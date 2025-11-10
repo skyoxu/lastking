@@ -8,7 +8,7 @@ func _ready() -> void:
     print("[TEMPLATE_SMOKE_READY] Main scene initialized")
     var db = get_node_or_null("/root/SqlDb")
     if db != null:
-        var ok := db.TryOpen("user://data/game.db")
+        var ok = db.TryOpen("user://data/game.db")
         if not ok:
             print("[DB] open failed: ", str(db.LastError))
         else:
