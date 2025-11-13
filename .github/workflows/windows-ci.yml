@@ -87,14 +87,13 @@ jobs:
           $env:Path = "$HOME\.dotnet;" + $env:Path
           $env:GODOT_DOTNET_CLI = (Get-Command dotnet).Path
           dotnet restore GodotGame.csproj
+          dotnet build GodotGame.csproj -c Release -v minimal
+          try { & "$env:GODOT_BIN" --headless --path . --quit } catch { Write-Warning $_ }
 
       - name: Dotnet tests (Python runner)
         shell: pwsh
         run: |
           py -3 scripts/python/run_dotnet.py --solution Game.sln --configuration Debug
-
-          dotnet build GodotGame.csproj -c Release -v minimal
-          try { & "$env:GODOT_BIN" --headless --path . --quit } catch { Write-Warning $_ }
 
       - name: Prepare test project link
         shell: pwsh
