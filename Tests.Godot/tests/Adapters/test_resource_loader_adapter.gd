@@ -1,4 +1,4 @@
-extends "res://addons/gdUnit4/src/core/GdUnitTestSuite.gd"
+extends "res://addons/gdUnit4/src/GdUnitTestSuite.gd"
 
 var _loader: Node
 
@@ -21,4 +21,3 @@ func test_load_text_absolute_path_should_fail() -> void:
 func test_load_text_with_parent_traversal_should_fail() -> void:
     var txt := _loader.LoadText("res://../project.godot")
     assert_that(txt).is_null()
-

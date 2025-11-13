@@ -1,4 +1,4 @@
-extends "res://addons/gdUnit4/src/core/GdUnitTestSuite.gd"
+extends "res://addons/gdUnit4/src/GdUnitTestSuite.gd"
 
 var _time: Node
 var _input: Node
@@ -19,4 +19,3 @@ func test_input_adapter_methods_exist() -> void:
     assert_bool(pressed or not pressed).is_true() # sanity of return type
     var axis := _input.GetAxis("ui_left", "ui_right")
     assert_float(axis).is_between(-1.0, 1.0)
-

@@ -1,4 +1,4 @@
-extends "res://addons/gdUnit4/src/core/GdUnitTestSuite.gd"
+extends "res://addons/gdUnit4/src/GdUnitTestSuite.gd"
 
 var _bus: Node
 var _emitted := false
@@ -16,4 +16,3 @@ func test_publish_simple_emits_signal() -> void:
     _bus.PublishSimple("test.evt", "gdunit", "{}")
     await process_frame
     assert_bool(_emitted).is_true()
-
