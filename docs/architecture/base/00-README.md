@@ -44,6 +44,17 @@
 - `csp-policy-analysis.md`
 - `front-matter-standardization-example.md`
 
+## Godot + C# 迁移口径（对齐 ADR-0018/0019）
+
+- 技术栈与三层结构
+  - 技术栈：Godot 4.5 + C#/.NET 8（见 ADR-0018）。
+  - 结构：Scenes（装配/信号）→ Adapters（仅封装 Godot API）→ Core（纯 C# 领域，可单测）。
+  - 当前仓库路径映射：Core → `Game.Core`；Adapters → `Game.Godot`；Scenes → 工程根下 `.tscn` 资源；场景测试 → `Tests.Godot`；领域测试将于 Phase 4 恢复为 xUnit。
+- 安全基线
+  - 本目录新增 `02-security-baseline-godot-v2.md` 作为运行时基线（引用 ADR-0019），替代 Electron 版本的 02 章作为执行口径。
+- 契约 SSoT
+  - 契约与事件仅落盘 `Scripts/Core/Contracts/**`（不依赖 Godot，不直接参与编译），各章节/用例引用路径，避免口径漂移。
+
 ## ADR 对齐（当前口径快照，自动生成）
 
 - Accepted：ADR-0001 / ADR-0002 / ADR-0003 / ADR-0004 / ADR-0005 / ADR-0006 / ADR-0007 / ADR-0008 / ADR-0010 / ADR-0011 / ADR-0015
