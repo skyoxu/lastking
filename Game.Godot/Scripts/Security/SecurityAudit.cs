@@ -1,4 +1,4 @@
-using Godot;
+﻿using Godot;
 using System;
 using System.IO;
 using System.Text.Json;
@@ -18,7 +18,7 @@ public partial class SecurityAudit : Node
                 var classes = ClassDB.GetClassList();
                 foreach (var c in classes)
                 {
-                    var s = c.AsStringName().ToString();
+                    var s = c.ToString();
                     if (s == "SQLite") { hasSqlite = true; break; }
                 }
             }
@@ -29,7 +29,7 @@ public partial class SecurityAudit : Node
                 ts = DateTime.UtcNow.ToString("O"),
                 event_type = "SECURITY_BASELINE",
                 app = GetAppNameSafe(),
-                godot = Engine.GetVersionInfo()["string"].AsStringName().ToString(),
+                godot = Engine.GetVersionInfo()["string"].ToString(),
                 db_backend = System.Environment.GetEnvironmentVariable("GODOT_DB_BACKEND") ?? "default",
                 demo = (System.Environment.GetEnvironmentVariable("TEMPLATE_DEMO") ?? "0").ToLowerInvariant() == "1",
                 plugin_sqlite = hasSqlite,
@@ -56,3 +56,4 @@ public partial class SecurityAudit : Node
         catch { return "GodotGame"; }
     }
 }
+
