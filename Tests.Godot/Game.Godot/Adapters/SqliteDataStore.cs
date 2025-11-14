@@ -23,6 +23,14 @@ public partial class SqliteDataStore : Node, ISqlDatabase
 
     public void Open(string dbPath)
     {
+        // Security: allow only user:// paths and forbid traversal
+        if (string.IsNullOrWhiteSpace(dbPath)) throw new ArgumentException("Empty database path");
+        var raw = dbPath.Replace('\\','/');
+        var lower = raw.ToLowerInvariant();
+        if (!lower.StartsWith("user://"))
+            throw new NotSupportedException("Only user:// paths are allowed for database files");
+        if (lower.Contains(".."))
+            throw new NotSupportedException("Path traversal is not allowed");
         _dbPath = Globalize(dbPath);
         EnsureParentDir(_dbPath!);
         var isNew = !System.IO.File.Exists(_dbPath!);

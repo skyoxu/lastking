@@ -34,6 +34,7 @@ LPT9
 build/
 reports/
 logs/
+gitlog/
 godot_local/
 tmp/
 **/bin/
