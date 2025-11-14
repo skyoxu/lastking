@@ -14,7 +14,9 @@ public class SaveGameRepository : ISaveGameRepository
 
     public Task UpsertAsync(SaveGame save)
     {
-        if (string.IsNullOrEmpty(save.Id)) save.Id = Guid.NewGuid().ToString();
+        // Use deterministic id to guarantee stable upsert semantics per (userId,slot)
+        // This avoids creating multiple rows for same logical save when called repeatedly.
+        if (string.IsNullOrEmpty(save.Id)) save.Id = $"{save.UserId}:{save.SlotNumber}";
         var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         if (save.CreatedAt == 0) save.CreatedAt = now;
         save.UpdatedAt = now;
@@ -61,4 +63,3 @@ public class SaveGameRepository : ISaveGameRepository
         return Task.FromResult(list);
     }
 }
-
