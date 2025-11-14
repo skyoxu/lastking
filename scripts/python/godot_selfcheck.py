@@ -66,15 +66,24 @@ def ensure_autoload(project_path: str) -> bool:
     return changed
 
 
-def run_cmd(args: list[str], cwd: str | None = None, timeout: int = 120000) -> tuple[int, str]:
-    p = subprocess.Popen(args, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding='utf-8', errors='ignore')
+def run_cmd(args: list[str], cwd: str | None = None, timeout: int = 120000) -> tuple[int, str, str]:
+    """Run a command and capture stdout/stderr separately (UTF-8 text)."""
+    p = subprocess.Popen(
+        args,
+        cwd=cwd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        encoding='utf-8',
+        errors='ignore',
+    )
     try:
-        out, _ = p.communicate(timeout=timeout/1000.0)
+        out, err = p.communicate(timeout=timeout / 1000.0)
     except subprocess.TimeoutExpired:
         p.kill()
-        out, _ = p.communicate()
-        return 124, out
-    return p.returncode, out
+        out, err = p.communicate()
+        return 124, out, err
+    return p.returncode, out, err
 
 
 def run_selfcheck(godot_bin: str, project_godot: str, build_solutions: bool) -> dict:
@@ -93,21 +102,44 @@ def run_selfcheck(godot_bin: str, project_godot: str, build_solutions: bool) -> 
     ts = dt.datetime.now().strftime('%H%M%S%f')
     if build_solutions:
         # Be explicit with --path to avoid project resolution flakiness on CI
-        rc, out = run_cmd([godot_bin, '--headless', '--no-window', '--path', root, '--build-solutions'], cwd=root, timeout=600000)
+        rc, out, err = run_cmd([godot_bin, '--headless', '--no-window', '--path', root, '--build-solutions', '--quit'], cwd=root, timeout=600000)
         with open(os.path.join(out_dir, f'godot-buildsolutions-{ts}.txt'), 'w', encoding='utf-8') as f:
-            f.write(out)
+            f.write(out or '')
+            if err:
+                f.write("\n--- STDERR ---\n")
+                f.write(err)
         summary['build_rc'] = rc
 
-    # Run the selfcheck script with explicit --path
-    rc, out = run_cmd([godot_bin, '--headless', '--no-window', '--path', root, '-s', 'res://Game.Godot/Scripts/Diagnostics/CompositionRootSelfCheck.gd'], cwd=root, timeout=300000)
+    # Run the selfcheck script with explicit --path and verbose output
+    args = [godot_bin, '--headless', '--no-window', '--path', root, '-s', 'res://Game.Godot/Scripts/Diagnostics/CompositionRootSelfCheck.gd', '--verbose']
     console_path = os.path.join(out_dir, f'godot-selfcheck-console-{ts}.txt')
+    stderr_path = os.path.join(out_dir, f'godot-selfcheck-stderr-{ts}.txt')
+    # Write call header for traceability
     with open(console_path, 'w', encoding='utf-8') as f:
-        f.write(out)
+        f.write('SELF_CHECK_CALL: ' + ' '.join(args) + '\n')
+    rc, out, err = run_cmd(args, cwd=root, timeout=300000)
+    with open(console_path, 'a', encoding='utf-8') as f:
+        f.write(out or '')
+    with open(stderr_path, 'w', encoding='utf-8') as f:
+        f.write(err or '')
     summary['selfcheck_rc'] = rc
-    m = re.search(r'SELF_CHECK_OUT:(.*)$', out, flags=re.M)
+    m = re.search(r'SELF_CHECK_OUT:(.*)$', out or '', flags=re.M)
     if not m:
-        summary['reason'] = 'SELF_CHECK_OUT not found in console output'
-        return summary
+        # Retry once after a lightweight prewarm
+        _rcpw, _outpw, _errpw = run_cmd([godot_bin, '--headless', '--no-window', '--path', root, '--quit'], cwd=root, timeout=120000)
+        rc2, out2, err2 = run_cmd(args, cwd=root, timeout=300000)
+        with open(console_path, 'a', encoding='utf-8') as f:
+            f.write('\n--- RETRY ---\n')
+            f.write(out2 or '')
+        with open(stderr_path, 'a', encoding='utf-8') as f:
+            f.write('\n--- RETRY ---\n')
+            f.write(err2 or '')
+        summary['selfcheck_rc'] = rc2
+        out = out2
+        m = re.search(r'SELF_CHECK_OUT:(.*)$', out or '', flags=re.M)
+        if not m:
+            summary['reason'] = 'SELF_CHECK_OUT not found in console output'
+            return summary
     user_json = m.group(1).strip()
     if not os.path.exists(user_json):
         summary['reason'] = f'output not found at {user_json}'

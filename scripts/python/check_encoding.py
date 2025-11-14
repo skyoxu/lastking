@@ -25,7 +25,8 @@ BINARY_EXT = {
     '.ogg','.wav','.mp3','.mp4','.avi','.mov',
     '.zip','.7z','.rar','.gz','.tar','.tgz',
     '.dll','.exe','.pdb','.pck','.import','.ttf','.otf',
-    '.db','.sqlite','.sav'
+    '.db','.sqlite','.sav',
+    '.bak'
 }
 
 # Exclude vendor/test asset folders and known binaries
