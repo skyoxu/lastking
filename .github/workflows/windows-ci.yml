@@ -118,8 +118,7 @@ jobs:
 
       - name: Upload self-check logs (always)
         if: always()
-        uses: actions/upload-artifact@v4
-        with:
+        uses: actions/upload-artifact@v4`n        with:`n          if-no-files-found: ignore
           name: selfcheck-logs
           path: logs/e2e/**
 
@@ -142,8 +141,7 @@ jobs:
 
       - name: Upload GdUnit reports (always)
         if: always()
-        uses: actions/upload-artifact@v4
-        with:
+        uses: actions/upload-artifact@v4`n        with:`n          if-no-files-found: ignore
           name: gdunit-reports
           path: logs/e2e/**/gdunit-reports/**
 
