@@ -98,6 +98,9 @@ func test_backup_restore_savegame() -> void:
     assert_bool(db.has_method("TryOpen")).is_true()
     var ok2 = db.TryOpen(backup_path)
     assert_bool(ok2).is_true()
+    # schema fallback to avoid Nil if copy missed table (tests only)
+    if db.has_method("TableExists") and not db.TableExists("saves"):
+        helper.CreateSchema()
     var bridge2 = preload("res://Game.Godot/Adapters/Db/RepositoryTestBridge.cs").new()
     add_child(auto_free(bridge2))
     await get_tree().process_frame

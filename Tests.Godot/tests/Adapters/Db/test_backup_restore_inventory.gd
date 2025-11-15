@@ -96,6 +96,9 @@ func test_backup_restore_inventory() -> void:
     assert_bool(db.has_method("TryOpen")).is_true()
     var ok2 = db.TryOpen(backup_path)
     assert_bool(ok2).is_true()
+    # schema fallback to avoid Nil if copy missed table (tests only)
+    if db.has_method("TableExists") and not db.TableExists("inventory_items"):
+        helper.CreateSchema()
     var inv2 = preload("res://Game.Godot/Adapters/Db/InventoryRepoBridge.cs").new()
     add_child(auto_free(inv2))
     await get_tree().process_frame

@@ -29,6 +29,49 @@ def run_cmd(args, cwd=None, timeout=600_000):
     return p.returncode, out
 
 
+def run_cmd_failfast(args, cwd=None, timeout=600_000, break_markers=None):
+    """Run a process and stream stdout; if any line contains a break marker, kill early and return rc=1.
+    This avoids long timeouts when Godot enters Debugger Break state.
+    """
+    break_markers = break_markers or [
+        'Debugger Break',
+        'Parser Error',
+        'SCRIPT ERROR',
+    ]
+    p = subprocess.Popen(args, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                         text=True, encoding='utf-8', errors='ignore')
+    buf_lines = []
+    hit_break = False
+    try:
+        # Poll line-by-line up to timeout
+        end_ts = dt.datetime.now().timestamp() + (timeout/1000.0)
+        while True:
+            line = p.stdout.readline()
+            if line:
+                buf_lines.append(line)
+                low = line.lower()
+                if any(m.lower() in low for m in break_markers):
+                    hit_break = True
+                    p.kill()
+                    break
+            else:
+                if p.poll() is not None:
+                    break
+            if dt.datetime.now().timestamp() > end_ts:
+                p.kill()
+                return 124, ''.join(buf_lines)
+        out = ''.join(buf_lines)
+        if hit_break:
+            return 1, out
+        return (p.returncode or 0), out
+    except Exception:
+        try:
+            p.kill()
+        except Exception:
+            pass
+        return 1, ''.join(buf_lines)
+
+
 def write_text(path: str, content: str) -> None:
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, 'w', encoding='utf-8') as f:
@@ -79,7 +122,7 @@ def main():
             write_text(os.path.join(out_dir, 'prewarm-dotnet.txt'), '\n'.join(agg) if agg else 'NO_DOTNET_BUILD_TARGETS')
             prewarm_note = 'fallback-dotnet'
 
-    # Run tests
+    # Run tests（带 Debugger Break fail-fast）
     # Build command with optional -a filters
     cmd = [args.godot_bin, '--headless', '--path', proj, '-s', '-d', 'res://addons/gdUnit4/bin/GdUnitCmdTool.gd', '--ignoreHeadlessMode']
     for a in args.add:
@@ -88,7 +131,7 @@ def main():
             # normalize relative tests path to res://
             apath = 'res://' + apath.replace('\\', '/').lstrip('/')
         cmd += ['-a', apath]
-    rc, out = run_cmd(cmd, cwd=proj, timeout=args.timeout_sec*1000)
+    rc, out = run_cmd_failfast(cmd, cwd=proj, timeout=args.timeout_sec*1000)
     console_path = os.path.join(out_dir, 'gdunit-console.txt')
     with open(console_path, 'w', encoding='utf-8') as f:
         f.write(out)
