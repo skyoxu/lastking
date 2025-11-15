@@ -6,8 +6,7 @@ func _new_db(name: String) -> Node:
         db = ClassDB.instantiate("SqliteDataStore")
     else:
         var s = load("res://Game.Godot/Adapters/SqliteDataStore.cs")
-        db = Node.new()
-        db.set_script(s)
+        db = s.new()
     db.name = name
     get_tree().get_root().add_child(auto_free(db))
     await get_tree().process_frame
@@ -35,4 +34,3 @@ func test_db_open_denied_writes_audit_log() -> void:
     assert_bool(FileAccess.file_exists(log_path)).is_true()
     var content = FileAccess.get_file_as_string(log_path)
     assert_str(content).contains('"action":"db.open.fail"')
-

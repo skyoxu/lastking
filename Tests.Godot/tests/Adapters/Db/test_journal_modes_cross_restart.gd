@@ -6,8 +6,7 @@ func _new_db(name: String) -> Node:
         db = ClassDB.instantiate("SqliteDataStore")
     else:
         var s = load("res://Game.Godot/Adapters/SqliteDataStore.cs")
-        db = Node.new()
-        db.set_script(s)
+        db = s.new()
     db.name = name
     get_tree().get_root().add_child(auto_free(db))
     await get_tree().process_frame
@@ -47,4 +46,3 @@ func test_wal_creates_wal_sidecar_and_delete_mode_not() -> void:
     await get_tree().process_frame
     assert_bool(FileAccess.file_exists(_abs(del_path) + "-wal")).is_false()
     db2.Close()
-

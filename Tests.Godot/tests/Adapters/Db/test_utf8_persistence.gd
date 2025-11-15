@@ -6,8 +6,7 @@ func _new_db(name: String) -> Node:
         db = ClassDB.instantiate("SqliteDataStore")
     else:
         var s = load("res://Game.Godot/Adapters/SqliteDataStore.cs")
-        db = Node.new()
-        db.set_script(s)
+        db = s.new()
     db.name = name
     get_tree().get_root().add_child(auto_free(db))
     await get_tree().process_frame
@@ -54,4 +53,3 @@ func test_utf8_chinese_roundtrip_cross_restart() -> void:
     var got_json = bridge2.GetSaveData(uid, 1)
     assert_str(str(got_json)).contains("你好，世界！")
     assert_str(str(got_json)).contains("äöü✓")
-

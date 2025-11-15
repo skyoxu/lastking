@@ -6,8 +6,7 @@ func _new_db(name: String) -> Node:
         db = ClassDB.instantiate("SqliteDataStore")
     else:
         var s = load("res://Game.Godot/Adapters/SqliteDataStore.cs")
-        db = Node.new()
-        db.set_script(s)
+        db = s.new()
     db.name = name
     get_tree().get_root().add_child(auto_free(db))
     await get_tree().process_frame
@@ -55,4 +54,3 @@ func test_close_rename_and_reopen_succeeds() -> void:
     # As a fallback, open by absolute path through GDScript -> managed path resolves absolute
     var ok = db2.TryOpen(ProjectSettings.localize_path(abs_new))
     assert_bool(ok).is_true()
-

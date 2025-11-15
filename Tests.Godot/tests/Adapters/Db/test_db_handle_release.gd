@@ -6,8 +6,7 @@ func _new_db(name: String) -> Node:
         db = ClassDB.instantiate("SqliteDataStore")
     else:
         var s = load("res://Game.Godot/Adapters/SqliteDataStore.cs")
-        db = Node.new()
-        db.set_script(s)
+        db = s.new()
     db.name = name
     get_tree().get_root().add_child(auto_free(db))
     await get_tree().process_frame
@@ -37,4 +36,3 @@ func test_handle_released_after_close_allows_rw_open() -> void:
     assert_that(f).is_not_null()
     if f:
         f.close()
-
