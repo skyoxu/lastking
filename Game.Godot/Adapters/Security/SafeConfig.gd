@@ -1,4 +1,4 @@
-﻿extends Node
+extends Node
 
 func save_user(path: String, sections: Dictionary) -> int:
     if not path.begins_with("user://"):
@@ -11,5 +11,4 @@ func save_user(path: String, sections: Dictionary) -> int:
         for k in m.keys():
             cfg.set_value(str(sec), str(k), m[k])
     return cfg.save(path)
-
 

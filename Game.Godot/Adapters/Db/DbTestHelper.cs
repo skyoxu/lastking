@@ -59,4 +59,24 @@ public partial class DbTestHelper : Node
     {
         System.Environment.SetEnvironmentVariable(key, value);
     }
+
+    public void EnsureMinVersion(int minVersion)
+    {
+        var db = GetDb();
+        // Ensure table exists and row present
+        db.Execute("CREATE TABLE IF NOT EXISTS schema_version (id INTEGER PRIMARY KEY CHECK(id=1), version INTEGER NOT NULL);");
+        db.Execute("INSERT OR IGNORE INTO schema_version(id,version) VALUES(1,1);");
+        try
+        {
+            var rows = db.Query("SELECT version FROM schema_version WHERE id=1;");
+            var cur = 0;
+            if (rows.Count > 0 && rows[0].ContainsKey("version") && rows[0]["version"] != null)
+                cur = Convert.ToInt32(rows[0]["version"]);
+            if (cur < minVersion)
+            {
+                db.Execute("UPDATE schema_version SET version=@0 WHERE id=1;", minVersion);
+            }
+        }
+        catch { }
+    }
 }
