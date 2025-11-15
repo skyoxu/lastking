@@ -62,7 +62,9 @@ func test_backup_restore_inventory() -> void:
     assert_bool(inv.Add("potion", 3)).is_true()
     assert_bool(inv.Add("elixir", 2)).is_true()
 
-    # close and copy to backup
+    # checkpoint WAL to persist changes into main db file, then close and copy to backup
+    if db.has_method("Execute"):
+        db.Execute("PRAGMA wal_checkpoint(TRUNCATE);")
     db.Close()
     await get_tree().process_frame
     var backup_dir = "user://backup_%s" % Time.get_unix_time_from_system()
@@ -79,6 +81,7 @@ func test_backup_restore_inventory() -> void:
     assert_bool(ok2).is_true()
     var inv2 = preload("res://Game.Godot/Adapters/Db/InventoryRepoBridge.cs").new()
     add_child(auto_free(inv2))
+    await get_tree().process_frame
     var items = inv2.All()
     var ok_p := false
     var ok_e := false

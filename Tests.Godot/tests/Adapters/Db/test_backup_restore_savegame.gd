@@ -65,7 +65,9 @@ func test_backup_restore_savegame() -> void:
     var json = '{"hp": 55, "ts": %d}' % Time.get_unix_time_from_system()
     assert_bool(bridge.UpsertSave(uid, 1, json)).is_true()
 
-    # close and copy to backup
+    # checkpoint WAL to persist changes into main db file, then close and copy to backup
+    if db.has_method("Execute"):
+        db.Execute("PRAGMA wal_checkpoint(TRUNCATE);")
     db.Close()
     await get_tree().process_frame
     var backup_dir = "user://backup_%s" % Time.get_unix_time_from_system()
@@ -82,5 +84,6 @@ func test_backup_restore_savegame() -> void:
     assert_bool(ok2).is_true()
     var bridge2 = preload("res://Game.Godot/Adapters/Db/RepositoryTestBridge.cs").new()
     add_child(auto_free(bridge2))
+    await get_tree().process_frame
     var got = bridge2.GetSaveData(uid, 1)
     assert_str(str(got)).contains('"hp": 55')
