@@ -158,3 +158,12 @@ jobs:
           name: gdunit-reports
           path: logs/e2e/**/gdunit-reports/**
           if-no-files-found: ignore
+
+      - name: Schema dump (soft)
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          $date = Get-Date -Format 'yyyy-MM-dd'
+          $out = "logs/ci/${{ github.run_id }}/schema-dump.json"
+          py -3 scripts/python/db_schema_dump.py --glob "$env:APPDATA\Godot\app_userdata\GodotGame\*.db" --out "$out"
+          Write-Host "SCHEMA_DUMP_OUT=$out"
