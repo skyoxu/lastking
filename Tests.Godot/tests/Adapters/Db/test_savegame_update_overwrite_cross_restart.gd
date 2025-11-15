@@ -1,7 +1,13 @@
 extends "res://addons/gdUnit4/src/GdUnitTestSuite.gd"
 
 func _new_db(name: String) -> Node:
-    var db = preload("res://Game.Godot/Adapters/SqliteDataStore.cs").new()
+    var s = preload("res://Game.Godot/Adapters/SqliteDataStore.cs")
+    var db = null
+    if s.can_instance():
+        db = s.new()
+    else:
+        db = Node.new()
+        db.set_script(s)
     db.name = name
     get_tree().get_root().add_child(auto_free(db))
     return db
@@ -43,4 +49,3 @@ func test_savegame_update_overwrite_cross_restart() -> void:
     add_child(auto_free(bridge3))
     var got = bridge3.GetSaveData(uid, 1)
     assert_str(str(got)).contains('"hp": 77')
-

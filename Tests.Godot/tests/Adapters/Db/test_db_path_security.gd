@@ -1,7 +1,13 @@
 extends "res://addons/gdUnit4/src/GdUnitTestSuite.gd"
 
 func _db() -> Node:
-    var db = preload("res://Game.Godot/Adapters/SqliteDataStore.cs").new()
+    var s = preload("res://Game.Godot/Adapters/SqliteDataStore.cs")
+    var db = null
+    if s.can_instance():
+        db = s.new()
+    else:
+        db = Node.new()
+        db.set_script(s)
     db.name = "SqlDb"
     get_tree().get_root().add_child(auto_free(db))
     return db

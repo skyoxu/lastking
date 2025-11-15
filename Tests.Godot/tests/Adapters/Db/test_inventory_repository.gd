@@ -4,7 +4,13 @@ func before() -> void:
     var helper = preload("res://Game.Godot/Adapters/Db/DbTestHelper.cs").new()
     add_child(auto_free(helper))
     helper.ForceManaged()
-    var db = preload("res://Game.Godot/Adapters/SqliteDataStore.cs").new()
+    var s = preload("res://Game.Godot/Adapters/SqliteDataStore.cs")
+    var db = null
+    if s.can_instance():
+        db = s.new()
+    else:
+        db = Node.new()
+        db.set_script(s)
     db.name = "SqlDb"
     get_tree().get_root().add_child(auto_free(db))
     var path := "user://utdb_%s/game.db" % Time.get_unix_time_from_system()
@@ -21,4 +27,3 @@ func test_inventory_add_and_list() -> void:
     assert_bool(ok).is_true()
     var items = bridge.All()
     assert_int(int(items.size())).is_greater(0)
-

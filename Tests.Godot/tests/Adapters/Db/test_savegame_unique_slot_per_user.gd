@@ -1,7 +1,13 @@
 extends "res://addons/gdUnit4/src/GdUnitTestSuite.gd"
 
 func _new_db(name: String) -> Node:
-    var db = preload("res://Game.Godot/Adapters/SqliteDataStore.cs").new()
+    var s = preload("res://Game.Godot/Adapters/SqliteDataStore.cs")
+    var db = null
+    if s.can_instance():
+        db = s.new()
+    else:
+        db = Node.new()
+        db.set_script(s)
     db.name = name
     get_tree().get_root().add_child(auto_free(db))
     return db
@@ -42,4 +48,3 @@ func test_savegame_unique_slot_per_user() -> void:
         if str(s).find('"hp": 77') != -1:
             count_slot1 += 1
     assert_int(count_slot1).is_equal(1)
-

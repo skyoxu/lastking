@@ -4,7 +4,13 @@ func before() -> void:
     var helper = preload("res://Game.Godot/Adapters/Db/DbTestHelper.cs").new()
     add_child(auto_free(helper))
     helper.ForceManaged()
-    var db = preload("res://Game.Godot/Adapters/SqliteDataStore.cs").new()
+    var s = preload("res://Game.Godot/Adapters/SqliteDataStore.cs")
+    var db = null
+    if s.can_instance():
+        db = s.new()
+    else:
+        db = Node.new()
+        db.set_script(s)
     db.name = "SqlDb"
     get_tree().get_root().add_child(auto_free(db))
     var path := "user://utdb_%s/game.db" % Time.get_unix_time_from_system()
@@ -25,4 +31,3 @@ func test_savegame_upsert_and_get() -> void:
     assert_bool(ok2).is_true()
     var got = bridge.GetSaveData(uid, 1)
     assert_str(str(got)).contains("hp")
-
