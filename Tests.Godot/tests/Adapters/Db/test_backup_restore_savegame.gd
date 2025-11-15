@@ -40,7 +40,7 @@ static func _copy_file(src: String, dst: String) -> bool:
 
 func test_backup_restore_savegame() -> void:
     var path = "user://utdb_%s/sg_bak.db" % Time.get_unix_time_from_system()
-    var db = _new_db("SqlDb")
+    var db = await _new_db("SqlDb")
     var ok = db.TryOpen(path)
     assert_bool(ok).is_true()
     var helper = preload("res://Game.Godot/Adapters/Db/DbTestHelper.cs").new()
