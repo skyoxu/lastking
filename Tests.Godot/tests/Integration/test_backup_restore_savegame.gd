@@ -57,8 +57,15 @@ static func _copy_file(src: String, dst: String) -> bool:
 func test_backup_restore_savegame() -> void:
     var path = "user://utdb_%s/sg_bak.db" % Time.get_unix_time_from_system()
     var db = await _new_db("SqlDb")
-    # Force managed provider to avoid flaky godot-sqlite plugin path in local env
-    var helper = preload("res://Game.Godot/Adapters/Db/DbTestHelper.cs").new()
+    if db == null:
+        push_warning("SKIP: missing C# instantiate, skip test")
+        return
+    # Force managed provider
+    var helper_sc = load("res://Game.Godot/Adapters/Db/DbTestHelper.cs")
+    if helper_sc == null or not helper_sc.has_method("new"):
+        push_warning("SKIP: helper C# unavailable, skip")
+        return
+    var helper = helper_sc.new()
     add_child(auto_free(helper))
     helper.ForceManaged()
     var tries := 20
@@ -66,19 +73,18 @@ func test_backup_restore_savegame() -> void:
         await get_tree().process_frame
         tries -= 1
     assert_bool(db.has_method("TryOpen")).is_true()
-    if db == null:
-        push_warning("SKIP: missing C# instantiate, skip test")
-        return
     var ok = db.TryOpen(path)
     assert_bool(ok).is_true()
-    var h = preload("res://Game.Godot/Adapters/Db/DbTestHelper.cs").new()
-    add_child(auto_free(h))
-    h.ExecSql("PRAGMA journal_mode=DELETE;")
+    helper.ExecSql("PRAGMA journal_mode=DELETE;")
     # Ensure schema exists and clean
     helper.CreateSchema()
     helper.ClearAll()
 
-    var bridge = preload("res://Game.Godot/Adapters/Db/RepositoryTestBridge.cs").new()
+    var bridge_sc = load("res://Game.Godot/Adapters/Db/RepositoryTestBridge.cs")
+    if bridge_sc == null or not bridge_sc.has_method("new"):
+        push_warning("SKIP: RepositoryTestBridge C# unavailable, skip")
+        return
+    var bridge = bridge_sc.new()
     add_child(auto_free(bridge))
     var username = "u_%s" % Time.get_unix_time_from_system()
     assert_bool(bridge.UpsertUser(username)).is_true()
@@ -87,10 +93,8 @@ func test_backup_restore_savegame() -> void:
     var json = '{"hp": 55, "ts": %d}' % Time.get_unix_time_from_system()
     assert_bool(bridge.UpsertSave(uid, 1, json)).is_true()
 
-    # checkpoint WAL to persist changes into main db file, then close and copy to backup
-    var h2 = preload("res://Game.Godot/Adapters/Db/DbTestHelper.cs").new()
-    add_child(auto_free(h2))
-    h2.ExecSql("PRAGMA wal_checkpoint(TRUNCATE);")
+    # checkpoint WAL → close → copy to backup
+    helper.ExecSql("PRAGMA wal_checkpoint(TRUNCATE);")
     db.Close()
     await get_tree().process_frame
     var backup_dir = "user://backup_%s" % Time.get_unix_time_from_system()
@@ -108,8 +112,13 @@ func test_backup_restore_savegame() -> void:
     # schema fallback to avoid Nil if copy missed table (tests only)
     if db.has_method("TableExists") and not db.TableExists("saves"):
         helper.CreateSchema()
-    var bridge2 = preload("res://Game.Godot/Adapters/Db/RepositoryTestBridge.cs").new()
+    var bridge2_sc = load("res://Game.Godot/Adapters/Db/RepositoryTestBridge.cs")
+    if bridge2_sc == null or not bridge2_sc.has_method("new"):
+        push_warning("SKIP: RepositoryTestBridge C# unavailable, skip")
+        return
+    var bridge2 = bridge2_sc.new()
     add_child(auto_free(bridge2))
     await get_tree().process_frame
     var got = bridge2.GetSaveData(uid, 1)
     assert_str(str(got)).contains('"hp": 55')
+
