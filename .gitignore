@@ -69,3 +69,6 @@ Thumbs.db
 # Godot editor binaries/downloads (keep project assets only)
 Godot_v*.exe
 Godot_*.zip
+
+# Local: ignore cifix artifacts
+cifix*.*

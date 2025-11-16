@@ -14,6 +14,8 @@ public partial class SettingsPanel : Control
     private Button _close = default!;
 
     private const string UserId = "default";
+    private const string ConfigPath = "user://settings.cfg";
+    private const string ConfigSection = "settings";
 
     public override void _Ready()
     {
@@ -53,17 +55,78 @@ public partial class SettingsPanel : Control
 
     private SqliteDataStore? Db() => GetNodeOrNull<SqliteDataStore>("/root/SqlDb");
 
+    private void SaveToConfig(float vol, string gfx, string lang)
+    {
+        var cfg = new ConfigFile();
+        // Load existing to preserve unrelated keys
+        cfg.Load(ConfigPath);
+        cfg.SetValue(ConfigSection, nameof(vol), vol);
+        cfg.SetValue(ConfigSection, nameof(gfx), gfx ?? "medium");
+        cfg.SetValue(ConfigSection, nameof(lang), lang ?? "en");
+        var err = cfg.Save(ConfigPath);
+        if (err != Error.Ok)
+        {
+            GD.PushWarning($"SettingsPanel: failed to save ConfigFile: {err}");
+        }
+    }
+
+    private bool TryLoadFromConfig(out float vol, out string gfx, out string lang)
+    {
+        vol = 0.5f; gfx = "medium"; lang = "en";
+        var cfg = new ConfigFile();
+        var err = cfg.Load(ConfigPath);
+        if (err != Error.Ok)
+        {
+            return false;
+        }
+        try
+        {
+            Variant v = cfg.GetValue(ConfigSection, nameof(vol), 0.5f);
+            Variant g = cfg.GetValue(ConfigSection, nameof(gfx), "medium");
+            Variant l = cfg.GetValue(ConfigSection, nameof(lang), "en");
+            vol = v.VariantType == Variant.Type.Nil ? 0.5f : (float)v.AsDouble();
+            gfx = g.VariantType == Variant.Type.Nil ? "medium" : g.AsString();
+            lang = l.VariantType == Variant.Type.Nil ? "en" : l.AsString();
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private void MigrateFromDbIfConfigMissing()
+    {
+        // If config already exists, do nothing
+        var cfgProbe = new ConfigFile();
+        if (cfgProbe.Load(ConfigPath) == Error.Ok)
+            return;
+
+        // Attempt read from DB once and save to config
+        var db = Db();
+        if (db == null)
+            return;
+        var rows = db.Query("SELECT audio_volume, graphics_quality, language FROM settings WHERE user_id=@0;", UserId);
+        if (rows.Count == 0) return;
+        var r = rows[0];
+        float vol = 0.5f; string gfx = "medium"; string lang = "en";
+        if (r.TryGetValue("audio_volume", out var v) && v != null)
+            vol = Convert.ToSingle(v);
+        if (r.TryGetValue("graphics_quality", out var g) && g != null)
+            gfx = g.ToString() ?? "medium";
+        if (r.TryGetValue("language", out var l) && l != null)
+            lang = l.ToString() ?? "en";
+        SaveToConfig(vol, gfx, lang);
+    }
+
     private void OnSave()
     {
-        var db = Db();
-        if (db == null) { GD.PushWarning("SqlDb not found"); return; }
         var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         var vol = Mathf.Clamp((float)_volume.Value, 0, 1);
         var gfx = _graphics.GetItemText(_graphics.Selected);
         var lang = _language.GetItemText(_language.Selected);
-        db.Execute("INSERT INTO settings(user_id,audio_volume,graphics_quality,language,updated_at) VALUES(@0,@1,@2,@3,@4) " +
-                   "ON CONFLICT(user_id) DO UPDATE SET audio_volume=@1, graphics_quality=@2, language=@3, updated_at=@4;",
-            UserId, vol, gfx, lang, now);
+        // SSoT to ConfigFile
+        SaveToConfig(vol, gfx, lang);
 
         // Apply immediately
         ApplyVolume(vol);
@@ -72,23 +135,33 @@ public partial class SettingsPanel : Control
 
     private void OnLoad()
     {
-        var db = Db();
-        if (db == null) { GD.PushWarning("SqlDb not found"); return; }
-        var rows = db.Query("SELECT audio_volume, graphics_quality, language FROM settings WHERE user_id=@0;", UserId);
-        if (rows.Count == 0) return;
-        var r = rows[0];
-        if (r.TryGetValue("audio_volume", out var v) && v != null) { _volume.Value = (double)System.Convert.ToSingle(v); ApplyVolume((float)_volume.Value); }
-        if (r.TryGetValue("graphics_quality", out var g) && g != null)
+        // Prefer ConfigFile; migrate once from DB if missing
+        float vol; string gfx; string lang;
+        if (!TryLoadFromConfig(out vol, out gfx, out lang))
         {
-            var s = g.ToString();
-            for (int i = 0; i < _graphics.ItemCount; i++)
-                if (_graphics.GetItemText(i).Equals(s, System.StringComparison.OrdinalIgnoreCase)) { _graphics.Selected = i; break; }
+            MigrateFromDbIfConfigMissing();
+            if (!TryLoadFromConfig(out vol, out gfx, out lang))
+                return;
         }
-        if (r.TryGetValue("language", out var l) && l != null)
+        _volume.Value = vol;
+        ApplyVolume(vol);
+        // graphics selection
+        if (!string.IsNullOrEmpty(gfx))
         {
-            var s = l.ToString();
+            for (int i = 0; i < _graphics.ItemCount; i++)
+            {
+                if (_graphics.GetItemText(i).Equals(gfx, StringComparison.OrdinalIgnoreCase))
+                { _graphics.Selected = i; break; }
+            }
+        }
+        // language
+        if (!string.IsNullOrEmpty(lang))
+        {
             for (int i = 0; i < _language.ItemCount; i++)
-                if (_language.GetItemText(i).Equals(s, System.StringComparison.OrdinalIgnoreCase)) { _language.Selected = i; break; }
+            {
+                if (_language.GetItemText(i).Equals(lang, StringComparison.OrdinalIgnoreCase))
+                { _language.Selected = i; break; }
+            }
             ApplyLanguage(_language.GetItemText(_language.Selected));
         }
     }

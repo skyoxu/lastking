@@ -17,13 +17,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - 本项目是 Windows only 的 Godot + C# 游戏模板，开箱即用、可复制。以下规范用于保障一致性与可维护性。
 - AI 优先 + arc42/C4 思维：按 不可回退 → 跨切面 → 运行时骨干 → 功能纵切 顺序
+- 删除无用代码，修改功能不保留旧的兼容性代码
+- **完整实现**，禁止MVP/占位/TODO，必须完整可运行
 
 ## 0 Scope & Intent
 
 - **Base 文档**：`docs/architecture/base/**` —— 跨切面与系统骨干（01–07、09、10 章），**无 PRD 痕迹**（以占位 `${DOMAIN_*}` `${PRODUCT_*}` 表达）。
 - **ADR**：Architecture Decision Record；**Accepted** 的 ADR 代表当前有效口径。
 - **SSoT**：Single Source of Truth；01/02/03 章统一口径（NFR/SLO、安全、可观测性）。
-- **Upstream**: BMAD v4 produces PRD + Architecture (arc42 overlays; CH01/CH03 at minimum; ADR-0001…0005 adopted, more as needed).
+- **Upstream**: BMAD v6 produces PRD + Architecture (arc42 overlays; CH01/CH03 at minimum; ADR-0001…0005 adopted, more as needed).
 - **Planning**: Taskmaster converts **PRD → Tasks** with back-links to ADR/CH/Overlay.
 - **Implementation & Quality**: Claude Code is primary; **SuperClaude** automates commits/changelogs/reviews; **Serena** handles symbol-level refactors and cross-file test-driven edits.
 - **Acceptance**: Official **Subagents** perform checklists/reviews; **Zen MCP** augments analysis with multi‑model reasoning.

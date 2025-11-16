@@ -17,16 +17,16 @@ This file provides guidance to Codex Cli when working with code in this reposito
 
 - 本项目是 Windows only 的 Godot + C# 游戏模板，开箱即用、可复制。以下规范用于保障一致性与可维护性。
 - AI 优先 + arc42/C4 思维：按 不可回退 → 跨切面 → 运行时骨干 → 功能纵切 顺序
+- 删除无用代码，修改功能不保留旧的兼容性代码
+- **完整实现**，禁止MVP/占位/TODO，必须完整可运行
 
 ## 0 Scope & Intent
 
 - **Base 文档**：`docs/architecture/base/**` —— 跨切面与系统骨干（01–07、09、10 章），**无 PRD 痕迹**（以占位 `${DOMAIN_*}` `${PRODUCT_*}` 表达）。
 - **ADR**：Architecture Decision Record；**Accepted** 的 ADR 代表当前有效口径。
 - **SSoT**：Single Source of Truth；01/02/03 章统一口径（NFR/SLO、安全、可观测性）。
-- **Upstream**: BMAD v4 produces PRD + Architecture (arc42 overlays; CH01/CH03 at minimum; ADR-0001…0005 adopted, more as needed).
+- **Upstream**: BMAD v6 produces PRD + Architecture (arc42 overlays; CH01/CH03 at minimum; ADR-0001…0005 adopted, more as needed).
 - **Planning**: Taskmaster converts **PRD → Tasks** with back-links to ADR/CH/Overlay.
-- **Implementation & Quality**: Codex Cli is primary; **SuperClaude** automates commits/changelogs/reviews; **Serena** handles symbol-level refactors and cross-file test-driven edits.
-- **Acceptance**: Official **Subagents** perform checklists/reviews; **Zen MCP** augments analysis with multi‑model reasoning.
 
 ## Project Background
 
@@ -35,7 +35,7 @@ This is a **production-ready Godot 4.5.1 project template** designed for rapid g
 ### Template Purpose
 - **Quick Start**: Clone and start building immediately without setup overhead
 - **Best Practices**: Pre-configured tech stack following Godot and C# conventions
-- **AI-Friendly**: Optimized for AI-assisted development workflows (BMAD, SuperClaude, Claude Code CLI)
+- **AI-Friendly**: Optimized for AI-assisted development workflows (BMAD, SuperClaude, Claude Code CLI,Codex.CLI)
 - **Quality Gates**: Built-in static analysis and error tracking infrastructure
 - **Scalable Architecture**: Modular scene system supporting complex game logic
 
@@ -133,7 +133,7 @@ docs/
 
 ### 违例处理
 
-- 缺失 `ADRs`、复制阈值进 08 章、Base 出现 PRD-ID、遗漏 `Test-Refs` 等：Claude/BMAD 应**拒绝写入**并返回“拒绝原因 + 自动修复建议 + 需要引用/新增的 ADR 清单”。
+- 缺失 `ADRs`、复制阈值进 08 章、Base 出现 PRD-ID、遗漏 `Test-Refs` 等：Codex/BMAD 应**拒绝写入**并返回“拒绝原因 + 自动修复建议 + 需要引用/新增的 ADR 清单”。
 - 需要新增 ADR 时，自动生成 `docs/adr/ADR-xxxx-<slug>.md` 的 _Proposed_ 草案并提示审阅。
 
 > **备注**：本 Rulebook 与项目中的脚本/模板、Base/Overlay 结构**强关联**。请保持这些文件存在且更新：  
@@ -203,7 +203,7 @@ This template comes pre-configured with the following technology stack:
 1. **凡会落地为代码/测试的改动，必须引用 ≥ 1 条 _Accepted_ ADR。**  
    若改动改变阈值/契约/安全口径：**新增 ADR** 或 **以 `Superseded(ADR-xxxx)` 替代旧 ADR**。
 
-- Local sessions: prefer `claude --add-dir shards` to reference `@shards/*` paths directly.
+- Local sessions: prefer `codex --add-dir shards` to reference `@shards/*` paths directly.
 
 2. **08 章（功能纵切）只放在 overlays**：
    - base 仅保留 `08-功能纵切-template.md` 模板与写作约束；**禁止**在 base 写任何具体模块内容。
@@ -211,52 +211,6 @@ This template comes pre-configured with the following technology stack:
      `\${DOMAIN_PREFIX}.<entity>.<action>`；接口/DTO 统一落盘到 `src/shared/contracts/**`。
 3. Use **only**: `@architecture_base.index`, `@prd_chunks.index`, `@shards/flattened-prd.xml`, `@shards/flattened-adr.xml` for overlay‑related work. Do **not** rescan `docs/` or rebuild flattened XML.
 4. Overlays: write to `docs/architecture/overlays/<PRD-ID>/08/`. 08章只写**功能纵切**（实体/事件/SLI/门禁/验收/测试占位）；跨切面规则仍在 Base/ADR。
-
----
-
-## 2 Tool Roles & Allowed Usage
-
-### 2.1 Claude Code (primary)
-
-- Use project **slash commands** in `.claude/commands/**` when available (`/architect`, `/taskmaster`, etc.).
-- Keep edits minimal, test-driven, and tied to ADR/CH.
-- Never broad‑read entire repo; always cite exact files with `@path`.
-
-### 2.2 Taskmaster — PRD → Tasks
-
-- Input: single‑file PRD at `.taskmaster/docs/prd.txt` (merged from `docs/prd_chunks/*`, FM removed).
-- Generate initial tasks: `npx task-master parse-prd .taskmaster/docs/prd.txt -n 30` (tune `-n`).
-- Persist to `tasks/tasks.json` with required fields:
-  - `adrRefs: ["ADR-0002", …]` (≥1), `archRefs: ["CH01","CH03", …]` (≥1), optional `overlay: "docs/architecture/overlays/<PRD-ID>/08/..."`.
-- Run Python task/ADR links validator（e.g. `py -3 scripts/python/validate_task_links.py`）to enforce ADR/CH back‑links & file existence（工具：Python JSONSchema）。Failing PRs cannot merge.
-
-### 2.3 SuperClaude — Git automation
-
-- Use for: **commit messages**, **changelogs**, **automated code reviews**.
-- Commands (examples; adapt to local scripts):
-  - `superclaude commit` → generate conventional commit w/ ADR/CH refs.
-  - `superclaude changelog` → update `CHANGELOG.md` from history.
-  - `superclaude review --staged` → summarize diffs + risks; produce review notes.
-- Guardrails: never auto‑commit failing builds; never bypass hooks (`--no-verify` forbidden).
-
-### 2.4 Serena — symbol‑level refactors & TDD edits
-
-- Use when you need **semantic (LSP‑aware)** changes: cross‑file rename, API migration, test‑driven fixes in large repos.
-- Typical prompts:
-  - “Rename `GuildService` → `GuildManagerService` across repo, update imports/usages/tests; keep changes atomic.”
-  - “Change interface contract `GuildId` → `GuildUID` and update affected DTOs + TS types; regenerate failing tests.”
-- Guardrails: propose a diff; run unit/E2E locally; large refactors go through PR with full review & CI.
-
-### 2.5 Official Subagents — acceptance & audits
-
-- Use to run **acceptance checklists** and doc‑out final overlays:  
-  _“Use the acceptance subagent to verify Overlay CH01/CH03/SLOs, security baseline, and CloudEvents builder; report failures with file+line links.”_
-- Subagents run with a **separate context**; keep them **read‑mostly** unless an edit is explicitly approved.
-
-### 2.6 Zen MCP — multi‑model validation
-
-- Use for: cross‑model code analysis, property‑based test suggestions, tricky bug triage, standards checks.
-- Keep it **stateless** for safety; paste back results as comments or PR reviews. Do not grant destructive tools by default.
 
 ---
 
