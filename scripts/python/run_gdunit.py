@@ -15,6 +15,7 @@ import os
 import shutil
 import subprocess
 import json
+import time
 
 
 def run_cmd(args, cwd=None, timeout=600_000):
@@ -100,27 +101,44 @@ def main():
     if args.prewarm:
         pre_cmd = [args.godot_bin, '--headless', '--path', proj, '--build-solutions', '--quit']
         _rcp, _outp = run_cmd(pre_cmd, cwd=proj, timeout=300_000)
+        prewarm_attempts = 1
         prewarm_rc = _rcp
+        # Write first attempt
         write_text(os.path.join(out_dir, 'prewarm-godot.txt'), _outp)
         if _rcp != 0:
-            # Fallback to dotnet build to avoid editor plugin failures
-            dotnet_projects = []
-            tests_csproj = os.path.join(proj, 'Tests.Godot.csproj')
-            if os.path.isfile(tests_csproj):
-                dotnet_projects.append(tests_csproj)
-            # Also try solution at repo root if present
-            sln = os.path.join(root, 'GodotGame.sln')
-            # Prefer project build; if solution exists, add as secondary
-            build_logs = []
-            for item in (dotnet_projects or [sln] if os.path.isfile(sln) else []):
-                rc_b, out_b = run_cmd(['dotnet', 'build', item, '-c', 'Debug', '-v', 'minimal'], cwd=root, timeout=600_000)
-                build_logs.append((item, rc_b, out_b))
-            # Persist build logs
-            agg = []
-            for item, rc_b, out_b in build_logs:
-                agg.append(f'=== {item} rc={rc_b} ===\n{out_b}\n')
-            write_text(os.path.join(out_dir, 'prewarm-dotnet.txt'), '\n'.join(agg) if agg else 'NO_DOTNET_BUILD_TARGETS')
-            prewarm_note = 'fallback-dotnet'
+            # Wait and retry once to mitigate transient C# load issues
+            time.sleep(3)
+            _rcp2, _outp2 = run_cmd(pre_cmd, cwd=proj, timeout=360_000)
+            prewarm_attempts = 2
+            prewarm_rc = _rcp2
+            # Append retry log to same file
+            try:
+                with open(os.path.join(out_dir, 'prewarm-godot.txt'), 'a', encoding='utf-8') as f:
+                    f.write("\n=== retry rc=%d ===\n" % _rcp2)
+                    f.write(_outp2)
+            except Exception:
+                pass
+            if _rcp2 == 0:
+                prewarm_note = 'retry-ok'
+            else:
+                # Fallback to dotnet build to avoid editor plugin failures
+                dotnet_projects = []
+                tests_csproj = os.path.join(proj, 'Tests.Godot.csproj')
+                if os.path.isfile(tests_csproj):
+                    dotnet_projects.append(tests_csproj)
+                # Also try solution at repo root if present
+                sln = os.path.join(root, 'GodotGame.sln')
+                # Prefer project build; if solution exists, add as secondary
+                build_logs = []
+                for item in (dotnet_projects or [sln] if os.path.isfile(sln) else []):
+                    rc_b, out_b = run_cmd(['dotnet', 'build', item, '-c', 'Debug', '-v', 'minimal'], cwd=root, timeout=600_000)
+                    build_logs.append((item, rc_b, out_b))
+                # Persist build logs
+                agg = []
+                for item, rc_b, out_b in build_logs:
+                    agg.append(f'=== {item} rc={rc_b} ===\n{out_b}\n')
+                write_text(os.path.join(out_dir, 'prewarm-dotnet.txt'), '\n'.join(agg) if agg else 'NO_DOTNET_BUILD_TARGETS')
+                prewarm_note = 'fallback-dotnet'
 
     # Run tests（带 Debugger Break fail-fast）
     # Build command with optional -a filters
@@ -166,6 +184,10 @@ def main():
         summary['prewarm_rc'] = prewarm_rc
         if prewarm_note:
             summary['prewarm_note'] = prewarm_note
+        try:
+            summary['prewarm_attempts'] = prewarm_attempts
+        except NameError:
+            pass
     try:
         with open(os.path.join(dest, 'run-summary.json'), 'w', encoding='utf-8') as f:
             json.dump(summary, f, ensure_ascii=False)
