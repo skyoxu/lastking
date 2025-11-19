@@ -16,7 +16,7 @@ public class SqlInventoryRepository : IInventoryRepository
 
     public SqlInventoryRepository(ISqlDatabase db) => _db = db;
 
-    public async Task<InventoryItem> AddAsync(string itemId, int qty)
+    public Task<InventoryItem> AddAsync(string itemId, int qty)
     {
         EnsureMigratedFromSnapshot();
         var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
@@ -26,7 +26,7 @@ public class SqlInventoryRepository : IInventoryRepository
         _db.Execute("INSERT INTO inventory_items(user_id,item_id,qty,updated_at) VALUES(@0,@1,@2,@3) " +
                     "ON CONFLICT(user_id,item_id) DO UPDATE SET qty=@2, updated_at=@3;",
             UserId, itemId, next, now);
-        return new InventoryItem(itemId, next);
+        return Task.FromResult(new InventoryItem(itemId, next));
     }
 
     public Task<InventoryItem?> GetAsync(string itemId)

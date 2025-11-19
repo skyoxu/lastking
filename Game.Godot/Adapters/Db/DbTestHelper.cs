@@ -106,4 +106,36 @@ public partial class DbTestHelper : Node
         }
         return 0;
     }
+
+    // Helpers to execute SQL against specific test DB nodes created under /root
+    public void ExecOnNode(string nodeName, string sql)
+    {
+        var db = GetNodeOrNull<SqliteDataStore>("/root/" + nodeName);
+        if (db == null) throw new InvalidOperationException($"SqliteDataStore not found at /root/{nodeName}");
+        db.Execute(sql);
+    }
+
+    public void ExecOnNode2(string nodeName, string sql, object p0, object p1)
+    {
+        var db = GetNodeOrNull<SqliteDataStore>("/root/" + nodeName);
+        if (db == null) throw new InvalidOperationException($"SqliteDataStore not found at /root/{nodeName}");
+        db.Execute(sql, p0, p1);
+    }
+
+    public int QueryOnNode2(string nodeName, string sql, global::Godot.Variant p0)
+    {
+        var db = GetNodeOrNull<SqliteDataStore>("/root/" + nodeName);
+        if (db == null) throw new InvalidOperationException($"SqliteDataStore not found at /root/{nodeName}");
+
+        var key = (string)p0;
+        var rows = db.Query(sql, key);
+        if (rows.Count == 0) return 0;
+        var row = rows[0];
+        foreach (var kv in row)
+        {
+            if (kv.Value == null) continue;
+            try { return Convert.ToInt32(kv.Value); } catch { }
+        }
+        return 0;
+    }
 }

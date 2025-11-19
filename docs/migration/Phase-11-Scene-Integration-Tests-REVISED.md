@@ -22,7 +22,31 @@
 | **依赖管理** | 零外部依赖 | 需手动 clone |
 | **性能** | 轻量快速 | 较重 |
 
-**结论**: 采用 GdUnit4 作为场景级测试主力，xUnit 负责 Game.Core 领域逻辑
+**结论**: 采用 GdUnit4 作为场景级测试主力，xUnit 负责 Game.Core 领域逻辑。
+
+### Godot+C# 变体（Tests.Godot + GdUnit4 6.x）
+
+- 场景/适配层测试项目：`Tests.Godot`（独立 Godot 项目，包含 GdUnit4 插件）。
+
+#### 测试分类与代表用例
+
+| 集合 | 目录 | 说明 | 代表性用例 |
+|------|------|------|------------|
+| Adapters | `tests/Adapters/**` | Db、Config、FeatureFlags 等适配层行为与跨重启语义 | `tests/Adapters/test_data_store_adapter.gd` |
+| Security | `tests/Security/**` | DB/Settings 路径安全与审计 | `tests/Security/test_db_audit_log.gd` |
+| Integration | `tests/Integration/**` | ScreenNavigator、HUD、Settings 事件链与信号连通 | `tests/Integration/test_screen_navigation_flow.gd`、`tests/Integration/test_settings_event_integration.gd` |
+| UI/Glue | `tests/UI/**` | MainMenu/HUD/SettingsPanel 等 UI/Glue 行为 | `tests/UI/test_main_menu_settings_button.gd`、`tests/UI/test_hud_updates_on_events.gd` |
+
+#### 运行方式
+
+- 本地与 CI 均通过 Python 脚本 `scripts/python/run_gdunit.py` 驱动 Godot Headless：
+  - 示例：`py -3 -E -X utf8 scripts/python/run_gdunit.py --prewarm --godot-bin "C:\\Godot\\Godot_v4.5.1-stable_mono_win64_console.exe" --project Tests.Godot --add tests/Adapters --add tests/Security --timeout-sec 600 --rd "logs/e2e/<date>/gdunit-reports"`。
+  - GdUnit4 插件在 `Tests.Godot/addons/gdUnit4` 下 vendored，由 `scripts/python/ensure_gdunit_plugin.py` 在 CI 中兜底校验。
+
+#### CI 集成
+
+- Windows CI（硬门禁）：在 `.github/workflows/ci-windows.yml` 中调用 `ci_pipeline.py` 跑 xUnit + Adapters/Security 小集；
+- Windows Quality Gate（软门禁）：在 `.github/workflows/windows-quality-gate.yml` 中跑 Integration/UI/Db/A11y 小集，并上传 GdUnit4 报告。
 
 ### 11.1.2 双轨测试架构
 
@@ -46,7 +70,12 @@
 
 ### 11.2.1 安装 GdUnit4
 
-**Python 安装脚本（推荐）** (`scripts/install_gut.py`):
+> 说明：当前仓库已在 `Tests.Godot/addons/gdUnit4` 中直接包含 GdUnit4 插件，并通过
+> `scripts/python/ensure_gdunit_plugin.py` 在 CI 中做兜底校验。下面的安装脚本与 Gut 相关
+> 配置保留为历史示例，用于说明如何在其他项目中从零集成测试框架；本项目实际运行
+> 时优先使用 Tests.Godot 现有结构与 Python runner。
+
+**Python 安装脚本（历史示例）** (`scripts/install_gut.py`):
 
 ```python
 import sys
@@ -368,7 +397,25 @@ exit $testExitCode
 
 ## 11.9 CI 集成工作流
 
-**GitHub Actions** (`.github/workflows/scene-integration-tests.yml`):
+### 11.9.1 当前 Windows CI 工作流（Godot+C# 变体）
+
+- **Windows CI（硬门禁）**：`.github/workflows/ci-windows.yml`
+  - 使用 `scripts/python/ci_pipeline.py` 跑：
+    - Game.Core xUnit 单元测试（含 coverlet 覆盖率）；
+    - Tests.Godot 中的 Adapters/Security GdUnit4 小集（通过 `run_gdunit.py`）；
+    - 编码扫描等基础门禁。
+- **Windows Quality Gate（软门禁）**：`.github/workflows/windows-quality-gate.yml`
+  - 同样通过 `ci_pipeline.py`/`run_gdunit.py` 跑 Integration/UI/Db/A11y 集成测试，
+    并将 GdUnit4 报告上传到 `logs/e2e/<run_id>/gdunit-reports/**` 作为工件。
+- 以上工作流均为 Windows-only，使用 Python 而不是 PowerShell 脚本作为统一入口。
+
+### 11.9.2 示例工作流（历史方案）
+
+> 下列基于 `scene-integration-tests.yml`、`run-gut-tests.ps1`/`run-xunit-tests.ps1` 的配置
+> 保留为概念示例，用于说明如何在其他项目中组合 xUnit + GdUnit4。当前仓库实际使用的
+> 是上文所述的 `ci-windows.yml` 与 `windows-quality-gate.yml`。
+
+**GitHub Actions（示意）** (`.github/workflows/scene-integration-tests.yml`):
 
 ```yaml
 name: Scene Integration Tests (GdUnit4 + xUnit)

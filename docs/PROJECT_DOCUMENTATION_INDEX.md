@@ -35,13 +35,14 @@
 - [ADR-0001-tech-stack.md](adr/ADR-0001-tech-stack.md) — 技术栈选型（React 19 / Electron / Phaser 3 / TS / Vite）
 - [ADR-0002-electron-security.md](adr/ADR-0002-electron-security.md) — Electron 安全基线（CSP、nodeIntegration=false、contextIsolation=true）
 - [ADR-0003-observability-release-health.md](adr/ADR-0003-observability-release-health.md) — 可观测性与发布健康（Sentry 集成，崩溃率阈值 99.5%）
-- [ADR-0004-event-bus-and-contracts.md](adr/ADR-0004-event-bus-and-contracts.md) — 事件总线与契约（CloudEvents 1.0，4 段式模板）
+- [ADR-0004-event-bus-and-contracts.md](adr/ADR-0004-event-bus-and-contracts.md) — 事件总线与契约（CloudEvents 1.0，4 段式模板 + Godot 事件命名/适配变体）
 - [ADR-0005-quality-gates.md](adr/ADR-0005-quality-gates.md) — 质量门禁（覆盖率、ESLint、性能、Bundle 大小）
-- [ADR-0006-data-storage.md](adr/ADR-0006-data-storage.md) — 数据存储（SQLite）
+- [ADR-0006-data-storage.md](adr/ADR-0006-data-storage.md) — 数据存储（Godot 变体：SQLite + ConfigFile，路径与事务口径）
 - [ADR-0007-ports-adapters.md](adr/ADR-0007-ports-adapters.md) — 端口适配器模式
 - [ADR-0008-deployment-release.md](adr/ADR-0008-deployment-release.md) — 部署与发布
 - [ADR-0009-cross-platform.md](adr/ADR-0009-cross-platform.md) — 跨平台
 - [ADR-0010-internationalization.md](adr/ADR-0010-internationalization.md) — 国际化
+- [ADR-0023-settings-ssot-configfile.md](adr/ADR-0023-settings-ssot-configfile.md) — Settings 单一事实来源：ConfigFile（user://settings.cfg），与 Godot 数据存储口径收敛
 
 ### 平台与质量约束（ADR-0011 ~ 0017）
 - [ADR-0011-windows-only-platform-and-ci.md](adr/ADR-0011-windows-only-platform-and-ci.md) — Windows 平台策略
@@ -64,8 +65,8 @@
 2. [02-security-baseline-electron-v2.md](architecture/base/02-security-baseline-electron-v2.md) — Electron 安全基线（引: ADR-0002）
 3. [03-observability-sentry-logging-v2.md](architecture/base/03-observability-sentry-logging-v2.md) — Sentry、结构化日志、Release Health（引: ADR-0003）
 4. [04-system-context-c4-event-flows-v2.md](architecture/base/04-system-context-c4-event-flows-v2.md) — C4 上下文、事件流、CloudEvents（引: ADR-0004）
-5. [05-data-models-and-storage-ports-v2.md](architecture/base/05-data-models-and-storage-ports-v2.md) — 数据模型、SQLite、端口适配（引: ADR-0006/0007）
-6. [06-runtime-view-loops-state-machines-error-paths-v2.md](architecture/base/06-runtime-view-loops-state-machines-error-paths-v2.md) — 运行时视图（循环/状态机/错误路径）
+5. [05-data-models-and-storage-ports-v2.md](architecture/base/05-data-models-and-storage-ports-v2.md) — 数据模型与存储端口（Godot+C#：ConfigFile + SQLite，见 ADR-0006/0007/0023）
+6. [06-runtime-view-loops-state-machines-error-paths-v2.md](architecture/base/06-runtime-view-loops-state-machines-error-paths-v2.md) — 运行时视图（Godot 场景/Autoload/事件总线/错误路径，含 Settings ConfigFile 流程）
 7. [07-dev-build-and-gates-v2.md](architecture/base/07-dev-build-and-gates-v2.md) — 构建、CI/CD、质量门禁（引: ADR-0005）
 8. [08-crosscutting-and-feature-slices.base.md](architecture/base/08-crosscutting-and-feature-slices.base.md) — 仅模板（功能纵切在 overlays）
 9. [09-performance-and-capacity-v2.md](architecture/base/09-performance-and-capacity-v2.md) — 性能基准、容量、回归阈值（引: ADR-0015）

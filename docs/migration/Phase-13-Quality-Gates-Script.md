@@ -33,7 +33,7 @@
 
 ## 2. 质量门禁定义
 
-### 2.1 10 项强制门禁
+### 2.1 10 项强制门禁（蓝图目标）
 
 | # | 门禁名称 | 度量标准 | 阈值 | 工具 | ADR |
 |---|---------|--------|------|------|-----|
@@ -49,6 +49,49 @@
 | 10 | 审计日志格式 | JSONL Valid | 100% | custom validator | ADR-0003 |
 
 *Godot 目标帧率 60fps → 每帧 16.67ms；P95 应在此以下确保绝大多数帧流畅
+
+---
+
+### 2.2 Godot+C# 变体（当前模板实现）
+
+> 本节描述的是 **当前 godotgame 模板已经落地的质量门禁实现**，用于对齐脚本/CI 的真实行为。上面的 10 项门禁表视为长期蓝图，尚未全部在本仓库中实现，对应增强统一收敛到 Phase-13 Backlog。
+
+- 统一入口（Python）：
+  - `scripts/python/quality_gates.py` 提供单一入口：
+    - `py -3 scripts/python/quality_gates.py all --solution Game.sln --configuration Debug --godot-bin "C:\Godot\Godot_v4.5.1-stable_mono_win64_console.exe" --build-solutions`
+  - 内部委托给 `scripts/python/ci_pipeline.py all` 执行当前已实现的门禁。
+
+- 当前已实现的门禁集合：
+  1. **dotnet 测试 + 覆盖率（硬门禁：测试通过；软门禁：覆盖率阈值）**
+     - 脚本：`scripts/python/run_dotnet.py`，由 `ci_pipeline.py` 调用。
+     - 行/分支覆盖率阈值：在 run_dotnet.py 中配置为软门禁（当前模板为较低阈值，方便扩展），不直接阻断构建。
+     - 测试失败视为硬失败，quality_gates 退出码为 1。
+  2. **Godot 自检（硬门禁）**
+     - 脚本：`scripts/python/godot_selfcheck.py`：
+       - `fix-autoload`：确保 CompositionRoot/Autoload 装配一致；
+       - `run`：以 headless 方式启动 Godot，验证六大端口（ITime/IInput/IResourceLoader/IDataStore/ILogger/IEventBus）。
+     - 由 `ci_pipeline.py` 调用，并将 SELF_CHECK 日志/摘要写入 `logs/e2e/<date>/` 与 `logs/ci/<date>/`。
+     - 自检失败视为硬失败，quality_gates 退出码为 1。
+  3. **编码扫描（软门禁）**
+     - 脚本：`scripts/python/check_encoding.py`。
+     - 作用：扫描本次改动的文件是否存在非 UTF-8 或可疑编码问题，结果写入 `logs/ci/<date>/encoding/`。
+     - 编码异常目前作为软门禁：仅在 CI 日志中标黄提醒，不直接阻断构建（可在后续 Phase 提升为硬门禁）。
+
+- CI 工作流对接：
+  - `.github/workflows/ci-windows.yml`
+    - 使用 PowerShell 封装脚本 `scripts/ci/quality_gate.ps1` 作为主入口；
+    - `quality_gate.ps1` 的第一个步骤调用：
+      - `py -3 scripts/python/quality_gates.py all --godot-bin $env:GODOT_BIN --solution Game.sln --configuration Debug --build-solutions`
+    - 若质量门禁硬失败则整个 Job 失败；可选步骤（Export/EXE smoke/Perf budget）目前仅在特定分支启用。
+  - `.github/workflows/windows-quality-gate.yml`
+    - 重用相同的 Python 入口，面向“质量门禁聚合 + 报告上传”场景；
+    - 额外聚合 GdUnit4 报告、DB/安全测试日志，作为软门禁信息来源。
+
+- 尚未在当前模板落地的蓝图门禁（示例）：
+  - 代码重复率（jscpd）、圈复杂度（SonarQube 或替代工具）、NetArchTest 架构测试；
+  - 性能 P95 硬门禁、审计 JSONL 结构化验证；
+  - GdUnit4 全集/Perf/Smoke 统一进入 quality_gates.py 的参数化入口。
+  - 这些增强项统一记录在 `docs/migration/Phase-13-Quality-Gates-Backlog.md`，作为后续项目/迭代的可选任务，不计入当前模板 DoD。
 
 ---
 

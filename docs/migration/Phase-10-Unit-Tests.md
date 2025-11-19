@@ -27,6 +27,25 @@
 | 运行器 | jest CLI | dotnet test |
 | CI 集成 | npm test | dotnet test --logger trx |
 
+### Godot+C# 变体（Game.Core + xUnit）
+
+- 测试项目：`Game.Core.Tests`（纯 C#，不依赖 Godot 引擎）。
+- 框架与工具：xUnit 2.x + FluentAssertions，采用 AAA 模式；需要参数化时使用 `[Theory]` + `[InlineData]`。
+- 代表性样板用例：
+  - `Domain/ValueObjects/DamageTests.cs`：验证 Damage 值对象的裁剪与 Critical 标志（EffectiveAmount 不为负）。
+  - `Engine/GameEngineCoreEventTests.cs`：通过 fake `IEventBus` 捕获 `DomainEvent`，验证事件 Type/Source/Data（如 `game.started`、`score.changed`）。
+- CI 集成（Windows）：
+  - 通过 `scripts/python/run_dotnet.py` / `scripts/python/ci_pipeline.py` 调用 `dotnet test` 并收集 coverlet 覆盖率；
+  - 覆盖率与测试结果落盘至 `logs/unit/<YYYY-MM-DD>/`，具体阈值与门禁见 `docs/testing-framework.md`。
+
+### Test-Refs（当前模板样板用例）
+
+- `Game.Core.Tests/Domain/ValueObjects/DamageTests.cs`
+- `Game.Core.Tests/Engine/GameEngineCoreEventTests.cs`
+- `Game.Core.Tests/Config/GameConfigTests.cs`（如存在）
+
+覆盖率与测试结果统一输出到 `logs/unit/<YYYY-MM-DD>/summary.json`，作为 Phase 10 与 Phase 13 质量门禁脚本的单一入口数据源。
+
 ---
 
 ## Jest 测试结构回顾

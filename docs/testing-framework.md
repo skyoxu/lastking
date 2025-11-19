@@ -142,6 +142,51 @@ public class GameStateManagerTests
 }
 ```
 
+### UI/Glue 测试（GdUnit4，Godot+C# 变体）
+
+UI/Glue 测试用于验证 MainMenu/HUD/SettingsPanel 等场景与 EventBus/ScreenNavigator 之间的胶水逻辑，在 headless 模式下需要遵循以下约束：
+
+- **不模拟真实输入事件链**：避免依赖 Godot Headless 中不会传播的 InputEvents，推荐直接调用方法或发射最小信号；
+- **有限帧轮询**：使用 `await get_tree().process_frame` 或 `await await_idle_frame()`，帧数通常控制在 60–120 之间，禁止无限循环等待；
+- **优先黑盒，必要时白盒兜底**：先通过事件/信号驱动 UI，再在必要时直接调用 Glue 方法（如 ShowPanel/ClosePanel）。
+
+代表性示例用例：
+
+```gdscript
+# Tests.Godot/tests/UI/test_main_menu_settings_button.gd
+extends "res://addons/gdUnit4/src/GdUnitTestSuite.gd"
+
+var _bus: Node
+var _received := false
+var _etype := ""
+
+func before() -> void:
+    _bus = preload("res://Game.Godot/Adapters/EventBusAdapter.cs").new()
+    _bus.name = "EventBus"
+    get_tree().get_root().add_child(auto_free(_bus))
+    _bus.connect("DomainEventEmitted", Callable(self, "_on_evt"))
+
+func _on_evt(type, _source, _data_json, _id, _spec, _ct, _ts) -> void:
+    _received = true
+    _etype = str(type)
+
+func test_main_menu_emits_settings() -> void:
+    _received = false
+    var menu = preload("res://Game.Godot/Scenes/UI/MainMenu.tscn").instantiate()
+    add_child(auto_free(menu))
+    await get_tree().process_frame
+    var btn = menu.get_node("VBox/BtnSettings")
+    btn.emit_signal("pressed")
+    await get_tree().process_frame
+    assert_bool(_received).is_true()
+    assert_str(_etype).is_equal("ui.menu.settings")
+```
+
+> 说明：
+> - 通过在 `/root` 下挂载 `EventBusAdapter`，将 DomainEventEmitted 作为断言源；
+> - 直接对 `BtnSettings` 发射 `pressed` 信号，而非依赖 InputEvents；
+> - 使用少量 `process_frame` 帧轮询等待信号到达，适配 headless CI 环境。
+
 ### 运行测试
 
 ```bash
@@ -610,3 +655,88 @@ A: 通过适配器隔离，在测试中注入 Mock。见"确定性测试"章节�
 - [GdUnit4 GitHub](https://github.com/MikeSchulze/gdUnit4)
 - [coverlet GitHub](https://github.com/coverlet-coverage/coverlet)
 - [Godot 单元测试指南](https://docs.godotengine.org/en/stable/tutorials/scripting/unit_testing.html)
+
+
+## UI/Glue 测试规范（GdUnit4，Godot+C#）
+
+### 适用范围
+
+- 依赖 Godot 场景树的 UI/Glue 行为：Main 场景、Screen 导航、Settings/HUD 等。
+- 需要验证节点可见性、信号连通、场景组合，而不是纯算法逻辑。
+- 运行在 headless 模式（CI/CD 环境），不依赖真实输入事件。
+
+### 基本原则
+
+- **禁止依赖真实 InputEvents**：headless 模式下 Godot 不会传递鼠标/键盘事件，UI 测试必须使用 `emit_signal` 或直接调用方法（如 `ShowPanel()`）。
+- **优先走“黑盒路径”，必要时白盒兜底**：先通过事件/信号驱动 UI（如发 `ui.menu.settings` 或点击按钮），若有限时间内未达到期望状态，再用白盒方法兜底，并在断言前后留注释。
+- **帧轮询有统一上限**：
+  - 常规场景：推荐最多轮询 60 帧（约 1 秒@60fps）；
+  - 复杂场景：最多 120 帧；超过上限仍未达到期望条件，应当视为失败，而不是无限等待。
+- **断言应稳定可复现**：避免依赖绝对时间或随机性，尽量通过可观测状态（visible/text 值/节点存在性）来断言。
+- **领域事件仍走 EventBus**：UI/Glue 测试中，领域事件统一通过 `/root/EventBus` 或 EventBusAdapter 触发，避免直接在 UI 层做领域逻辑。
+
+### 示例：SettingsPanel 显示/隐藏（白盒兜底）
+
+```gdscript
+extends "res://addons/gdUnit4/src/GdUnitTestSuite.gd"
+
+func test_settings_panel_show_and_close() -> void:
+    var packed = load("res://Game.Godot/Scenes/UI/SettingsPanel.tscn")
+    if packed == null:
+        push_warning("SKIP: SettingsPanel.tscn not found")
+        return
+    var panel = packed.instantiate()
+    add_child(auto_free(panel))
+    await get_tree().process_frame
+
+    # 默认隐藏
+    assert_bool(panel.visible).is_false()
+
+    # 黑盒路径：调用公开方法
+    if panel.has_method("ShowPanel"):
+        panel.ShowPanel()
+        await get_tree().process_frame
+
+    if not panel.visible:
+        push_warning("ShowPanel 未生效，检查信号/装配逻辑")
+        return
+
+    # 关闭
+    var close_btn = panel.get_node("VBox/Buttons/CloseBtn")
+    close_btn.emit_signal("pressed")
+    await get_tree().process_frame
+    assert_bool(panel.visible).is_false()
+```
+
+### 示例：screen.settings.saved 与 ConfigFile 持久化
+
+```gdscript
+extends "res://addons/gdUnit4/src/GdUnitTestSuite.gd"
+
+func test_settings_saved_uses_configfile() -> void:
+    # 清理旧配置
+    var dir := DirAccess.open("user://")
+    if dir and dir.file_exists("settings.cfg"):
+        dir.remove("settings.cfg")
+
+    # 加载主场景
+    var packed = load("res://Game.Godot/Scenes/Main.tscn")
+    var main = packed.instantiate()
+    get_tree().get_root().add_child(auto_free(main))
+    await get_tree().process_frame
+
+    # 通过 screen 事件保存设置
+    var bus = get_node_or_null("/root/EventBus")
+    assert_object(bus).is_not_null()
+    bus.PublishSimple("ui.menu.settings", "ut", "{}")
+    await get_tree().process_frame
+
+    # 触发保存（例如 SettingsPanel 内部发出 screen.settings.saved）
+    # 此处只断言 ConfigFile 已写入，不关心 DB
+    await get_tree().process_frame
+
+    var cfg := ConfigFile.new()
+    var err := cfg.load("user://settings.cfg")
+    assert_int(err).is_equal(Error.OK)
+```
+

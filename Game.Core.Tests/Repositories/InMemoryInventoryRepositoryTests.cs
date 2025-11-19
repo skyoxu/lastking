@@ -1,5 +1,6 @@
 using System.Linq;
 using System.Threading.Tasks;
+using FluentAssertions;
 using Game.Core.Repositories;
 using Xunit;
 
@@ -21,6 +22,6 @@ public class InMemoryInventoryRepositoryTests
         Assert.Equal(5, one!.Qty);
 
         var all = await repo.AllAsync();
-        Assert.True(all.Any(x => x.ItemId == "iron" && x.Qty == 5));
+        all.Should().ContainSingle(x => x.ItemId == "iron" && x.Qty == 5);
     }
 }

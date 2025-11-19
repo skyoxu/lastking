@@ -45,6 +45,26 @@ supersedes: []
 - 校验：`validateEventNaming` 先将 `${DOMAIN_PREFIX}` 归一化为占位值后再执行命名正则校验。
 - Overlay/实现层绑定具体域前缀，避免口径漂移。
 
+## Godot 变体（Game.Godot + EventBusAdapter）
+
+- 本仓库在 Godot+C# 模板中采用本 ADR 作为事件命名与契约的上位规范，结合以下规则在运行时落地：
+  - 事件命名前缀：
+    - `ui.menu.<action>`：UI 菜单与按钮命令（如 `ui.menu.start`、`ui.menu.settings`、`ui.menu.quit`）。
+    - `screen.<name>.<action>`：Screen 生命周期与关键操作（如 `screen.settings.opened`、`screen.settings.saved`）。
+    - `core.<entity>.<action>`：领域事件推荐口径（如 `core.game.started`、`core.score.updated`、`core.player.health.changed`）。
+    - `demo.<name>`：仅用于模板示例，实际业务不应新增 `demo.*` 事件。
+  - 历史事件名：
+    - 旧的 `game.started`、`score.changed` 等事件视为示例/兼容路径，仅在少量演示场景中保留；
+    - 新增或重构代码一律使用 `core.*.*` / `ui.menu.*` / `screen.*.*` 三类前缀之一。
+
+- Godot 侧实现：
+  - `Game.Core/Contracts/DomainEvent.cs` 定义 CloudEvents 风格的领域事件结构；
+  - `Game.Core/Services/EventBus.cs` 提供内存事件总线接口 `IEventBus`；
+  - `Game.Godot/Adapters/EventBusAdapter.cs` 作为 Autoload 适配层，将 `DomainEvent` 序列化并通过 `DomainEventEmitted` Signal 暴露给 GDScript。
+- 文档与测试对齐：
+  - 事件命名与桥接细节的迁移方案见 `docs/migration/Phase-9-Signal-System.md`；
+  - 代表性用例通过 xUnit（GameEngineCoreEventTests）与 GdUnit4（Adapters/Integration 小集）验证。
+
 ## Verification
 
 - 单元测试：事件必填字段校验、命名规则校验。

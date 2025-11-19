@@ -30,6 +30,7 @@ public class GameEngineCore
         _inventorySvc = new InventoryService(inventory);
         _bus = bus;
         _time = time;
+        _enemiesDefeated = 0;
 
         State = new GameState(
             Id: Guid.NewGuid().ToString("N"),
@@ -97,4 +98,3 @@ public class GameEngineCore
         _ = _bus?.PublishAsync(new DomainEvent(type, nameof(GameEngineCore), data, DateTime.UtcNow, Guid.NewGuid().ToString("N")));
     }
 }
-

@@ -17,9 +17,13 @@ func test_navigate_start_to_settings_and_back() -> void:
     assert_bool(ok).is_true()
     await get_tree().process_frame
     var root = main.get_node("ScreenRoot")
-    assert_object(root.get_child(0)).is_not_null()
+    var current = root.get_child(0)
+    assert_object(current).is_not_null()
+    assert_str(current.name).is_equal("SettingsScreen")
 
     ok = nav.SwitchTo("res://Game.Godot/Scenes/Screens/StartScreen.tscn")
     assert_bool(ok).is_true()
     await get_tree().process_frame
-    assert_object(root.get_child(0)).is_not_null()
+    current = root.get_child(0)
+    assert_object(current).is_not_null()
+    assert_str(current.name).is_equal("StartScreen")

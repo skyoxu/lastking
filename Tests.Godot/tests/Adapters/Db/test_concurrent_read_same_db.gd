@@ -17,14 +17,18 @@ func _new_db(name: String) -> Node:
         await get_tree().process_frame
     return db
 
+var _db_helper = null
+
 func _force_managed() -> void:
-    var helper = preload("res://Game.Godot/Adapters/Db/DbTestHelper.cs").new()
-    add_child(auto_free(helper))
-    helper.ForceManaged()
+    if _db_helper == null:
+        _db_helper = preload("res://Game.Godot/Adapters/Db/DbTestHelper.cs").new()
+        add_child(auto_free(_db_helper))
+        await get_tree().process_frame
+    _db_helper.ForceManaged()
 
 func test_concurrent_read_after_write_commit() -> void:
     var path = "user://utdb_%s/concurrent.db" % Time.get_unix_time_from_system()
-    _force_managed()
+    await _force_managed()
     var a = await _new_db("SqlDbA")
     var b = await _new_db("SqlDbB")
     if a == null or b == null:
@@ -32,9 +36,8 @@ func test_concurrent_read_after_write_commit() -> void:
         return
     assert_bool(a.TryOpen(path)).is_true()
     assert_bool(b.TryOpen(path)).is_true()
-    a.Execute("CREATE TABLE IF NOT EXISTS t(k TEXT PRIMARY KEY, v INTEGER);")
-    a.Execute("INSERT OR REPLACE INTO t(k,v) VALUES(@0,@1);", "key", 7)
+    _db_helper.ExecOnNode("SqlDbA", "CREATE TABLE IF NOT EXISTS t(k TEXT PRIMARY KEY, v INTEGER);")
+    _db_helper.ExecOnNode("SqlDbA", "INSERT OR REPLACE INTO t(k,v) VALUES('key',7);")
     await get_tree().process_frame
-    var rows = b.Query("SELECT v FROM t WHERE k=@0;", "key")
-    assert_int(rows.size()).is_equal(1)
-    assert_int(int(rows[0]["v"])) .is_equal(7)
+    var value = _db_helper.QueryOnNode2("SqlDbB", "SELECT v FROM t WHERE k=@0;", "key")
+    assert_int(value).is_equal(7)

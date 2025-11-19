@@ -54,11 +54,10 @@ func test_close_rename_and_reopen_succeeds() -> void:
     var abs_new = abs_old.get_base_dir().path_join("renamed.db")
     _try_rename_abs(abs_old, abs_new)
     assert_bool(FileAccess.file_exists(abs_new)).is_true()
-    var new_user = "user://" + abs_new.substr(abs_new.find_last("/") + 1)
-    # reopen by absolute user path resolution
+    var dir_user = path.get_base_dir()
+    var new_user = dir_user.path_join("renamed.db")
+    # reopen by new user:// path in same directory
     var db2 = await _new_db("SqlDb2")
     _force_managed()
-    # Reuse the same directory: convert abs_new back to user:// by stripping project dir if possible
-    # As a fallback, open by absolute path through GDScript -> managed path resolves absolute
-    var ok = db2.TryOpen(ProjectSettings.localize_path(abs_new))
+    var ok = db2.TryOpen(new_user)
     assert_bool(ok).is_true()

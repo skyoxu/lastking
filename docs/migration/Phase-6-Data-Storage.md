@@ -96,6 +96,8 @@ CREATE TABLE settings (
 );
 ```
 
+> 【Deprecated by ADR-0023】`settings` 表仅作为历史 schema 兼容保留。当前 Settings 的唯一 SSoT 为 ConfigFile（user://settings.cfg），DB 中该表不再作为设置的权威来源，迁移策略与实现见 ADR-0023 与 ADR-0006（Godot 变体）。
+
 ---
 
 ## IDataStore 实现（Phase 5 接口）

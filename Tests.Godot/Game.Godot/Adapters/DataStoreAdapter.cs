@@ -51,6 +51,6 @@ public partial class DataStoreAdapter : Node, IDataStore
 
     // Synchronous helpers for GDScript tests
     public void SaveSync(string key, string json) => SaveAsync(key, json).Wait();
-    public string LoadSync(string key) => LoadAsync(key).Result;
+    public string? LoadSync(string key) => LoadAsync(key).Result;
     public void DeleteSync(string key) => DeleteAsync(key).Wait();
 }

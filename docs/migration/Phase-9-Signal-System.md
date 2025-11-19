@@ -15,6 +15,87 @@
 
 ## 技术栈对比
 
+## 事件命名规范（Godot 变体）
+
+### 事件类别与命名规则
+
+* UI 菜单事件：`ui.menu.<action>`
+  - 示例：`ui.menu.start`、`ui.menu.settings`、`ui.menu.quit`
+  - 用途：从 MainMenu/Settings 等 UI 按钮发出命令型事件，由 Main.gd 或其他 Glue 逻辑消费。
+* Screen 事件：`screen.<name>.<action>`
+  - 示例：`screen.start.loaded`、`screen.settings.saved`
+  - 用途：描述 Screen 生命周期或关键操作（加载完成、保存成功等），通常由 Screen 自身发送，供上层 Glue/诊断使用。
+* 领域事件：`core.<entity>.<action>`（推荐）
+  - 示例：`core.score.updated`、`core.health.updated`、`core.game.started`
+  - 用途：表达领域层状态变化，通常由 Game.Core 服务通过 IEventBus 发布，再由 Godot 适配层转为 Signal。
+* Demo/示例事件：`demo.<name>`
+  - 示例：`demo.event`
+  - 用途：模板演示用事件，不建议在实际业务中使用 `demo.*` 命名。
+
+> 说明：现有模板中同时存在 `game.started` / `score.changed` 等旧命名以及 `core.score.updated` 等新命名。对于新项目，请优先使用 `core.*.*` 作为领域事件命名，旧命名保留为示例与兼容。
+> 规范：**新增或调整的事件命名必须使用 `core.*.*` / `ui.menu.*` / `screen.*.*` 三种前缀之一。旧的 `game.*` / `score.changed` 等事件仅作为历史示例和兼容保留，不再扩展。**
+
+### 旧规范事件（兼容层）
+
+当前仓库中仍保留少量早期事件命名，仅用于兼容和示例，不再作为推荐口径：
+
+| 事件类型 | 使用位置 | 建议 |
+| --- | --- | --- |
+| game.started | Game.Core.Tests/Engine/GameEngineCoreEventTests.cs:58 | 迁移目标：`core.game.started` |
+| score.changed | Game.Core.Tests/Engine/GameEngineCoreEventTests.cs:74 | 迁移目标：`core.score.updated` |
+| player.health.changed | Game.Core.Tests/Engine/GameEngineCoreEventTests.cs:90 | 迁移目标：`core.player.health.updated` |
+
+- 这些事件目前只出现在测试代码中，不影响运行时代码；
+- 新增业务事件一律使用 `core.*.*` / `ui.menu.*` / `screen.*.*` 三类前缀；
+- 将旧事件重命名为新规范事件的工作记录在 Phase-9 Backlog 中，不在本次 Phase 9 P0 范围内完成。
+
+### 最小字段与 CloudEvents 对齐
+
+- 最小字段集合：
+  - `type`：事件类型（遵循上面的命名规则）；
+  - `source`：事件来源（如 `GameEngineCore`、`MainMenu`）；
+  - `data`：与业务相关的 JSON 或对象；
+  - `time`：UTC 时间戳（ISO8601）；
+  - `id`：全局唯一标识（GUID）。
+- 在 C# 中由 `DomainEvent` 承载上述信息；
+- 在 Godot 中，由 `EventBusAdapter` 将 `DomainEvent` 序列化为 `DomainEventEmitted(type, source, dataJson, id, specVersion, dataContentType, timestampIso)` Signal。
+
+---
+
+## Godot EventBusAdapter 用法（Publish / Subscribe）
+
+### Publish 路径
+
+- 领域层（Game.Core）：
+  - 通过 IEventBus.PublishAsync(DomainEvent) 发送事件；
+  - 事件命名遵守 ADR‑0004 / 本 Phase 命名规范。
+- Godot 适配层（EventBusAdapter）：
+  - 实现 IEventBus 接口；
+  - 在 PublishAsync 中：
+    - 若 Data 为 string，则直接作为 JSON 使用（空字符串退化为 `{}`）；
+    - 否则使用 `System.Text.Json.JsonSerializer.Serialize(Data)` 序列化；
+    - EmitSignal `DomainEventEmitted`，供 GDScript 订阅。
+- GDScript/测试：
+  - 优先通过 `EventBusAdapter.PublishSimple(type, source, data_json)` 发送简单事件，避免在 GDScript 中构造 DomainEvent；
+  - 订阅 `/root/EventBus` 的 `DomainEventEmitted`，根据 `type` 和 `dataJson` 做 UI 更新或断言。
+
+### Subscribe 路径
+
+- C# 内部订阅：
+  - 通过 `IEventBus.Subscribe(Func<DomainEvent, Task> handler)` 订阅领域事件；
+  - 适用于需要统一收集日志、埋点或跨模块协调的场景。
+- GDScript 订阅：
+  - 在场景/节点中：
+    - `var bus = get_node_or_null("/root/EventBus")`
+    - `bus.connect("DomainEventEmitted", Callable(self, "_on_domain_event"))`
+  - 在 `_on_domain_event(type, source, data_json, id, spec, content_type, ts)` 中，按 `type` 做分支处理：
+    - 如 `core.score.updated` 更新 HUD 文本；
+    - 如 `ui.menu.start` 触发 ScreenNavigator 切换。
+
+---
+
+
+
 | 功能 | vitegame (CloudEvents) | godotgame (Godot Signals) |
 |-----|----------------------|--------------------------|
 | 事件定义 | TypeScript 接口 + CloudEvent<T> | C# [Signal] delegate |
@@ -1348,6 +1429,26 @@ jobs:
 ```
 
 ---
+
+## 实现与测试范围（当前模板）
+
+- 已覆盖：
+  - `GameEngineCore` 关键 DomainEvent 通过 xUnit 用例验证（见下方 Test-Refs）。
+  - Godot 侧 `EventBusAdapter` 已通过代表性 GdUnit4 用例验证事件转发和序列化（Adapters/Integration 小集）。
+- 未覆盖（刻意暂不处理）：
+  - 历史 `game.*` / `score.changed` 事件的全量重命名与迁移。
+  - 所有领域服务的 1:1 事件用例（当前模板仅保留代表性样例，留待具体游戏项目按需扩展）。
+
+## Backlog（后续可选优化）
+
+- 逐步将历史 `game.*` 事件迁移为 `core.*.*` 命名，并视需要保留兼容层。
+- 为主要领域服务补充成对的 xUnit + GdUnit4 事件测试用例。
+
+## Test-Refs
+
+- `Game.Core.Tests/Engine/GameEngineCoreEventTests.cs`
+- `Tests.Godot/tests/Adapters/test_event_bus_adapter.gd`
+- `Tests.Godot/tests/Integration/test_settings_event_integration.gd`
 
 ## 完成标准
 

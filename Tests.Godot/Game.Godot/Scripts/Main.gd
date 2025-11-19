@@ -25,6 +25,14 @@ func _ready() -> void:
     if bus != null:
         bus.connect("DomainEventEmitted", Callable(self, "_on_domain_event"))
 
+func _exit_tree() -> void:
+    var bus = get_node_or_null("/root/EventBus")
+    if bus == null:
+        return
+    var callable := Callable(self, "_on_domain_event")
+    if bus.is_connected("DomainEventEmitted", callable):
+        bus.disconnect("DomainEventEmitted", callable)
+
 func _on_publish() -> void:
     var bus = get_node_or_null("/root/EventBus")
     if bus == null:

@@ -1092,6 +1092,9 @@ public partial class ExampleTest
 - [ ] GdUnit4 场景测试覆盖主要场景
 - [ ] xUnit 逻辑测试覆盖场景管理逻辑
 - [ ] CI 集成场景结构验证
+- [ ] ScreenNavigator + ScreenRoot/HUD/Overlays 结构通过 GdUnit4 集成测试（如 test_screen_navigator.gd、test_screen_navigation_flow.gd）
+- [ ] Settings SSoT 行为（ConfigFile 优先于 DB）通过集成测试验证（test_settings_precedence_placeholder.gd / test_settings_configfile_wins_over_db，符合 ADR‑0023）
+- [ ] UI/Glue 测试符合 docs/testing-framework.md 中 UI/Glue 测试规范（帧轮询上限、无 InputEvents、EventBus 事件）
 
 ---
 
@@ -1108,6 +1111,8 @@ public partial class ExampleTest
   - `HUD`（常驻 UI）
   - `Overlays`（Modal/Toast 等叠加）
   - 引导节点：`ThemeApplier`、`SettingsLoader`、`InputMapper`
+
+> 口径对齐：Settings 读取/写入与持久化以 ADR‑0006（Godot 数据存储）、ADR‑0023（Settings SSoT = ConfigFile）以及 CH05/CH06 为准，本 Phase 聚焦场景/屏幕结构与信号流，不重复存储细节。
 
 ## 导航器 / Screen Navigator
 
@@ -1131,6 +1136,7 @@ public partial class ExampleTest
   - `Enter()`：Screen 被导航器实例化并即将显示（可选自定义方法）
   - `Exit()`：Screen 被替换前触发（释放资源/断开信号）（可选自定义方法）
 - 信号命名：`screen.<name>.<action>`，例如 `screen.start.loaded`、`screen.settings.saved`
+  - `screen.settings.saved` 事件应触发 SettingsPanel 通过 ConfigFile（user://settings.cfg）持久化设置（见 ADR‑0023），而不是直接写入数据库。
 - 领域事件仍通过 `/root/EventBus`，UI 层尽量发布语义清晰的 screen 事件供上层协调。
 
 

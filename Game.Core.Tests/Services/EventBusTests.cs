@@ -41,8 +41,8 @@ public class EventBusTests
     {
         var bus = new InMemoryEventBus();
         int ok = 0;
-        bus.Subscribe(async _ => { throw new InvalidOperationException("boom"); });
-        bus.Subscribe(async _ => { ok++; await Task.CompletedTask; });
+        bus.Subscribe(_ => throw new InvalidOperationException("boom"));
+        bus.Subscribe(_ => { ok++; return Task.CompletedTask; });
 
         await bus.PublishAsync(new DomainEvent(
             Type: "evt",
