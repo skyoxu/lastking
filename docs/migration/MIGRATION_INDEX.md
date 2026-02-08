@@ -2,7 +2,7 @@
 
 
 
-> 项目: LegacyProject → godotgame
+> 项目: LegacyProject → lastking
 
 > 迁移类型: 完整技术栈替换（运行时 + UI + 渲染 + 测试）
 
@@ -24,7 +24,7 @@
 
 
 
-| 层次 | 原技术栈 (LegacyProject) | 新技术栈 (godotgame) | 迁移复杂度 |
+| 层次 | 原技术栈 (LegacyProject) | 新技术栈 (lastking) | 迁移复杂度 |
 
 |------|-------------------|-------------------|----------|
 
@@ -246,7 +246,7 @@
 
 3. **先冒烟后全量**：E2E 只先做启动/退出/关键信号冒烟测试
 
-4. **分支并行**：保留 LegacyProject 主分支，godotgame 在独立分支开发
+4. **分支并行**：保留 LegacyProject 主分支，lastking 在独立分支开发
 
 
 

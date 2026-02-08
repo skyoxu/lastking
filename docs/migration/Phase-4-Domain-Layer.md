@@ -91,7 +91,7 @@ export class Player {
 }
 ```
 
-**C# (godotgame)**:
+**C# (lastking)**:
 
 ```csharp
 // Game.Core/Domain/ValueObjects/Position.cs
