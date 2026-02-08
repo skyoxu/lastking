@@ -197,7 +197,7 @@ SuperClaude v4 提供三种运行模式,根据任务特征选择合适的模式�
 | 旗标 | 专长领域 | 适用任务 | 示例 |
 |------|---------|---------|------|
 | `--security` | 安全工程 | ADR-0002 路径校验实现 | 文件系统访问,权限验证 |
-| `--frontend` | 前端架构 | Godot 场景/UI 任务 | 场景树设计,Signal 连接 |
+| `--ui` | UI架构 | Godot 场景/UI 任务 | 场景树设计,Signal 连接 |
 | `--performance` | 性能优化 | 性能关键任务 | 帧率优化,算法优化 |
 
 #### MCP 工具扩展配置
@@ -1060,7 +1060,7 @@ SuperClaude 分析内容:
 | 任务类型 | 推荐旗标 | 命令示例 |
 |---------|---------|---------|
 | 安全敏感任务 | `--security` | `/sc:build --task 1.1 --tdd --security --coverage-gate 90` |
-| Godot 场景/UI | `--frontend` | `/sc:build --task 2.3 --tdd --frontend --coverage-gate 85` |
+| Godot 场景/UI | `--ui` | `/sc:build --task 2.3 --tdd --ui --coverage-gate 85` |
 | 性能关键任务 | `--performance` | `/sc:build --task 3.5 --tdd --performance --coverage-gate 90` |
 | 标准任务 | 无旗标 | `/sc:build --task 1.1 --tdd --coverage-gate 90` |
 
@@ -1071,7 +1071,7 @@ SuperClaude 分析内容:
 /sc:build --task 1.1 --tdd --security --coverage-gate 90
 
 # Godot 场景任务(如公会 HUD 实现)
-/sc:build --task 2.3 --tdd --frontend --coverage-gate 85
+/sc:build --task 2.3 --tdd --ui --coverage-gate 85
 
 # 性能关键任务(如帧率优化)
 /sc:build --task 3.5 --tdd --performance --coverage-gate 90
@@ -2493,7 +2493,7 @@ superclaude review --staged
 
 ## 9. 参考资料
 
-- Task Master 文档：[README.md](../../.taskmaster/README.md)
+- Task Master 文档：请在本地安装目录查看对应 README（本仓库不内置 `.taskmaster/README.md`）
 - SuperClaude 使用指南：(根据实际安装路径补充)
 - ADR 目录：[docs/adr/](../adr/)
 - 测试框架指南：[docs/testing-framework.md](../testing-framework.md)

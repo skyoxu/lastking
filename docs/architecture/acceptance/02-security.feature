@@ -1,5 +1,5 @@
-Feature: 02 Electron 安全基线
+Feature: 02 Godot 安全基线
   Scenario: 基线护栏启用
     Given 应用以生产配置启动
-    Then 渲染进程应禁用 Node 能力
-    And 存在严格 CSP 元标签
+    Then 资源访问仅允许 res:// 与 user://
+    And 仅允许 HTTPS 外联且受白名单约束

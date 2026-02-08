@@ -157,7 +157,7 @@
 | `--tdd` | flag | false | 启用 TDD 模式 |
 | `--coverage-gate` | int | 90 | 覆盖率门禁阈值 (%) |
 | `--security` | flag | false | 启用安全专长代理 |
-| `--frontend` | flag | false | 启用前端架构专长代理 |
+| `--ui` | flag | false | 启用UI架构专长代理 |
 | `--performance` | flag | false | 启用性能优化专长代理 |
 
 **专长旗标详解**:
@@ -165,7 +165,7 @@
 | 旗标 | 专长领域 | 适用任务 | 示例 |
 |------|---------|---------|------|
 | `--security` | 安全工程 | ADR-0002 路径校验实现 | 文件系统访问、权限验证 |
-| `--frontend` | 前端架构 | Godot 场景/UI 任务 | 场景树设计、Signal 连接 |
+| `--ui` | UI架构 | Godot 场景/UI 任务 | 场景树设计、Signal 连接 |
 | `--performance` | 性能优化 | 性能关键任务 | 帧率优化、算法优化 |
 
 **TDD 执行流程**:
@@ -204,7 +204,7 @@ graph LR
 ##### 场景 2: Godot 场景/UI 任务
 
 ```bash
-/sc:build --task 2.3 --tdd --frontend --coverage-gate 85
+/sc:build --task 2.3 --tdd --ui --coverage-gate 85
 
 # 专长代理自动处理:
 # - 场景树结构: 节点层级设计
@@ -662,11 +662,11 @@ py -3 scripts/python/godot_tests.py --headless --suite security
 ```bash
 # 步骤 1-4: 同标准流程
 
-# 步骤 5: 分析 (前端架构焦点)
+# 步骤 5: 分析 (UI架构焦点)
 /sc:analyze --task 3.2 --focus architecture,accessibility
 
-# 步骤 6: TDD 实现 (启用前端专长)
-/sc:build --task 3.2 --tdd --frontend --coverage-gate 85
+# 步骤 6: TDD 实现 (启用UI专长)
+/sc:build --task 3.2 --tdd --ui --coverage-gate 85
 
 # SuperClaude 自动处理:
 # - 场景树结构设计
@@ -798,7 +798,7 @@ claude mcp add context7
 | 分析任务上下文 | `/sc:analyze --task 1.1 --focus architecture,security` |
 | TDD 实现 (标准) | `/sc:build --task 1.1 --tdd --coverage-gate 90` |
 | TDD 实现 (安全) | `/sc:build --task 2.1 --tdd --security --coverage-gate 90` |
-| TDD 实现 (前端) | `/sc:build --task 3.2 --tdd --frontend --coverage-gate 85` |
+| TDD 实现 (UI) | `/sc:build --task 3.2 --tdd --ui --coverage-gate 85` |
 | TDD 实现 (性能) | `/sc:build --task 4.1 --tdd --performance --coverage-gate 90` |
 | 验证覆盖率 | `/sc:test --coverage --threshold 90` |
 | 生成审查报告 | `/sc:review --staged` |
@@ -820,7 +820,7 @@ claude mcp add context7
 | 旗标 | 专长领域 | 适用任务 |
 |------|---------|---------|
 | --security | 安全工程 | ADR-0002 路径校验实现 |
-| --frontend | 前端架构 | Godot 场景/UI 任务 |
+| --ui | UI架构 | Godot 场景/UI 任务 |
 | --performance | 性能优化 | 性能关键任务 |
 
 ### MCP 工具速查
@@ -899,7 +899,7 @@ npx task-master set-status 1.1 done
 1. **优先使用 orchestration 模式**: 适用于大多数场景, 自动优化工具调度
 2. **大文档场景启用 token-efficiency**: PRD 30+ 页或单文件 >500 行时启用
 3. **合理选择 focus 焦点**: 标准任务使用 architecture,security, 避免不必要的焦点
-4. **专长旗标按需启用**: 仅在相关任务时启用 --security/--frontend/--performance
+4. **专长旗标按需启用**: 仅在相关任务时启用 --security/--ui/--performance
 5. **MCP 工具最小化**: 默认仅启用 serena, 按需添加 context7/LegacyE2ERunner
 
 ---

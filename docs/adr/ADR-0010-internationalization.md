@@ -21,7 +21,7 @@ supersedes: []
 
 ## Context
 
-模板需要支持多语言，并保证语言选择可持久化、可在运行时切换、可在 headless 下验收。Godot 运行时不使用 Web 前端 i18n 生态（如 i18next），因此需要以 Godot 原生国际化能力为基线口径。
+模板需要支持多语言，并保证语言选择可持久化、可在运行时切换、可在 headless 下验收。Godot 运行时不依赖历史 Web i18n 生态（如 i18next），因此需要以 Godot 原生国际化能力为基线口径。
 
 ## Decision
 

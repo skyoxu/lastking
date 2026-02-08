@@ -88,4 +88,4 @@ Base 仅提供骨架示例，真实 PRD 的追踪表放在 Overlay 08，并通�
 - [ ] Base 中不出现 `PRD_xxx` 标识（由 `scripts/ci/verify_base_clean.ps1` 校验）
 - [ ] 不复制阈值到 08 章以外（阈值只在 ADR/SSoT 中维护）
 - [ ] 所有命令提供 Windows 兼容写法（PowerShell、`py -3`）
-- [ ] 不引入旧桌面壳/Web 前端栈作为当前运行时口径（迁移历史仅放在 `docs/migration/**`）
+- [ ] 不引入旧技术栈语境作为当前运行时口径（迁移历史仅放在 docs/migration/**）
