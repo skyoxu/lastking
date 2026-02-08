@@ -100,7 +100,7 @@
 ### 3.2 鐩綍缁撴瀯
 
 ```
-godotgame/
+lastking/
 鈹溾攢鈹€ scripts/
 鈹?  鈹溾攢鈹€ guard.ps1                  # PowerShell 涓诲叆鍙ｈ剼鏈?
 鈹?  鈹溾攢鈹€ python/
@@ -172,7 +172,7 @@ public class LayeringTests
 ```bash
 # 1) 寮€濮嬪垎鏋愶紙绀轰緥锛?
 dotnet sonarscanner begin \
-  /k:"godotgame" /d:sonar.host.url="%SONAR_HOST_URL%" \
+  /k:"lastking" /d:sonar.host.url="%SONAR_HOST_URL%" \
   /d:sonar.login="%SONAR_TOKEN%" \
   /d:sonar.cs.opencover.reportsPaths="logs/ci/xunit-coverage.xml"
 
@@ -268,7 +268,7 @@ def collect_user_reports(project_name: str, date_str: str, dest_dir: Path) -> No
             shutil.copy2(f, dest_dir / f.name)
 
 # 鐢ㄦ硶绀轰緥锛?
-# collect_user_reports(project_name='godotgame', date_str=datetime.now().strftime('%Y-%m-%d'), dest_dir=Path('logs')/'e2e'/datetime.now().strftime('%Y-%m-%d'))
+# collect_user_reports(project_name='lastking', date_str=datetime.now().strftime('%Y-%m-%d'), dest_dir=Path('logs')/'e2e'/datetime.now().strftime('%Y-%m-%d'))
 ```
 
 璇存槑锛圵indows 璺緞鏄犲皠锛夛細

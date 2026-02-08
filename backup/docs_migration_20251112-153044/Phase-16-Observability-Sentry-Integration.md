@@ -160,7 +160,7 @@
 ### 3.2 鐩綍缁撴瀯
 
 ```
-godotgame/
+lastking/
 鈹溾攢鈹€ src/
 鈹?  鈹溾攢鈹€ Game.Core/
 鈹?  鈹?  鈹溾攢鈹€ Observability/
@@ -237,7 +237,7 @@ namespace Game.Core.Observability
                 // 鍩烘湰閰嶇疆
                 options.Dsn = _config.SentryDsn;
                 options.Environment = _config.Environment; // "dev" | "staging" | "prod"
-                options.Release = _config.Release; // e.g., "godotgame@1.0.0+build.123"
+                options.Release = _config.Release; // e.g., "lastking@1.0.0+build.123"
 
                 // 浼氳瘽杩借釜锛圧elease Health锛?
                 options.AutoSessionTracking = true;
@@ -423,7 +423,7 @@ namespace Game.Core.Observability
     {
         public string SentryDsn { get; set; }
         public string Environment { get; set; } // "dev" | "staging" | "prod"
-        public string Release { get; set; } // e.g., "godotgame@1.0.0+build.123"
+        public string Release { get; set; } // e.g., "lastking@1.0.0+build.123"
 
         // 閲囨牱鐜囷紙0.0-1.0锛?
         public double SessionSampleRate { get; set; } = 1.0; // Dev: 1.0, Prod: 0.1
@@ -445,7 +445,7 @@ namespace Game.Core.Observability
 {
   "dsn": "https://examplePublicKey@o0.ingest.sentry.io/0",
   "environment": "dev",
-  "release": "godotgame@0.1.0+local",
+  "release": "lastking@0.1.0+local",
   "sessionSampleRate": 1.0,
   "tracesSampleRate": 0.1,
   "breadcrumbs": true
@@ -856,9 +856,9 @@ on:
   workflow_dispatch:
     inputs:
       release_version:
-        description: 'Release version to check (e.g., godotgame@1.0.0)'
+        description: 'Release version to check (e.g., lastking@1.0.0)'
         required: true
-        default: 'godotgame@1.0.0'
+        default: 'lastking@1.0.0'
       environment:
         description: 'Sentry environment'
         required: true
@@ -928,7 +928,7 @@ jobs:
 
 {
   "scripts": {
-    "test:observability": "python scripts/release_health_gate.py --release godotgame@dev --environment dev",
+    "test:observability": "python scripts/release_health_gate.py --release lastking@dev --environment dev",
     "observability:flush": "dotnet test src/Game.Core.Tests/Observability.Tests.cs",
     "sentry:sourcemaps": "python scripts/upload_sourcemaps.py",
     "release:create": "python scripts/generate_release_metadata.py --version $npm_package_version"
@@ -1208,9 +1208,9 @@ options.BeforeSend = (sentryEvent, hint) =>
 # 1. 鍒涘缓 Sentry 璐︽埛锛坔ttps://sentry.io锛?
 # 2. 鍒涘缓 Organization: godot-game
 # 3. 鍒涘缓 Projects:
-#    - godotgame-dev (environment: dev)
-#    - godotgame-staging (environment: staging)
-#    - godotgame-prod (environment: production)
+#    - lastking-dev (environment: dev)
+#    - lastking-staging (environment: staging)
+#    - lastking-prod (environment: production)
 
 # 4. 鑾峰彇 DSN锛堟瘡涓」鐩級
 # Example: https://key@sentry.io/projectid
@@ -1220,7 +1220,7 @@ options.BeforeSend = (sentryEvent, hint) =>
 
 # 6. 淇濆瓨涓?GitHub Secrets:
 export SENTRY_ORG=godot-game
-export SENTRY_PROJECT=godotgame-prod
+export SENTRY_PROJECT=lastking-prod
 export SENTRY_AUTH_TOKEN=<token>
 ```
 

@@ -9,13 +9,13 @@
 
 ## 鐩爣
 
-灏?vitegame 鐨?Jest + TypeScript 鍗曞厓娴嬭瘯杩佺Щ鍒?godotgame 鐨?xUnit + C# 鍗曞厓娴嬭瘯锛屽缓绔嬬被鍨嬪畨鍏ㄧ殑娴嬭瘯濂椾欢涓?AI-first 瑕嗙洊鐜囬棬绂併€?
+灏?vitegame 鐨?Jest + TypeScript 鍗曞厓娴嬭瘯杩佺Щ鍒?lastking 鐨?xUnit + C# 鍗曞厓娴嬭瘯锛屽缓绔嬬被鍨嬪畨鍏ㄧ殑娴嬭瘯濂椾欢涓?AI-first 瑕嗙洊鐜囬棬绂併€?
 
 ---
 
 ## 鎶€鏈爤瀵规瘮
 
-| 鍔熻兘 | vitegame (Node.js) | godotgame (.NET 8) |
+| 鍔熻兘 | vitegame (Node.js) | lastking (.NET 8) |
 |-----|-------------------|-------------------|
 | 娴嬭瘯妗嗘灦 | Jest 29 | xUnit 2.x |
 | 鏂█搴?| Jest expect() | FluentAssertions |
@@ -117,7 +117,7 @@ describe('Player', () => {
 
 ## xUnit 娴嬭瘯缁撴瀯
 
-### 绛変环 xUnit 娴嬭瘯 (godotgame)
+### 绛変环 xUnit 娴嬭瘯 (lastking)
 
 ```csharp
 // Game.Core.Tests/Domain/Entities/PlayerTests.cs
@@ -1515,7 +1515,7 @@ jobs:
         with:
           files: ./TestResults/**/coverage.cobertura.xml
           flags: unittests
-          name: codecov-godotgame
+          name: codecov-lastking
 ```
 
 ---

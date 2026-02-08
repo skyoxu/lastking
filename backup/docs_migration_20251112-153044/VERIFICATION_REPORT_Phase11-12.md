@@ -153,13 +153,13 @@ godot --version    # 4.5+ .NET
 dotnet --version   # 8.x+
 
 # 创建项目
-mkdir C:\buildgame\godotgame
-godot --path C:\buildgame\godotgame --headless --editor
+mkdir C:\buildgame\lastking
+godot --path C:\buildgame\lastking --headless --editor
 ```
 
 ### 第 3 天：GdUnit4 安装
 ```powershell
-.\scripts\install-gut.ps1 -ProjectRoot "C:\buildgame\godotgame"
+.\scripts\install-gut.ps1 -ProjectRoot "C:\buildgame\lastking"
 # 验证：ls addons\gut\plugin.cfg
 ```
 
@@ -185,7 +185,7 @@ public partial class ExampleTest
 
 ### 第 6 天：首次冒烟测试
 ```bash
-godot --path "C:\buildgame\godotgame" --headless --scene "res://Tests/SmokeTestRunner.tscn"
+godot --path "C:\buildgame\lastking" --headless --scene "res://Tests/SmokeTestRunner.tscn"
 # 预期：7/7 PASS，<2min
 ```
 

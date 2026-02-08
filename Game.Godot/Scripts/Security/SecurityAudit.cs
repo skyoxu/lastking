@@ -51,9 +51,9 @@ public partial class SecurityAudit : Node
         try
         {
             var v = ProjectSettings.GetSetting("application/config/name");
-            return v.VariantType == Variant.Type.Nil ? "GodotGame" : v.AsString();
+            return v.VariantType == Variant.Type.Nil ? "lastking" : v.AsString();
         }
-        catch { return "GodotGame"; }
+        catch { return "lastking"; }
     }
 }
 

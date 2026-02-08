@@ -40,5 +40,5 @@ window/stretch/mode="viewport"
 
 [dotnet]
 
-project/assembly_name="GodotGame"
-project/project_path="res://GodotGame.csproj"
+project/assembly_name="lastking"
+project/project_path="res://lastking.csproj"

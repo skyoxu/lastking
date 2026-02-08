@@ -24,7 +24,7 @@
 - 无主动监控告警
 - 版本回滚链不清晰（用户可能回滚到更旧的有问题版本）
 
-### 新版（godotgame）回滚机遇与挑战
+### 新版（lastking）回滚机遇与挑战
 
 **机遇**：
 - Phase 16 提供 Release Health API（实时 Crash-Free Sessions 查询）
@@ -166,7 +166,7 @@ IF v1.5.0 is revoked:
 ### 2.5 目录结构
 
 ```
-godotgame/
+lastking/
 ├── src/
 │   ├── Game.Core/
 │   │   └── Release/
@@ -436,7 +436,7 @@ on:
   workflow_dispatch:
     inputs:
       release_version:
-        description: 'Release to monitor (e.g., godotgame@1.0.0)'
+        description: 'Release to monitor (e.g., lastking@1.0.0)'
         required: false
       environment:
         description: 'Environment'
@@ -466,7 +466,7 @@ jobs:
         id: health
         run: |
           python scripts/monitor_release_health.py \
-            --release "${{ github.event.inputs.release_version || 'godotgame@latest' }}" \
+            --release "${{ github.event.inputs.release_version || 'lastking@latest' }}" \
             --environment "${{ github.event.inputs.environment || 'production' }}" \
             --output health-report.json
 
@@ -854,7 +854,7 @@ public partial class ExampleTest
 ```bash
 # 1. 本地模拟回滚检查
 python scripts/monitor_release_health.py \
-  --release godotgame@1.0.0 \
+  --release lastking@1.0.0 \
   --environment production \
   --simulate-crash-drop
 
@@ -867,13 +867,13 @@ python scripts/monitor_release_health.py \
 # 3. 检查回滚安全性
 python scripts/trigger_rollback.py \
   --analyze \
-  --release godotgame@1.0.0 \
-  --candidate godotgame@0.9.5
+  --release lastking@1.0.0 \
+  --candidate lastking@0.9.5
 
 # 4. 执行回滚（本地模拟）
 python scripts/trigger_rollback.py \
   --revoke \
-  --release godotgame@1.0.0 \
+  --release lastking@1.0.0 \
   --dry-run
 ```
 

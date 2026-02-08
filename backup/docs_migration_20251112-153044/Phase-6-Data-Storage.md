@@ -6,12 +6,12 @@
 
 ## 鐩爣
 
-灏?vitegame 鐨?better-sqlite3 鏁版嵁搴撹縼绉诲埌 godotgame 鐨?godot-sqlite锛屽缓绔嬬被鍨嬪畨鍏ㄧ殑浠撳偍灞傚拰杩佺Щ绯荤粺銆?
+灏?vitegame 鐨?better-sqlite3 鏁版嵁搴撹縼绉诲埌 lastking 鐨?godot-sqlite锛屽缓绔嬬被鍨嬪畨鍏ㄧ殑浠撳偍灞傚拰杩佺Щ绯荤粺銆?
 ---
 
 ## 鎶€鏈爤瀵规瘮
 
-| 鍔熻兘 | vitegame (Node.js) | godotgame (Godot) |
+| 鍔熻兘 | vitegame (Node.js) | lastking (Godot) |
 |-----|-------------------|------------------|
 | 搴?| better-sqlite3 | godot-sqlite (GDNative) |
 | 鍒濆鍖?| `new Database('game.db')` | `SQLite.new() + open_db()` |
@@ -63,7 +63,7 @@ CREATE TABLE schema_version (
 );
 ```
 
-### 鐩爣 Schema (godotgame)
+### 鐩爣 Schema (lastking)
 
 淇濇寔鐩稿悓缁撴瀯锛屼絾娣诲姞锛?
 ```sql

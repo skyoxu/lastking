@@ -111,7 +111,7 @@
 ### 3.2 鐩綍缁撴瀯
 
 ```
-godotgame/
+lastking/
 鈹溾攢鈹€ src/
 鈹?  鈹溾攢鈹€ Game.Core/
 鈹?  鈹?  鈹斺攢鈹€ Performance/
@@ -816,7 +816,7 @@ jobs:
 
 ## 闄勫綍 A锛氭€ц兘鎸囨爣瀵规爣琛?
 
-| 鎸囨爣 | vitegame锛圗lectron锛?| godotgame锛圙odot锛?| 瀵规爣鎯呭喌 |
+| 鎸囨爣 | vitegame锛圗lectron锛?| lastking锛圙odot锛?| 瀵规爣鎯呭喌 |
 |-----|-------------------|------------------|---------|
 | 鍚姩鏃堕棿 | ~2.5-3.0s | 鈮?.0s | [OK] 鎸佸钩 |
 | 鑿滃崟 FPS | 60fps (16.67ms) | 鈮?4ms P95 | [OK] 鏀硅繘 |

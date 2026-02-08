@@ -17,7 +17,7 @@
 
 ### Godot 鍦烘櫙鏍?vs React 缁勪欢鏍?
 
-| 姒傚康 | React (vitegame) | Godot (godotgame) |
+| 姒傚康 | React (vitegame) | Godot (lastking) |
 |-----|-----------------|------------------|
 | 鍩烘湰鍗曞厓 | Component (鍑芥暟/绫? | Node (鍦烘櫙鑺傜偣) |
 | 缁勭粐鏂瑰紡 | JSX 宓屽 | Scene Tree 鏍戝舰缁撴瀯 |

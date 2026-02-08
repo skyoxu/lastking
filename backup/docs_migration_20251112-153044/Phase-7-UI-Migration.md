@@ -9,13 +9,13 @@
 
 ## 鐩爣
 
-灏?vitegame 鐨?React 19 + Tailwind CSS UI 杩佺Щ鍒?godotgame 鐨?Godot Control 鑺傜偣绯荤粺锛屼繚鎸佸姛鑳界瓑浠锋€т笌鍙祴璇曟€с€?
+灏?vitegame 鐨?React 19 + Tailwind CSS UI 杩佺Щ鍒?lastking 鐨?Godot Control 鑺傜偣绯荤粺锛屼繚鎸佸姛鑳界瓑浠锋€т笌鍙祴璇曟€с€?
 
 ---
 
 ## 鎶€鏈爤瀵规瘮
 
-| 灞傛 | vitegame (Web) | godotgame (Godot) |
+| 灞傛 | vitegame (Web) | lastking (Godot) |
 |-----|---------------|------------------|
 | UI妗嗘灦 | React 19 (JSX) | Godot Control 鑺傜偣 (.tscn) |
 | 甯冨眬绯荤粺 | Flexbox / CSS Grid | Container 鑺傜偣 (VBoxContainer, HBoxContainer, GridContainer) |
@@ -102,7 +102,7 @@ export function PrimaryButton({
 }
 ```
 
-**Godot (godotgame)**:
+**Godot (lastking)**:
 
 **鍦烘櫙鏂囦欢** (`Game.Godot/Scenes/UI/PrimaryButton.tscn`):
 
@@ -253,7 +253,7 @@ export function TextInput({ label, error, ...props }: TextInputProps) {
 }
 ```
 
-**Godot (godotgame)**:
+**Godot (lastking)**:
 
 **鍦烘櫙鏂囦欢** (`Game.Godot/Scenes/UI/TextInput.tscn`):
 
@@ -480,7 +480,7 @@ export function UserCard({ username, level, avatar }: UserCardProps) {
 }
 ```
 
-**Godot Container (godotgame)**:
+**Godot Container (lastking)**:
 
 **鍦烘櫙鏂囦欢** (`Game.Godot/Scenes/UI/UserCard.tscn`):
 
@@ -638,7 +638,7 @@ export function HealthBar({ maxHealth = 100 }: { maxHealth?: number }) {
 }
 ```
 
-**Godot Properties (godotgame)**:
+**Godot Properties (lastking)**:
 
 **鍦烘櫙鏂囦欢** (`Game.Godot/Scenes/UI/HealthBar.tscn`):
 
@@ -1012,7 +1012,7 @@ export function LoginForm() {
 }
 ```
 
-**Godot Form (godotgame)**:
+**Godot Form (lastking)**:
 
 **鍦烘櫙鏂囦欢** (`Game.Godot/Scenes/UI/LoginForm.tscn`):
 
@@ -1164,7 +1164,7 @@ export function UserList({ users }: { users: User[] }) {
 }
 ```
 
-**Godot List (godotgame)**:
+**Godot List (lastking)**:
 
 **鍦烘櫙鏂囦欢** (`Game.Godot/Scenes/UI/UserList.tscn`):
 

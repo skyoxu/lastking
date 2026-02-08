@@ -81,7 +81,7 @@ if __name__ == '__main__':
 杩愯绀轰緥锛圵indows锛夛細
 
 ```
-py -3 scripts/install_gut.py C:\buildgame\godotgame
+py -3 scripts/install_gut.py C:\buildgame\lastking
 ```
 
 ### 11.2.2 椤圭洰閰嶇疆
@@ -292,7 +292,7 @@ public class GodotTimeAdapterTests
 
 ```powershell
 param(
-    [string]$ProjectRoot = "C:\buildgame\godotgame",
+    [string]$ProjectRoot = "C:\buildgame\lastking",
     [switch]$Headless = $true,
     [string]$TestFilter = ""
 )
@@ -339,7 +339,7 @@ exit $lastExitCode
 
 ```powershell
 param(
-    [string]$ProjectRoot = "C:\buildgame\godotgame",
+    [string]$ProjectRoot = "C:\buildgame\lastking",
     [string]$Configuration = "Debug"
 )
 

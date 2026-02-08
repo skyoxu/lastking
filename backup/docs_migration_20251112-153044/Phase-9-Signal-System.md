@@ -9,13 +9,13 @@
 
 ## 鐩爣
 
-灏?vitegame 鐨?CloudEvents 浜嬩欢绯荤粺杩佺Щ鍒?godotgame 鐨?Godot Signals锛屽缓绔嬬被鍨嬪畨鍏ㄧ殑淇″彿鏋舵瀯涓庤法鍦烘櫙閫氫俊妯″紡銆?
+灏?vitegame 鐨?CloudEvents 浜嬩欢绯荤粺杩佺Щ鍒?lastking 鐨?Godot Signals锛屽缓绔嬬被鍨嬪畨鍏ㄧ殑淇″彿鏋舵瀯涓庤法鍦烘櫙閫氫俊妯″紡銆?
 
 ---
 
 ## 鎶€鏈爤瀵规瘮
 
-| 鍔熻兘 | vitegame (CloudEvents) | godotgame (Godot Signals) |
+| 鍔熻兘 | vitegame (CloudEvents) | lastking (Godot Signals) |
 |-----|----------------------|--------------------------|
 | 浜嬩欢瀹氫箟 | TypeScript 鎺ュ彛 + CloudEvent<T> 状态: 模板规范（最小集已落地）`n> 前置: Phase 1-8 完成
 | 浜嬩欢鍙戝皠 | eventBus.publish() | EmitSignal() |
@@ -333,7 +333,7 @@ eventBus.subscribe('app.game.coin.collected', (event) => 状态: 模板规范（
 });
 ```
 
-**Godot Signals (godotgame)**:
+**Godot Signals (lastking)**:
 
 ```csharp
 // Game.Godot/Scripts/Coin.cs
@@ -422,7 +422,7 @@ eventBus.publish(createEnemyDefeatedEvent({
 }));
 ```
 
-**Godot Signals (godotgame)**:
+**Godot Signals (lastking)**:
 
 ```csharp
 // Game.Godot/Scripts/EnemyRewards.cs
@@ -537,7 +537,7 @@ globalEventBus.subscribe('app.game.state.changed', (event) => 状态: 模板规�
 });
 ```
 
-**Godot EventBus Autoload (godotgame)**:
+**Godot EventBus Autoload (lastking)**:
 
 ```csharp
 // Game.Godot/Autoloads/EventBus.cs

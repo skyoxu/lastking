@@ -89,7 +89,7 @@
 ### 2.2 閻╊喖缍嶇紒鎾寸€?
 
 ```
-godotgame/
+lastking/
 閳规壕鏀㈤埞鈧?src/
 閳?  閳规壕鏀㈤埞鈧?Godot/
 閳?  閳?  閳规壕鏀㈤埞鈧?project.godot                     # Godot 妞ゅ湱娲伴柊宥囩枂
@@ -109,9 +109,9 @@ godotgame/
 閳?      閳规柡鏀㈤埞鈧?build-windows.yml                 閳?GitHub Actions 閺嬪嫬缂撳銉ょ稊濞?
 閳?
 閳规壕鏀㈤埞鈧?dist/                                     閳?閺堫剙婀撮弸鍕紦鏉堟挸鍤惄顔肩秿
-閳?  閳规壕鏀㈤埞鈧?godotgame-1.0.0.exe
-閳?  閳规壕鏀㈤埞鈧?godotgame-1.0.0.pck
-閳?  閳规壕鏀㈤埞鈧?godotgame-1.0.0-SHA256.txt
+閳?  閳规壕鏀㈤埞鈧?lastking-1.0.0.exe
+閳?  閳规壕鏀㈤埞鈧?lastking-1.0.0.pck
+閳?  閳规壕鏀㈤埞鈧?lastking-1.0.0-SHA256.txt
 閳?  閳规柡鏀㈤埞鈧?build-metadata.json
 閳?
 閳规柡鏀㈤埞鈧?package.json
@@ -147,7 +147,7 @@ custom_features=""
 export_filter="all_resources"
 include_filter=""
 exclude_filter=""
-export_path="dist/godotgame-1.0.0.exe"
+export_path="dist/lastking-1.0.0.exe"
 encryption_include_filters=""
 encryption_exclude_filters=""
 encrypt_pck=false
@@ -161,7 +161,7 @@ application/file_description="Godot Game - Vite Migration"
 application/copyright="2025"
 application/trademarks=""
 application/company_name="Anthropic"
-application/product_name="GodotGame"
+application/product_name="lastking"
 application/product_version="1.0.0"
 application/file_version="1.0.0"
 application/icon="res://icon.svg"
@@ -227,7 +227,7 @@ custom_features="debug"
 export_filter="all_resources"
 include_filter=""
 exclude_filter=""
-export_path="dist/godotgame-1.0.0-debug.exe"
+export_path="dist/lastking-1.0.0-debug.exe"
 encryption_include_filters=""
 encryption_exclude_filters=""
 encrypt_pck=false
@@ -240,7 +240,7 @@ windows/subsystem=2
 application/file_description="Godot Game - Debug Build"
 application/copyright="2025"
 application/company_name="Anthropic"
-application/product_name="GodotGame"
+application/product_name="lastking"
 application/product_version="1.0.0-debug"
 application/file_version="1.0.0"
 application/icon="res://icon.svg"
@@ -361,7 +361,7 @@ class GodotBuildDriver:
         """濞撳懐鎮婇弮褎鐎杞伴獓閻?""
         self._log("Cleaning build directory...")
         if self.dist_dir.exists():
-            for file in self.dist_dir.glob("godotgame-*"):
+            for file in self.dist_dir.glob("lastking-*"):
                 file.unlink()
                 self._log(f"Removed: {file.name}")
 
@@ -370,7 +370,7 @@ class GodotBuildDriver:
         self._log(f"Starting Godot export ({self.build_config})...")
 
         preset_name = "Windows Desktop" if self.build_config == "release" else "Windows Desktop (Debug)"
-        exe_name = f"godotgame-1.0.0{'-debug' if self.build_config == 'debug' else ''}.exe"
+        exe_name = f"lastking-1.0.0{'-debug' if self.build_config == 'debug' else ''}.exe"
         exe_path = self.dist_dir / exe_name
 
         # 绾喕绻?dist 閻╊喖缍嶇€涙ê婀?
@@ -654,7 +654,7 @@ jobs:
         if: github.event_name == 'push' || github.event.inputs.build_config == 'release'
         run: |
           python scripts/build_windows.py release
-          Get-Item dist/godotgame-*.exe | ForEach-Object {
+          Get-Item dist/lastking-*.exe | ForEach-Object {
             Write-Host "Built: $($_.Name) ($([math]::Round($_.Length / 1MB, 2)) MB)"
           }
         shell: powershell
@@ -687,8 +687,8 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            dist/godotgame-*.exe
-            dist/godotgame-*-SHA256.txt
+            dist/lastking-*.exe
+            dist/lastking-*-SHA256.txt
             dist/build-metadata.json
           body: |
             ## Build Information
@@ -698,12 +698,12 @@ jobs:
             **Commit**: ${{ github.sha }}
 
             ### Files
-            - `godotgame-*.exe` - Windows Desktop executable
-            - `godotgame-*-SHA256.txt` - File integrity checksum
+            - `lastking-*.exe` - Windows Desktop executable
+            - `lastking-*-SHA256.txt` - File integrity checksum
             - `build-metadata.json` - Build configuration metadata
 
             ### Installation
-            Extract and run `godotgame-1.0.0.exe`. No installation required.
+            Extract and run `lastking-1.0.0.exe`. No installation required.
 
             ### Requirements
             - Windows 10/11 (64-bit)
@@ -785,7 +785,7 @@ namespace Game.Core.Version
         /// 鎼存梻鏁ら悽銊﹀煕娴狅絿鎮婄€涙顑佹稉璇х礄閻劋绨?Sentry Release閿?
         /// </summary>
         public static string UserAgent =>
-            $"godotgame/{SemanticVersion} ({GitTag})";
+            $"lastking/{SemanticVersion} ({GitTag})";
     }
 }
 ```
@@ -839,11 +839,11 @@ def inject_version_info(project_root: Path, commit_sha: str, git_tag: str, build
 ```bash
 # 瀵偓閸欐垶鐎鐚寸礄鐠嬪啳鐦粭锕€褰块敍?
 npm run build:exe:debug
-# 鏉堟挸鍤敍姝瀒st/godotgame-1.0.0-debug.exe
+# 鏉堟挸鍤敍姝瀒st/lastking-1.0.0-debug.exe
 
 # 閸欐垵绔烽弸鍕紦閿涘牅绱崠鏍电礆
 npm run build:exe
-# 鏉堟挸鍤敍姝瀒st/godotgame-1.0.0.exe, dist/build-metadata.json, dist/godotgame-*-SHA256.txt
+# 鏉堟挸鍤敍姝瀒st/lastking-1.0.0.exe, dist/build-metadata.json, dist/lastking-*-SHA256.txt
 
 # 鐢缚鍞惍浣侯劮閸氬秶娈戦弸鍕紦
 npm run build:sign
@@ -1011,7 +1011,7 @@ npm run build:exe
 import subprocess, pathlib
 project = pathlib.Path('Game.Godot')
 export_preset = 'Windows Desktop'
-output = pathlib.Path('dist')/ 'godotgame.exe'
+output = pathlib.Path('dist')/ 'lastking.exe'
 output.parent.mkdir(parents=True, exist_ok=True)
 
 # 鐎电厧鍤崣顖涘⒔鐞涘本鏋冩禒?subprocess.check_call([
@@ -1067,7 +1067,7 @@ if __name__ == '__main__':
 ```
 
 閻劍纭堕敍?```
-py -3 scripts/sign_executable.py --file dist\godotgame.exe --thumbprint <CERT_SHA1>
+py -3 scripts/sign_executable.py --file dist\lastking.exe --thumbprint <CERT_SHA1>
 ```
 
 鐠囧瓨妲戦敍?- 婵″倹鐏夋担鐘卞▏閻?.pfx 閺傚洣娆㈤敍灞藉讲娴肩姴鍙?`--pfx` 娑?`--pfx-password`閵?- 閺冨爼妫块幋铏箛閸斺€冲讲闁俺绻?`--timestamp` 閹稿洤鐣鹃敍娑㈢帛鐠併倓濞囬悽?DigiCert閵?- 閸?CI 娑擃叏绱濆楦款唴鐏忓棜鐦夋稊锕€鎷扮€靛棛鐖滄禒銉︽簚鐎靛棙鏌熷蹇旀暈閸忋儳骞嗘晶鍐跨礄GitHub Actions Secrets閿涘鈧?

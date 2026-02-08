@@ -154,7 +154,7 @@ function Invoke-Export([string]$mode) {
 }
 
 # Skip --build-solutions when a solution is already present to reduce flakiness in CI
-$sln = Join-Path $ProjectDir 'GodotGame.sln'
+$sln = Join-Path $ProjectDir 'lastking.sln'
 if (Test-Path $sln) {
   Add-Content -Encoding UTF8 -Path $glog -Value "Solution detected at $sln, skipping --build-solutions."
 } else {
