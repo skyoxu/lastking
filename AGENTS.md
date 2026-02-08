@@ -118,7 +118,6 @@ docs/
 ### 默认 ADR 映射（可扩展）
 
 - **ADR-0001-tech-stack**：技术栈选型
-- **ADR-0002-legacy-desktop-shell-security-baseline**：旧桌面壳安全基线（历史；已被 ADR-0019 替代）
 - **ADR-0019-godot-security-baseline**：Godot 安全基线（当前有效）
 - **ADR-0003-observability-release-health**：可观测性和发布健康 (Sentry, 崩溃率阈值, 结构化日志)
 - **ADR-0004-event-bus-and-contracts**：事件总线和契约 (CloudEvents, 类型定义, 端口适配)
@@ -163,7 +162,7 @@ docs/
 - 需要新增 ADR 时，自动生成 `docs/adr/ADR-xxxx-<slug>.md` 的 _Proposed_ 草案并提示审阅。
 
 > **备注**：本 Rulebook 与项目中的脚本/模板、Base/Overlay 结构**强关联**。请保持这些文件存在且更新：  
-> `scripts/scan_electron_safety.mjs` · `scripts/quality_gates.mjs` · `scripts/verify_base_clean.mjs` · `.github/PULL_REQUEST_TEMPLATE.md` · `docs/architecture/base/08-功能纵切-template.md`。
+> `scripts/python/security_soft_scan.py` · `scripts/python/quality_gates.py` · `scripts/ci/verify_base_clean.ps1` · `.github/PULL_REQUEST_TEMPLATE.md` · `docs/architecture/base/08-crosscutting-and-feature-slices.base.md`。
 
 ---
 

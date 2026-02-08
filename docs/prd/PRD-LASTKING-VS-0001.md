@@ -1,6 +1,6 @@
 ---
-Story-ID: PRD-NEWGUILD-VS-0001
-Title: newguild 首个垂直切片 - 公会管理循环
+Story-ID: PRD-LASTKING-VS-0001
+Title: lastking 首个垂直切片 - 公会管理循环
 Status: Active
 ADR-Refs:
   - ADR-0018
@@ -26,15 +26,15 @@ Test-Refs:
   - Tests.Godot/tests/Integration/test_guild_workflow.gd
 ---
 
-# PRD-NEWGUILD-VS-0001：首个垂直切片 - 公会管理循环
+# PRD-LASTKING-VS-0001：首个垂直切片 - 公会管理循环
 
 ## 1. 引言与目标（引用 CH01）
 
 ### 1.1 Story ID
-PRD-NEWGUILD-VS-0001
+PRD-LASTKING-VS-0001
 
 ### 1.2 目标
-定义 newguild 首个可玩的垂直切片：基础公会管理循环（创建公会 → 成员管理 → 解散公会），作为后续功能迭代的基线。
+定义 lastking 首个可玩的垂直切片：基础公会管理循环（创建公会 → 成员管理 → 解散公会），作为后续功能迭代的基线。
 
 ### 1.3 技术栈（引用 ADR-0018）
 - 游戏引擎：Godot 4.5（Forward Plus 渲染器）
@@ -139,7 +139,7 @@ PRD-NEWGUILD-VS-0001
 
 ### 5.2 外部互操作（未来规划）
 如未来需发布 Mod API 或插件系统事件：
-- **迁移目标**：反向 DNS 命名（如 `com.newguild.guild.created`）
+- **迁移目标**：反向 DNS 命名（如 `com.lastking.guild.created`）
 - **迁移范围**：仅外部发布事件，内部事件保持简化前缀
 - **文档要求**：在 Overlay/08 中注明迁移计划与适用范围
 
@@ -179,7 +179,7 @@ Base 文档使用 `${DOMAIN_PREFIX}` 占位符：
 ## 7. 验收标准
 
 ### 7.1 PRD 完整性
-- [x] 存在一份针对 newguild 的最小 PRD 片段（本文档）
+- [x] 存在一份针对 lastking 的最小 PRD 片段（本文档）
 - [x] 显式引用 ADR-0018/0004/0005/0023/0011（见上文各章节）
 - [x] 包含输入/输出/状态/存储与非功能约束
 
