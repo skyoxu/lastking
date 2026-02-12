@@ -39,7 +39,15 @@
     "acceptance": [
       "Taskmaster #1 behavior matches PRD lock for Set up Godot 4.5.1 C# project for Windows.",
       "Referenced automated tests pass on Windows Godot+C# baseline.",
-      "No regression on deterministic simulation and core loop constraints."
+      "No regression on deterministic simulation and core loop constraints.",
+      "On Windows, Godot 4.5.1 .NET editor and the required .NET SDK are installed and recognized by the project.",
+      "The project is configured to use C# as its scripting language, and at least one attached C# script compiles successfully in editor.",
+      "Running the startup scene in Godot editor loads successfully and executes attached C# behavior without binding or runtime script errors.",
+      "Project structure includes dedicated scenes, scripts, and assets directories, and each directory contains at least one relevant project artifact.",
+      "A Windows Desktop export preset is configured and successfully produces a runnable Windows build artifact.",
+      "The exported build can enter the game main flow in standalone single-player mode without requiring multiplayer backend services.",
+      "Scene creation, node setup, and script attachment are verifiable in Godot editor via saved SceneTree and Inspector bindings.",
+      "If editor startup, C# compile, scene loading, or Windows export verification fails, this task is not accepted as complete."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #1 primary behavior.",
@@ -96,7 +104,14 @@
     "acceptance": [
       "Taskmaster #2 behavior matches PRD lock for Implement config-first balancing system.",
       "Referenced automated tests pass on Windows Godot+C# baseline.",
-      "No regression on deterministic simulation and core loop constraints."
+      "No regression on deterministic simulation and core loop constraints.",
+      "Balance settings are loaded from a JSON or INI file through ConfigManager, and the loaded settings are globally accessible to gameplay systems.",
+      "Day/Night timing comes from config with effective values Day=240 seconds and Night=120 seconds.",
+      "Normal wave budget comes from config with day1=50 and daily growth=120% (multiplier 1.2).",
+      "Spawn and boss controls come from config with spawn cadence=10 seconds and boss count=2.",
+      "Elite and boss channel settings exist in config and are consumed by wave/spawn selection logic.",
+      "When the config file is modified and reloaded, observable in-game balance behavior changes to the new values; if not modified, behavior remains unchanged.",
+      "Verification checks confirm the above balance values are sourced from configuration reads rather than hardcoded constants in game logic."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #2 primary behavior.",
@@ -153,7 +168,13 @@
     "acceptance": [
       "Taskmaster #3 behavior matches PRD lock for Develop runtime state machine for Day/Night cycles.",
       "Referenced automated tests pass on Windows Godot+C# baseline.",
-      "No regression on deterministic simulation and core loop constraints."
+      "No regression on deterministic simulation and core loop constraints.",
+      "Players can observe only two cycle phases, Day and Night, and the game transitions between them automatically.",
+      "In gameplay, Day lasts 4 minutes and Night lasts 2 minutes per configured timing before each transition.",
+      "The displayed/tracked day progression begins at Day1 and advances deterministically until Day15 completion.",
+      "With a fixed seed, repeated playthroughs under the same inputs produce the same cycle progression and random event sequence.",
+      "The win condition occurs when Day15 is completed and does not occur earlier.",
+      "Day/Night progression updates continuously while the game runtime loop is active."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #3 primary behavior.",
@@ -211,7 +232,15 @@
     "acceptance": [
       "Taskmaster #4 behavior matches PRD lock for Implement wave budget and channel system.",
       "Referenced automated tests pass on Windows Godot+C# baseline.",
-      "No regression on deterministic simulation and core loop constraints."
+      "No regression on deterministic simulation and core loop constraints.",
+      "A WaveManager C# component is available to generate wave outputs from day index, channel budget config, and seed input.",
+      "Given default config (normal day1 budget = 50), the generated normal-channel budget for day 1 equals 50.",
+      "For days beyond day 1, normal-channel budget follows the configured daily growth rule (default 120%) and matches expected values across multiple days.",
+      "Changing elite-channel budget alone does not change normal-channel budget or normal-channel spawn output for the same day and seed.",
+      "Changing boss-channel budget alone does not change normal-channel budget or normal-channel spawn output for the same day and seed.",
+      "Enemy allocation per channel is constrained by that channel budget and does not exceed the configured budget.",
+      "Using the same fixed seed, day, and config yields identical wave outputs across repeated runs; changing only the seed changes at least one spawn decision.",
+      "Independent config tuning for normal, elite, and boss budgets changes only the targeted channel output while non-targeted channel outputs remain unchanged for the same day and seed."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #4 primary behavior.",
@@ -269,7 +298,13 @@
     "acceptance": [
       "Taskmaster #5 behavior matches PRD lock for Create enemy spawning system with cadence.",
       "Referenced automated tests pass on Windows Godot+C# baseline.",
-      "No regression on deterministic simulation and core loop constraints."
+      "No regression on deterministic simulation and core loop constraints.",
+      "With Night duration configured to 120 seconds, enemy spawning occurs only in the first 96 seconds of Night.",
+      "Within that first 96-second Night window, spawn timing follows a 10-second cadence between consecutive regular enemy spawns.",
+      "No new enemy spawns occur during the last 24 seconds of Night.",
+      "Boss night behavior produces exactly 2 boss spawns from config.",
+      "Each spawned enemy appears at a predefined spawn point in the game world, with no off-list spawn locations.",
+      "If gameplay is not in Night state, this Night-cadence spawn flow does not emit new enemy spawns."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #5 primary behavior.",
@@ -326,7 +361,13 @@
     "acceptance": [
       "Taskmaster #6 behavior matches PRD lock for Implement enemy AI with target priority and pathing.",
       "Referenced automated tests pass on Windows Godot+C# baseline.",
-      "No regression on deterministic simulation and core loop constraints."
+      "No regression on deterministic simulation and core loop constraints.",
+      "In mixed-target scenarios with at least one valid path, each enemy selects a target by strict reachable priority: unit > castle > armed defense > wall/gate.",
+      "With identical initial state and fixed random seed, tie-breaks between equal-priority candidates produce the same target choice across repeated runs.",
+      "If preferred targets are blocked, the enemy attacks the nearest blocking structure on the blocked route and does not remain idle or switch to unrelated non-blocking targets.",
+      "Pathing behavior follows Godot navigation constraints: enemies traverse only navigable routes, and blocked-path scenarios prevent passage through obstacles.",
+      "Enemy nodes used in combat scenes have EnemyAI attached and active; missing attachment is detected as a failed configuration in validation/tests.",
+      "Player-origin attacks cannot damage friendly/player units, and friendly-fire hit events are absent in collision-layer/mask validation runs."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #6 primary behavior.",
@@ -384,7 +425,14 @@
     "acceptance": [
       "Taskmaster #7 behavior matches PRD lock for Set up castle HP and loss condition.",
       "Referenced automated tests pass on Windows Godot+C# baseline.",
-      "No regression on deterministic simulation and core loop constraints."
+      "No regression on deterministic simulation and core loop constraints.",
+      "At battle start, castle HP is initialized from the configured starting HP value and is greater than 0.",
+      "When an enemy attack event is applied to the castle, castle HP decreases by the expected damage amount for that attack.",
+      "If no enemy attack is applied to the castle during a test interval, castle HP does not change during that interval.",
+      "When castle HP reaches 0 due to enemy damage, the game enters the loss/game-over state.",
+      "After the loss/game-over state is entered at castle HP = 0, the game state remains in loss/game-over and does not continue normal play.",
+      "The gameplay UI shows the current castle HP and updates the displayed value after each HP change.",
+      "Enemy AI can target the castle as a valid target, and attacks from that targeting flow reduce castle HP."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #7 primary behavior.",
@@ -442,7 +490,12 @@
     "acceptance": [
       "Taskmaster #8 behavior matches PRD lock for Develop win condition and game progression.",
       "Referenced automated tests pass on Windows Godot+C# baseline.",
-      "No regression on deterministic simulation and core loop constraints."
+      "No regression on deterministic simulation and core loop constraints.",
+      "Reaching Day15 with castle HP greater than 0 triggers a win end state and displays a win screen or win message.",
+      "If castle HP becomes 0 before Day15, a loss end state is triggered and no win state is emitted for that run.",
+      "Before an end state is triggered, day/night progression continues normally and still evaluates the Day15 win condition.",
+      "After either win or loss is triggered, game-end handling is applied as configured (pause or reset), preventing continued normal progression without explicit restart/reset.",
+      "When current day is below 15 and castle HP is above 0, the game remains in non-win progression state."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #8 primary behavior.",
@@ -501,7 +554,13 @@
     "acceptance": [
       "Taskmaster #9 behavior matches PRD lock for Create basic UI for day/night and HP display.",
       "Referenced automated tests pass on Windows Godot+C# baseline.",
-      "No regression on deterministic simulation and core loop constraints."
+      "No regression on deterministic simulation and core loop constraints.",
+      "At runtime, the screen contains distinct UI outputs for current day, current cycle time remaining, and castle HP.",
+      "While the simulation advances, the displayed day value reflects the game day counter within the expected 1-15 range.",
+      "The displayed time remaining for the active Day/Night cycle changes over time during play and is not static while the cycle is progressing.",
+      "When a Day/Night phase transition occurs, the cycle-related UI updates to the new phase/timing state without showing stale previous-phase values.",
+      "When castle HP changes from gameplay events, the HP UI value updates accordingly during runtime.",
+      "If day, cycle time, and HP source values do not change, their corresponding UI outputs remain unchanged."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #9 primary behavior.",
@@ -566,7 +625,12 @@
     "acceptance": [
       "Taskmaster #10 behavior matches PRD lock for Integrate and test full core loop.",
       "Referenced automated tests pass on Windows Godot+C# baseline.",
-      "No regression on deterministic simulation and core loop constraints."
+      "No regression on deterministic simulation and core loop constraints.",
+      "A single playable scene integrates runtime loop services through adapters with explicit deterministic update order, and smoke run evidence shows day-night transition, wave start, and win/loss terminal dispatch.",
+      "Deterministic checkpoints are emitted at each major transition, and two same-seed replays for Day1-Day15 produce an identical ordered checkpoint timeline; any sequence mismatch fails acceptance.",
+      "In fully blocked seeded map fixtures, path-block fallback targeting engages without deadlock and recovers to normal targeting when a valid path becomes available.",
+      "Normal, elite, and boss-night scenarios enforce fixed boss-count lock and per-channel accounting isolation, with no cross-channel budget leakage.",
+      "Each integration slice is independently runnable and publishes consolidated evidence artifacts to logs/e2e and logs/ci, including required core-anchor fields for CI inspection and manual debugging handoff."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #10 primary behavior.",
@@ -618,7 +682,17 @@
     "acceptance": [
       "Taskmaster #11 behavior matches PRD lock for Set Up Godot 4.5.1 C# Project for Windows.",
       "Referenced automated tests pass on Windows Godot+C# baseline.",
-      "No regression on deterministic simulation and core loop constraints."
+      "No regression on deterministic simulation and core loop constraints.",
+      "On Windows, the project opens in Godot 4.5.1 with .NET/C# support enabled and no editor startup errors.",
+      "Building C# scripts from the Godot editor completes with zero C# compilation errors.",
+      "A main scene is configured as the startup scene, and running the project opens that scene without runtime exceptions.",
+      "The baseline project structure includes directories for scripts, scenes, assets, and config files.",
+      "Startup game flow is implemented through Godot C# API and is executed when the main scene runs.",
+      "Configuration logic loads at least one JSON balancing/config file through C# at runtime without parse or load errors.",
+      "A Windows desktop export preset for Steam single-player compatibility is configured in project export settings.",
+      "Exporting with the Windows preset produces a runnable Windows executable artifact.",
+      "Launching the exported executable on Windows opens the game and reaches the initial scene without immediate crash.",
+      "If any required open/compile/run/export/launch check fails, the task is not accepted."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #11 primary behavior.",
@@ -675,7 +749,14 @@
     "acceptance": [
       "Taskmaster #12 behavior matches PRD lock for Implement Core Resource System with Integer Safety.",
       "Referenced automated tests pass on Windows Godot+C# baseline.",
-      "No regression on deterministic simulation and core loop constraints."
+      "No regression on deterministic simulation and core loop constraints.",
+      "At game start, gameplay-facing resource values are gold=800, iron=150, and pop-cap=50.",
+      "Player-triggered spends consume integer gold/iron amounts only when both requirements are met; failed spends do not partially deduct resources.",
+      "Gameplay cannot drive gold, iron, or population cap below zero through any supported resource action.",
+      "Resource actions handle edge cases (including zero values and negative attempts) with deterministic outcomes visible in state and test assertions.",
+      "UI-bound gameplay resource displays are updated via emitted signal/event whenever resource values change successfully.",
+      "Gameplay resource updates do not introduce floating-point drift because resource state and calculations remain integer-based.",
+      "Overflow/underflow scenarios are guarded so gameplay never observes wrapped or nonsensical resource values."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #12 primary behavior.",
@@ -733,7 +814,15 @@
     "acceptance": [
       "Taskmaster #13 behavior matches PRD lock for Design and Implement Building System with Footprint Rules.",
       "Referenced automated tests pass on Windows Godot+C# baseline.",
-      "No regression on deterministic simulation and core loop constraints."
+      "No regression on deterministic simulation and core loop constraints.",
+      "Build mode lets the player select castle, residence, mine, barracks, MG tower, wall, or mine trap and shows a grid-aligned footprint preview before confirm.",
+      "Gameplay placement enforces footprint rule values: castle=4, barracks=2, MG tower=1, wall=1.",
+      "Confirming placement on out-of-bounds or occupied cells is refused; no building appears and player resources remain unchanged.",
+      "Confirming placement with insufficient resources is refused; no building appears and player resources remain unchanged.",
+      "Confirming a valid placement snaps the building to the grid and deducts the configured cost exactly once.",
+      "Wall drag-line build places wall segments continuously along the drag path on valid cells; invalid cells remain unchanged and do not consume resources.",
+      "Gate one-way behavior is observable in play: non-gate wall segments block passage, while gate cells allow only configured one-way passage.",
+      "Debug visuals in test runs show footprint boundaries and final building positions aligned to the grid."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #13 primary behavior.",
@@ -791,7 +880,13 @@
     "acceptance": [
       "Taskmaster #14 behavior matches PRD lock for Implement Economy and Tax System for Residences.",
       "Referenced automated tests pass on Windows Godot+C# baseline.",
-      "No regression on deterministic simulation and core loop constraints."
+      "No regression on deterministic simulation and core loop constraints.",
+      "Placing a Residence immediately increases settlement population cap by the configured amount.",
+      "During gameplay, a built Residence grants gold every 15 seconds and does not grant Residence tax gold between interval ticks.",
+      "Gold granted per Residence tax tick follows configured values, including per-level values when such configuration is present.",
+      "Observed and stored gold/population-cap values remain whole-number consistent over long runs, without floating-point drift.",
+      "With zero placed Residences, no Residence tax income appears.",
+      "In-game verification confirms: place Residence -> population cap increases; wait in 15-second intervals -> gold increases at each interval on Windows Godot+C#."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #14 primary behavior.",
@@ -849,7 +944,16 @@
     "acceptance": [
       "Taskmaster #15 behavior matches PRD lock for Develop Upgrade and Repair System with Constraints.",
       "Referenced automated tests pass on Windows Godot+C# baseline.",
-      "No regression on deterministic simulation and core loop constraints."
+      "No regression on deterministic simulation and core loop constraints.",
+      "Upgrade start is allowed only when state is Idle, level is below 5, and config-defined upgrade resource costs are payable.",
+      "A successful upgrade increases level by exactly 1; level skipping is not possible, and level never exceeds 5.",
+      "If an upgrade request is invalid (non-Idle state, insufficient resources, or level already 5), upgrade does not start and level/state remain unchanged.",
+      "When an upgrade completes, current HP is restored to full HP.",
+      "Changing upgrade cost values in configuration changes charged upgrade costs accordingly for subsequent upgrades.",
+      "Repair consumes gold only; fully repairing from damaged to full HP results in total gold spend equal to 50% of the building build cost.",
+      "Repair is applied incrementally over time (not as a single instant heal) until full HP is reached.",
+      "Upgrade and repair cannot be active simultaneously; starting one while the other is active must not create concurrent Upgrading and Repairing activity.",
+      "Progress operations return to Idle state on completion, and automated tests verify level progression, cost rules, HP restoration, conflict handling, integer-safe arithmetic, and config-driven values on Windows Godot+C# baseline."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #15 primary behavior.",
@@ -907,7 +1011,14 @@
     "acceptance": [
       "Taskmaster #16 behavior matches PRD lock for Implement Unit Training Queue in Barracks.",
       "Referenced automated tests pass on Windows Godot+C# baseline.",
-      "No regression on deterministic simulation and core loop constraints."
+      "No regression on deterministic simulation and core loop constraints.",
+      "Players can queue multiple units in a Barracks and observe one-at-a-time training in FIFO order based on configured training times.",
+      "Multiple Barracks train independently, so queue actions in one Barracks do not alter queue order, progress, or results in another Barracks.",
+      "When a unit is queued, its configured cost is deducted; if cost cannot be paid, the queue request fails and queue/resource values remain unchanged.",
+      "Players can cancel any queued unit, including the currently training unit, and receive a 100% refund of that unit's deducted cost.",
+      "After cancellation, only the selected job is removed and the remaining queued jobs keep their original relative order.",
+      "Queue add/cancel/complete state changes are reflected through Godot signal-driven UI updates without hidden state divergence.",
+      "During long train/cancel sequences with large integer values, displayed and stored resource totals remain correct integers and never drop below zero."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #16 primary behavior.",
@@ -965,7 +1076,12 @@
     "acceptance": [
       "Taskmaster #17 behavior matches PRD lock for Design and Integrate Tech Tree for Unit Stats.",
       "Referenced automated tests pass on Windows Godot+C# baseline.",
-      "No regression on deterministic simulation and core loop constraints."
+      "No regression on deterministic simulation and core loop constraints.",
+      "Tech tree node definitions and unlock requirements are read from a JSON config loaded through Godot's resource system, and the runtime node set matches the config data.",
+      "Stat effects from unlocked tech nodes are combined multiplicatively (not additively) for attack speed, damage, production speed, range, HP, and cost.",
+      "When no relevant tech is unlocked, the multiplier for that stat remains 1.0 and barracks-trained units retain baseline stat values.",
+      "After unlocking configured tech nodes, newly trained barracks units show stat changes that match the computed config multipliers.",
+      "Unlock progression is fully config-driven: changing unlock paths/prerequisites in config changes available unlocks without code changes."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #17 primary behavior.",
@@ -1023,7 +1139,13 @@
     "acceptance": [
       "Taskmaster #18 behavior matches PRD lock for Implement Reward System with Nightly Choices.",
       "Referenced automated tests pass on Windows Godot+C# baseline.",
-      "No regression on deterministic simulation and core loop constraints."
+      "No regression on deterministic simulation and core loop constraints.",
+      "When the day/night cycle enters a night phase, one reward trigger occurs for that night and reward generation runs for that night type.",
+      "Given a night type with at least three available entries in its configured pool, the system presents exactly three reward choices from that pool.",
+      "Reward pools are loaded from JSON configuration by night type, and changing the JSON changes generated choices without code changes.",
+      "Each generated choice is a supported reward kind (resource, unit, or bonus) and is visible in the Godot UI for night reward selection.",
+      "If the current night-type pool is exhausted and generates zero choices, the system grants the configured fixed gold fallback amount exactly once for that trigger and does not present selectable reward choices for that trigger.",
+      "Automated coverage includes choice generation, pool exhaustion, fallback-to-gold behavior, and JSON-driven pool selection; in-game night progression verifies reward presentation and fallback behavior."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #18 primary behavior.",
@@ -1081,7 +1203,15 @@
     "acceptance": [
       "Taskmaster #19 behavior matches PRD lock for Add Day/Night Cycle and Game Win/Lose Conditions.",
       "Referenced automated tests pass on Windows Godot+C# baseline.",
-      "No regression on deterministic simulation and core loop constraints."
+      "No regression on deterministic simulation and core loop constraints.",
+      "A gameplay cycle runs 4 minutes of Day then 2 minutes of Night, repeating in that order for each day without skipped or reordered phases.",
+      "Game state tracks current day and cycle progress, and day numbering advances sequentially from Day1 to Day15 after each full Day+Night cycle.",
+      "When castle HP reaches 0 at any point, the run transitions to a Lose state immediately and does not later transition to Win.",
+      "When the player survives through Day15 with castle HP above 0, the run transitions to a Win state and does not later transition to Lose.",
+      "Win/Lose checks read castle HP from the building/castle system source of truth, not from UI-only values.",
+      "Godot signals are emitted for UI-observable state updates, including at least day counter changes on day progression.",
+      "End-to-end validation covers both terminal paths: forced castle destruction triggers Lose, and surviving to Day15 triggers Win.",
+      "Configured timing yields approximately 90 minutes for 15 full days (15 x (4 + 2) minutes), satisfying the stated 60-90 minute match-duration target boundary."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #19 primary behavior.",
@@ -1140,7 +1270,12 @@
     "acceptance": [
       "Taskmaster #20 behavior matches PRD lock for Integrate Combat with Friendly Fire Disabled.",
       "Referenced automated tests pass on Windows Godot+C# baseline.",
-      "No regression on deterministic simulation and core loop constraints."
+      "No regression on deterministic simulation and core loop constraints.",
+      "If attacker and target share the same team/owner, the attack is refused and target HP remains unchanged.",
+      "Player-owned units can damage enemy units or enemy buildings when a valid target is in attack range.",
+      "MG towers can acquire and damage enemy targets, and never damage same-team units or same-team walls.",
+      "Attack damage uses current config/tech-tree-derived stats for the attacker, and stat changes produce corresponding damage changes.",
+      "Automated verification includes unit tests for attack resolution and friendly-fire prevention plus an in-game scenario covering player units, enemies, MG towers, and walls where only enemies are hit."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #20 primary behavior.",
@@ -1192,7 +1327,15 @@
     "acceptance": [
       "Taskmaster #21 behavior matches PRD lock for Set Up Godot 4.5.1 C# Project with Windows Configuration.",
       "Referenced automated tests pass on Windows Godot+C# baseline.",
-      "No regression on deterministic simulation and core loop constraints."
+      "No regression on deterministic simulation and core loop constraints.",
+      "Project opens in Godot 4.5.1 with C# scripting enabled and C# project files generated without initialization errors.",
+      "Project settings set application/config/name to \"LASTKING\" and application/run/main_scene to \"res://scenes/Main.tscn\".",
+      "Project settings set display/window/size/width to 1920 and display/window/size/height to 1080.",
+      "Export presets include Windows Desktop (64-bit) and a Steam App ID placeholder for single-player configuration.",
+      "Non-Windows export targets are disabled or absent; enabling other platform targets fails acceptance.",
+      "Required project folders exist for scripts, scenes, configs, saves, and game assets organization (including assets, ui, and audio paths).",
+      "Main scene at res://scenes/Main.tscn runs on Windows without startup errors and emits console output containing \"Project setup complete\" from an attached C# script.",
+      ".NET SDK/toolchain configured for the project is compatible with Godot 4.5.1 C# and supports successful build/run."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #21 primary behavior.",
@@ -1249,7 +1392,12 @@
     "acceptance": [
       "Taskmaster #22 behavior matches PRD lock for Implement Camera and Interaction System with Edge and Keyboard Scrolling.",
       "Referenced automated tests pass on Windows Godot+C# baseline.",
-      "No regression on deterministic simulation and core loop constraints."
+      "No regression on deterministic simulation and core loop constraints.",
+      "When the mouse cursor enters a configurable edge margin near each viewport border, the camera moves in the corresponding world direction; when the cursor is outside all edge margins and no scroll keys are pressed, camera position does not change.",
+      "Pressing scroll actions mapped to Arrow keys and WASD moves the camera in the expected cardinal directions, and releasing those keys stops keyboard-driven scrolling.",
+      "Camera translation is smooth and frame-rate independent, with movement scaled by delta time and a configurable scroll speed value that can be adjusted without code changes.",
+      "Camera movement is clamped to configured world boundaries so the visible area cannot be scrolled beyond map limits on any side.",
+      "Edge scrolling and keyboard scrolling can both be active in the same frame without input loss, and resulting movement remains continuous."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #22 primary behavior.",
@@ -1306,7 +1454,14 @@
     "acceptance": [
       "Taskmaster #23 behavior matches PRD lock for Develop Runtime Speed Controls (Pause, 1x, 2x) with Timer Freeze.",
       "Referenced automated tests pass on Windows Godot+C# baseline.",
-      "No regression on deterministic simulation and core loop constraints."
+      "No regression on deterministic simulation and core loop constraints.",
+      "Pause control sets runtime speed to 0 immediately, and gameplay progression halts while paused.",
+      "1x control sets runtime speed to 1x, and gameplay progression resumes at baseline speed.",
+      "2x control sets runtime speed to 2x, and gameplay progression is measurably faster than at 1x over the same interval.",
+      "When paused, active and queued countdown timers (including wave timers) stop decrementing and do not complete early.",
+      "After unpausing, paused countdown timers resume from their remaining time rather than restarting or skipping elapsed steps.",
+      "UI speed controls expose Pause, 1x, and 2x, and each control updates active speed state and applies the matching runtime behavior.",
+      "Nodes intended to pause with gameplay stop processing during pause and resume processing when gameplay is unpaused."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #23 primary behavior.",
@@ -1363,7 +1518,12 @@
     "acceptance": [
       "Taskmaster #24 behavior matches PRD lock for Create UI Feedback System for Invalid Actions and Errors.",
       "Referenced automated tests pass on Windows Godot+C# baseline.",
-      "No regression on deterministic simulation and core loop constraints."
+      "No regression on deterministic simulation and core loop constraints.",
+      "When invalid placement is attempted (such as blocked or invalid terrain), the UI shows a temporary feedback message (for example, \"Cannot build here.\") and the message auto-hides after a short timeout.",
+      "When a blocked action is attempted, the UI feedback includes the specific blocking reason, and the blocked action is refused without changing game state.",
+      "When migration or load fails (including corrupted save input), a persistent error dialog is shown with error details and remains visible until the user dismisses it.",
+      "Feedback messages are non-intrusive: temporary feedback does not block normal gameplay interaction while visible.",
+      "Feedback display is event-driven: invalid placement, blocked action, and migration/load error events each trigger their corresponding UI feedback output."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #24 primary behavior.",
@@ -1418,7 +1578,13 @@
     "acceptance": [
       "Taskmaster #25 behavior matches PRD lock for Build Save System with Autosave and Migration Handling.",
       "Referenced automated tests pass on Windows Godot+C# baseline.",
-      "No regression on deterministic simulation and core loop constraints."
+      "No regression on deterministic simulation and core loop constraints.",
+      "Saving uses exactly one autosave slot, and consecutive autosaves overwrite the same slot instead of creating additional save files.",
+      "At the start of each in-game day, an autosave is triggered and the autosave file is created or updated in user storage on Windows.",
+      "Loading a valid autosave restores persisted gameplay state values, including game state, seed, and wave timer, to the saved values.",
+      "When save version is incompatible with the current version, load is rejected, a user-visible migration error is shown, and runtime state remains unchanged.",
+      "When save content is invalid or corrupt, load fails with explicit error feedback and does not crash or partially apply state.",
+      "Save/load file access uses Windows-safe user-path semantics and handles missing file and read/write failures with deterministic, testable outcomes."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #25 primary behavior.",
@@ -1473,7 +1639,13 @@
     "acceptance": [
       "Taskmaster #26 behavior matches PRD lock for Integrate Steam Cloud Save with Account Binding.",
       "Referenced automated tests pass on Windows Godot+C# baseline.",
-      "No regression on deterministic simulation and core loop constraints."
+      "No regression on deterministic simulation and core loop constraints.",
+      "When a Steam development account is logged in, triggering save through the existing SaveManager uploads the active save file to Steam Cloud and reports a successful upload result.",
+      "After a successful cloud upload, restarting the game and loading the same profile restores save data from Steam Cloud, and the loaded data matches the previously uploaded save content.",
+      "If local and cloud save versions conflict, the game blocks automatic overwrite and shows a user choice prompt before deciding which version to load.",
+      "If upload or download fails due to network/API/unavailable cloud conditions, the failure is surfaced to the user and the pre-existing local save file remains unchanged.",
+      "Save data is bound to the current Steam account identity, and cloud operations only read/write that account's cloud save scope.",
+      "Steam Cloud integration remains compatible with the current SaveManager workflow, and local save/load continues to work when Steam Cloud is unavailable."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #26 primary behavior.",
@@ -1528,7 +1700,12 @@
     "acceptance": [
       "Taskmaster #27 behavior matches PRD lock for Implement Achievements System with Deterministic Unlocking.",
       "Referenced automated tests pass on Windows Godot+C# baseline.",
-      "No regression on deterministic simulation and core loop constraints."
+      "No regression on deterministic simulation and core loop constraints.",
+      "Achievement list UI displays all configured achievements from session start, with name and description visible by default (non-hidden).",
+      "When a defined deterministic condition is met (for example, surviving day 15), the matching achievement changes to unlocked state and an unlock notification is shown.",
+      "Replaying the same scenario with the same inputs unlocks the same achievements in the same order across runs.",
+      "Events that do not satisfy an achievement condition leave that achievement locked and do not emit an unlock notification.",
+      "If Steam integration is active during gameplay, unlocked achievements are synchronized to Steam stats in the same session."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #27 primary behavior.",
@@ -1583,7 +1760,13 @@
     "acceptance": [
       "Taskmaster #28 behavior matches PRD lock for Set Up Localization (i18n) for zh-CN and en-US.",
       "Referenced automated tests pass on Windows Godot+C# baseline.",
-      "No regression on deterministic simulation and core loop constraints."
+      "No regression on deterministic simulation and core loop constraints.",
+      "Localization supports both en-US and zh-CN: selecting either language loads that locale's translations and resolves the same key (for example UI_PAUSE) to locale-specific text.",
+      "Language switching is available in settings, and changing language updates already-visible localized UI text in the same running session.",
+      "When a key is missing in the active locale, the rendered text falls back to the key string itself (for example, MISSING_KEY renders as \"MISSING_KEY\").",
+      "Language preference is persisted to config: after setting zh-CN or en-US and restarting the game, the previously selected language is restored automatically.",
+      "At launch, only en-US and zh-CN are accepted locale options; requesting an unsupported locale does not change the current language state.",
+      "Localization key identifiers used by UI remain stable across patches: existing keys referenced by UI are not renamed or removed unintentionally."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #28 primary behavior.",
@@ -1638,7 +1821,12 @@
     "acceptance": [
       "Taskmaster #29 behavior matches PRD lock for Add Audio Settings for Music and SFX Channels.",
       "Referenced automated tests pass on Windows Godot+C# baseline.",
-      "No regression on deterministic simulation and core loop constraints."
+      "No regression on deterministic simulation and core loop constraints.",
+      "The settings UI provides separate controls for music volume and SFX volume.",
+      "Moving either control changes the audible level of its own channel immediately while the game is running.",
+      "After the player changes music and SFX volumes, closing and relaunching the game preserves and reapplies the same effective levels at startup.",
+      "During simultaneous music and sound playback, changing music volume leaves current SFX loudness unchanged at the same SFX setting, and changing SFX volume leaves music loudness unchanged at the same music setting.",
+      "Rapid slider adjustments during playback do not interrupt channel playback and do not trigger runtime errors."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #29 primary behavior.",
@@ -1701,7 +1889,12 @@
     "acceptance": [
       "Taskmaster #30 behavior matches PRD lock for Optimize for Performance Targets (45 FPS 1% Low, 60 FPS Average).",
       "Referenced automated tests pass on Windows Godot+C# baseline.",
-      "No regression on deterministic simulation and core loop constraints."
+      "No regression on deterministic simulation and core loop constraints.",
+      "Deterministic baseline profiles are captured using locked camera paths and scripted sessions, and two repeated runs stay within the predefined variance window.",
+      "A profiling report identifies and ranks frame-time hotspots by subsystem (AI, spawn, render, UI) with repeatable timing data per offender.",
+      "Targeted optimizations to update loops, pooling, and expensive queries deliver measurable frame-time improvement versus baseline while regression tests confirm gameplay semantics are unchanged.",
+      "Stress and endurance runs at launch presets cover worst-case wave mixes and UI-heavy scenarios, and the report records memory growth and stutter spikes with pass/fail thresholds or explicit failure reasons plus traces.",
+      "Standardized gate artifacts are written to logs/perf and logs/ci for Windows headless/playable fixed-seed runs, with integer threshold fields and verdicts for baseline, 1% low FPS, and average FPS."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #30 primary behavior.",
@@ -1753,7 +1946,12 @@
     "acceptance": [
       "Taskmaster #31 behavior matches PRD lock for Set up Godot 4.5.1 C# project structure for config contracts.",
       "Referenced automated tests pass on Windows Godot+C# baseline.",
-      "No regression on deterministic simulation and core loop constraints."
+      "No regression on deterministic simulation and core loop constraints.",
+      "The project opens successfully in Godot 4.5.1 on Windows, and C# project generation/build completes without compile errors.",
+      "Both directories `config/schemas/` and `config/samples/` exist in the project structure after setup.",
+      "Export configuration includes a Windows Desktop target and does not enable non-Windows export targets.",
+      "Project settings are configured for single-player operation, with networking/multiplayer features disabled so gameplay does not depend on online connectivity.",
+      "A `README.md` file exists and documents the config-first approach, including the purpose of `config/schemas/` and `config/samples/`."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #31 primary behavior.",
@@ -1808,7 +2006,14 @@
     "acceptance": [
       "Taskmaster #32 behavior matches PRD lock for Implement enemy-config.schema.json with validation rules.",
       "Referenced automated tests pass on Windows Godot+C# baseline.",
-      "No regression on deterministic simulation and core loop constraints."
+      "No regression on deterministic simulation and core loop constraints.",
+      "config/schemas/enemy-config.schema.json exists and declares \"$schema\": \"http://json-schema.org/draft-07/schema#\" with top-level \"type\": \"object\".",
+      "The schema defines an \"enemies\" property as an array, and each array item is an object schema for a single enemy configuration.",
+      "Each enemy item schema includes at least enemy_id (string), health (number, minimum 1), damage (number, minimum 0), and speed (number, minimum 0), and these fields are listed in required.",
+      "The schema includes configurable enemy type/identity and behavior-related fields with explicit type constraints, so behavior selection is data-driven by config.",
+      "Validator-based tests on Windows C# reject payloads with missing required fields, wrong field types, or numeric values below declared minima.",
+      "Validator-based tests on Windows C# accept at least one valid payload where all required fields and numeric constraints are satisfied.",
+      "Enemy balance values are sourced from schema-validated configuration data; adding or adjusting enemy balance values does not require hardcoded per-enemy constants for schema compliance."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #32 primary behavior.",
@@ -1863,7 +2068,14 @@
     "acceptance": [
       "Taskmaster #33 behavior matches PRD lock for Implement difficulty-config.schema.json with versioning and lock constraints.",
       "Referenced automated tests pass on Windows Godot+C# baseline.",
-      "No regression on deterministic simulation and core loop constraints."
+      "No regression on deterministic simulation and core loop constraints.",
+      "A file exists at `config/schemas/difficulty-config.schema.json` and parses as valid JSON.",
+      "The schema requires both `version` and `difficulty_level`, and validation rejects inputs where `version` is missing.",
+      "`version` is validated as a string matching `^\\d+\\.\\d+$`; examples like `1.0` pass while `v1` or `1` fail.",
+      "`difficulty_level` is validated as a string enum with only `easy`, `medium`, and `hard`; any other value is rejected.",
+      "`modifiers` is defined as an object and its declared modifier fields are numeric; non-numeric modifier values are rejected.",
+      "Per PRD lock constraint, once a run starts, attempts to change active difficulty are refused or leave active difficulty unchanged.",
+      "Schema validation tests include positive and negative samples covering invalid enum, missing `version`, and invalid `version` pattern with expected pass/fail outcomes."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #33 primary behavior.",
@@ -1918,7 +2130,13 @@
     "acceptance": [
       "Taskmaster #34 behavior matches PRD lock for Implement spawn-config.schema.json for deterministic wave composition.",
       "Referenced automated tests pass on Windows Godot+C# baseline.",
-      "No regression on deterministic simulation and core loop constraints."
+      "No regression on deterministic simulation and core loop constraints.",
+      "config/schemas/spawn-config.schema.json exists and validates a spawn config object with seed (integer) and waves (array) fields.",
+      "Each wave object validation enforces day as an integer in [1, 15] and includes day/night timing values aligned to a 4-minute Day + 2-minute Night cycle.",
+      "Enemy entries in each wave validate enemy_id as string and count as integer with minimum 0; negative counts or wrong types fail validation.",
+      "Validation test data includes at least one valid config and failing cases for day outside 1-15 and negative enemy count, and failures are observable in test results.",
+      "Determinism test demonstrates that repeated wave generation with the same seed and the same valid config yields the same wave timeline, while invalid config is rejected with no timeline output.",
+      "Wave timeline generation inputs are restricted to schema-valid config values plus seed, with no hidden runtime override required to reproduce results."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #34 primary behavior.",
@@ -1973,7 +2191,13 @@
     "acceptance": [
       "Taskmaster #35 behavior matches PRD lock for Implement pressure-normalization.config.schema.json with baseline constants and range checks.",
       "Referenced automated tests pass on Windows Godot+C# baseline.",
-      "No regression on deterministic simulation and core loop constraints."
+      "No regression on deterministic simulation and core loop constraints.",
+      "config/schemas/pressure-normalization.config.schema.json exists and is parseable as JSON Schema.",
+      "Schema defines baseline, min_pressure, and max_pressure as number-typed fields, and normalization_factors as an array whose items are number-typed.",
+      "Schema rejects configurations that omit baseline, min_pressure, max_pressure, or normalization_factors.",
+      "Schema encodes explicit baseline and pressure-bound constants (including a baseline lower bound) instead of relying on implicit defaults.",
+      "Schema validation rejects configurations where min_pressure is greater than or equal to max_pressure.",
+      "Schema validation rejects non-numeric baseline values and accepts numeric baseline values that satisfy declared bounds."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #35 primary behavior.",
@@ -2031,7 +2255,12 @@
     "acceptance": [
       "Taskmaster #36 behavior matches PRD lock for Create sample JSON files for all configs with valid data.",
       "Referenced automated tests pass on Windows Godot+C# baseline.",
-      "No regression on deterministic simulation and core loop constraints."
+      "No regression on deterministic simulation and core loop constraints.",
+      "difficulty-config.sample.json is present as a release sample artifact, passes schema and semantic validation, and includes version metadata, deterministic launch-tier defaults, and lock-at-start fields.",
+      "spawn-config.sample.json is present as a release sample artifact, passes schema and semantic validation, and includes Day1-Day15 cadence coverage plus channel isolation flags required by the runtime parser.",
+      "pressure-normalization.config.sample.json is present as a release sample artifact, passes schema and semantic validation, and declares explicit baseline constants with all tuning values inside guard bands.",
+      "Negative fixtures include malformed and boundary-breach samples for these config domains, each negative case fails validation with explicit reason codes, and positive samples remain passing.",
+      "A CI-consumable validation summary artifact is generated with schema and semantic validation outcomes for all positive and negative fixtures, and acceptance fails if this artifact is missing."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #36 primary behavior.",
@@ -2091,7 +2320,12 @@
     "acceptance": [
       "Taskmaster #37 behavior matches PRD lock for Implement config validation and fallback handling in C#.",
       "Referenced automated tests pass on Windows Godot+C# baseline.",
-      "No regression on deterministic simulation and core loop constraints."
+      "No regression on deterministic simulation and core loop constraints.",
+      "Schema-invalid config payloads are rejected by structural validation with deterministic normalized error codes and error payload fields.",
+      "Semantic rule violations are validated and each violation maps to an explicit policy action with a testable reason key.",
+      "Runtime config application enforces immutable and difficulty-locked fields: allowed fields fallback to built-in safe defaults, and forbidden changes are rejected without mutating protected runtime state.",
+      "Validation decisions emit standardized audit entries and CI summary artifacts in logs/ci, including policy decision trace and rejection/fallback reasons.",
+      "A valid/invalid/boundary config matrix demonstrates policy-consistent accept, reject, or fallback outcomes with observable logs."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #37 primary behavior.",
@@ -2146,7 +2380,12 @@
     "acceptance": [
       "Taskmaster #38 behavior matches PRD lock for Integrate config governance for gameplay tuning.",
       "Referenced automated tests pass on Windows Godot+C# baseline.",
-      "No regression on deterministic simulation and core loop constraints."
+      "No regression on deterministic simulation and core loop constraints.",
+      "Changing only enemy-config values updates corresponding enemy runtime stats (including health) in gameplay without modifying code; unchanged stats after a config-only change fails acceptance.",
+      "Changing only spawn-config timing values updates wave spawn timing in gameplay without modifying code; unchanged timing after a config-only change fails acceptance.",
+      "Wave generation uses spawn-config seed such that repeated runs with the same seed produce identical wave composition/order, and changing the seed changes composition/order.",
+      "When valid config values are present, gameplay systems do not override enemy stats or wave-spawn parameters with hardcoded constants.",
+      "Integration scenarios with at least two distinct config sets demonstrate that enemy stats and wave composition outputs follow config differences while remaining deterministic under a fixed seed."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #38 primary behavior.",
@@ -2201,7 +2440,11 @@
     "acceptance": [
       "Taskmaster #39 behavior matches PRD lock for Add config hash/version to battle report metadata for auditability.",
       "Referenced automated tests pass on Windows Godot+C# baseline.",
-      "No regression on deterministic simulation and core loop constraints."
+      "No regression on deterministic simulation and core loop constraints.",
+      "Each generated battle report includes metadata key \"config_hash\" or \"config_version\" with a non-empty value tied to the exact config used for that battle.",
+      "Using the same config content/version across repeated runs produces the same metadata value in battle reports.",
+      "Changing config content or its declared version before report generation produces a different metadata value in the next battle report.",
+      "A battle report missing both \"config_hash\" and \"config_version\" is treated as invalid output and is not accepted as audit-complete."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #39 primary behavior.",
@@ -2256,7 +2499,11 @@
     "acceptance": [
       "Taskmaster #40 behavior matches PRD lock for Implement version migration rule with force migration.",
       "Referenced automated tests pass on Windows Godot+C# baseline.",
-      "No regression on deterministic simulation and core loop constraints."
+      "No regression on deterministic simulation and core loop constraints.",
+      "When a loaded config version differs from the expected version, the loaded config is rejected and runtime configuration falls back to default values.",
+      "On version mismatch, an error log entry is emitted that explicitly indicates migration is required.",
+      "No dual-version compatibility path is active: mismatched-version configs are never partially accepted or auto-adapted.",
+      "Automated unit tests cover both matching and mismatching config versions, and verify fallback occurs only for mismatches."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #40 primary behavior.",
