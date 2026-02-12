@@ -16,9 +16,9 @@ Chapter-Refs:
   - CH07
   - CH10
 Overlay-Refs:
-  - docs/architecture/overlays/PRD-Guild-Manager/08/_index.md
-  - docs/architecture/overlays/PRD-Guild-Manager/08/08-Feature-Slice-Guild-Manager.md
-  - docs/architecture/overlays/PRD-Guild-Manager/08/ACCEPTANCE_CHECKLIST.md
+  - docs/architecture/overlays/PRD-lastking-T2/08/_index.md
+  - docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md
+  - docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md
 Test-Refs:
   - Game.Core.Tests/Domain/GuildCoreTests.cs
   - Game.Core.Tests/Domain/GuildMemberTests.cs
@@ -184,7 +184,7 @@ Base 文档使用 `${DOMAIN_PREFIX}` 占位符：
 - [x] 包含输入/输出/状态/存储与非功能约束
 
 ### 7.2 Overlay/08 文档合规
-- [ ] 在 overlays/PRD-Guild-Manager/08 下调整功能纵切文档
+- [ ] 在 overlays/PRD-lastking-T2/08 下调整功能纵切文档
 - [ ] 严格遵守"引用不复制"规则（仅引用 01/02/03 章口径）
 - [ ] 不在 08 章复制阈值/策略
 
@@ -243,9 +243,9 @@ Tests.Godot/tests/Integration/test_guild_workflow.gd
 
 ### A.4 Overlay 文档路径
 ```
-docs/architecture/overlays/PRD-Guild-Manager/08/_index.md
-docs/architecture/overlays/PRD-Guild-Manager/08/08-Feature-Slice-Guild-Manager.md
-docs/architecture/overlays/PRD-Guild-Manager/08/ACCEPTANCE_CHECKLIST.md
+docs/architecture/overlays/PRD-lastking-T2/08/_index.md
+docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md
+docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md
 ```
 
 ---

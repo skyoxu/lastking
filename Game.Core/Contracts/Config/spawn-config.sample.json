@@ -1,0 +1,60 @@
+{
+  "version": "1.0.0",
+  "spawn_model": "greedy_fill_plus_seeded_weighted_topk",
+  "seed_formula": "run_seed + day + lane + spawn_tick",
+  "refresh_step_seconds": 10,
+  "active_spawn_window_percent": 80,
+  "inactive_spawn_window_percent": 20,
+  "top_k": 5,
+  "remainder_budget_policy": "discard",
+  "lane_ratio": {
+    "default": {
+      "left": 50,
+      "right": 50
+    },
+    "allow_override": true
+  },
+  "night_type_weights": {
+    "normal": 100,
+    "elite": 125,
+    "boss": 150
+  },
+  "channel_budget_multipliers_source": {
+    "normal": "difficulty.budget_mult_normal",
+    "elite": "difficulty.budget_mult_elite",
+    "boss": "difficulty.budget_mult_boss"
+  },
+  "night_schedule": {
+    "elite_days": [
+      5,
+      10
+    ],
+    "boss_days": [
+      15
+    ],
+    "boss_count": {
+      "mode": "config-driven",
+      "default": 2,
+      "by_day": {
+        "15": 2
+      },
+      "by_difficulty": {},
+      "by_day_and_difficulty": {}
+    }
+  },
+  "candidate_filters": {
+    "use_min_day_max_day": true,
+    "use_night_type_mask": true,
+    "exclude_boss_from_non_boss_nights": true
+  },
+  "sampling": {
+    "weight_formula": "spawn_weight * night_type_weight",
+    "deterministic_rng": "pcg32",
+    "deterministic_tie_breaker": "seeded_pseudo_random"
+  },
+  "safety_fallback": {
+    "on_config_load_failure": "use_builtin_safe_default_and_warn",
+    "on_no_eligible_candidates": "discard_tick_budget"
+  },
+  "night_type_weight_semantics": "sampling-priority-only-not-channel-budget"
+}

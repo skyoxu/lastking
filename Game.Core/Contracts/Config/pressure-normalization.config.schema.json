@@ -1,0 +1,214 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lastking.local/schemas/pressure-normalization.config.schema.json",
+  "title": "Lastking Pressure Normalization Config Schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "mode",
+    "day_count",
+    "rounding_policy",
+    "tie_breaker",
+    "score_range",
+    "weights",
+    "component_formulas",
+    "base_by_night",
+    "elite_boss_component",
+    "reference_metrics"
+  ],
+  "properties": {
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semantic version of pressure normalization contract"
+    },
+    "mode": {
+      "type": "string",
+      "const": "normalized-weighted-score-v1",
+      "description": "Locks algorithm family for reproducible battle report scoring"
+    },
+    "day_count": {
+      "type": "integer",
+      "const": 15,
+      "description": "Reference day count for the current campaign lock"
+    },
+    "rounding_policy": {
+      "type": "string",
+      "const": "floor",
+      "description": "Integer-only deterministic rounding policy"
+    },
+    "tie_breaker": {
+      "type": "string",
+      "const": "later-night-wins",
+      "description": "When pressure score ties, select later night"
+    },
+    "score_range": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "min",
+        "max"
+      ],
+      "properties": {
+        "min": {
+          "type": "integer",
+          "const": 0
+        },
+        "max": {
+          "type": "integer",
+          "const": 100
+        }
+      }
+    },
+    "weights": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "budget_p",
+        "spawn_count_p",
+        "castle_damage_p",
+        "blocked_path_p",
+        "elite_boss_p"
+      ],
+      "properties": {
+        "budget_p": {
+          "type": "integer",
+          "const": 35
+        },
+        "spawn_count_p": {
+          "type": "integer",
+          "const": 25
+        },
+        "castle_damage_p": {
+          "type": "integer",
+          "const": 20
+        },
+        "blocked_path_p": {
+          "type": "integer",
+          "const": 10
+        },
+        "elite_boss_p": {
+          "type": "integer",
+          "const": 10
+        }
+      },
+      "description": "Locked pressure component weights"
+    },
+    "component_formulas": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "budget_p",
+        "spawn_count_p",
+        "castle_damage_p",
+        "blocked_path_p",
+        "elite_boss_p",
+        "final_score"
+      ],
+      "properties": {
+        "budget_p": {
+          "type": "string",
+          "const": "floor(100 * normal_budget_used / normal_budget_ref_day)"
+        },
+        "spawn_count_p": {
+          "type": "string",
+          "const": "floor(100 * spawned_count / spawned_ref_day)"
+        },
+        "castle_damage_p": {
+          "type": "string",
+          "const": "floor(100 * castle_damage / castle_max_hp)"
+        },
+        "blocked_path_p": {
+          "type": "string",
+          "const": "floor(100 * blocked_seconds / night_seconds)"
+        },
+        "elite_boss_p": {
+          "type": "string",
+          "const": "clamp(base_by_night + min(20, elite_spawned*2 + boss_spawned*10), 0, 100)"
+        },
+        "final_score": {
+          "type": "string",
+          "const": "(35*budget_p + 25*spawn_count_p + 20*castle_damage_p + 10*blocked_path_p + 10*elite_boss_p)/100"
+        }
+      }
+    },
+    "base_by_night": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "normal",
+        "elite",
+        "boss"
+      ],
+      "properties": {
+        "normal": {
+          "type": "integer",
+          "const": 10
+        },
+        "elite": {
+          "type": "integer",
+          "const": 60
+        },
+        "boss": {
+          "type": "integer",
+          "const": 70
+        }
+      }
+    },
+    "elite_boss_component": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "elite_multiplier",
+        "boss_multiplier",
+        "dynamic_cap"
+      ],
+      "properties": {
+        "elite_multiplier": {
+          "type": "integer",
+          "const": 2
+        },
+        "boss_multiplier": {
+          "type": "integer",
+          "const": 10
+        },
+        "dynamic_cap": {
+          "type": "integer",
+          "const": 20
+        }
+      }
+    },
+    "reference_metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "normal_budget_ref_day",
+        "spawned_ref_day"
+      ],
+      "properties": {
+        "normal_budget_ref_day": {
+          "$ref": "#/$defs/daySeries",
+          "description": "Locked baseline series for normal budget reference by day index"
+        },
+        "spawned_ref_day": {
+          "$ref": "#/$defs/daySeries",
+          "description": "Locked baseline series for spawned unit reference by day index"
+        }
+      },
+      "description": "Two baseline references are mandatory and cannot be omitted"
+    }
+  },
+  "$defs": {
+    "daySeries": {
+      "type": "array",
+      "minItems": 15,
+      "maxItems": 15,
+      "items": {
+        "type": "integer",
+        "minimum": 1
+      },
+      "description": "Index 0..14 maps to Day1..Day15"
+    }
+  }
+}

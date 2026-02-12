@@ -1,0 +1,147 @@
+{
+  "tasks": [
+    {
+      "id": 21,
+      "title": "Implement camera control (edge and keyboard scrolling)",
+      "description": "Deliver map navigation controls for fixed-height, horizontal multi-screen battlefield.",
+      "status": "pending",
+      "dependencies": [
+        1
+      ],
+      "priority": "medium",
+      "details": "Implement camera controller in adapter layer with configurable scroll speed, dead zones, and boundary clamps for ~3-screen map width.",
+      "testStrategy": "Scene tests validate camera movement, boundary clamping, and input source parity.",
+      "subtasks": []
+    },
+    {
+      "id": 22,
+      "title": "Implement pause/1x/2x time controls with full freeze",
+      "description": "Provide runtime speed controls where pause freezes all timers and queued countdowns.",
+      "status": "pending",
+      "dependencies": [
+        2,
+        21
+      ],
+      "priority": "high",
+      "details": "Hook time-scale controller into core tick abstraction. Pause must freeze day/night, spawn scheduling, training, repairs, and build timers consistently.",
+      "testStrategy": "Integration tests assert zero progression under pause and deterministic resume across all timer subsystems.",
+      "subtasks": []
+    },
+    {
+      "id": 23,
+      "title": "Implement action feedback and failure reason prompts",
+      "description": "Show clear UI prompts for invalid placement, blocked action, and unavailable operation causes.",
+      "status": "pending",
+      "dependencies": [
+        12,
+        22
+      ],
+      "priority": "medium",
+      "details": "Implement structured reason-code to localized message mapping and UI toast/dialog routing. Include prompts for migration errors and rejected config load.",
+      "testStrategy": "UI tests verify reason-code coverage and localization key mapping for all failure classes.",
+      "subtasks": []
+    },
+    {
+      "id": 24,
+      "title": "Implement autosave slot manager (single slot policy)",
+      "description": "Implement one autosave slot with day-start triggers and immutable slot ownership policy.",
+      "status": "pending",
+      "dependencies": [
+        3,
+        22
+      ],
+      "priority": "high",
+      "details": "Add save manager using versioned payload with single autosave channel. Ensure manual save flow cannot overwrite autosave channel if policy forbids.",
+      "testStrategy": "Unit tests validate day-start autosave trigger and slot write-protection invariants.",
+      "subtasks": []
+    },
+    {
+      "id": 25,
+      "title": "Implement forced save migration and invalid-load rejection",
+      "description": "Require migration for old payloads and reject invalid saves with explicit user guidance.",
+      "status": "pending",
+      "dependencies": [
+        24
+      ],
+      "priority": "high",
+      "details": "Create migration pipeline with schema/version checks and fail-fast rejection paths. Expose clear remediation prompts when migration fails.",
+      "testStrategy": "Migration tests cover forward migration success, unsupported version failure, and corrupted payload rejection.",
+      "subtasks": []
+    },
+    {
+      "id": 26,
+      "title": "Implement Steam cloud synchronization integration",
+      "description": "Integrate cloud save sync for Steam-account-bound profiles with deterministic conflict policy.",
+      "status": "pending",
+      "dependencies": [
+        24,
+        25
+      ],
+      "priority": "medium",
+      "details": "Implement cloud sync adapter with manifest and package strategy, include conflict detection and predictable winner policy documented for UX.",
+      "testStrategy": "Adapter tests validate upload/download lifecycle and conflict handling simulation.",
+      "subtasks": []
+    },
+    {
+      "id": 27,
+      "title": "Implement battle report generation pipeline",
+      "description": "Persist and display battle report fields: seed, wave timeline, queue snapshots, rewards, economy outcomes.",
+      "status": "pending",
+      "dependencies": [
+        10,
+        20,
+        24
+      ],
+      "priority": "medium",
+      "details": "Create report DTO and serializer for end-of-run summary. Include deterministic identifiers for replay comparability and diagnostics.",
+      "testStrategy": "Unit tests validate schema completeness and deterministic report content for fixed-seed sessions.",
+      "subtasks": []
+    },
+    {
+      "id": 28,
+      "title": "Implement deterministic achievement framework (20 visible)",
+      "description": "Implement 20 non-hidden achievements with explicit trigger conditions and timing windows.",
+      "status": "pending",
+      "dependencies": [
+        27
+      ],
+      "priority": "medium",
+      "details": "Create achievement registry and trigger engine bound to event stream and report milestones. Ensure deterministic unlock behavior under replay.",
+      "testStrategy": "Unit tests and integration scenarios verify trigger conditions and no duplicate unlock regressions.",
+      "subtasks": []
+    },
+    {
+      "id": 29,
+      "title": "Implement bilingual i18n key system with runtime switch",
+      "description": "Provide zh-CN/en-US launch support, runtime switching, and previous-language memory.",
+      "status": "pending",
+      "dependencies": [
+        23
+      ],
+      "priority": "medium",
+      "details": "Define key-based localization catalog structure and fallback behavior. Persist language preference locally and reload safely on startup.",
+      "testStrategy": "Localization tests validate key completeness, fallback rules, and runtime switch persistence.",
+      "subtasks": []
+    },
+    {
+      "id": 30,
+      "title": "Implement launch QA gates for audio and performance baselines",
+      "description": "Establish smoke checks for music/SFX channels and performance targets (1% low 45 FPS, avg 60 FPS).",
+      "status": "pending",
+      "dependencies": [
+        22,
+        27
+      ],
+      "priority": "medium",
+      "details": "Add headless and playable smoke scripts collecting FPS and stability metrics into logs. Include pass/fail criteria and baseline trend output for CI-local use.",
+      "testStrategy": "Performance smoke test verifies thresholds under fixed test scene and records reproducible summaries.",
+      "subtasks": []
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0",
+    "generatedAt": "2026-02-11T19:05:50",
+    "sourceShard": "03-ui-save-ops-quality",
+    "taskCount": 10
+  }
+}

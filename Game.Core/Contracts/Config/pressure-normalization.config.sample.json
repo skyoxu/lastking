@@ -1,0 +1,72 @@
+{
+  "version": "1.0.0",
+  "mode": "normalized-weighted-score-v1",
+  "day_count": 15,
+  "rounding_policy": "floor",
+  "tie_breaker": "later-night-wins",
+  "score_range": {
+    "min": 0,
+    "max": 100
+  },
+  "weights": {
+    "budget_p": 35,
+    "spawn_count_p": 25,
+    "castle_damage_p": 20,
+    "blocked_path_p": 10,
+    "elite_boss_p": 10
+  },
+  "component_formulas": {
+    "budget_p": "floor(100 * normal_budget_used / normal_budget_ref_day)",
+    "spawn_count_p": "floor(100 * spawned_count / spawned_ref_day)",
+    "castle_damage_p": "floor(100 * castle_damage / castle_max_hp)",
+    "blocked_path_p": "floor(100 * blocked_seconds / night_seconds)",
+    "elite_boss_p": "clamp(base_by_night + min(20, elite_spawned*2 + boss_spawned*10), 0, 100)",
+    "final_score": "(35*budget_p + 25*spawn_count_p + 20*castle_damage_p + 10*blocked_path_p + 10*elite_boss_p)/100"
+  },
+  "base_by_night": {
+    "normal": 10,
+    "elite": 60,
+    "boss": 70
+  },
+  "elite_boss_component": {
+    "elite_multiplier": 2,
+    "boss_multiplier": 10,
+    "dynamic_cap": 20
+  },
+  "reference_metrics": {
+    "normal_budget_ref_day": [
+      50,
+      60,
+      72,
+      86,
+      104,
+      124,
+      149,
+      179,
+      215,
+      258,
+      310,
+      372,
+      446,
+      535,
+      642
+    ],
+    "spawned_ref_day": [
+      10,
+      12,
+      14,
+      17,
+      20,
+      24,
+      29,
+      34,
+      40,
+      47,
+      55,
+      64,
+      74,
+      85,
+      98
+    ]
+  }
+}

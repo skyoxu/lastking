@@ -1,0 +1,150 @@
+{
+  "tasks": [
+    {
+      "id": 31,
+      "title": "Formalize enemy-config schema and loader contract",
+      "description": "Lock enemy composition and scaling fields into schema-driven validation and typed loading.",
+      "status": "pending",
+      "dependencies": [],
+      "priority": "high",
+      "details": "Implement schema contract mapping and typed parser for enemy archetypes, tags, costs, scaling flags, and channel compatibility.",
+      "testStrategy": "Schema contract tests validate required fields, enum domains, and invalid payload rejection.",
+      "subtasks": []
+    },
+    {
+      "id": 32,
+      "title": "Formalize difficulty-config schema with run-start lock",
+      "description": "Ensure difficulty settings are schema-validated and immutable after match start.",
+      "status": "pending",
+      "dependencies": [
+        31
+      ],
+      "priority": "high",
+      "details": "Implement difficulty schema parser and runtime lock policy enforcement at session bootstrap. Reject mid-run mutation attempts.",
+      "testStrategy": "Unit tests validate lock behavior and reject illegal runtime updates.",
+      "subtasks": []
+    },
+    {
+      "id": 33,
+      "title": "Formalize spawn-config schema and validator rules",
+      "description": "Encode spawn window cadence, channel distributions, and policy constraints in schema+rule contracts.",
+      "status": "pending",
+      "dependencies": [
+        31,
+        32
+      ],
+      "priority": "high",
+      "details": "Implement schema binding for timeline windows, lane weights, and channel rules. Integrate validator rules for semantic checks beyond JSON schema.",
+      "testStrategy": "Contract tests cover both structural validation and semantic rule validation failures.",
+      "subtasks": []
+    },
+    {
+      "id": 34,
+      "title": "Formalize pressure-normalization schema and sample baselines",
+      "description": "Lock pressure normalization baselines and allowable tuning ranges via schema.",
+      "status": "pending",
+      "dependencies": [
+        33
+      ],
+      "priority": "high",
+      "details": "Define baseline constants and clamp ranges in pressure-normalization contract. Provide sample values as reference tuning baseline.",
+      "testStrategy": "Validation tests ensure baseline constants exist and out-of-range values are rejected.",
+      "subtasks": []
+    },
+    {
+      "id": 35,
+      "title": "Implement config repository with version/hash identity",
+      "description": "Create unified config repository exposing version and hash metadata for deterministic reproducibility.",
+      "status": "pending",
+      "dependencies": [
+        31,
+        32,
+        33,
+        34
+      ],
+      "priority": "medium",
+      "details": "Implement repository that loads validated contracts, computes content hash, and publishes runtime identity metadata to battle report context.",
+      "testStrategy": "Unit tests verify stable hashing and deterministic identity across identical inputs.",
+      "subtasks": []
+    },
+    {
+      "id": 36,
+      "title": "Implement invalid-config policy and safe fallback behavior",
+      "description": "Reject invalid config loads and apply built-in safe defaults where policy permits.",
+      "status": "pending",
+      "dependencies": [
+        35
+      ],
+      "priority": "high",
+      "details": "Implement policy matrix for hard-reject vs fallback cases. Surface explicit reason codes and ensure failure paths are user-visible and logged.",
+      "testStrategy": "Negative tests validate reject/fallback branches and corresponding audit entries.",
+      "subtasks": []
+    },
+    {
+      "id": 37,
+      "title": "Implement force-migration config upgrade pipeline",
+      "description": "Support forced migration only; no dual-version runtime compatibility.",
+      "status": "pending",
+      "dependencies": [
+        35,
+        36
+      ],
+      "priority": "high",
+      "details": "Implement migration runner with explicit from/to version handlers and failure guardrails. If migration fails, loading must stop with guidance.",
+      "testStrategy": "Migration tests cover supported upgrade paths and unsupported-version failure handling.",
+      "subtasks": []
+    },
+    {
+      "id": 38,
+      "title": "Implement config change governance and audit records",
+      "description": "Track config provenance, mutability boundaries, and audit trails for tuning changes.",
+      "status": "pending",
+      "dependencies": [
+        35
+      ],
+      "priority": "medium",
+      "details": "Add governance metadata fields (source, author, timestamp, hash) and persist change audits. Enforce run-time immutability boundaries where locked.",
+      "testStrategy": "Audit tests verify immutable fields and complete provenance records for accepted changes.",
+      "subtasks": []
+    },
+    {
+      "id": 39,
+      "title": "Build contract test suite for schemas and samples",
+      "description": "Create automated tests for all config schemas, samples, and invalid edge cases.",
+      "status": "pending",
+      "dependencies": [
+        31,
+        32,
+        33,
+        34
+      ],
+      "priority": "high",
+      "details": "Implement schema validation test harness with golden sample coverage and negative fixtures. Report results to logs/unit and logs/ci summaries.",
+      "testStrategy": "Automated contract tests pass all sample files and fail invalid fixtures with clear diagnostics.",
+      "subtasks": []
+    },
+    {
+      "id": 40,
+      "title": "Implement deterministic replay/governance final gate",
+      "description": "Validate deterministic replay under same seed+config and emit governance checklist artifacts.",
+      "status": "pending",
+      "dependencies": [
+        10,
+        30,
+        35,
+        37,
+        39
+      ],
+      "priority": "high",
+      "details": "Build final validation gate combining replay determinism, config identity, and operational checklist output for release readiness.",
+      "testStrategy": "End-to-end tests rerun fixed seed scenarios and compare timeline/report hashes for exact match.",
+      "subtasks": []
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0",
+    "generatedAt": "2026-02-11T19:05:50",
+    "sourceShard": "04-contracts-config-governance",
+    "taskCount": 10
+  }
+}

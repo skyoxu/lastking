@@ -1,0 +1,1464 @@
+# PRD-LASTKING-v1.2-GAMEDESIGN
+
+## 0. 文档定位
+- 本文档是 `Lastking` 的可实现 PRD 富化版本，用于后续 Taskmaster 拆解与实现，任务拆分 SSoT 为 `tasks/tasks.json`。
+- 架构基线保持不变：Scenes -> Adapters -> Game.Core；非必要不改底层。
+- 本文档受 ADR-0031/0032/0033 约束，相关规则已锁定。
+- 运行时行为 SSoT 以 `Game.Core/Contracts/**` + 配置契约 + 代码实现为准；PRD/GDD 不作为 CI 门禁输入。
+
+## 1. 产品定位与目标用户
+- 目标玩家：偏中核塔防玩家，能够接受经济与火力协同管理；低难可上手，高难可硬核。
+- 核心体验：在固定时钟压力下，以建设、募兵、布防和科技抉择维持城堡生存。
+- 目标时长：单局 60-90 分钟。
+- 发行范围：Steam 单机，Windows only；不包含联机与移动端。
+- 首发输入与平台边界：键鼠支持，首发不支持手柄。
+- 首发生态边界：不支持 Mod/Steam 创意工坊。
+
+## 2. 核心循环（分钟级 Day/Night 流程 + 状态机）
+### 2.1 循环节律
+- Day: 4 分钟；Night: 2 分钟；每晚 1 波。
+- 胜利：存活到第 15 天结束；失败：城堡 HP 归零（唯一失败条件）。
+- 首个可玩里程碑（Vertical Slice）锁定为 Day1-Day15 全流程可跑通。
+- 开局保护：不提供保护波/护盾机制。
+
+### 2.2 运行时状态机
+`DayStart -> BuildAndRecruit -> NightPrepare -> NightCombat -> Settlement -> RewardChoice -> NextDay`
+
+- `DayStart`：结算税收与科技点增长（基础 +1/天），触发自动存档。
+- `BuildAndRecruit`：允许建造/升级/训练，执行建造队列。
+- `NightPrepare`：冻结白天经济结算，锁定当夜波次计划。
+- `DifficultyLock`：难度在开局锁定，对局中不可切换。
+- `NightCombat`：自动作战主导，可设置集结点，不可微操，技能自动释放。
+- `Settlement`：统计战损、资源、里程碑。
+- `RewardChoice`：触发一次 3 选 1，走奖励状态机。
+- `DefeatReport`：当城堡 HP 归零时进入战报页，玩家确认后退出到主菜单。
+- Tick 固定顺序（锁定）：`Input -> Economy -> Queue -> Spawn -> Targeting -> Attack -> Damage -> DeathCleanup -> RewardState -> SaveSnapshot`。
+- 奖励状态机禁止同一 Tick 重入（`reward_reentry_same_tick=false`）。
+
+## 3. 波次与敌军系统（normal/elite/boss）
+### 3.1 夜型规则
+- Day 5: Elite Night
+- Day 10: Elite Night
+- Day 15: Boss Night（Boss 数量由配置决定，默认 2）
+
+### 3.2 预算公式（锁定）
+- `normalBudget(day) = round(50 * 1.2^(day-1))`
+- `eliteBudget(day) = round(30 * 1.2^(day-1))`，仅精英夜启用
+- `bossBudget(day) = 240`，仅首领夜启用；`bossCount(day, difficulty)` 由配置决定（默认 2），不再硬编码固定数量。
+- `normal/elite/boss` 为独立通道，禁止互相折算。
+- 难度系统支持 10+ 档，全部通过配置文件驱动（不做硬编码）；首版仅做数值倍率变化，不引入机制分叉。
+- 难度倍率按通道分别配置：`budget_mult_normal / budget_mult_elite / budget_mult_boss`。
+- 难度开放策略：采用通关解锁（配置驱动映射），首局不开放全部难度。
+- 难度解锁不允许跨级跳过，必须按配置链路逐级通关解锁。
+- `budget -> spawn` 换算不硬编码，由敌军配置表驱动（JSON/DB）。
+
+### 3.4 Budget -> Spawn 生成策略（锁定）
+- 算法：`greedy_fill + seeded_weighted_topk`。
+- 采样权重采用 `spawn_weight × night_type_weight`（推荐），在同类怪基础权重上叠加夜型修正，兼顾可控难度与对局变化。
+- `night_type_weight` 仅用于采样优先级，不占用也不替代对应夜型通道预算。
+- Top-K：`5`（从候选集中取前5后做带种子加权抽样）。
+- 种子公式：`run_seed + day + lane + spawn_tick`。
+- 默认分兵比例：`50/50`（左右两侧），并允许配置覆盖。
+- 刷新步长：`10s`。
+- 尾差预算：直接丢弃（不跨波累计、不补低成本怪）。
+- 若某个刷新 tick 无合法候选，则该 tick 对应预算直接丢弃，不延迟到后续 tick。
+
+### 3.3 路径全堵回退行为（ADR-0031）
+- 防御建筑允许完全堵路。
+- 当敌军到城堡路径不可达时：`PathFail -> Blocked -> AttackNearestBlockingStructure -> Reevaluate`。
+- 最近目标按路径代价判定；并列时使用带种子的伪随机选择（保证可复盘）。
+- 禁止敌军卡住等待；禁止随机攻击无关目标。
+
+- 若路径不可达且不存在可攻击阻挡结构，则回退目标为城堡（禁止空转）。
+- 城门规则：敌军不可穿越存活城门；可攻击城门本体；城门被摧毁后该路径格恢复可通行。
+## 4. 数值平衡首版表（Day1~Day15）
+
+| Day | NightType | normalBudget | eliteBudget | bossBudget | spawnPlan摘要 | 预计压力等级 |
+|---|---|---:|---:|---:|---|---|
+| 1 | Normal | 50 | 0 | 0 | Base mobs with small Fast subgroup | P1-Low |
+| 2 | Normal | 60 | 0 | 0 | Base mobs with small Fast subgroup | P1-Low |
+| 3 | Normal | 72 | 0 | 0 | Base mobs with small Fast subgroup | P1-Low |
+| 4 | Normal | 86 | 0 | 0 | Base mobs with small Fast subgroup | P2-Mid |
+| 5 | Elite | 104 | 62 | 0 | Elite core + Fast flankers + regular mobs | P2-Mid |
+| 6 | Normal | 124 | 0 | 0 | Base + Armored mixed push, lane pressure rises | P2-Mid |
+| 7 | Normal | 149 | 0 | 0 | Base + Armored mixed push, lane pressure rises | P3-High |
+| 8 | Normal | 179 | 0 | 0 | Base + Armored mixed push, lane pressure rises | P3-High |
+| 9 | Normal | 215 | 0 | 0 | Base + Armored mixed push, lane pressure rises | P3-High |
+| 10 | Elite | 258 | 155 | 0 | Elite core + Fast flankers + regular mobs | P3-High |
+| 11 | Normal | 310 | 0 | 0 | Base + Armored + Ranged, occasional Self-destruct | P4-VeryHigh |
+| 12 | Normal | 372 | 0 | 0 | Base + Armored + Ranged, occasional Self-destruct | P4-VeryHigh |
+| 13 | Normal | 446 | 0 | 0 | Base + Armored + Ranged, occasional Self-destruct | P4-VeryHigh |
+| 14 | Normal | 535 | 0 | 0 | Base + Armored + Ranged, occasional Self-destruct | P4-VeryHigh |
+| 15 | Boss | 642 | 0 | 240 | Boss count from config (default 2) + Armored/Ranged mixed mobs, priority pressure on both lanes | P5-Extreme |
+
+### 4.1 敌军行为优先级
+1. 优先攻击最近阻挡建筑（路径失败时）。
+2. 路径可达时优先推进城堡方向。
+3. 并列目标使用带种子伪随机打破并列，保证同种子可复现。
+4. 夜晚刷怪采用持续流，前 80% 时间按线性均匀分布，刷新步长 10s；后 20% 不再刷新新敌军。
+5. 路径可达时敌方目标优先级：兵种 > 城堡 > 有攻击力防御建筑 > 城墙/城门。
+
+6. 路径失败且无阻挡目标时，强制回退攻击城堡。
+
+### 4.2 普通杂兵标签占比基线（首版建议，配置可覆盖）
+- 说明：以下仅用于 `normal` 杂兵池的首版分布基线；`elite/boss` 通道独立配置，不参与该占比。
+- 所有占比字段由配置文件驱动，后续平衡迭代只改配置，不改实现代码。
+
+| Day 区间 | basic | fast | heavy | ranged | suicide |
+|---|---:|---:|---:|---:|---:|
+| Day1-Day3 | 70% | 20% | 10% | 0% | 0% |
+| Day4-Day6 | 55% | 20% | 15% | 10% | 0% |
+| Day7-Day9 | 45% | 20% | 20% | 10% | 5% |
+| Day10（精英夜杂兵） | 35% | 20% | 20% | 15% | 10% |
+| Day11-Day14 | 35% | 18% | 22% | 15% | 10% |
+| Day15（首领夜杂兵） | 25% | 20% | 25% | 20% | 10% |
+## 5. 经济与建设系统
+- 初始资源：金币 800 / 铁矿 150 / 人口上限 50。
+- 核心资源类型：金币（核心）、铁矿。
+- 人口上限与科技点为系统参数，不归类为可采集资源。
+- 金币允许进入负值状态（Debt）。
+- 负债状态（金币 < 0）下，仅禁止新增正成本消费行为：新建、升级、训练、维修、重掷。
+- 负债状态允许零成本操作；被动回款（税收、奖励）始终允许；金币恢复到 >= 0 后自动解除消费禁令。
+- 负债下限硬闸门：金币最低为 `-3000`；触达下限后拒绝继续扣费并阻断新的消费请求。
+- 负债惩罚硬闸门：当金币 `< 0` 时，税收乘区固定为 `70%`（等价 `-30%` 惩罚）；金币恢复到 `>= 0` 后解除惩罚。
+- 负债失败闸门：不额外引入“连续负债N夜直接失败”规则，维持当前唯一失败条件（城堡 HP 归零）。
+- 数值精度：经济与战斗数值统一使用整数；百分比换算后按规则取整（默认向下取整）。
+- 居民住所税收：每 15 秒 +50 金币，+10 人口上限。
+- 伐木产出：矿场每 10 秒产出 20 铁矿，可被科技/奖励/难度修正。
+- 科技点：基础每昼夜 +1，可被奖励额外增加。
+- 建造网格：地图不显示网格，所有建筑按网格占地判定。
+- 建筑并发：建筑不受并发队列限制，只要资源足够即可开始建造。
+- 建造软限制：放置操作设置软频率限制（默认 100ms/次，可配置）以避免输入洪峰与性能抖动。
+- 兵种队列：一个兵营仅 1 条训练队列；城堡等级不增加兵营训练队列。
+- 建筑被摧毁时：其关联训练/建造队列全部取消并 100% 返还对应资源。
+- 队列扣费规则：建造/训练/升级在“进入队列时”一次性扣费（非执行完成时扣费）。
+
+- 债务跨零边界规则：金币从 `>=0` 变为 `<0` 时，不中断已在执行中的建造/训练/升级/维修，仅阻止新消费动作。
+- 债务解禁阈值：金币恢复到 `>=0` 时立即解除消费禁令。
+- 整数结算规则：统一采用“先乘后除、逐步向下取整（floor）”，禁止四舍五入。
+- 建造软限制作用域：按玩家全局限流（默认 `100ms/次`）。
+### 5.1 建筑升级规则
+- 建筑统一 5 级。
+- 首次升级（L1->L2）成本/时间：城堡 1000/2m，兵营 600/1m，机枪塔 400/0.5m，住所 500/1m。
+- 升级期间建筑保留当前功能，但升级收益在完成后生效。
+- 同一建筑不能同时执行“维修+升级”；升级完成后建筑 HP 回满。
+- 升级中建筑被摧毁：升级成本全损（0 返还）。
+- 允许取消升级：取消后返还 100% 已投入升级资源。
+
+### 5.2 维修系统（锁定）
+- 满维修成本 = 对应建筑建造金币成本的 50%（仅计算金币）。
+- 维修费用按已修复百分比持续扣减，不一次性扣满。
+- 维修速度 = 对应建造速度的 50%。
+- 夜晚允许维修。
+- 维修中断（玩家取消或建筑被毁）：已扣维修费用不返还。
+- 建筑被摧毁后可立即原地重建，无额外冷却。
+- 债务影响维修：若维修过程中金币降至 `<0`，维修立即暂停；金币恢复到 `>=0` 后可继续。
+
+## 6. 军事系统（基础兵 + 2 高级兵）
+### 6.1 兵种与建筑参数表
+
+| 对象 | 类型 | 成本 | 训练/建造时间 | HP | 占地 | 人口消耗 | 升级收益 |
+|---|---|---|---|---|---:|---:|---|
+| Castle | Building | N/A (initial) | N/A | 1000/1000 initial | 4 | N/A | L2-L5: HP +20%/level; unlocks build queue +1 at L3/L5 |
+| Housing | Building | 120 Gold / 40 Iron Ore | 30s | 300 | 1 | +10 cap | Tax +10%/level, pop cap +5/level |
+| Ore Mine | Building | 180 Gold / 60 Iron Ore | 40s | 350 | 1 | 0 | Iron Ore output +15%/level |
+| Gunner Camp | Military Building | 220 Gold / 80 Iron Ore | 45s | 450 | 2 | 0 | Training speed +8%/level; unit HP +5/level |
+| Tank Camp | Military Building | 420 Gold / 120 Iron Ore | 60s | 600 | 2 | 0 | Training speed +8%/level; unit damage +3/level |
+| MG Tower | Defense | 200 Gold | 25s | 500 | 1 | 0 | Damage +12%/level; range +0.2 tile/level |
+| Wall (line build) | Defense | 20 Gold per tile | instant queue | 500 | 1/tile | 0 | HP +15%/level; repair efficiency +10%/level |
+| Landmine | Defense-Consumable | 50 Gold | 8s | 1 (one-shot) | 1 | 0 | Damage +20/level (L1-L5) |
+| Gunner | Unit-Base | 100 Gold | 10s | 50 | N/A | 1 | Single-target, medium range, high fire-rate |
+| Tank | Unit-Base | 500 Gold | 20s | 200 | N/A | 3 | AoE around target point, long range, very low speed |
+| Rail Sniper | Unit-Advanced | 350 Gold | 16s | 70 | N/A | 2 | Very long range, armor-penetrating single target |
+| Rocket Demolisher | Unit-Advanced | 650 Gold | 24s | 180 | N/A | 4 | Large AoE burst, long cooldown, no friendly fire |
+
+### 6.2 作战规则
+- 全部我方攻击无友伤。
+- 枪兵：中程高攻速单体压制；坦克：远程低攻速范围打击。
+- 我方目标选择：在攻击范围内按“地图中心点向外扩散”顺序判定目标。
+- 克制关系（首版锁定）：机枪兵系优先克制高速怪；坦克系优先克制重甲怪。
+- 兵种训练取消：允许取消，取消后返还 100% 资源。
+- 高级兵种通过奖励解锁，不是基础兵升级分支。
+- 解锁入口：在现有兵营页签内新增兵种按钮并解锁训练。
+
+- 伤害结算顺序：基础伤害 -> 攻防/科技修正 -> 难度修正 -> 护甲减伤 -> 最小伤害钳制（>=1）。
+## 7. 科技系统（仅数值向）
+- 科技树不解锁新机制，机制解锁主要来自奖励 3 选 1。
+- 百分比类存在上限；数值类不设上限。
+- 科技分配交互：支持预分配后确认；确认后不可撤销。
+- 科技生效时机：夜战结算后统一结算应用。
+
+## 8. 奖励系统状态机（catalog/exhausted/fallback）
+### 8.1 触发与池子
+- 每晚结算触发 1 次 3 选 1。
+- Normal/Elite/Boss 使用独立奖励池。
+- 奖励池元素：宝物 / 高级兵种 / +3 科技点 / +600 金币。
+
+- 触发时点：夜晚结算后立即弹出奖励选择；未完成选择前暂停昼夜计时。
+- 金币兜底口径：`+600 Gold` 为固定值，不受难度倍率影响。
+### 8.2 状态机定义
+- `catalog_available`：非金币合法候选充足。
+- `exhausted`：非金币候选不足以组成有效 3 选 1。
+- `gold_fallback`：触发后候选直接全部为金币，允许重复。
+
+### 8.3 非法迁移
+- 禁止绕过状态机直接发奖。
+- 禁止同局重复发放同名非金币奖励。
+- 禁止同局对同一非金币奖励叠加。
+
+## 9. Boss 与分身生命周期
+- Boss 机制A：每 20 秒无敌 5 秒。
+- Boss 机制B：每 20 秒召唤 2 分身。
+- 分身属性：50% 本体攻击与 HP，永久持续，上限 10，可被减速。
+- Boss 与分身的具体攻击/射程/移速/抗性参数不硬编码，统一由敌军配置表驱动（JSON/DB）。
+- 首领夜构成：Boss + 杂兵；Boss 数量由配置文件决定（默认 2）。
+- 本体 Boss 死亡时，所有其存活分身立即消失（同 Tick 清理，不掉落额外奖励）。
+
+- 分身上限解释：上限 10 为全场总上限（非每个 Boss 上限）。
+- 分身击杀计入战报统计。
+- 分身不计入 Boss 通道预算，仅作为 Boss 技能产物。
+## 10. UI/交互/镜头规范
+- 主 HUD：资源、人口、波次倒计时、科技点、城堡 HP、夜型标识。
+- 建造交互：网格吸附预览、可建造/阻挡提示、线性城墙拖拽建造。
+- 镜头：边缘滚屏 + 键盘滚屏；战斗告警时镜头可一键跳转到受压侧。
+- 操作原则：宏观指令优先，减少微操负担。
+- 默认显示模式：全屏。
+- 支持键盘按键重绑定。
+- 支持鼠标灵敏度调节。
+- UI 缩放预设：`80% / 100% / 125% / 150%`。
+- 支持输入种子开局（除战报复制 seed 外）。
+- 时间控制：支持 `暂停 / 1x / 2x`。
+- 暂停语义锁定：`pause` 状态下完全冻结所有计时器（含维修进度、队列进度、刷怪 tick、波次倒计时、奖励弹窗计时、教程计时、提示消失计时）。
+- 提供“性能模式”预设并锁定为首发必备选项（关闭高成本特效，优先保障 1024x768 低配稳定帧率）。
+- 性能模式首版固定降级项：阴影关闭、后处理关闭、粒子密度下调至50%、血条动画关闭。
+- 性能模式允许局内切换，切换后即时生效，并写入全局设置作为下次默认。
+- 首发不提供安全模式启动（维持当前口径）。
+- 无障碍口径：首版不提供高对比度/色盲模式。
+
+### 10.2 音频设置（首版）
+- 提供独立音量滑杆：`音乐`、`音效`。
+- 首版不提供额外分轨（如主音量/UI音量）。
+
+### 10.1 新手引导（首版）
+- 提供 3 步强引导：建住所 -> 建兵营 -> 撑过首夜。
+- 引导完成后不再强制弹窗，仅保留可选提示。
+- 允许玩家在引导过程中主动跳过并继续游戏。
+- 设置菜单提供“重新播放教程”入口。
+
+## 11. 存档/云存档/成就
+### 11.1 存档与云
+- 仅 1 个自动存档槽。
+- 存档作用域：按 Steam 账号隔离存档数据（同机不同账号不共享）。
+- 自动存档触发：每天开始（DayStart）时。
+- 自动存档不可被手动存档覆盖，不采用轮转覆盖。
+- Steam Cloud 单存档大小上限：`5MB`。
+- 自动存档失败处理：弹出提示，不强制中断当前对局。
+- 自动存档损坏恢复：若存在上一日有效快照则自动回退；若无可用快照则提示玩家新开局。
+- 存档/配置版本不兼容：先执行强制迁移（迁移前自动备份）；迁移失败则拒绝加载并阻断进入对局，并提示删除该存档后重开。
+- 存档迁移语义版本策略：`major` 走强制迁移；`minor/patch` 自动兼容迁移。
+- 云同步策略：本地离线先触发成就与进度记录；联网后再同步到 Steam。
+- 云冲突策略：仅提供二选一（本地/云端）决策入口，不展示差异字段，默认预选本地。
+- 云冲突默认项支持在设置中改为“默认预选云端”，但冲突界面仍为二选一。
+- 云同步失败兜底：允许继续本地游玩并延迟重试，不强制中断本局；重试退避固定为 `30s -> 2m -> 10m`（上限10m）。
+- 必须记录字段：随机种子、波次计时、建筑队列。
+- 战败后不提供“一键重开/快速重掷”入口，避免鼓励频繁重开。
+- 配置热更新策略：对局中禁止加载新配置；新配置仅在新开局生效。
+- 非官方配置存档策略：允许写入正式存档（当前阶段口径）。
+- 外部测试门禁：进入外部测试前，非官方配置必须切换为仅写入 `dirty_save` 槽；`dirty_save` 不参与云同步与成就。
+- 外测触发开关：`BUILD_CHANNEL in {external_test, beta}`。
+- `dirty_save` 槽位策略：单槽，并在 UI 以红色标签标识“非官方配置局”。
+
+### 11.2 本地化（i18n）
+- 首版策略：中英文双语（简体中文 + 英文）。
+- 文本资源统一走可本地化键值，不在代码中写死玩家可见文本。
+- 语言切换：支持局内切换并全局即时生效。
+- 语言偏好：记忆上次选择并在下次启动默认应用。
+- 语言预留（按 Steam 常用语言前6口径）：在 `zh-CN`、`en-US` 基础上预留 `ru-RU`、`es-419`、`pt-BR`、`de-DE`。
+- i18n 键不做强制冻结，允许迭代调整；变更后通过回归测试兜底。
+- i18n 发布硬门禁：关键 HUD 文案在中英文下均不得出现截断或重叠。
+- i18n 硬门禁验收方式：自动截图对比（主）+ 人工抽检（辅）。
+
+### 11.3 战报页最小字段（锁定）
+- 显示顺序锁定：Outcome -> Losses -> Combat -> Combat Detail -> Economy -> Progression。
+- 显示并支持一键复制：`run_seed`。
+- 总击杀
+- 分兵种击杀
+- 建筑损失
+- 经济收入
+- 科技投入
+- 最高压力夜（计算建议）：
+  - `pressure_score = (35*budget_p + 25*spawn_count_p + 20*castle_damage_p + 10*blocked_path_p + 10*elite_boss_p) / 100`
+  - 各分量范围统一为 `0-100` 整数，结果按整数处理。
+  - 分量归一化口径（首版锁定）：
+    - `budget_p = floor(100 * normal_budget_used / normal_budget_ref_day)`
+    - `spawn_count_p = floor(100 * spawned_count / spawned_ref_day)`
+    - `castle_damage_p = floor(100 * castle_damage / castle_max_hp)`
+    - `blocked_path_p = floor(100 * blocked_seconds / night_seconds)`
+    - `elite_boss_p = clamp(base_by_night + min(20, elite_spawned*2 + boss_spawned*10), 0, 100)`
+  - `base_by_night = { normal:10, elite:60, boss:70 }`
+  - `max_pressure_night` 取整局 `pressure_score` 最大值对应夜晚；并列时取更晚夜晚。
+- 战报页不提供可执行建议（不输出推荐建造/选项建议）。
+- 战报导出：允许导出 JSON，最小字段包含 `run_seed`、`config_hash`、`max_pressure_night` 与战报最小字段全集。
+- 战报导出路径：固定为 `logs/e2e/<YYYY-MM-DD>/`。
+- 战报身份字段：仅导出匿名 `player_slot_id`，不导出 Steam 账号标识。
+- 战报导出留存策略：保留最近30天，超期自动清理（启动时执行清理）。
+
+### 11.4 成就清单（20，无隐藏）
+- 成就触发源：统一由 Core 事件流判定并触发，UI 仅负责展示。
+- 每个成就必须绑定唯一 `achievement_event_id`，禁止多个成就复用同一事件ID。
+- `achievement_event_id` 命名规范锁定：`ACH_<DOMAIN>_<ACTION>`。
+- 非官方配置（未命中白名单配置哈希）时，成就系统自动禁用且不回补。
+- 非官方配置判定：满足“配置整包哈希不在白名单”或“`schema_version` 不在支持范围”任一条件即判定为非官方配置。
+- 成就禁用提示策略：每次加载到非官方配置时均提示“本局成就已禁用”。
+- 配置哈希白名单粒度：采用“整包哈希 + 清单（manifest）”双层校验。
+- 配置哈希算法锁定：`SHA-256(RFC 8785 canonical JSON)`。
+- 成就条件变更策略：仅对新开局生效，不做历史补发。
+
+| 序号 | 成就名称 | 条件 | 触发时机 |
+|---:|---|---|---|
+| 1 | 守城第一夜 | 完成第1夜防守 | 第1夜结算时 |
+| 2 | 精英试炼 | 完成第5夜精英夜 | 第5夜结算时 |
+| 3 | 再破精英 | 完成第10夜精英夜 | 第10夜结算时 |
+| 4 | 终夜将临 | 进入第15夜首领夜 | 第15夜开始时 |
+| 5 | 王城不倒 | 通关并存活到第15天结束 | 胜利结算时 |
+| 6 | 铜墙铁壁 | 单局建造80段城墙 | 条件达成当帧 |
+| 7 | 火力网 | 同时拥有12座机枪塔 | 条件达成当帧 |
+| 8 | 经济起飞 | 单日税收达到3000金币 | 日结算时 |
+| 9 | 铁矿大户 | 累计采集5000铁矿 | 条件达成当帧 |
+| 10 | 兵工厂 | 累计训练100名枪兵 | 条件达成当帧 |
+| 11 | 重装集群 | 累计训练40台坦克 | 条件达成当帧 |
+| 12 | 精准打击 | 解锁高级兵种Rail Sniper | 奖励确认时 |
+| 13 | 爆裂艺术 | 解锁高级兵种Rocket Demolisher | 奖励确认时 |
+| 14 | 科技狂热 | 单局累计投入20科技点 | 条件达成当帧 |
+| 15 | 无伤首领 | 首领夜城堡未受到伤害 | 第15夜结算时 |
+| 16 | 爆破清场 | 单夜地雷击杀30敌军 | 夜战结算时 |
+| 17 | 极限扩张 | 单局人口上限达到200 | 条件达成当帧 |
+| 18 | 速建大师 | 单夜完成20次建造/升级 | 夜战结算时 |
+| 19 | 压力掌控 | 连续5夜城堡HP高于80% | 对应夜结算时 |
+| 20 | 钢铁意志 | 在困难档完成通关 | 胜利结算时 |
+
+### 11.5 配置权限治理（锁定）
+- 配置编辑权限：除 guest 外，其他角色均可编辑配置。
+- 配置变更审计硬闸门：`difficulty/spawn/enemy` 核心配置每次变更必须记录审计条目（actor/timestamp/file/change-summary）。
+- 配置变更评审硬闸门：核心配置变更未通过评审不得合入。
+- 审计输出：统一写入 `logs/ci/<YYYY-MM-DD>/config-change-audit.jsonl`。
+- 审计写入来源：仅允许脚本产出（script-only），禁止人工直接改写审计文件。
+- 审计日志契约：`logs/ci/<YYYY-MM-DD>/config-change-audit.jsonl` 的单行记录必须满足 `Game.Core/Contracts/Config/config-change-audit.schema.json`。
+
+## 12. 测试与验收映射（Test-Refs）
+- Core（xUnit）重点：预算公式、路径回退、奖励状态机、科技上限规则。
+- Scenes（GdUnit4）重点：滚屏交互、阻挡回退、波次生成、HUD 反馈。
+- Security/Perf：日志落盘到 `logs/`，覆盖审计与帧耗时摘要。
+
+**Test-Refs（draft）**
+- `Tests/Core/Combat/WaveBudgetCalculatorTests.cs`
+- `Tests/Core/Combat/PathBlockFallbackPolicyTests.cs`
+- `Tests/Core/Progression/RewardStateMachineTests.cs`
+- `Tests/Core/Progression/TechCapRulesTests.cs`
+- `Tests/Scenes/Combat/test_wave_spawn_and_lane_pressure.gd`
+- `Tests/Scenes/Combat/test_path_block_attack_blocker.gd`
+- `Tests/Scenes/UI/test_hud_scroll_and_build_interaction.gd`
+- `logs/e2e/<YYYY-MM-DD>/security-audit.jsonl`
+- `logs/perf/<YYYY-MM-DD>/summary.json`
+
+## 13. 风险与回退策略
+- 风险1：堵路极端场景导致路径重算抖动。
+  - 策略：结构变化触发 + 冷却重评估，禁逐帧全量重算。
+- 风险2：奖励池耗尽导致空候选。
+  - 策略：状态机强制迁移到 `gold_fallback`，保障永不空选项。
+- 风险3：后期高密敌军导致性能下探。
+  - 策略：分身上限 10、热路径采样、目标硬件按 60 FPS/1% low 45 FPS 验收。
+- 风险4：配置表字段漂移导致运行时解析失败。
+  - 策略：为敌军/难度配置建立 JSON Schema 校验，并在版本不兼容时拒绝加载并阻断进入对局。
+- 风险5：奖励配置后续扩展缺少契约约束。
+  - 策略：`reward-config.schema` 不在本轮 PRD 锁定，转入任务执行阶段实现。
+
+### 13.1 最低配置建议（首版）
+- OS: Windows 10 64-bit
+- CPU: Intel Core i5-4460 / AMD Ryzen 3 1200
+- RAM: 8 GB
+- GPU: NVIDIA GTX 750 Ti / AMD RX 460 (2GB VRAM)
+- Resolution: 1024x768 baseline
+- Performance Target: Avg 60 FPS, 1% Low 45 FPS
+- Startup Budget: main scene cold start <= 3.0s
+- Frame Budget: logic frame P95 <= 16.6ms, P99 <= 22.0ms (1024x768 baseline)
+- Stress Budget: peak 300 enemies on field still meets Avg 60 / 1% Low 45
+
+### 13.2 难度平衡KPI基线（首版，可迭代）
+- 说明：以下为首版验收目标区间，用于平衡回归；实际会按测试数据滚动调整。
+
+| 难度ID | 目标通关率（首版基线） |
+|---|---|
+| story | 85%-95% |
+| casual | 75%-85% |
+| easy | 65%-75% |
+| normal | 60%-70% |
+| advanced | 45%-55% |
+| hard | 25%-35% |
+| expert | 15%-25% |
+| nightmare | 8%-15% |
+| hell | 3%-8% |
+| impossible | 1%-3% |
+
+### 13.3 PRD封板条件（建议锁定）
+- P0 决策项全部清零（无待确认）。
+- `PRD + LOCKED-SUMMARY + schema/sample/validator` 四者口径一致。
+- 固定种子回归门禁：日常门禁 `30` 局（`normal/hard/impossible = 10/10/10`）；封板门禁 `100` 局（10档各10局）。
+- 热修回归门禁：最少 `30` 局固定种子回归，且必须覆盖受影响难度档。
+- Day1-Day15 全流程可跑通且无阻断。
+- 战报页 6 个最小字段必须全部有值。
+- Taskmaster 拆分前强制生成并冻结“配置哈希白名单”清单，未完成不得进入任务拆分。
+- 封板后任何行为改动必须同步更新 ADR/PRD/LOCKED-SUMMARY 并附测试。
+- 封板后“行为改动预算”不设强制硬上限（以评审与回归结果为准）。
+- v1.2 冻结日期：不强制设置。
+
+### 13.4 配置治理与权限（当前阶段）
+- 配置哈希白名单治理：当前阶段允许任何项目成员生成与提交（不设独立审批角色）。
+- 白名单审批策略维持不变：当前阶段不启用双人审批（保持现状）。
+- 白名单回滚策略：允许回滚到最近3个已签名版本之一，且回滚操作必须记录审计日志（actor/from/to/reason/timestamp）。
+- 配置哈希算法：统一使用 `SHA-256(canonical JSON)`。
+- 封板后行为改动不强制绑定测试ID（保持现状）。
+- 不新增独立 `Release-Blockers` 章节（保持现状）。
+- 白名单签名算法：`Ed25519`。
+- 白名单公钥来源：内置只读资源。
+- 白名单回滚审计路径：`logs/ci/<YYYY-MM-DD>/allowlist-rollback.jsonl`。
+- 上述治理口径风险较高，后续进入多人协作发布期建议收敛为“生成者/审批者分离”。
+
+## 14. Decision Ledger（已决议台账）
+- 本节替代 Conflict Log，仅记录已锁定口径，后续不再作为“待确认项”重复输入代理。
+- 若需变更本节任一决议，必须先更新 ADR 与 `LOCKED-SUMMARY`，再更新本节。
+
+| 项目 | 最终决议 | 决议依据 | 状态 |
+|---|---|---|---|
+| 通关天数 | 15天标准局（Day1-Day15） | 已与里程碑、KPI、首领夜规则对齐 | Locked |
+| 敌军增长口径 | 预算通道增长（120%）优先，数量由 `budget -> spawn` 换算 | 可回放、可校验、可调优 | Locked |
+| 存档策略 | 单自动存档槽；手动不可覆盖；冲突默认本地优先并保留人工审阅入口 | 与云存档/迁移规则一致 | Locked |
+| 高级兵种定位 | 首版固定2种高级兵，机枪系克高速、坦克系克重甲 | 与克制矩阵与配置驱动一致 | Locked |
+| 负债行为 | 负债下仅禁止正成本消费，零成本操作允许 | 防止软锁局，保持可恢复性 | Locked |
+| 负债失败闸门 | 不新增连续负债导致失败规则 | 保持失败条件单一且可解释 | Locked |
+| Tick顺序 | `Input -> Economy -> Queue -> Spawn -> Targeting -> Attack -> Damage -> DeathCleanup -> RewardState -> SaveSnapshot` | 保证确定性回放与调试一致性 | Locked |
+| Boss分身清理 | Boss死亡同Tick清理分身，不额外掉落奖励 | 防止战斗尾段膨胀与统计污染 | Locked |
+| 普通杂兵占比基线 | Day1-Day15 按 6 段标签占比基线推进，配置可覆盖 | 先锁定可跑口径，再用配置迭代平衡 | Locked |
+| 压力夜归一化 | `budget/spawn/castle/block/elite_boss` 五分量整数归一化+加权 | 保证跨版本战报可比较 | Locked |
+| 回归门禁分层 | 日常30局（10/10/10）+封板100局（10档各10局） | 防止单档过拟合和漏检 | Locked |
+| 云冲突交互 | 仅本地/云端二选一，不展示差异字段 | 降低认知负担，避免错误决策 | Locked |
+| 成就治理 | 非官方配置禁用成就；事件ID命名 `ACH_<DOMAIN>_<ACTION>` | 防刷成就并保持事件治理一致性 | Locked |
+| 战报取证 | 战报展示并可复制种子，支持JSON导出含`config_hash` | 强化可复盘与问题回放 | Locked |
+| 拆分前门禁 | Taskmaster 前必须先产出配置哈希白名单 | 防止任务阶段口径漂移 | Locked |
+| 非官方配置判定 | 同时校验整包哈希白名单与schema版本支持范围 | 防止绕过契约刷成就 | Locked |
+| 云冲突默认项 | 二选一界面不变，默认预选项可在设置中切换 | 保持低认知负担同时给高级玩家控制权 | Locked |
+| 对局配置变更 | 对局中禁止热更新配置，仅新开局生效 | 保证回放一致性与调试可复现 | Locked |
+| 白名单治理权限 | 当前阶段任何项目成员可生成与提交白名单 | 交付效率优先（高风险口径） | Locked |
+| 非官方配置存档 | 允许写入正式存档 | 维持当前研发灵活性 | Locked |
+| 战报留存策略 | 导出报告保留最近30天并自动清理超期记录 | 在追溯能力与磁盘成本间做平衡 | Locked |
+| 外测前存档隔离 | 外测前非官方配置改为仅写入 `dirty_save`，且不参与云同步与成就 | 防止测试阶段污染正式存档与成就 | Locked |
+| 白名单回滚 | 仅允许回滚到最近3个已签名版本，且必须审计记录 | 保证可回滚同时防止无审计回退 | Locked |
+| 哈希算法 | 配置哈希统一 `SHA-256(canonical JSON)` | 防止同义异形 JSON 导致哈希漂移 | Locked |
+| 白名单审批（不变） | 不启用双人审批 | 维持当前效率优先策略（高风险） | Locked |
+| 变更约束（不变） | 封板后行为改动不强制测试ID；不新增 Release-Blockers 章节 | 维持当前流程约束 | Locked |
+| 热修回归门禁 | 热修最少30局固定种子回归并覆盖受影响难度档 | 降低补丁回归漏检概率 | Locked |
+| 外测触发开关 | `BUILD_CHANNEL in {external_test, beta}` 时启用外测门禁 | 将外测策略与发布渠道绑定，避免误触发 | Locked |
+| dirty_save 表现层 | `dirty_save` 采用单槽并红色标签提示 | 降低误读风险并保持实现简单 | Locked |
+| 哈希规范细化 | `SHA-256(RFC 8785 canonical JSON)` | 防止序列化差异导致哈希漂移 | Locked |
+| 白名单签名与公钥 | `Ed25519` + 内置只读公钥 | 保证白名单来源可信且不可运行时篡改 | Locked |
+| 回滚审计路径 | `logs/ci/<YYYY-MM-DD>/allowlist-rollback.jsonl` | 强制回滚可追溯 | Locked |
+| 报告清理时机 | 启动时执行超期（30天）清理 | 避免战斗中IO抖动 | Locked |
+| 云同步重试退避 | `30s -> 2m -> 10m`（上限10m） | 降低失败风暴并保持可恢复 | Locked |
+| 性能模式持久化 | 局内切换即时生效且写入全局设置 | 减少玩家重复设置成本 | Locked |
+| i18n门禁验收 | 自动截图对比 + 人工抽检 | 提高双语HUD质量闸门可执行性 | Locked |
+| v1.2 冻结日期 | 不强制设置 | 保持当前发布节奏灵活性 | Locked |
+| 显示与输入基线 | 默认全屏、支持键盘重绑定与鼠标灵敏度、支持输入种子开局 | 提升首发可用性与复盘效率 | Locked |
+| UI缩放 | 提供 `80/100/125/150` 四档缩放预设 | 覆盖常见显示密度场景 | Locked |
+| 无障碍边界 | 首版不提供高对比度/色盲模式 | 控制首发范围，聚焦核心体验 | Locked |
+| 音频分轨 | 首版仅提供音乐/音效两路独立音量 | 简化实现同时保留核心可调性 | Locked |
+| 语言预留 | 除中英文外预留 `ru-RU/es-419/pt-BR/de-DE` | 降低后续多语言扩展成本 | Locked |
+| 云存档体积门禁 | 单存档上限 `5MB` | 控制云存储风险与同步稳定性 | Locked |
+| 成就补发策略 | 条件改动仅影响新局，不做历史补发 | 避免历史状态歧义与追溯复杂度 | Locked |
+| 首发平台边界 | 首发不支持手柄，不支持 Mod/创意工坊，不提供安全模式启动 | 锁定首发范围与维护成本 | Locked |
+
+## 15. 表C：科技与奖励池表
+
+| 条目 | 类型 | 效果 | 上限 | 是否可重复 | 状态机约束 | 获取来源 |
+|---|---|---|---|---|---|---|
+| Attack Speed | Tech(%) | +4% per point | max +60% | N/A | Applied at settlement | Tech points/reward |
+| Damage | Tech(value) | +2 per point | No cap | N/A | Applied at settlement | Tech points/reward |
+| Production Speed | Tech(%) | +5% per point | max +50% | N/A | Applied at settlement | Tech points/reward |
+| Range | Tech(value) | +0.15 tile per point | No cap | N/A | Applied at settlement | Tech points/reward |
+| HP | Tech(value) | +10 HP per point | No cap | N/A | Applied at settlement | Tech points/reward |
+| Build Cost | Tech(%) | -3% per point | max -40% | N/A | Applied at settlement | Tech points/reward |
+| Relic | Reward | Permanent run modifier | Unique per relic | No | catalog_available only | 3-choice reward |
+| Advanced Unit Unlock | Reward | Unlock Rail Sniper or Rocket Demolisher | 2 total in v1 pool | No | catalog_available only | 3-choice reward |
+| +3 Tech Points | Reward | Grant 3 unspent tech points | N/A | No | catalog_available only | 3-choice reward |
+| +600 Gold | Reward-Fallback | Immediate economy injection | N/A | Yes | gold_fallback allowed | 3-choice reward/fallback |
+
+## 16. Machine-Readable Appendix (JSON)
+```json
+{
+  "locked_constraints": {
+    "platform": "Steam single-player, Windows only",
+    "engine": "Godot 4.5.1 + C#",
+    "duration_target_min": "60-90",
+    "day_night_cycle": {
+      "day_minutes": 4,
+      "night_minutes": 2
+    },
+    "victory": "Survive day 15",
+    "failure": "Castle HP reaches 0 only",
+    "map": "fixed vertical, ~3 screens width at 1024x768, edge+keyboard scroll",
+    "wave_channels": "normal/elite/boss independent",
+    "difficulty": {
+      "mode": "config-driven",
+      "supports_levels": ">=10",
+      "v1_changes": "numeric-only",
+      "required_fields": [
+        "enemy_hp_mult",
+        "enemy_dmg_mult",
+        "budget_mult_normal",
+        "budget_mult_elite",
+        "budget_mult_boss",
+        "resource_mult"
+      ],
+      "match_lock": "locked-at-run-start, immutable-in-match",
+      "unlock_policy": "clear-to-unlock-config-driven-no-cross-tier-skip"
+    },
+    "spawn_timing": {
+      "pattern": "continuous",
+      "distribution": "linear-uniform",
+      "active_window": "first 80% of night",
+      "last_20_percent": "no new spawns",
+      "refresh_step_seconds": 10
+    },
+    "boss_night": {
+      "day": 15,
+      "boss_count_policy": "config-driven",
+      "boss_count_default": 2,
+      "difficulty_scaling": "config-driven"
+    },
+    "reward_rule": "3-choice once per night, non-gold unique non-stack, insufficient non-gold -> direct gold fallback",
+    "save": "single autosave only, no overwrite by manual save",
+    "budget_to_spawn": {
+      "implementation": "external enemy config table",
+      "hardcoded": false,
+      "algorithm": "greedy_fill + seeded_weighted_topk",
+      "weight_formula": "spawn_weight * night_type_weight",
+      "top_k": 5,
+      "seed_formula": "run_seed + day + lane + spawn_tick",
+      "lane_ratio_default": "50/50",
+      "lane_ratio_overridable": true,
+      "refresh_step_seconds": 10,
+      "remainder_budget": "discard",
+      "night_type_weight_semantics": "sampling-priority-only-not-channel-budget",
+      "on_no_eligible_candidates": "discard_tick_budget"
+    },
+    "numeric_precision": "integer-only (deterministic rounding rule)",
+    "time_controls": [
+      "pause",
+      "1x",
+      "2x"
+    ],
+    "tutorial": "3-step onboarding (housing -> barracks -> survive first night)",
+    "tick_order_policy": {
+      "order": [
+        "input",
+        "economy",
+        "queue",
+        "spawn",
+        "targeting",
+        "attack",
+        "damage",
+        "death_cleanup",
+        "reward_state",
+        "save_snapshot"
+      ],
+      "reward_reentry_same_tick": false
+    },
+    "i18n": {
+      "languages": [
+        "zh-CN",
+        "en-US"
+      ],
+      "strategy": "localization-key based",
+      "switching": "in-match supported",
+      "preference_persistence": "remember-last-selection",
+      "key_freeze": "not-mandatory-regression-tested"
+    },
+    "cloud_conflict_policy": "binary-choice-local-or-cloud-local-default",
+    "cloud_conflict_manual_review_entry": false,
+    "defeat_flow": "show battle report then exit to menu",
+    "config_load_failure": "reject-load-and-block-match",
+    "save_migration_policy": "forced-with-prebackup",
+    "save_migration_failure_action": "reject-load-and-suggest-delete-save",
+    "tutorial_skip": "allowed",
+    "achievement_trigger_source": "core-event-stream-only",
+    "reward_schema_policy": "defer-to-task-execution-phase",
+    "upgrade_repair_rules": {
+      "destroyed_during_upgrade_refund_percent": 0,
+      "cancel_upgrade_allowed": true,
+      "cancel_upgrade_refund_percent": 100,
+      "repair_interruption_refund_percent": 0
+    },
+    "advanced_unit_unlock_path": "existing-barracks-tab-and-unit-button-unlock",
+    "battle_report_min_fields": [
+      "total_kills",
+      "kills_by_unit_type",
+      "building_losses",
+      "economy_income",
+      "tech_points_spent",
+      "max_pressure_night"
+    ],
+    "max_pressure_night_formula": {
+      "score": "(35*budget_p + 25*spawn_count_p + 20*castle_damage_p + 10*blocked_path_p + 10*elite_boss_p)/100",
+      "components_range": "0-100 integers",
+      "tie_breaker": "later-night-wins"
+    },
+    "tutorial_replay_entry": "settings-menu-available",
+    "balance_kpi_baseline": [
+      {
+        "difficulty_id": "story",
+        "target_win_rate": "85%-95%"
+      },
+      {
+        "difficulty_id": "casual",
+        "target_win_rate": "75%-85%"
+      },
+      {
+        "difficulty_id": "easy",
+        "target_win_rate": "65%-75%"
+      },
+      {
+        "difficulty_id": "normal",
+        "target_win_rate": "60%-70%"
+      },
+      {
+        "difficulty_id": "advanced",
+        "target_win_rate": "45%-55%"
+      },
+      {
+        "difficulty_id": "hard",
+        "target_win_rate": "25%-35%"
+      },
+      {
+        "difficulty_id": "expert",
+        "target_win_rate": "15%-25%"
+      },
+      {
+        "difficulty_id": "nightmare",
+        "target_win_rate": "8%-15%"
+      },
+      {
+        "difficulty_id": "hell",
+        "target_win_rate": "3%-8%"
+      },
+      {
+        "difficulty_id": "impossible",
+        "target_win_rate": "1%-3%"
+      }
+    ],
+    "vertical_slice_milestone": "Day1-Day15",
+    "difficulty_unlock_policy": "clear-to-unlock-config-driven",
+    "difficulty_unlock_cross_tier_skip": false,
+    "enemy_target_priority_when_path_reachable": [
+      "player_units",
+      "castle",
+      "armed_defense_buildings",
+      "walls_and_gate"
+    ],
+    "player_target_priority_within_range": "from-map-center-outward",
+    "queue_on_building_destroyed": "cancel-and-100%-refund",
+    "gold_balance_policy": "negative-allowed",
+    "config_version_mismatch_policy": "reject-load-and-block-match",
+    "quick_restart": "disabled",
+    "starter_protection": "none",
+    "battle_report_display_order": [
+      "Outcome",
+      "Losses",
+      "Combat",
+      "Combat Detail",
+      "Economy",
+      "Progression"
+    ],
+    "battle_report_actionable_suggestions": false,
+    "config_edit_permissions": "all-except-guest",
+    "prd_seal_criteria": [
+      "all-p0-decisions-cleared",
+      "prd-locked-summary-and-config-contracts-consistent",
+      "day1-day15-end-to-end-playable-without-blocker",
+      "battle-report-min-fields-all-present",
+      "post-freeze-behavior-change-requires-adr-prd-summary-and-tests",
+      "taskmaster-preflight-config-hash-allowlist-generated",
+      "daily-gate:30-seeded-runs-pass(normal/hard/impossible=10/10/10)",
+      "release-gate:100-seeded-runs-pass(10-difficulties*10)",
+      "hotfix-gate:30-seeded-runs-impacted-difficulties-covered",
+      "v1.2-freeze-date:not-required"
+    ],
+    "debt_guardrails": {
+      "min_gold": -3000,
+      "on_floor_reached": "block-new-spend-and-stop-further-deduction",
+      "penalty_trigger": "gold-below-zero",
+      "tax_income_multiplier_percent": 70,
+      "penalty_removed_when_gold_at_least": 0,
+      "spend_actions_when_gold_below_zero": "positive-cost-actions-disallowed-zero-cost-allowed",
+      "blocked_actions": [
+        "build",
+        "upgrade",
+        "train",
+        "repair",
+        "reroll"
+      ],
+      "blocked_actions_condition": "cost-greater-than-zero",
+      "in_progress_spend_actions_when_gold_below_zero": "continue-until-complete",
+      "unlock_threshold": "gold-at-least-zero"
+    },
+    "config_change_audit_policy": "mandatory-audit-log-and-review-for-core-config",
+    "config_change_audit_scope": [
+      "difficulty",
+      "spawn",
+      "enemy"
+    ],
+    "config_change_audit_required_fields": [
+      "actor",
+      "timestamp",
+      "file",
+      "change_summary"
+    ],
+    "config_change_audit_log_path": "logs/ci/<YYYY-MM-DD>/config-change-audit.jsonl",
+    "config_change_audit_schema_path": "Game.Core/Contracts/Config/config-change-audit.schema.json",
+    "config_change_audit_source": "script-only",
+    "build_soft_limit_scope": "player-global",
+    "reward_popup_timing": "immediately-after-night-settlement",
+    "reward_popup_pause": "pause-day-night-timer-until-choice",
+    "reward_gold_fallback_scaling": "fixed-600-not-affected-by-difficulty",
+    "path_fail_fallback": {
+      "primary": "nearest-blocking-structure-by-path-cost",
+      "when_no_blocker": "attack-castle",
+      "gate_policy": "enemy-cannot-pass-alive-gate-can-attack-gate-destroyed-passable"
+    },
+    "boss_clone_policy": {
+      "cap_scope": "global",
+      "cap_max": 10,
+      "kills_counted_in_report": true,
+      "boss_budget_accounting": "not-counted-as-boss-channel-budget",
+      "despawn_on_boss_death": "immediate",
+      "despawn_timing": "same-tick"
+    },
+    "integer_rounding_policy": {
+      "pipeline": "multiply-then-divide",
+      "rounding": "floor",
+      "bankers_rounding": false
+    },
+    "performance_budget": {
+      "resolution": "1024x768",
+      "avg_fps_min": 60,
+      "fps_1pct_low_min": 45,
+      "logic_frame_p95_ms_max": 16.6,
+      "logic_frame_p99_ms_max": 22.0,
+      "cold_start_seconds_max": 3.0,
+      "peak_enemy_count_target": 300
+    },
+    "damage_pipeline_order": [
+      "base_damage",
+      "offense_defense_modifiers",
+      "difficulty_modifiers",
+      "armor_reduction",
+      "min_damage_clamp_1"
+    ],
+    "save_scope": "steam-account",
+    "pause_semantics": "full-freeze-all-timers",
+    "performance_mode": "preset-required",
+    "battle_report_seed_visible": true,
+    "battle_report_seed_copyable": true,
+    "battle_report_export_json": true,
+    "battle_report_export_min_fields": [
+      "run_seed",
+      "config_hash",
+      "max_pressure_night",
+      "total_kills",
+      "kills_by_unit_type",
+      "building_losses",
+      "economy_income",
+      "tech_points_spent"
+    ],
+    "achievement_event_id_pattern": "ACH_<DOMAIN>_<ACTION>",
+    "achievements_disabled_on_unofficial_config": true,
+    "debt_failure_gate": "none",
+    "taskmaster_preflight_config_hash_allowlist_required": true,
+    "non_official_config_detection": {
+      "bundle_hash_allowlist_required": true,
+      "schema_version_supported_required": true,
+      "decision": "either-fail-means-unofficial"
+    },
+    "achievements_disable_notice_policy": "show-on-every-load-when-unofficial",
+    "config_hash_allowlist_granularity": "bundle-hash-plus-manifest",
+    "performance_mode_fixed_toggles": {
+      "shadows": "off",
+      "post_processing": "off",
+      "particle_density_percent": 50,
+      "healthbar_animation": "off"
+    },
+    "pause_freeze_scope": [
+      "repair_progress",
+      "queue_progress",
+      "spawn_tick",
+      "night_timer",
+      "reward_popup_timer",
+      "tutorial_timer",
+      "hint_expire_timer"
+    ],
+    "battle_report_export_path": "logs/e2e/<YYYY-MM-DD>/",
+    "battle_report_identity_field": "player_slot_id_only",
+    "save_migration_semver_policy": {
+      "major": "forced-migrate",
+      "minor": "auto-compatible-migrate",
+      "patch": "auto-compatible-migrate"
+    },
+    "cloud_conflict_default_selection_setting": true,
+    "config_hot_reload_in_match": false,
+    "allowlist_governance": {
+      "policy": "open-write-current-phase",
+      "approval_required": false,
+      "risk_level": "high"
+    },
+    "non_official_save_policy": "allow-official-save",
+    "report_retention_policy": "retain-30-days-auto-cleanup",
+    "autosave_corruption_recovery": "fallback-to-last-valid-day-snapshot-if-exists-else-new-run",
+    "cloud_sync_failure_fallback": "continue-local-and-retry-later",
+    "performance_mode_switch_in_match": true,
+    "i18n_release_hard_gate": "critical-hud-no-truncation-no-overlap-zh-en",
+    "post_freeze_behavior_change_budget": "not-enforced",
+    "report_retention_days": 30,
+    "non_official_save_policy_current_phase": "allow-official-save",
+    "non_official_save_policy_external_test": "dirty-save-only",
+    "dirty_save_cloud_sync": false,
+    "dirty_save_achievements_enabled": false,
+    "config_hash_algorithm": "sha256-rfc8785-canonical-json",
+    "allowlist_rollback_policy": {
+      "signed_versions_only": true,
+      "max_recent_versions": 3,
+      "audit_required": true,
+      "audit_fields": [
+        "actor",
+        "from",
+        "to",
+        "reason",
+        "timestamp"
+      ]
+    },
+    "hotfix_regression_gate": "30-seeded-runs-impacted-difficulties-covered",
+    "allowlist_dual_approval_required": false,
+    "post_freeze_behavior_change_test_id_required": false,
+    "release_blockers_section_required": false,
+    "external_test_gate_trigger": {
+      "build_channels": [
+        "external_test",
+        "beta"
+      ]
+    },
+    "dirty_save_slot_policy": "single-slot",
+    "dirty_save_ui_label": "red-unofficial-config-run",
+    "config_hash_canonical_spec": "rfc8785",
+    "allowlist_signature_algorithm": "ed25519",
+    "allowlist_public_key_source": "embedded-readonly-resource",
+    "allowlist_rollback_audit_log_path": "logs/ci/<YYYY-MM-DD>/allowlist-rollback.jsonl",
+    "report_cleanup_timing": "on-startup",
+    "cloud_sync_retry_backoff_seconds": [
+      30,
+      120,
+      600
+    ],
+    "cloud_sync_retry_cap_seconds": 600,
+    "performance_mode_persist_global_setting": true,
+    "i18n_hud_gate_validation": "auto-screenshot-diff-plus-manual-spotcheck",
+    "v1_2_freeze_date_required": false,
+    "display_mode_default": "fullscreen",
+    "input_rebinding_keyboard": true,
+    "input_mouse_sensitivity": true,
+    "ui_scale_presets": [
+      80,
+      100,
+      125,
+      150
+    ],
+    "accessibility_high_contrast_mode": false,
+    "accessibility_color_blind_mode": false,
+    "audio_mix_channels": [
+      "music",
+      "sfx"
+    ],
+    "language_reserved_next4": [
+      "ru-RU",
+      "es-419",
+      "pt-BR",
+      "de-DE"
+    ],
+    "steam_cloud_save_size_limit_mb": 5,
+    "achievement_backfill_on_condition_change": false,
+    "custom_seed_start_supported": true,
+    "safe_mode_startup": false,
+    "gamepad_support_launch": false,
+    "mod_support_launch": false,
+    "steam_workshop_support_launch": false
+  },
+  "reward_state_machine": {
+    "states": [
+      "catalog_available",
+      "exhausted",
+      "gold_fallback"
+    ],
+    "transitions": [
+      {
+        "from": "catalog_available",
+        "to": "catalog_available",
+        "condition": "eligible non-gold rewards can form valid 3-choice"
+      },
+      {
+        "from": "catalog_available",
+        "to": "exhausted",
+        "condition": "eligible non-gold rewards cannot form valid 3-choice"
+      },
+      {
+        "from": "exhausted",
+        "to": "gold_fallback",
+        "condition": "fallback branch chosen"
+      },
+      {
+        "from": "gold_fallback",
+        "to": "gold_fallback",
+        "condition": "subsequent nights under exhausted pool"
+      }
+    ],
+    "illegal_transitions": [
+      "UI-layer direct reward injection without state machine",
+      "grant duplicate non-gold reward in same run",
+      "stack same non-gold reward in same run"
+    ],
+    "fallback": {
+      "reward": "gold",
+      "amount": 600,
+      "repeat_allowed": true,
+      "all_options_gold": true
+    }
+  },
+  "day_balance_table": [
+    {
+      "day": 1,
+      "night_type": "Normal",
+      "normal_budget": 50,
+      "elite_budget": 0,
+      "boss_budget": 0,
+      "spawn_plan": "Base mobs with small Fast subgroup",
+      "pressure": "P1-Low"
+    },
+    {
+      "day": 2,
+      "night_type": "Normal",
+      "normal_budget": 60,
+      "elite_budget": 0,
+      "boss_budget": 0,
+      "spawn_plan": "Base mobs with small Fast subgroup",
+      "pressure": "P1-Low"
+    },
+    {
+      "day": 3,
+      "night_type": "Normal",
+      "normal_budget": 72,
+      "elite_budget": 0,
+      "boss_budget": 0,
+      "spawn_plan": "Base mobs with small Fast subgroup",
+      "pressure": "P1-Low"
+    },
+    {
+      "day": 4,
+      "night_type": "Normal",
+      "normal_budget": 86,
+      "elite_budget": 0,
+      "boss_budget": 0,
+      "spawn_plan": "Base mobs with small Fast subgroup",
+      "pressure": "P2-Mid"
+    },
+    {
+      "day": 5,
+      "night_type": "Elite",
+      "normal_budget": 104,
+      "elite_budget": 62,
+      "boss_budget": 0,
+      "spawn_plan": "Elite core + Fast flankers + regular mobs",
+      "pressure": "P2-Mid"
+    },
+    {
+      "day": 6,
+      "night_type": "Normal",
+      "normal_budget": 124,
+      "elite_budget": 0,
+      "boss_budget": 0,
+      "spawn_plan": "Base + Armored mixed push, lane pressure rises",
+      "pressure": "P2-Mid"
+    },
+    {
+      "day": 7,
+      "night_type": "Normal",
+      "normal_budget": 149,
+      "elite_budget": 0,
+      "boss_budget": 0,
+      "spawn_plan": "Base + Armored mixed push, lane pressure rises",
+      "pressure": "P3-High"
+    },
+    {
+      "day": 8,
+      "night_type": "Normal",
+      "normal_budget": 179,
+      "elite_budget": 0,
+      "boss_budget": 0,
+      "spawn_plan": "Base + Armored mixed push, lane pressure rises",
+      "pressure": "P3-High"
+    },
+    {
+      "day": 9,
+      "night_type": "Normal",
+      "normal_budget": 215,
+      "elite_budget": 0,
+      "boss_budget": 0,
+      "spawn_plan": "Base + Armored mixed push, lane pressure rises",
+      "pressure": "P3-High"
+    },
+    {
+      "day": 10,
+      "night_type": "Elite",
+      "normal_budget": 258,
+      "elite_budget": 155,
+      "boss_budget": 0,
+      "spawn_plan": "Elite core + Fast flankers + regular mobs",
+      "pressure": "P3-High"
+    },
+    {
+      "day": 11,
+      "night_type": "Normal",
+      "normal_budget": 310,
+      "elite_budget": 0,
+      "boss_budget": 0,
+      "spawn_plan": "Base + Armored + Ranged, occasional Self-destruct",
+      "pressure": "P4-VeryHigh"
+    },
+    {
+      "day": 12,
+      "night_type": "Normal",
+      "normal_budget": 372,
+      "elite_budget": 0,
+      "boss_budget": 0,
+      "spawn_plan": "Base + Armored + Ranged, occasional Self-destruct",
+      "pressure": "P4-VeryHigh"
+    },
+    {
+      "day": 13,
+      "night_type": "Normal",
+      "normal_budget": 446,
+      "elite_budget": 0,
+      "boss_budget": 0,
+      "spawn_plan": "Base + Armored + Ranged, occasional Self-destruct",
+      "pressure": "P4-VeryHigh"
+    },
+    {
+      "day": 14,
+      "night_type": "Normal",
+      "normal_budget": 535,
+      "elite_budget": 0,
+      "boss_budget": 0,
+      "spawn_plan": "Base + Armored + Ranged, occasional Self-destruct",
+      "pressure": "P4-VeryHigh"
+    },
+    {
+      "day": 15,
+      "night_type": "Boss",
+      "normal_budget": 642,
+      "elite_budget": 0,
+      "boss_budget": 240,
+      "spawn_plan": "Boss count from config (default 2) + Armored/Ranged mixed mobs, priority pressure on both lanes",
+      "pressure": "P5-Extreme"
+    }
+  ],
+  "unit_building_table": [
+    {
+      "name": "Castle",
+      "category": "Building",
+      "cost": "N/A (initial)",
+      "time": "N/A",
+      "hp": "1000/1000 initial",
+      "area": "4",
+      "population": "N/A",
+      "upgrade": "L2-L5: HP +20%/level; unlocks build queue +1 at L3/L5"
+    },
+    {
+      "name": "Housing",
+      "category": "Building",
+      "cost": "120 Gold / 40 Iron Ore",
+      "time": "30s",
+      "hp": "300",
+      "area": "1",
+      "population": "+10 cap",
+      "upgrade": "Tax +10%/level, pop cap +5/level"
+    },
+    {
+      "name": "Ore Mine",
+      "category": "Building",
+      "cost": "180 Gold / 60 Iron Ore",
+      "time": "40s",
+      "hp": "350",
+      "area": "1",
+      "population": "0",
+      "upgrade": "Iron Ore output +15%/level"
+    },
+    {
+      "name": "Gunner Camp",
+      "category": "Military Building",
+      "cost": "220 Gold / 80 Iron Ore",
+      "time": "45s",
+      "hp": "450",
+      "area": "2",
+      "population": "0",
+      "upgrade": "Training speed +8%/level; unit HP +5/level"
+    },
+    {
+      "name": "Tank Camp",
+      "category": "Military Building",
+      "cost": "420 Gold / 120 Iron Ore",
+      "time": "60s",
+      "hp": "600",
+      "area": "2",
+      "population": "0",
+      "upgrade": "Training speed +8%/level; unit damage +3/level"
+    },
+    {
+      "name": "MG Tower",
+      "category": "Defense",
+      "cost": "200 Gold",
+      "time": "25s",
+      "hp": "500",
+      "area": "1",
+      "population": "0",
+      "upgrade": "Damage +12%/level; range +0.2 tile/level"
+    },
+    {
+      "name": "Wall (line build)",
+      "category": "Defense",
+      "cost": "20 Gold per tile",
+      "time": "instant queue",
+      "hp": "500",
+      "area": "1/tile",
+      "population": "0",
+      "upgrade": "HP +15%/level; repair efficiency +10%/level"
+    },
+    {
+      "name": "Landmine",
+      "category": "Defense-Consumable",
+      "cost": "50 Gold",
+      "time": "8s",
+      "hp": "1 (one-shot)",
+      "area": "1",
+      "population": "0",
+      "upgrade": "Damage +20/level (L1-L5)"
+    },
+    {
+      "name": "Gunner",
+      "category": "Unit-Base",
+      "cost": "100 Gold",
+      "time": "10s",
+      "hp": "50",
+      "area": "N/A",
+      "population": "1",
+      "upgrade": "Single-target, medium range, high fire-rate"
+    },
+    {
+      "name": "Tank",
+      "category": "Unit-Base",
+      "cost": "500 Gold",
+      "time": "20s",
+      "hp": "200",
+      "area": "N/A",
+      "population": "3",
+      "upgrade": "AoE around target point, long range, very low speed"
+    },
+    {
+      "name": "Rail Sniper",
+      "category": "Unit-Advanced",
+      "cost": "350 Gold",
+      "time": "16s",
+      "hp": "70",
+      "area": "N/A",
+      "population": "2",
+      "upgrade": "Very long range, armor-penetrating single target"
+    },
+    {
+      "name": "Rocket Demolisher",
+      "category": "Unit-Advanced",
+      "cost": "650 Gold",
+      "time": "24s",
+      "hp": "180",
+      "area": "N/A",
+      "population": "4",
+      "upgrade": "Large AoE burst, long cooldown, no friendly fire"
+    }
+  ],
+  "test_refs_draft": [
+    "Tests/Core/Combat/WaveBudgetCalculatorTests.cs",
+    "Tests/Core/Combat/PathBlockFallbackPolicyTests.cs",
+    "Tests/Core/Progression/RewardStateMachineTests.cs",
+    "Tests/Core/Progression/TechCapRulesTests.cs",
+    "Tests/Scenes/Combat/test_wave_spawn_and_lane_pressure.gd",
+    "Tests/Scenes/Combat/test_path_block_attack_blocker.gd",
+    "Tests/Scenes/UI/test_hud_scroll_and_build_interaction.gd",
+    "logs/e2e/<YYYY-MM-DD>/security-audit.jsonl",
+    "logs/perf/<YYYY-MM-DD>/summary.json"
+  ]
+}
+```
+
+## 17. PRD附录：enemy-config.schema（Draft）
+- 目标：为 `budget -> spawn` 的配置驱动实现提供统一约束，避免字段漂移。
+- 建议落盘：`Game.Core/Contracts/Config/enemy-config.schema.json`。
+- 约束说明：遵循整数口径（fixed-point），支持带种子可复盘生成。
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lastking.local/schemas/enemy-config.schema.json",
+  "title": "Lastking Enemy Config Schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "seed_policy",
+    "enemies"
+  ],
+  "properties": {
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semantic version of enemy config"
+    },
+    "seed_policy": {
+      "type": "string",
+      "enum": [
+        "deterministic"
+      ],
+      "description": "Must stay deterministic to support reproducible seeded spawn"
+    },
+    "enemies": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/enemy"
+      }
+    }
+  },
+  "$defs": {
+    "enemy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "cost",
+        "hp",
+        "dmg",
+        "move_speed",
+        "range",
+        "attack_interval",
+        "armor",
+        "tags",
+        "spawn_weight",
+        "min_day",
+        "max_day",
+        "is_elite",
+        "is_boss"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9_\\-]+$"
+        },
+        "cost": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Budget cost"
+        },
+        "hp": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "dmg": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "move_speed": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Fixed-point speed unit (e.g. milli-tile/second), integer-only"
+        },
+        "range": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Fixed-point attack range, integer-only"
+        },
+        "attack_interval": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Attack interval in milliseconds"
+        },
+        "armor": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "tags": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "base",
+              "fast",
+              "armored",
+              "ranged",
+              "self_destruct",
+              "elite",
+              "boss"
+            ]
+          }
+        },
+        "spawn_weight": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Used in seeded weighted pick inside Top-K"
+        },
+        "min_day": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 15
+        },
+        "max_day": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 15
+        },
+        "is_elite": {
+          "type": "boolean"
+        },
+        "is_boss": {
+          "type": "boolean"
+        },
+        "lane_ratio_override": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "left",
+            "right"
+          ],
+          "properties": {
+            "left": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "right": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100
+            }
+          },
+          "description": "Optional lane split override for specific enemy"
+        },
+        "night_type_mask": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "normal",
+              "elite",
+              "boss"
+            ]
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "is_boss": {
+                "const": true
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "tags": {
+                "contains": {
+                  "const": "boss"
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "is_elite": {
+                "const": true
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "tags": {
+                "contains": {
+                  "const": "elite"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+## 18. PRD附录：Config Contracts 索引与回链锁定（Locked）
+
+### 18.1 契约索引（SSoT）
+- `Game.Core/Contracts/Config/difficulty-config.schema.json`
+- `Game.Core/Contracts/Config/difficulty-config.sample.json`
+- `Game.Core/Contracts/Config/spawn-config.schema.json`
+- `Game.Core/Contracts/Config/spawn-config.sample.json`
+- `Game.Core/Contracts/Config/spawn-config.validator.rules.md`
+- `Game.Core/Contracts/Config/enemy-config.schema.json`
+- `Game.Core/Contracts/Config/config-change-audit.schema.json`
+- `Game.Core/Contracts/Config/pressure-normalization.config.schema.json`
+- `Game.Core/Contracts/Config/pressure-normalization.config.sample.json`
+
+### 18.2 PRD Machine Keys 与契约字段回链矩阵
+| PRD 锁定键（Machine Appendix） | 契约字段（Schema/Rules） | 锁定值 |
+|---|---|---|
+| `locked_constraints.difficulty.unlock_policy` | `difficulty-config.schema.json -> properties.unlock_policy.enum[0]` | `clear-to-unlock-config-driven-no-cross-tier-skip` |
+| `locked_constraints.difficulty_unlock_policy` + `locked_constraints.difficulty_unlock_cross_tier_skip` | `difficulty-config.schema.json -> properties.unlock_policy / properties.allow_cross_tier_skip.const` | `clear-to-unlock-config-driven` + `false` |
+| `locked_constraints.boss_night.boss_count_policy` + `locked_constraints.boss_night.boss_count_default` | `spawn-config.schema.json -> properties.night_schedule.properties.boss_count.mode/default` | `config-driven` + `2` |
+| `locked_constraints.config_change_audit_source` | `config-change-audit.schema.json -> properties.writer_source.const` | `script-only` |
+| `locked_constraints.budget_to_spawn.on_no_eligible_candidates` | `spawn-config.schema.json -> properties.safety_fallback.properties.on_no_eligible_candidates.enum[0]` | `discard_tick_budget` |
+| `locked_constraints.budget_to_spawn.night_type_weight_semantics` | `spawn-config.schema.json -> properties.night_type_weight_semantics.enum[0]` | `sampling-priority-only-not-channel-budget` |
+| `R-005 Boss Constraints`（规则层） | `spawn-config.validator.rules.md` | `boss_count.mode == config-driven` 且 `boss_count.default >= 1` |
+
+### 18.3 双向锁定变更规则（Hard Gate）
+- 若以上任一锁定键变更，必须在同一改动集中同步更新 4 处：
+  1) `docs/prd/PRD-LASTKING-v1.2-GAMEDESIGN.md`（本节 + Machine Appendix）
+  2) `docs/prd/PRD-LASTKING-v1.2-LOCKED-SUMMARY.md`
+  3) 对应 `Game.Core/Contracts/Config/*.schema.json` 与 `*.sample.json`
+  4) 对应规则文件（如 `spawn-config.validator.rules.md`）
+- 未完成四处同步视为口径漂移，禁止进入任务拆分与实现阶段。
+
+## 19. 自检清单
+- [x] 所有硬约束均被保留
+- [x] 三张核心表完整（表A/表B/表C）
+- [x] 奖励状态机完整且可实现
+- [x] 波次预算公式可计算
+- [x] Test-Refs 可落到文件路径
+- [x] 无联机/移动端/多平台漂移
+- [x] 与 ADR-0031/0032/0033 无冲突
+- [x] PRD 与 Config Contracts 回链矩阵已同步并锁定

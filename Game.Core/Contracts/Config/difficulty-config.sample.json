@@ -1,0 +1,130 @@
+{
+  "version": "1.0.0",
+  "mode": "numeric-only",
+  "default_level_id": "normal",
+  "rounding_policy": "floor",
+  "unlock_policy": "clear-to-unlock-config-driven",
+  "allow_cross_tier_skip": false,
+  "levels": [
+    {
+      "id": "story",
+      "order": 1,
+      "display_name_key": "DIFFICULTY.STORY",
+      "enemy_hp_mult": 70,
+      "enemy_dmg_mult": 70,
+      "resource_mult": 130,
+      "notes": "Narrative-friendly entry level",
+      "budget_mult_normal": 75,
+      "budget_mult_elite": 75,
+      "budget_mult_boss": 75
+    },
+    {
+      "id": "casual",
+      "order": 2,
+      "display_name_key": "DIFFICULTY.CASUAL",
+      "enemy_hp_mult": 80,
+      "enemy_dmg_mult": 80,
+      "resource_mult": 120,
+      "notes": "Low-pressure defense onboarding",
+      "budget_mult_normal": 85,
+      "budget_mult_elite": 85,
+      "budget_mult_boss": 85
+    },
+    {
+      "id": "easy",
+      "order": 3,
+      "display_name_key": "DIFFICULTY.EASY",
+      "enemy_hp_mult": 90,
+      "enemy_dmg_mult": 90,
+      "resource_mult": 110,
+      "notes": "Beginner challenge",
+      "budget_mult_normal": 95,
+      "budget_mult_elite": 95,
+      "budget_mult_boss": 95
+    },
+    {
+      "id": "normal",
+      "order": 4,
+      "display_name_key": "DIFFICULTY.NORMAL",
+      "enemy_hp_mult": 100,
+      "enemy_dmg_mult": 100,
+      "resource_mult": 100,
+      "notes": "Design baseline",
+      "budget_mult_normal": 100,
+      "budget_mult_elite": 100,
+      "budget_mult_boss": 100
+    },
+    {
+      "id": "advanced",
+      "order": 5,
+      "display_name_key": "DIFFICULTY.ADVANCED",
+      "enemy_hp_mult": 110,
+      "enemy_dmg_mult": 110,
+      "resource_mult": 95,
+      "notes": "Tighter economy, stronger waves",
+      "budget_mult_normal": 110,
+      "budget_mult_elite": 110,
+      "budget_mult_boss": 110
+    },
+    {
+      "id": "hard",
+      "order": 6,
+      "display_name_key": "DIFFICULTY.HARD",
+      "enemy_hp_mult": 120,
+      "enemy_dmg_mult": 120,
+      "resource_mult": 90,
+      "notes": "Core hard mode",
+      "budget_mult_normal": 120,
+      "budget_mult_elite": 120,
+      "budget_mult_boss": 120
+    },
+    {
+      "id": "expert",
+      "order": 7,
+      "display_name_key": "DIFFICULTY.EXPERT",
+      "enemy_hp_mult": 130,
+      "enemy_dmg_mult": 130,
+      "resource_mult": 85,
+      "notes": "High-pressure optimization required",
+      "budget_mult_normal": 130,
+      "budget_mult_elite": 130,
+      "budget_mult_boss": 130
+    },
+    {
+      "id": "nightmare",
+      "order": 8,
+      "display_name_key": "DIFFICULTY.NIGHTMARE",
+      "enemy_hp_mult": 145,
+      "enemy_dmg_mult": 145,
+      "resource_mult": 80,
+      "notes": "Near-perfect planning expected",
+      "budget_mult_normal": 145,
+      "budget_mult_elite": 145,
+      "budget_mult_boss": 145
+    },
+    {
+      "id": "hell",
+      "order": 9,
+      "display_name_key": "DIFFICULTY.HELL",
+      "enemy_hp_mult": 160,
+      "enemy_dmg_mult": 160,
+      "resource_mult": 75,
+      "notes": "Punishing attrition profile",
+      "budget_mult_normal": 160,
+      "budget_mult_elite": 160,
+      "budget_mult_boss": 160
+    },
+    {
+      "id": "impossible",
+      "order": 10,
+      "display_name_key": "DIFFICULTY.IMPOSSIBLE",
+      "enemy_hp_mult": 180,
+      "enemy_dmg_mult": 180,
+      "resource_mult": 70,
+      "notes": "Challenge run tier",
+      "budget_mult_normal": 180,
+      "budget_mult_elite": 180,
+      "budget_mult_boss": 180
+    }
+  ]
+}

@@ -1,0 +1,331 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lastking.local/schemas/spawn-config.schema.json",
+  "title": "Lastking Spawn Config Schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "spawn_model",
+    "seed_formula",
+    "refresh_step_seconds",
+    "active_spawn_window_percent",
+    "inactive_spawn_window_percent",
+    "top_k",
+    "remainder_budget_policy",
+    "lane_ratio",
+    "night_type_weights",
+    "night_type_weight_semantics",
+    "channel_budget_multipliers_source",
+    "night_schedule",
+    "candidate_filters",
+    "sampling",
+    "safety_fallback"
+  ],
+  "properties": {
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "spawn_model": {
+      "type": "string",
+      "enum": [
+        "greedy_fill_plus_seeded_weighted_topk"
+      ]
+    },
+    "seed_formula": {
+      "type": "string",
+      "enum": [
+        "run_seed + day + lane + spawn_tick"
+      ]
+    },
+    "refresh_step_seconds": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Locked default is 10 seconds."
+    },
+    "active_spawn_window_percent": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 100,
+      "description": "Locked default is 80."
+    },
+    "inactive_spawn_window_percent": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 99,
+      "description": "Locked default is 20."
+    },
+    "top_k": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Locked default is 5."
+    },
+    "remainder_budget_policy": {
+      "type": "string",
+      "enum": [
+        "discard"
+      ]
+    },
+    "lane_ratio": {
+      "$ref": "#/$defs/laneRatioConfig"
+    },
+    "night_type_weights": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "normal",
+        "elite",
+        "boss"
+      ],
+      "properties": {
+        "normal": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "elite": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "boss": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "channel_budget_multipliers_source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "normal",
+        "elite",
+        "boss"
+      ],
+      "properties": {
+        "normal": {
+          "type": "string",
+          "enum": [
+            "difficulty.budget_mult_normal"
+          ]
+        },
+        "elite": {
+          "type": "string",
+          "enum": [
+            "difficulty.budget_mult_elite"
+          ]
+        },
+        "boss": {
+          "type": "string",
+          "enum": [
+            "difficulty.budget_mult_boss"
+          ]
+        }
+      }
+    },
+    "night_schedule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "elite_days",
+        "boss_days",
+        "boss_count"
+      ],
+      "properties": {
+        "elite_days": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 15
+          }
+        },
+        "boss_days": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 15
+          }
+        },
+        "boss_count": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "mode",
+            "default"
+          ],
+          "properties": {
+            "mode": {
+              "type": "string",
+              "enum": [
+                "config-driven"
+              ]
+            },
+            "default": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Default boss count when no override matches. Locked default is 2."
+            },
+            "by_day": {
+              "type": "object",
+              "patternProperties": {
+                "^(?:[1-9]|1[0-5])$": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "additionalProperties": false,
+              "description": "Optional day-level override, key range 1..15."
+            },
+            "by_difficulty": {
+              "type": "object",
+              "patternProperties": {
+                "^[a-z0-9_\\-]+$": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "additionalProperties": false,
+              "description": "Optional difficulty-level override."
+            },
+            "by_day_and_difficulty": {
+              "type": "object",
+              "patternProperties": {
+                "^(?:[1-9]|1[0-5])$": {
+                  "type": "object",
+                  "patternProperties": {
+                    "^[a-z0-9_\\-]+$": {
+                      "type": "integer",
+                      "minimum": 1
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false,
+              "description": "Optional day+difficulty override with highest priority."
+            }
+          }
+        }
+      }
+    },
+    "candidate_filters": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "use_min_day_max_day",
+        "use_night_type_mask",
+        "exclude_boss_from_non_boss_nights"
+      ],
+      "properties": {
+        "use_min_day_max_day": {
+          "type": "boolean"
+        },
+        "use_night_type_mask": {
+          "type": "boolean"
+        },
+        "exclude_boss_from_non_boss_nights": {
+          "type": "boolean"
+        }
+      }
+    },
+    "sampling": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "weight_formula",
+        "deterministic_rng",
+        "deterministic_tie_breaker"
+      ],
+      "properties": {
+        "weight_formula": {
+          "type": "string",
+          "enum": [
+            "spawn_weight * night_type_weight"
+          ]
+        },
+        "deterministic_rng": {
+          "type": "string",
+          "enum": [
+            "pcg32"
+          ]
+        },
+        "deterministic_tie_breaker": {
+          "type": "string",
+          "enum": [
+            "seeded_pseudo_random"
+          ]
+        }
+      }
+    },
+    "safety_fallback": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "on_config_load_failure",
+        "on_no_eligible_candidates"
+      ],
+      "properties": {
+        "on_config_load_failure": {
+          "type": "string",
+          "enum": [
+            "use_builtin_safe_default_and_warn"
+          ]
+        },
+        "on_no_eligible_candidates": {
+          "type": "string",
+          "enum": [
+            "discard_tick_budget"
+          ]
+        }
+      }
+    },
+    "night_type_weight_semantics": {
+      "type": "string",
+      "enum": [
+        "sampling-priority-only-not-channel-budget"
+      ],
+      "description": "Night-type weight affects candidate sampling priority only. It does not consume or replace channel budgets."
+    }
+  },
+  "$defs": {
+    "laneRatioConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "default",
+        "allow_override"
+      ],
+      "properties": {
+        "default": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "left",
+            "right"
+          ],
+          "properties": {
+            "left": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "right": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100
+            }
+          },
+          "description": "left + right should equal 100 (validated by runtime semantic validator)."
+        },
+        "allow_override": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

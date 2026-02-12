@@ -1,0 +1,566 @@
+{
+  "tasks": [
+    {
+      "id": 1,
+      "title": "Implement match clock abstractions and phase enums",
+      "description": "Create deterministic time primitives for Day/Night runtime loop under Windows Godot+C#.",
+      "status": "pending",
+      "dependencies": [],
+      "priority": "high",
+      "details": "Add core abstractions for match time, phase enum (Day/Night/Settlement), and tick source interfaces in Game.Core without Godot dependency. Ensure integer-based timing units to avoid float drift.",
+      "testStrategy": "Unit tests validate phase enum transitions and integer timing arithmetic boundaries.",
+      "subtasks": []
+    },
+    {
+      "id": 2,
+      "title": "Build Day/Night state machine (4+2 fixed cycle)",
+      "description": "Implement runtime state machine for 4-minute Day and 2-minute Night with deterministic transitions.",
+      "status": "pending",
+      "dependencies": [
+        1
+      ],
+      "priority": "high",
+      "details": "Implement state machine service with explicit transition guards and event hooks. Support pause-aware clock input and deterministic replay by seed/time snapshot.",
+      "testStrategy": "Unit tests cover normal and edge transitions; property tests assert cycle invariants over long runs.",
+      "subtasks": []
+    },
+    {
+      "id": 3,
+      "title": "Implement day progression and terminal conditions",
+      "description": "Track Day1-Day15, enforce win at Day15 survival and lose when castle HP reaches zero.",
+      "status": "pending",
+      "dependencies": [
+        2
+      ],
+      "priority": "high",
+      "details": "Add match progression service that increments day counters only at valid boundaries. Integrate terminal condition checks and freeze progression on terminal states.",
+      "testStrategy": "Unit tests validate day rollover, win condition timing, and immediate loss precedence.",
+      "subtasks": []
+    },
+    {
+      "id": 4,
+      "title": "Implement independent wave budget channels",
+      "description": "Create budget calculators for normal/elite/boss channels with normal day1=50 and 120% growth.",
+      "status": "pending",
+      "dependencies": [
+        1,
+        3
+      ],
+      "priority": "high",
+      "details": "Implement budget engine where normal budget uses multiplicative daily growth and elite/boss are computed separately, never merged into normal weights.",
+      "testStrategy": "Unit tests verify budget progression table Day1-Day15 and strict channel independence.",
+      "subtasks": []
+    },
+    {
+      "id": 5,
+      "title": "Implement night spawn scheduler (80/20 with 10s cadence)",
+      "description": "Schedule continuous spawns in first 80% of night and stop new spawns in last 20%.",
+      "status": "pending",
+      "dependencies": [
+        2,
+        4
+      ],
+      "priority": "high",
+      "details": "Build spawn timeline planner with integer seconds, cadence=10s, and phase windowing. Ensure boss-night fixed spawn envelope supports 2 bosses.",
+      "testStrategy": "Simulation tests validate spawn timestamps distribution and no new spawn after 80% cutoff.",
+      "subtasks": []
+    },
+    {
+      "id": 6,
+      "title": "Implement channel-specific spawn composition resolver",
+      "description": "Resolve unit composition from per-channel budgets and configured pools.",
+      "status": "pending",
+      "dependencies": [
+        4,
+        5
+      ],
+      "priority": "medium",
+      "details": "Create resolver that maps budget to spawn groups using config-driven costs and channel pools. Keep elite and boss paths isolated from normal composition logic.",
+      "testStrategy": "Unit tests verify composition output under budget constraints and channel isolation.",
+      "subtasks": []
+    },
+    {
+      "id": 7,
+      "title": "Implement deterministic seeded RNG utilities",
+      "description": "Provide seeded pseudo-random helpers for tie-breakers and reproducible spawn decisions.",
+      "status": "pending",
+      "dependencies": [
+        1
+      ],
+      "priority": "medium",
+      "details": "Add RNG service with explicit seed state serialization. Use deterministic tie-break API for equal-cost/equal-priority decisions.",
+      "testStrategy": "Unit tests assert same-seed reproducibility and different-seed divergence.",
+      "subtasks": []
+    },
+    {
+      "id": 8,
+      "title": "Implement blocked-path fallback targeting",
+      "description": "When pathfinding fails, enemy must attack nearest blocking structure instead of deadlocking.",
+      "status": "pending",
+      "dependencies": [
+        7
+      ],
+      "priority": "high",
+      "details": "Add fallback target selection based on nearest blocker distance with deterministic seeded tie-break. Include ultimate fallback behavior if blockers are unavailable.",
+      "testStrategy": "Scenario tests with fully blocked maps validate fallback target always selected and combat resumes.",
+      "subtasks": []
+    },
+    {
+      "id": 9,
+      "title": "Implement enemy target priority policy",
+      "description": "Apply path-valid priority chain: unit > castle > armed defense > wall/gate.",
+      "status": "pending",
+      "dependencies": [
+        8
+      ],
+      "priority": "high",
+      "details": "Implement target evaluator with clear priority order and policy switches based on path status. Keep policy deterministic under equal score via seeded utilities.",
+      "testStrategy": "Unit/integration tests validate priority ordering under mixed battlefield compositions.",
+      "subtasks": []
+    },
+    {
+      "id": 10,
+      "title": "Create core-loop integration simulation harness",
+      "description": "Build deterministic simulation tests covering Day/Night, wave channels, and path fallback.",
+      "status": "pending",
+      "dependencies": [
+        3,
+        5,
+        6,
+        9
+      ],
+      "priority": "high",
+      "details": "Add headless simulation harness producing replay artifacts for seed-based validation. Include baseline cases for normal, elite night, and boss night.",
+      "testStrategy": "Integration tests compare expected timelines and outcomes against golden snapshots.",
+      "subtasks": []
+    },
+    {
+      "id": 11,
+      "title": "Implement integer resource ledger with negative-gold support",
+      "description": "Create authoritative resource accounting for gold/iron/pop-cap using integer arithmetic only.",
+      "status": "pending",
+      "dependencies": [
+        1
+      ],
+      "priority": "high",
+      "details": "Implement ledger operations for spend/income/refund with audit records. Allow negative gold state where rules permit and block invalid iron/pop underflow.",
+      "testStrategy": "Unit tests validate integer-only operations, debt edge cases, and overflow guards.",
+      "subtasks": []
+    },
+    {
+      "id": 12,
+      "title": "Implement build footprint and placement rule engine",
+      "description": "Enforce occupancy and footprint rules for castle/barracks/tower/wall and non-buildable tiles.",
+      "status": "pending",
+      "dependencies": [
+        11
+      ],
+      "priority": "high",
+      "details": "Build placement validator with hidden-grid occupancy checks and blocked-tile constraints. Reject placements crossing forbidden cells and path-restricted geometry rules.",
+      "testStrategy": "Unit tests and map fixtures verify valid placement, rejection reasons, and deterministic outcomes.",
+      "subtasks": []
+    },
+    {
+      "id": 13,
+      "title": "Implement wall drag-line and one-way gate behavior",
+      "description": "Support drag-line wall placement and enforce one-way gate logic (friendly out, enemy in denied).",
+      "status": "pending",
+      "dependencies": [
+        12
+      ],
+      "priority": "high",
+      "details": "Add segmented wall construction planner with cost accumulation and placement previews. Implement gate pass policy by faction and direction.",
+      "testStrategy": "Integration tests validate drag segmentation, accumulated cost, and gate traversal restrictions.",
+      "subtasks": []
+    },
+    {
+      "id": 14,
+      "title": "Implement building construction pipeline",
+      "description": "Create construction actions that start when resources are available and run concurrently for buildings.",
+      "status": "pending",
+      "dependencies": [
+        11,
+        12
+      ],
+      "priority": "medium",
+      "details": "Implement build action lifecycle (queued/active/completed/cancelled) with immediate cost reservation. Do not apply barracks queue limitations to building construction.",
+      "testStrategy": "Unit tests validate build state transitions, resource reservation timing, and concurrency semantics.",
+      "subtasks": []
+    },
+    {
+      "id": 15,
+      "title": "Implement upgrade system (max 5, no skipping)",
+      "description": "Implement upgrade rules including level cap, no skip-level upgrades, and completion full-heal.",
+      "status": "pending",
+      "dependencies": [
+        14
+      ],
+      "priority": "high",
+      "details": "Implement upgrade scheduler with level validation and mutual exclusion hooks for repair. On upgrade completion, restore building HP to full per locked rule.",
+      "testStrategy": "Unit tests cover cap enforcement, no-skip checks, and full-heal post-upgrade behavior.",
+      "subtasks": []
+    },
+    {
+      "id": 16,
+      "title": "Implement repair pipeline and debt-stop behavior",
+      "description": "Implement progressive repair cost/time and stop repair automatically on invalid debt conditions.",
+      "status": "pending",
+      "dependencies": [
+        11,
+        15
+      ],
+      "priority": "high",
+      "details": "Implement repair at 50% build-speed equivalent and 50% build-cost for full repair (gold-only basis). Block simultaneous repair+upgrade and stop repair if debt rule triggers.",
+      "testStrategy": "Unit tests validate incremental deduction, stop/resume conditions, and mutual exclusion with upgrades.",
+      "subtasks": []
+    },
+    {
+      "id": 17,
+      "title": "Implement barracks training queues and cancellation rules",
+      "description": "Support one training queue per barracks and cancellation with 100% refund.",
+      "status": "pending",
+      "dependencies": [
+        11
+      ],
+      "priority": "medium",
+      "details": "Implement queue state machine by barracks instance with immediate training cost lock and cancellation rollback. Keep queue limits independent from castle level.",
+      "testStrategy": "Unit tests validate one-queue constraint, cancellation refund correctness, and multi-barracks behavior.",
+      "subtasks": []
+    },
+    {
+      "id": 18,
+      "title": "Implement combat profiles for base and advanced units",
+      "description": "Model core ranged unit stats/roles and enforce no-friendly-fire behavior in damage resolution.",
+      "status": "pending",
+      "dependencies": [
+        17
+      ],
+      "priority": "high",
+      "details": "Implement unit profile registry (rifleman, tank, advanced classes) and attack resolver policies. Ensure targeting and AOE logic never harms allied entities.",
+      "testStrategy": "Combat simulation tests verify DPS role expectations and friendly-fire suppression invariants.",
+      "subtasks": []
+    },
+    {
+      "id": 19,
+      "title": "Implement tech stat progression engine",
+      "description": "Implement tech effects on unit stats only, with percent caps and numeric uncapped fields.",
+      "status": "pending",
+      "dependencies": [
+        18
+      ],
+      "priority": "medium",
+      "details": "Create tech modifier pipeline with capped percentage domains (attack speed, production speed, cost) and additive numeric domains (damage/range/hp).",
+      "testStrategy": "Unit tests validate cap enforcement, stacking order, and deterministic modifier application.",
+      "subtasks": []
+    },
+    {
+      "id": 20,
+      "title": "Implement nightly 3-choice reward state machine",
+      "description": "Implement reward pools by night type with non-repeat non-stack policy and gold fallback on exhaustion.",
+      "status": "pending",
+      "dependencies": [
+        5,
+        19
+      ],
+      "priority": "high",
+      "details": "Build reward selector for normal/elite/boss pools with one trigger per night. Persist taken rewards within run to enforce uniqueness and fallback-to-gold behavior.",
+      "testStrategy": "Unit tests verify pool isolation, uniqueness constraints, and exhaustion fallback correctness.",
+      "subtasks": []
+    },
+    {
+      "id": 21,
+      "title": "Implement camera control (edge and keyboard scrolling)",
+      "description": "Deliver map navigation controls for fixed-height, horizontal multi-screen battlefield.",
+      "status": "pending",
+      "dependencies": [
+        1
+      ],
+      "priority": "medium",
+      "details": "Implement camera controller in adapter layer with configurable scroll speed, dead zones, and boundary clamps for ~3-screen map width.",
+      "testStrategy": "Scene tests validate camera movement, boundary clamping, and input source parity.",
+      "subtasks": []
+    },
+    {
+      "id": 22,
+      "title": "Implement pause/1x/2x time controls with full freeze",
+      "description": "Provide runtime speed controls where pause freezes all timers and queued countdowns.",
+      "status": "pending",
+      "dependencies": [
+        2,
+        21
+      ],
+      "priority": "high",
+      "details": "Hook time-scale controller into core tick abstraction. Pause must freeze day/night, spawn scheduling, training, repairs, and build timers consistently.",
+      "testStrategy": "Integration tests assert zero progression under pause and deterministic resume across all timer subsystems.",
+      "subtasks": []
+    },
+    {
+      "id": 23,
+      "title": "Implement action feedback and failure reason prompts",
+      "description": "Show clear UI prompts for invalid placement, blocked action, and unavailable operation causes.",
+      "status": "pending",
+      "dependencies": [
+        12,
+        22
+      ],
+      "priority": "medium",
+      "details": "Implement structured reason-code to localized message mapping and UI toast/dialog routing. Include prompts for migration errors and rejected config load.",
+      "testStrategy": "UI tests verify reason-code coverage and localization key mapping for all failure classes.",
+      "subtasks": []
+    },
+    {
+      "id": 24,
+      "title": "Implement autosave slot manager (single slot policy)",
+      "description": "Implement one autosave slot with day-start triggers and immutable slot ownership policy.",
+      "status": "pending",
+      "dependencies": [
+        3,
+        22
+      ],
+      "priority": "high",
+      "details": "Add save manager using versioned payload with single autosave channel. Ensure manual save flow cannot overwrite autosave channel if policy forbids.",
+      "testStrategy": "Unit tests validate day-start autosave trigger and slot write-protection invariants.",
+      "subtasks": []
+    },
+    {
+      "id": 25,
+      "title": "Implement forced save migration and invalid-load rejection",
+      "description": "Require migration for old payloads and reject invalid saves with explicit user guidance.",
+      "status": "pending",
+      "dependencies": [
+        24
+      ],
+      "priority": "high",
+      "details": "Create migration pipeline with schema/version checks and fail-fast rejection paths. Expose clear remediation prompts when migration fails.",
+      "testStrategy": "Migration tests cover forward migration success, unsupported version failure, and corrupted payload rejection.",
+      "subtasks": []
+    },
+    {
+      "id": 26,
+      "title": "Implement Steam cloud synchronization integration",
+      "description": "Integrate cloud save sync for Steam-account-bound profiles with deterministic conflict policy.",
+      "status": "pending",
+      "dependencies": [
+        24,
+        25
+      ],
+      "priority": "medium",
+      "details": "Implement cloud sync adapter with manifest and package strategy, include conflict detection and predictable winner policy documented for UX.",
+      "testStrategy": "Adapter tests validate upload/download lifecycle and conflict handling simulation.",
+      "subtasks": []
+    },
+    {
+      "id": 27,
+      "title": "Implement battle report generation pipeline",
+      "description": "Persist and display battle report fields: seed, wave timeline, queue snapshots, rewards, economy outcomes.",
+      "status": "pending",
+      "dependencies": [
+        10,
+        20,
+        24
+      ],
+      "priority": "medium",
+      "details": "Create report DTO and serializer for end-of-run summary. Include deterministic identifiers for replay comparability and diagnostics.",
+      "testStrategy": "Unit tests validate schema completeness and deterministic report content for fixed-seed sessions.",
+      "subtasks": []
+    },
+    {
+      "id": 28,
+      "title": "Implement deterministic achievement framework (20 visible)",
+      "description": "Implement 20 non-hidden achievements with explicit trigger conditions and timing windows.",
+      "status": "pending",
+      "dependencies": [
+        27
+      ],
+      "priority": "medium",
+      "details": "Create achievement registry and trigger engine bound to event stream and report milestones. Ensure deterministic unlock behavior under replay.",
+      "testStrategy": "Unit tests and integration scenarios verify trigger conditions and no duplicate unlock regressions.",
+      "subtasks": []
+    },
+    {
+      "id": 29,
+      "title": "Implement bilingual i18n key system with runtime switch",
+      "description": "Provide zh-CN/en-US launch support, runtime switching, and previous-language memory.",
+      "status": "pending",
+      "dependencies": [
+        23
+      ],
+      "priority": "medium",
+      "details": "Define key-based localization catalog structure and fallback behavior. Persist language preference locally and reload safely on startup.",
+      "testStrategy": "Localization tests validate key completeness, fallback rules, and runtime switch persistence.",
+      "subtasks": []
+    },
+    {
+      "id": 30,
+      "title": "Implement launch QA gates for audio and performance baselines",
+      "description": "Establish smoke checks for music/SFX channels and performance targets (1% low 45 FPS, avg 60 FPS).",
+      "status": "pending",
+      "dependencies": [
+        22,
+        27
+      ],
+      "priority": "medium",
+      "details": "Add headless and playable smoke scripts collecting FPS and stability metrics into logs. Include pass/fail criteria and baseline trend output for CI-local use.",
+      "testStrategy": "Performance smoke test verifies thresholds under fixed test scene and records reproducible summaries.",
+      "subtasks": []
+    },
+    {
+      "id": 31,
+      "title": "Formalize enemy-config schema and loader contract",
+      "description": "Lock enemy composition and scaling fields into schema-driven validation and typed loading.",
+      "status": "pending",
+      "dependencies": [],
+      "priority": "high",
+      "details": "Implement schema contract mapping and typed parser for enemy archetypes, tags, costs, scaling flags, and channel compatibility.",
+      "testStrategy": "Schema contract tests validate required fields, enum domains, and invalid payload rejection.",
+      "subtasks": []
+    },
+    {
+      "id": 32,
+      "title": "Formalize difficulty-config schema with run-start lock",
+      "description": "Ensure difficulty settings are schema-validated and immutable after match start.",
+      "status": "pending",
+      "dependencies": [
+        31
+      ],
+      "priority": "high",
+      "details": "Implement difficulty schema parser and runtime lock policy enforcement at session bootstrap. Reject mid-run mutation attempts.",
+      "testStrategy": "Unit tests validate lock behavior and reject illegal runtime updates.",
+      "subtasks": []
+    },
+    {
+      "id": 33,
+      "title": "Formalize spawn-config schema and validator rules",
+      "description": "Encode spawn window cadence, channel distributions, and policy constraints in schema+rule contracts.",
+      "status": "pending",
+      "dependencies": [
+        31,
+        32
+      ],
+      "priority": "high",
+      "details": "Implement schema binding for timeline windows, lane weights, and channel rules. Integrate validator rules for semantic checks beyond JSON schema.",
+      "testStrategy": "Contract tests cover both structural validation and semantic rule validation failures.",
+      "subtasks": []
+    },
+    {
+      "id": 34,
+      "title": "Formalize pressure-normalization schema and sample baselines",
+      "description": "Lock pressure normalization baselines and allowable tuning ranges via schema.",
+      "status": "pending",
+      "dependencies": [
+        33
+      ],
+      "priority": "high",
+      "details": "Define baseline constants and clamp ranges in pressure-normalization contract. Provide sample values as reference tuning baseline.",
+      "testStrategy": "Validation tests ensure baseline constants exist and out-of-range values are rejected.",
+      "subtasks": []
+    },
+    {
+      "id": 35,
+      "title": "Implement config repository with version/hash identity",
+      "description": "Create unified config repository exposing version and hash metadata for deterministic reproducibility.",
+      "status": "pending",
+      "dependencies": [
+        31,
+        32,
+        33,
+        34
+      ],
+      "priority": "medium",
+      "details": "Implement repository that loads validated contracts, computes content hash, and publishes runtime identity metadata to battle report context.",
+      "testStrategy": "Unit tests verify stable hashing and deterministic identity across identical inputs.",
+      "subtasks": []
+    },
+    {
+      "id": 36,
+      "title": "Implement invalid-config policy and safe fallback behavior",
+      "description": "Reject invalid config loads and apply built-in safe defaults where policy permits.",
+      "status": "pending",
+      "dependencies": [
+        35
+      ],
+      "priority": "high",
+      "details": "Implement policy matrix for hard-reject vs fallback cases. Surface explicit reason codes and ensure failure paths are user-visible and logged.",
+      "testStrategy": "Negative tests validate reject/fallback branches and corresponding audit entries.",
+      "subtasks": []
+    },
+    {
+      "id": 37,
+      "title": "Implement force-migration config upgrade pipeline",
+      "description": "Support forced migration only; no dual-version runtime compatibility.",
+      "status": "pending",
+      "dependencies": [
+        35,
+        36
+      ],
+      "priority": "high",
+      "details": "Implement migration runner with explicit from/to version handlers and failure guardrails. If migration fails, loading must stop with guidance.",
+      "testStrategy": "Migration tests cover supported upgrade paths and unsupported-version failure handling.",
+      "subtasks": []
+    },
+    {
+      "id": 38,
+      "title": "Implement config change governance and audit records",
+      "description": "Track config provenance, mutability boundaries, and audit trails for tuning changes.",
+      "status": "pending",
+      "dependencies": [
+        35
+      ],
+      "priority": "medium",
+      "details": "Add governance metadata fields (source, author, timestamp, hash) and persist change audits. Enforce run-time immutability boundaries where locked.",
+      "testStrategy": "Audit tests verify immutable fields and complete provenance records for accepted changes.",
+      "subtasks": []
+    },
+    {
+      "id": 39,
+      "title": "Build contract test suite for schemas and samples",
+      "description": "Create automated tests for all config schemas, samples, and invalid edge cases.",
+      "status": "pending",
+      "dependencies": [
+        31,
+        32,
+        33,
+        34
+      ],
+      "priority": "high",
+      "details": "Implement schema validation test harness with golden sample coverage and negative fixtures. Report results to logs/unit and logs/ci summaries.",
+      "testStrategy": "Automated contract tests pass all sample files and fail invalid fixtures with clear diagnostics.",
+      "subtasks": []
+    },
+    {
+      "id": 40,
+      "title": "Implement deterministic replay/governance final gate",
+      "description": "Validate deterministic replay under same seed+config and emit governance checklist artifacts.",
+      "status": "pending",
+      "dependencies": [
+        10,
+        30,
+        35,
+        37,
+        39
+      ],
+      "priority": "high",
+      "details": "Build final validation gate combining replay determinism, config identity, and operational checklist output for release readiness.",
+      "testStrategy": "End-to-end tests rerun fixed seed scenarios and compare timeline/report hashes for exact match.",
+      "subtasks": []
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0",
+    "generatedAt": "2026-02-11T19:05:50",
+    "projectName": "Lastking",
+    "taskCount": 40,
+    "completedCount": 0,
+    "tags": [
+      "master"
+    ],
+    "generationMethod": "sharded-append-fallback",
+    "sourceFile": ".taskmaster/docs/prd.txt",
+    "sourceShards": [
+      ".taskmaster/tasks/append-shards/01-core-loop-wave-pathing.tasks.json",
+      ".taskmaster/tasks/append-shards/02-economy-build-combat-progression.tasks.json",
+      ".taskmaster/tasks/append-shards/03-ui-save-ops-quality.tasks.json",
+      ".taskmaster/tasks/append-shards/04-contracts-config-governance.tasks.json"
+    ]
+  }
+}

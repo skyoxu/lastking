@@ -1,0 +1,202 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lastking.local/schemas/enemy-config.schema.json",
+  "title": "Lastking Enemy Config Schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "seed_policy",
+    "enemies"
+  ],
+  "properties": {
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semantic version of enemy config"
+    },
+    "seed_policy": {
+      "type": "string",
+      "enum": [
+        "deterministic"
+      ],
+      "description": "Must stay deterministic to support reproducible seeded spawn"
+    },
+    "enemies": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/enemy"
+      }
+    }
+  },
+  "$defs": {
+    "enemy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "cost",
+        "hp",
+        "dmg",
+        "move_speed",
+        "range",
+        "attack_interval",
+        "armor",
+        "tags",
+        "spawn_weight",
+        "min_day",
+        "max_day",
+        "is_elite",
+        "is_boss"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9_\\-]+$"
+        },
+        "cost": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Budget cost"
+        },
+        "hp": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "dmg": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "move_speed": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Fixed-point speed unit (e.g. milli-tile/second), integer-only"
+        },
+        "range": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Fixed-point attack range, integer-only"
+        },
+        "attack_interval": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Attack interval in milliseconds"
+        },
+        "armor": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "tags": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "base",
+              "fast",
+              "armored",
+              "ranged",
+              "self_destruct",
+              "elite",
+              "boss"
+            ]
+          }
+        },
+        "spawn_weight": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Used in seeded weighted pick inside Top-K"
+        },
+        "min_day": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 15
+        },
+        "max_day": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 15
+        },
+        "is_elite": {
+          "type": "boolean"
+        },
+        "is_boss": {
+          "type": "boolean"
+        },
+        "lane_ratio_override": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "left",
+            "right"
+          ],
+          "properties": {
+            "left": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "right": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100
+            }
+          },
+          "description": "Optional lane split override for specific enemy"
+        },
+        "night_type_mask": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "normal",
+              "elite",
+              "boss"
+            ]
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "is_boss": {
+                "const": true
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "tags": {
+                "contains": {
+                  "const": "boss"
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "is_elite": {
+                "const": true
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "tags": {
+                "contains": {
+                  "const": "elite"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

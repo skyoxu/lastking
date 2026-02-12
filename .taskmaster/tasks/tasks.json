@@ -1,0 +1,868 @@
+{
+  "master": {
+    "tasks": [
+      {
+        "id": 1,
+        "title": "Set up Godot 4.5.1 C# project for Windows",
+        "description": "Initialize a Godot 4.5.1 project with C# scripting on Windows, ensuring compatibility with Steam single-player and required dependencies.",
+        "details": "Install Godot 4.5.1 with .NET SDK (C# support). Create a new project with C# as the scripting language. Set up project structure (scenes, scripts, assets). Configure export settings for Windows (Steam single-player). Ensure all necessary Godot nodes and C# scripts are ready for core loop implementation. Use Godot's built-in tools for scene management and scripting.",
+        "testStrategy": "Verify project runs without errors in Godot editor on Windows. Confirm C# scripts compile and execute. Test basic scene loading and script attachment.",
+        "priority": "high",
+        "dependencies": [],
+        "status": "pending",
+        "subtasks": [],
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+      },
+      {
+        "id": 2,
+        "title": "Implement config-first balancing system",
+        "description": "Create a configuration system to manage game balance values (e.g., wave budgets, day durations) without hardcoding.",
+        "details": "Define a JSON or INI configuration file structure. Create a ConfigManager C# class to load and parse config files. Include settings for day/night durations (4 min Day, 2 min Night), normal wave budget (day1=50, daily growth=120%), elite/boss channels, spawn cadence (10s), boss count (2). Ensure config values are accessible globally in the game. Use Godot's Resource system or custom file I/O.",
+        "testStrategy": "Load config file and verify values are correctly parsed. Test dynamic updates by modifying config and checking in-game effects. Ensure no hardcoded balance values exist in code.",
+        "priority": "high",
+        "dependencies": [
+          1
+        ],
+        "status": "pending",
+        "subtasks": [],
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+      },
+      {
+        "id": 3,
+        "title": "Develop runtime state machine for Day/Night cycles",
+        "description": "Implement a state machine to manage Day and Night cycles with deterministic progression up to Day15.",
+        "details": "Create a GameStateManager C# class with states: Day, Night. Use timers based on config (Day=4 min, Night=2 min). Track current day (1-15). Implement deterministic behavior using a fixed seed for random events. Transition between states automatically. On Day15 completion, trigger win condition. Integrate with Godot's process loop for updates.",
+        "testStrategy": "Run game and verify Day/Night cycles switch correctly per config times. Test deterministic progression with fixed seed. Ensure win triggers after Day15.",
+        "priority": "high",
+        "dependencies": [
+          2
+        ],
+        "status": "pending",
+        "subtasks": [],
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+      },
+      {
+        "id": 4,
+        "title": "Implement wave budget and channel system",
+        "description": "Set up wave generation with normal, elite, and boss channels based on configurable budgets.",
+        "details": "Create WaveManager C# class. Calculate normal wave budget: start from config (day1=50) and apply daily growth (120%). Elite and boss channels are independent; define configurable budgets for them. Spawn enemies based on budget allocation. Use deterministic random number generation with fixed seed. Ensure channels can be tuned independently via config.",
+        "testStrategy": "Test wave budget calculations for multiple days. Verify elite and boss channels do not affect normal budget. Check config tuning modifies wave generation appropriately.",
+        "priority": "medium",
+        "dependencies": [
+          2,
+          3
+        ],
+        "status": "pending",
+        "subtasks": [],
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+      },
+      {
+        "id": 5,
+        "title": "Create enemy spawning system with cadence",
+        "description": "Develop a spawning system that continuously spawns enemies during the first 80% of Night with a 10s cadence.",
+        "details": "In WaveManager, implement spawning logic during Night state. Calculate Night duration from config (2 min). Spawn enemies continuously in first 80% of Night (i.e., 96 seconds) with a 10-second cadence. Use timers to trigger spawns. In last 20% of Night (24 seconds), stop new spawns. Handle boss nights with fixed count=2 from config. Spawn enemies at predefined spawn points in the game world.",
+        "testStrategy": "Run game during Night and verify spawning occurs in first 80% with 10s intervals. Confirm no spawns in last 20%. Test boss night spawns exactly 2 bosses.",
+        "priority": "medium",
+        "dependencies": [
+          3,
+          4
+        ],
+        "status": "pending",
+        "subtasks": [],
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+      },
+      {
+        "id": 6,
+        "title": "Implement enemy AI with target priority and pathing",
+        "description": "Develop enemy AI that follows target priority rules and handles blocked paths with fallback attacks.",
+        "details": "Create EnemyAI C# script attached to enemy nodes. Define target priority when path is valid: unit > castle > armed defense > wall/gate. Use Godot's navigation system for pathfinding. If path is blocked, fallback to attack nearest blocking structure. Use seeded tie-break for determinism in case of multiple targets. Ensure friendly fire is disabled for player attacks (set collision layers/masks accordingly).",
+        "testStrategy": "Spawn enemies and verify they target correctly per priority. Test blocked path scenario to ensure fallback attack triggers. Check deterministic behavior with fixed seed. Confirm friendly fire is disabled.",
+        "priority": "medium",
+        "dependencies": [
+          1
+        ],
+        "status": "pending",
+        "subtasks": [],
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+      },
+      {
+        "id": 7,
+        "title": "Set up castle HP and loss condition",
+        "description": "Implement castle health system and loss condition when HP reaches 0.",
+        "details": "Create Castle C# script with HP property. Initialize HP from config (value to be defined, but loss at 0). When enemies attack castle, reduce HP. On HP=0, trigger loss condition (game over). Display HP in UI (basic implementation). Integrate with enemy AI targeting.",
+        "testStrategy": "Attack castle with enemies and verify HP decreases. Test loss condition triggers at HP=0. Ensure it aligns with game state.",
+        "priority": "medium",
+        "dependencies": [
+          1,
+          6
+        ],
+        "status": "pending",
+        "subtasks": [],
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+      },
+      {
+        "id": 8,
+        "title": "Develop win condition and game progression",
+        "description": "Implement win condition (survive Day15) and integrate with day progression.",
+        "details": "In GameStateManager, check if current day reaches 15 and castle HP > 0 to trigger win. Display win screen or message. Ensure it works with day/night cycles. Handle game end states (win/loss) appropriately, pausing or resetting as needed.",
+        "testStrategy": "Play through to Day15 without losing to verify win triggers. Test loss condition precedence if castle HP=0 before Day15.",
+        "priority": "low",
+        "dependencies": [
+          3,
+          7
+        ],
+        "status": "pending",
+        "subtasks": [],
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+      },
+      {
+        "id": 9,
+        "title": "Create basic UI for day/night and HP display",
+        "description": "Implement a minimal user interface to show current day, time in cycle, and castle HP.",
+        "details": "Use Godot's Control nodes (e.g., Label) to create UI elements. Display current day (1-15), time remaining in current Day/Night cycle, and castle HP. Update UI in real-time via C# scripts. Keep it simple for core loop visibility.",
+        "testStrategy": "Run game and verify UI updates correctly with day progression and HP changes. Test responsiveness during state transitions.",
+        "priority": "low",
+        "dependencies": [
+          1,
+          3,
+          7
+        ],
+        "status": "pending",
+        "subtasks": [],
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+      },
+      {
+        "id": 10,
+        "title": "Integrate and test full core loop",
+        "description": "Combine all systems and test the complete core gameplay loop from start to win/loss.",
+        "details": "Split this integration gate into deterministic verification slices to reduce execution risk. Integrate runtime loop, spawn channels, path fallback, and win/lose checks in staged order. Keep each slice independently runnable and log artifacts to logs/e2e and logs/ci.",
+        "testStrategy": "Run staged integration tests per subtask, then run a full seeded end-to-end replay (Day1-Day15). Validate deterministic timeline, channel isolation, blocker fallback, boss count lock, and regression smoke logs.",
+        "priority": "high",
+        "dependencies": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Wire core-loop systems into one playable scene flow",
+            "description": "Assemble state machine, budget engine, spawner, and HP terminal checks in a single runtime path.",
+            "status": "pending",
+            "priority": "high",
+            "dependencies": [
+              "1",
+              "2",
+              "3",
+              "4",
+              "5"
+            ],
+            "details": "Connect Game.Core services through adapters; ensure update order is explicit and deterministic.",
+            "testStrategy": "Scene-level smoke verifies day-night transitions, wave start, and terminal state dispatch.",
+            "subtasks": []
+          },
+          {
+            "id": 2,
+            "title": "Add seeded replay checkpoints and timeline assertions",
+            "description": "Persist seed+phase snapshots and compare expected checkpoints during integration runs.",
+            "status": "pending",
+            "priority": "high",
+            "dependencies": [
+              "10.1",
+              "6",
+              "7"
+            ],
+            "details": "Emit deterministic checkpoints every major transition and assert timeline invariants.",
+            "testStrategy": "Repeat same-seed run twice and assert equivalent checkpoint sequence.",
+            "subtasks": []
+          },
+          {
+            "id": 3,
+            "title": "Verify path-block fallback under fully blocked maps",
+            "description": "Force blocked-path scenarios and confirm nearest-blocker targeting remains active.",
+            "status": "pending",
+            "priority": "high",
+            "dependencies": [
+              "10.1",
+              "8"
+            ],
+            "details": "Build reproducible blocked fixtures with seeded ties and ensure fallback target selection never deadlocks.",
+            "testStrategy": "Integration case validates fallback engagement and recovery to normal targeting.",
+            "subtasks": []
+          },
+          {
+            "id": 4,
+            "title": "Lock boss-night consistency and channel isolation checks",
+            "description": "Assert boss-night fixed count and verify elite/boss channels do not contaminate normal budget.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "10.2",
+              "10.3",
+              "9"
+            ],
+            "details": "Add assertions for fixed boss count and per-channel accounting boundaries.",
+            "testStrategy": "Scenario tests cover normal/elite/boss nights and compare channel budgets independently.",
+            "subtasks": []
+          },
+          {
+            "id": 5,
+            "title": "Publish integration evidence package for release gate",
+            "description": "Export smoke logs, seeded replay summary, and failure triage traces to logs paths.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "10.4"
+            ],
+            "details": "Write consolidated artifacts for CI-style inspection and manual debugging handoff.",
+            "testStrategy": "Checklist verifies logs exist and contain required fields for each core anchor.",
+            "subtasks": []
+          }
+        ],
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+      },
+      {
+        "id": 11,
+        "title": "Set Up Godot 4.5.1 C# Project for Windows",
+        "description": "Initialize a Godot 4.5.1 project with C# support on Windows, ensuring compatibility with Steam single-player and setting up the basic project structure.",
+        "details": "Install Godot 4.5.1 with .NET SDK for C# support. Create a new project with a main scene, configure export settings for Windows (Steam single-player). Set up directories for scripts, scenes, assets, and config files. Ensure the project runs without errors in the Godot editor on Windows. Use Godot's C# API for game logic. Pseudo-code: // Main.cs - Initialize game window and load initial scene. // ConfigManager.cs - Load JSON config files for balancing.",
+        "testStrategy": "Verify project opens in Godot 4.5.1 on Windows, compiles C# scripts without errors, and runs a basic scene. Test export to a Windows executable to ensure it launches properly.",
+        "priority": "high",
+        "dependencies": [],
+        "status": "pending",
+        "subtasks": [],
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+      },
+      {
+        "id": 12,
+        "title": "Implement Core Resource System with Integer Safety",
+        "description": "Create a resource management system for gold, iron, and population cap, ensuring integer-safe operations to prevent floating-point drift.",
+        "details": "Define a ResourceManager class in C# using integers for gold, iron, and population cap. Initialize with starting values: gold=800, iron=150, pop-cap=50. Implement methods to add/subtract resources with bounds checking (e.g., no negative values). Use Godot's signals or events for UI updates. Store resources as int to avoid floating-point issues. Pseudo-code: public class ResourceManager { private int gold, iron, popCap; public bool TrySpend(int goldCost, int ironCost) { if (gold >= goldCost && iron >= ironCost) { gold -= goldCost; iron -= ironCost; return true; } return false; } }",
+        "testStrategy": "Unit tests in C# using NUnit or similar: test initial values, addition/subtraction, edge cases (zero, negative attempts), and integer overflow prevention. Verify no floating-point usage in resource calculations.",
+        "priority": "high",
+        "dependencies": [
+          11
+        ],
+        "status": "pending",
+        "subtasks": [],
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+      },
+      {
+        "id": 13,
+        "title": "Design and Implement Building System with Footprint Rules",
+        "description": "Develop a building system that supports core buildings (castle, residence, mine, barracks, MG tower, wall, mine trap) with footprint rules and placement logic.",
+        "details": "Create a Building base class in C# with properties: type, level, footprint size, HP, cost. Implement subclasses for each building type. Footprint rules: castle=4, barracks=2, MG tower=1, wall=1. Use a grid-based placement system in Godot (e.g., TileMap or custom grid). For walls, implement drag-line build mode and gate one-way logic (blocks path except at gates). Buildings should be placed only if footprint fits and resources are available. Pseudo-code: public class Building { public Vector2I footprint; public bool CanPlace(Grid grid) { return grid.IsAreaFree(position, footprint); } }",
+        "testStrategy": "Test placement logic: valid/invalid positions, footprint collisions, resource deduction on build. Test wall drag-line building and gate functionality in-game. Use debug visuals to verify grid alignment.",
+        "priority": "high",
+        "dependencies": [
+          11,
+          12
+        ],
+        "status": "pending",
+        "subtasks": [],
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+      },
+      {
+        "id": 14,
+        "title": "Implement Economy and Tax System for Residences",
+        "description": "Add economy features where residences generate gold tax every 15 seconds and provide population capacity.",
+        "details": "Extend the Building system for Residence class. On placement, increase population cap (configurable). Use a timer in Godot (Timer node) to trigger tax every 15 seconds: add gold to ResourceManager. Config-driven values (e.g., tax amount per level). Ensure integer-safe operations. Pseudo-code: public class Residence : Building { private Timer taxTimer; public override void OnBuilt() { resourceManager.IncreasePopCap(popAmount); taxTimer = new Timer(); taxTimer.WaitTime = 15; taxTimer.Timeout += () => resourceManager.AddGold(taxAmount); } }",
+        "testStrategy": "Unit tests for tax timing and gold addition. In-game test: place residence, verify population cap increase, and check gold increments every 15 seconds. Validate no floating-point drift in resource updates.",
+        "priority": "medium",
+        "dependencies": [
+          12,
+          13
+        ],
+        "status": "pending",
+        "subtasks": [],
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+      },
+      {
+        "id": 15,
+        "title": "Develop Upgrade and Repair System with Constraints",
+        "description": "Create a system for building upgrades (max level 5, no skipping) and repairs, with economic rules and constraints.",
+        "details": "Add upgrade and repair functionality to Building class. Upgrades: increase level up to 5, cannot skip levels, cost resources (config-driven). On upgrade completion, restore full HP. Repairs: cost gold only, total full repair cost = 50% of build cost, applied incrementally over time. Prevent upgrade and repair from running simultaneously (use a state enum). Implement queues or coroutines in Godot for progress. Pseudo-code: public enum BuildState { Idle, Upgrading, Repairing }; public bool StartUpgrade() { if (state == BuildState.Idle && level < 5) { state = BuildState.Upgrading; // Deduct cost, start timer } }",
+        "testStrategy": "Test upgrade logic: level progression, resource costs, HP restoration. Test repair: cost calculation, incremental application, and conflict with upgrades. Verify integer safety and config-driven values.",
+        "priority": "medium",
+        "dependencies": [
+          13,
+          14
+        ],
+        "status": "pending",
+        "subtasks": [],
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+      },
+      {
+        "id": 16,
+        "title": "Implement Unit Training Queue in Barracks",
+        "description": "Add unit training functionality to barracks with a single queue per barracks, cancellable with 100% refund.",
+        "details": "Create a Barracks class extending Building. Implement a training queue (List or Queue in C#) for units. Each barracks has its own queue. Training consumes resources over time (config-driven). Allow cancellation of any queued unit with 100% refund to resources. Use Godot's signals for UI updates. Pseudo-code: public class Barracks : Building { private Queue<UnitTrainingJob> trainingQueue; public void CancelTraining(int index) { var job = trainingQueue[index]; resourceManager.Refund(job.cost); trainingQueue.RemoveAt(index); } }",
+        "testStrategy": "Unit tests for queue operations, resource deduction/refund on cancel. In-game test: train multiple units, cancel mid-training, verify refund accuracy and queue state. Ensure integer safety.",
+        "priority": "medium",
+        "dependencies": [
+          13,
+          14
+        ],
+        "status": "pending",
+        "subtasks": [],
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+      },
+      {
+        "id": 17,
+        "title": "Design and Integrate Tech Tree for Unit Stats",
+        "description": "Develop a config-driven tech tree that affects unit stats (atk speed %, damage, production speed %, range, HP, cost %).",
+        "details": "Create a TechTreeManager class that loads tech definitions from JSON config. Each tech node modifies unit stats multiplicatively (e.g., damage * 1.1 for 10% increase). Apply effects to units trained from barracks. Ensure no hardcoded unlock paths; unlocks are config-driven. Use Godot's resource system for config files. Pseudo-code: public class TechTreeManager { private Dictionary<string, TechNode> nodes; public float GetStatMultiplier(string stat) { // Calculate based on unlocked techs } }",
+        "testStrategy": "Test config loading and parsing. Unit tests for stat multiplier calculations. In-game test: unlock techs, train units, verify stat changes match config. Ensure all unlocks are configurable.",
+        "priority": "medium",
+        "dependencies": [
+          13,
+          16
+        ],
+        "status": "pending",
+        "subtasks": [],
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+      },
+      {
+        "id": 18,
+        "title": "Implement Reward System with Nightly Choices",
+        "description": "Add a reward system that triggers each night, offering 3 choices from separate pools, with fallback to gold if pool is exhausted.",
+        "details": "Create a RewardManager class. Each night (based on day/night cycle), trigger a reward event. Generate 3 choices from a pool specific to night type (config-driven). Pools are defined in JSON; if a pool is empty, fallback to granting a fixed gold amount. Choices can include resources, units, or bonuses. Use Godot's UI to present choices. Pseudo-code: public class RewardManager { public void OnNightStart() { var choices = GetThreeChoices(nightPool); if (choices.Count == 0) resourceManager.AddGold(fallbackGold); } }",
+        "testStrategy": "Unit tests for choice generation, pool exhaustion, and fallback logic. In-game test: progress through nights, verify rewards appear correctly and fallback works. Validate config-driven pools.",
+        "priority": "low",
+        "dependencies": [
+          12,
+          14
+        ],
+        "status": "pending",
+        "subtasks": [],
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+      },
+      {
+        "id": 19,
+        "title": "Add Day/Night Cycle and Game Win/Lose Conditions",
+        "description": "Implement the day/night cycle (4 min Day + 2 min Night, Day1-Day15) and win/lose conditions based on castle HP.",
+        "details": "Create a GameManager class to handle game state. Use a timer for day/night cycle: 4 minutes day, 2 minutes night, repeat for 15 days. Track current day and time. Win condition: survive to Day15. Lose condition: castle HP = 0. Integrate with Building system to monitor castle HP. Use Godot's signals for UI updates (e.g., day counter). Pseudo-code: public class GameManager { private int currentDay = 1; private Timer cycleTimer; public void CheckWinLose() { if (currentDay > 15) Win(); if (castle.HP <= 0) Lose(); } }",
+        "testStrategy": "Test day/night timing accuracy. Unit tests for win/lose conditions. In-game test: play through cycles, destroy castle to trigger lose, survive to Day15 to win. Verify match duration target (60-90 minutes) is achievable.",
+        "priority": "high",
+        "dependencies": [
+          11,
+          13
+        ],
+        "status": "pending",
+        "subtasks": [],
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+      },
+      {
+        "id": 20,
+        "title": "Integrate Combat with Friendly Fire Disabled",
+        "description": "Implement combat system for units and towers, with friendly fire disabled for all player attacks.",
+        "details": "Create a CombatSystem class. Units and MG towers can attack enemies. Use Godot's physics or area detection for targeting. Implement attack logic: damage calculation based on stats (from tech tree). Ensure friendly fire is disabled: player-owned units cannot damage other player-owned units or buildings. This can be done by checking team IDs or ownership flags. Pseudo-code: public void Attack(Unit attacker, Unit target) { if (attacker.team == target.team) return; // Friendly fire disabled // Apply damage }",
+        "testStrategy": "Unit tests for attack logic and friendly fire prevention. In-game test: spawn player units and enemies, verify attacks only hit enemies. Test with MG towers and walls. Ensure config-driven stats are applied.",
+        "priority": "medium",
+        "dependencies": [
+          13,
+          16,
+          17
+        ],
+        "status": "pending",
+        "subtasks": [],
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+      },
+      {
+        "id": 21,
+        "title": "Set Up Godot 4.5.1 C# Project with Windows Configuration",
+        "description": "Initialize a Godot 4.5.1 project with C# scripting, configure for Windows-only Steam single-player, and establish project structure.",
+        "status": "pending",
+        "dependencies": [],
+        "priority": "high",
+        "details": "Create a new Godot 4.5.1 project with C# as the scripting language. Set the export target to Windows (64-bit) and configure Steam integration for single-player. Set up the project directory with folders for scripts, scenes, assets, and configs. Ensure the project uses the .NET SDK compatible with Godot 4.5.1. Implement a basic main scene to verify setup. Use Godot's project settings to lock platform to Windows and disable other targets.\n\nPseudo-code:\n// Create Godot project via Godot editor\n// Set project settings:\n- application/config/name = \"LASTKING\"\n- application/run/main_scene = \"res://scenes/Main.tscn\"\n- display/window/size/width = 1920\n- display/window/size/height = 1080\n- export_presets: configure for Windows Desktop, Steam app ID placeholder\n// Create folder structure: scripts/, scenes/, ui/, audio/, configs/, saves/\n// Write a simple C# script attached to a Node to print \"Project setup complete\"",
+        "testStrategy": "Launch the project in Godot editor on Windows, verify it runs without errors, and check console output. Confirm project settings are correctly configured for Windows and C#. Validate folder structure exists.",
+        "subtasks": [],
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+      },
+      {
+        "id": 22,
+        "title": "Implement Camera and Interaction System with Edge and Keyboard Scrolling",
+        "description": "Develop camera controls for edge scrolling and keyboard-based scrolling in the game world.",
+        "status": "pending",
+        "dependencies": [
+          21
+        ],
+        "priority": "high",
+        "details": "Create a CameraController node with a Camera2D. Implement edge scrolling: detect mouse position near screen edges (e.g., within 20 pixels) and move camera accordingly. Add keyboard scrolling using arrow keys or WASD. Configure camera limits to match game world boundaries. Ensure smooth movement with adjustable speed. Use Godot's input system for keyboard and mouse events.\n\nPseudo-code:\n// CameraController.cs\npublic partial class CameraController : Node2D\n{\n    private Camera2D _camera;\n    private float _scrollSpeed = 500f;\n    private int _edgeMargin = 20;\n\n    public override void _Ready() {\n        _camera = GetNode<Camera2D>(\"Camera2D\");\n    }\n\n    public override void _Process(double delta) {\n        Vector2 move = Vector2.Zero;\n        // Edge scrolling\n        Vector2 mousePos = GetViewport().GetMousePosition();\n        if (mousePos.X < _edgeMargin) move.X -= 1;\n        if (mousePos.X > GetViewport().GetVisibleRect().Size.X - _edgeMargin) move.X += 1;\n        if (mousePos.Y < _edgeMargin) move.Y -= 1;\n        if (mousePos.Y > GetViewport().GetVisibleRect().Size.Y - _edgeMargin) move.Y += 1;\n        // Keyboard scrolling\n        if (Input.IsActionPressed(\"ui_right\")) move.X += 1;\n        if (Input.IsActionPressed(\"ui_left\")) move.X -= 1;\n        if (Input.IsActionPressed(\"ui_down\")) move.Y += 1;\n        if (Input.IsActionPressed(\"ui_up\")) move.Y -= 1;\n        _camera.Position += move.Normalized() * _scrollSpeed * (float)delta;\n    }\n}",
+        "testStrategy": "Test in-game: move mouse to screen edges and verify camera scrolls. Press arrow keys/WASD to confirm keyboard scrolling. Check camera limits prevent moving beyond world bounds. Ensure no performance issues.",
+        "subtasks": [],
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+      },
+      {
+        "id": 23,
+        "title": "Develop Runtime Speed Controls (Pause, 1x, 2x) with Timer Freeze",
+        "description": "Implement game speed controls including pause, 1x, and 2x speeds, ensuring all timers freeze during pause.",
+        "status": "pending",
+        "dependencies": [
+          21
+        ],
+        "priority": "high",
+        "details": "Create a GameManager singleton to manage game state and speed. Implement pause functionality that sets Engine.TimeScale to 0 and freezes all custom timers. For 1x and 2x speeds, set TimeScale to 1 and 2 respectively. Ensure that during pause, any queued countdowns (e.g., wave timers) are paused and resume correctly. Use Godot's ProcessMode to handle pausing of nodes. Add UI buttons to control speed.\n\nPseudo-code:\n// GameManager.cs\npublic partial class GameManager : Node\n{\n    public static GameManager Instance;\n    private float _currentSpeed = 1f;\n    private bool _isPaused = false;\n\n    public override void _Ready() {\n        Instance = this;\n    }\n\n    public void SetSpeed(float speed) {\n        if (_isPaused && speed > 0) _isPaused = false;\n        Engine.TimeScale = speed;\n        _currentSpeed = speed;\n        // Notify all timers to adjust\n    }\n\n    public void TogglePause() {\n        _isPaused = !_isPaused;\n        if (_isPaused) {\n            Engine.TimeScale = 0;\n            // Freeze all custom timers\n        } else {\n            Engine.TimeScale = _currentSpeed;\n            // Unfreeze timers\n        }\n    }\n}",
+        "testStrategy": "Test pause: start a timer, pause game, verify timer stops and no gameplay progresses. Unpause and confirm timer resumes. Switch between 1x and 2x speeds, check game speed changes accordingly. Validate UI buttons work and update state.",
+        "subtasks": [],
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+      },
+      {
+        "id": 24,
+        "title": "Create UI Feedback System for Invalid Actions and Errors",
+        "description": "Implement UI feedback for invalid placement, blocked actions, and migration/load errors with clear user-facing messages.",
+        "status": "pending",
+        "dependencies": [
+          21
+        ],
+        "priority": "medium",
+        "details": "Design a UIFeedbackManager that displays messages via a label or popup. For invalid placement (e.g., building on invalid terrain), show a temporary message like \"Cannot build here.\" For blocked actions, display reason. For migration/load errors, show a persistent error dialog with details. Use Godot's Control nodes for UI. Ensure messages are non-intrusive and dismissible. Integrate with game events to trigger feedback.\n\nPseudo-code:\n// UIFeedbackManager.cs\npublic partial class UIFeedbackManager : Control\n{\n    private Label _feedbackLabel;\n    private Timer _hideTimer;\n\n    public override void _Ready() {\n        _feedbackLabel = GetNode<Label>(\"FeedbackLabel\");\n        _hideTimer = GetNode<Timer>(\"HideTimer\");\n        _hideTimer.Timeout += HideFeedback;\n    }\n\n    public void ShowFeedback(string message, bool isError = false) {\n        _feedbackLabel.Text = message;\n        _feedbackLabel.Modulate = isError ? Colors.Red : Colors.Yellow;\n        _feedbackLabel.Visible = true;\n        _hideTimer.Start(3.0); // Hide after 3 seconds\n    }\n\n    private void HideFeedback() {\n        _feedbackLabel.Visible = false;\n    }\n}",
+        "testStrategy": "Simulate invalid placement: attempt to build in a blocked area, verify feedback appears. Test load error by corrupting a save file, check error dialog shows. Ensure messages are clear and UI updates correctly. Validate timing and visibility.",
+        "subtasks": [],
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+      },
+      {
+        "id": 25,
+        "title": "Build Save System with Autosave and Migration Handling",
+        "description": "Develop a save system with one autosave slot, start-of-day autosaves, and migration for invalid configs/loads.",
+        "status": "pending",
+        "dependencies": [
+          21
+        ],
+        "priority": "high",
+        "details": "Create a SaveManager that handles saving and loading game state to a file. Use a single autosave slot (e.g., autosave.save). Implement autosave at the start of each day. For migration, check save file version; if incompatible, reject load and show error. Save data should include game state, seed, wave timer, etc. Use JSON or binary serialization. Ensure safe file operations on Windows.\n\nPseudo-code:\n// SaveManager.cs\npublic partial class SaveManager : Node\n{\n    private string _savePath = \"user://autosave.save\";\n    private int _currentVersion = 1;\n\n    public void SaveGame(GameState state) {\n        var saveData = new SaveData { Version = _currentVersion, State = state };\n        string json = Json.Stringify(saveData);\n        FileAccess file = FileAccess.Open(_savePath, FileAccess.ModeFlags.Write);\n        file.StoreString(json);\n        file.Close();\n    }\n\n    public GameState LoadGame() {\n        if (!FileAccess.FileExists(_savePath)) return null;\n        FileAccess file = FileAccess.Open(_savePath, FileAccess.ModeFlags.Read);\n        string json = file.GetAsText();\n        file.Close();\n        var saveData = Json.ParseString<SaveData>(json);\n        if (saveData.Version != _currentVersion) {\n            // Trigger migration error via UIFeedbackManager\n            return null;\n        }\n        return saveData.State;\n    }\n}",
+        "testStrategy": "Test save: play game, trigger autosave, verify file is created. Load game, confirm state is restored. Test migration: modify save version, attempt load, check error is shown. Validate file paths and error handling.",
+        "subtasks": [],
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+      },
+      {
+        "id": 26,
+        "title": "Integrate Steam Cloud Save with Account Binding",
+        "description": "Implement Steam cloud save functionality using Steam account binding for save data synchronization.",
+        "status": "pending",
+        "dependencies": [
+          25
+        ],
+        "priority": "medium",
+        "details": "Use Steamworks.NET or GodotSteam plugin to integrate Steam API. Bind saves to the user's Steam account. On save, upload the save file to Steam Cloud; on load, download from cloud. Handle conflicts (e.g., local vs. cloud) by prompting user. Ensure compatibility with the existing SaveManager. Test with Steamworks API in a development environment.\n\nPseudo-code:\n// SteamCloudManager.cs\npublic partial class SteamCloudManager : Node\n{\n    public async Task UploadSave(string filePath) {\n        if (SteamManager.IsLoggedIn) {\n            byte[] data = File.ReadAllBytes(filePath);\n            bool success = SteamRemoteStorage.FileWrite(\"autosave.save\", data);\n            if (!success) Debug.Log(\"Upload failed\");\n        }\n    }\n\n    public async Task DownloadSave(string filePath) {\n        if (SteamRemoteStorage.FileExists(\"autosave.save\")) {\n            byte[] data = SteamRemoteStorage.FileRead(\"autosave.save\");\n            File.WriteAllBytes(filePath, data);\n        }\n    }\n}",
+        "testStrategy": "Test with a Steam development account: save game, verify file uploads to cloud. Restart game, load from cloud, confirm data matches. Simulate network issues, check error handling. Ensure account binding works.",
+        "subtasks": [],
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+      },
+      {
+        "id": 27,
+        "title": "Implement Achievements System with Deterministic Unlocking",
+        "description": "Create an achievements system with a visible list, non-hidden achievements, and deterministic unlock triggers.",
+        "status": "pending",
+        "dependencies": [
+          21
+        ],
+        "priority": "medium",
+        "details": "Design an AchievementManager that tracks achievement progress. Define achievements in a config file (e.g., JSON) with IDs, names, descriptions, and unlock conditions. Achievements should be visible from the start (non-hidden). Unlock triggers must be deterministic based on game events (e.g., survive day 15). Use Steamworks API for Steam achievements if integrated. Update UI to show achievement list and unlock notifications.\n\nPseudo-code:\n// AchievementManager.cs\npublic partial class AchievementManager : Node\n{\n    private Dictionary<string, Achievement> _achievements;\n\n    public override void _Ready() {\n        LoadAchievementsFromConfig();\n    }\n\n    public void UnlockAchievement(string id) {\n        if (_achievements.ContainsKey(id) && !_achievements[id].IsUnlocked) {\n            _achievements[id].IsUnlocked = true;\n            // Update Steam achievement\n            SteamUserStats.SetAchievement(id);\n            SteamUserStats.StoreStats();\n            // Show UI notification\n        }\n    }\n}",
+        "testStrategy": "Test unlocking: trigger an achievement condition (e.g., win game), verify achievement unlocks and UI updates. Check achievement list displays correctly. Ensure determinism by repeating same actions. Validate Steam integration if used.",
+        "subtasks": [],
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+      },
+      {
+        "id": 28,
+        "title": "Set Up Localization (i18n) for zh-CN and en-US",
+        "description": "Implement key-based internationalization workflow supporting zh-CN and en-US at launch.",
+        "status": "pending",
+        "dependencies": [
+          21
+        ],
+        "priority": "medium",
+        "details": "Create a LocalizationManager that loads translation files (e.g., CSV or JSON) for each language. Use keys for text references (e.g., \"UI_PAUSE\"). Support zh-CN and en-US. Implement language switching in settings. Ensure i18n keys remain stable across patches. Integrate with UI elements to update text dynamically. Store language preference in config.\n\nPseudo-code:\n// LocalizationManager.cs\npublic partial class LocalizationManager : Node\n{\n    private Dictionary<string, string> _translations;\n    private string _currentLanguage = \"en-US\";\n\n    public void LoadLanguage(string lang) {\n        string filePath = $\"res://locales/{lang}.json\";\n        var file = FileAccess.Open(filePath, FileAccess.ModeFlags.Read);\n        string json = file.GetAsText();\n        _translations = Json.ParseString<Dictionary<string, string>>(json);\n        file.Close();\n        _currentLanguage = lang;\n        // Notify UI to update\n    }\n\n    public string Tr(string key) {\n        return _translations.GetValueOrDefault(key, key);\n    }\n}",
+        "testStrategy": "Test language switching: load en-US and zh-CN, verify UI text changes. Check missing keys fallback to key. Validate translation files are loaded correctly. Ensure keys are stable and don't change unintentionally.",
+        "subtasks": [],
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+      },
+      {
+        "id": 29,
+        "title": "Add Audio Settings for Music and SFX Channels",
+        "description": "Implement audio settings to control music and sound effects volume at launch.",
+        "status": "pending",
+        "dependencies": [
+          21
+        ],
+        "priority": "low",
+        "details": "Create an AudioManager that handles music and SFX playback. Add settings in UI to adjust volume sliders for music and SFX channels. Save audio preferences to config file. Use Godot's AudioStreamPlayer nodes. Ensure settings apply immediately and persist between sessions.\n\nPseudo-code:\n// AudioManager.cs\npublic partial class AudioManager : Node\n{\n    private AudioStreamPlayer _musicPlayer;\n    private AudioStreamPlayer _sfxPlayer;\n    private float _musicVolume = 1.0f;\n    private float _sfxVolume = 1.0f;\n\n    public override void _Ready() {\n        _musicPlayer = GetNode<AudioStreamPlayer>(\"MusicPlayer\");\n        _sfxPlayer = GetNode<AudioStreamPlayer>(\"SFXPlayer\");\n        LoadSettings();\n    }\n\n    public void SetMusicVolume(float volume) {\n        _musicVolume = volume;\n        _musicPlayer.VolumeDb = LinearToDb(volume);\n        SaveSettings();\n    }\n}",
+        "testStrategy": "Test volume sliders: adjust music and SFX, verify audio levels change. Save and reload game, check settings persist. Play sounds to ensure channels work independently. Validate no audio glitches.",
+        "subtasks": [],
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+      },
+      {
+        "id": 30,
+        "title": "Optimize for Performance Targets (45 FPS 1% Low, 60 FPS Average)",
+        "description": "Implement optimizations to meet non-functional goals: low-end baseline 45 FPS (1% low) and average 60 FPS target.",
+        "status": "pending",
+        "dependencies": [
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27,
+          28,
+          29
+        ],
+        "priority": "high",
+        "details": "Decompose performance optimization into measurable phases: baseline capture, hotspot isolation, frame-budget remediation, stress validation, and gate artifact output. Keep all thresholds integer and reproducible in Windows headless/playable runs.",
+        "testStrategy": "Run phased perf suites with fixed seed scenes; compare 1% low and average FPS against baselines. Emit summary artifacts under logs/perf and logs/ci for gate review.",
+        "subtasks": [
+          {
+            "id": "1",
+            "title": "Capture deterministic baseline performance profiles",
+            "description": "Collect 1% low/average FPS baseline from fixed-seed scenarios and store reproducible traces.",
+            "status": "pending",
+            "priority": "high",
+            "dependencies": [
+              "21",
+              "22",
+              "23"
+            ],
+            "details": "Use locked camera paths and scripted sessions to produce comparable baseline measurements.",
+            "testStrategy": "Two repeated runs must remain within acceptable variance windows.",
+            "subtasks": []
+          },
+          {
+            "id": "2",
+            "title": "Identify and classify frame-time hotspots",
+            "description": "Find CPU/GPU and script hotspots affecting frame stability in combat-heavy scenes.",
+            "status": "pending",
+            "priority": "high",
+            "dependencies": [
+              "30.1"
+            ],
+            "details": "Tag hotspots by subsystem (AI, spawn, render, UI) and quantify impact before optimization.",
+            "testStrategy": "Profiling report must rank top offenders with repeatable timing data.",
+            "subtasks": []
+          },
+          {
+            "id": "3",
+            "title": "Apply targeted optimizations under config-safe constraints",
+            "description": "Implement focused fixes without breaking deterministic behavior or config governance.",
+            "status": "pending",
+            "priority": "high",
+            "dependencies": [
+              "30.2",
+              "24",
+              "25",
+              "26"
+            ],
+            "details": "Optimize update loops, pooling, and expensive queries while preserving gameplay semantics.",
+            "testStrategy": "Regression suite confirms behavior parity and measurable frame-time improvement.",
+            "subtasks": []
+          },
+          {
+            "id": "4",
+            "title": "Run stress and endurance validation at launch presets",
+            "description": "Validate thresholds under high-pressure waves and long-session stability conditions.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "30.3",
+              "27",
+              "28",
+              "29"
+            ],
+            "details": "Execute worst-case wave mixes and UI-heavy scenarios; watch memory growth and stutter spikes.",
+            "testStrategy": "Stress report shows thresholds satisfied or clear fail reasons with traces.",
+            "subtasks": []
+          },
+          {
+            "id": "5",
+            "title": "Publish performance gate evidence package",
+            "description": "Export final metrics, comparisons, and gate decision artifacts for release readiness.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "30.4"
+            ],
+            "details": "Write standardized summary files to logs/perf and logs/ci with threshold verdicts.",
+            "testStrategy": "Checklist verifies required artifacts and threshold fields are complete.",
+            "subtasks": []
+          }
+        ],
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+      },
+      {
+        "id": 31,
+        "title": "Set up Godot 4.5.1 C# project structure for config contracts",
+        "description": "Initialize a Godot 4.5.1 C# project on Windows with a dedicated folder structure for config schemas and samples, ensuring compatibility with Steam single-player and Windows-only constraints.",
+        "details": "Create a new Godot 4.5.1 project using C# as the scripting language. Set up directories: 'config/schemas/' for JSON schemas and 'config/samples/' for sample files. Ensure the project is configured for Windows target only and single-player mode. Use Godot's C# project settings to disable networking features. Add a basic README outlining the config-first approach. Pseudo-code: // Project setup via Godot editor, create folders and set export presets.",
+        "testStrategy": "Validate that the project opens in Godot 4.5.1 on Windows, C# scripts compile without errors, and the folder structure exists. Check export settings for Windows single-player.",
+        "priority": "high",
+        "dependencies": [],
+        "status": "pending",
+        "subtasks": [],
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+      },
+      {
+        "id": 32,
+        "title": "Implement enemy-config.schema.json with validation rules",
+        "description": "Define JSON schema for enemy configuration, including fields for enemy types, stats, and behaviors, adhering to config-first balancing and no hardcoded values.",
+        "details": "Create enemy-config.schema.json in config/schemas/. Define schema with properties: enemy_id (string), health (number min 1), damage (number min 0), speed (number min 0), etc. Include required fields and type constraints. Use JSON Schema draft-07. Ensure all balance values are configurable. Pseudo-code: { \"$schema\": \"http://json-schema.org/draft-07/schema#\", \"type\": \"object\", \"properties\": { \"enemies\": { \"type\": \"array\", \"items\": { \"type\": \"object\", \"properties\": { \"enemy_id\": { \"type\": \"string\" }, \"health\": { \"type\": \"number\", \"minimum\": 1 } } } } } }.",
+        "testStrategy": "Validate schema against a test JSON file using a JSON schema validator (e.g., Newtonsoft.Json.Schema in C#). Ensure it rejects invalid types or missing required fields.",
+        "priority": "high",
+        "dependencies": [
+          31
+        ],
+        "status": "pending",
+        "subtasks": [],
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+      },
+      {
+        "id": 33,
+        "title": "Implement difficulty-config.schema.json with versioning and lock constraints",
+        "description": "Create JSON schema for difficulty configuration, including version field, difficulty levels, and constants, ensuring difficulty is locked at run start per PRD.",
+        "details": "Create difficulty-config.schema.json in config/schemas/. Define schema with properties: version (string, required), difficulty_level (string enum: [\"easy\", \"medium\", \"hard\"]), modifiers (object with numeric fields). Include explicit version field for backward-trackability. Enforce that all values are configurable. Pseudo-code: { \"version\": { \"type\": \"string\", \"pattern\": \"^\\\\d+\\\\.\\\\d+$\" }, \"difficulty_level\": { \"type\": \"string\", \"enum\": [\"easy\", \"medium\", \"hard\"] } }.",
+        "testStrategy": "Test schema validation with sample files, check that invalid enums or missing version are rejected. Verify version field is present and follows pattern.",
+        "priority": "medium",
+        "dependencies": [
+          31
+        ],
+        "status": "pending",
+        "subtasks": [],
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+      },
+      {
+        "id": 34,
+        "title": "Implement spawn-config.schema.json for deterministic wave composition",
+        "description": "Define JSON schema for spawn configuration to control enemy waves, ensuring determinism: same seed + same config => same wave timeline.",
+        "details": "Create spawn-config.schema.json in config/schemas/. Include properties: seed (integer), waves (array of wave objects with day/night timing, enemy counts). Align with match duration (60-90 mins) and day/night cycle (4 min Day + 2 min Night, Day1-Day15). Use config values only. Pseudo-code: { \"seed\": { \"type\": \"integer\" }, \"waves\": [ { \"day\": { \"type\": \"integer\", \"minimum\": 1, \"maximum\": 15 }, \"enemies\": [ { \"enemy_id\": \"string\", \"count\": { \"type\": \"integer\", \"minimum\": 0 } } ] } ] }.",
+        "testStrategy": "Validate schema with test data, ensure it enforces day range 1-15 and non-negative counts. Test determinism by generating waves with fixed seed and config.",
+        "priority": "medium",
+        "dependencies": [
+          31
+        ],
+        "status": "pending",
+        "subtasks": [],
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+      },
+      {
+        "id": 35,
+        "title": "Implement pressure-normalization.config.schema.json with baseline constants and range checks",
+        "description": "Create JSON schema for pressure normalization configuration, including explicit baseline constants and validation for ranges as per PRD.",
+        "details": "Create pressure-normalization.config.schema.json in config/schemas/. Define properties: baseline (number), min_pressure (number), max_pressure (number), normalization_factors (array of numbers). Include range checks (e.g., min < max). Use explicit constants. Pseudo-code: { \"baseline\": { \"type\": \"number\", \"minimum\": 0 }, \"min_pressure\": { \"type\": \"number\" }, \"max_pressure\": { \"type\": \"number\" }, \"constraints\": { \"type\": \"object\", \"properties\": { \"range_check\": { \"type\": \"boolean\" } } } }.",
+        "testStrategy": "Test schema validation to ensure it rejects invalid ranges (e.g., min_pressure > max_pressure). Verify baseline is a number.",
+        "priority": "medium",
+        "dependencies": [
+          31
+        ],
+        "status": "pending",
+        "subtasks": [],
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+      },
+      {
+        "id": 36,
+        "title": "Create sample JSON files for all configs with valid data",
+        "description": "Generate sample JSON files (difficulty-config.sample.json, spawn-config.sample.json, pressure-normalization.config.sample.json) that adhere to the schemas and include realistic values.",
+        "details": "Treat sample generation as a contract release artifact, not a static placeholder. Split by config domain and require positive+negative validation fixtures before acceptance.",
+        "testStrategy": "Validate each sample with schema and semantic validator rules, then run negative fixtures to ensure reject paths are effective.",
+        "priority": "medium",
+        "dependencies": [
+          32,
+          33,
+          34,
+          35
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Generate difficulty sample aligned with schema caps",
+            "description": "Create difficulty sample values consistent with lock-at-start and bounded percentage fields.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "32"
+            ],
+            "details": "Emit a clean sample with version metadata and deterministic defaults for launch tiers.",
+            "testStrategy": "Schema validation passes and lock-at-start fields are present.",
+            "subtasks": []
+          },
+          {
+            "id": 2,
+            "title": "Generate spawn sample with channel and cadence coverage",
+            "description": "Create spawn sample covering normal/elite/boss channels, lane settings, and timing cadence.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "33"
+            ],
+            "details": "Include Day1-Day15 coverage and channel isolation flags needed by runtime parser.",
+            "testStrategy": "Schema + validator rules pass for required cadence and channel constraints.",
+            "subtasks": []
+          },
+          {
+            "id": 3,
+            "title": "Generate pressure-normalization baseline sample",
+            "description": "Create normalization sample with baseline constants and range-safe tuning values.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "34"
+            ],
+            "details": "Ensure baseline constants are explicit and tuning values remain within guard bands.",
+            "testStrategy": "Validation confirms constants and range checks are enforced.",
+            "subtasks": []
+          },
+          {
+            "id": 4,
+            "title": "Add negative fixtures and validation summary artifact",
+            "description": "Provide invalid fixtures and expected rejection reasons for contract hardening.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "36.1",
+              "36.2",
+              "36.3",
+              "35"
+            ],
+            "details": "Create malformed and boundary-breach samples; export validation summary for CI review.",
+            "testStrategy": "Negative cases fail with explicit reason codes; positive samples remain green.",
+            "subtasks": []
+          }
+        ],
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+      },
+      {
+        "id": 37,
+        "title": "Implement config validation and fallback handling in C#",
+        "description": "Develop C# code in Godot to load and validate config files against schemas, applying invalid config handling policy: reject and fallback to built-in safe defaults.",
+        "details": "Implement config validation/fallback as layered policy: structural validation, semantic validation, policy routing, runtime integration, and audit output. Ensure rejection reasons are explicit and testable.",
+        "testStrategy": "Validate success/failure matrix across valid, invalid, and boundary config inputs; confirm fallback or reject behavior matches policy and logs are emitted.",
+        "priority": "medium",
+        "dependencies": [
+          32,
+          33,
+          34,
+          35
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": "1",
+            "title": "Implement schema-level structural validation adapters",
+            "description": "Bind JSON schema checks for all core config files before runtime consumption.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "31",
+              "32",
+              "33",
+              "34"
+            ],
+            "details": "Centralize structural validation and collect normalized error payloads.",
+            "testStrategy": "Structural invalid payloads fail with deterministic error codes.",
+            "subtasks": []
+          },
+          {
+            "id": "2",
+            "title": "Implement semantic rule validation and policy router",
+            "description": "Apply cross-field semantics and route outcomes to reject/fallback branches.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "37.1",
+              "35"
+            ],
+            "details": "Encode rule sets from validator contracts and map each failure to policy action.",
+            "testStrategy": "Rule-violation cases trigger expected policy outcomes and reason keys.",
+            "subtasks": []
+          },
+          {
+            "id": "3",
+            "title": "Integrate runtime fallback application boundaries",
+            "description": "Apply safe defaults only for allowed cases and block forbidden runtime overrides.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "37.2",
+              "36"
+            ],
+            "details": "Enforce difficulty lock and immutable runtime fields while applying allowed fallbacks.",
+            "testStrategy": "Integration tests confirm allowed fallbacks apply, forbidden cases reject.",
+            "subtasks": []
+          },
+          {
+            "id": "4",
+            "title": "Emit validation audit and incident artifacts",
+            "description": "Persist validation outcomes with reason, target, and caller for traceability.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "37.3"
+            ],
+            "details": "Write standardized audit entries and summary outputs to logs/ci paths.",
+            "testStrategy": "Audit tests verify required fields and policy decision trace completeness.",
+            "subtasks": []
+          }
+        ],
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+      },
+      {
+        "id": 38,
+        "title": "Integrate config governance for gameplay tuning",
+        "description": "Connect config values to gameplay systems (e.g., enemy stats, wave spawning) to ensure all tuning is via config only, with no implementation hardcoding.",
+        "details": "Modify existing gameplay C# scripts to read values from ConfigManager instead of hardcoded constants. For example, enemy health from enemy-config, wave timing from spawn-config. Ensure determinism by using seed from spawn-config for random generation. Pseudo-code: Enemy.health = ConfigManager.GetEnemyConfig(enemyId).health; WaveSpawner.seed = ConfigManager.GetSpawnConfig().seed;.",
+        "testStrategy": "Integration tests: run gameplay with different configs, verify enemy stats and wave compositions change accordingly. Check that no hardcoded values override configs.",
+        "priority": "medium",
+        "dependencies": [
+          37
+        ],
+        "status": "pending",
+        "subtasks": [],
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+      },
+      {
+        "id": 39,
+        "title": "Add config hash/version to battle report metadata for auditability",
+        "description": "Implement functionality to compute and include config hash or version in battle report metadata, as required for auditability.",
+        "details": "In ConfigManager, add method to compute hash (e.g., SHA256) of config files or extract version fields. Store this in a BattleReport class along with match results. Ensure it's included when generating reports. Pseudo-code: string configHash = ComputeHash(configJson); battleReport.Metadata.Add(\"config_hash\", configHash);.",
+        "testStrategy": "Test that battle report includes config hash/version metadata. Verify hash changes when config changes, and is consistent for same config.",
+        "priority": "low",
+        "dependencies": [
+          37
+        ],
+        "status": "pending",
+        "subtasks": [],
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+      },
+      {
+        "id": 40,
+        "title": "Implement version migration rule with force migration",
+        "description": "Develop version handling to force migration when config version changes, without dual-version compatibility, per PRD.",
+        "details": "In ConfigManager, check version field of loaded config against expected version. If mismatch, reject config and force fallback to default, logging migration requirement. Do not support multiple versions. Pseudo-code: if (config.version != expectedVersion) { Log.Error(\"Version mismatch, migration required\"); return LoadDefault(); }.",
+        "testStrategy": "Unit tests: provide configs with different versions, ensure they are rejected and fallback occurs. Verify no compatibility mode is active.",
+        "priority": "medium",
+        "dependencies": [
+          37
+        ],
+        "status": "pending",
+        "subtasks": [],
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+      }
+    ],
+    "metadata": {
+      "version": "1.0.0",
+      "lastModified": "2026-02-11T20:30:07",
+      "taskCount": 40,
+      "completedCount": 0,
+      "tags": [
+        "master"
+      ],
+      "migration": "legacy-master-to-standard-repair"
+    }
+  }
+}

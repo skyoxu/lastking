@@ -1,0 +1,2271 @@
+[
+  {
+    "id": "NG-0001",
+    "story_id": "BACKLOG-LASTKING-M1",
+    "owner": "architecture",
+    "depends_on": [],
+    "taskmaster_exported": false,
+    "title": "Set up Godot 4.5.1 C# project for Windows",
+    "description": "Initialize a Godot 4.5.1 project with C# scripting on Windows, ensuring compatibility with Steam single-player and required dependencies.",
+    "status": "pending",
+    "priority": "P1",
+    "layer": "ci",
+    "adr_refs": [
+      "ADR-0011",
+      "ADR-0001"
+    ],
+    "chapter_refs": [
+      "CH07",
+      "CH10",
+      "CH01"
+    ],
+    "overlay_refs": [
+      "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
+    ],
+    "labels": [
+      "backlog",
+      "lastking",
+      "taskmaster-view",
+      "ci"
+    ],
+    "test_refs": [
+      "Game.Core.Tests/State/GameStateMachineTests.cs"
+    ],
+    "acceptance": [
+      "Taskmaster #1 behavior matches PRD lock for Set up Godot 4.5.1 C# project for Windows.",
+      "Referenced automated tests pass on Windows Godot+C# baseline.",
+      "No regression on deterministic simulation and core loop constraints."
+    ],
+    "test_strategy": [
+      "Red: add or update test coverage around Taskmaster #1 primary behavior.",
+      "Green: implement minimal deterministic logic to satisfy assertions.",
+      "Refactor: preserve passing tests and tighten contract boundaries."
+    ],
+    "taskmaster_id": 1,
+    "contractRefs": [
+      "Game.Core/Contracts/DomainEvent.cs"
+    ]
+  },
+  {
+    "id": "NG-0002",
+    "story_id": "BACKLOG-LASTKING-M1",
+    "owner": "architecture",
+    "depends_on": [
+      "NG-0001"
+    ],
+    "taskmaster_exported": false,
+    "title": "Implement config-first balancing system",
+    "description": "Create a configuration system to manage game balance values (e.g., wave budgets, day durations) without hardcoding.",
+    "status": "pending",
+    "priority": "P1",
+    "layer": "core",
+    "adr_refs": [
+      "ADR-0021",
+      "ADR-0022",
+      "ADR-0018"
+    ],
+    "chapter_refs": [
+      "CH05",
+      "CH06",
+      "CH04",
+      "CH01",
+      "CH07"
+    ],
+    "overlay_refs": [
+      "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
+    ],
+    "labels": [
+      "backlog",
+      "lastking",
+      "taskmaster-view",
+      "core"
+    ],
+    "test_refs": [
+      "Game.Core.Tests/Domain/GameConfigTests.cs"
+    ],
+    "acceptance": [
+      "Taskmaster #2 behavior matches PRD lock for Implement config-first balancing system.",
+      "Referenced automated tests pass on Windows Godot+C# baseline.",
+      "No regression on deterministic simulation and core loop constraints."
+    ],
+    "test_strategy": [
+      "Red: add or update test coverage around Taskmaster #2 primary behavior.",
+      "Green: implement minimal deterministic logic to satisfy assertions.",
+      "Refactor: preserve passing tests and tighten contract boundaries."
+    ],
+    "taskmaster_id": 2,
+    "contractRefs": [
+      "Game.Core/Contracts/DomainEvent.cs"
+    ]
+  },
+  {
+    "id": "NG-0003",
+    "story_id": "BACKLOG-LASTKING-M1",
+    "owner": "architecture",
+    "depends_on": [
+      "NG-0002"
+    ],
+    "taskmaster_exported": false,
+    "title": "Develop runtime state machine for Day/Night cycles",
+    "description": "Implement a state machine to manage Day and Night cycles with deterministic progression up to Day15.",
+    "status": "pending",
+    "priority": "P1",
+    "layer": "core",
+    "adr_refs": [
+      "ADR-0021",
+      "ADR-0022",
+      "ADR-0018"
+    ],
+    "chapter_refs": [
+      "CH05",
+      "CH06",
+      "CH04",
+      "CH01",
+      "CH07"
+    ],
+    "overlay_refs": [
+      "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
+    ],
+    "labels": [
+      "backlog",
+      "lastking",
+      "taskmaster-view",
+      "core"
+    ],
+    "test_refs": [
+      "Game.Core.Tests/State/GameStateMachineTests.cs"
+    ],
+    "acceptance": [
+      "Taskmaster #3 behavior matches PRD lock for Develop runtime state machine for Day/Night cycles.",
+      "Referenced automated tests pass on Windows Godot+C# baseline.",
+      "No regression on deterministic simulation and core loop constraints."
+    ],
+    "test_strategy": [
+      "Red: add or update test coverage around Taskmaster #3 primary behavior.",
+      "Green: implement minimal deterministic logic to satisfy assertions.",
+      "Refactor: preserve passing tests and tighten contract boundaries."
+    ],
+    "taskmaster_id": 3,
+    "contractRefs": [
+      "Game.Core/Contracts/DomainEvent.cs"
+    ]
+  },
+  {
+    "id": "NG-0004",
+    "story_id": "BACKLOG-LASTKING-M1",
+    "owner": "architecture",
+    "depends_on": [
+      "NG-0002",
+      "NG-0003"
+    ],
+    "taskmaster_exported": false,
+    "title": "Implement wave budget and channel system",
+    "description": "Set up wave generation with normal, elite, and boss channels based on configurable budgets.",
+    "status": "pending",
+    "priority": "P2",
+    "layer": "core",
+    "adr_refs": [
+      "ADR-0021",
+      "ADR-0022",
+      "ADR-0018"
+    ],
+    "chapter_refs": [
+      "CH05",
+      "CH06",
+      "CH04",
+      "CH01",
+      "CH07"
+    ],
+    "overlay_refs": [
+      "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
+    ],
+    "labels": [
+      "backlog",
+      "lastking",
+      "taskmaster-view",
+      "core"
+    ],
+    "test_refs": [
+      "Game.Core.Tests/Services/CollisionServiceTests.cs"
+    ],
+    "acceptance": [
+      "Taskmaster #4 behavior matches PRD lock for Implement wave budget and channel system.",
+      "Referenced automated tests pass on Windows Godot+C# baseline.",
+      "No regression on deterministic simulation and core loop constraints."
+    ],
+    "test_strategy": [
+      "Red: add or update test coverage around Taskmaster #4 primary behavior.",
+      "Green: implement minimal deterministic logic to satisfy assertions.",
+      "Refactor: preserve passing tests and tighten contract boundaries."
+    ],
+    "taskmaster_id": 4,
+    "contractRefs": [
+      "Game.Core/Contracts/DomainEvent.cs"
+    ]
+  },
+  {
+    "id": "NG-0005",
+    "story_id": "BACKLOG-LASTKING-M1",
+    "owner": "architecture",
+    "depends_on": [
+      "NG-0003",
+      "NG-0004"
+    ],
+    "taskmaster_exported": false,
+    "title": "Create enemy spawning system with cadence",
+    "description": "Develop a spawning system that continuously spawns enemies during the first 80% of Night with a 10s cadence.",
+    "status": "pending",
+    "priority": "P2",
+    "layer": "core",
+    "adr_refs": [
+      "ADR-0021",
+      "ADR-0022",
+      "ADR-0018"
+    ],
+    "chapter_refs": [
+      "CH05",
+      "CH06",
+      "CH04",
+      "CH01",
+      "CH07"
+    ],
+    "overlay_refs": [
+      "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
+    ],
+    "labels": [
+      "backlog",
+      "lastking",
+      "taskmaster-view",
+      "core"
+    ],
+    "test_refs": [
+      "Game.Core.Tests/Services/CollisionServiceTests.cs"
+    ],
+    "acceptance": [
+      "Taskmaster #5 behavior matches PRD lock for Create enemy spawning system with cadence.",
+      "Referenced automated tests pass on Windows Godot+C# baseline.",
+      "No regression on deterministic simulation and core loop constraints."
+    ],
+    "test_strategy": [
+      "Red: add or update test coverage around Taskmaster #5 primary behavior.",
+      "Green: implement minimal deterministic logic to satisfy assertions.",
+      "Refactor: preserve passing tests and tighten contract boundaries."
+    ],
+    "taskmaster_id": 5,
+    "contractRefs": [
+      "Game.Core/Contracts/DomainEvent.cs"
+    ]
+  },
+  {
+    "id": "NG-0006",
+    "story_id": "BACKLOG-LASTKING-M1",
+    "owner": "architecture",
+    "depends_on": [
+      "NG-0001"
+    ],
+    "taskmaster_exported": false,
+    "title": "Implement enemy AI with target priority and pathing",
+    "description": "Develop enemy AI that follows target priority rules and handles blocked paths with fallback attacks.",
+    "status": "pending",
+    "priority": "P2",
+    "layer": "core",
+    "adr_refs": [
+      "ADR-0021",
+      "ADR-0022",
+      "ADR-0018"
+    ],
+    "chapter_refs": [
+      "CH05",
+      "CH06",
+      "CH04",
+      "CH01",
+      "CH07"
+    ],
+    "overlay_refs": [
+      "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
+    ],
+    "labels": [
+      "backlog",
+      "lastking",
+      "taskmaster-view",
+      "core"
+    ],
+    "test_refs": [
+      "Game.Core.Tests/Services/CollisionServiceTests.cs"
+    ],
+    "acceptance": [
+      "Taskmaster #6 behavior matches PRD lock for Implement enemy AI with target priority and pathing.",
+      "Referenced automated tests pass on Windows Godot+C# baseline.",
+      "No regression on deterministic simulation and core loop constraints."
+    ],
+    "test_strategy": [
+      "Red: add or update test coverage around Taskmaster #6 primary behavior.",
+      "Green: implement minimal deterministic logic to satisfy assertions.",
+      "Refactor: preserve passing tests and tighten contract boundaries."
+    ],
+    "taskmaster_id": 6,
+    "contractRefs": [
+      "Game.Core/Contracts/DomainEvent.cs"
+    ]
+  },
+  {
+    "id": "NG-0007",
+    "story_id": "BACKLOG-LASTKING-M1",
+    "owner": "architecture",
+    "depends_on": [
+      "NG-0001",
+      "NG-0006"
+    ],
+    "taskmaster_exported": false,
+    "title": "Set up castle HP and loss condition",
+    "description": "Implement castle health system and loss condition when HP reaches 0.",
+    "status": "pending",
+    "priority": "P2",
+    "layer": "ci",
+    "adr_refs": [
+      "ADR-0021",
+      "ADR-0022",
+      "ADR-0018"
+    ],
+    "chapter_refs": [
+      "CH05",
+      "CH06",
+      "CH04",
+      "CH01",
+      "CH07"
+    ],
+    "overlay_refs": [
+      "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
+    ],
+    "labels": [
+      "backlog",
+      "lastking",
+      "taskmaster-view",
+      "ci"
+    ],
+    "test_refs": [
+      "Game.Core.Tests/State/GameStateMachineTests.cs"
+    ],
+    "acceptance": [
+      "Taskmaster #7 behavior matches PRD lock for Set up castle HP and loss condition.",
+      "Referenced automated tests pass on Windows Godot+C# baseline.",
+      "No regression on deterministic simulation and core loop constraints."
+    ],
+    "test_strategy": [
+      "Red: add or update test coverage around Taskmaster #7 primary behavior.",
+      "Green: implement minimal deterministic logic to satisfy assertions.",
+      "Refactor: preserve passing tests and tighten contract boundaries."
+    ],
+    "taskmaster_id": 7,
+    "contractRefs": [
+      "Game.Core/Contracts/DomainEvent.cs"
+    ]
+  },
+  {
+    "id": "NG-0008",
+    "story_id": "BACKLOG-LASTKING-M1",
+    "owner": "architecture",
+    "depends_on": [
+      "NG-0003",
+      "NG-0007"
+    ],
+    "taskmaster_exported": false,
+    "title": "Develop win condition and game progression",
+    "description": "Implement win condition (survive Day15) and integrate with day progression.",
+    "status": "pending",
+    "priority": "P3",
+    "layer": "core",
+    "adr_refs": [
+      "ADR-0021",
+      "ADR-0022",
+      "ADR-0018"
+    ],
+    "chapter_refs": [
+      "CH05",
+      "CH06",
+      "CH04",
+      "CH01",
+      "CH07"
+    ],
+    "overlay_refs": [
+      "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
+    ],
+    "labels": [
+      "backlog",
+      "lastking",
+      "taskmaster-view",
+      "core"
+    ],
+    "test_refs": [
+      "Game.Core.Tests/State/GameStateMachineTests.cs"
+    ],
+    "acceptance": [
+      "Taskmaster #8 behavior matches PRD lock for Develop win condition and game progression.",
+      "Referenced automated tests pass on Windows Godot+C# baseline.",
+      "No regression on deterministic simulation and core loop constraints."
+    ],
+    "test_strategy": [
+      "Red: add or update test coverage around Taskmaster #8 primary behavior.",
+      "Green: implement minimal deterministic logic to satisfy assertions.",
+      "Refactor: preserve passing tests and tighten contract boundaries."
+    ],
+    "taskmaster_id": 8,
+    "contractRefs": [
+      "Game.Core/Contracts/DomainEvent.cs"
+    ]
+  },
+  {
+    "id": "NG-0009",
+    "story_id": "BACKLOG-LASTKING-M1",
+    "owner": "architecture",
+    "depends_on": [
+      "NG-0001",
+      "NG-0003",
+      "NG-0007"
+    ],
+    "taskmaster_exported": false,
+    "title": "Create basic UI for day/night and HP display",
+    "description": "Implement a minimal user interface to show current day, time in cycle, and castle HP.",
+    "status": "pending",
+    "priority": "P3",
+    "layer": "adapter",
+    "adr_refs": [
+      "ADR-0021",
+      "ADR-0022",
+      "ADR-0018"
+    ],
+    "chapter_refs": [
+      "CH05",
+      "CH06",
+      "CH04",
+      "CH01",
+      "CH07"
+    ],
+    "overlay_refs": [
+      "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
+    ],
+    "labels": [
+      "backlog",
+      "lastking",
+      "taskmaster-view",
+      "adapter"
+    ],
+    "test_refs": [
+      "Tests.Godot/tests/UI/test_hud_scene.gd"
+    ],
+    "acceptance": [
+      "Taskmaster #9 behavior matches PRD lock for Create basic UI for day/night and HP display.",
+      "Referenced automated tests pass on Windows Godot+C# baseline.",
+      "No regression on deterministic simulation and core loop constraints."
+    ],
+    "test_strategy": [
+      "Red: add or update test coverage around Taskmaster #9 primary behavior.",
+      "Green: implement minimal deterministic logic to satisfy assertions.",
+      "Refactor: preserve passing tests and tighten contract boundaries."
+    ],
+    "taskmaster_id": 9,
+    "contractRefs": [
+      "Game.Core/Contracts/DomainEvent.cs"
+    ]
+  },
+  {
+    "id": "NG-0010",
+    "story_id": "BACKLOG-LASTKING-M1",
+    "owner": "architecture",
+    "depends_on": [
+      "NG-0001",
+      "NG-0002",
+      "NG-0003",
+      "NG-0004",
+      "NG-0005",
+      "NG-0006",
+      "NG-0007",
+      "NG-0008",
+      "NG-0009"
+    ],
+    "taskmaster_exported": false,
+    "title": "Integrate and test full core loop",
+    "description": "Combine all systems and test the complete core gameplay loop from start to win/loss.",
+    "status": "pending",
+    "priority": "P1",
+    "layer": "core",
+    "adr_refs": [
+      "ADR-0021",
+      "ADR-0022",
+      "ADR-0018"
+    ],
+    "chapter_refs": [
+      "CH05",
+      "CH06",
+      "CH04",
+      "CH01",
+      "CH07"
+    ],
+    "overlay_refs": [
+      "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
+    ],
+    "labels": [
+      "backlog",
+      "lastking",
+      "taskmaster-view",
+      "core"
+    ],
+    "test_refs": [
+      "Game.Core.Tests/State/GameStateMachineTests.cs"
+    ],
+    "acceptance": [
+      "Taskmaster #10 behavior matches PRD lock for Integrate and test full core loop.",
+      "Referenced automated tests pass on Windows Godot+C# baseline.",
+      "No regression on deterministic simulation and core loop constraints."
+    ],
+    "test_strategy": [
+      "Red: add or update test coverage around Taskmaster #10 primary behavior.",
+      "Green: implement minimal deterministic logic to satisfy assertions.",
+      "Refactor: preserve passing tests and tighten contract boundaries."
+    ],
+    "taskmaster_id": 10,
+    "contractRefs": [
+      "Game.Core/Contracts/DomainEvent.cs"
+    ]
+  },
+  {
+    "id": "NG-0011",
+    "story_id": "BACKLOG-LASTKING-M1",
+    "owner": "architecture",
+    "depends_on": [],
+    "taskmaster_exported": false,
+    "title": "Set Up Godot 4.5.1 C# Project for Windows",
+    "description": "Initialize a Godot 4.5.1 project with C# support on Windows, ensuring compatibility with Steam single-player and setting up the basic project structure.",
+    "status": "pending",
+    "priority": "P1",
+    "layer": "ci",
+    "adr_refs": [
+      "ADR-0011",
+      "ADR-0001"
+    ],
+    "chapter_refs": [
+      "CH07",
+      "CH10",
+      "CH01"
+    ],
+    "overlay_refs": [
+      "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
+    ],
+    "labels": [
+      "backlog",
+      "lastking",
+      "taskmaster-view",
+      "ci"
+    ],
+    "test_refs": [
+      "Game.Core.Tests/State/GameStateMachineTests.cs"
+    ],
+    "acceptance": [
+      "Taskmaster #11 behavior matches PRD lock for Set Up Godot 4.5.1 C# Project for Windows.",
+      "Referenced automated tests pass on Windows Godot+C# baseline.",
+      "No regression on deterministic simulation and core loop constraints."
+    ],
+    "test_strategy": [
+      "Red: add or update test coverage around Taskmaster #11 primary behavior.",
+      "Green: implement minimal deterministic logic to satisfy assertions.",
+      "Refactor: preserve passing tests and tighten contract boundaries."
+    ],
+    "taskmaster_id": 11,
+    "contractRefs": [
+      "Game.Core/Contracts/DomainEvent.cs"
+    ]
+  },
+  {
+    "id": "NG-0012",
+    "story_id": "BACKLOG-LASTKING-M1",
+    "owner": "architecture",
+    "depends_on": [
+      "NG-0011"
+    ],
+    "taskmaster_exported": false,
+    "title": "Implement Core Resource System with Integer Safety",
+    "description": "Create a resource management system for gold, iron, and population cap, ensuring integer-safe operations to prevent floating-point drift.",
+    "status": "pending",
+    "priority": "P1",
+    "layer": "core",
+    "adr_refs": [
+      "ADR-0021",
+      "ADR-0022",
+      "ADR-0018"
+    ],
+    "chapter_refs": [
+      "CH05",
+      "CH06",
+      "CH04",
+      "CH01",
+      "CH07"
+    ],
+    "overlay_refs": [
+      "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
+    ],
+    "labels": [
+      "backlog",
+      "lastking",
+      "taskmaster-view",
+      "core"
+    ],
+    "test_refs": [
+      "Game.Core.Tests/State/GameStateMachineTests.cs"
+    ],
+    "acceptance": [
+      "Taskmaster #12 behavior matches PRD lock for Implement Core Resource System with Integer Safety.",
+      "Referenced automated tests pass on Windows Godot+C# baseline.",
+      "No regression on deterministic simulation and core loop constraints."
+    ],
+    "test_strategy": [
+      "Red: add or update test coverage around Taskmaster #12 primary behavior.",
+      "Green: implement minimal deterministic logic to satisfy assertions.",
+      "Refactor: preserve passing tests and tighten contract boundaries."
+    ],
+    "taskmaster_id": 12,
+    "contractRefs": [
+      "Game.Core/Contracts/DomainEvent.cs"
+    ]
+  },
+  {
+    "id": "NG-0013",
+    "story_id": "BACKLOG-LASTKING-M1",
+    "owner": "architecture",
+    "depends_on": [
+      "NG-0011",
+      "NG-0012"
+    ],
+    "taskmaster_exported": false,
+    "title": "Design and Implement Building System with Footprint Rules",
+    "description": "Develop a building system that supports core buildings (castle, residence, mine, barracks, MG tower, wall, mine trap) with footprint rules and placement logic.",
+    "status": "pending",
+    "priority": "P1",
+    "layer": "core",
+    "adr_refs": [
+      "ADR-0021",
+      "ADR-0022",
+      "ADR-0018"
+    ],
+    "chapter_refs": [
+      "CH05",
+      "CH06",
+      "CH04",
+      "CH01",
+      "CH07"
+    ],
+    "overlay_refs": [
+      "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
+    ],
+    "labels": [
+      "backlog",
+      "lastking",
+      "taskmaster-view",
+      "core"
+    ],
+    "test_refs": [
+      "Tests.Godot/tests/UI/test_hud_scene.gd"
+    ],
+    "acceptance": [
+      "Taskmaster #13 behavior matches PRD lock for Design and Implement Building System with Footprint Rules.",
+      "Referenced automated tests pass on Windows Godot+C# baseline.",
+      "No regression on deterministic simulation and core loop constraints."
+    ],
+    "test_strategy": [
+      "Red: add or update test coverage around Taskmaster #13 primary behavior.",
+      "Green: implement minimal deterministic logic to satisfy assertions.",
+      "Refactor: preserve passing tests and tighten contract boundaries."
+    ],
+    "taskmaster_id": 13,
+    "contractRefs": [
+      "Game.Core/Contracts/DomainEvent.cs"
+    ]
+  },
+  {
+    "id": "NG-0014",
+    "story_id": "BACKLOG-LASTKING-M1",
+    "owner": "architecture",
+    "depends_on": [
+      "NG-0012",
+      "NG-0013"
+    ],
+    "taskmaster_exported": false,
+    "title": "Implement Economy and Tax System for Residences",
+    "description": "Add economy features where residences generate gold tax every 15 seconds and provide population capacity.",
+    "status": "pending",
+    "priority": "P2",
+    "layer": "core",
+    "adr_refs": [
+      "ADR-0021",
+      "ADR-0022",
+      "ADR-0018"
+    ],
+    "chapter_refs": [
+      "CH05",
+      "CH06",
+      "CH04",
+      "CH01",
+      "CH07"
+    ],
+    "overlay_refs": [
+      "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
+    ],
+    "labels": [
+      "backlog",
+      "lastking",
+      "taskmaster-view",
+      "core"
+    ],
+    "test_refs": [
+      "Game.Core.Tests/State/GameStateMachineTests.cs"
+    ],
+    "acceptance": [
+      "Taskmaster #14 behavior matches PRD lock for Implement Economy and Tax System for Residences.",
+      "Referenced automated tests pass on Windows Godot+C# baseline.",
+      "No regression on deterministic simulation and core loop constraints."
+    ],
+    "test_strategy": [
+      "Red: add or update test coverage around Taskmaster #14 primary behavior.",
+      "Green: implement minimal deterministic logic to satisfy assertions.",
+      "Refactor: preserve passing tests and tighten contract boundaries."
+    ],
+    "taskmaster_id": 14,
+    "contractRefs": [
+      "Game.Core/Contracts/DomainEvent.cs"
+    ]
+  },
+  {
+    "id": "NG-0015",
+    "story_id": "BACKLOG-LASTKING-M1",
+    "owner": "architecture",
+    "depends_on": [
+      "NG-0013",
+      "NG-0014"
+    ],
+    "taskmaster_exported": false,
+    "title": "Develop Upgrade and Repair System with Constraints",
+    "description": "Create a system for building upgrades (max level 5, no skipping) and repairs, with economic rules and constraints.",
+    "status": "pending",
+    "priority": "P2",
+    "layer": "core",
+    "adr_refs": [
+      "ADR-0021",
+      "ADR-0022",
+      "ADR-0018"
+    ],
+    "chapter_refs": [
+      "CH05",
+      "CH06",
+      "CH04",
+      "CH01",
+      "CH07"
+    ],
+    "overlay_refs": [
+      "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
+    ],
+    "labels": [
+      "backlog",
+      "lastking",
+      "taskmaster-view",
+      "core"
+    ],
+    "test_refs": [
+      "Game.Core.Tests/State/GameStateMachineTests.cs"
+    ],
+    "acceptance": [
+      "Taskmaster #15 behavior matches PRD lock for Develop Upgrade and Repair System with Constraints.",
+      "Referenced automated tests pass on Windows Godot+C# baseline.",
+      "No regression on deterministic simulation and core loop constraints."
+    ],
+    "test_strategy": [
+      "Red: add or update test coverage around Taskmaster #15 primary behavior.",
+      "Green: implement minimal deterministic logic to satisfy assertions.",
+      "Refactor: preserve passing tests and tighten contract boundaries."
+    ],
+    "taskmaster_id": 15,
+    "contractRefs": [
+      "Game.Core/Contracts/DomainEvent.cs"
+    ]
+  },
+  {
+    "id": "NG-0016",
+    "story_id": "BACKLOG-LASTKING-M1",
+    "owner": "architecture",
+    "depends_on": [
+      "NG-0013",
+      "NG-0014"
+    ],
+    "taskmaster_exported": false,
+    "title": "Implement Unit Training Queue in Barracks",
+    "description": "Add unit training functionality to barracks with a single queue per barracks, cancellable with 100% refund.",
+    "status": "pending",
+    "priority": "P2",
+    "layer": "core",
+    "adr_refs": [
+      "ADR-0021",
+      "ADR-0022",
+      "ADR-0018"
+    ],
+    "chapter_refs": [
+      "CH05",
+      "CH06",
+      "CH04",
+      "CH01",
+      "CH07"
+    ],
+    "overlay_refs": [
+      "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
+    ],
+    "labels": [
+      "backlog",
+      "lastking",
+      "taskmaster-view",
+      "core"
+    ],
+    "test_refs": [
+      "Game.Core.Tests/State/GameStateMachineTests.cs"
+    ],
+    "acceptance": [
+      "Taskmaster #16 behavior matches PRD lock for Implement Unit Training Queue in Barracks.",
+      "Referenced automated tests pass on Windows Godot+C# baseline.",
+      "No regression on deterministic simulation and core loop constraints."
+    ],
+    "test_strategy": [
+      "Red: add or update test coverage around Taskmaster #16 primary behavior.",
+      "Green: implement minimal deterministic logic to satisfy assertions.",
+      "Refactor: preserve passing tests and tighten contract boundaries."
+    ],
+    "taskmaster_id": 16,
+    "contractRefs": [
+      "Game.Core/Contracts/DomainEvent.cs"
+    ]
+  },
+  {
+    "id": "NG-0017",
+    "story_id": "BACKLOG-LASTKING-M1",
+    "owner": "architecture",
+    "depends_on": [
+      "NG-0013",
+      "NG-0016"
+    ],
+    "taskmaster_exported": false,
+    "title": "Design and Integrate Tech Tree for Unit Stats",
+    "description": "Develop a config-driven tech tree that affects unit stats (atk speed %, damage, production speed %, range, HP, cost %).",
+    "status": "pending",
+    "priority": "P2",
+    "layer": "core",
+    "adr_refs": [
+      "ADR-0021",
+      "ADR-0022",
+      "ADR-0018"
+    ],
+    "chapter_refs": [
+      "CH05",
+      "CH06",
+      "CH04",
+      "CH01",
+      "CH07"
+    ],
+    "overlay_refs": [
+      "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
+    ],
+    "labels": [
+      "backlog",
+      "lastking",
+      "taskmaster-view",
+      "core"
+    ],
+    "test_refs": [
+      "Game.Core.Tests/State/GameStateMachineTests.cs"
+    ],
+    "acceptance": [
+      "Taskmaster #17 behavior matches PRD lock for Design and Integrate Tech Tree for Unit Stats.",
+      "Referenced automated tests pass on Windows Godot+C# baseline.",
+      "No regression on deterministic simulation and core loop constraints."
+    ],
+    "test_strategy": [
+      "Red: add or update test coverage around Taskmaster #17 primary behavior.",
+      "Green: implement minimal deterministic logic to satisfy assertions.",
+      "Refactor: preserve passing tests and tighten contract boundaries."
+    ],
+    "taskmaster_id": 17,
+    "contractRefs": [
+      "Game.Core/Contracts/DomainEvent.cs"
+    ]
+  },
+  {
+    "id": "NG-0018",
+    "story_id": "BACKLOG-LASTKING-M1",
+    "owner": "architecture",
+    "depends_on": [
+      "NG-0012",
+      "NG-0014"
+    ],
+    "taskmaster_exported": false,
+    "title": "Implement Reward System with Nightly Choices",
+    "description": "Add a reward system that triggers each night, offering 3 choices from separate pools, with fallback to gold if pool is exhausted.",
+    "status": "pending",
+    "priority": "P3",
+    "layer": "core",
+    "adr_refs": [
+      "ADR-0021",
+      "ADR-0022",
+      "ADR-0018"
+    ],
+    "chapter_refs": [
+      "CH05",
+      "CH06",
+      "CH04",
+      "CH01",
+      "CH07"
+    ],
+    "overlay_refs": [
+      "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
+    ],
+    "labels": [
+      "backlog",
+      "lastking",
+      "taskmaster-view",
+      "core"
+    ],
+    "test_refs": [
+      "Game.Core.Tests/State/GameStateMachineTests.cs"
+    ],
+    "acceptance": [
+      "Taskmaster #18 behavior matches PRD lock for Implement Reward System with Nightly Choices.",
+      "Referenced automated tests pass on Windows Godot+C# baseline.",
+      "No regression on deterministic simulation and core loop constraints."
+    ],
+    "test_strategy": [
+      "Red: add or update test coverage around Taskmaster #18 primary behavior.",
+      "Green: implement minimal deterministic logic to satisfy assertions.",
+      "Refactor: preserve passing tests and tighten contract boundaries."
+    ],
+    "taskmaster_id": 18,
+    "contractRefs": [
+      "Game.Core/Contracts/DomainEvent.cs"
+    ]
+  },
+  {
+    "id": "NG-0019",
+    "story_id": "BACKLOG-LASTKING-M1",
+    "owner": "architecture",
+    "depends_on": [
+      "NG-0011",
+      "NG-0013"
+    ],
+    "taskmaster_exported": false,
+    "title": "Add Day/Night Cycle and Game Win/Lose Conditions",
+    "description": "Implement the day/night cycle (4 min Day + 2 min Night, Day1-Day15) and win/lose conditions based on castle HP.",
+    "status": "pending",
+    "priority": "P1",
+    "layer": "core",
+    "adr_refs": [
+      "ADR-0021",
+      "ADR-0022",
+      "ADR-0018"
+    ],
+    "chapter_refs": [
+      "CH05",
+      "CH06",
+      "CH04",
+      "CH01",
+      "CH07"
+    ],
+    "overlay_refs": [
+      "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
+    ],
+    "labels": [
+      "backlog",
+      "lastking",
+      "taskmaster-view",
+      "core"
+    ],
+    "test_refs": [
+      "Game.Core.Tests/State/GameStateMachineTests.cs"
+    ],
+    "acceptance": [
+      "Taskmaster #19 behavior matches PRD lock for Add Day/Night Cycle and Game Win/Lose Conditions.",
+      "Referenced automated tests pass on Windows Godot+C# baseline.",
+      "No regression on deterministic simulation and core loop constraints."
+    ],
+    "test_strategy": [
+      "Red: add or update test coverage around Taskmaster #19 primary behavior.",
+      "Green: implement minimal deterministic logic to satisfy assertions.",
+      "Refactor: preserve passing tests and tighten contract boundaries."
+    ],
+    "taskmaster_id": 19,
+    "contractRefs": [
+      "Game.Core/Contracts/DomainEvent.cs"
+    ]
+  },
+  {
+    "id": "NG-0020",
+    "story_id": "BACKLOG-LASTKING-M1",
+    "owner": "architecture",
+    "depends_on": [
+      "NG-0013",
+      "NG-0016",
+      "NG-0017"
+    ],
+    "taskmaster_exported": false,
+    "title": "Integrate Combat with Friendly Fire Disabled",
+    "description": "Implement combat system for units and towers, with friendly fire disabled for all player attacks.",
+    "status": "pending",
+    "priority": "P2",
+    "layer": "core",
+    "adr_refs": [
+      "ADR-0021",
+      "ADR-0022",
+      "ADR-0018"
+    ],
+    "chapter_refs": [
+      "CH05",
+      "CH06",
+      "CH04",
+      "CH01",
+      "CH07"
+    ],
+    "overlay_refs": [
+      "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
+    ],
+    "labels": [
+      "backlog",
+      "lastking",
+      "taskmaster-view",
+      "core"
+    ],
+    "test_refs": [
+      "Game.Core.Tests/State/GameStateMachineTests.cs"
+    ],
+    "acceptance": [
+      "Taskmaster #20 behavior matches PRD lock for Integrate Combat with Friendly Fire Disabled.",
+      "Referenced automated tests pass on Windows Godot+C# baseline.",
+      "No regression on deterministic simulation and core loop constraints."
+    ],
+    "test_strategy": [
+      "Red: add or update test coverage around Taskmaster #20 primary behavior.",
+      "Green: implement minimal deterministic logic to satisfy assertions.",
+      "Refactor: preserve passing tests and tighten contract boundaries."
+    ],
+    "taskmaster_id": 20,
+    "contractRefs": [
+      "Game.Core/Contracts/DomainEvent.cs"
+    ]
+  },
+  {
+    "id": "NG-0021",
+    "story_id": "BACKLOG-LASTKING-M1",
+    "owner": "architecture",
+    "depends_on": [],
+    "taskmaster_exported": false,
+    "title": "Set Up Godot 4.5.1 C# Project with Windows Configuration",
+    "description": "Initialize a Godot 4.5.1 project with C# scripting, configure for Windows-only Steam single-player, and establish project structure.",
+    "status": "pending",
+    "priority": "P1",
+    "layer": "ci",
+    "adr_refs": [
+      "ADR-0011",
+      "ADR-0001"
+    ],
+    "chapter_refs": [
+      "CH07",
+      "CH10",
+      "CH01"
+    ],
+    "overlay_refs": [
+      "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
+    ],
+    "labels": [
+      "backlog",
+      "lastking",
+      "taskmaster-view",
+      "ci"
+    ],
+    "test_refs": [
+      "Game.Core.Tests/Domain/GameConfigTests.cs"
+    ],
+    "acceptance": [
+      "Taskmaster #21 behavior matches PRD lock for Set Up Godot 4.5.1 C# Project with Windows Configuration.",
+      "Referenced automated tests pass on Windows Godot+C# baseline.",
+      "No regression on deterministic simulation and core loop constraints."
+    ],
+    "test_strategy": [
+      "Red: add or update test coverage around Taskmaster #21 primary behavior.",
+      "Green: implement minimal deterministic logic to satisfy assertions.",
+      "Refactor: preserve passing tests and tighten contract boundaries."
+    ],
+    "taskmaster_id": 21,
+    "contractRefs": [
+      "Game.Core/Contracts/DomainEvent.cs"
+    ]
+  },
+  {
+    "id": "NG-0022",
+    "story_id": "BACKLOG-LASTKING-M1",
+    "owner": "architecture",
+    "depends_on": [
+      "NG-0021"
+    ],
+    "taskmaster_exported": false,
+    "title": "Implement Camera and Interaction System with Edge and Keyboard Scrolling",
+    "description": "Develop camera controls for edge scrolling and keyboard-based scrolling in the game world.",
+    "status": "pending",
+    "priority": "P1",
+    "layer": "adapter",
+    "adr_refs": [
+      "ADR-0021",
+      "ADR-0022",
+      "ADR-0018"
+    ],
+    "chapter_refs": [
+      "CH05",
+      "CH06",
+      "CH04",
+      "CH01",
+      "CH07"
+    ],
+    "overlay_refs": [
+      "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
+    ],
+    "labels": [
+      "backlog",
+      "lastking",
+      "taskmaster-view",
+      "adapter"
+    ],
+    "test_refs": [
+      "Tests.Godot/tests/UI/test_hud_scene.gd"
+    ],
+    "acceptance": [
+      "Taskmaster #22 behavior matches PRD lock for Implement Camera and Interaction System with Edge and Keyboard Scrolling.",
+      "Referenced automated tests pass on Windows Godot+C# baseline.",
+      "No regression on deterministic simulation and core loop constraints."
+    ],
+    "test_strategy": [
+      "Red: add or update test coverage around Taskmaster #22 primary behavior.",
+      "Green: implement minimal deterministic logic to satisfy assertions.",
+      "Refactor: preserve passing tests and tighten contract boundaries."
+    ],
+    "taskmaster_id": 22,
+    "contractRefs": [
+      "Game.Core/Contracts/DomainEvent.cs"
+    ]
+  },
+  {
+    "id": "NG-0023",
+    "story_id": "BACKLOG-LASTKING-M1",
+    "owner": "architecture",
+    "depends_on": [
+      "NG-0021"
+    ],
+    "taskmaster_exported": false,
+    "title": "Develop Runtime Speed Controls (Pause, 1x, 2x) with Timer Freeze",
+    "description": "Implement game speed controls including pause, 1x, and 2x speeds, ensuring all timers freeze during pause.",
+    "status": "pending",
+    "priority": "P1",
+    "layer": "core",
+    "adr_refs": [
+      "ADR-0021",
+      "ADR-0022",
+      "ADR-0018"
+    ],
+    "chapter_refs": [
+      "CH05",
+      "CH06",
+      "CH04",
+      "CH01",
+      "CH07"
+    ],
+    "overlay_refs": [
+      "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
+    ],
+    "labels": [
+      "backlog",
+      "lastking",
+      "taskmaster-view",
+      "core"
+    ],
+    "test_refs": [
+      "Game.Core.Tests/State/GameStateMachineTests.cs"
+    ],
+    "acceptance": [
+      "Taskmaster #23 behavior matches PRD lock for Develop Runtime Speed Controls (Pause, 1x, 2x) with Timer Freeze.",
+      "Referenced automated tests pass on Windows Godot+C# baseline.",
+      "No regression on deterministic simulation and core loop constraints."
+    ],
+    "test_strategy": [
+      "Red: add or update test coverage around Taskmaster #23 primary behavior.",
+      "Green: implement minimal deterministic logic to satisfy assertions.",
+      "Refactor: preserve passing tests and tighten contract boundaries."
+    ],
+    "taskmaster_id": 23,
+    "contractRefs": [
+      "Game.Core/Contracts/DomainEvent.cs"
+    ]
+  },
+  {
+    "id": "NG-0024",
+    "story_id": "BACKLOG-LASTKING-M1",
+    "owner": "architecture",
+    "depends_on": [
+      "NG-0021"
+    ],
+    "taskmaster_exported": false,
+    "title": "Create UI Feedback System for Invalid Actions and Errors",
+    "description": "Implement UI feedback for invalid placement, blocked actions, and migration/load errors with clear user-facing messages.",
+    "status": "pending",
+    "priority": "P2",
+    "layer": "adapter",
+    "adr_refs": [
+      "ADR-0021",
+      "ADR-0022",
+      "ADR-0018"
+    ],
+    "chapter_refs": [
+      "CH05",
+      "CH06",
+      "CH04",
+      "CH01",
+      "CH07"
+    ],
+    "overlay_refs": [
+      "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
+    ],
+    "labels": [
+      "backlog",
+      "lastking",
+      "taskmaster-view",
+      "adapter"
+    ],
+    "test_refs": [
+      "Tests.Godot/tests/UI/test_hud_scene.gd"
+    ],
+    "acceptance": [
+      "Taskmaster #24 behavior matches PRD lock for Create UI Feedback System for Invalid Actions and Errors.",
+      "Referenced automated tests pass on Windows Godot+C# baseline.",
+      "No regression on deterministic simulation and core loop constraints."
+    ],
+    "test_strategy": [
+      "Red: add or update test coverage around Taskmaster #24 primary behavior.",
+      "Green: implement minimal deterministic logic to satisfy assertions.",
+      "Refactor: preserve passing tests and tighten contract boundaries."
+    ],
+    "taskmaster_id": 24,
+    "contractRefs": [
+      "Game.Core/Contracts/DomainEvent.cs"
+    ]
+  },
+  {
+    "id": "NG-0025",
+    "story_id": "BACKLOG-LASTKING-M1",
+    "owner": "architecture",
+    "depends_on": [
+      "NG-0021"
+    ],
+    "taskmaster_exported": false,
+    "title": "Build Save System with Autosave and Migration Handling",
+    "description": "Develop a save system with one autosave slot, start-of-day autosaves, and migration for invalid configs/loads.",
+    "status": "pending",
+    "priority": "P1",
+    "layer": "adapter",
+    "adr_refs": [
+      "ADR-0006",
+      "ADR-0008",
+      "ADR-0011"
+    ],
+    "chapter_refs": [
+      "CH05",
+      "CH10",
+      "CH07"
+    ],
+    "overlay_refs": [
+      "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
+    ],
+    "labels": [
+      "backlog",
+      "lastking",
+      "taskmaster-view",
+      "adapter"
+    ],
+    "test_refs": [
+      "Tests.Godot/tests/Integration/test_backup_restore_savegame.gd"
+    ],
+    "acceptance": [
+      "Taskmaster #25 behavior matches PRD lock for Build Save System with Autosave and Migration Handling.",
+      "Referenced automated tests pass on Windows Godot+C# baseline.",
+      "No regression on deterministic simulation and core loop constraints."
+    ],
+    "test_strategy": [
+      "Red: add or update test coverage around Taskmaster #25 primary behavior.",
+      "Green: implement minimal deterministic logic to satisfy assertions.",
+      "Refactor: preserve passing tests and tighten contract boundaries."
+    ],
+    "taskmaster_id": 25,
+    "contractRefs": [
+      "Game.Core/Contracts/DomainEvent.cs"
+    ]
+  },
+  {
+    "id": "NG-0026",
+    "story_id": "BACKLOG-LASTKING-M1",
+    "owner": "architecture",
+    "depends_on": [
+      "NG-0025"
+    ],
+    "taskmaster_exported": false,
+    "title": "Integrate Steam Cloud Save with Account Binding",
+    "description": "Implement Steam cloud save functionality using Steam account binding for save data synchronization.",
+    "status": "pending",
+    "priority": "P2",
+    "layer": "adapter",
+    "adr_refs": [
+      "ADR-0006",
+      "ADR-0008",
+      "ADR-0011"
+    ],
+    "chapter_refs": [
+      "CH05",
+      "CH10",
+      "CH07"
+    ],
+    "overlay_refs": [
+      "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
+    ],
+    "labels": [
+      "backlog",
+      "lastking",
+      "taskmaster-view",
+      "adapter"
+    ],
+    "test_refs": [
+      "Tests.Godot/tests/Integration/test_backup_restore_savegame.gd"
+    ],
+    "acceptance": [
+      "Taskmaster #26 behavior matches PRD lock for Integrate Steam Cloud Save with Account Binding.",
+      "Referenced automated tests pass on Windows Godot+C# baseline.",
+      "No regression on deterministic simulation and core loop constraints."
+    ],
+    "test_strategy": [
+      "Red: add or update test coverage around Taskmaster #26 primary behavior.",
+      "Green: implement minimal deterministic logic to satisfy assertions.",
+      "Refactor: preserve passing tests and tighten contract boundaries."
+    ],
+    "taskmaster_id": 26,
+    "contractRefs": [
+      "Game.Core/Contracts/DomainEvent.cs"
+    ]
+  },
+  {
+    "id": "NG-0027",
+    "story_id": "BACKLOG-LASTKING-M1",
+    "owner": "architecture",
+    "depends_on": [
+      "NG-0021"
+    ],
+    "taskmaster_exported": false,
+    "title": "Implement Achievements System with Deterministic Unlocking",
+    "description": "Create an achievements system with a visible list, non-hidden achievements, and deterministic unlock triggers.",
+    "status": "pending",
+    "priority": "P2",
+    "layer": "adapter",
+    "adr_refs": [
+      "ADR-0006",
+      "ADR-0008",
+      "ADR-0011"
+    ],
+    "chapter_refs": [
+      "CH05",
+      "CH10",
+      "CH07"
+    ],
+    "overlay_refs": [
+      "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
+    ],
+    "labels": [
+      "backlog",
+      "lastking",
+      "taskmaster-view",
+      "adapter"
+    ],
+    "test_refs": [
+      "Game.Core.Tests/State/GameStateMachineTests.cs"
+    ],
+    "acceptance": [
+      "Taskmaster #27 behavior matches PRD lock for Implement Achievements System with Deterministic Unlocking.",
+      "Referenced automated tests pass on Windows Godot+C# baseline.",
+      "No regression on deterministic simulation and core loop constraints."
+    ],
+    "test_strategy": [
+      "Red: add or update test coverage around Taskmaster #27 primary behavior.",
+      "Green: implement minimal deterministic logic to satisfy assertions.",
+      "Refactor: preserve passing tests and tighten contract boundaries."
+    ],
+    "taskmaster_id": 27,
+    "contractRefs": [
+      "Game.Core/Contracts/DomainEvent.cs"
+    ]
+  },
+  {
+    "id": "NG-0028",
+    "story_id": "BACKLOG-LASTKING-M1",
+    "owner": "architecture",
+    "depends_on": [
+      "NG-0021"
+    ],
+    "taskmaster_exported": false,
+    "title": "Set Up Localization (i18n) for zh-CN and en-US",
+    "description": "Implement key-based internationalization workflow supporting zh-CN and en-US at launch.",
+    "status": "pending",
+    "priority": "P2",
+    "layer": "ci",
+    "adr_refs": [
+      "ADR-0006",
+      "ADR-0008",
+      "ADR-0011"
+    ],
+    "chapter_refs": [
+      "CH05",
+      "CH10",
+      "CH07"
+    ],
+    "overlay_refs": [
+      "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
+    ],
+    "labels": [
+      "backlog",
+      "lastking",
+      "taskmaster-view",
+      "ci"
+    ],
+    "test_refs": [
+      "Game.Core.Tests/State/GameStateMachineTests.cs"
+    ],
+    "acceptance": [
+      "Taskmaster #28 behavior matches PRD lock for Set Up Localization (i18n) for zh-CN and en-US.",
+      "Referenced automated tests pass on Windows Godot+C# baseline.",
+      "No regression on deterministic simulation and core loop constraints."
+    ],
+    "test_strategy": [
+      "Red: add or update test coverage around Taskmaster #28 primary behavior.",
+      "Green: implement minimal deterministic logic to satisfy assertions.",
+      "Refactor: preserve passing tests and tighten contract boundaries."
+    ],
+    "taskmaster_id": 28,
+    "contractRefs": [
+      "Game.Core/Contracts/DomainEvent.cs"
+    ]
+  },
+  {
+    "id": "NG-0029",
+    "story_id": "BACKLOG-LASTKING-M1",
+    "owner": "architecture",
+    "depends_on": [
+      "NG-0021"
+    ],
+    "taskmaster_exported": false,
+    "title": "Add Audio Settings for Music and SFX Channels",
+    "description": "Implement audio settings to control music and sound effects volume at launch.",
+    "status": "pending",
+    "priority": "P3",
+    "layer": "adapter",
+    "adr_refs": [
+      "ADR-0006",
+      "ADR-0008",
+      "ADR-0011"
+    ],
+    "chapter_refs": [
+      "CH05",
+      "CH10",
+      "CH07"
+    ],
+    "overlay_refs": [
+      "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
+    ],
+    "labels": [
+      "backlog",
+      "lastking",
+      "taskmaster-view",
+      "adapter"
+    ],
+    "test_refs": [
+      "Game.Core.Tests/State/GameStateMachineTests.cs"
+    ],
+    "acceptance": [
+      "Taskmaster #29 behavior matches PRD lock for Add Audio Settings for Music and SFX Channels.",
+      "Referenced automated tests pass on Windows Godot+C# baseline.",
+      "No regression on deterministic simulation and core loop constraints."
+    ],
+    "test_strategy": [
+      "Red: add or update test coverage around Taskmaster #29 primary behavior.",
+      "Green: implement minimal deterministic logic to satisfy assertions.",
+      "Refactor: preserve passing tests and tighten contract boundaries."
+    ],
+    "taskmaster_id": 29,
+    "contractRefs": [
+      "Game.Core/Contracts/DomainEvent.cs"
+    ]
+  },
+  {
+    "id": "NG-0030",
+    "story_id": "BACKLOG-LASTKING-M1",
+    "owner": "architecture",
+    "depends_on": [
+      "NG-0021",
+      "NG-0022",
+      "NG-0023",
+      "NG-0024",
+      "NG-0025",
+      "NG-0026",
+      "NG-0027",
+      "NG-0028",
+      "NG-0029"
+    ],
+    "taskmaster_exported": false,
+    "title": "Optimize for Performance Targets (45 FPS 1% Low, 60 FPS Average)",
+    "description": "Implement optimizations to meet non-functional goals: low-end baseline 45 FPS (1% low) and average 60 FPS target.",
+    "status": "pending",
+    "priority": "P1",
+    "layer": "adapter",
+    "adr_refs": [
+      "ADR-0015",
+      "ADR-0005",
+      "ADR-0011"
+    ],
+    "chapter_refs": [
+      "CH09",
+      "CH07",
+      "CH10"
+    ],
+    "overlay_refs": [
+      "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
+    ],
+    "labels": [
+      "backlog",
+      "lastking",
+      "taskmaster-view",
+      "adapter"
+    ],
+    "test_refs": [
+      "Game.Core.Tests/State/GameStateMachineTests.cs"
+    ],
+    "acceptance": [
+      "Taskmaster #30 behavior matches PRD lock for Optimize for Performance Targets (45 FPS 1% Low, 60 FPS Average).",
+      "Referenced automated tests pass on Windows Godot+C# baseline.",
+      "No regression on deterministic simulation and core loop constraints."
+    ],
+    "test_strategy": [
+      "Red: add or update test coverage around Taskmaster #30 primary behavior.",
+      "Green: implement minimal deterministic logic to satisfy assertions.",
+      "Refactor: preserve passing tests and tighten contract boundaries."
+    ],
+    "taskmaster_id": 30,
+    "contractRefs": [
+      "Game.Core/Contracts/DomainEvent.cs"
+    ]
+  },
+  {
+    "id": "NG-0031",
+    "story_id": "BACKLOG-LASTKING-M1",
+    "owner": "architecture",
+    "depends_on": [],
+    "taskmaster_exported": false,
+    "title": "Set up Godot 4.5.1 C# project structure for config contracts",
+    "description": "Initialize a Godot 4.5.1 C# project on Windows with a dedicated folder structure for config schemas and samples, ensuring compatibility with Steam single-player and Windows-only constraints.",
+    "status": "pending",
+    "priority": "P1",
+    "layer": "ci",
+    "adr_refs": [
+      "ADR-0011",
+      "ADR-0001"
+    ],
+    "chapter_refs": [
+      "CH07",
+      "CH10",
+      "CH01"
+    ],
+    "overlay_refs": [
+      "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
+    ],
+    "labels": [
+      "backlog",
+      "lastking",
+      "taskmaster-view",
+      "ci"
+    ],
+    "test_refs": [
+      "Game.Core.Tests/Domain/GameConfigTests.cs"
+    ],
+    "acceptance": [
+      "Taskmaster #31 behavior matches PRD lock for Set up Godot 4.5.1 C# project structure for config contracts.",
+      "Referenced automated tests pass on Windows Godot+C# baseline.",
+      "No regression on deterministic simulation and core loop constraints."
+    ],
+    "test_strategy": [
+      "Red: add or update test coverage around Taskmaster #31 primary behavior.",
+      "Green: implement minimal deterministic logic to satisfy assertions.",
+      "Refactor: preserve passing tests and tighten contract boundaries."
+    ],
+    "taskmaster_id": 31,
+    "contractRefs": [
+      "Game.Core/Contracts/DomainEvent.cs"
+    ]
+  },
+  {
+    "id": "NG-0032",
+    "story_id": "BACKLOG-LASTKING-M1",
+    "owner": "architecture",
+    "depends_on": [
+      "NG-0031"
+    ],
+    "taskmaster_exported": false,
+    "title": "Implement enemy-config.schema.json with validation rules",
+    "description": "Define JSON schema for enemy configuration, including fields for enemy types, stats, and behaviors, adhering to config-first balancing and no hardcoded values.",
+    "status": "pending",
+    "priority": "P1",
+    "layer": "core",
+    "adr_refs": [
+      "ADR-0023",
+      "ADR-0007",
+      "ADR-0005"
+    ],
+    "chapter_refs": [
+      "CH05",
+      "CH06",
+      "CH07"
+    ],
+    "overlay_refs": [
+      "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
+    ],
+    "labels": [
+      "backlog",
+      "lastking",
+      "taskmaster-view",
+      "core"
+    ],
+    "test_refs": [
+      "Game.Core.Tests/Domain/GameConfigTests.cs"
+    ],
+    "acceptance": [
+      "Taskmaster #32 behavior matches PRD lock for Implement enemy-config.schema.json with validation rules.",
+      "Referenced automated tests pass on Windows Godot+C# baseline.",
+      "No regression on deterministic simulation and core loop constraints."
+    ],
+    "test_strategy": [
+      "Red: add or update test coverage around Taskmaster #32 primary behavior.",
+      "Green: implement minimal deterministic logic to satisfy assertions.",
+      "Refactor: preserve passing tests and tighten contract boundaries."
+    ],
+    "taskmaster_id": 32,
+    "contractRefs": [
+      "Game.Core/Contracts/Config/enemy-config.schema.json"
+    ]
+  },
+  {
+    "id": "NG-0033",
+    "story_id": "BACKLOG-LASTKING-M1",
+    "owner": "architecture",
+    "depends_on": [
+      "NG-0031"
+    ],
+    "taskmaster_exported": false,
+    "title": "Implement difficulty-config.schema.json with versioning and lock constraints",
+    "description": "Create JSON schema for difficulty configuration, including version field, difficulty levels, and constants, ensuring difficulty is locked at run start per PRD.",
+    "status": "pending",
+    "priority": "P2",
+    "layer": "core",
+    "adr_refs": [
+      "ADR-0023",
+      "ADR-0007",
+      "ADR-0005"
+    ],
+    "chapter_refs": [
+      "CH05",
+      "CH06",
+      "CH07"
+    ],
+    "overlay_refs": [
+      "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
+    ],
+    "labels": [
+      "backlog",
+      "lastking",
+      "taskmaster-view",
+      "core"
+    ],
+    "test_refs": [
+      "Game.Core.Tests/Domain/GameConfigTests.cs"
+    ],
+    "acceptance": [
+      "Taskmaster #33 behavior matches PRD lock for Implement difficulty-config.schema.json with versioning and lock constraints.",
+      "Referenced automated tests pass on Windows Godot+C# baseline.",
+      "No regression on deterministic simulation and core loop constraints."
+    ],
+    "test_strategy": [
+      "Red: add or update test coverage around Taskmaster #33 primary behavior.",
+      "Green: implement minimal deterministic logic to satisfy assertions.",
+      "Refactor: preserve passing tests and tighten contract boundaries."
+    ],
+    "taskmaster_id": 33,
+    "contractRefs": [
+      "Game.Core/Contracts/Config/difficulty-config.schema.json"
+    ]
+  },
+  {
+    "id": "NG-0034",
+    "story_id": "BACKLOG-LASTKING-M1",
+    "owner": "architecture",
+    "depends_on": [
+      "NG-0031"
+    ],
+    "taskmaster_exported": false,
+    "title": "Implement spawn-config.schema.json for deterministic wave composition",
+    "description": "Define JSON schema for spawn configuration to control enemy waves, ensuring determinism: same seed + same config => same wave timeline.",
+    "status": "pending",
+    "priority": "P2",
+    "layer": "core",
+    "adr_refs": [
+      "ADR-0023",
+      "ADR-0007",
+      "ADR-0005"
+    ],
+    "chapter_refs": [
+      "CH05",
+      "CH06",
+      "CH07"
+    ],
+    "overlay_refs": [
+      "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
+    ],
+    "labels": [
+      "backlog",
+      "lastking",
+      "taskmaster-view",
+      "core"
+    ],
+    "test_refs": [
+      "Game.Core.Tests/Domain/GameConfigTests.cs"
+    ],
+    "acceptance": [
+      "Taskmaster #34 behavior matches PRD lock for Implement spawn-config.schema.json for deterministic wave composition.",
+      "Referenced automated tests pass on Windows Godot+C# baseline.",
+      "No regression on deterministic simulation and core loop constraints."
+    ],
+    "test_strategy": [
+      "Red: add or update test coverage around Taskmaster #34 primary behavior.",
+      "Green: implement minimal deterministic logic to satisfy assertions.",
+      "Refactor: preserve passing tests and tighten contract boundaries."
+    ],
+    "taskmaster_id": 34,
+    "contractRefs": [
+      "Game.Core/Contracts/Config/spawn-config.schema.json"
+    ]
+  },
+  {
+    "id": "NG-0035",
+    "story_id": "BACKLOG-LASTKING-M1",
+    "owner": "architecture",
+    "depends_on": [
+      "NG-0031"
+    ],
+    "taskmaster_exported": false,
+    "title": "Implement pressure-normalization.config.schema.json with baseline constants and range checks",
+    "description": "Create JSON schema for pressure normalization configuration, including explicit baseline constants and validation for ranges as per PRD.",
+    "status": "pending",
+    "priority": "P2",
+    "layer": "core",
+    "adr_refs": [
+      "ADR-0023",
+      "ADR-0007",
+      "ADR-0005"
+    ],
+    "chapter_refs": [
+      "CH05",
+      "CH06",
+      "CH07"
+    ],
+    "overlay_refs": [
+      "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
+    ],
+    "labels": [
+      "backlog",
+      "lastking",
+      "taskmaster-view",
+      "core"
+    ],
+    "test_refs": [
+      "Game.Core.Tests/Domain/GameConfigTests.cs"
+    ],
+    "acceptance": [
+      "Taskmaster #35 behavior matches PRD lock for Implement pressure-normalization.config.schema.json with baseline constants and range checks.",
+      "Referenced automated tests pass on Windows Godot+C# baseline.",
+      "No regression on deterministic simulation and core loop constraints."
+    ],
+    "test_strategy": [
+      "Red: add or update test coverage around Taskmaster #35 primary behavior.",
+      "Green: implement minimal deterministic logic to satisfy assertions.",
+      "Refactor: preserve passing tests and tighten contract boundaries."
+    ],
+    "taskmaster_id": 35,
+    "contractRefs": [
+      "Game.Core/Contracts/Config/pressure-normalization.config.schema.json"
+    ]
+  },
+  {
+    "id": "NG-0036",
+    "story_id": "BACKLOG-LASTKING-M1",
+    "owner": "architecture",
+    "depends_on": [
+      "NG-0032",
+      "NG-0033",
+      "NG-0034",
+      "NG-0035"
+    ],
+    "taskmaster_exported": false,
+    "title": "Create sample JSON files for all configs with valid data",
+    "description": "Generate sample JSON files (difficulty-config.sample.json, spawn-config.sample.json, pressure-normalization.config.sample.json) that adhere to the schemas and include realistic values.",
+    "status": "pending",
+    "priority": "P2",
+    "layer": "core",
+    "adr_refs": [
+      "ADR-0023",
+      "ADR-0007",
+      "ADR-0005"
+    ],
+    "chapter_refs": [
+      "CH05",
+      "CH06",
+      "CH07"
+    ],
+    "overlay_refs": [
+      "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
+    ],
+    "labels": [
+      "backlog",
+      "lastking",
+      "taskmaster-view",
+      "core"
+    ],
+    "test_refs": [
+      "Game.Core.Tests/Domain/GameConfigTests.cs"
+    ],
+    "acceptance": [
+      "Taskmaster #36 behavior matches PRD lock for Create sample JSON files for all configs with valid data.",
+      "Referenced automated tests pass on Windows Godot+C# baseline.",
+      "No regression on deterministic simulation and core loop constraints."
+    ],
+    "test_strategy": [
+      "Red: add or update test coverage around Taskmaster #36 primary behavior.",
+      "Green: implement minimal deterministic logic to satisfy assertions.",
+      "Refactor: preserve passing tests and tighten contract boundaries."
+    ],
+    "taskmaster_id": 36,
+    "contractRefs": [
+      "Game.Core/Contracts/Config/difficulty-config.sample.json",
+      "Game.Core/Contracts/Config/spawn-config.sample.json",
+      "Game.Core/Contracts/Config/pressure-normalization.config.sample.json"
+    ]
+  },
+  {
+    "id": "NG-0037",
+    "story_id": "BACKLOG-LASTKING-M1",
+    "owner": "architecture",
+    "depends_on": [
+      "NG-0032",
+      "NG-0033",
+      "NG-0034",
+      "NG-0035"
+    ],
+    "taskmaster_exported": false,
+    "title": "Implement config validation and fallback handling in C#",
+    "description": "Develop C# code in Godot to load and validate config files against schemas, applying invalid config handling policy: reject and fallback to built-in safe defaults.",
+    "status": "pending",
+    "priority": "P2",
+    "layer": "core",
+    "adr_refs": [
+      "ADR-0023",
+      "ADR-0007",
+      "ADR-0005"
+    ],
+    "chapter_refs": [
+      "CH05",
+      "CH06",
+      "CH07"
+    ],
+    "overlay_refs": [
+      "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
+    ],
+    "labels": [
+      "backlog",
+      "lastking",
+      "taskmaster-view",
+      "core"
+    ],
+    "test_refs": [
+      "Game.Core.Tests/Domain/GameConfigTests.cs"
+    ],
+    "acceptance": [
+      "Taskmaster #37 behavior matches PRD lock for Implement config validation and fallback handling in C#.",
+      "Referenced automated tests pass on Windows Godot+C# baseline.",
+      "No regression on deterministic simulation and core loop constraints."
+    ],
+    "test_strategy": [
+      "Red: add or update test coverage around Taskmaster #37 primary behavior.",
+      "Green: implement minimal deterministic logic to satisfy assertions.",
+      "Refactor: preserve passing tests and tighten contract boundaries."
+    ],
+    "taskmaster_id": 37,
+    "contractRefs": [
+      "Game.Core/Contracts/Config/spawn-config.validator.rules.md"
+    ]
+  },
+  {
+    "id": "NG-0038",
+    "story_id": "BACKLOG-LASTKING-M1",
+    "owner": "architecture",
+    "depends_on": [
+      "NG-0037"
+    ],
+    "taskmaster_exported": false,
+    "title": "Integrate config governance for gameplay tuning",
+    "description": "Connect config values to gameplay systems (e.g., enemy stats, wave spawning) to ensure all tuning is via config only, with no implementation hardcoding.",
+    "status": "pending",
+    "priority": "P2",
+    "layer": "core",
+    "adr_refs": [
+      "ADR-0023",
+      "ADR-0007",
+      "ADR-0005"
+    ],
+    "chapter_refs": [
+      "CH05",
+      "CH06",
+      "CH07"
+    ],
+    "overlay_refs": [
+      "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
+    ],
+    "labels": [
+      "backlog",
+      "lastking",
+      "taskmaster-view",
+      "core"
+    ],
+    "test_refs": [
+      "Game.Core.Tests/Domain/GameConfigTests.cs"
+    ],
+    "acceptance": [
+      "Taskmaster #38 behavior matches PRD lock for Integrate config governance for gameplay tuning.",
+      "Referenced automated tests pass on Windows Godot+C# baseline.",
+      "No regression on deterministic simulation and core loop constraints."
+    ],
+    "test_strategy": [
+      "Red: add or update test coverage around Taskmaster #38 primary behavior.",
+      "Green: implement minimal deterministic logic to satisfy assertions.",
+      "Refactor: preserve passing tests and tighten contract boundaries."
+    ],
+    "taskmaster_id": 38,
+    "contractRefs": [
+      "Game.Core/Contracts/Config/config-change-audit.schema.json"
+    ]
+  },
+  {
+    "id": "NG-0039",
+    "story_id": "BACKLOG-LASTKING-M1",
+    "owner": "architecture",
+    "depends_on": [
+      "NG-0037"
+    ],
+    "taskmaster_exported": false,
+    "title": "Add config hash/version to battle report metadata for auditability",
+    "description": "Implement functionality to compute and include config hash or version in battle report metadata, as required for auditability.",
+    "status": "pending",
+    "priority": "P3",
+    "layer": "core",
+    "adr_refs": [
+      "ADR-0023",
+      "ADR-0007",
+      "ADR-0005"
+    ],
+    "chapter_refs": [
+      "CH05",
+      "CH06",
+      "CH07"
+    ],
+    "overlay_refs": [
+      "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
+    ],
+    "labels": [
+      "backlog",
+      "lastking",
+      "taskmaster-view",
+      "core"
+    ],
+    "test_refs": [
+      "Game.Core.Tests/Domain/GameConfigTests.cs"
+    ],
+    "acceptance": [
+      "Taskmaster #39 behavior matches PRD lock for Add config hash/version to battle report metadata for auditability.",
+      "Referenced automated tests pass on Windows Godot+C# baseline.",
+      "No regression on deterministic simulation and core loop constraints."
+    ],
+    "test_strategy": [
+      "Red: add or update test coverage around Taskmaster #39 primary behavior.",
+      "Green: implement minimal deterministic logic to satisfy assertions.",
+      "Refactor: preserve passing tests and tighten contract boundaries."
+    ],
+    "taskmaster_id": 39,
+    "contractRefs": [
+      "Game.Core/Contracts/Config/config-change-audit.schema.json"
+    ]
+  },
+  {
+    "id": "NG-0040",
+    "story_id": "BACKLOG-LASTKING-M1",
+    "owner": "architecture",
+    "depends_on": [
+      "NG-0037"
+    ],
+    "taskmaster_exported": false,
+    "title": "Implement version migration rule with force migration",
+    "description": "Develop version handling to force migration when config version changes, without dual-version compatibility, per PRD.",
+    "status": "pending",
+    "priority": "P2",
+    "layer": "core",
+    "adr_refs": [
+      "ADR-0006",
+      "ADR-0008",
+      "ADR-0011"
+    ],
+    "chapter_refs": [
+      "CH05",
+      "CH10",
+      "CH07"
+    ],
+    "overlay_refs": [
+      "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
+    ],
+    "labels": [
+      "backlog",
+      "lastking",
+      "taskmaster-view",
+      "core"
+    ],
+    "test_refs": [
+      "Game.Core.Tests/Domain/GameConfigTests.cs"
+    ],
+    "acceptance": [
+      "Taskmaster #40 behavior matches PRD lock for Implement version migration rule with force migration.",
+      "Referenced automated tests pass on Windows Godot+C# baseline.",
+      "No regression on deterministic simulation and core loop constraints."
+    ],
+    "test_strategy": [
+      "Red: add or update test coverage around Taskmaster #40 primary behavior.",
+      "Green: implement minimal deterministic logic to satisfy assertions.",
+      "Refactor: preserve passing tests and tighten contract boundaries."
+    ],
+    "taskmaster_id": 40,
+    "contractRefs": [
+      "Game.Core/Contracts/Config/difficulty-config.schema.json"
+    ]
+  }
+]

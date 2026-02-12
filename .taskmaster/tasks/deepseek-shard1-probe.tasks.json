@@ -1,0 +1,45 @@
+{
+  "tasks": [],
+  "metadata": {
+    "version": "1.0.0",
+    "generatedAt": "",
+    "taskCount": 0,
+    "completedCount": 0,
+    "tags": [
+      "master"
+    ]
+  },
+  "master": {
+    "tasks": [
+      {
+        "id": 1,
+        "title": "Implement Day/Night Cycle State Machine and Wave Budget System",
+        "description": "Create a runtime state machine to manage Day/Night cycles (4 min Day, 2 min Night) for Day1-Day15 progression, with deterministic timeline under a fixed seed. Implement wave budget baseline starting at day1=50 with daily growth=120%, and independent elite and boss channels configurable via config-first balancing.",
+        "details": "Use Godot 4.5.1 with C#. Create a GameManager singleton to handle game state. Implement a state machine with states: Day, Night, Transition. Use a timer for cycle durations (4 min Day, 2 min Night). Track current day (1-15) and seed for determinism. Store wave budget in a config file (e.g., JSON or Resource) with baseline values: day1=50, growth=120%. Calculate daily budget as baseline * (growth^(day-1)). Separate config entries for elite and boss channels to allow independent tuning. Ensure all balance values are config-driven, no hardcoded numbers. Pseudo-code:\n\n// GameManager.cs\npublic class GameManager : Node\n{\n    private enum GameState { Day, Night }\n    private GameState currentState;\n    private int currentDay = 1;\n    private float dayTimer = 240f; // 4 min in seconds\n    private float nightTimer = 120f; // 2 min in seconds\n    private RandomNumberGenerator rng = new RandomNumberGenerator();\n    private Config config; // Load from file\n\n    public override void _Ready()\n    {\n        rng.Seed = config.Seed;\n        StartDay();\n    }\n\n    private void StartDay()\n    {\n        currentState = GameState.Day;\n        // Start day timer\n        // Update wave budget: config.Baseline * Mathf.Pow(config.Growth, currentDay-1)\n    }\n\n    private void StartNight()\n    {\n        currentState = GameState.Night;\n        // Start night timer\n        // Trigger wave spawning based on budget\n    }\n}\n\n// Config.cs\npublic class Config\n{\n    public int Seed { get; set; }\n    public float Baseline { get; set; } = 50f;\n    public float Growth { get; set; } = 1.2f;\n    public float EliteBudget { get; set; }\n    public float BossBudget { get; set; }\n}",
+        "testStrategy": "Unit tests in Godot with C#: Verify state transitions at correct times (e.g., after 4 min, switch to Night). Test deterministic behavior by running multiple sessions with same seed and comparing day progression and wave budgets. Validate config loading and budget calculations (e.g., day1=50, day2=60, etc.). Use in-editor debugging to monitor state changes and log outputs. Acceptance: Day timeline is deterministic under fixed seed; wave channels tunable by config independently.",
+        "priority": "high",
+        "dependencies": [],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 2,
+        "title": "Implement Enemy Spawning and AI Pathing with Fallback Attack",
+        "description": "Set up enemy spawning during night with continuous spawning in first 80% of night at 10s cadence, and no new spawns in last 20%. Implement enemy AI with target priority (unit > castle > armed defense > wall/gate) when path is valid, and fallback to attack nearest blocking structure if path blocked, using seeded tie-break for determinism.",
+        "details": "Create an EnemySpawner system that triggers during Night state from Task 1. Calculate spawn intervals: night duration = 120s, first 80% = 96s, spawn every 10s (approx 9 spawns). Use a timer to spawn enemies at 10s intervals until 96s elapsed, then stop. For boss nights (e.g., specific days), spawn fixed count = 2 bosses independently. Implement Enemy AI script in C# with pathfinding using Godot's NavigationServer or AStar. Set target priority: check for valid path to target types in order: player units, castle, armed defenses (e.g., towers), walls/gates. If path is blocked (e.g., by structure), fallback to attack nearest blocking structure; use seeded RNG for tie-break if multiple equally near. Ensure friendly fire is disabled for player attacks (set collision layers/masks accordingly). Pseudo-code:\n\n// EnemySpawner.cs\npublic class EnemySpawner : Node\n{\n    private GameManager gameManager;\n    private Timer spawnTimer;\n    private float nightElapsed = 0f;\n\n    public override void _Ready()\n    {\n        gameManager = GetNode<GameManager>(\"/root/GameManager\");\n        spawnTimer = new Timer();\n        spawnTimer.WaitTime = 10f;\n        spawnTimer.Timeout += OnSpawnTimeout;\n        AddChild(spawnTimer);\n    }\n\n    private void OnSpawnTimeout()\n    {\n        if (gameManager.CurrentState == GameState.Night && nightElapsed < 96f)\n        {\n            SpawnEnemy();\n            nightElapsed += 10f;\n        }\n    }\n}\n\n// EnemyAI.cs\npublic class EnemyAI : Node\n{\n    private RandomNumberGenerator rng = new RandomNumberGenerator();\n    private Node currentTarget;\n\n    public void UpdateTarget()\n    {\n        var targets = GetTargetsInPriorityOrder(); // unit, castle, defense, wall\n        foreach (var target in targets)\n        {\n            if (IsPathValid(target))\n            {\n                currentTarget = target;\n                return;\n            }\n        }\n        // Fallback: attack nearest blocking structure\n        currentTarget = GetNearestBlockingStructure();\n        // Use rng.Seed for tie-break\n    }\n}",
+        "testStrategy": "Integration tests: Spawn enemies during night and verify spawn cadence (every 10s for first 96s, then stop). Check boss count on boss nights (fixed=2). Test AI by placing obstacles to block paths and observe fallback attack behavior; verify target priority order and deterministic tie-break with seeded RNG. Use debug overlays to visualize paths and targets. Acceptance: Fully blocked path does not deadlock; fallback attack always triggers; boss count constant across difficulties.",
+        "priority": "medium",
+        "dependencies": [
+          1
+        ],
+        "status": "pending",
+        "subtasks": []
+      }
+    ],
+    "metadata": {
+      "created": "2026-02-11T11:41:12.943Z",
+      "updated": "2026-02-11T11:41:12.944Z",
+      "description": "Tasks for master context"
+    }
+  }
+}

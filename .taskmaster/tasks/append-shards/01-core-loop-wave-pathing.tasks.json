@@ -1,0 +1,144 @@
+{
+  "tasks": [
+    {
+      "id": 1,
+      "title": "Implement match clock abstractions and phase enums",
+      "description": "Create deterministic time primitives for Day/Night runtime loop under Windows Godot+C#.",
+      "status": "pending",
+      "dependencies": [],
+      "priority": "high",
+      "details": "Add core abstractions for match time, phase enum (Day/Night/Settlement), and tick source interfaces in Game.Core without Godot dependency. Ensure integer-based timing units to avoid float drift.",
+      "testStrategy": "Unit tests validate phase enum transitions and integer timing arithmetic boundaries.",
+      "subtasks": []
+    },
+    {
+      "id": 2,
+      "title": "Build Day/Night state machine (4+2 fixed cycle)",
+      "description": "Implement runtime state machine for 4-minute Day and 2-minute Night with deterministic transitions.",
+      "status": "pending",
+      "dependencies": [
+        1
+      ],
+      "priority": "high",
+      "details": "Implement state machine service with explicit transition guards and event hooks. Support pause-aware clock input and deterministic replay by seed/time snapshot.",
+      "testStrategy": "Unit tests cover normal and edge transitions; property tests assert cycle invariants over long runs.",
+      "subtasks": []
+    },
+    {
+      "id": 3,
+      "title": "Implement day progression and terminal conditions",
+      "description": "Track Day1-Day15, enforce win at Day15 survival and lose when castle HP reaches zero.",
+      "status": "pending",
+      "dependencies": [
+        2
+      ],
+      "priority": "high",
+      "details": "Add match progression service that increments day counters only at valid boundaries. Integrate terminal condition checks and freeze progression on terminal states.",
+      "testStrategy": "Unit tests validate day rollover, win condition timing, and immediate loss precedence.",
+      "subtasks": []
+    },
+    {
+      "id": 4,
+      "title": "Implement independent wave budget channels",
+      "description": "Create budget calculators for normal/elite/boss channels with normal day1=50 and 120% growth.",
+      "status": "pending",
+      "dependencies": [
+        1,
+        3
+      ],
+      "priority": "high",
+      "details": "Implement budget engine where normal budget uses multiplicative daily growth and elite/boss are computed separately, never merged into normal weights.",
+      "testStrategy": "Unit tests verify budget progression table Day1-Day15 and strict channel independence.",
+      "subtasks": []
+    },
+    {
+      "id": 5,
+      "title": "Implement night spawn scheduler (80/20 with 10s cadence)",
+      "description": "Schedule continuous spawns in first 80% of night and stop new spawns in last 20%.",
+      "status": "pending",
+      "dependencies": [
+        2,
+        4
+      ],
+      "priority": "high",
+      "details": "Build spawn timeline planner with integer seconds, cadence=10s, and phase windowing. Ensure boss-night fixed spawn envelope supports 2 bosses.",
+      "testStrategy": "Simulation tests validate spawn timestamps distribution and no new spawn after 80% cutoff.",
+      "subtasks": []
+    },
+    {
+      "id": 6,
+      "title": "Implement channel-specific spawn composition resolver",
+      "description": "Resolve unit composition from per-channel budgets and configured pools.",
+      "status": "pending",
+      "dependencies": [
+        4,
+        5
+      ],
+      "priority": "medium",
+      "details": "Create resolver that maps budget to spawn groups using config-driven costs and channel pools. Keep elite and boss paths isolated from normal composition logic.",
+      "testStrategy": "Unit tests verify composition output under budget constraints and channel isolation.",
+      "subtasks": []
+    },
+    {
+      "id": 7,
+      "title": "Implement deterministic seeded RNG utilities",
+      "description": "Provide seeded pseudo-random helpers for tie-breakers and reproducible spawn decisions.",
+      "status": "pending",
+      "dependencies": [
+        1
+      ],
+      "priority": "medium",
+      "details": "Add RNG service with explicit seed state serialization. Use deterministic tie-break API for equal-cost/equal-priority decisions.",
+      "testStrategy": "Unit tests assert same-seed reproducibility and different-seed divergence.",
+      "subtasks": []
+    },
+    {
+      "id": 8,
+      "title": "Implement blocked-path fallback targeting",
+      "description": "When pathfinding fails, enemy must attack nearest blocking structure instead of deadlocking.",
+      "status": "pending",
+      "dependencies": [
+        7
+      ],
+      "priority": "high",
+      "details": "Add fallback target selection based on nearest blocker distance with deterministic seeded tie-break. Include ultimate fallback behavior if blockers are unavailable.",
+      "testStrategy": "Scenario tests with fully blocked maps validate fallback target always selected and combat resumes.",
+      "subtasks": []
+    },
+    {
+      "id": 9,
+      "title": "Implement enemy target priority policy",
+      "description": "Apply path-valid priority chain: unit > castle > armed defense > wall/gate.",
+      "status": "pending",
+      "dependencies": [
+        8
+      ],
+      "priority": "high",
+      "details": "Implement target evaluator with clear priority order and policy switches based on path status. Keep policy deterministic under equal score via seeded utilities.",
+      "testStrategy": "Unit/integration tests validate priority ordering under mixed battlefield compositions.",
+      "subtasks": []
+    },
+    {
+      "id": 10,
+      "title": "Create core-loop integration simulation harness",
+      "description": "Build deterministic simulation tests covering Day/Night, wave channels, and path fallback.",
+      "status": "pending",
+      "dependencies": [
+        3,
+        5,
+        6,
+        9
+      ],
+      "priority": "high",
+      "details": "Add headless simulation harness producing replay artifacts for seed-based validation. Include baseline cases for normal, elite night, and boss night.",
+      "testStrategy": "Integration tests compare expected timelines and outcomes against golden snapshots.",
+      "subtasks": []
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0",
+    "generatedAt": "2026-02-11T19:05:50",
+    "sourceShard": "01-core-loop-wave-pathing",
+    "taskCount": 10
+  }
+}

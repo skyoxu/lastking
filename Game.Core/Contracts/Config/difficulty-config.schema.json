@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lastking.local/schemas/difficulty-config.schema.json",
+  "title": "Lastking Difficulty Config Schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "mode",
+    "default_level_id",
+    "rounding_policy",
+    "allow_cross_tier_skip",
+    "unlock_policy",
+    "levels"
+  ],
+  "properties": {
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semantic version of difficulty config"
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "numeric-only"
+      ],
+      "description": "v1 locks difficulty changes to numeric multipliers only"
+    },
+    "default_level_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9_\\-]+$"
+    },
+    "rounding_policy": {
+      "type": "string",
+      "enum": [
+        "floor"
+      ],
+      "description": "Integer-only pipeline: percentage calculation rounds down"
+    },
+    "levels": {
+      "type": "array",
+      "minItems": 10,
+      "description": "Supports 10+ difficulty levels",
+      "items": {
+        "$ref": "#/$defs/difficultyLevel"
+      }
+    },
+    "unlock_policy": {
+      "type": "string",
+      "enum": [
+        "clear-to-unlock-config-driven"
+      ],
+      "description": "Difficulty unlock policy is config-driven clear-to-unlock."
+    },
+    "allow_cross_tier_skip": {
+      "type": "boolean",
+      "const": false,
+      "description": "Cross-tier unlock skip is disallowed by lock."
+    }
+  },
+  "$defs": {
+    "difficultyLevel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "order",
+        "display_name_key",
+        "enemy_hp_mult",
+        "enemy_dmg_mult",
+        "budget_mult_normal",
+        "budget_mult_elite",
+        "budget_mult_boss",
+        "resource_mult"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9_\\-]+$"
+        },
+        "order": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Ascending order used by UI and progression"
+        },
+        "display_name_key": {
+          "type": "string",
+          "pattern": "^[A-Z0-9_\\.]+$",
+          "description": "Localization key for bilingual UI"
+        },
+        "enemy_hp_mult": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Percent multiplier (e.g. 100 = 1.00x)"
+        },
+        "enemy_dmg_mult": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Percent multiplier (e.g. 100 = 1.00x)"
+        },
+        "resource_mult": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Percent multiplier applied to economy income"
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "budget_mult_normal": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Percent multiplier applied to normal channel budget"
+        },
+        "budget_mult_elite": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Percent multiplier applied to elite channel budget"
+        },
+        "budget_mult_boss": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Percent multiplier applied to boss channel budget"
+        }
+      }
+    }
+  }
+}
