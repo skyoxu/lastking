@@ -25,7 +25,8 @@ Updated: true
 ## Execution Invariants
 
 - 任一 Taskmaster 任务必须能回链到本目录中的至少一个页面。
-- 任一页面中的 `Test-Refs` 至少要有 1 条现存测试文件路径。
+- `08-Feature-Slice-T2-Core-Loop.md`、`08-Contracts-T2.md`、`08-Testing-T2.md` 的 `Test-Refs` 至少要有 1 条现存测试文件路径。
+- `08-Observability-T2.md` 的 `Test-Refs` 允许使用日志工件路径作为证据引用。
 - 任一执行步骤必须产生可定位的日志工件路径。
 
 ## Validation Commands (Windows)

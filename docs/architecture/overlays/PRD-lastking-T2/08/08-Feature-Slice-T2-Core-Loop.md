@@ -41,7 +41,7 @@ Test-Refs:
 
 ## Event Contracts
 
-事件命名遵循 `${DOMAIN_PREFIX}.<entity>.<action>`，首版约定 `${DOMAIN_PREFIX}=core.lastking`。
+事件命名在 T2 锁定为 `core.lastking.<entity>.<action>`，禁止在本页继续使用模板变量。
 
 - `core.lastking.day.started`
 - `core.lastking.night.started`
