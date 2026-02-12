@@ -183,7 +183,7 @@ def _rejoin_lines(lines: list[str]) -> str:
         blank_run += 1
         if blank_run <= 2:
             collapsed.append("")
-    return "\n".join(collapsed).strip() + ("\n" if collapsed else "")
+    return "\n".join(collapsed).strip()
 
 
 @dataclass
