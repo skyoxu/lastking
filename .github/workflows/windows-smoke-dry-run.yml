@@ -32,6 +32,22 @@ jobs:
         with:
           python-version: '3.x'
 
+      - name: Guard archived overlays (hard)
+        shell: pwsh
+        run: |
+          py -3 scripts/python/guard_archived_overlays.py --strict-git
+
+      - name: Validate docs UTF-8 without BOM (hard)
+        shell: pwsh
+        run: |
+          py -3 scripts/python/validate_docs_utf8_no_bom.py --roots docs .github .taskmaster Game.Core/Contracts/Config AGENTS.md
+
+      - name: Validate overlay execution spec (hard)
+        shell: pwsh
+        run: |
+          py -3 scripts/python/validate_overlay_execution.py --prd-id PRD-lastking-T2
+
+
       - name: Download Godot .NET (Windows)
         shell: pwsh
         run: |

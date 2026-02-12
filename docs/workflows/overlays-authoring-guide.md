@@ -171,8 +171,8 @@ overlays 只做引用：
 
 1) 口径文档（引用型）：
    - `docs/adr/ADR-0004-event-bus-and-contracts.md`
-   - `docs/architecture/overlays/<PRD-ID>/08/08-Contracts-CloudEvent.md`（示例见 `PRD-Guild-Manager`）
-   - `docs/architecture/overlays/<PRD-ID>/08/08-Contracts-CloudEvents-Core.md`（示例见 `PRD-Guild-Manager`）
+   - `docs/architecture/overlays/<PRD-ID>/08/08-Contracts-CloudEvent.md`（示例见 `PRD-lastking-T2`）
+   - `docs/architecture/overlays/<PRD-ID>/08/08-Contracts-CloudEvents-Core.md`（示例见 `PRD-lastking-T2`）
 2) 契约自检（脚本生成报告，用于开工前对齐，非 SSoT）：
    - `py -3 scripts/python/check_domain_contracts.py`（输出到 `logs/ci/<YYYY-MM-DD>/domain-contracts-check/summary.json`）
    - `py -3 scripts/python/generate_contracts_catalog.py --prd-id <PRD-ID>`（输出到 `logs/ci/<YYYY-MM-DD>/contracts-catalog/`；说明见 `docs/workflows/contracts-catalog-guide.md`）

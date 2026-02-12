@@ -119,8 +119,10 @@ def main() -> int:
 
     if args.cmd == "all":
         # 1) 基础门禁：dotnet + self-check + 编码扫描
+        hard_failed = False
         rc = run_ci_pipeline(args.solution, args.configuration, args.godot_bin, args.build_solutions)
-        hard_failed = rc != 0
+        if rc != 0:
+            hard_failed = True
 
         # 2) 可选硬门禁：GdUnit4 小集
         if args.gdunit_hard:
