@@ -47,7 +47,10 @@
       "A Windows Desktop export preset is configured and successfully produces a runnable Windows build artifact.",
       "The exported build can enter the game main flow in standalone single-player mode without requiring multiplayer backend services.",
       "Scene creation, node setup, and script attachment are verifiable in Godot editor via saved SceneTree and Inspector bindings.",
-      "If editor startup, C# compile, scene loading, or Windows export verification fails, this task is not accepted as complete."
+      "If editor startup, C# compile, scene loading, or Windows export verification fails, this task is not accepted as complete.",
+      "A new project initialized in Godot 4.5.1 .NET on Windows generates C# solution/project files that compile without errors using the installed .NET SDK.",
+      "A startup scene is configured as the main scene in project settings, saved, and reloads with its node-to-script attachments intact after editor restart.",
+      "Acceptance evidence includes successful Windows verification of editor run, C# compile/execute, and basic startup scene loading with attached script behavior."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #1 primary behavior.",
@@ -111,7 +114,9 @@
       "Spawn and boss controls come from config with spawn cadence=10 seconds and boss count=2.",
       "Elite and boss channel settings exist in config and are consumed by wave/spawn selection logic.",
       "When the config file is modified and reloaded, observable in-game balance behavior changes to the new values; if not modified, behavior remains unchanged.",
-      "Verification checks confirm the above balance values are sourced from configuration reads rather than hardcoded constants in game logic."
+      "Verification checks confirm the above balance values are sourced from configuration reads rather than hardcoded constants in game logic.",
+      "With no code changes, replacing only the balance config values and reloading updates runtime outcomes for day/night cycle length, wave budget progression, spawn cadence, and boss count.",
+      "Required balance inputs are all provided by one configuration source and can be validated by reading loaded runtime values for day/night duration, normal wave day1 budget, normal wave daily growth, elite channel, boss channel, spawn cadence, and boss count."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #2 primary behavior.",
@@ -174,7 +179,10 @@
       "The displayed/tracked day progression begins at Day1 and advances deterministically until Day15 completion.",
       "With a fixed seed, repeated playthroughs under the same inputs produce the same cycle progression and random event sequence.",
       "The win condition occurs when Day15 is completed and does not occur earlier.",
-      "Day/Night progression updates continuously while the game runtime loop is active."
+      "Day/Night progression updates continuously while the game runtime loop is active.",
+      "From a fresh run at Day1, players observe a Day-to-Night switch at 4:00 and a Night-to-Day2 switch at 6:00 total elapsed cycle time.",
+      "When gameplay updates are paused or stopped, players observe no Day/Night transition and no day counter change until updates resume.",
+      "After the Day15 completion win moment, players do not see the day counter go above 15 and do not see the win presentation fire again."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #3 primary behavior.",
@@ -304,7 +312,9 @@
       "No new enemy spawns occur during the last 24 seconds of Night.",
       "Boss night behavior produces exactly 2 boss spawns from config.",
       "Each spawned enemy appears at a predefined spawn point in the game world, with no off-list spawn locations.",
-      "If gameplay is not in Night state, this Night-cadence spawn flow does not emit new enemy spawns."
+      "If gameplay is not in Night state, this Night-cadence spawn flow does not emit new enemy spawns.",
+      "In a non-boss Night with at least one valid spawn point, gameplay exhibits at least one regular enemy spawn before the 96-second cutoff.",
+      "If Night duration is changed in configuration, gameplay still enforces the same 80% spawn phase and 20% no-new-spawn phase."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #5 primary behavior.",
@@ -367,7 +377,10 @@
       "If preferred targets are blocked, the enemy attacks the nearest blocking structure on the blocked route and does not remain idle or switch to unrelated non-blocking targets.",
       "Pathing behavior follows Godot navigation constraints: enemies traverse only navigable routes, and blocked-path scenarios prevent passage through obstacles.",
       "Enemy nodes used in combat scenes have EnemyAI attached and active; missing attachment is detected as a failed configuration in validation/tests.",
-      "Player-origin attacks cannot damage friendly/player units, and friendly-fire hit events are absent in collision-layer/mask validation runs."
+      "Player-origin attacks cannot damage friendly/player units, and friendly-fire hit events are absent in collision-layer/mask validation runs.",
+      "Whenever at least one higher-priority target has a valid navigation path, the enemy does not select any lower-priority target in that decision cycle.",
+      "In blocked-path tests, fallback target selection is validated as the nearest blocking structure on the blocked route by distance, and attack events are directed to that blocker.",
+      "In player-attack combat runs, friendly/player damage event count remains zero from start to end, confirming friendly fire stays disabled."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #6 primary behavior.",
@@ -432,7 +445,9 @@
       "When castle HP reaches 0 due to enemy damage, the game enters the loss/game-over state.",
       "After the loss/game-over state is entered at castle HP = 0, the game state remains in loss/game-over and does not continue normal play.",
       "The gameplay UI shows the current castle HP and updates the displayed value after each HP change.",
-      "Enemy AI can target the castle as a valid target, and attacks from that targeting flow reduce castle HP."
+      "Enemy AI can target the castle as a valid target, and attacks from that targeting flow reduce castle HP.",
+      "The loss condition is triggered exactly when castle HP reaches 0; while castle HP remains above 0, the game does not enter loss/game-over.",
+      "Across a sequence of enemy attacks in one battle, castle HP changes cumulatively per resolved damage event, and the UI HP value equals the current castle HP after each event."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #7 primary behavior.",
@@ -495,7 +510,10 @@
       "If castle HP becomes 0 before Day15, a loss end state is triggered and no win state is emitted for that run.",
       "Before an end state is triggered, day/night progression continues normally and still evaluates the Day15 win condition.",
       "After either win or loss is triggered, game-end handling is applied as configured (pause or reset), preventing continued normal progression without explicit restart/reset.",
-      "When current day is below 15 and castle HP is above 0, the game remains in non-win progression state."
+      "When current day is below 15 and castle HP is above 0, the game remains in non-win progression state.",
+      "At the progression step where current day first reaches 15 and castle HP is greater than 0, win state is entered immediately in that same run.",
+      "If castle HP is 0 at or before the Day15 evaluation point, the run remains in loss state and must not transition to win unless an explicit restart/reset starts a new run.",
+      "After entering win or loss, additional day/night ticks must not produce extra end-state transitions or duplicate win/loss UI emissions in the same run."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #8 primary behavior.",
@@ -560,7 +578,10 @@
       "The displayed time remaining for the active Day/Night cycle changes over time during play and is not static while the cycle is progressing.",
       "When a Day/Night phase transition occurs, the cycle-related UI updates to the new phase/timing state without showing stale previous-phase values.",
       "When castle HP changes from gameplay events, the HP UI value updates accordingly during runtime.",
-      "If day, cycle time, and HP source values do not change, their corresponding UI outputs remain unchanged."
+      "If day, cycle time, and HP source values do not change, their corresponding UI outputs remain unchanged.",
+      "On scene initialization, day, cycle time remaining, and castle HP UI outputs are populated with concrete runtime values (not empty placeholders) before progression-dependent changes occur.",
+      "Within a single play session that includes at least one day/night transition and at least one HP change event, all three UI outputs continue updating and remain visible without freezing or disappearing.",
+      "During normal core-loop gameplay, current day, cycle time remaining, and castle HP are continuously readable on the main play view without requiring a secondary debug/menu screen."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #9 primary behavior.",
@@ -630,7 +651,9 @@
       "Deterministic checkpoints are emitted at each major transition, and two same-seed replays for Day1-Day15 produce an identical ordered checkpoint timeline; any sequence mismatch fails acceptance.",
       "In fully blocked seeded map fixtures, path-block fallback targeting engages without deadlock and recovers to normal targeting when a valid path becomes available.",
       "Normal, elite, and boss-night scenarios enforce fixed boss-count lock and per-channel accounting isolation, with no cross-channel budget leakage.",
-      "Each integration slice is independently runnable and publishes consolidated evidence artifacts to logs/e2e and logs/ci, including required core-anchor fields for CI inspection and manual debugging handoff."
+      "Each integration slice is independently runnable and publishes consolidated evidence artifacts to logs/e2e and logs/ci, including required core-anchor fields for CI inspection and manual debugging handoff.",
+      "Staged integration execution runs slices in the required order (runtime loop wiring, seeded checkpoints, blocked-map fallback, boss/channel checks, evidence packaging), and each slice produces an explicit pass/fail result when run independently.",
+      "A full seeded end-to-end replay from Day1 through Day15 reaches either win or loss and records deterministic timeline, channel isolation, blocker fallback engagement, and boss-count lock anchors in logs/e2e and logs/ci; missing terminal state or missing anchors fails acceptance."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #10 primary behavior.",
@@ -756,7 +779,9 @@
       "Resource actions handle edge cases (including zero values and negative attempts) with deterministic outcomes visible in state and test assertions.",
       "UI-bound gameplay resource displays are updated via emitted signal/event whenever resource values change successfully.",
       "Gameplay resource updates do not introduce floating-point drift because resource state and calculations remain integer-based.",
-      "Overflow/underflow scenarios are guarded so gameplay never observes wrapped or nonsensical resource values."
+      "Overflow/underflow scenarios are guarded so gameplay never observes wrapped or nonsensical resource values.",
+      "Gameplay actions that add or subtract gold, iron, or population cap apply exact integer deltas when valid, and post-action values equal prior values plus or minus those exact deltas.",
+      "If gameplay submits an invalid resource mutation request (insufficient amount, negative amount, or overflow/underflow risk), observed resource values and gameplay-visible state remain unchanged after the action."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #12 primary behavior.",
@@ -822,7 +847,9 @@
       "Confirming a valid placement snaps the building to the grid and deducts the configured cost exactly once.",
       "Wall drag-line build places wall segments continuously along the drag path on valid cells; invalid cells remain unchanged and do not consume resources.",
       "Gate one-way behavior is observable in play: non-gate wall segments block passage, while gate cells allow only configured one-way passage.",
-      "Debug visuals in test runs show footprint boundaries and final building positions aligned to the grid."
+      "Debug visuals in test runs show footprint boundaries and final building positions aligned to the grid.",
+      "During both preview and confirm, placement remains constrained to discrete grid cells and cannot be committed at off-grid coordinates.",
+      "Changing the selected building type immediately updates preview footprint and validation behavior to that selected type (castle, residence, mine, barracks, MG tower, wall, mine trap)."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #13 primary behavior.",
@@ -886,7 +913,9 @@
       "Gold granted per Residence tax tick follows configured values, including per-level values when such configuration is present.",
       "Observed and stored gold/population-cap values remain whole-number consistent over long runs, without floating-point drift.",
       "With zero placed Residences, no Residence tax income appears.",
-      "In-game verification confirms: place Residence -> population cap increases; wait in 15-second intervals -> gold increases at each interval on Windows Godot+C#."
+      "In-game verification confirms: place Residence -> population cap increases; wait in 15-second intervals -> gold increases at each interval on Windows Godot+C#.",
+      "If Residence placement is invalid or canceled, gameplay state shows no population-cap increase and no Residence tax income starts.",
+      "With multiple built Residences, each 15-second income tick increases gold by the combined configured tax of all built Residences."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #14 primary behavior.",
@@ -953,7 +982,8 @@
       "Repair consumes gold only; fully repairing from damaged to full HP results in total gold spend equal to 50% of the building build cost.",
       "Repair is applied incrementally over time (not as a single instant heal) until full HP is reached.",
       "Upgrade and repair cannot be active simultaneously; starting one while the other is active must not create concurrent Upgrading and Repairing activity.",
-      "Progress operations return to Idle state on completion, and automated tests verify level progression, cost rules, HP restoration, conflict handling, integer-safe arithmetic, and config-driven values on Windows Godot+C# baseline."
+      "Progress operations return to Idle state on completion, and automated tests verify level progression, cost rules, HP restoration, conflict handling, integer-safe arithmetic, and config-driven values on Windows Godot+C# baseline.",
+      "Upgrade and repair effects are completed asynchronously via progress flow (queue/coroutine/timer driven), so completion outcomes are observed after progress updates rather than in the same tick as a successful start request."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #15 primary behavior.",
@@ -1018,7 +1048,9 @@
       "Players can cancel any queued unit, including the currently training unit, and receive a 100% refund of that unit's deducted cost.",
       "After cancellation, only the selected job is removed and the remaining queued jobs keep their original relative order.",
       "Queue add/cancel/complete state changes are reflected through Godot signal-driven UI updates without hidden state divergence.",
-      "During long train/cancel sequences with large integer values, displayed and stored resource totals remain correct integers and never drop below zero."
+      "During long train/cancel sequences with large integer values, displayed and stored resource totals remain correct integers and never drop below zero.",
+      "If players cancel the unit currently being trained, that canceled unit is not spawned and, if another job exists, training continues with the next queued unit.",
+      "Queueing alone does not instantly produce units; each unit appears only after its configured training duration elapses."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #16 primary behavior.",
@@ -1081,7 +1113,11 @@
       "Stat effects from unlocked tech nodes are combined multiplicatively (not additively) for attack speed, damage, production speed, range, HP, and cost.",
       "When no relevant tech is unlocked, the multiplier for that stat remains 1.0 and barracks-trained units retain baseline stat values.",
       "After unlocking configured tech nodes, newly trained barracks units show stat changes that match the computed config multipliers.",
-      "Unlock progression is fully config-driven: changing unlock paths/prerequisites in config changes available unlocks without code changes."
+      "Unlock progression is fully config-driven: changing unlock paths/prerequisites in config changes available unlocks without code changes.",
+      "Automated tests include JSON config loading/parsing checks that assert runtime tech node IDs, unlock prerequisites, and stat modifier values match the JSON resource content.",
+      "Unit tests verify stat multiplier calculations use multiplicative stacking across multiple unlocked nodes (for example, 1.1 × 1.2 = 1.32) and ignore locked nodes.",
+      "In-game verification unlocks configured techs, trains barracks units, and confirms attack speed, damage, production speed, range, HP, and cost equal baseline values multiplied by configured tech multipliers.",
+      "If unlock prerequisites are not satisfied by the current config state, the corresponding tech remains unavailable and stat outputs remain unchanged from currently applicable multipliers."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #17 primary behavior.",
@@ -1145,7 +1181,10 @@
       "Reward pools are loaded from JSON configuration by night type, and changing the JSON changes generated choices without code changes.",
       "Each generated choice is a supported reward kind (resource, unit, or bonus) and is visible in the Godot UI for night reward selection.",
       "If the current night-type pool is exhausted and generates zero choices, the system grants the configured fixed gold fallback amount exactly once for that trigger and does not present selectable reward choices for that trigger.",
-      "Automated coverage includes choice generation, pool exhaustion, fallback-to-gold behavior, and JSON-driven pool selection; in-game night progression verifies reward presentation and fallback behavior."
+      "Automated coverage includes choice generation, pool exhaustion, fallback-to-gold behavior, and JSON-driven pool selection; in-game night progression verifies reward presentation and fallback behavior.",
+      "Reward processing does not trigger during non-night phases, and no reward-choice UI or fallback gold is produced outside a night trigger.",
+      "For any night trigger where generated choices count is greater than zero, fallback gold is not granted for that trigger.",
+      "Across consecutive nights with different night types, each trigger uses the active night type pool, and presented choices correspond to that active night type."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #18 primary behavior.",
@@ -1211,7 +1250,10 @@
       "Win/Lose checks read castle HP from the building/castle system source of truth, not from UI-only values.",
       "Godot signals are emitted for UI-observable state updates, including at least day counter changes on day progression.",
       "End-to-end validation covers both terminal paths: forced castle destruction triggers Lose, and surviving to Day15 triggers Win.",
-      "Configured timing yields approximately 90 minutes for 15 full days (15 x (4 + 2) minutes), satisfying the stated 60-90 minute match-duration target boundary."
+      "Configured timing yields approximately 90 minutes for 15 full days (15 x (4 + 2) minutes), satisfying the stated 60-90 minute match-duration target boundary.",
+      "Runtime-observable state includes current phase plus elapsed or remaining phase time, so tests/UI can verify day-night progress without relying on internal fields.",
+      "A complete win-path sequence is observable as Day1->Night1 through Day15->Night15 before terminal Win, and no Day16 phase begins.",
+      "After entering either terminal state (Win or Lose), phase transitions stop and no further day progression updates are emitted."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #19 primary behavior.",
@@ -1275,7 +1317,9 @@
       "Player-owned units can damage enemy units or enemy buildings when a valid target is in attack range.",
       "MG towers can acquire and damage enemy targets, and never damage same-team units or same-team walls.",
       "Attack damage uses current config/tech-tree-derived stats for the attacker, and stat changes produce corresponding damage changes.",
-      "Automated verification includes unit tests for attack resolution and friendly-fire prevention plus an in-game scenario covering player units, enemies, MG towers, and walls where only enemies are hit."
+      "Automated verification includes unit tests for attack resolution and friendly-fire prevention plus an in-game scenario covering player units, enemies, MG towers, and walls where only enemies are hit.",
+      "CombatSystem provides a shared attack-resolution path for both unit and MG tower attacks, and both paths enforce the same team/owner friendly-fire block before any damage is applied.",
+      "Target acquisition uses in-range detection (physics query or area overlap), so attacks execute only against detected enemy targets in range, while non-detected or out-of-range targets receive no damage."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #20 primary behavior.",
@@ -1397,7 +1441,9 @@
       "Pressing scroll actions mapped to Arrow keys and WASD moves the camera in the expected cardinal directions, and releasing those keys stops keyboard-driven scrolling.",
       "Camera translation is smooth and frame-rate independent, with movement scaled by delta time and a configurable scroll speed value that can be adjusted without code changes.",
       "Camera movement is clamped to configured world boundaries so the visible area cannot be scrolled beyond map limits on any side.",
-      "Edge scrolling and keyboard scrolling can both be active in the same frame without input loss, and resulting movement remains continuous."
+      "Edge scrolling and keyboard scrolling can both be active in the same frame without input loss, and resulting movement remains continuous.",
+      "A CameraController with an active Camera2D is present in the playable scene, and camera movement is applied through that camera.",
+      "With default configuration, entering within 20 pixels of any viewport edge triggers movement toward that edge, and scroll input is consumed through Godot Input/viewport events."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #22 primary behavior.",
@@ -1461,7 +1507,10 @@
       "When paused, active and queued countdown timers (including wave timers) stop decrementing and do not complete early.",
       "After unpausing, paused countdown timers resume from their remaining time rather than restarting or skipping elapsed steps.",
       "UI speed controls expose Pause, 1x, and 2x, and each control updates active speed state and applies the matching runtime behavior.",
-      "Nodes intended to pause with gameplay stop processing during pause and resume processing when gameplay is unpaused."
+      "Nodes intended to pause with gameplay stop processing during pause and resume processing when gameplay is unpaused.",
+      "Selecting 1x or 2x while currently paused clears paused state in the same interaction and applies the selected runtime speed immediately.",
+      "During pause, countdown logic driven by custom timers remains frozen even if real time passes, and those timers continue from the exact remaining value after unpause.",
+      "Pause, 1x, and 2x controls are mutually consistent: at any moment only one active speed state is in effect, and observed gameplay rate matches that active state."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #23 primary behavior.",
@@ -1523,7 +1572,10 @@
       "When a blocked action is attempted, the UI feedback includes the specific blocking reason, and the blocked action is refused without changing game state.",
       "When migration or load fails (including corrupted save input), a persistent error dialog is shown with error details and remains visible until the user dismisses it.",
       "Feedback messages are non-intrusive: temporary feedback does not block normal gameplay interaction while visible.",
-      "Feedback display is event-driven: invalid placement, blocked action, and migration/load error events each trigger their corresponding UI feedback output."
+      "Feedback display is event-driven: invalid placement, blocked action, and migration/load error events each trigger their corresponding UI feedback output.",
+      "On an invalid placement attempt, placement is refused and no new entity is committed to game state while the temporary feedback is shown.",
+      "The migration/load error dialog is dismissible only by explicit user action and does not auto-hide.",
+      "For blocked actions and migration/load failures, the displayed message content reflects the concrete triggering reason/details rather than a generic placeholder."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #24 primary behavior.",
@@ -1584,7 +1636,10 @@
       "Loading a valid autosave restores persisted gameplay state values, including game state, seed, and wave timer, to the saved values.",
       "When save version is incompatible with the current version, load is rejected, a user-visible migration error is shown, and runtime state remains unchanged.",
       "When save content is invalid or corrupt, load fails with explicit error feedback and does not crash or partially apply state.",
-      "Save/load file access uses Windows-safe user-path semantics and handles missing file and read/write failures with deterministic, testable outcomes."
+      "Save/load file access uses Windows-safe user-path semantics and handles missing file and read/write failures with deterministic, testable outcomes.",
+      "Across multiple in-game day starts, each day-start event triggers one autosave write to the same autosave path, and no additional save-slot files are created.",
+      "A save/load round trip reproduces the saved values for game state, seed, and wave timer exactly at the moment of save.",
+      "If no autosave file exists, load returns a deterministic failure outcome with explicit feedback and leaves runtime state unchanged."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #25 primary behavior.",
@@ -1645,7 +1700,10 @@
       "If local and cloud save versions conflict, the game blocks automatic overwrite and shows a user choice prompt before deciding which version to load.",
       "If upload or download fails due to network/API/unavailable cloud conditions, the failure is surfaced to the user and the pre-existing local save file remains unchanged.",
       "Save data is bound to the current Steam account identity, and cloud operations only read/write that account's cloud save scope.",
-      "Steam Cloud integration remains compatible with the current SaveManager workflow, and local save/load continues to work when Steam Cloud is unavailable."
+      "Steam Cloud integration remains compatible with the current SaveManager workflow, and local save/load continues to work when Steam Cloud is unavailable.",
+      "In a Steam development environment, downloading cloud save data to a clean local target after upload restores the same profile state with no missing persisted fields.",
+      "When a local-vs-cloud conflict prompt is shown, choosing the local option loads local data for that operation without automatic cloud overwrite, and choosing the cloud option loads cloud data for that operation.",
+      "When no valid Steam login is present, cloud sync is explicitly skipped with user-visible status, and SaveManager local save/load still completes successfully without save corruption."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #26 primary behavior.",
@@ -1705,7 +1763,9 @@
       "When a defined deterministic condition is met (for example, surviving day 15), the matching achievement changes to unlocked state and an unlock notification is shown.",
       "Replaying the same scenario with the same inputs unlocks the same achievements in the same order across runs.",
       "Events that do not satisfy an achievement condition leave that achievement locked and do not emit an unlock notification.",
-      "If Steam integration is active during gameplay, unlocked achievements are synchronized to Steam stats in the same session."
+      "If Steam integration is active during gameplay, unlocked achievements are synchronized to Steam stats in the same session.",
+      "At session start, each listed achievement shows a lock/unlock status consistent with current local state, with no hidden entries.",
+      "Each achievement shows at most one unlock notification on first unlock in a session; re-triggering the same condition does not produce another unlock popup."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #27 primary behavior.",
@@ -1766,7 +1826,9 @@
       "When a key is missing in the active locale, the rendered text falls back to the key string itself (for example, MISSING_KEY renders as \"MISSING_KEY\").",
       "Language preference is persisted to config: after setting zh-CN or en-US and restarting the game, the previously selected language is restored automatically.",
       "At launch, only en-US and zh-CN are accepted locale options; requesting an unsupported locale does not change the current language state.",
-      "Localization key identifiers used by UI remain stable across patches: existing keys referenced by UI are not renamed or removed unintentionally."
+      "Localization key identifiers used by UI remain stable across patches: existing keys referenced by UI are not renamed or removed unintentionally.",
+      "The locale resource for each supported language (en-US and zh-CN) is present and parseable at runtime; if loading/parsing fails, the switch is refused and the previously active language state remains unchanged.",
+      "Localized UI text is key-driven (not hardcoded): for representative visible UI entries, the displayed value changes by locale through the same key lookup path in a single running session."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #28 primary behavior.",
@@ -1826,7 +1888,9 @@
       "Moving either control changes the audible level of its own channel immediately while the game is running.",
       "After the player changes music and SFX volumes, closing and relaunching the game preserves and reapplies the same effective levels at startup.",
       "During simultaneous music and sound playback, changing music volume leaves current SFX loudness unchanged at the same SFX setting, and changing SFX volume leaves music loudness unchanged at the same music setting.",
-      "Rapid slider adjustments during playback do not interrupt channel playback and do not trigger runtime errors."
+      "Rapid slider adjustments during playback do not interrupt channel playback and do not trigger runtime errors.",
+      "At startup, the settings UI initializes music and SFX controls to the last saved values, and the audible levels already match those values before the player moves any slider.",
+      "Changing only one slider and then saving/relaunching keeps the other slider value and effective loudness unchanged from its previously saved state."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #29 primary behavior.",
@@ -1894,7 +1958,11 @@
       "A profiling report identifies and ranks frame-time hotspots by subsystem (AI, spawn, render, UI) with repeatable timing data per offender.",
       "Targeted optimizations to update loops, pooling, and expensive queries deliver measurable frame-time improvement versus baseline while regression tests confirm gameplay semantics are unchanged.",
       "Stress and endurance runs at launch presets cover worst-case wave mixes and UI-heavy scenarios, and the report records memory growth and stutter spikes with pass/fail thresholds or explicit failure reasons plus traces.",
-      "Standardized gate artifacts are written to logs/perf and logs/ci for Windows headless/playable fixed-seed runs, with integer threshold fields and verdicts for baseline, 1% low FPS, and average FPS."
+      "Standardized gate artifacts are written to logs/perf and logs/ci for Windows headless/playable fixed-seed runs, with integer threshold fields and verdicts for baseline, 1% low FPS, and average FPS.",
+      "Task completion is PASS only when reproducible Windows fixed-seed headless/playable runs meet at least 45 FPS for 1% low and 60 FPS for average FPS in the gate summary.",
+      "If runs fail to show measurable improvement versus baseline within the declared variance window, or required gate artifacts/fields are missing, the task verdict is FAIL and must not be accepted.",
+      "Gate evidence includes paired baseline and post-optimization metrics for the same fixed-seed scenes so 1% low and average FPS deltas are directly verifiable.",
+      "Acceptance is blocked when any required phase evidence (baseline capture, hotspot isolation, frame-budget remediation, stress validation, gate artifact output) is missing from logs/perf or logs/ci."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #30 primary behavior.",
@@ -1951,7 +2019,9 @@
       "Both directories `config/schemas/` and `config/samples/` exist in the project structure after setup.",
       "Export configuration includes a Windows Desktop target and does not enable non-Windows export targets.",
       "Project settings are configured for single-player operation, with networking/multiplayer features disabled so gameplay does not depend on online connectivity.",
-      "A `README.md` file exists and documents the config-first approach, including the purpose of `config/schemas/` and `config/samples/`."
+      "A `README.md` file exists and documents the config-first approach, including the purpose of `config/schemas/` and `config/samples/`.",
+      "The project is initialized with C# scripting enabled (not GDScript-only), and Godot 4.5.1 on Windows generates/uses C# project files that compile successfully.",
+      "Acceptance fails if startup or core single-player flow requires network connectivity or multiplayer services to be available."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #31 primary behavior.",
@@ -2013,7 +2083,10 @@
       "The schema includes configurable enemy type/identity and behavior-related fields with explicit type constraints, so behavior selection is data-driven by config.",
       "Validator-based tests on Windows C# reject payloads with missing required fields, wrong field types, or numeric values below declared minima.",
       "Validator-based tests on Windows C# accept at least one valid payload where all required fields and numeric constraints are satisfied.",
-      "Enemy balance values are sourced from schema-validated configuration data; adding or adjusting enemy balance values does not require hardcoded per-enemy constants for schema compliance."
+      "Enemy balance values are sourced from schema-validated configuration data; adding or adjusting enemy balance values does not require hardcoded per-enemy constants for schema compliance.",
+      "The root schema lists \"enemies\" in required, and validator-based tests reject a top-level payload that omits \"enemies\".",
+      "Validator-based tests reject enemy objects where behavior-related fields are present but use types that differ from the schema declaration.",
+      "Validator-based tests accept a payload containing at least two enemy entries with different valid health/damage/speed values without requiring schema or code changes."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #32 primary behavior.",
@@ -2075,7 +2148,10 @@
       "`difficulty_level` is validated as a string enum with only `easy`, `medium`, and `hard`; any other value is rejected.",
       "`modifiers` is defined as an object and its declared modifier fields are numeric; non-numeric modifier values are rejected.",
       "Per PRD lock constraint, once a run starts, attempts to change active difficulty are refused or leave active difficulty unchanged.",
-      "Schema validation tests include positive and negative samples covering invalid enum, missing `version`, and invalid `version` pattern with expected pass/fail outcomes."
+      "Schema validation tests include positive and negative samples covering invalid enum, missing `version`, and invalid `version` pattern with expected pass/fail outcomes.",
+      "The schema declares `version` as an explicit top-level property and includes it in `required`, so configuration revision is always present for backward-trackability checks.",
+      "Validation accepts at least two configurations that differ only in declared numeric `modifiers` values, confirming these values are configurable data and not fixed constants.",
+      "A lock-behavior test verifies difficulty changes can take effect before run start, while after run start a change attempt is refused or leaves active difficulty unchanged."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #33 primary behavior.",
@@ -2136,7 +2212,8 @@
       "Enemy entries in each wave validate enemy_id as string and count as integer with minimum 0; negative counts or wrong types fail validation.",
       "Validation test data includes at least one valid config and failing cases for day outside 1-15 and negative enemy count, and failures are observable in test results.",
       "Determinism test demonstrates that repeated wave generation with the same seed and the same valid config yields the same wave timeline, while invalid config is rejected with no timeline output.",
-      "Wave timeline generation inputs are restricted to schema-valid config values plus seed, with no hidden runtime override required to reproduce results."
+      "Wave timeline generation inputs are restricted to schema-valid config values plus seed, with no hidden runtime override required to reproduce results.",
+      "Schema/timeline verification demonstrates that the configured 4-minute Day + 2-minute Night cadence over Day1-Day15 produces a timeline within the required 60-90 minute match window (90 minutes at full 15-day coverage) using config values only."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #34 primary behavior.",
@@ -2197,7 +2274,11 @@
       "Schema rejects configurations that omit baseline, min_pressure, max_pressure, or normalization_factors.",
       "Schema encodes explicit baseline and pressure-bound constants (including a baseline lower bound) instead of relying on implicit defaults.",
       "Schema validation rejects configurations where min_pressure is greater than or equal to max_pressure.",
-      "Schema validation rejects non-numeric baseline values and accepts numeric baseline values that satisfy declared bounds."
+      "Schema validation rejects non-numeric baseline values and accepts numeric baseline values that satisfy declared bounds.",
+      "Schema validation accepts a configuration with numeric baseline, min_pressure < max_pressure, and normalization_factors containing only numbers.",
+      "Schema validation rejects a configuration where normalization_factors contains any non-numeric element.",
+      "If a constraints object is present, constraints.range_check is boolean-typed and schema validation rejects non-boolean values.",
+      "Schema validation rejects a configuration where baseline violates the declared lower-bound constant."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #35 primary behavior.",
@@ -2260,7 +2341,10 @@
       "spawn-config.sample.json is present as a release sample artifact, passes schema and semantic validation, and includes Day1-Day15 cadence coverage plus channel isolation flags required by the runtime parser.",
       "pressure-normalization.config.sample.json is present as a release sample artifact, passes schema and semantic validation, and declares explicit baseline constants with all tuning values inside guard bands.",
       "Negative fixtures include malformed and boundary-breach samples for these config domains, each negative case fails validation with explicit reason codes, and positive samples remain passing.",
-      "A CI-consumable validation summary artifact is generated with schema and semantic validation outcomes for all positive and negative fixtures, and acceptance fails if this artifact is missing."
+      "A CI-consumable validation summary artifact is generated with schema and semantic validation outcomes for all positive and negative fixtures, and acceptance fails if this artifact is missing.",
+      "Acceptance fails if any required positive sample file is missing, empty, or excluded from the validation run output.",
+      "Validation output must contain explicit schema and semantic pass/fail results for each positive sample file; missing per-file results fail acceptance.",
+      "For each config domain, at least one malformed fixture and one boundary-breach fixture are executed and rejected with non-empty explicit reason codes in the same run where all positive samples pass."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #36 primary behavior.",
@@ -2325,7 +2409,9 @@
       "Semantic rule violations are validated and each violation maps to an explicit policy action with a testable reason key.",
       "Runtime config application enforces immutable and difficulty-locked fields: allowed fields fallback to built-in safe defaults, and forbidden changes are rejected without mutating protected runtime state.",
       "Validation decisions emit standardized audit entries and CI summary artifacts in logs/ci, including policy decision trace and rejection/fallback reasons.",
-      "A valid/invalid/boundary config matrix demonstrates policy-consistent accept, reject, or fallback outcomes with observable logs."
+      "A valid/invalid/boundary config matrix demonstrates policy-consistent accept, reject, or fallback outcomes with observable logs.",
+      "On any rejection path, runtime state remains unchanged for protected fields and no partial config mutation is observable after the decision.",
+      "Reject and fallback outcomes expose explicit machine-verifiable reason identifiers in both test assertions and emitted audit records."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #37 primary behavior.",
@@ -2385,7 +2471,9 @@
       "Changing only spawn-config timing values updates wave spawn timing in gameplay without modifying code; unchanged timing after a config-only change fails acceptance.",
       "Wave generation uses spawn-config seed such that repeated runs with the same seed produce identical wave composition/order, and changing the seed changes composition/order.",
       "When valid config values are present, gameplay systems do not override enemy stats or wave-spawn parameters with hardcoded constants.",
-      "Integration scenarios with at least two distinct config sets demonstrate that enemy stats and wave composition outputs follow config differences while remaining deterministic under a fixed seed."
+      "Integration scenarios with at least two distinct config sets demonstrate that enemy stats and wave composition outputs follow config differences while remaining deterministic under a fixed seed.",
+      "Using the same executable and content, tuning outcomes are achieved by config-only changes: updating enemy-config or spawn-config changes gameplay outputs without editing C# scripts; requiring script changes fails acceptance.",
+      "For a chosen enemyId and spawn profile, observed runtime enemy health and spawn interval values exactly equal the active config values in that run; any value mismatch fails acceptance."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #38 primary behavior.",
@@ -2444,7 +2532,8 @@
       "Each generated battle report includes metadata key \"config_hash\" or \"config_version\" with a non-empty value tied to the exact config used for that battle.",
       "Using the same config content/version across repeated runs produces the same metadata value in battle reports.",
       "Changing config content or its declared version before report generation produces a different metadata value in the next battle report.",
-      "A battle report missing both \"config_hash\" and \"config_version\" is treated as invalid output and is not accepted as audit-complete."
+      "A battle report missing both \"config_hash\" and \"config_version\" is treated as invalid output and is not accepted as audit-complete.",
+      "Battle report outputs preserve match-result content and include the chosen config metadata field (\"config_hash\" or \"config_version\") in the same persisted report payload for audit retrieval."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #39 primary behavior.",
@@ -2503,7 +2592,9 @@
       "When a loaded config version differs from the expected version, the loaded config is rejected and runtime configuration falls back to default values.",
       "On version mismatch, an error log entry is emitted that explicitly indicates migration is required.",
       "No dual-version compatibility path is active: mismatched-version configs are never partially accepted or auto-adapted.",
-      "Automated unit tests cover both matching and mismatching config versions, and verify fallback occurs only for mismatches."
+      "Automated unit tests cover both matching and mismatching config versions, and verify fallback occurs only for mismatches.",
+      "When a loaded config version equals the expected version, the loaded config is accepted and runtime configuration does not fall back to default values.",
+      "Unit tests explicitly assert both paths: matching version keeps loaded config, mismatching version rejects loaded config and triggers default fallback with migration-required logging."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #40 primary behavior.",
