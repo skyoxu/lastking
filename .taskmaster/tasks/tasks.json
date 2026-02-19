@@ -24,7 +24,80 @@
           1
         ],
         "status": "pending",
-        "subtasks": [],
+        "subtasks": [
+          {
+            "id": "1",
+            "title": "Define balancing config contract and file layout",
+            "description": "Specify config structure and required fields for day/night timing, wave budgets, channels, cadence, and boss rules.",
+            "status": "pending",
+            "priority": "high",
+            "dependencies": [
+              "1"
+            ],
+            "details": "Create canonical config sections and key names; map each key to runtime owner and default value policy.",
+            "testStrategy": "Contract checks verify all mandatory keys exist and names remain stable across revisions.",
+            "subtasks": [],
+            "parentId": "undefined"
+          },
+          {
+            "id": "2",
+            "title": "Implement ConfigManager loading and typed parsing",
+            "description": "Build a C# ConfigManager that loads config files and parses them into typed runtime models.",
+            "status": "pending",
+            "priority": "high",
+            "dependencies": [
+              "2.1",
+              "1"
+            ],
+            "details": "Add load order, typed DTO mapping, and deterministic defaults for absent optional fields.",
+            "testStrategy": "Parsing tests assert typed values for valid config and deterministic failure for malformed input.",
+            "subtasks": [],
+            "parentId": "undefined"
+          },
+          {
+            "id": "3",
+            "title": "Expose runtime accessors for balancing values",
+            "description": "Provide stable access APIs for day/night durations, wave budgets, channel budgets, spawn cadence, and boss count.",
+            "status": "pending",
+            "priority": "high",
+            "dependencies": [
+              "2.2"
+            ],
+            "details": "Bind accessors used by loop, wave, and spawn systems without duplicating constants elsewhere.",
+            "testStrategy": "Integration checks prove consuming systems read values only from ConfigManager accessors.",
+            "subtasks": [],
+            "parentId": "undefined"
+          },
+          {
+            "id": "4",
+            "title": "Add invalid-config fallback and audit traces",
+            "description": "Implement deterministic fallback behavior for invalid config and emit audit evidence for failure paths.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "2.2"
+            ],
+            "details": "Define reject/fallback rules and write validation outcomes with actionable reason codes.",
+            "testStrategy": "Negative tests cover missing keys, wrong types, and out-of-range values with expected fallback behavior.",
+            "subtasks": [],
+            "parentId": "undefined"
+          },
+          {
+            "id": "5",
+            "title": "Harden with anti-hardcode and regression tests",
+            "description": "Add tests that enforce config-first ownership and prevent reintroduction of hardcoded balance constants.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "2.3",
+              "2.4"
+            ],
+            "details": "Include source scans and behavior tests that fail when runtime diverges from config-driven values.",
+            "testStrategy": "Gate passes only when config mutation changes runtime behavior without code edits.",
+            "subtasks": [],
+            "parentId": "undefined"
+          }
+        ],
         "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
       },
       {
@@ -38,7 +111,79 @@
           2
         ],
         "status": "pending",
-        "subtasks": [],
+        "subtasks": [
+          {
+            "id": "1",
+            "title": "Define runtime state machine model and transitions",
+            "description": "Design explicit Day and Night states, transition guards, and deterministic state events.",
+            "status": "pending",
+            "priority": "high",
+            "dependencies": [
+              "2"
+            ],
+            "details": "Document state graph, transition conditions, and emitted events consumed by downstream systems.",
+            "testStrategy": "State graph tests verify legal transitions and reject invalid transition attempts.",
+            "subtasks": [],
+            "parentId": "undefined"
+          },
+          {
+            "id": "2",
+            "title": "Implement timer-driven Day/Night progression",
+            "description": "Implement 4-minute Day and 2-minute Night timers with deterministic day counter advancement.",
+            "status": "pending",
+            "priority": "high",
+            "dependencies": [
+              "3.1",
+              "2"
+            ],
+            "details": "Use config-bound durations and ensure timer updates are monotonic and frame-rate independent.",
+            "testStrategy": "Timing tests assert exact transition boundaries under fixed-step and variable-step updates.",
+            "subtasks": [],
+            "parentId": "undefined"
+          },
+          {
+            "id": "3",
+            "title": "Integrate fixed-seed deterministic progression",
+            "description": "Bind fixed-seed randomness and transition checkpoints to guarantee repeatable cycle behavior.",
+            "status": "pending",
+            "priority": "high",
+            "dependencies": [
+              "3.2"
+            ],
+            "details": "Emit deterministic checkpoints at every phase boundary for replay comparison.",
+            "testStrategy": "Same-seed replay tests must produce identical phase and checkpoint sequences.",
+            "subtasks": [],
+            "parentId": "undefined"
+          },
+          {
+            "id": "4",
+            "title": "Implement Day15 terminal trigger and state lock",
+            "description": "Trigger terminal flow when Day15 cycle completes and lock further progression updates.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "3.3"
+            ],
+            "details": "Ensure only one terminal state is emitted and post-terminal transitions are ignored.",
+            "testStrategy": "Terminal tests verify single terminal emission and no post-terminal progression.",
+            "subtasks": [],
+            "parentId": "undefined"
+          },
+          {
+            "id": "5",
+            "title": "Add deterministic cycle verification tests",
+            "description": "Create unit and scene tests covering timing, transitions, and terminal conditions.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "3.4"
+            ],
+            "details": "Cover normal flow, edge timing boundaries, and forced terminal scenarios with fixed seeds.",
+            "testStrategy": "Coverage must include transition correctness and deterministic replay parity checks.",
+            "subtasks": [],
+            "parentId": "undefined"
+          }
+        ],
         "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
       },
       {
@@ -251,7 +396,80 @@
           11
         ],
         "status": "pending",
-        "subtasks": [],
+        "subtasks": [
+          {
+            "id": "1",
+            "title": "Define resource contracts and integer invariants",
+            "description": "Define canonical resource fields and invariants for gold, iron, and population cap as integer-only data.",
+            "status": "pending",
+            "priority": "high",
+            "dependencies": [
+              "11"
+            ],
+            "details": "Lock resource names, initial values, and invariant rules consumed by all economy systems.",
+            "testStrategy": "Contract tests verify integer-only schemas and required invariant declarations.",
+            "subtasks": [],
+            "parentId": "undefined"
+          },
+          {
+            "id": "2",
+            "title": "Implement integer-safe add/spend operations",
+            "description": "Implement atomic add/spend methods with bounds checks and deterministic failure returns.",
+            "status": "pending",
+            "priority": "high",
+            "dependencies": [
+              "12.1",
+              "11"
+            ],
+            "details": "Enforce single-path mutation methods and remove any floating-point math from resource logic.",
+            "testStrategy": "Unit tests verify valid mutation, insufficient-resource rejection, and invariant preservation.",
+            "subtasks": [],
+            "parentId": "undefined"
+          },
+          {
+            "id": "3",
+            "title": "Integrate resource events for gameplay and UI",
+            "description": "Publish deterministic resource change events to UI and gameplay consumers.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "12.2"
+            ],
+            "details": "Emit structured deltas and reasons to avoid consumer-side recomputation or hidden mutations.",
+            "testStrategy": "Integration tests verify event ordering and payload integrity during rapid updates.",
+            "subtasks": [],
+            "parentId": "undefined"
+          },
+          {
+            "id": "4",
+            "title": "Add overflow guards and snapshot-safe serialization",
+            "description": "Add overflow protection and stable snapshot payloads for save/load compatibility.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "12.2"
+            ],
+            "details": "Protect arithmetic boundaries and provide deterministic serialization for current resource state.",
+            "testStrategy": "Boundary tests cover max/min values and snapshot roundtrip parity.",
+            "subtasks": [],
+            "parentId": "undefined"
+          },
+          {
+            "id": "5",
+            "title": "Build integer-safety regression test suite",
+            "description": "Create tests that enforce integer-only operations and prevent float-based regressions.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "12.2",
+              "12.4"
+            ],
+            "details": "Add static checks and runtime assertions that fail on non-integer resource math.",
+            "testStrategy": "Suite fails if any resource path introduces float operations or invariant drift.",
+            "subtasks": [],
+            "parentId": "undefined"
+          }
+        ],
         "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
       },
       {
@@ -266,7 +484,83 @@
           12
         ],
         "status": "pending",
-        "subtasks": [],
+        "subtasks": [
+          {
+            "id": "1",
+            "title": "Define building archetypes and footprint metadata",
+            "description": "Define building type metadata including level, HP, cost, and footprint size rules.",
+            "status": "pending",
+            "priority": "high",
+            "dependencies": [
+              "11",
+              "12"
+            ],
+            "details": "Create canonical archetype definitions for castle, residence, mine, barracks, MG tower, wall, and mine trap.",
+            "testStrategy": "Metadata tests verify required fields and footprint values match design constraints.",
+            "subtasks": [],
+            "parentId": "undefined"
+          },
+          {
+            "id": "2",
+            "title": "Implement grid occupancy and placement validation",
+            "description": "Implement grid occupancy checks and placement validation against footprint collisions.",
+            "status": "pending",
+            "priority": "high",
+            "dependencies": [
+              "13.1",
+              "12"
+            ],
+            "details": "Reject out-of-bounds, blocked, and overlapping placements with deterministic reason codes.",
+            "testStrategy": "Placement tests cover valid placement, collision rejection, and boundary constraints.",
+            "subtasks": [],
+            "parentId": "undefined"
+          },
+          {
+            "id": "3",
+            "title": "Implement wall drag-line and one-way gate behavior",
+            "description": "Add drag-line wall building and gate logic that enforces one-way traversal constraints.",
+            "status": "pending",
+            "priority": "high",
+            "dependencies": [
+              "13.2"
+            ],
+            "details": "Support continuous wall placement with gate segments while preserving pathing restrictions.",
+            "testStrategy": "Scene tests verify drag-line placement, gate creation, and traversal direction rules.",
+            "subtasks": [],
+            "parentId": "undefined"
+          },
+          {
+            "id": "4",
+            "title": "Integrate build transactions and resource deduction",
+            "description": "Integrate placement with atomic resource deduction and rollback on failed placements.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "13.2",
+              "12"
+            ],
+            "details": "Ensure placement and spend are transactional so resources remain unchanged when placement fails.",
+            "testStrategy": "Transaction tests verify spend-on-success and full rollback-on-failure behavior.",
+            "subtasks": [],
+            "parentId": "undefined"
+          },
+          {
+            "id": "5",
+            "title": "Add placement and gate-pathing verification suite",
+            "description": "Create integration tests for footprint collisions, wall gates, and path-block outcomes.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "13.3",
+              "13.4",
+              "6"
+            ],
+            "details": "Cover blocked-path fallback interactions and validate deterministic tie handling in gate scenarios.",
+            "testStrategy": "Integration suite verifies consistent results across repeated same-seed placement scenarios.",
+            "subtasks": [],
+            "parentId": "undefined"
+          }
+        ],
         "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
       },
       {
@@ -356,7 +650,84 @@
           13
         ],
         "status": "pending",
-        "subtasks": [],
+        "subtasks": [
+          {
+            "id": "1",
+            "title": "Define cycle scheduler and deterministic clock contract",
+            "description": "Define scheduler interfaces for 4-minute Day and 2-minute Night with deterministic tick ownership.",
+            "status": "pending",
+            "priority": "high",
+            "dependencies": [
+              "11"
+            ],
+            "details": "Specify timing ownership, transition events, and day counter boundaries for Day1-Day15.",
+            "testStrategy": "Contract tests verify scheduler emits expected phase events and day boundaries.",
+            "subtasks": [],
+            "parentId": "undefined"
+          },
+          {
+            "id": "2",
+            "title": "Implement Day1-Day15 cycle progression",
+            "description": "Implement cycle transitions and day progression across Day and Night phases through Day15.",
+            "status": "pending",
+            "priority": "high",
+            "dependencies": [
+              "19.1",
+              "3"
+            ],
+            "details": "Bind scheduler to runtime updates and ensure phase changes stay aligned with configured durations.",
+            "testStrategy": "Progression tests verify exact day increment boundaries and phase durations.",
+            "subtasks": [],
+            "parentId": "undefined"
+          },
+          {
+            "id": "3",
+            "title": "Implement win/lose evaluator against castle HP",
+            "description": "Implement terminal evaluator: win on surviving through Day15, lose when castle HP reaches zero.",
+            "status": "pending",
+            "priority": "high",
+            "dependencies": [
+              "19.2",
+              "13",
+              "7"
+            ],
+            "details": "Guarantee a single terminal result and lock state updates after terminal resolution.",
+            "testStrategy": "Terminal tests verify lose-before-Day15 and survive-Day15 scenarios with exclusive outcomes.",
+            "subtasks": [],
+            "parentId": "undefined"
+          },
+          {
+            "id": "4",
+            "title": "Integrate cycle and terminal events with UI state",
+            "description": "Wire cycle and terminal events to UI counters, warnings, and end-state presentation.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "19.3",
+              "9"
+            ],
+            "details": "Update day counters, phase indicators, and terminal prompts using stable event payloads.",
+            "testStrategy": "UI integration tests verify event-to-display consistency through transitions and terminal events.",
+            "subtasks": [],
+            "parentId": "undefined"
+          },
+          {
+            "id": "5",
+            "title": "Add end-to-end scenario coverage for cycle outcomes",
+            "description": "Add scenario tests that cover full-cycle progression and both terminal branches.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "19.2",
+              "19.3",
+              "19.4"
+            ],
+            "details": "Run deterministic scenarios to validate schedule accuracy and win/lose correctness together.",
+            "testStrategy": "Scenario suite passes only when cycle timings and terminal outcomes are both correct.",
+            "subtasks": [],
+            "parentId": "undefined"
+          }
+        ],
         "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
       },
       {
@@ -440,7 +811,82 @@
         "priority": "high",
         "details": "Create a SaveManager that handles saving and loading game state to a file. Use a single autosave slot (e.g., autosave.save). Implement autosave at the start of each day. For migration, check save file version; if incompatible, reject load and show error. Save data should include game state, seed, wave timer, etc. Use JSON or binary serialization. Ensure safe file operations on Windows.\n\nPseudo-code:\n// SaveManager.cs\npublic partial class SaveManager : Node\n{\n    private string _savePath = \"user://autosave.save\";\n    private int _currentVersion = 1;\n\n    public void SaveGame(GameState state) {\n        var saveData = new SaveData { Version = _currentVersion, State = state };\n        string json = Json.Stringify(saveData);\n        FileAccess file = FileAccess.Open(_savePath, FileAccess.ModeFlags.Write);\n        file.StoreString(json);\n        file.Close();\n    }\n\n    public GameState LoadGame() {\n        if (!FileAccess.FileExists(_savePath)) return null;\n        FileAccess file = FileAccess.Open(_savePath, FileAccess.ModeFlags.Read);\n        string json = file.GetAsText();\n        file.Close();\n        var saveData = Json.ParseString<SaveData>(json);\n        if (saveData.Version != _currentVersion) {\n            // Trigger migration error via UIFeedbackManager\n            return null;\n        }\n        return saveData.State;\n    }\n}",
         "testStrategy": "Test save: play game, trigger autosave, verify file is created. Load game, confirm state is restored. Test migration: modify save version, attempt load, check error is shown. Validate file paths and error handling.",
-        "subtasks": [],
+        "subtasks": [
+          {
+            "id": "1",
+            "title": "Define SaveData contract and versioned payload model",
+            "description": "Define versioned SaveData payload including game state, seed, wave timer, and required metadata fields.",
+            "status": "pending",
+            "priority": "high",
+            "dependencies": [
+              "21"
+            ],
+            "details": "Lock payload schema and serialization format ownership for the single autosave slot.",
+            "testStrategy": "Contract tests verify required fields and version field presence in serialized payloads.",
+            "subtasks": [],
+            "parentId": "undefined"
+          },
+          {
+            "id": "2",
+            "title": "Implement single-slot autosave writer on day start",
+            "description": "Implement autosave writing to user://autosave.save triggered at day-start boundaries.",
+            "status": "pending",
+            "priority": "high",
+            "dependencies": [
+              "25.1",
+              "19"
+            ],
+            "details": "Ensure first autosave creates file and subsequent saves overwrite the same slot deterministically.",
+            "testStrategy": "Autosave tests verify create-on-first-trigger and overwrite-on-later-triggers behavior.",
+            "subtasks": [],
+            "parentId": "undefined"
+          },
+          {
+            "id": "3",
+            "title": "Implement load path with IO and corruption handling",
+            "description": "Implement load behavior for missing file, read failure, and corrupt payload with explicit failure outcomes.",
+            "status": "pending",
+            "priority": "high",
+            "dependencies": [
+              "25.1"
+            ],
+            "details": "Reject partial state application and keep runtime state unchanged on all load failures.",
+            "testStrategy": "Negative tests cover missing file, read error, and invalid payload with no partial apply.",
+            "subtasks": [],
+            "parentId": "undefined"
+          },
+          {
+            "id": "4",
+            "title": "Implement migration gate for version mismatch",
+            "description": "Validate save version before state apply and reject incompatible versions with user feedback.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "25.3",
+              "22"
+            ],
+            "details": "Apply migration rejection policy before any field mutation and emit explicit migration error reason.",
+            "testStrategy": "Migration tests assert incompatible version rejects load and leaves runtime state unchanged.",
+            "subtasks": [],
+            "parentId": "undefined"
+          },
+          {
+            "id": "5",
+            "title": "Build save/load verification and audit evidence suite",
+            "description": "Add roundtrip and failure-path tests with auditable evidence for release gate checks.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "25.2",
+              "25.3",
+              "25.4"
+            ],
+            "details": "Cover valid roundtrip, missing file, IO failure, corruption, and version mismatch in one gate suite.",
+            "testStrategy": "Suite must prove deterministic outcomes and required audit fields for each path.",
+            "subtasks": [],
+            "parentId": "undefined"
+          }
+        ],
         "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
       },
       {
@@ -520,7 +966,7 @@
         "testStrategy": "Run phased perf suites with fixed seed scenes; compare 1% low and average FPS against baselines. Emit summary artifacts under logs/perf and logs/ci for gate review.",
         "subtasks": [
           {
-            "id": "1",
+            "id": 1,
             "title": "Capture deterministic baseline performance profiles",
             "description": "Collect 1% low/average FPS baseline from fixed-seed scenarios and store reproducible traces.",
             "status": "pending",
@@ -535,7 +981,7 @@
             "subtasks": []
           },
           {
-            "id": "2",
+            "id": 2,
             "title": "Identify and classify frame-time hotspots",
             "description": "Find CPU/GPU and script hotspots affecting frame stability in combat-heavy scenes.",
             "status": "pending",
@@ -548,7 +994,7 @@
             "subtasks": []
           },
           {
-            "id": "3",
+            "id": 3,
             "title": "Apply targeted optimizations under config-safe constraints",
             "description": "Implement focused fixes without breaking deterministic behavior or config governance.",
             "status": "pending",
@@ -564,7 +1010,7 @@
             "subtasks": []
           },
           {
-            "id": "4",
+            "id": 4,
             "title": "Run stress and endurance validation at launch presets",
             "description": "Validate thresholds under high-pressure waves and long-session stability conditions.",
             "status": "pending",
@@ -580,7 +1026,7 @@
             "subtasks": []
           },
           {
-            "id": "5",
+            "id": 5,
             "title": "Publish performance gate evidence package",
             "description": "Export final metrics, comparisons, and gate decision artifacts for release readiness.",
             "status": "pending",
@@ -752,7 +1198,7 @@
         "status": "pending",
         "subtasks": [
           {
-            "id": "1",
+            "id": 1,
             "title": "Implement schema-level structural validation adapters",
             "description": "Bind JSON schema checks for all core config files before runtime consumption.",
             "status": "pending",
@@ -768,7 +1214,7 @@
             "subtasks": []
           },
           {
-            "id": "2",
+            "id": 2,
             "title": "Implement semantic rule validation and policy router",
             "description": "Apply cross-field semantics and route outcomes to reject/fallback branches.",
             "status": "pending",
@@ -782,7 +1228,7 @@
             "subtasks": []
           },
           {
-            "id": "3",
+            "id": 3,
             "title": "Integrate runtime fallback application boundaries",
             "description": "Apply safe defaults only for allowed cases and block forbidden runtime overrides.",
             "status": "pending",
@@ -796,7 +1242,7 @@
             "subtasks": []
           },
           {
-            "id": "4",
+            "id": 4,
             "title": "Emit validation audit and incident artifacts",
             "description": "Persist validation outcomes with reason, target, and caller for traceability.",
             "status": "pending",
@@ -862,7 +1308,9 @@
       "tags": [
         "master"
       ],
-      "migration": "legacy-master-to-standard-repair"
+      "migration": "legacy-master-to-standard-repair",
+      "created": "2026-02-19T14:29:31.954Z",
+      "description": "Tasks for master context"
     }
   }
 }
