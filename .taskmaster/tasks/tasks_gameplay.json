@@ -58,7 +58,8 @@
       "All required C# and .NET dependencies needed for editor run and Windows export resolve on Windows; unresolved SDK, assembly, or restore errors reject acceptance.",
       "Windows export settings are validated for Steam single-player by launching the export into offline single-player startup flow with no multiplayer or backend requirement.",
       "Steam compatibility validation is explicit: the Windows export can be launched as a Steam desktop game build with expected startup flow and no Steam-integration blocking errors.",
-      "Acceptance is rejected if verification bypasses required steps such as C# build, script attachment checks, or startup scene execution."
+      "Acceptance is rejected if verification bypasses required steps such as C# build, script attachment checks, or startup scene execution.",
+      "Steam compatibility verification must include one audited launch under Steam runtime context (real appid or Steam launch stub) and confirm startup flow without Steam API initialization failure; skipping Steam-runtime launch fails acceptance."
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #1 primary behavior.",
