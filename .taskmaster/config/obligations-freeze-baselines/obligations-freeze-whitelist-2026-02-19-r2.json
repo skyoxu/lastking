@@ -1,0 +1,85 @@
+{
+  "schema_version": "1.0-baseline",
+  "generated_at": "2026-02-19T13:17:12+00:00",
+  "source": {
+    "summary_file": "logs/ci/2026-02-19/sc-llm-obligations-jitter-batch5x3-summary-rerun-full-refreshed-v3.json",
+    "method": "llm_extract_task_obligations batch_size=5 rounds=3"
+  },
+  "policy": {
+    "default_mode": "single_run",
+    "jitter_mode": "three_run_majority",
+    "majority_pass_rule": "at least 2/3 runs verdict=ok",
+    "majority_fail_rule": "at least 2/3 runs verdict=fail",
+    "tie_rule": "mark_unknown_and_recheck",
+    "freeze_invalidation": [
+      "acceptance_changed",
+      "master_details_changed",
+      "tooling_or_prompt_changed"
+    ]
+  },
+  "task_sets": {
+    "stable_ok": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40
+    ],
+    "jitter_ok_majority": [],
+    "jitter_fail_majority": [],
+    "stable_fail": []
+  },
+  "ops_recommendation": {
+    "watchlist": [],
+    "auto_rerun_on_single_fail": [],
+    "blocked_until_fix": [],
+    "notes": [
+      "This is a draft whitelist baseline, not a permanent gate bypass.",
+      "Any acceptance/content change invalidates the freeze baseline."
+    ]
+  },
+  "promoted_at": "2026-02-19T13:46:26+00:00",
+  "promoted_from": ".taskmaster/config/obligations-freeze-whitelist.draft.json",
+  "baseline": {
+    "id": "obligations-freeze-whitelist-2026-02-19-r2",
+    "date": "2026-02-19",
+    "tag": "r2",
+    "immutable": true,
+    "baseline_file": ".taskmaster/config/obligations-freeze-baselines/obligations-freeze-whitelist-2026-02-19-r2.json"
+  }
+}
