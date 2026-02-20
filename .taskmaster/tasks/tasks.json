@@ -3,10 +3,10 @@
     "tasks": [
       {
         "id": 1,
-        "title": "Set up Godot 4.5.1 C# project for Windows",
-        "description": "Initialize a Godot 4.5.1 project with C# scripting on Windows, ensuring compatibility with Steam single-player and required dependencies.",
-        "details": "Install Godot 4.5.1 with .NET SDK (C# support). Create a new project with C# as the scripting language. Set up project structure (scenes, scripts, assets). Configure export settings for Windows (Steam single-player). Ensure all necessary Godot nodes and C# scripts are ready for core loop implementation. Use Godot's built-in tools for scene management and scripting.",
-        "testStrategy": "Verify project runs without errors in Godot editor on Windows. Confirm C# scripts compile and execute. Test basic scene loading and script attachment.",
+        "title": "Establish baseline Godot 4.5.1 C# Windows project",
+        "description": "Create the canonical baseline Godot 4.5.1 C# Windows project used by all later setup tasks.",
+        "details": "Create the single canonical Godot 4.5.1 .NET project on Windows, verify C# compile/run, define core folder layout, and produce a runnable Windows export baseline. This task owns initial project creation and must not be duplicated by downstream setup tasks.",
+        "testStrategy": "Verify editor open, C# build, main scene run, and Windows export run from the same canonical project root. Fail if any downstream setup task creates a second independent project root.",
         "priority": "high",
         "dependencies": [],
         "status": "pending",
@@ -375,12 +375,14 @@
       },
       {
         "id": 11,
-        "title": "Set Up Godot 4.5.1 C# Project for Windows",
-        "description": "Initialize a Godot 4.5.1 project with C# support on Windows, ensuring compatibility with Steam single-player and setting up the basic project structure.",
-        "details": "Install Godot 4.5.1 with .NET SDK for C# support. Create a new project with a main scene, configure export settings for Windows (Steam single-player). Set up directories for scripts, scenes, assets, and config files. Ensure the project runs without errors in the Godot editor on Windows. Use Godot's C# API for game logic. Pseudo-code: // Main.cs - Initialize game window and load initial scene. // ConfigManager.cs - Load JSON config files for balancing.",
-        "testStrategy": "Verify project opens in Godot 4.5.1 on Windows, compiles C# scripts without errors, and runs a basic scene. Test export to a Windows executable to ensure it launches properly.",
+        "title": "Refine baseline bootstrap with main-scene and structure standards",
+        "description": "Refine the existing T1 project with stricter main-scene, startup bootstrap script, and folder standards.",
+        "details": "Reuse the project created in T1 (no new project). Harden startup main scene bindings, standardize scripts/scenes/assets/config folders, and verify editor reopen stability. This task focuses on baseline quality hardening, not duplicate project initialization.",
+        "testStrategy": "Run reopen/rebuild checks on the same T1 project root, verify main scene bootstrap persistence and folder standards. Reject if validation is performed on a newly recreated project.",
         "priority": "high",
-        "dependencies": [],
+        "dependencies": [
+          1
+        ],
         "status": "pending",
         "subtasks": [],
         "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
@@ -748,13 +750,15 @@
       },
       {
         "id": 21,
-        "title": "Set Up Godot 4.5.1 C# Project with Windows Configuration",
-        "description": "Initialize a Godot 4.5.1 project with C# scripting, configure for Windows-only Steam single-player, and establish project structure.",
+        "title": "Lock Windows export profile and Steam runtime startup validation",
+        "description": "On top of T11, lock Windows-only export profile and validate Steam runtime startup path for single-player mode.",
         "status": "pending",
-        "dependencies": [],
+        "dependencies": [
+          11
+        ],
         "priority": "high",
-        "details": "Create a new Godot 4.5.1 project with C# as the scripting language. Set the export target to Windows (64-bit) and configure Steam integration for single-player. Set up the project directory with folders for scripts, scenes, assets, and configs. Ensure the project uses the .NET SDK compatible with Godot 4.5.1. Implement a basic main scene to verify setup. Use Godot's project settings to lock platform to Windows and disable other targets.\n\nPseudo-code:\n// Create Godot project via Godot editor\n// Set project settings:\n- application/config/name = \"LASTKING\"\n- application/run/main_scene = \"res://scenes/Main.tscn\"\n- display/window/size/width = 1920\n- display/window/size/height = 1080\n- export_presets: configure for Windows Desktop, Steam app ID placeholder\n// Create folder structure: scripts/, scenes/, ui/, audio/, configs/, saves/\n// Write a simple C# script attached to a Node to print \"Project setup complete\"",
-        "testStrategy": "Launch the project in Godot editor on Windows, verify it runs without errors, and check console output. Confirm project settings are correctly configured for Windows and C#. Validate folder structure exists.",
+        "details": "Reuse the hardened project from T11 (no re-bootstrap). Finalize Windows-only export configuration, disable online dependencies for single-player path, and verify Steam runtime startup compatibility. This task owns platform/runtime validation only.",
+        "testStrategy": "Validate Windows export artifact and Steam runtime startup flow on the same project root from T11; fail if any step depends on a newly created project or bypasses Steam runtime launch checks.",
         "subtasks": [],
         "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
       },
@@ -1043,12 +1047,14 @@
       },
       {
         "id": 31,
-        "title": "Set up Godot 4.5.1 C# project structure for config contracts",
-        "description": "Initialize a Godot 4.5.1 C# project on Windows with a dedicated folder structure for config schemas and samples, ensuring compatibility with Steam single-player and Windows-only constraints.",
-        "details": "Create a new Godot 4.5.1 project using C# as the scripting language. Set up directories: 'config/schemas/' for JSON schemas and 'config/samples/' for sample files. Ensure the project is configured for Windows target only and single-player mode. Use Godot's C# project settings to disable networking features. Add a basic README outlining the config-first approach. Pseudo-code: // Project setup via Godot editor, create folders and set export presets.",
-        "testStrategy": "Validate that the project opens in Godot 4.5.1 on Windows, C# scripts compile without errors, and the folder structure exists. Check export settings for Windows single-player.",
+        "title": "Scaffold config-contract workspace on existing project",
+        "description": "Extend the existing project with config schema/sample workspace structure for contract-driven tuning.",
+        "details": "Reuse the validated project from T21. Add config/schemas and config/samples workspace, plus config contract README and wiring entrypoints. This task must not recreate or reinitialize the Godot project.",
+        "testStrategy": "Verify new config workspace paths and contract entrypoints exist and are wired in the existing project root inherited from T21. Fail if setup is executed by creating another standalone project.",
         "priority": "high",
-        "dependencies": [],
+        "dependencies": [
+          21
+        ],
         "status": "pending",
         "subtasks": [],
         "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
