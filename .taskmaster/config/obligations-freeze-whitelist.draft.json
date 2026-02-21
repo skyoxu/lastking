@@ -20,7 +20,6 @@
   "task_sets": {
     "stable_ok": [
       1,
-      2,
       3,
       4,
       5,
@@ -30,7 +29,6 @@
       9,
       10,
       11,
-      12,
       13,
       14,
       15,
@@ -60,7 +58,10 @@
       39,
       40
     ],
-    "jitter_ok_majority": [],
+    "jitter_ok_majority": [
+      2,
+      12
+    ],
     "jitter_fail_majority": [],
     "stable_fail": []
   },

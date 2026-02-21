@@ -82,10 +82,5 @@
     "tag": "r1",
     "immutable": true,
     "baseline_file": ".taskmaster/config/obligations-freeze-baselines/obligations-freeze-whitelist-2026-02-21-r1.json"
-  },
-  "current_pointer": {
-    "updated_at": "2026-02-21T06:35:24+00:00",
-    "baseline_file": ".taskmaster/config/obligations-freeze-baselines/obligations-freeze-whitelist-2026-02-21-r1.json",
-    "baseline_sha256": "83f092ffaefe5edd06bf75d126fab2706c56822f9cce852a58cac0c560cf547d"
   }
 }
