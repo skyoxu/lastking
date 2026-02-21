@@ -10,7 +10,45 @@
         "priority": "high",
         "dependencies": [],
         "status": "pending",
-        "subtasks": [],
+        "subtasks": [
+          {
+            "id": "1",
+            "title": "Lock canonical project-root contract",
+            "description": "Define single-root constraints, required folders, and startup-scene ownership for the baseline Windows C# project.",
+            "status": "pending",
+            "priority": "high",
+            "dependencies": [],
+            "details": "Document canonical root, mandatory structure, and startup binding constraints used by all downstream tasks.",
+            "testStrategy": "Contract checks reject secondary project roots and missing baseline folders.",
+            "subtasks": []
+          },
+          {
+            "id": "2",
+            "title": "Implement baseline bootstrap and verification flow",
+            "description": "Create/open baseline project, validate C# compile, and verify editor startup flow and export preset availability.",
+            "status": "pending",
+            "priority": "high",
+            "dependencies": [
+              "1"
+            ],
+            "details": "Wire deterministic bootstrap flow for editor run and Windows export baseline verification.",
+            "testStrategy": "Integration smoke verifies editor startup and export preset readiness.",
+            "subtasks": []
+          },
+          {
+            "id": "3",
+            "title": "Publish baseline evidence and hard-gate tests",
+            "description": "Emit baseline verification evidence and gate failures for missing compile/startup/export conditions.",
+            "status": "pending",
+            "priority": "high",
+            "dependencies": [
+              "2"
+            ],
+            "details": "Produce deterministic evidence artifacts and fail fast when baseline checks are incomplete.",
+            "testStrategy": "Task-level gate tests validate baseline evidence completeness and fail conditions.",
+            "subtasks": []
+          }
+        ],
         "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
       },
       {
@@ -198,7 +236,45 @@
           3
         ],
         "status": "pending",
-        "subtasks": [],
+        "subtasks": [
+          {
+            "id": "1",
+            "title": "Define wave-budget and channel rules",
+            "description": "Specify budget growth formula, channel boundaries, and elite/boss budget isolation constraints.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [],
+            "details": "Lock per-day budget inputs, channel accounting fields, and elite/boss independent accounting policy.",
+            "testStrategy": "Contract tests verify budget math inputs and channel isolation invariants.",
+            "subtasks": []
+          },
+          {
+            "id": "2",
+            "title": "Implement budget engine and channel accounting",
+            "description": "Build deterministic budget allocator that computes per-wave/channel spend under locked rules.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "1"
+            ],
+            "details": "Apply deterministic allocation and enforce no cross-channel leakage in runtime accounting.",
+            "testStrategy": "Unit tests verify deterministic budget outputs and channel totals.",
+            "subtasks": []
+          },
+          {
+            "id": "3",
+            "title": "Add regression and audit evidence for budget flow",
+            "description": "Add replay-safe checks and logs proving budget progression and channel accounting correctness.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "2"
+            ],
+            "details": "Emit per-wave budget evidence and reject invalid accounting transitions.",
+            "testStrategy": "Regression tests assert repeatable budget traces under fixed seeds.",
+            "subtasks": []
+          }
+        ],
         "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
       },
       {
@@ -213,7 +289,45 @@
           4
         ],
         "status": "pending",
-        "subtasks": [],
+        "subtasks": [
+          {
+            "id": "1",
+            "title": "Define spawn cadence and composition contract",
+            "description": "Specify spawn cadence windows, per-channel pacing, and composition constraints for normal/elite/boss nights.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [],
+            "details": "Lock cadence fields and deterministic sequencing keys consumed by spawner runtime.",
+            "testStrategy": "Contract checks validate cadence and required composition fields.",
+            "subtasks": []
+          },
+          {
+            "id": "2",
+            "title": "Implement deterministic spawner orchestration",
+            "description": "Implement spawn scheduler that follows cadence, channel assignments, and seeded ordering.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "1"
+            ],
+            "details": "Use seeded deterministic ordering and enforce per-channel emission boundaries.",
+            "testStrategy": "Simulation tests verify stable spawn order with same seed.",
+            "subtasks": []
+          },
+          {
+            "id": "3",
+            "title": "Add spawn regression and failure-path coverage",
+            "description": "Cover invalid cadence inputs, channel overflow, and fallback behaviors with deterministic assertions.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "2"
+            ],
+            "details": "Emit structured spawn diagnostics and fail on malformed composition states.",
+            "testStrategy": "Regression tests assert fallback behavior and deterministic traces.",
+            "subtasks": []
+          }
+        ],
         "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
       },
       {
@@ -227,7 +341,45 @@
           1
         ],
         "status": "pending",
-        "subtasks": [],
+        "subtasks": [
+          {
+            "id": "1",
+            "title": "Define enemy target-priority and pathing policy",
+            "description": "Define target selection order, blocked-path fallback, and tie-break policies for deterministic AI behavior.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [],
+            "details": "Lock AI priority chain and seeded tie-break rules for repeatable outcomes.",
+            "testStrategy": "Contract tests verify target-priority and tie-break rule declarations.",
+            "subtasks": []
+          },
+          {
+            "id": "2",
+            "title": "Implement pathing and target selection runtime",
+            "description": "Implement runtime selection logic for nearest valid target and path-cost-based movement under constraints.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "1"
+            ],
+            "details": "Apply deterministic path-cost evaluation and target switching without illegal path traversal.",
+            "testStrategy": "Unit tests verify path selection and target switching behaviors.",
+            "subtasks": []
+          },
+          {
+            "id": "3",
+            "title": "Add blocked-map and recovery regression tests",
+            "description": "Validate fully blocked scenarios, fallback activation, and recovery once valid routes reappear.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "2"
+            ],
+            "details": "Emit pathing diagnostics and ensure no deadlock under blocked-map conditions.",
+            "testStrategy": "Integration tests verify blocked-map fallback and deterministic recovery.",
+            "subtasks": []
+          }
+        ],
         "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
       },
       {
@@ -242,7 +394,45 @@
           6
         ],
         "status": "pending",
-        "subtasks": [],
+        "subtasks": [
+          {
+            "id": "1",
+            "title": "Define castle HP terminal-state contract",
+            "description": "Define castle HP fields, damage application rules, and lose-condition trigger contract.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [],
+            "details": "Lock castle HP mutation boundaries and terminal-state transition conditions.",
+            "testStrategy": "Contract tests verify terminal trigger and HP bounds.",
+            "subtasks": []
+          },
+          {
+            "id": "2",
+            "title": "Implement castle damage and lose-condition flow",
+            "description": "Implement HP mutation, terminal state dispatch, and no-duplicate-failure trigger logic.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "1"
+            ],
+            "details": "Apply deterministic state transition when HP reaches terminal threshold.",
+            "testStrategy": "Unit tests verify single terminal dispatch and HP transitions.",
+            "subtasks": []
+          },
+          {
+            "id": "3",
+            "title": "Add terminal-state replay and evidence checks",
+            "description": "Add deterministic replay checks for castle-fall scenarios and evidence logging.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "2"
+            ],
+            "details": "Emit terminal transition evidence and fail on missing terminal artifacts.",
+            "testStrategy": "Regression tests verify consistent lose-condition timing under same seed.",
+            "subtasks": []
+          }
+        ],
         "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
       },
       {
@@ -273,7 +463,45 @@
           7
         ],
         "status": "pending",
-        "subtasks": [],
+        "subtasks": [
+          {
+            "id": "1",
+            "title": "Define minimal HUD data contract",
+            "description": "Define data contract for day/night state, castle HP, and essential runtime counters in HUD.",
+            "status": "pending",
+            "priority": "low",
+            "dependencies": [],
+            "details": "Lock HUD fields, refresh cadence, and error-state placeholders for baseline UI.",
+            "testStrategy": "Contract tests verify required HUD fields and bindings.",
+            "subtasks": []
+          },
+          {
+            "id": "2",
+            "title": "Implement HUD binding and update flow",
+            "description": "Bind core-loop state to HUD and ensure deterministic updates without stale values.",
+            "status": "pending",
+            "priority": "low",
+            "dependencies": [
+              "1"
+            ],
+            "details": "Wire event-driven updates from core loop into UI layer with clear ownership.",
+            "testStrategy": "Scene tests verify HUD state reflects runtime transitions.",
+            "subtasks": []
+          },
+          {
+            "id": "3",
+            "title": "Add HUD regression and fallback-state tests",
+            "description": "Cover missing-data fallback and state-transition rendering correctness in UI tests.",
+            "status": "pending",
+            "priority": "low",
+            "dependencies": [
+              "2"
+            ],
+            "details": "Emit UI state diagnostics for transition points and invalid data handling.",
+            "testStrategy": "Regression tests verify HUD continuity across day-night and damage events.",
+            "subtasks": []
+          }
+        ],
         "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
       },
       {
@@ -384,7 +612,45 @@
           1
         ],
         "status": "pending",
-        "subtasks": [],
+        "subtasks": [
+          {
+            "id": "1",
+            "title": "Define bootstrap refinement standards",
+            "description": "Define canonical main-scene, folder layout, and startup script standards for baseline refinement.",
+            "status": "pending",
+            "priority": "high",
+            "dependencies": [],
+            "details": "Lock naming conventions and mandatory bootstrap assets on existing root.",
+            "testStrategy": "Contract checks verify required bootstrap assets and scene configuration.",
+            "subtasks": []
+          },
+          {
+            "id": "2",
+            "title": "Implement refined bootstrap wiring",
+            "description": "Apply main-scene and structure refinements while preserving canonical root invariants.",
+            "status": "pending",
+            "priority": "high",
+            "dependencies": [
+              "1"
+            ],
+            "details": "Update startup wiring and folder structure without introducing secondary roots.",
+            "testStrategy": "Integration smoke verifies refined startup flow and structure integrity.",
+            "subtasks": []
+          },
+          {
+            "id": "3",
+            "title": "Add structure-regression and gate checks",
+            "description": "Add checks that fail when refined standards regress or startup bindings are broken.",
+            "status": "pending",
+            "priority": "high",
+            "dependencies": [
+              "2"
+            ],
+            "details": "Emit structure verification artifacts and fail on missing mandatory bootstrap parts.",
+            "testStrategy": "Gate tests verify refined bootstrap standards remain enforced.",
+            "subtasks": []
+          }
+        ],
         "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
       },
       {
@@ -577,7 +843,45 @@
           13
         ],
         "status": "pending",
-        "subtasks": [],
+        "subtasks": [
+          {
+            "id": "1",
+            "title": "Define economy and tax contract",
+            "description": "Define residence tax cadence, integer resource flow, and debt-related guard conditions.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [],
+            "details": "Lock tax tick interval, integer-only updates, and negative-gold handling expectations.",
+            "testStrategy": "Contract tests validate tax cadence fields and integer invariants.",
+            "subtasks": []
+          },
+          {
+            "id": "2",
+            "title": "Implement residence tax runtime flow",
+            "description": "Implement tax generation, resource updates, and deterministic economy event emission.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "1"
+            ],
+            "details": "Apply integer-only tax mutations and deterministic update ordering per tick.",
+            "testStrategy": "Unit tests verify tax accumulation and debt-state transitions.",
+            "subtasks": []
+          },
+          {
+            "id": "3",
+            "title": "Add economy regression and audit coverage",
+            "description": "Cover invalid config fallback, long-run economy consistency, and audit evidence outputs.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "2"
+            ],
+            "details": "Emit structured economy traces for tax ticks and mutation reasons.",
+            "testStrategy": "Regression tests verify repeatable tax outcomes under fixed seeds.",
+            "subtasks": []
+          }
+        ],
         "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
       },
       {
@@ -592,7 +896,45 @@
           14
         ],
         "status": "pending",
-        "subtasks": [],
+        "subtasks": [
+          {
+            "id": "1",
+            "title": "Define upgrade-repair exclusivity rules",
+            "description": "Define upgrade levels, repair cost model, and mutual-exclusion constraints between repair and upgrade.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [],
+            "details": "Lock cannot-repair-while-upgrading behavior and full-heal-on-upgrade completion rule.",
+            "testStrategy": "Contract tests validate upgrade/repair exclusivity and level constraints.",
+            "subtasks": []
+          },
+          {
+            "id": "2",
+            "title": "Implement upgrade and repair execution flow",
+            "description": "Implement queueing, resource deduction, cancellation policy, and progression timing for upgrades and repairs.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "1"
+            ],
+            "details": "Apply integer-only cost deduction with cancel/refund rules and deterministic timing.",
+            "testStrategy": "Unit tests verify queue transitions, refunds, and completion effects.",
+            "subtasks": []
+          },
+          {
+            "id": "3",
+            "title": "Add repair-upgrade regression scenarios",
+            "description": "Cover debt-stop repair, cancel behaviors, and edge-case transitions with deterministic assertions.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "2"
+            ],
+            "details": "Emit upgrade/repair timeline evidence and reject illegal concurrent actions.",
+            "testStrategy": "Regression tests verify exclusivity and recovery paths across edge cases.",
+            "subtasks": []
+          }
+        ],
         "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
       },
       {
@@ -607,7 +949,45 @@
           14
         ],
         "status": "pending",
-        "subtasks": [],
+        "subtasks": [
+          {
+            "id": "1",
+            "title": "Define barracks queue contract",
+            "description": "Define per-barracks queue constraints, slot behavior, and resource-deduction timing rules.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [],
+            "details": "Lock one-queue-per-barracks rule and immediate cost deduction semantics.",
+            "testStrategy": "Contract tests verify queue limits and deduction timing constraints.",
+            "subtasks": []
+          },
+          {
+            "id": "2",
+            "title": "Implement training queue runtime",
+            "description": "Implement enqueue, cancel/refund, and completion flows for unit training per barracks.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "1"
+            ],
+            "details": "Apply deterministic queue progression and per-queue ownership boundaries.",
+            "testStrategy": "Unit tests verify queue order, cancel refunds, and completion dispatch.",
+            "subtasks": []
+          },
+          {
+            "id": "3",
+            "title": "Add queue stress and regression tests",
+            "description": "Cover rapid enqueue/cancel sequences and multi-barracks isolation scenarios.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "2"
+            ],
+            "details": "Emit queue diagnostics for ordering and state transitions under load.",
+            "testStrategy": "Regression tests verify deterministic queue behavior in stress cases.",
+            "subtasks": []
+          }
+        ],
         "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
       },
       {
@@ -622,7 +1002,45 @@
           16
         ],
         "status": "pending",
-        "subtasks": [],
+        "subtasks": [
+          {
+            "id": "1",
+            "title": "Define tech-tree stat modifier contract",
+            "description": "Define tech stat categories, integer/percentage boundaries, and stack application order.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [],
+            "details": "Lock tech modifier schema and out-of-range rejection behavior for percentage-based stats.",
+            "testStrategy": "Contract tests verify modifier bounds and deterministic apply order.",
+            "subtasks": []
+          },
+          {
+            "id": "2",
+            "title": "Implement tech application runtime",
+            "description": "Apply tech modifiers to unit stats and production parameters using deterministic update rules.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "1"
+            ],
+            "details": "Ensure tech effects propagate through runtime snapshots without hardcoded constants.",
+            "testStrategy": "Unit tests verify expected stat outputs after tech changes.",
+            "subtasks": []
+          },
+          {
+            "id": "3",
+            "title": "Add tech regression and balancing checks",
+            "description": "Add tests for cap enforcement, reset/load consistency, and replay-safe outcomes.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "2"
+            ],
+            "details": "Emit tech application traces and reject out-of-range modifier inputs.",
+            "testStrategy": "Regression tests verify deterministic tech impact under fixed seeds.",
+            "subtasks": []
+          }
+        ],
         "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
       },
       {
@@ -745,7 +1163,45 @@
           17
         ],
         "status": "pending",
-        "subtasks": [],
+        "subtasks": [
+          {
+            "id": "1",
+            "title": "Define combat resolution contract",
+            "description": "Define damage resolution, target selection constraints, and no-friendly-fire invariant.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [],
+            "details": "Lock combat event payload and friendly-fire disabled policy across all units/towers.",
+            "testStrategy": "Contract tests verify combat payload fields and friendly-fire invariants.",
+            "subtasks": []
+          },
+          {
+            "id": "2",
+            "title": "Implement combat integration flow",
+            "description": "Integrate unit/tower attacks with target resolution and deterministic combat tick ordering.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "1"
+            ],
+            "details": "Apply deterministic combat tick sequencing and ignore friendly entities in damage paths.",
+            "testStrategy": "Unit tests verify target resolution and damage application order.",
+            "subtasks": []
+          },
+          {
+            "id": "3",
+            "title": "Add combat regression and edge-case coverage",
+            "description": "Cover mixed-unit scenarios, elite/boss fights, and no-friendly-fire guarantees.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "2"
+            ],
+            "details": "Emit combat diagnostics for target picks and damage events.",
+            "testStrategy": "Regression tests verify no-friendly-fire under dense engagements.",
+            "subtasks": []
+          }
+        ],
         "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
       },
       {
@@ -759,7 +1215,45 @@
         "priority": "high",
         "details": "Reuse the hardened project from T11 (no re-bootstrap). Finalize Windows-only export configuration, disable online dependencies for single-player path, and verify Steam runtime startup compatibility. This task owns platform/runtime validation only.",
         "testStrategy": "Validate Windows export artifact and Steam runtime startup flow on the same project root from T11; fail if any step depends on a newly created project or bypasses Steam runtime launch checks.",
-        "subtasks": [],
+        "subtasks": [
+          {
+            "id": "1",
+            "title": "Define Windows export and Steam startup contract",
+            "description": "Define required Windows export profile fields and Steam runtime startup validation checkpoints.",
+            "status": "pending",
+            "priority": "high",
+            "dependencies": [],
+            "details": "Lock export preset invariants and startup validation criteria on Windows-only target.",
+            "testStrategy": "Contract checks verify export profile keys and startup validation prerequisites.",
+            "subtasks": []
+          },
+          {
+            "id": "2",
+            "title": "Implement export profile lock and startup checks",
+            "description": "Implement validation logic for export profile integrity and Steam startup preflight.",
+            "status": "pending",
+            "priority": "high",
+            "dependencies": [
+              "1"
+            ],
+            "details": "Apply fail-fast checks when profile or startup prerequisites are missing.",
+            "testStrategy": "Integration checks verify startup validation path on Windows runtime.",
+            "subtasks": []
+          },
+          {
+            "id": "3",
+            "title": "Add export/startup gate regression tests",
+            "description": "Cover corrupted profile, missing fields, and startup failure-path diagnostics.",
+            "status": "pending",
+            "priority": "high",
+            "dependencies": [
+              "2"
+            ],
+            "details": "Emit structured export/startup evidence and reject invalid release inputs.",
+            "testStrategy": "Gate tests verify release blocking behavior for invalid profiles.",
+            "subtasks": []
+          }
+        ],
         "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
       },
       {
@@ -773,7 +1267,45 @@
         "priority": "high",
         "details": "Create a CameraController node with a Camera2D. Implement edge scrolling: detect mouse position near screen edges (e.g., within 20 pixels) and move camera accordingly. Add keyboard scrolling using arrow keys or WASD. Configure camera limits to match game world boundaries. Ensure smooth movement with adjustable speed. Use Godot's input system for keyboard and mouse events.\n\nPseudo-code:\n// CameraController.cs\npublic partial class CameraController : Node2D\n{\n    private Camera2D _camera;\n    private float _scrollSpeed = 500f;\n    private int _edgeMargin = 20;\n\n    public override void _Ready() {\n        _camera = GetNode<Camera2D>(\"Camera2D\");\n    }\n\n    public override void _Process(double delta) {\n        Vector2 move = Vector2.Zero;\n        // Edge scrolling\n        Vector2 mousePos = GetViewport().GetMousePosition();\n        if (mousePos.X < _edgeMargin) move.X -= 1;\n        if (mousePos.X > GetViewport().GetVisibleRect().Size.X - _edgeMargin) move.X += 1;\n        if (mousePos.Y < _edgeMargin) move.Y -= 1;\n        if (mousePos.Y > GetViewport().GetVisibleRect().Size.Y - _edgeMargin) move.Y += 1;\n        // Keyboard scrolling\n        if (Input.IsActionPressed(\"ui_right\")) move.X += 1;\n        if (Input.IsActionPressed(\"ui_left\")) move.X -= 1;\n        if (Input.IsActionPressed(\"ui_down\")) move.Y += 1;\n        if (Input.IsActionPressed(\"ui_up\")) move.Y -= 1;\n        _camera.Position += move.Normalized() * _scrollSpeed * (float)delta;\n    }\n}",
         "testStrategy": "Test in-game: move mouse to screen edges and verify camera scrolls. Press arrow keys/WASD to confirm keyboard scrolling. Check camera limits prevent moving beyond world bounds. Ensure no performance issues.",
-        "subtasks": [],
+        "subtasks": [
+          {
+            "id": "1",
+            "title": "Define camera movement and bounds contract",
+            "description": "Define edge-scroll, keyboard-scroll, lock behavior, and world-bounds constraints.",
+            "status": "pending",
+            "priority": "high",
+            "dependencies": [],
+            "details": "Lock movement speeds, bounds clamping, and lock-state interaction rules.",
+            "testStrategy": "Contract tests verify movement parameters and bounds invariants.",
+            "subtasks": []
+          },
+          {
+            "id": "2",
+            "title": "Implement camera edge/keyboard scroll runtime",
+            "description": "Implement edge and keyboard camera control with deterministic clamping and lock handling.",
+            "status": "pending",
+            "priority": "high",
+            "dependencies": [
+              "1"
+            ],
+            "details": "Apply stable movement updates across paused and active runtime states.",
+            "testStrategy": "Scene tests verify camera movement, lock, and bounds behavior.",
+            "subtasks": []
+          },
+          {
+            "id": "3",
+            "title": "Add camera regression and usability checks",
+            "description": "Cover focus loss, rapid input switching, and boundary stress scenarios.",
+            "status": "pending",
+            "priority": "high",
+            "dependencies": [
+              "2"
+            ],
+            "details": "Emit camera state diagnostics for movement mode transitions.",
+            "testStrategy": "Regression tests verify no boundary escape and consistent movement response.",
+            "subtasks": []
+          }
+        ],
         "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
       },
       {
@@ -787,7 +1319,45 @@
         "priority": "high",
         "details": "Create a GameManager singleton to manage game state and speed. Implement pause functionality that sets Engine.TimeScale to 0 and freezes all custom timers. For 1x and 2x speeds, set TimeScale to 1 and 2 respectively. Ensure that during pause, any queued countdowns (e.g., wave timers) are paused and resume correctly. Use Godot's ProcessMode to handle pausing of nodes. Add UI buttons to control speed.\n\nPseudo-code:\n// GameManager.cs\npublic partial class GameManager : Node\n{\n    public static GameManager Instance;\n    private float _currentSpeed = 1f;\n    private bool _isPaused = false;\n\n    public override void _Ready() {\n        Instance = this;\n    }\n\n    public void SetSpeed(float speed) {\n        if (_isPaused && speed > 0) _isPaused = false;\n        Engine.TimeScale = speed;\n        _currentSpeed = speed;\n        // Notify all timers to adjust\n    }\n\n    public void TogglePause() {\n        _isPaused = !_isPaused;\n        if (_isPaused) {\n            Engine.TimeScale = 0;\n            // Freeze all custom timers\n        } else {\n            Engine.TimeScale = _currentSpeed;\n            // Unfreeze timers\n        }\n    }\n}",
         "testStrategy": "Test pause: start a timer, pause game, verify timer stops and no gameplay progresses. Unpause and confirm timer resumes. Switch between 1x and 2x speeds, check game speed changes accordingly. Validate UI buttons work and update state.",
-        "subtasks": [],
+        "subtasks": [
+          {
+            "id": "1",
+            "title": "Define speed-control and freeze semantics",
+            "description": "Define pause/1x/2x semantics and full timer freeze behavior for gameplay systems.",
+            "status": "pending",
+            "priority": "high",
+            "dependencies": [],
+            "details": "Lock which timers freeze and which systems remain deterministic under speed changes.",
+            "testStrategy": "Contract tests verify speed-state matrix and freeze invariants.",
+            "subtasks": []
+          },
+          {
+            "id": "2",
+            "title": "Implement runtime speed switching",
+            "description": "Implement pause/1x/2x switching and propagate speed state across timing-dependent systems.",
+            "status": "pending",
+            "priority": "high",
+            "dependencies": [
+              "1"
+            ],
+            "details": "Apply deterministic propagation of speed state to loop, spawn, and queue timers.",
+            "testStrategy": "Unit tests verify timer behavior under all speed states.",
+            "subtasks": []
+          },
+          {
+            "id": "3",
+            "title": "Add speed-control regression and replay checks",
+            "description": "Cover rapid toggles, pause-resume cycles, and replay consistency under speed changes.",
+            "status": "pending",
+            "priority": "high",
+            "dependencies": [
+              "2"
+            ],
+            "details": "Emit speed-state timeline evidence for debugging and gate checks.",
+            "testStrategy": "Regression tests verify deterministic timeline anchors across speed changes.",
+            "subtasks": []
+          }
+        ],
         "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
       },
       {
@@ -801,7 +1371,45 @@
         "priority": "medium",
         "details": "Design a UIFeedbackManager that displays messages via a label or popup. For invalid placement (e.g., building on invalid terrain), show a temporary message like \"Cannot build here.\" For blocked actions, display reason. For migration/load errors, show a persistent error dialog with details. Use Godot's Control nodes for UI. Ensure messages are non-intrusive and dismissible. Integrate with game events to trigger feedback.\n\nPseudo-code:\n// UIFeedbackManager.cs\npublic partial class UIFeedbackManager : Control\n{\n    private Label _feedbackLabel;\n    private Timer _hideTimer;\n\n    public override void _Ready() {\n        _feedbackLabel = GetNode<Label>(\"FeedbackLabel\");\n        _hideTimer = GetNode<Timer>(\"HideTimer\");\n        _hideTimer.Timeout += HideFeedback;\n    }\n\n    public void ShowFeedback(string message, bool isError = false) {\n        _feedbackLabel.Text = message;\n        _feedbackLabel.Modulate = isError ? Colors.Red : Colors.Yellow;\n        _feedbackLabel.Visible = true;\n        _hideTimer.Start(3.0); // Hide after 3 seconds\n    }\n\n    private void HideFeedback() {\n        _feedbackLabel.Visible = false;\n    }\n}",
         "testStrategy": "Simulate invalid placement: attempt to build in a blocked area, verify feedback appears. Test load error by corrupting a save file, check error dialog shows. Ensure messages are clear and UI updates correctly. Validate timing and visibility.",
-        "subtasks": [],
+        "subtasks": [
+          {
+            "id": "1",
+            "title": "Define invalid-action feedback contract",
+            "description": "Define error categories, message keys, and display priorities for invalid actions.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [],
+            "details": "Lock feedback reason codes and i18n-friendly key usage for UI messages.",
+            "testStrategy": "Contract tests verify reason-code to message-key mapping completeness.",
+            "subtasks": []
+          },
+          {
+            "id": "2",
+            "title": "Implement runtime feedback dispatch flow",
+            "description": "Implement dispatch of invalid-action and error messages from gameplay logic to UI.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "1"
+            ],
+            "details": "Apply deterministic message routing with de-dup and clear user-facing priority rules.",
+            "testStrategy": "Scene tests verify message rendering for invalid actions and errors.",
+            "subtasks": []
+          },
+          {
+            "id": "3",
+            "title": "Add feedback regression and localization checks",
+            "description": "Cover repeated invalid inputs, boundary errors, and localization key fallback behavior.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "2"
+            ],
+            "details": "Emit feedback diagnostics with reason codes for troubleshooting.",
+            "testStrategy": "Regression tests verify stable feedback behavior across repeated errors.",
+            "subtasks": []
+          }
+        ],
         "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
       },
       {
@@ -904,7 +1512,45 @@
         "priority": "medium",
         "details": "Use Steamworks.NET or GodotSteam plugin to integrate Steam API. Bind saves to the user's Steam account. On save, upload the save file to Steam Cloud; on load, download from cloud. Handle conflicts (e.g., local vs. cloud) by prompting user. Ensure compatibility with the existing SaveManager. Test with Steamworks API in a development environment.\n\nPseudo-code:\n// SteamCloudManager.cs\npublic partial class SteamCloudManager : Node\n{\n    public async Task UploadSave(string filePath) {\n        if (SteamManager.IsLoggedIn) {\n            byte[] data = File.ReadAllBytes(filePath);\n            bool success = SteamRemoteStorage.FileWrite(\"autosave.save\", data);\n            if (!success) Debug.Log(\"Upload failed\");\n        }\n    }\n\n    public async Task DownloadSave(string filePath) {\n        if (SteamRemoteStorage.FileExists(\"autosave.save\")) {\n            byte[] data = SteamRemoteStorage.FileRead(\"autosave.save\");\n            File.WriteAllBytes(filePath, data);\n        }\n    }\n}",
         "testStrategy": "Test with a Steam development account: save game, verify file uploads to cloud. Restart game, load from cloud, confirm data matches. Simulate network issues, check error handling. Ensure account binding works.",
-        "subtasks": [],
+        "subtasks": [
+          {
+            "id": "1",
+            "title": "Define Steam cloud-save binding contract",
+            "description": "Define account binding constraints, slot policy, and cloud/local consistency rules.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [],
+            "details": "Lock Steam account identity checks and single auto-save slot behavior.",
+            "testStrategy": "Contract tests verify account-bound save identity and slot constraints.",
+            "subtasks": []
+          },
+          {
+            "id": "2",
+            "title": "Implement cloud-save sync and validation",
+            "description": "Implement cloud upload/download flow, binding validation, and conflict handling.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "1"
+            ],
+            "details": "Apply deterministic save metadata checks and strict rejection on invalid ownership.",
+            "testStrategy": "Integration tests verify cloud sync and ownership validation flow.",
+            "subtasks": []
+          },
+          {
+            "id": "3",
+            "title": "Add cloud-save regression and failure recovery tests",
+            "description": "Cover offline fallback, account mismatch, and corrupted payload rejection paths.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "2"
+            ],
+            "details": "Emit structured save-sync diagnostics and fail-safe recovery evidence.",
+            "testStrategy": "Regression tests verify deterministic recovery and rejection behavior.",
+            "subtasks": []
+          }
+        ],
         "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
       },
       {
@@ -918,7 +1564,45 @@
         "priority": "medium",
         "details": "Design an AchievementManager that tracks achievement progress. Define achievements in a config file (e.g., JSON) with IDs, names, descriptions, and unlock conditions. Achievements should be visible from the start (non-hidden). Unlock triggers must be deterministic based on game events (e.g., survive day 15). Use Steamworks API for Steam achievements if integrated. Update UI to show achievement list and unlock notifications.\n\nPseudo-code:\n// AchievementManager.cs\npublic partial class AchievementManager : Node\n{\n    private Dictionary<string, Achievement> _achievements;\n\n    public override void _Ready() {\n        LoadAchievementsFromConfig();\n    }\n\n    public void UnlockAchievement(string id) {\n        if (_achievements.ContainsKey(id) && !_achievements[id].IsUnlocked) {\n            _achievements[id].IsUnlocked = true;\n            // Update Steam achievement\n            SteamUserStats.SetAchievement(id);\n            SteamUserStats.StoreStats();\n            // Show UI notification\n        }\n    }\n}",
         "testStrategy": "Test unlocking: trigger an achievement condition (e.g., win game), verify achievement unlocks and UI updates. Check achievement list displays correctly. Ensure determinism by repeating same actions. Validate Steam integration if used.",
-        "subtasks": [],
+        "subtasks": [
+          {
+            "id": "1",
+            "title": "Define achievement trigger contract",
+            "description": "Define achievement IDs, deterministic trigger conditions, and persistence boundaries.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [],
+            "details": "Lock trigger conditions and one-time unlock behavior for all visible achievements.",
+            "testStrategy": "Contract tests verify achievement key set and trigger condition completeness.",
+            "subtasks": []
+          },
+          {
+            "id": "2",
+            "title": "Implement deterministic unlock pipeline",
+            "description": "Implement runtime trigger evaluation, unlock persistence, and event dispatch.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "1"
+            ],
+            "details": "Apply deterministic unlock ordering and idempotent save behavior.",
+            "testStrategy": "Unit tests verify unlock criteria and duplicate-trigger protection.",
+            "subtasks": []
+          },
+          {
+            "id": "3",
+            "title": "Add achievement regression and sync tests",
+            "description": "Cover replay consistency, load-resume behavior, and Steam sync edge cases.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "2"
+            ],
+            "details": "Emit achievement unlock evidence with deterministic timestamps/sequence anchors.",
+            "testStrategy": "Regression tests verify consistent unlock outcomes under repeated runs.",
+            "subtasks": []
+          }
+        ],
         "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
       },
       {
@@ -932,7 +1616,45 @@
         "priority": "medium",
         "details": "Create a LocalizationManager that loads translation files (e.g., CSV or JSON) for each language. Use keys for text references (e.g., \"UI_PAUSE\"). Support zh-CN and en-US. Implement language switching in settings. Ensure i18n keys remain stable across patches. Integrate with UI elements to update text dynamically. Store language preference in config.\n\nPseudo-code:\n// LocalizationManager.cs\npublic partial class LocalizationManager : Node\n{\n    private Dictionary<string, string> _translations;\n    private string _currentLanguage = \"en-US\";\n\n    public void LoadLanguage(string lang) {\n        string filePath = $\"res://locales/{lang}.json\";\n        var file = FileAccess.Open(filePath, FileAccess.ModeFlags.Read);\n        string json = file.GetAsText();\n        _translations = Json.ParseString<Dictionary<string, string>>(json);\n        file.Close();\n        _currentLanguage = lang;\n        // Notify UI to update\n    }\n\n    public string Tr(string key) {\n        return _translations.GetValueOrDefault(key, key);\n    }\n}",
         "testStrategy": "Test language switching: load en-US and zh-CN, verify UI text changes. Check missing keys fallback to key. Validate translation files are loaded correctly. Ensure keys are stable and don't change unintentionally.",
-        "subtasks": [],
+        "subtasks": [
+          {
+            "id": "1",
+            "title": "Define i18n resource and key contract",
+            "description": "Define zh-CN/en-US baseline keys, namespace conventions, and fallback behavior.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [],
+            "details": "Lock message-key conventions and non-hardcoded text usage requirements.",
+            "testStrategy": "Contract tests verify required key coverage for both baseline locales.",
+            "subtasks": []
+          },
+          {
+            "id": "2",
+            "title": "Implement localization loading and runtime switching",
+            "description": "Implement locale resource loading, key resolution, and runtime language switching.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "1"
+            ],
+            "details": "Apply deterministic fallback to key literal when keys are missing.",
+            "testStrategy": "Scene tests verify locale switch updates core UI text correctly.",
+            "subtasks": []
+          },
+          {
+            "id": "3",
+            "title": "Add i18n regression and key-audit tests",
+            "description": "Cover missing keys, fallback correctness, and persisted locale preference behavior.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "2"
+            ],
+            "details": "Emit localization diagnostics for unresolved keys and fallback paths.",
+            "testStrategy": "Regression tests verify stable key resolution across reloads.",
+            "subtasks": []
+          }
+        ],
         "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
       },
       {
@@ -1056,7 +1778,45 @@
           21
         ],
         "status": "pending",
-        "subtasks": [],
+        "subtasks": [
+          {
+            "id": "1",
+            "title": "Define config-workspace conventions",
+            "description": "Define schema locations, naming conventions, and version field rules for config workspace.",
+            "status": "pending",
+            "priority": "high",
+            "dependencies": [],
+            "details": "Lock canonical config paths and naming standards for all contract files.",
+            "testStrategy": "Contract checks verify workspace structure and required metadata fields.",
+            "subtasks": []
+          },
+          {
+            "id": "2",
+            "title": "Implement workspace scaffold on existing root",
+            "description": "Create/update config contract directories and bootstrap baseline manifests without changing core architecture.",
+            "status": "pending",
+            "priority": "high",
+            "dependencies": [
+              "1"
+            ],
+            "details": "Apply non-destructive scaffold updates compatible with current repository layout.",
+            "testStrategy": "Structure tests verify required files/directories exist and are discoverable.",
+            "subtasks": []
+          },
+          {
+            "id": "3",
+            "title": "Add scaffold regression and guard checks",
+            "description": "Cover missing-file detection, duplicate-path prevention, and bootstrap idempotency.",
+            "status": "pending",
+            "priority": "high",
+            "dependencies": [
+              "2"
+            ],
+            "details": "Emit scaffold evidence for CI-friendly verification and troubleshooting.",
+            "testStrategy": "Regression tests verify repeated scaffold runs remain idempotent.",
+            "subtasks": []
+          }
+        ],
         "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
       },
       {
@@ -1084,7 +1844,45 @@
           31
         ],
         "status": "pending",
-        "subtasks": [],
+        "subtasks": [
+          {
+            "id": "1",
+            "title": "Define difficulty schema and lock rules",
+            "description": "Define difficulty tiers, locked-session constraints, and version metadata requirements.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [],
+            "details": "Lock schema fields for level definitions, lock policy, and migration metadata.",
+            "testStrategy": "Schema tests verify required tier fields and lock constraints.",
+            "subtasks": []
+          },
+          {
+            "id": "2",
+            "title": "Implement difficulty schema validation",
+            "description": "Implement parser/validator for tier values, bounds, and compatibility rules.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "1"
+            ],
+            "details": "Apply strict validation with clear reject reasons for invalid tiers.",
+            "testStrategy": "Validation tests verify bounds, missing fields, and type mismatch handling.",
+            "subtasks": []
+          },
+          {
+            "id": "3",
+            "title": "Add difficulty schema regression samples",
+            "description": "Add canonical samples and negative fixtures for schema drift prevention.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "2"
+            ],
+            "details": "Emit schema validation evidence and fallback behavior for invalid configs.",
+            "testStrategy": "Regression tests verify stable validation against sample fixtures.",
+            "subtasks": []
+          }
+        ],
         "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
       },
       {
@@ -1112,7 +1910,45 @@
           31
         ],
         "status": "pending",
-        "subtasks": [],
+        "subtasks": [
+          {
+            "id": "1",
+            "title": "Define pressure-normalization schema constraints",
+            "description": "Define baseline constants, range checks, and normalization fields for pressure control.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [],
+            "details": "Lock schema fields that normalize pressure inputs and cap unsafe values.",
+            "testStrategy": "Schema tests verify baseline constants and allowed range declarations.",
+            "subtasks": []
+          },
+          {
+            "id": "2",
+            "title": "Implement normalization schema validation flow",
+            "description": "Implement validation and typed mapping for normalization config values.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "1"
+            ],
+            "details": "Apply strict reject/fallback behavior when normalization values are out of range.",
+            "testStrategy": "Validation tests verify deterministic parsing and range enforcement.",
+            "subtasks": []
+          },
+          {
+            "id": "3",
+            "title": "Add normalization regression and baseline fixtures",
+            "description": "Add sample fixtures and negative cases to prevent drift in normalization behavior.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "2"
+            ],
+            "details": "Emit normalization validation evidence and fallback reason codes.",
+            "testStrategy": "Regression tests verify stable baseline behavior across config revisions.",
+            "subtasks": []
+          }
+        ],
         "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
       },
       {
@@ -1274,7 +2110,45 @@
           37
         ],
         "status": "pending",
-        "subtasks": [],
+        "subtasks": [
+          {
+            "id": "1",
+            "title": "Define config-governance policy contract",
+            "description": "Define governance checks for schema completeness, ownership, and promotion flow.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [],
+            "details": "Lock mandatory governance fields and promotion preconditions for tuning configs.",
+            "testStrategy": "Contract tests verify governance metadata and promotion prerequisites.",
+            "subtasks": []
+          },
+          {
+            "id": "2",
+            "title": "Implement governance checks in tuning workflow",
+            "description": "Implement validation gates that enforce governance policy before runtime config adoption.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "1"
+            ],
+            "details": "Apply fail-fast governance checks and deterministic reject reasons.",
+            "testStrategy": "Workflow tests verify blocked promotion on missing governance criteria.",
+            "subtasks": []
+          },
+          {
+            "id": "3",
+            "title": "Add governance regression and audit outputs",
+            "description": "Cover policy bypass attempts, partial updates, and audit trace completeness.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "2"
+            ],
+            "details": "Emit governance audit artifacts for CI/manual review handoff.",
+            "testStrategy": "Regression tests verify governance checks remain enforced after updates.",
+            "subtasks": []
+          }
+        ],
         "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
       },
       {
@@ -1302,7 +2176,45 @@
           37
         ],
         "status": "pending",
-        "subtasks": [],
+        "subtasks": [
+          {
+            "id": "1",
+            "title": "Define forced-migration rule contract",
+            "description": "Define migration trigger conditions, version boundaries, and failure behavior contract.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [],
+            "details": "Lock forced migration policy and reject-load behavior on unrecoverable migration failure.",
+            "testStrategy": "Contract tests verify migration trigger matrix and failure policy.",
+            "subtasks": []
+          },
+          {
+            "id": "2",
+            "title": "Implement version migration executor",
+            "description": "Implement migration steps, state transformation, and deterministic version bump handling.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "1"
+            ],
+            "details": "Apply deterministic migration sequence with strict validation per step.",
+            "testStrategy": "Unit tests verify migration correctness across supported version paths.",
+            "subtasks": []
+          },
+          {
+            "id": "3",
+            "title": "Add migration regression and failure-path tests",
+            "description": "Cover broken payloads, unsupported versions, and forced-fail user guidance outputs.",
+            "status": "pending",
+            "priority": "medium",
+            "dependencies": [
+              "2"
+            ],
+            "details": "Emit migration diagnostics and enforce reject-load on fatal migration failures.",
+            "testStrategy": "Regression tests verify deterministic migration and rejection behavior.",
+            "subtasks": []
+          }
+        ],
         "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
       }
     ],
