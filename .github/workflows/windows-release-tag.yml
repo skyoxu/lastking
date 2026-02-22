@@ -10,6 +10,7 @@ jobs:
     runs-on: windows-latest
     env:
       GODOT_VERSION: '4.5.1'
+      SECURITY_PROFILE: 'host-safe'
     steps:
       - name: Checkout
         uses: actions/checkout@v4

@@ -14,6 +14,7 @@ jobs:
       EXPORT_SIZE_MAX_MB: '150'
       PYTHONIOENCODING: 'utf-8'
       PYTHONUTF8: '1'
+      SECURITY_PROFILE: 'host-safe'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -206,4 +207,3 @@ jobs:
           $out = "logs/ci/${{ github.run_id }}/schema-dump.json"
           py -3 scripts/python/db_schema_dump.py --glob "$env:APPDATA\Godot\app_userdata\lastking\*.db" --out "$out"
           Write-Host "SCHEMA_DUMP_OUT=$out"
-

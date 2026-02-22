@@ -10,6 +10,7 @@ This file provides guidance to Codex Cli when working with code in this reposito
 - **代码和脚本和测试等文件**全部使用**英文**，包括**注释和打印测试**
 - **日志与取证**：所有安全/网络/文件/权限审计与测试输出统一写入 logs/（规范见“6.3 日志与工件（SSoT）”），便于排障与归档
 - **安全合规**：仅防御安全；拒绝进攻性/潜在滥用代码请求
+- **安全档位默认值**：单机默认 `SECURITY_PROFILE=host-safe`，反篡改类默认 advisory，不作为阻断
 - **代码与改动**：遵循项目现有约定；先看周边文件/依赖
 - **任务管理**：强制频繁使用 TodoWrite 规划/跟踪；逐项标记进行/完成，不要堆到最后
 

@@ -8,6 +8,7 @@ jobs:
     runs-on: windows-latest
     env:
       GODOT_VERSION: '4.5.1'
+      SECURITY_PROFILE: 'host-safe'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -159,6 +160,5 @@ jobs:
           SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
         run: |
           py -3 scripts/python/check_sentry_secrets.py
-
 
 

@@ -9,6 +9,7 @@ jobs:
     env:
       GODOT_VERSION: '4.5.1'
       EXPORT_SIZE_MAX_MB: '150'
+      SECURITY_PROFILE: 'host-safe'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -160,5 +161,4 @@ jobs:
           path: |
             build/Game.exe
             logs/ci/**
-
 
