@@ -1,33 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-sc-llm-extract-task-obligations
+"""Extract task obligations and check acceptance coverage via LLM.
 
-Goal:
-  Extract a falsifiable set of "must" obligations from tasks.json (master + subtasks),
-  then check whether those obligations are covered by >= 1 acceptance item across the
-  available task views (tasks_back/tasks_gameplay).
-
-Why:
-  Subtasks coverage is necessary but not sufficient: a task can "look covered" while
-  still allowing no-op loopholes (e.g., "waiting for player action" implemented as
-  "do not call AdvanceTurn").
-
-This script is intentionally pre-flight:
-  - It does not run build/tests.
-  - It does not modify any files.
-
-Output:
-  logs/ci/<YYYY-MM-DD>/sc-llm-obligations-task-<id>/
-    - prompt.md
-    - trace.log
-    - output-last-message.txt
-    - summary.json
-    - report.md
-
-Usage (Windows):
-  py -3 scripts/sc/llm_extract_task_obligations.py --task-id 17
-  py -3 scripts/sc/llm_extract_task_obligations.py --task-id 17 --timeout-sec 600
+Supports multi-run consensus, per-run artifacts, and deterministic hard gates:
+- minimum obligations count
+- each subtask must have at least one obligation source `subtask:<id>`
 """
 
 from __future__ import annotations
@@ -41,16 +18,12 @@ import sys
 from pathlib import Path
 from typing import Any
 
-
 def _bootstrap_imports() -> None:
     sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-
 _bootstrap_imports()
-
 from _taskmaster import resolve_triplet  # noqa: E402
 from _util import ci_dir, repo_root, write_json, write_text  # noqa: E402
-
 
 def _run_codex_exec(*, prompt: str, out_last_message: Path, timeout_sec: int) -> tuple[int, str, list[str]]:
     exe = shutil.which("codex")
@@ -85,7 +58,6 @@ def _run_codex_exec(*, prompt: str, out_last_message: Path, timeout_sec: int) ->
         return 1, f"codex exec failed to start: {exc}\n", cmd
     return proc.returncode or 0, proc.stdout or "", cmd
 
-
 def _extract_json_object(text: str) -> dict[str, Any]:
     text = str(text or "").strip()
     try:
@@ -102,12 +74,10 @@ def _extract_json_object(text: str) -> dict[str, Any]:
         raise ValueError("Model output JSON is not an object.")
     return obj
 
-
 def _truncate(text: str, *, max_chars: int) -> str:
     if len(text) <= max_chars:
         return text
     return text[: max_chars - 3] + "..."
-
 
 def _normalize_subtasks(raw: Any) -> list[dict[str, str]]:
     if not isinstance(raw, list):
@@ -131,6 +101,17 @@ def _normalize_subtasks(raw: Any) -> list[dict[str, str]]:
         out.append({"id": sid, "title": title, "details": details, "testStrategy": test_strategy})
     return out
 
+def _normalize_model_status(value: Any) -> str:
+    status = str(value or "").strip().lower()
+    return "ok" if status == "ok" else "fail"
+
+def _parse_subtask_source(source: Any) -> str | None:
+    text = str(source or "").strip()
+    m = re.match(r"subtask\s*:\s*(.+)$", text, flags=re.IGNORECASE)
+    if not m:
+        return None
+    sid = str(m.group(1) or "").strip()
+    return sid or None
 
 def _format_acceptance(view_name: str, acceptance: list[Any]) -> str:
     out = [f"[{view_name}] acceptance items ({len(acceptance)}):"]
@@ -276,6 +257,9 @@ def main() -> int:
     ap.add_argument("--task-id", default=None, help="Taskmaster id (e.g. 17). Default: first status=in-progress task.")
     ap.add_argument("--timeout-sec", type=int, default=360, help="codex exec timeout in seconds (default: 360).")
     ap.add_argument("--max-prompt-chars", type=int, default=80_000, help="Max prompt size (default: 80000).")
+    ap.add_argument("--consensus-runs", type=int, default=1, help="Run N rounds and use majority status (default: 1).")
+    ap.add_argument("--min-obligations", type=int, default=0, help="Deterministic hard gate: minimum obligations count (default: 0).")
+    ap.add_argument("--round-id", default="", help="Optional run id suffix for output directory isolation.")
     args = ap.parse_args()
 
     try:
@@ -284,7 +268,10 @@ def main() -> int:
         print(f"SC_LLM_OBLIGATIONS status=fail error=resolve_triplet_failed exc={exc}")
         return 2
 
-    out_dir = ci_dir(f"sc-llm-obligations-task-{triplet.task_id}")
+    out_dir_name = f"sc-llm-obligations-task-{triplet.task_id}"
+    if str(args.round_id or "").strip():
+        out_dir_name += f"-round-{str(args.round_id).strip()}"
+    out_dir = ci_dir(out_dir_name)
     title = str(triplet.master.get("title") or "").strip()
     details = str(triplet.master.get("details") or "").strip()
     test_strategy = str(triplet.master.get("testStrategy") or "").strip()
@@ -329,34 +316,77 @@ def main() -> int:
     trace_path = out_dir / "trace.log"
     write_text(prompt_path, prompt)
 
-    rc, trace_out, cmd = _run_codex_exec(prompt=prompt, out_last_message=last_msg_path, timeout_sec=int(args.timeout_sec))
-    write_text(trace_path, trace_out)
-    last_msg = last_msg_path.read_text(encoding="utf-8", errors="ignore") if last_msg_path.exists() else ""
+    runs = max(1, int(args.consensus_runs))
+    run_results: list[dict[str, Any]] = []
+    run_verdicts: list[dict[str, Any]] = []
+    cmd_ref: list[str] | None = None
+    for i in range(1, runs + 1):
+        run_last = out_dir / f"output-last-message-run-{i:02d}.txt"
+        run_trace = out_dir / f"trace-run-{i:02d}.log"
+        rc, trace_out, cmd = _run_codex_exec(prompt=prompt, out_last_message=run_last, timeout_sec=int(args.timeout_sec))
+        write_text(run_trace, trace_out)
+        if cmd_ref is None:
+            cmd_ref = cmd
+        last_msg = run_last.read_text(encoding="utf-8", errors="ignore") if run_last.exists() else ""
+        parsed_obj: dict[str, Any] | None = None
+        err: str | None = None
+        if rc != 0 or not last_msg.strip():
+            err = "codex_exec_failed_or_empty"
+        else:
+            try:
+                parsed_obj = _extract_json_object(last_msg)
+            except Exception as exc:  # noqa: BLE001
+                err = f"invalid_json:{exc}"
+        run_status = _normalize_model_status((parsed_obj or {}).get("status")) if parsed_obj else "fail"
+        run_results.append({"run": i, "rc": rc, "status": run_status, "error": err})
+        if parsed_obj:
+            run_verdicts.append({"run": i, "status": run_status, "obj": parsed_obj})
+            write_json(out_dir / f"verdict-run-{i:02d}.json", parsed_obj)
 
-    summary["rc"] = rc
-    summary["cmdline"] = cmd
+    ok_votes = sum(1 for r in run_results if r["status"] == "ok")
+    fail_votes = runs - ok_votes
+    status = "ok" if ok_votes > fail_votes else "fail"
+    selected = next((v for v in run_verdicts if v["status"] == status), run_verdicts[0] if run_verdicts else None)
+    obj: dict[str, Any] = dict((selected or {}).get("obj") or {"task_id": str(triplet.task_id), "status": "fail", "obligations": []})
+    obj["status"] = status
 
-    if rc != 0 or not last_msg.strip():
-        summary["status"] = "fail"
-        summary["error"] = "codex_exec_failed_or_empty"
-        write_json(out_dir / "summary.json", summary)
-        print(f"SC_LLM_OBLIGATIONS status=fail rc={rc} out={out_dir}")
-        return 1
+    obligations = obj.get("obligations") or []
+    if not isinstance(obligations, list):
+        obligations = []
+    det_missing: list[str] = []
+    if int(args.min_obligations) > 0 and len(obligations) < int(args.min_obligations):
+        det_missing.append(f"DET_MIN_OBLIGATIONS<{int(args.min_obligations)}")
+    if subtasks:
+        required = [str(s["id"]) for s in subtasks]
+        covered_sources = {sid for sid in (_parse_subtask_source((o or {}).get("source")) for o in obligations if isinstance(o, dict)) if sid}
+        for sid in required:
+            if sid not in covered_sources:
+                det_missing.append(f"DET_SUBTASK_SOURCE:{sid}")
+    if det_missing:
+        status = "fail"
+        obj["status"] = "fail"
+        uncovered = obj.get("uncovered_obligation_ids") or []
+        if not isinstance(uncovered, list):
+            uncovered = []
+        obj["uncovered_obligation_ids"] = uncovered + [x for x in det_missing if x not in uncovered]
+        notes = obj.get("notes") or []
+        if not isinstance(notes, list):
+            notes = []
+        obj["notes"] = notes + [f"deterministic_hard_gate: {x}" for x in det_missing]
 
-    try:
-        obj = _extract_json_object(last_msg)
-    except Exception as exc:  # noqa: BLE001
-        summary["status"] = "fail"
-        summary["error"] = f"invalid_json:{exc}"
-        write_json(out_dir / "summary.json", summary)
-        print(f"SC_LLM_OBLIGATIONS status=fail reason=invalid_json out={out_dir}")
-        return 1
-
-    status = str(obj.get("status") or "").strip()
+    summary["rc"] = 0 if run_verdicts else 1
+    summary["cmdline"] = cmd_ref or []
+    summary["consensus_runs"] = runs
+    summary["consensus_votes"] = {"ok": ok_votes, "fail": fail_votes}
+    summary["run_results"] = run_results
     summary["status"] = status
+    if not run_verdicts:
+        summary["error"] = "all_runs_failed_or_invalid"
     write_json(out_dir / "summary.json", summary)
     write_json(out_dir / "verdict.json", obj)
     write_text(out_dir / "report.md", _render_report(obj))
+    write_text(last_msg_path, json.dumps(obj, ensure_ascii=False, indent=2) + "\n")
+    write_text(trace_path, f"consensus_runs={runs}\nok_votes={ok_votes}\nfail_votes={fail_votes}\n")
 
     ok = status == "ok"
     print(f"SC_LLM_OBLIGATIONS status={'ok' if ok else 'fail'} out={out_dir}")
