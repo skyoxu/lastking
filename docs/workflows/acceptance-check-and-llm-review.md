@@ -28,6 +28,7 @@
 - **硬门禁必须确定性**：构建/测试/回链/契约一致性/架构边界等，必须脚本化并可复现。
 - **LLM 只做软证据**：只做补充意见与留痕，不作为默认阻断（除非显式 `--strict`）。
 - **输出落盘**：所有检查写入 `logs/ci/<YYYY-MM-DD>/...`，便于对比、归档和排障。
+- **安全档位要显式**：命令优先显式传 `--security-profile`，避免环境变量导致跨机器结果漂移。
 
 ---
 
@@ -48,6 +49,10 @@
   - `tasks_back[].taskmaster_id`
   - `tasks_gameplay[].taskmaster_id`
 - 若存在 `taskdoc/<id>.md` 会作为附加上下文被记录在报告中（用于追溯）。
+- 安全档位解析顺序：
+  - 1) `--security-profile`
+  - 2) `SECURITY_PROFILE`
+  - 3) 默认 `host-safe`
 
 CI 集成说明（Windows Quality Gate）：
 
@@ -102,6 +107,15 @@ CI 集成说明（Windows Quality Gate）：
   - `py -3 scripts/sc/test.py --type all --godot-bin "$env:GODOT_BIN"`  
   或  
   - `py -3 scripts/python/smoke_headless.py --godot-bin "$env:GODOT_BIN" --project . --scene res://Game.Godot/Scenes/Main.tscn --timeout-sec 5 --mode strict`
+
+### 2.6 安全档位如何启用（建议显式）
+
+- 默认档位：`host-safe`（单机本地安全为硬门，反篡改默认降级）。
+- 严格档位：`strict`（安全相关 gate 全部硬门，适合发布收口或高风险改动）。
+- 示例：
+  - `py -3 scripts/sc/acceptance_check.py --task-id 10 --security-profile host-safe`
+  - `py -3 scripts/sc/acceptance_check.py --task-id 10 --security-profile strict`
+  - `py -3 scripts/sc/llm_review.py --task-id 10 --base main --security-profile host-safe`
 
 ---
 
@@ -176,9 +190,9 @@ py -3 scripts/sc/llm_review.py --task-id 10 --base main --strict
 每完成一个 `tasks.json` 的任务（或一个子任务提交）后：
 
 1) **硬门禁**：  
-   `py -3 scripts/sc/acceptance_check.py --task-id <id> --godot-bin "$env:GODOT_BIN" --perf-p95-ms 20`
+   `py -3 scripts/sc/acceptance_check.py --task-id <id> --security-profile host-safe --godot-bin "$env:GODOT_BIN" --perf-p95-ms 20`
 2) **软审查（可选）**：  
-   `py -3 scripts/sc/llm_review.py --task-id <id> --base main`
+   `py -3 scripts/sc/llm_review.py --task-id <id> --base main --security-profile host-safe`
 3) 通过后再进入下一个任务（避免质量债滚雪球）。
 
 ---

@@ -12,13 +12,16 @@
 
 ```powershell
 # 全量执行（建议在 CI 或本地验收使用）
-py -3 scripts/sc/acceptance_check.py --task-id 10 --godot-bin "$env:GODOT_BIN"
+py -3 scripts/sc/acceptance_check.py --task-id 10 --security-profile host-safe --godot-bin "$env:GODOT_BIN"
 
 # 仅执行部分步骤（逗号分隔）
-py -3 scripts/sc/acceptance_check.py --task-id 10 --only adr,overlay,contracts,arch,build,security
+py -3 scripts/sc/acceptance_check.py --task-id 10 --security-profile host-safe --only adr,overlay,contracts,arch,build,security
 
 # 启用性能硬门禁：解析 logs/ci/**/headless.log 中最新 [PERF] p95_ms
-py -3 scripts/sc/acceptance_check.py --task-id 10 --perf-p95-ms 20
+py -3 scripts/sc/acceptance_check.py --task-id 10 --security-profile host-safe --perf-p95-ms 20
+
+# 发布收口/高风险任务（严格档位）
+py -3 scripts/sc/acceptance_check.py --task-id 10 --security-profile strict --godot-bin "$env:GODOT_BIN"
 ```
 
 ## 3. 退出码
@@ -74,9 +77,26 @@ py -3 scripts/sc/acceptance_check.py --task-id 10 --perf-p95-ms 20
 - 运行：`py -3 scripts/sc/build.py lastking.csproj --type dev`
 - 以 `-warnaserror` 方式构建，确保编译告警不被忽略
 
-### 5.7 `security`（软门禁）
+### 5.7 `security`（硬+软组合）
 
-该组步骤**不会**阻断通过，但会写入 `security-soft.json` 供审计与回溯：
+该组由“硬门禁 + 软扫描”组成：
+
+- `security-hard`（可阻断）：路径/SQL/审计 schema 静态门禁
+- `ui-event-security`（可阻断）：UI 事件 JSON 守卫与 source 校验
+- `security-soft`（不阻断）：安全软扫描与补充审计
+
+安全档位解析顺序：
+
+- 1) `--security-profile`
+- 2) `SECURITY_PROFILE`
+- 3) 默认 `host-safe`
+
+默认档位含义：
+
+- `host-safe`：`path/sql=require`，`audit_schema=warn`，`ui_event_json_guards=skip`，`ui_event_source_verify=skip`，`audit_evidence=skip`
+- `strict`：上述 gate 全部 `require`
+
+软扫描步骤会写入 `security-soft.json` 供审计与回溯：
 
 - `check-sentry-secrets`：`py -3 scripts/python/check_sentry_secrets.py`（总是 `exit 0`，只输出检测结果）
 - `check-domain-contracts`（可选）：
@@ -85,6 +105,7 @@ py -3 scripts/sc/acceptance_check.py --task-id 10 --perf-p95-ms 20
   - 若脚本不存在则跳过
 - `security-soft-scan`：`py -3 scripts/python/security_soft_scan.py --out <json>`
 - `check-encoding-since-today`（可选）：`py -3 scripts/python/check_encoding.py --since-today`（脚本存在才运行）
+- 需要按任务覆盖默认值时，可用 `--security-path-gate/--security-sql-gate/--security-audit-schema-gate/--ui-event-json-guards/--ui-event-source-verify/--security-audit-evidence` 单独指定。
 
 ### 5.8 `tests`（硬门禁）
 
@@ -95,4 +116,3 @@ py -3 scripts/sc/acceptance_check.py --task-id 10 --perf-p95-ms 20
 
 - 通过 `--perf-p95-ms <ms>` 或 `PERF_P95_THRESHOLD_MS=<ms>` 启用
 - 从 `logs/ci/**/headless.log` 提取最新 `[PERF] ... p95_ms=...` 作为门禁依据
-

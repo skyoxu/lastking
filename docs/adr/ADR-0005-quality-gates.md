@@ -61,12 +61,22 @@ supersedes: []
 - 引擎/场景：`logs/e2e/<YYYY-MM-DD>/`
 - CI 汇总与扫描：`logs/ci/<YYYY-MM-DD>/`
 
+### 6) 安全姿态档位（`acceptance_check` / `llm_review`）
+
+- 档位解析顺序：CLI `--security-profile` > 环境变量 `SECURITY_PROFILE` > 默认 `host-safe`。
+- 默认 `host-safe`（单机 Windows 交付姿态）：`path/sql=require`；`audit_schema=warn`；`ui_event_*` 与 `audit_evidence` 为 `skip`。
+- `strict`（发布收口/高风险改动）：上述安全 gate 统一 `require`。
+- 流程要求：本地与 CI 命令应显式传 `--security-profile`，避免跨机器环境变量漂移。
+
 ## Verification
 
 本地最小验收（PowerShell）：
 
 ```powershell
-pwsh -File scripts/ci/quality_gate.ps1 -GodotBin "$env:GODOT_BIN"
+py -3 scripts/sc/acceptance_check.py --task-id <id> --security-profile host-safe --godot-bin "$env:GODOT_BIN"
+
+# 发布收口/高风险任务
+py -3 scripts/sc/acceptance_check.py --task-id <id> --security-profile strict --godot-bin "$env:GODOT_BIN"
 ```
 
 CI 侧应能在 `logs/**` 中找到对应摘要与日志文件；失败时可直接定位到具体 gate 的输出。
