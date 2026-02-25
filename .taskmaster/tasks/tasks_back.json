@@ -73,7 +73,9 @@
       "Windows export validation must execute the produced build and confirm it reaches the baseline startup flow. Refs: Tests.Godot/tests/Integration/test_windows_export_startup_flow.gd Tests.Godot/tests/Integration/test_windows_export_preset_artifact.gd",
       "Standalone desktop launch compatibility is accepted only when the exported Windows build starts and reaches expected startup flow without blocking initialization errors. Refs: Tests.Godot/tests/Integration/test_windows_export_startup_flow.gd",
       "Acceptance is rejected if verification bypasses any required check, including C# build, script-attachment validation, startup scene execution, export execution, or root-uniqueness validation. Refs: Game.Core.Tests/Tasks/Task1BaselineVerificationGateTests.cs Game.Core.Tests/Tasks/Task1ProjectRootUniquenessTests.cs",
-      "Acceptance fails if this task or any downstream setup task creates a second independent Godot project root instead of reusing the canonical root. Refs: Game.Core.Tests/Tasks/Task1ProjectRootUniquenessTests.cs"
+      "Acceptance fails if this task or any downstream setup task creates a second independent Godot project root instead of reusing the canonical root. Refs: Game.Core.Tests/Tasks/Task1ProjectRootUniquenessTests.cs",
+      "Canonical-root contract evidence must be persisted and auditable, including root identifier, mandatory directory structure, and startup binding constraints; missing evidence fails acceptance. Refs: Game.Core.Tests/Tasks/Task1BaselineVerificationGateTests.cs Game.Core.Tests/Tasks/Task1ProjectRootUniquenessTests.cs",
+      "Deterministic bootstrap evidence artifacts must use fixed field schema and stable naming; repeated runs with the same input must produce comparable structure, otherwise gate fails. Refs: Game.Core.Tests/Tasks/Task1BaselineVerificationGateTests.cs"
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #1 primary behavior.",
@@ -240,7 +242,9 @@
       "Day15 完成并发出终局胜利后，后续更新不得将 day 推进到 15 以上，且不得再次发出终局或胜利结果。 Refs: Game.Core.Tests/State/GameStateManagerTests.cs",
       "任一阶段在未达到配置阈值前，阶段状态与 day 必须保持不变；仅在活动更新中达到阈值时才允许发生迁移。 Refs: Game.Core.Tests/State/GameStateManagerTests.cs",
       "运行时 C# GameStateManager 实例必须可观测地提供当前阶段状态（Day/Night）、当前 day（1-15）以及供下游消费的迁移/终局信号。 Refs: Game.Core.Tests/State/GameStateManagerTests.cs",
-      "必须交付并关联已评审的运行时状态机设计工件，明确 Day/Night 状态图、迁移条件与下游事件消费者；缺失工件即判定不通过。 Refs: Game.Core.Tests/Tasks/Task3DayNightDesignArtifactTests.cs"
+      "必须交付并关联已评审的运行时状态机设计工件，明确 Day/Night 状态图、迁移条件与下游事件消费者；缺失工件即判定不通过。 Refs: Game.Core.Tests/Tasks/Task3DayNightDesignArtifactTests.cs",
+      "At every Day<->Night boundary, runtime must emit exactly one deterministic checkpoint event; no missing and no extra checkpoint events are allowed. Refs: Game.Core.Tests/State/GameStateManagerTests.cs",
+      "Replay validation must assert checkpoint-event count equals observed boundary-transition count for the same run input. Refs: Game.Core.Tests/State/GameStateManagerTests.cs"
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #3 primary behavior.",
@@ -311,7 +315,9 @@
       "Given the same fixed seed, day, and config, wave outputs are identical across runs; changing only the seed changes at least one spawn decision. Refs: Game.Core.Tests/Services/WaveManagerDeterminismTests.cs",
       "Independent tuning of normal, elite, and boss budgets changes only the targeted channel output, while non-target channels stay unchanged for the same day and seed. Refs: Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs Game.Core.Tests/Services/WaveManagerDeterminismTests.cs",
       "Each generated wave emits auditable per-channel budget evidence that includes input, allocated, spent, and remaining values for normal, elite, and boss. Refs: Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs",
-      "Invalid accounting transitions (negative spend, over-budget spend, or cross-channel charge) are rejected, channel totals remain unchanged after rejection, and same-seed replay reproduces the rejection trace. Refs: Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs Game.Core.Tests/Services/WaveManagerDeterminismTests.cs"
+      "Invalid accounting transitions (negative spend, over-budget spend, or cross-channel charge) are rejected, channel totals remain unchanged after rejection, and same-seed replay reproduces the rejection trace. Refs: Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs Game.Core.Tests/Services/WaveManagerDeterminismTests.cs",
+      "During a single wave execution, any attempt to modify per-day budget inputs or channel accounting fields must be rejected and must not advance the flow. Refs: Game.Core.Tests/Services/WaveBudgetAllocatorTests.cs",
+      "After a rejected mutation attempt, normal/elite/boss input, allocated, spent, and remaining fields must remain bitwise-equivalent to pre-rejection state. Refs: Game.Core.Tests/Services/WaveBudgetAllocatorTests.cs"
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #4 primary behavior.",
@@ -550,7 +556,11 @@
       "Obligation lock O1: A concrete Castle C# script (Castle.cs or equivalent) must exist and expose a readable CurrentHp property for gameplay, combat resolution, and UI binding. Refs: Tests.Godot/tests/Scenes/Battle/test_castle_current_hp_contract.gd",
       "Castle HP mutation boundaries are enforced: CurrentHp changes only at battle initialization from configured starting HP and when resolved enemy attacks apply damage; without either trigger, CurrentHp must remain unchanged.",
       "Terminal transition is deterministic and single-dispatch: when CurrentHp first reaches 0, exactly one loss/game-over transition is emitted, and further damage processing while already terminal must not emit an additional loss transition.",
-      "Terminal-state evidence and replay checks are required: entering loss/game-over at HP=0 must emit terminal-transition evidence artifacts, and repeated runs with the same seed must produce the same loss-transition timing; missing evidence must fail validation."
+      "Terminal-state evidence and replay checks are required: entering loss/game-over at HP=0 must emit terminal-transition evidence artifacts, and repeated runs with the same seed must produce the same loss-transition timing; missing evidence must fail validation.",
+      "Contract tests must verify terminal trigger boundaries: HP=0 triggers loss, HP>0 does not trigger loss, and HP boundary rules are auditable. Refs: Game.Core.Tests/Services/CastleDurabilityTerminalTests.cs",
+      "Contract-test gate for terminal trigger boundaries is mandatory on Windows baseline CI and blocks on failure. Refs: Game.Core.Tests/Services/CastleDurabilityTerminalTests.cs",
+      "Unit tests must assert single terminal dispatch: first transition to HP=0 emits exactly one loss event and subsequent damage emits no additional terminal event. Refs: Game.Core.Tests/Services/CastleDurabilityTerminalTests.cs",
+      "Unit tests must cover multi-hit HP transition traces and assert flow remains stopped after terminal state is reached. Refs: Game.Core.Tests/Services/CastleDurabilityTerminalTests.cs"
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #7 primary behavior.",
@@ -1131,7 +1141,11 @@
       "Residence 税收流程必须绑定 Godot Timer 节点并以 15 秒触发，将税额写入 ResourceManager；该绑定关系必须可被测试或可审计证据验证。 Refs: Tests.Godot/tests/Scenes/Economy/test_residence_timer_node_tax_binding.gd Tests.Godot/tests/Scenes/Economy/test_residence_tax_timer_cadence.gd",
       "经济契约必须明确并锁定：税收 tick 间隔为 15 秒、相关变更为整数语义、以及负金币处理策略；任何异常输入都必须按策略拒绝或显式处理，不能静默改状态。",
       "Residence 税收运行时必须在每个 tick 按确定顺序执行整数变更；相同初始状态与相同 tick 序列下，金币总量与债务状态迁移结果必须完全一致。",
-      "回归覆盖必须产出结构化税收轨迹，逐条记录每次 Residence 结算的变更原因与增量；固定随机种子重复运行时，轨迹顺序与汇总结果必须可复现。"
+      "回归覆盖必须产出结构化税收轨迹，逐条记录每次 Residence 结算的变更原因与增量；固定随机种子重复运行时，轨迹顺序与汇总结果必须可复现。",
+      "Contract tests must lock Residence tax cadence at 15 seconds and fail if runtime cadence drifts under identical tick input. Refs: Game.Core.Tests/Services/ResidenceTaxCadenceTests.cs",
+      "Contract tests must enforce integer-only semantics for Residence economy fields and reject non-integer inputs with explicit failure. Refs: Game.Core.Tests/Services/ResidenceTaxConfigTests.cs",
+      "Unit tests must verify multi-tick Residence tax accumulation equals expected deterministic totals. Refs: Game.Core.Tests/Services/ResidenceTaxCadenceTests.cs",
+      "Unit tests must verify debt-state transition determinism: identical initial state and tick sequence produce identical debt-state outputs. Refs: Game.Core.Tests/Services/ResidenceTaxCadenceTests.cs"
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #14 primary behavior.",
@@ -1296,7 +1310,11 @@
       "Obligation lock O1: Barracks exists as a class that extends Building, verifiable through tests or auditable evidence. Refs: Game.Core.Tests/Domain/BarracksBuildingTests.cs",
       "Obligation lock O2: Barracks contains a unit training queue implemented with a C# List or Queue, verifiable through tests or auditable evidence. Refs: Game.Core.Tests/Domain/BarracksBuildingTests.cs Game.Core.Tests/Services/BarracksTrainingQueueTests.cs",
       "Obligation lock O8: Unit and regression tests verify queue operations, cancel deduction/refund correctness, and deterministic queue transitions under stress-relevant scenarios with traceable evidence. Refs: Game.Core.Tests/Services/BarracksTrainingQueueTests.cs Game.Core.Tests/Services/BarracksTrainingCostScheduleTests.cs",
-      "Obligation lock O10: At least one in-game test passes multi-unit training, mid-training cancel, exact refund, and queue-state correctness with traceable evidence. Refs: Tests.Godot/tests/Integration/test_barracks_training_queue_flow.gd"
+      "Obligation lock O10: At least one in-game test passes multi-unit training, mid-training cancel, exact refund, and queue-state correctness with traceable evidence. Refs: Tests.Godot/tests/Integration/test_barracks_training_queue_flow.gd",
+      "When queue capacity is reached, enqueue must be rejected and queue/resource state must remain unchanged. Refs: Game.Core.Tests/Services/BarracksTrainingQueueTests.cs",
+      "Boundary tests must cover capacity-1, capacity, and capacity+1 cases and assert deduction timing constraints. Refs: Game.Core.Tests/Services/BarracksTrainingCostScheduleTests.cs",
+      "Stress train/cancel scenarios must emit queue diagnostics containing operation index, queue snapshot, and state transition. Refs: Game.Core.Tests/Services/BarracksTrainingQueueTests.cs",
+      "Regression tests must assert diagnostics are consistent with FIFO order and observed state transitions. Refs: Game.Core.Tests/Services/BarracksTrainingQueueTests.cs"
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #16 primary behavior.",
@@ -1625,7 +1643,13 @@
       "Target acquisition uses in-range detection (physics query or area overlap): only detected in-range enemy targets are damaged, while non-detected or out-of-range targets remain unchanged. Refs: Tests.Godot/tests/Scenes/Combat/test_combat_scene_targeting_range.gd",
       "Combat resolution contract is stable across all unit and MG tower attacks: emitted combat events contain attacker identity/team, target identity/team, resolved damage, and outcome, and contract tests fail on payload field drift.",
       "Given identical simulation state and tick timing, combat target selection and damage application order are deterministic across repeated runs, and same-team entities are excluded from damage paths before resolution.",
-      "Combat diagnostics are emitted for every target pick and damage or refusal event (including friendly-fire refusals), and dense-engagement regression tests verify those diagnostics are present and consistent."
+      "Combat diagnostics are emitted for every target pick and damage or refusal event (including friendly-fire refusals), and dense-engagement regression tests verify those diagnostics are present and consistent.",
+      "Contract tests must enforce friendly-fire invariant: same-team attack outcome is refused and resolved damage is 0. Refs: Game.Core.Tests/Services/CombatServiceTests.cs",
+      "Contract tests must fail when combat event fields exist but friendly-fire invariant is violated. Refs: Game.Core.Tests/Services/CombatServiceTests.cs",
+      "Unit tests must separately assert target-resolution correctness and damage-application order. Refs: Game.Core.Tests/Services/CombatSystemTests.cs",
+      "For identical initial state and tick input, target-resolution and damage-order outcomes must be deterministic. Refs: Game.Core.Tests/Services/CombatSystemTests.cs",
+      "High-density combat regression must assert allied unit/building HP unchanged while enemy HP decreases under allowed attacks. Refs: Tests.Godot/tests/Integration/test_combat_units_towers_walls_flow.gd",
+      "All friendly-fire attempts in high-density scenarios must take refusal branch and be asserted. Refs: Game.Core.Tests/Services/CombatServiceTests.cs"
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #20 primary behavior.",
@@ -2107,7 +2131,11 @@
       "Cloud-sync calls execute against real Steam API integration (Steamworks.NET or GodotSteam) in the Steam development environment and are verifiable as Steam Remote Storage operations for the logged-in account, not local-only mock behavior. Refs: Tests.Godot/tests/Integration/test_steam_remote_storage_real_ops.gd Tests.Godot/tests/Adapters/Steam/test_steam_api_binding_remote_storage.gd",
       "Cloud-save binding enforces exactly one auto-save slot identity per Steam account, and cross-account create/read/overwrite attempts are rejected without modifying current account save state.",
       "Before applying cloud data, sync validates deterministic save metadata and ownership; if ownership does not match the logged-in Steam account, the payload is rejected and local save state remains unchanged.",
-      "Regression coverage includes upload, download, conflict, and failure-recovery paths, and each failure path emits structured save-sync diagnostics with evidence for deterministic recovery or explicit rejection."
+      "Regression coverage includes upload, download, conflict, and failure-recovery paths, and each failure path emits structured save-sync diagnostics with evidence for deterministic recovery or explicit rejection.",
+      "Acceptance must include account-ownership plus single-auto-slot contract tests and pass on Windows baseline. Refs: Tests.Godot/tests/Integration/test_save_manager_steam_cloud_sync_flow.gd Tests.Godot/tests/Adapters/Db/test_savegame_unique_slot_per_user.gd",
+      "Contract tests must cover cross-account read/write/overwrite rejection while preserving current-account save state. Refs: Tests.Godot/tests/Adapters/Db/test_savegame_unique_slot_per_user.gd",
+      "Integration tests must cover full chain cloud-sync -> ownership check -> allow/reject branches with pass criteria. Refs: Tests.Godot/tests/Integration/test_save_manager_steam_cloud_sync_flow.gd",
+      "When ownership mismatches, integration tests must assert sync flow aborts and local save remains unchanged. Refs: Tests.Godot/tests/Integration/test_save_manager_steam_cloud_sync_flow.gd"
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #26 primary behavior.",
@@ -2186,7 +2214,9 @@
       "Events or unlock requests that do not map to a valid, currently unlockable achievement must leave unlock state unchanged and emit no notification or external sync call. Refs: Game.Core.Tests/Services/AchievementInvalidTriggerTests.cs Tests.Godot/tests/UI/test_achievements_locked_on_invalid_event.gd",
       "Obligation lock O1: Exactly one achievement coordinator (AchievementManager or equivalent) must own progress tracking and unlock orchestration. Refs: Game.Core.Tests/Tasks/Task27SingleCoordinatorOwnershipTests.cs",
       "Obligation lock O2: Achievement definitions must load from external configuration files (JSON or equivalent), and hardcoded definitions cannot be the only data source. Refs: Game.Core.Tests/Repositories/AchievementConfigRepositoryTests.cs Game.Core.Tests/Services/AchievementDefinitionLoaderTests.cs",
-      "Obligation lock O10: Automated test gates on Windows baseline must cover unlock trigger plus UI update, achievements list presentation, deterministic repeat actions, deterministic unlock sequence evidence for regression/sync checks, and Steam verification when enabled. Refs: Tests.Godot/tests/Integration/test_achievements_end_to_end_unlock_and_sync.gd"
+      "Obligation lock O10: Automated test gates on Windows baseline must cover unlock trigger plus UI update, achievements list presentation, deterministic repeat actions, deterministic unlock sequence evidence for regression/sync checks, and Steam verification when enabled. Refs: Tests.Godot/tests/Integration/test_achievements_end_to_end_unlock_and_sync.gd",
+      "Regression/sync tests must output unlock evidence including deterministic timestamp and sequence anchor for every unlock record, and identical input must reproduce identical evidence. Refs: Game.Core.Tests/Services/AchievementSyncDeterminismTests.cs",
+      "Gate must fail when any unlock record misses timestamp/sequence anchor or diverges from deterministic baseline under identical input. Refs: Game.Core.Tests/Services/AchievementSyncDeterminismTests.cs"
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #27 primary behavior.",
@@ -3018,7 +3048,13 @@
       "Obligation lock O1 is mandatory: existing gameplay C# scripts must read tuning values from ConfigManager rather than hardcoded constants, with proof from tests or audit evidence; otherwise acceptance fails. Refs: Game.Core.Tests/Domain/GameConfigTests.cs",
       "Before any tuning promotion, the config-governance policy contract must be enforced: all mandatory governance fields and promotion preconditions are validated, and if any required field/precondition is missing or invalid, promotion is rejected and active gameplay-config state remains unchanged.",
       "Governance checks in the tuning workflow must execute fail-fast and emit deterministic reject reasons: for identical invalid input, repeated runs return the same reject outcome and reason, with no partial promotion side effects.",
-      "For every promotion attempt, governance regression/audit outputs must be produced for CI/manual review handoff and include allow/reject decision plus evaluated governance criteria; missing governance audit output for any attempt fails acceptance."
+      "For every promotion attempt, governance regression/audit outputs must be produced for CI/manual review handoff and include allow/reject decision plus evaluated governance criteria; missing governance audit output for any attempt fails acceptance.",
+      "Contract tests must validate governance metadata required fields and promotion prerequisites before tuning promotion. Refs: Game.Core.Tests/Tasks/Task38ConfigGovernanceTests.cs",
+      "If any governance field or prerequisite is missing or invalid, contract tests must deterministically fail with comparable reason code. Refs: Game.Core.Tests/Tasks/Task38ConfigGovernanceTests.cs",
+      "Workflow tests must assert missing governance criteria blocks promotion and keeps active gameplay-config state unchanged. Refs: Game.Core.Tests/Services/GameplayTuningConfigIntegrationTests.cs",
+      "For identical invalid input, workflow rejection outcome and reason must be deterministic across reruns. Refs: Game.Core.Tests/Services/GameplayTuningConfigIntegrationTests.cs",
+      "Regression tests must assert governance checks remain enforced after implementation updates. Refs: Game.Core.Tests/Tasks/Task38ConfigGovernanceTests.cs",
+      "Any update that weakens or removes governance enforcement must fail regression gate and block promotion. Refs: Game.Core.Tests/Tasks/Task38ConfigGovernanceTests.cs"
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #38 primary behavior.",
@@ -3155,7 +3191,16 @@
       "O1 义务必须可测试：ConfigManager 在选择加载配置路径或默认回退路径前，必须先比较 loaded config version 与 expectedVersion。 Refs: Game.Core.Tests/Services/ConfigManagerVersionPolicyTests.cs",
       "子任务1（强制迁移契约）必须可验证：触发矩阵中，expectedVersion 匹配时保留加载配置；任一非相等版本或不可恢复迁移失败时拒绝加载配置并保持默认运行状态。",
       "子任务2（迁移执行器）必须可验证：迁移过程按确定性顺序执行并进行逐步严格校验；不支持路径或致命步骤结果必须确定性收敛为拒绝加载并回退默认。",
-      "子任务3（回归与失败路径）必须可验证：自动化测试覆盖版本不匹配与致命迁移场景，要求输出迁移诊断，并证明运行时保持默认状态且不存在部分接受加载配置。"
+      "子任务3（回归与失败路径）必须可验证：自动化测试覆盖版本不匹配与致命迁移场景，要求输出迁移诊断，并证明运行时保持默认状态且不存在部分接受加载配置。",
+      "Regression tests must assert deterministic migration step order and deterministic final result for identical inputs. Refs: Game.Core.Tests/Services/ConfigManagerMigrationLoggingTests.cs",
+      "Regression tests must assert rejection paths keep default runtime state unchanged and never allow partial acceptance. Refs: Game.Core.Tests/Services/ConfigManagerVersionPolicyTests.cs",
+      "Mutual-exclusive policy must be explicit: if config.version != expectedVersion, system must always refuse loaded config and force default fallback. Refs: Game.Core.Tests/Services/ConfigManagerVersionPolicyTests.cs",
+      "Single-version policy is mandatory: only expectedVersion is acceptable; all other versions are rejected with no compatibility acceptance path. Refs: Game.Core.Tests/Services/ConfigManagerVersionPolicyTests.cs",
+      "Unit-test gate must prove all non-expectedVersion inputs are rejected with default fallback while compatibility mode stays disabled. Refs: Game.Core.Tests/Services/ConfigManagerVersionPolicyTests.cs",
+      "Contract tests must cover migration trigger matrix and failure policy, and must pass on Windows baseline CI. Refs: Game.Core.Tests/Services/ConfigManagerVersionPolicyTests.cs Game.Core.Tests/Services/ConfigManagerMigrationLoggingTests.cs",
+      "Unit tests must cover each supported migratable path in the trigger matrix and assert migrated key configuration fields exactly match expected post-migration values. Refs: Game.Core.Tests/Services/ConfigManagerVersionPolicyTests.cs",
+      "Supported migratable path matrix must explicitly declare from->to list and must state no exemption from the non-expectedVersion rejection rule. Refs: Game.Core.Tests/Services/ConfigManagerVersionPolicyTests.cs",
+      "Each supported path must declare one unique final-state rule consistent with single-version policy; no path may simultaneously claim acceptance of non-expectedVersion inputs. Refs: Game.Core.Tests/Services/ConfigManagerVersionPolicyTests.cs"
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #40 primary behavior.",
