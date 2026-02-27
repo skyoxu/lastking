@@ -82,6 +82,13 @@ def _normalize_ws(text: str) -> str:
     return re.sub(r"\s+", " ", str(text or "")).strip()
 
 
+def _normalize_backslash_escapes(text: str) -> str:
+    value = str(text or "")
+    if "\\\\" not in value:
+        return value
+    return value.replace("\\\\", "\\")
+
+
 def _strip_prompt_prefix(text: str) -> str:
     s = str(text or "").strip()
     if not s:
@@ -113,13 +120,37 @@ def _contains_excerpt(excerpt: str, raw_corpus: str, norm_corpus: str) -> tuple[
     if not excerpt:
         return False, False
 
+    normalized_escape_raw_corpus = _normalize_backslash_escapes(raw_corpus)
+    normalized_escape_norm_corpus = _normalize_ws(normalized_escape_raw_corpus)
+
     def _match(candidate: str) -> bool:
         if not candidate:
             return False
         if candidate in raw_corpus:
             return True
         norm_candidate = _normalize_ws(candidate)
-        return bool(norm_candidate and norm_candidate in norm_corpus)
+        if norm_candidate and norm_candidate in norm_corpus:
+            return True
+
+        normalized_escape_candidate = _normalize_backslash_escapes(candidate)
+        normalized_escape_norm_candidate = _normalize_ws(normalized_escape_candidate)
+        if normalized_escape_candidate != candidate:
+            if normalized_escape_candidate in raw_corpus:
+                return True
+            if normalized_escape_norm_candidate and normalized_escape_norm_candidate in norm_corpus:
+                return True
+
+        if normalized_escape_raw_corpus != raw_corpus:
+            if candidate in normalized_escape_raw_corpus:
+                return True
+            if norm_candidate and norm_candidate in normalized_escape_norm_corpus:
+                return True
+            if normalized_escape_candidate in normalized_escape_raw_corpus:
+                return True
+            if normalized_escape_norm_candidate and normalized_escape_norm_candidate in normalized_escape_norm_corpus:
+                return True
+
+        return False
 
     if _match(excerpt):
         return True, False
