@@ -27,6 +27,8 @@ def validate_fill_acceptance_summary(summary: dict[str, Any]) -> tuple[bool, lis
         "status": str,
         "consensus_runs": int,
         "prd_source": str,
+        "recovered_from_nonzero_rc_total": int,
+        "recovered_from_nonzero_rc_tasks": int,
     }
     for key, typ in required.items():
         if key not in obj:
@@ -50,6 +52,8 @@ def validate_fill_acceptance_summary(summary: dict[str, Any]) -> tuple[bool, lis
             item_status = str(item.get("status") or "").strip()
             if item_status not in {"ok", "fail", "skipped"}:
                 errors.append(f"result_status_invalid:{idx}")
+            if "recovered_from_nonzero_rc" in item and not isinstance(item.get("recovered_from_nonzero_rc"), int):
+                errors.append(f"result_recovered_count_type:{idx}")
     else:
         errors.append("results_not_list")
     return not errors, errors, obj
@@ -86,6 +90,8 @@ def run_fill_acceptance_refs_self_check(
         "status": "ok",
         "consensus_runs": 1,
         "prd_source": ".taskmaster/docs/prd.txt",
+        "recovered_from_nonzero_rc_total": 0,
+        "recovered_from_nonzero_rc_tasks": 0,
     }
     summary_ok, summary_errors, checked = validate_summary(summary)
     checks.append({"name": "summary_contract", "ok": bool(summary_ok), "errors": summary_errors})
@@ -108,4 +114,3 @@ def run_fill_acceptance_refs_self_check(
     ]
     report_lines.extend([f"- {item.get('name')}: {'ok' if item.get('ok') else 'fail'}" for item in checks])
     return ok, payload, "\n".join(report_lines) + "\n"
-

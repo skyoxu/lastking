@@ -218,7 +218,7 @@ def main() -> int:
             rewrite_placeholders=bool(args.rewrite_placeholders),
         )
         if not missing:
-            results.append({"task_id": tid, "status": "skipped", "reason": "no_missing_refs"})
+            results.append({"task_id": tid, "status": "skipped", "reason": "no_missing_refs", "recovered_from_nonzero_rc": 0})
             continue
 
         existing_candidates = pick_existing_candidates(all_tests=all_tests, task_id=tid, title=str((master or {}).get("title") or ""), limit=int(args.candidate_limit))
@@ -245,6 +245,7 @@ def main() -> int:
             max_refs_per_item=int(args.max_refs_per_item),
             consensus_runs=consensus_runs,
         )
+        recovered_count = int(sum(1 for run in run_results if str(run.get("note") or "") == "recovered_from_nonzero_rc"))
 
         task_result: dict[str, Any] = {
             "task_id": tid,
@@ -253,6 +254,7 @@ def main() -> int:
             "runs": run_results,
             "cmd": cmd_ref,
             "prompt": str(prompt_path.relative_to(root)).replace("\\", "/"),
+            "recovered_from_nonzero_rc": recovered_count,
         }
         if not ok:
             task_result["status"] = "fail"
@@ -310,6 +312,12 @@ def main() -> int:
                         missing_after += 1
 
     status = "fail" if hard_fail or (args.write and missing_after) else "ok"
+    recovered_from_nonzero_rc_total = int(
+        sum(int((r or {}).get("recovered_from_nonzero_rc") or 0) for r in results if isinstance(r, dict))
+    )
+    recovered_from_nonzero_rc_tasks = int(
+        sum(1 for r in results if isinstance(r, dict) and int(r.get("recovered_from_nonzero_rc") or 0) > 0)
+    )
     summary = {
         "cmd": "sc-llm-fill-acceptance-refs",
         "date": today_str(),
@@ -324,6 +332,8 @@ def main() -> int:
         "status": status,
         "consensus_runs": consensus_runs,
         "prd_source": prd_source,
+        "recovered_from_nonzero_rc_total": recovered_from_nonzero_rc_total,
+        "recovered_from_nonzero_rc_tasks": recovered_from_nonzero_rc_tasks,
     }
     schema_ok, schema_errors, checked_summary = validate_fill_acceptance_summary(summary)
     if not schema_ok:
