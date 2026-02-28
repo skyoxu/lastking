@@ -122,26 +122,9 @@ def build_source_text_blocks(
 
     blocks: list[str] = [title_text, str(details or ""), str(test_strategy or "")]
     for item in subtasks:
-        sub_id = str(item.get("id") or "").strip()
-        sub_title = str(item.get("title") or "")
-        sub_details = str(item.get("details") or "")
-        sub_test_strategy = str(item.get("testStrategy") or "")
-
-        blocks.append(sub_title)
-        blocks.append(sub_details)
-        blocks.append(sub_test_strategy)
-
-        if sub_title and sub_details:
-            blocks.append(f"{sub_title} :: {sub_details}")
-        if sub_test_strategy:
-            blocks.append(f"testStrategy: {sub_test_strategy}")
-        if sub_id and sub_title:
-            prompt_line = f"- {sub_id}: {sub_title}"
-            if sub_details:
-                prompt_line += f" :: {sub_details}"
-            blocks.append(prompt_line)
-            if sub_test_strategy:
-                blocks.append(f"  testStrategy: {sub_test_strategy}")
+        blocks.append(str(item.get("title") or ""))
+        blocks.append(str(item.get("details") or ""))
+        blocks.append(str(item.get("testStrategy") or ""))
 
     if not str(blocks[0] or "").strip():
         raise ValueError("source_blocks[0] must be non-empty master.title")
