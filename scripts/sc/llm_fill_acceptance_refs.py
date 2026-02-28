@@ -103,6 +103,14 @@ def _run_consensus_for_task(
     max_refs_per_item: int,
     consensus_runs: int,
 ) -> tuple[bool, dict[str, dict[int, list[str]]], list[dict[str, Any]], list[str]]:
+    def _try_parse_mapping(raw: str, *, max_refs: int) -> tuple[bool, dict[str, dict[int, list[str]]], str]:
+        try:
+            obj = extract_json_object(raw)
+            mapping = parse_model_items_to_paths(items=obj.get("items"), max_refs_per_item=max_refs)
+            return True, mapping, ""
+        except Exception as exc:  # noqa: BLE001
+            return False, {"back": {}, "gameplay": {}}, str(exc)
+
     run_results: list[dict[str, Any]] = []
     cmd_ref: list[str] = []
     for run_index in range(1, max(1, consensus_runs) + 1):
@@ -114,19 +122,21 @@ def _run_consensus_for_task(
         if not cmd_ref:
             cmd_ref = cmd
         last_msg = read_text(last_msg_path) if last_msg_path.exists() else ""
-        one = {"run": run_index, "rc": rc, "status": "fail", "error": "", "direct_mapped": 0}
-        if rc != 0 or not last_msg.strip():
+        one = {"run": run_index, "rc": rc, "status": "fail", "error": "", "direct_mapped": 0, "note": ""}
+        if not last_msg.strip():
             one["error"] = "codex_exec_failed_or_empty"
             run_results.append(one)
             continue
-        try:
-            obj = extract_json_object(last_msg)
-            mapping = parse_model_items_to_paths(items=obj.get("items"), max_refs_per_item=max_refs_per_item)
+
+        parsed_ok, mapping, parse_error = _try_parse_mapping(last_msg, max_refs=max_refs_per_item)
+        if parsed_ok:
             one["status"] = "ok"
             one["mapping"] = mapping
             one["direct_mapped"] = int(sum(len(v) for v in mapping.values()))
-        except Exception as exc:  # noqa: BLE001
-            one["error"] = str(exc)
+            if rc != 0:
+                one["note"] = "recovered_from_nonzero_rc"
+        else:
+            one["error"] = parse_error if rc == 0 else f"codex_exec_failed_or_empty:{parse_error}"
         run_results.append(one)
 
     ok_runs = [r for r in run_results if str(r.get("status")) == "ok"]

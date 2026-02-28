@@ -150,9 +150,9 @@
       "Tests.Godot/tests/Security/Hard/test_settings_config_security.gd"
     ],
     "acceptance": [
-      "Hard gate: malformed JSON/INI input must deterministically fail with a fixed reason code, and parse failure must not advance runtime config snapshot (must keep last-known-good or documented fallback).",
-      "Hard gate: ConfigManager load order must be deterministic and explicitly verified across initial load, reload, and fallback paths; any order drift fails acceptance.",
-      "Hard gate: acceptance requires both anti-hardcode source-scan gate and config-driven runtime behavior regression gate; missing either gate fails acceptance.",
+      "Hard gate: malformed JSON/INI input must deterministically fail with a fixed reason code, and parse failure must not advance runtime config snapshot (must keep last-known-good or documented fallback). Refs: Tests.Godot/tests/Adapters/Config/test_settings_persistence.gd",
+      "Hard gate: ConfigManager load order must be deterministic and explicitly verified across initial load, reload, and fallback paths; any order drift fails acceptance. Refs: Game.Core.Tests/Domain/GameConfigTests.cs Tests.Godot/tests/Adapters/Config/test_settings_persistence.gd",
+      "Hard gate: acceptance requires both anti-hardcode source-scan gate and config-driven runtime behavior regression gate; missing either gate fails acceptance. Refs: Tests.Godot/tests/Security/Hard/test_settings_config_security.gd",
       "只有当运行时可观察到日夜循环、波次预算与刷怪行为由配置值驱动且不依赖代码常量时，本任务才可判定通过。 Refs: Tests.Godot/tests/Integration/test_balance_runtime_config_reload.gd",
       "本任务关联的自动化测试在 Windows Godot + C# 基线环境必须全部通过，任一失败即不通过。 Refs: Tests.Godot/tests/Integration/test_balance_runtime_config_reload.gd",
       "在配置输入不变的条件下，重复执行确定性模拟必须产生一致的核心循环输出，出现任意差异即判失败。 Refs: Tests.Godot/tests/Integration/test_balance_simulation_determinism.gd",
@@ -178,7 +178,8 @@
     "taskmaster_id": 2,
     "contractRefs": [
       "Game.Core/Contracts/DomainEvent.cs"
-    ]
+    ],
+    "evidence_refs": []
   },
   {
     "id": "NG-0003",
@@ -226,8 +227,8 @@
       "Game.Core.Tests/Tasks/Task3DayNightDesignArtifactTests.cs"
     ],
     "acceptance": [
-      "Hard gate: deterministic cycle verification must include a fixed-seed forced-terminal scenario, not only natural Day15 completion paths.",
-      "Hard gate: forced-terminal verification must assert exactly one terminal emission, zero post-terminal progression, and checkpoint replay parity against baseline.",
+      "Hard gate: deterministic cycle verification must include a fixed-seed forced-terminal scenario, not only natural Day15 completion paths. Refs: Game.Core.Tests/State/GameStateMachineTests.cs Game.Core.Tests/State/GameStateManagerTests.cs",
+      "Hard gate: forced-terminal verification must assert exactly one terminal emission, zero post-terminal progression, and checkpoint replay parity against baseline. Refs: Game.Core.Tests/State/GameStateManagerTests.cs Game.Core.Tests/State/GameStateMachineTests.cs",
       "Taskmaster #3 的实现范围仅限 Day/Night 运行时状态机从 Day1 推进到 Day15；若出现与该循环无关的运行时功能行为变更则判定失败。 Refs: Game.Core.Tests/Tasks/Task3DayNightScopeGuardTests.cs",
       "在 Windows Godot+C# 基线下，本任务相关自动化测试必须全部通过，并覆盖正常推进、计时边界、固定种子重放一致性与 Day15 终局场景。 Refs: Game.Core.Tests/State/GameStateManagerTests.cs",
       "在 Day/Night 循环条件未变化且输入序列相同的前提下，本功能之外的确定性模拟输出与核心循环可观察行为必须保持不变。 Refs: Game.Core.Tests/State/GameStateManagerTests.cs",
@@ -254,7 +255,8 @@
     "taskmaster_id": 3,
     "contractRefs": [
       "Game.Core/Contracts/DomainEvent.cs"
-    ]
+    ],
+    "evidence_refs": []
   },
   {
     "id": "NG-0004",
@@ -373,7 +375,12 @@
       "Game.Core.Tests/Services/CollisionServiceTests.cs",
       "Game.Core.Tests/Services/WaveManagerNightCadenceWindowTests.cs",
       "Game.Core.Tests/Services/WaveManagerSpawnPolicyTests.cs",
-      "Game.Core.Tests/Services/WaveManagerNightStateGateTests.cs"
+      "Game.Core.Tests/Services/WaveManagerNightStateGateTests.cs",
+      "Game.Core.Tests/Services/WaveManagerNightCompositionValidationTests.cs",
+      "Game.Core.Tests/Services/WaveManagerNightDeterminismTests.cs",
+      "Game.Core.Tests/Services/WaveManagerNightChannelBoundaryTests.cs",
+      "Game.Core.Tests/Services/WaveManagerNightDiagnosticsTests.cs",
+      "Game.Core.Tests/Services/WaveManagerNightRegressionTests.cs"
     ],
     "acceptance": [
       "Taskmaster #5 PRD lock is satisfied: cadence spawning is active only during the first 80% of Night and emits no new cadence-driven spawns in the final 20%. Refs: Game.Core.Tests/Services/WaveManagerNightCadenceWindowTests.cs",
@@ -391,11 +398,11 @@
       "For a non-boss Night with Night duration set to 120 seconds and at least one configured spawn point, regular spawn event count in [0,96) is at least 9 and at most 10, and regular spawn event count in [96,120] is 0. Refs: Game.Core.Tests/Services/WaveManagerNightCadenceWindowTests.cs",
       "Obligation lock O1: In WaveManager, implement spawning logic during Night state is enforced as a hard acceptance criterion and must be verifiable by tests or audit evidence. Refs: Game.Core.Tests/Services/WaveManagerNightStateGateTests.cs Game.Core.Tests/Services/WaveManagerNightCadenceWindowTests.cs",
       "Obligation lock O6: In the final 20% of Night [0.8D, D], the system must emit no new enemy spawn events of any type (regular, elite, or boss). Refs: Game.Core.Tests/Services/WaveManagerSpawnPolicyTests.cs",
-      "Night spawn composition input is contract-validated before runtime use: required cadence fields and deterministic sequencing keys must be present, otherwise Night spawning for that run is rejected.",
-      "Given the same configuration, spawn-point set, composition payload, and deterministic seed, repeated runs produce the same spawn emission order and timing schedule for Night.",
-      "Spawner orchestration enforces per-channel emission boundaries: regular cadence emissions are confined to the configured spawn window, and boss-channel emissions never exceed the configured fixed count for boss nights.",
-      "When spawn composition is malformed, the system fails closed (no undefined spawn emissions) and emits structured diagnostics that identify failure reason and offending contract field.",
-      "Regression coverage includes both nominal and malformed-composition paths and verifies deterministic trace stability for same-seed runs."
+      "Night spawn composition input is contract-validated before runtime use: required cadence fields and deterministic sequencing keys must be present, otherwise Night spawning for that run is rejected. Refs: Game.Core.Tests/Services/WaveManagerNightCompositionValidationTests.cs",
+      "Given the same configuration, spawn-point set, composition payload, and deterministic seed, repeated runs produce the same spawn emission order and timing schedule for Night. Refs: Game.Core.Tests/Services/WaveManagerNightDeterminismTests.cs",
+      "Spawner orchestration enforces per-channel emission boundaries: regular cadence emissions are confined to the configured spawn window, and boss-channel emissions never exceed the configured fixed count for boss nights. Refs: Game.Core.Tests/Services/WaveManagerNightChannelBoundaryTests.cs",
+      "When spawn composition is malformed, the system fails closed (no undefined spawn emissions) and emits structured diagnostics that identify failure reason and offending contract field. Refs: Game.Core.Tests/Services/WaveManagerNightDiagnosticsTests.cs",
+      "Regression coverage includes both nominal and malformed-composition paths and verifies deterministic trace stability for same-seed runs. Refs: Game.Core.Tests/Services/WaveManagerNightRegressionTests.cs"
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #5 primary behavior.",
@@ -405,7 +412,8 @@
     "taskmaster_id": 5,
     "contractRefs": [
       "Game.Core/Contracts/DomainEvent.cs"
-    ]
+    ],
+    "evidence_refs": []
   },
   {
     "id": "NG-0006",
@@ -454,7 +462,13 @@
       "Game.Core.Tests/Services/EnemyAiDecisionDeterminismTests.cs",
       "Game.Core.Tests/Engine/DeterministicSimulationLoopTests.cs",
       "Tests.Godot/tests/Scenes/Combat/test_enemy_ai_navigation_priority.gd",
-      "Tests.Godot/tests/Scenes/Combat/test_enemy_ai_attachment_validation.gd"
+      "Tests.Godot/tests/Scenes/Combat/test_enemy_ai_attachment_validation.gd",
+      "Game.Core.Tests/Services/EnemyAiTargetingServiceTests.cs",
+      "Tests.Godot/tests/Integration/test_enemy_ai_target_selection_determinism.gd",
+      "Game.Core.Tests/Services/EnemyAiRetargetingServiceTests.cs",
+      "Tests.Godot/tests/Scenes/Combat/test_enemy_ai_retarget_unreachable_target.gd",
+      "Game.Core.Tests/Services/EnemyAiPathingDiagnosticsTests.cs",
+      "Tests.Godot/tests/Integration/test_enemy_ai_blocked_map_fallback_timeout.gd"
     ],
     "acceptance": [
       "Taskmaster #6 is complete only if combat runs show enemies selecting targets by defined priority and executing blocked-path fallback attacks when routes are obstructed. Refs: Game.Core.Tests/Services/EnemyAiTargetSelectionTests.cs Tests.Godot/tests/Scenes/Combat/test_enemy_ai_blocked_route_fallback.gd",
@@ -473,9 +487,9 @@
       "With fixed seed and identical initial state, repeated runs produce identical decision traces for both equal-priority ties and blocked-path fallback choices. Refs: Game.Core.Tests/Services/EnemyAiDecisionDeterminismTests.cs",
       "Obligation lock O1 is satisfied only when combat enemy nodes run with an active EnemyAI C# script attached at runtime; absence is a configuration failure. Refs: Tests.Godot/tests/Scenes/Combat/test_enemy_ai_attachment_validation.gd",
       "Obligation lock O9 is satisfied only when automated tests verify fixed-seed deterministic behavior across repeated runs for this task. Refs: Game.Core.Tests/Services/EnemyAiDecisionDeterminismTests.cs",
-      "For reachable candidates at the same priority, target selection compares deterministic path cost, and equal-cost ties are resolved only by the fixed seed so repeated runs stay identical.",
-      "If the current target becomes unreachable or invalid at runtime, the enemy switches to the next reachable target under reachability-plus-priority rules and does not traverse non-navigable space to keep the old target.",
-      "Blocked-map regression runs emit pathing diagnostics for each fallback decision, and each enemy reaches a fallback attack within timeout instead of entering a no-move/no-attack deadlock."
+      "For reachable candidates at the same priority, target selection compares deterministic path cost, and equal-cost ties are resolved only by the fixed seed so repeated runs stay identical. Refs: Game.Core.Tests/Services/EnemyAiTargetingServiceTests.cs Tests.Godot/tests/Integration/test_enemy_ai_target_selection_determinism.gd",
+      "If the current target becomes unreachable or invalid at runtime, the enemy switches to the next reachable target under reachability-plus-priority rules and does not traverse non-navigable space to keep the old target. Refs: Game.Core.Tests/Services/EnemyAiRetargetingServiceTests.cs Tests.Godot/tests/Scenes/Combat/test_enemy_ai_retarget_unreachable_target.gd",
+      "Blocked-map regression runs emit pathing diagnostics for each fallback decision, and each enemy reaches a fallback attack within timeout instead of entering a no-move/no-attack deadlock. Refs: Game.Core.Tests/Services/EnemyAiPathingDiagnosticsTests.cs Tests.Godot/tests/Integration/test_enemy_ai_blocked_map_fallback_timeout.gd"
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #6 primary behavior.",
@@ -485,7 +499,8 @@
     "taskmaster_id": 6,
     "contractRefs": [
       "Game.Core/Contracts/DomainEvent.cs"
-    ]
+    ],
+    "evidence_refs": []
   },
   {
     "id": "NG-0007",
@@ -536,7 +551,10 @@
       "Tests.Godot/tests/Adapters/Config/test_castle_start_hp_config.gd",
       "Tests.Godot/tests/UI/test_hud_updates_on_events.gd",
       "Game.Core.Tests/Services/EnemyTargetSelectionTests.cs",
-      "Tests.Godot/tests/Scenes/Battle/test_castle_current_hp_contract.gd"
+      "Tests.Godot/tests/Scenes/Battle/test_castle_current_hp_contract.gd",
+      "Game.Core.Tests/Engine/GameEngineCoreEventTests.cs",
+      "Game.Core.Tests/Domain/ValueObjects/HealthTests.cs",
+      "Tests.Godot/tests/Integration/test_castle_loss_transition_evidence_replay.gd"
     ],
     "acceptance": [
       "Task #7 delivers all required outcomes in one playable flow: castle HP state exists, enemy attacks reduce castle HP, HP=0 triggers loss/game-over, UI shows updated HP, and enemy AI can target the castle. Refs: Tests.Godot/tests/Integration/test_battle_castle_loss_flow.gd",
@@ -554,9 +572,9 @@
       "Castle state exposes a readable current HP value from castle script/state for both combat resolution and UI HP update flows. Refs: Tests.Godot/tests/Scenes/Battle/test_castle_current_hp_contract.gd",
       "Changing the configured starting HP value changes castle HP at battle start without requiring code changes. Refs: Tests.Godot/tests/Adapters/Config/test_castle_start_hp_config.gd",
       "Obligation lock O1: A concrete Castle C# script (Castle.cs or equivalent) must exist and expose a readable CurrentHp property for gameplay, combat resolution, and UI binding. Refs: Tests.Godot/tests/Scenes/Battle/test_castle_current_hp_contract.gd",
-      "Castle HP mutation boundaries are enforced: CurrentHp changes only at battle initialization from configured starting HP and when resolved enemy attacks apply damage; without either trigger, CurrentHp must remain unchanged.",
-      "Terminal transition is deterministic and single-dispatch: when CurrentHp first reaches 0, exactly one loss/game-over transition is emitted, and further damage processing while already terminal must not emit an additional loss transition.",
-      "Terminal-state evidence and replay checks are required: entering loss/game-over at HP=0 must emit terminal-transition evidence artifacts, and repeated runs with the same seed must produce the same loss-transition timing; missing evidence must fail validation.",
+      "Castle HP mutation boundaries are enforced: CurrentHp changes only at battle initialization from configured starting HP and when resolved enemy attacks apply damage; without either trigger, CurrentHp must remain unchanged. Refs: Game.Core.Tests/Engine/GameEngineCoreEventTests.cs Game.Core.Tests/Domain/ValueObjects/HealthTests.cs",
+      "Terminal transition is deterministic and single-dispatch: when CurrentHp first reaches 0, exactly one loss/game-over transition is emitted, and further damage processing while already terminal must not emit an additional loss transition. Refs: Game.Core.Tests/State/GameStateMachineTests.cs Game.Core.Tests/Engine/GameEngineCoreEventTests.cs",
+      "Terminal-state evidence and replay checks are required: entering loss/game-over at HP=0 must emit terminal-transition evidence artifacts, and repeated runs with the same seed must produce the same loss-transition timing; missing evidence must fail validation. Refs: Tests.Godot/tests/Integration/test_castle_loss_transition_evidence_replay.gd",
       "Contract tests must verify terminal trigger boundaries: HP=0 triggers loss, HP>0 does not trigger loss, and HP boundary rules are auditable. Refs: Game.Core.Tests/Services/CastleDurabilityTerminalTests.cs",
       "Contract-test gate for terminal trigger boundaries is mandatory on Windows baseline CI and blocks on failure. Refs: Game.Core.Tests/Services/CastleDurabilityTerminalTests.cs",
       "Unit tests must assert single terminal dispatch: first transition to HP=0 emits exactly one loss event and subsequent damage emits no additional terminal event. Refs: Game.Core.Tests/Services/CastleDurabilityTerminalTests.cs",
@@ -570,7 +588,8 @@
     "taskmaster_id": 7,
     "contractRefs": [
       "Game.Core/Contracts/DomainEvent.cs"
-    ]
+    ],
+    "evidence_refs": []
   },
   {
     "id": "NG-0008",
@@ -710,9 +729,9 @@
       "In a run with day progression, at least one Day/Night transition, and at least one HP change, all three HUD values visibly track their source values in real time on the main play view. Refs: Tests.Godot/tests/Integration/test_hud_integration.gd Tests.Godot/tests/UI/test_hud_updates_on_events.gd",
       "Scope remains minimal: the HUD directly exposes only day, cycle time remaining, and castle HP for core-loop visibility. Refs: Tests.Godot/tests/UI/test_hud_scene.gd",
       "Real-time HUD updates via C# scripts are treated as mandatory and must be verifiable through tests or audit evidence. Refs: Tests.Godot/tests/UI/test_hud_updates_on_events.gd",
-      "A single HUD data contract defines required fields (day, cycle time remaining, castle HP), required refresh cadence, and explicit fallback placeholders for invalid or unavailable data; contract tests fail if any required field, binding, or fallback definition is missing.",
-      "HUD binding and update flow is event-driven from core-loop transitions with explicit ownership boundaries, and Day/Night transition events plus HP change events must update mapped HUD outputs in the same session without scene reload or manual refresh.",
-      "Regression tests cover HUD continuity across Day/Night transitions and HP damage/change events, validate invalid-data fallback behavior, and emit UI state diagnostics at transition and fallback activation points."
+      "A single HUD data contract defines required fields (day, cycle time remaining, castle HP), required refresh cadence, and explicit fallback placeholders for invalid or unavailable data; contract tests fail if any required field, binding, or fallback definition is missing. Refs: Tests.Godot/tests/UI/test_hud_scene.gd",
+      "HUD binding and update flow is event-driven from core-loop transitions with explicit ownership boundaries, and Day/Night transition events plus HP change events must update mapped HUD outputs in the same session without scene reload or manual refresh. Refs: Tests.Godot/tests/UI/test_hud_updates_on_events.gd Tests.Godot/tests/Integration/test_hud_integration.gd",
+      "Regression tests cover HUD continuity across Day/Night transitions and HP damage/change events, validate invalid-data fallback behavior, and emit UI state diagnostics at transition and fallback activation points. Refs: Tests.Godot/tests/UI/test_hud_updates_on_events.gd"
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #9 primary behavior.",
@@ -722,7 +741,8 @@
     "taskmaster_id": 9,
     "contractRefs": [
       "Game.Core/Contracts/DomainEvent.cs"
-    ]
+    ],
+    "evidence_refs": []
   },
   {
     "id": "NG-0010",
@@ -867,7 +887,10 @@
       "Game.Core.Tests/Domain/GameConfigTests.cs",
       "Tests.Godot/tests/Integration/test_editor_reopen_rebuild_stability.gd",
       "Tests.Godot/tests/Integration/test_singleplayer_startup_flow.gd",
-      "Game.Core.Tests/Services/StartupBootstrapServiceTests.cs"
+      "Game.Core.Tests/Services/StartupBootstrapServiceTests.cs",
+      "Game.Core.Tests/Engine/BootstrapStructureContractTests.cs",
+      "Tests.Godot/tests/Integration/test_screen_navigator.gd",
+      "Tests.Godot/tests/Security/Hard/test_db_open_denied_writes_audit_log.gd"
     ],
     "acceptance": [
       "T11 必须在既有 T1 项目根目录上执行加固与验证，不得新建或替换为另一个 Godot 项目。 Refs: Game.Core.Tests/Tasks/Task11ProjectReuseGuardsTests.cs",
@@ -893,10 +916,10 @@
       "Scope boundary hard gate: T11 必须复用既有 T1 项目根目录，且禁止任何 new-project bootstrap；出现即不通过。 Refs: Game.Core.Tests/Tasks/Task11ProjectReuseGuardsTests.cs",
       "T11 复用验证必须在同一 T1 根目录完成，并包含至少两次编辑器重开且 Main Scene 与脚本绑定保持不变；缺少证据即不通过。 Refs: Tests.Godot/tests/Integration/test_editor_reopen_rebuild_stability.gd",
       "T11 执行期间若发生任何 reinitialization 或再次创建 Godot 项目，即使其他构建检查通过也判定不通过。 Refs: Game.Core.Tests/Tasks/Task11ProjectReuseGuardsTests.cs",
-      "在同一 T1 根目录内，必须明确并验证启动基线命名约定（Main Scene 名称、启动脚本名称、scripts/scenes/assets/config 目录命名）并保持一致；任一不一致即不通过。",
-      "必需 bootstrap 资产（至少含启动场景与启动脚本）必须由结构契约检查列出并校验；缺失任一必需项时门禁必须失败。",
-      "启动 wiring 与目录标准调整后，集成冒烟需证明启动流仍从既有主场景进入且目录完整；若出现 secondary root 或替代根路径即不通过。",
-      "结构回归与门禁检查必须在复用的 T1 根目录生成可审计验证工件并记录缺失项失败结果；未产出工件或缺失项未触发失败即不通过。"
+      "在同一 T1 根目录内，必须明确并验证启动基线命名约定（Main Scene 名称、启动脚本名称、scripts/scenes/assets/config 目录命名）并保持一致；任一不一致即不通过。 Refs: Tests.Godot/tests/Scenes/Smoke/test_main_scene_smoke.gd",
+      "必需 bootstrap 资产（至少含启动场景与启动脚本）必须由结构契约检查列出并校验；缺失任一必需项时门禁必须失败。 Refs: Game.Core.Tests/Engine/BootstrapStructureContractTests.cs",
+      "启动 wiring 与目录标准调整后，集成冒烟需证明启动流仍从既有主场景进入且目录完整；若出现 secondary root 或替代根路径即不通过。 Refs: Tests.Godot/tests/Scenes/Smoke/test_glue_connections.gd Tests.Godot/tests/Integration/test_screen_navigator.gd",
+      "结构回归与门禁检查必须在复用的 T1 根目录生成可审计验证工件并记录缺失项失败结果；未产出工件或缺失项未触发失败即不通过。 Refs: Tests.Godot/tests/Security/Hard/test_db_open_denied_writes_audit_log.gd"
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #11 primary behavior.",
@@ -906,7 +929,8 @@
     "taskmaster_id": 11,
     "contractRefs": [
       "Game.Core/Contracts/DomainEvent.cs"
-    ]
+    ],
+    "evidence_refs": []
   },
   {
     "id": "NG-0012",
@@ -951,11 +975,13 @@
       "Game.Core.Tests/State/GameStateMachineTests.cs",
       "Game.Core.Tests/Services/ResourceManagerTests.cs",
       "Tests.Godot/tests/UI/test_hud_updates_on_events.gd",
-      "Game.Core.Tests/Services/ResourceManagerEventTests.cs"
+      "Game.Core.Tests/Services/ResourceManagerEventTests.cs",
+      "Game.Core.Tests/Services/ResourceManagerIntegerSafetyTests.cs",
+      "Game.Core.Tests/Engine/GameEngineCoreEventTests.cs"
     ],
     "acceptance": [
-      "Hard gate: integer safety requires both static scan and runtime assertion gates; any non-integer resource arithmetic must fail immediately and keep state unchanged.",
-      "Hard gate: all economy modules must consume the shared resource contract/API, with cross-module tests proving consistent names, initial values, and invariants.",
+      "Hard gate: integer safety requires both static scan and runtime assertion gates; any non-integer resource arithmetic must fail immediately and keep state unchanged. Refs: Game.Core.Tests/Services/ResourceManagerIntegerSafetyTests.cs",
+      "Hard gate: all economy modules must consume the shared resource contract/API, with cross-module tests proving consistent names, initial values, and invariants. Refs: Game.Core.Tests/Engine/GameEngineCoreEventTests.cs",
       "Taskmaster #12 delivery is strictly limited to integer-safe resource management for gold, iron, and population cap, with no unrelated behavior changes. Refs: Game.Core.Tests/Services/ResourceManagerTests.cs",
       "All automated tests referenced by this task pass on the Windows Godot+C# baseline. Refs: Tests.Godot/tests/UI/test_hud_updates_on_events.gd",
       "Resource mutations and resource-state snapshot serialization are deterministic: identical integer initial state plus identical mutation sequence always yields identical final state and serialized snapshot. Refs: Game.Core.Tests/Services/ResourceManagerTests.cs",
@@ -984,7 +1010,8 @@
     "taskmaster_id": 12,
     "contractRefs": [
       "Game.Core/Contracts/DomainEvent.cs"
-    ]
+    ],
+    "evidence_refs": []
   },
   {
     "id": "NG-0013",
@@ -1038,11 +1065,13 @@
       "Game.Core.Tests/Services/WallDragPlacementServiceTests.cs",
       "Game.Core.Tests/Services/GatePathingRulesTests.cs",
       "Game.Core.Tests/Services/BuildingSelectionPolicyTests.cs",
-      "Tests.Godot/tests/Scenes/Building/test_building_debug_overlays_alignment.gd"
+      "Tests.Godot/tests/Scenes/Building/test_building_debug_overlays_alignment.gd",
+      "Tests.Godot/tests/Scenes/Building/test_wall_drag_line_gate_segments.gd",
+      "Tests.Godot/tests/Scenes/Building/test_wall_gate_invalid_input_no_side_effects.gd"
     ],
     "acceptance": [
-      "Hard gate: scene tests must explicitly assert gate-segment creation outcomes (count, position, direction) during drag-line wall building.",
-      "Hard gate: invalid gate-creation input must be rejected with no gate/wall side effects and no resource state mutation.",
+      "Hard gate: scene tests must explicitly assert gate-segment creation outcomes (count, position, direction) during drag-line wall building. Refs: Tests.Godot/tests/Scenes/Building/test_wall_drag_line_gate_segments.gd",
+      "Hard gate: invalid gate-creation input must be rejected with no gate/wall side effects and no resource state mutation. Refs: Tests.Godot/tests/Scenes/Building/test_wall_gate_invalid_input_no_side_effects.gd",
       "Taskmaster #13 在后端实现 castle、residence、mine、barracks、MG tower、wall、mine trap 的建造行为，且放置结果由 footprint 规则决定并限定在任务范围内。 Refs: Game.Core.Tests/Services/BuildingSubtypePlacementTests.cs Game.Core.Tests/Services/BuildingPlacementValidationTests.cs",
       "所有被引用的自动化测试在 Windows Godot+C# 基线上通过。 Refs: Game.Core.Tests/Services/BuildingPlacementValidationTests.cs Game.Core.Tests/Services/BuildingPlacementTransactionTests.cs",
       "在相同 grid 状态、资源状态、seed 和输入序列下，放置、gate-pathing 与拒绝结果必须可重复且保持确定性。 Refs: Game.Core.Tests/Services/BuildingPlacementDeterminismTests.cs Game.Core.Tests/Engine/BuildingSystemCoreLoopDeterminismTests.cs",
@@ -1070,7 +1099,8 @@
     "taskmaster_id": 13,
     "contractRefs": [
       "Game.Core/Contracts/DomainEvent.cs"
-    ]
+    ],
+    "evidence_refs": []
   },
   {
     "id": "NG-0014",
@@ -1121,7 +1151,10 @@
       "Game.Core.Tests/Services/ResidenceTaxCadenceTests.cs",
       "Tests.Godot/tests/Scenes/Economy/test_residence_placement_no_effect_on_cancel.gd",
       "Tests.Godot/tests/Scenes/Economy/test_residence_multi_tax_sum.gd",
-      "Tests.Godot/tests/Scenes/Economy/test_residence_timer_node_tax_binding.gd"
+      "Tests.Godot/tests/Scenes/Economy/test_residence_timer_node_tax_binding.gd",
+      "Game.Core.Tests/Services/ResidenceTaxPolicyTests.cs",
+      "Game.Core.Tests/Services/ResidenceTaxDeterminismTests.cs",
+      "Game.Core.Tests/Services/ResidenceTaxTraceTests.cs"
     ],
     "acceptance": [
       "仅当 Residence 成功建造后同时满足两项才通过：人口上限按配置提升，且 15 秒税收节拍开始运行；任一缺失即不通过。 Refs: Tests.Godot/tests/Integration/test_residence_economy_flow.gd",
@@ -1139,9 +1172,9 @@
       "同一个成功放置事件被重复处理时，不得再次增加该次放置对应的人口上限。 Refs: Game.Core.Tests/Domain/ResidenceBuildingTests.cs",
       "Residence 经济行为必须通过 Building 系统中的 Residence 扩展路径生效；绕过该路径不得产生对应经济变更，并可由测试或审计证据验证。 Refs: Game.Core.Tests/Domain/ResidenceBuildingTests.cs",
       "Residence 税收流程必须绑定 Godot Timer 节点并以 15 秒触发，将税额写入 ResourceManager；该绑定关系必须可被测试或可审计证据验证。 Refs: Tests.Godot/tests/Scenes/Economy/test_residence_timer_node_tax_binding.gd Tests.Godot/tests/Scenes/Economy/test_residence_tax_timer_cadence.gd",
-      "经济契约必须明确并锁定：税收 tick 间隔为 15 秒、相关变更为整数语义、以及负金币处理策略；任何异常输入都必须按策略拒绝或显式处理，不能静默改状态。",
-      "Residence 税收运行时必须在每个 tick 按确定顺序执行整数变更；相同初始状态与相同 tick 序列下，金币总量与债务状态迁移结果必须完全一致。",
-      "回归覆盖必须产出结构化税收轨迹，逐条记录每次 Residence 结算的变更原因与增量；固定随机种子重复运行时，轨迹顺序与汇总结果必须可复现。",
+      "经济契约必须明确并锁定：税收 tick 间隔为 15 秒、相关变更为整数语义、以及负金币处理策略；任何异常输入都必须按策略拒绝或显式处理，不能静默改状态。 Refs: Game.Core.Tests/Services/ResidenceTaxPolicyTests.cs",
+      "Residence 税收运行时必须在每个 tick 按确定顺序执行整数变更；相同初始状态与相同 tick 序列下，金币总量与债务状态迁移结果必须完全一致。 Refs: Game.Core.Tests/Services/ResidenceTaxDeterminismTests.cs",
+      "回归覆盖必须产出结构化税收轨迹，逐条记录每次 Residence 结算的变更原因与增量；固定随机种子重复运行时，轨迹顺序与汇总结果必须可复现。 Refs: Game.Core.Tests/Services/ResidenceTaxTraceTests.cs",
       "Contract tests must lock Residence tax cadence at 15 seconds and fail if runtime cadence drifts under identical tick input. Refs: Game.Core.Tests/Services/ResidenceTaxCadenceTests.cs",
       "Contract tests must enforce integer-only semantics for Residence economy fields and reject non-integer inputs with explicit failure. Refs: Game.Core.Tests/Services/ResidenceTaxConfigTests.cs",
       "Unit tests must verify multi-tick Residence tax accumulation equals expected deterministic totals. Refs: Game.Core.Tests/Services/ResidenceTaxCadenceTests.cs",
@@ -1155,7 +1188,8 @@
     "taskmaster_id": 14,
     "contractRefs": [
       "Game.Core/Contracts/DomainEvent.cs"
-    ]
+    ],
+    "evidence_refs": []
   },
   {
     "id": "NG-0015",
@@ -1203,7 +1237,11 @@
       "Game.Core.Tests/Services/BuildingOperationStateMachineTests.cs",
       "Tests.Godot/tests/Integration/test_building_upgrade_repair_progress_flow.gd",
       "Game.Core.Tests/Engine/GameEngineCoreEventTests.cs",
-      "Game.Core.Tests/Services/BuildingRepairProgressTests.cs"
+      "Game.Core.Tests/Services/BuildingRepairProgressTests.cs",
+      "Game.Core.Tests/Services/BuildingUpgradeRepairRefundTests.cs",
+      "Game.Core.Tests/State/BuildingOperationDeterminismTests.cs",
+      "Game.Core.Tests/State/BuildingOperationTimelineTests.cs",
+      "Game.Core.Tests/Services/BuildingUpgradeRepairServiceTests.cs"
     ],
     "acceptance": [
       "Taskmaster #15 implementation behavior is limited to the upgrade/repair rules and constraints defined for Develop Upgrade and Repair System with Constraints. Refs: Game.Core.Tests/Domain/BuildingUpgradeTests.cs Game.Core.Tests/Services/BuildingOperationStateMachineTests.cs",
@@ -1228,9 +1266,9 @@
       "Obligation lock O1: Add upgrade and repair functionality to Building class is enforced as a hard acceptance criterion and must be verifiable by tests or audit evidence. Refs: Game.Core.Tests/Domain/BuildingUpgradeTests.cs Game.Core.Tests/Services/BuildingRepairProgressTests.cs",
       "Obligation lock O10: public enum BuildState { Idle, Upgrading, Repairing }; is enforced as a hard acceptance criterion and must be verifiable by tests or audit evidence. Refs: Game.Core.Tests/Domain/BuildingUpgradeTests.cs Game.Core.Tests/Services/BuildingOperationStateMachineTests.cs",
       "Obligation lock O11: Progress flow implementation must use Godot queue or coroutine mechanisms; timer-only implementation is rejected as insufficient acceptance evidence. Refs: Tests.Godot/tests/Integration/test_building_upgrade_repair_progress_flow.gd",
-      "When a cancel or interruption path is invoked for an active upgrade or repair, refund outcomes are deterministic and integer-safe: refunded value equals only the remaining unconsumed cost and never exceeds what was already deducted.",
-      "Given fixed initial state and fixed progress-step inputs, upgrade/repair execution timing and completion ordering are deterministic across repeated runs.",
-      "Regression scenarios must emit an ordered operation timeline (start, progress, completion, refusal) that demonstrates illegal concurrent requests are refused and valid requests can still complete after the building returns to Idle."
+      "When a cancel or interruption path is invoked for an active upgrade or repair, refund outcomes are deterministic and integer-safe: refunded value equals only the remaining unconsumed cost and never exceeds what was already deducted. Refs: Game.Core.Tests/Services/BuildingUpgradeRepairRefundTests.cs",
+      "Given fixed initial state and fixed progress-step inputs, upgrade/repair execution timing and completion ordering are deterministic across repeated runs. Refs: Game.Core.Tests/State/BuildingOperationDeterminismTests.cs",
+      "Regression scenarios must emit an ordered operation timeline (start, progress, completion, refusal) that demonstrates illegal concurrent requests are refused and valid requests can still complete after the building returns to Idle. Refs: Game.Core.Tests/State/BuildingOperationTimelineTests.cs Game.Core.Tests/Services/BuildingUpgradeRepairServiceTests.cs"
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #15 primary behavior.",
@@ -1240,7 +1278,8 @@
     "taskmaster_id": 15,
     "contractRefs": [
       "Game.Core/Contracts/DomainEvent.cs"
-    ]
+    ],
+    "evidence_refs": []
   },
   {
     "id": "NG-0016",
@@ -1377,7 +1416,12 @@
       "Tests.Godot/tests/Integration/test_techtree_reload_unlock_paths.gd",
       "Game.Core.Tests/Services/TechTreeUnlockPrerequisitesTests.cs",
       "Game.Core.Tests/Services/TechTreeReloadBehaviorTests.cs",
-      "Game.Core.Tests/Services/TechTreeManagerContractTests.cs"
+      "Game.Core.Tests/Services/TechTreeManagerContractTests.cs",
+      "Game.Core.Tests/Services/TechTreeManagerTests.cs",
+      "Game.Core.Tests/State/TechRuntimeSnapshotTests.cs",
+      "Tests.Godot/tests/Integration/test_barracks_tech_snapshot_flow.gd",
+      "Tests.Godot/tests/Integration/test_barracks_tech_invalid_modifier_rejection.gd",
+      "Tests.Godot/tests/Integration/test_barracks_tech_seeded_determinism.gd"
     ],
     "acceptance": [
       "When a valid tech-tree JSON resource is loaded through Godot Resource APIs, runtime exposes exactly the node IDs, prerequisite links, and stat modifiers defined by that resource. Refs: Tests.Godot/tests/Adapters/test_techtree_resource_loading.gd",
@@ -1400,11 +1444,11 @@
       "TechTreeManager exposes GetStatMultiplier(string stat), and results are computed from currently unlocked tech nodes rather than fixed outputs. Refs: Game.Core.Tests/Services/TechTreeManagerContractTests.cs",
       "TechTreeManager owns loading tech definitions from JSON config via Godot Resource APIs and building the runtime node set; moving JSON load ownership outside it fails acceptance. Refs: Tests.Godot/tests/Adapters/test_techtree_resource_loading.gd",
       "TechTreeManager keeps private ID-keyed node storage as Dictionary<string, TechNode> (or audit-equivalent private map with string keys and TechNode values), verifiable by tests or audit evidence. Refs: Game.Core.Tests/Services/TechTreeManagerContractTests.cs",
-      "Before runtime application, tech modifiers are schema-validated: percentage-based modifiers outside defined bounds are rejected, and apply order is deterministic for the same unlocked-node set.",
-      "Tech effects propagate through runtime snapshots: after unlock-state changes, the next snapshot used for barracks stat computation reflects new multipliers, while already produced snapshots remain unchanged.",
-      "Runtime calculations use active config values, not embedded constants: reloading with only modifier-value changes updates computed multipliers without source-code edits.",
-      "Out-of-range modifier inputs are rejected and do not mutate computed multipliers or trained-unit stats; rejection is observable in runtime results.",
-      "Under fixed seeds with identical config and unlock sequences, regression runs produce identical tech-application outcomes, including final multipliers and barracks-trained unit stats.",
+      "Before runtime application, tech modifiers are schema-validated: percentage-based modifiers outside defined bounds are rejected, and apply order is deterministic for the same unlocked-node set. Refs: Game.Core.Tests/Services/TechTreeManagerTests.cs",
+      "Tech effects propagate through runtime snapshots: after unlock-state changes, the next snapshot used for barracks stat computation reflects new multipliers, while already produced snapshots remain unchanged. Refs: Game.Core.Tests/State/TechRuntimeSnapshotTests.cs Tests.Godot/tests/Integration/test_barracks_tech_snapshot_flow.gd",
+      "Runtime calculations use active config values, not embedded constants: reloading with only modifier-value changes updates computed multipliers without source-code edits. Refs: Game.Core.Tests/Services/TechTreeManagerTests.cs",
+      "Out-of-range modifier inputs are rejected and do not mutate computed multipliers or trained-unit stats; rejection is observable in runtime results. Refs: Tests.Godot/tests/Integration/test_barracks_tech_invalid_modifier_rejection.gd",
+      "Under fixed seeds with identical config and unlock sequences, regression runs produce identical tech-application outcomes, including final multipliers and barracks-trained unit stats. Refs: Game.Core.Tests/Services/TechTreeDeterminismTests.cs Tests.Godot/tests/Integration/test_barracks_tech_seeded_determinism.gd",
       "Regression outputs include deterministic tech-application trace artifacts exposing unlock sequence and multiplier snapshots for audit and replay comparison. Refs: Game.Core.Tests/Services/TechTreeDeterminismTests.cs Game.Core.Tests/Services/TechTreeReloadBehaviorTests.cs"
     ],
     "test_strategy": [
@@ -1415,7 +1459,8 @@
     "taskmaster_id": 17,
     "contractRefs": [
       "Game.Core/Contracts/DomainEvent.cs"
-    ]
+    ],
+    "evidence_refs": []
   },
   {
     "id": "NG-0018",
@@ -1546,11 +1591,13 @@
       "Game.Core.Tests/Services/GameManagerTerminalConditionsTests.cs",
       "Tests.Godot/tests/UI/test_hud_day_counter_updates.gd",
       "Tests.Godot/tests/Scenes/Gameplay/test_game_manager_phase_signal_flow.gd",
-      "Game.Core.Tests/Domain/GameConfigTests.cs"
+      "Game.Core.Tests/Domain/GameConfigTests.cs",
+      "Tests.Godot/tests/UI/test_game_manager_transition_and_terminal_prompts.gd",
+      "Tests.Godot/tests/Integration/test_day_night_cycle_and_win_lose_outcomes.gd"
     ],
     "acceptance": [
-      "Hard gate: UI integration tests must assert payload-to-display consistency for both transition and terminal events, including correct Win/Lose prompt mapping.",
-      "Hard gate: one deterministic end-to-end suite must jointly gate cycle timing boundaries and terminal outcomes in the same run; any failed assertion fails the suite.",
+      "Hard gate: UI integration tests must assert payload-to-display consistency for both transition and terminal events, including correct Win/Lose prompt mapping. Refs: Tests.Godot/tests/UI/test_game_manager_transition_and_terminal_prompts.gd",
+      "Hard gate: one deterministic end-to-end suite must jointly gate cycle timing boundaries and terminal outcomes in the same run; any failed assertion fails the suite. Refs: Tests.Godot/tests/Integration/test_day_night_cycle_and_win_lose_outcomes.gd",
       "GameManager is the single runtime authority for phase timing, day progression, and terminal-state evaluation, with transitions observable through exposed state or events. Refs: Game.Core.Tests/State/GameStateMachineTests.cs",
       "On the Windows Godot+C# baseline, automated tests for this feature execute to completion and pass. Refs: Tests.Godot/tests/Integration/test_game_flow_day_night_terminal_paths.gd",
       "Given the same initial state and timing inputs, repeated runs produce the same phase sequence, day boundaries, and terminal result. Refs: Game.Core.Tests/State/GameStateMachineTests.cs",
@@ -1580,7 +1627,8 @@
     "taskmaster_id": 19,
     "contractRefs": [
       "Game.Core/Contracts/DomainEvent.cs"
-    ]
+    ],
+    "evidence_refs": []
   },
   {
     "id": "NG-0020",
@@ -1641,9 +1689,9 @@
       "Automated verification includes unit tests for attack resolution and friendly-fire prevention plus an in-game scenario with player units, enemies, MG towers, and walls where only enemies take damage. Refs: Game.Core.Tests/Services/CombatServiceTests.cs",
       "CombatSystem enforces one shared attack-resolution policy for both unit and MG tower attacks, and both apply the same team/owner friendly-fire guard before any damage commit. Refs: Game.Core.Tests/Services/CombatSystemTests.cs",
       "Target acquisition uses in-range detection (physics query or area overlap): only detected in-range enemy targets are damaged, while non-detected or out-of-range targets remain unchanged. Refs: Tests.Godot/tests/Scenes/Combat/test_combat_scene_targeting_range.gd",
-      "Combat resolution contract is stable across all unit and MG tower attacks: emitted combat events contain attacker identity/team, target identity/team, resolved damage, and outcome, and contract tests fail on payload field drift.",
-      "Given identical simulation state and tick timing, combat target selection and damage application order are deterministic across repeated runs, and same-team entities are excluded from damage paths before resolution.",
-      "Combat diagnostics are emitted for every target pick and damage or refusal event (including friendly-fire refusals), and dense-engagement regression tests verify those diagnostics are present and consistent.",
+      "Combat resolution contract is stable across all unit and MG tower attacks: emitted combat events contain attacker identity/team, target identity/team, resolved damage, and outcome, and contract tests fail on payload field drift. Refs: Game.Core.Tests/Services/CombatServiceTests.cs",
+      "Given identical simulation state and tick timing, combat target selection and damage application order are deterministic across repeated runs, and same-team entities are excluded from damage paths before resolution. Refs: Game.Core.Tests/Services/CombatServiceTests.cs",
+      "Combat diagnostics are emitted for every target pick and damage or refusal event (including friendly-fire refusals), and dense-engagement regression tests verify those diagnostics are present and consistent. Refs: Game.Core.Tests/Services/CombatServiceTests.cs",
       "Contract tests must enforce friendly-fire invariant: same-team attack outcome is refused and resolved damage is 0. Refs: Game.Core.Tests/Services/CombatServiceTests.cs",
       "Contract tests must fail when combat event fields exist but friendly-fire invariant is violated. Refs: Game.Core.Tests/Services/CombatServiceTests.cs",
       "Unit tests must separately assert target-resolution correctness and damage-application order. Refs: Game.Core.Tests/Services/CombatSystemTests.cs",
@@ -1659,7 +1707,8 @@
     "taskmaster_id": 20,
     "contractRefs": [
       "Game.Core/Contracts/DomainEvent.cs"
-    ]
+    ],
+    "evidence_refs": []
   },
   {
     "id": "NG-0021",
@@ -1783,7 +1832,11 @@
       "Tests.Godot/tests/UI/test_hud_scene.gd",
       "Tests.Godot/tests/Scenes/Camera/test_camera_controller_scroll_inputs.gd",
       "Tests.Godot/tests/Scenes/Camera/test_main_scene_camera_wiring.gd",
-      "Tests.Godot/tests/Scenes/Camera/test_camera_controller_delta_speed_and_bounds.gd"
+      "Tests.Godot/tests/Scenes/Camera/test_camera_controller_delta_speed_and_bounds.gd",
+      "Game.Core.Tests/State/CameraMovementContractTests.cs",
+      "Tests.Godot/tests/Adapters/test_camera_controller_bounds_and_lock.gd",
+      "Tests.Godot/tests/Adapters/test_camera_controller_active_paused_scroll.gd",
+      "Tests.Godot/tests/Adapters/test_camera_controller_mode_transitions.gd"
     ],
     "acceptance": [
       "Taskmaster #22 delivers a playable world-navigation camera where edge scrolling and keyboard scrolling are both functional. Refs: Tests.Godot/tests/Scenes/Camera/test_camera_controller_scroll_inputs.gd Tests.Godot/tests/Scenes/Camera/test_main_scene_camera_wiring.gd",
@@ -1796,9 +1849,9 @@
       "Edge scrolling and keyboard scrolling can both be active in the same frame without dropped input, and resulting movement remains continuous. Refs: Tests.Godot/tests/Scenes/Camera/test_camera_controller_scroll_inputs.gd",
       "A CameraController with an active Camera2D is present in the playable scene, and camera movement is applied through that Camera2D. Refs: Tests.Godot/tests/Scenes/Camera/test_main_scene_camera_wiring.gd",
       "With default configuration, entering within 20 pixels of any viewport edge triggers movement toward that edge, and scroll input is read through Godot Input plus viewport mouse-position events. Refs: Tests.Godot/tests/Scenes/Camera/test_camera_controller_scroll_inputs.gd",
-      "A camera movement contract defines scroll speed, edge-margin threshold, bounds-clamping invariants, and lock-state interaction rules; contract tests fail if movement occurs while locked or if movement exceeds configured bounds.",
-      "Runtime behavior is state-aware: in active state, edge and keyboard inputs move the camera continuously; in paused state, the same inputs do not change camera position, and bounds invariants remain satisfied.",
-      "Camera state diagnostics are emitted for movement-mode transitions (idle, edge, keyboard, combined, locked), and regression checks verify consistent transition behavior with no boundary escape under repeated input sequences."
+      "A camera movement contract defines scroll speed, edge-margin threshold, bounds-clamping invariants, and lock-state interaction rules; contract tests fail if movement occurs while locked or if movement exceeds configured bounds. Refs: Game.Core.Tests/State/CameraMovementContractTests.cs Tests.Godot/tests/Adapters/test_camera_controller_bounds_and_lock.gd",
+      "Runtime behavior is state-aware: in active state, edge and keyboard inputs move the camera continuously; in paused state, the same inputs do not change camera position, and bounds invariants remain satisfied. Refs: Tests.Godot/tests/Adapters/test_camera_controller_active_paused_scroll.gd",
+      "Camera state diagnostics are emitted for movement-mode transitions (idle, edge, keyboard, combined, locked), and regression checks verify consistent transition behavior with no boundary escape under repeated input sequences. Refs: Tests.Godot/tests/Adapters/test_camera_controller_mode_transitions.gd"
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #22 primary behavior.",
@@ -1808,7 +1861,8 @@
     "taskmaster_id": 22,
     "contractRefs": [
       "Game.Core/Contracts/DomainEvent.cs"
-    ]
+    ],
+    "evidence_refs": []
   },
   {
     "id": "NG-0023",
@@ -1857,7 +1911,13 @@
       "Game.Core.Tests/Services/GameplayProgressionRateTests.cs",
       "Game.Core.Tests/Services/CountdownSchedulerPauseTests.cs",
       "Tests.Godot/tests/Scenes/Runtime/test_nodes_process_mode_pause_resume.gd",
-      "Tests.Godot/tests/Integration/test_game_manager_singleton_speed_modes.gd"
+      "Tests.Godot/tests/Integration/test_game_manager_singleton_speed_modes.gd",
+      "Game.Core.Tests/Services/RuntimeSpeedTimelineEvidenceTests.cs",
+      "Tests.Godot/tests/Integration/test_runtime_speed_timeline_evidence.gd",
+      "Game.Core.Tests/State/RuntimeSpeedReplayDeterminismTests.cs",
+      "Tests.Godot/tests/Integration/test_runtime_speed_replay_determinism.gd",
+      "Game.Core.Tests/Services/RuntimeSpeedTimelineGateValidationTests.cs",
+      "Tests.Godot/tests/Integration/test_runtime_speed_timeline_gate_validation.gd"
     ],
     "acceptance": [
       "运行时速度控制仅暴露 Pause、1x、2x 三种状态；进入 Pause 时必须同时生效计时冻结语义。 Refs: Game.Core.Tests/Services/RuntimeSpeedControllerTests.cs Tests.Godot/tests/UI/test_speed_controls_buttons_apply_speed.gd",
@@ -1884,9 +1944,9 @@
       "必须有可验证证据证明 Pause 路径将 Engine.TimeScale 设为 0，并冻结全部自定义计时器；无法验证则不通过。 Refs: Tests.Godot/tests/Integration/test_game_manager_singleton_speed_modes.gd Game.Core.Tests/Services/CountdownSchedulerPauseTests.cs",
       "必须有可验证证据证明 1x 与 2x 路径分别将 TimeScale 设为 1 与 2；无法验证则不通过。 Refs: Tests.Godot/tests/Integration/test_game_manager_singleton_speed_modes.gd Game.Core.Tests/Services/RuntimeSpeedControllerTests.cs",
       "必须有可验证证据证明节点暂停遵循 Godot ProcessMode 语义，并能观测到暂停/恢复处理行为；无法验证则不通过。 Refs: Tests.Godot/tests/Scenes/Runtime/test_nodes_process_mode_pause_resume.gd",
-      "每次速度状态变更（Pause/1x/2x）都必须产出可排序时间线证据，至少包含变更前状态、变更后状态、生效时刻与触发来源；任一字段缺失即判定不通过。",
-      "在相同初始状态、相同输入序列与相同随机种子下重放速度切换，时间线锚点（切换顺序、倒计时完成顺序、关键进度里程碑）必须一致；出现锚点漂移即判定不通过。",
-      "回归与门禁检查必须读取并校验上述速度时间线证据；若证据未生成、不可读取或与观测状态不一致，则验收失败。"
+      "每次速度状态变更（Pause/1x/2x）都必须产出可排序时间线证据，至少包含变更前状态、变更后状态、生效时刻与触发来源；任一字段缺失即判定不通过。 Refs: Game.Core.Tests/Services/RuntimeSpeedTimelineEvidenceTests.cs Tests.Godot/tests/Integration/test_runtime_speed_timeline_evidence.gd",
+      "在相同初始状态、相同输入序列与相同随机种子下重放速度切换，时间线锚点（切换顺序、倒计时完成顺序、关键进度里程碑）必须一致；出现锚点漂移即判定不通过。 Refs: Game.Core.Tests/State/RuntimeSpeedReplayDeterminismTests.cs Tests.Godot/tests/Integration/test_runtime_speed_replay_determinism.gd",
+      "回归与门禁检查必须读取并校验上述速度时间线证据；若证据未生成、不可读取或与观测状态不一致，则验收失败。 Refs: Game.Core.Tests/Services/RuntimeSpeedTimelineGateValidationTests.cs Tests.Godot/tests/Integration/test_runtime_speed_timeline_gate_validation.gd"
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #23 primary behavior.",
@@ -1896,7 +1956,8 @@
     "taskmaster_id": 23,
     "contractRefs": [
       "Game.Core/Contracts/DomainEvent.cs"
-    ]
+    ],
+    "evidence_refs": []
   },
   {
     "id": "NG-0024",
@@ -1947,7 +2008,12 @@
       "Tests.Godot/tests/Integration/test_gameplay_action_rejection_state_invariant.gd",
       "Tests.Godot/tests/Integration/test_load_failure_feedback_flow.gd",
       "Tests.Godot/tests/UI/test_hud_updates_on_events.gd",
-      "Tests.Godot/tests/Adapters/test_event_bus_adapter.gd"
+      "Tests.Godot/tests/Adapters/test_event_bus_adapter.gd",
+      "Game.Core.Tests/Domain/InvalidActionFeedbackContractTests.cs",
+      "Game.Core.Tests/Services/UIFeedbackMessageResolverTests.cs",
+      "Tests.Godot/tests/UI/test_settings_locale.gd",
+      "Game.Core.Tests/Services/UIFeedbackRegressionTests.cs",
+      "Tests.Godot/tests/Integration/test_feedback_error_flows.gd"
     ],
     "acceptance": [
       "Taskmaster #24 provides user-facing UI feedback in each required scenario: invalid placement, blocked actions, and migration/load failures. Refs: Tests.Godot/tests/UI/test_hud_action_feedback.gd Tests.Godot/tests/UI/test_hud_error_dialog.gd",
@@ -1966,13 +2032,13 @@
       "The persistent migration/load error dialog exposes an explicit dismiss control, and using it closes the dialog and returns normal UI control. Refs: Tests.Godot/tests/UI/test_hud_error_dialog.gd Tests.Godot/tests/Integration/test_load_failure_feedback_flow.gd",
       "Obligation O11 is satisfied: UI feedback uses Godot Control nodes, and this is verifiable by tests or audit evidence. Refs: Tests.Godot/tests/UI/test_hud_scene.gd",
       "Obligation O12 is satisfied: a UIFeedbackManager displays feedback through a label or popup, and this is verifiable by tests or audit evidence. Refs: Tests.Godot/tests/UI/test_hud_action_feedback.gd Tests.Godot/tests/UI/test_hud_error_dialog.gd",
-      "Invalid-action feedback contract enumerates reason codes and i18n message keys, and contract tests fail when any supported reason code lacks a mapped message key.",
-      "UI feedback resolution uses reason-code-to-message-key mapping so locale changes alter displayed text without changing trigger conditions or reason semantics.",
-      "Runtime feedback dispatch applies deterministic priority rules for competing feedback events, and identical event sequences always produce the same visible feedback outcome.",
-      "Runtime feedback dispatch de-duplicates repeated feedback events with the same reason/details within the configured dedup scope so duplicate concurrent messages/dialogs are not shown.",
-      "Regression tests cover repeated invalid placements, blocked actions, and load/migration failures to verify stable feedback behavior across repeated errors.",
-      "Feedback diagnostics include reason code and resolved message key/details for blocked actions and migration/load failures so troubleshooting can correlate UI output with triggering cause.",
-      "Localization checks verify that required feedback paths render non-empty localized user-facing text for active locales rather than raw/internal reason codes."
+      "Invalid-action feedback contract enumerates reason codes and i18n message keys, and contract tests fail when any supported reason code lacks a mapped message key. Refs: Game.Core.Tests/Domain/InvalidActionFeedbackContractTests.cs Game.Core.Tests/Services/UIFeedbackMessageResolverTests.cs",
+      "UI feedback resolution uses reason-code-to-message-key mapping so locale changes alter displayed text without changing trigger conditions or reason semantics. Refs: Tests.Godot/tests/UI/test_settings_locale.gd",
+      "Runtime feedback dispatch applies deterministic priority rules for competing feedback events, and identical event sequences always produce the same visible feedback outcome. Refs: Tests.Godot/tests/UI/test_hud_updates_on_events.gd",
+      "Runtime feedback dispatch de-duplicates repeated feedback events with the same reason/details within the configured dedup scope so duplicate concurrent messages/dialogs are not shown. Refs: Tests.Godot/tests/UI/test_hud_updates_on_events.gd",
+      "Regression tests cover repeated invalid placements, blocked actions, and load/migration failures to verify stable feedback behavior across repeated errors. Refs: Game.Core.Tests/Services/UIFeedbackRegressionTests.cs Tests.Godot/tests/Integration/test_feedback_error_flows.gd",
+      "Feedback diagnostics include reason code and resolved message key/details for blocked actions and migration/load failures so troubleshooting can correlate UI output with triggering cause. Refs: Tests.Godot/tests/Integration/test_feedback_error_flows.gd",
+      "Localization checks verify that required feedback paths render non-empty localized user-facing text for active locales rather than raw/internal reason codes. Refs: Tests.Godot/tests/UI/test_settings_locale.gd"
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #24 primary behavior.",
@@ -1982,7 +2048,8 @@
     "taskmaster_id": 24,
     "contractRefs": [
       "Game.Core/Contracts/DomainEvent.cs"
-    ]
+    ],
+    "evidence_refs": []
   },
   {
     "id": "NG-0025",
@@ -2113,7 +2180,8 @@
       "Tests.Godot/tests/Adapters/Db/test_savegame_unique_slot_per_user.gd",
       "Tests.Godot/tests/Adapters/Db/test_savegame_repository.gd",
       "Tests.Godot/tests/UI/test_save_conflict_prompt_branch_selection.gd",
-      "Tests.Godot/tests/Adapters/Steam/test_steam_api_binding_remote_storage.gd"
+      "Tests.Godot/tests/Adapters/Steam/test_steam_api_binding_remote_storage.gd",
+      "Tests.Godot/tests/Adapters/Db/test_savegame_update_overwrite_cross_restart.gd"
     ],
     "acceptance": [
       "Task #26 integrates Steam account-bound cloud save synchronization into the existing SaveManager flow, matching this task's defined scope. Refs: Tests.Godot/tests/Integration/test_save_manager_steam_cloud_sync_flow.gd Tests.Godot/tests/Integration/test_steam_remote_storage_real_ops.gd",
@@ -2129,9 +2197,9 @@
       "When a local-vs-cloud conflict prompt is shown, choosing Local applies local data for that operation without automatic cloud overwrite, and choosing Cloud applies cloud data for that operation. Refs: Game.Core.Tests/Services/CloudSaveConflictResolverTests.cs Tests.Godot/tests/UI/test_save_conflict_prompt_branch_selection.gd",
       "When no valid Steam login is present, cloud sync is explicitly skipped with user-visible status, and SaveManager local save/load still succeeds without save corruption. Refs: Tests.Godot/tests/Adapters/Db/test_savegame_repository.gd",
       "Cloud-sync calls execute against real Steam API integration (Steamworks.NET or GodotSteam) in the Steam development environment and are verifiable as Steam Remote Storage operations for the logged-in account, not local-only mock behavior. Refs: Tests.Godot/tests/Integration/test_steam_remote_storage_real_ops.gd Tests.Godot/tests/Adapters/Steam/test_steam_api_binding_remote_storage.gd",
-      "Cloud-save binding enforces exactly one auto-save slot identity per Steam account, and cross-account create/read/overwrite attempts are rejected without modifying current account save state.",
-      "Before applying cloud data, sync validates deterministic save metadata and ownership; if ownership does not match the logged-in Steam account, the payload is rejected and local save state remains unchanged.",
-      "Regression coverage includes upload, download, conflict, and failure-recovery paths, and each failure path emits structured save-sync diagnostics with evidence for deterministic recovery or explicit rejection.",
+      "Cloud-save binding enforces exactly one auto-save slot identity per Steam account, and cross-account create/read/overwrite attempts are rejected without modifying current account save state. Refs: Tests.Godot/tests/Adapters/Db/test_savegame_unique_slot_per_user.gd Tests.Godot/tests/Adapters/Db/test_savegame_update_overwrite_cross_restart.gd",
+      "Before applying cloud data, sync validates deterministic save metadata and ownership; if ownership does not match the logged-in Steam account, the payload is rejected and local save state remains unchanged. Refs: Tests.Godot/tests/Adapters/Db/test_savegame_unique_slot_per_user.gd Tests.Godot/tests/Adapters/Db/test_savegame_persistence_cross_restart.gd",
+      "Regression coverage includes upload, download, conflict, and failure-recovery paths, and each failure path emits structured save-sync diagnostics with evidence for deterministic recovery or explicit rejection. Refs: Tests.Godot/tests/Integration/test_backup_restore_savegame.gd Tests.Godot/tests/Adapters/Db/test_savegame_upsert_rollback.gd",
       "Acceptance must include account-ownership plus single-auto-slot contract tests and pass on Windows baseline. Refs: Tests.Godot/tests/Integration/test_save_manager_steam_cloud_sync_flow.gd Tests.Godot/tests/Adapters/Db/test_savegame_unique_slot_per_user.gd",
       "Contract tests must cover cross-account read/write/overwrite rejection while preserving current-account save state. Refs: Tests.Godot/tests/Adapters/Db/test_savegame_unique_slot_per_user.gd",
       "Integration tests must cover full chain cloud-sync -> ownership check -> allow/reject branches with pass criteria. Refs: Tests.Godot/tests/Integration/test_save_manager_steam_cloud_sync_flow.gd",
@@ -2145,7 +2213,8 @@
     "taskmaster_id": 26,
     "contractRefs": [
       "Game.Core/Contracts/DomainEvent.cs"
-    ]
+    ],
+    "evidence_refs": []
   },
   {
     "id": "NG-0027",
@@ -2296,9 +2365,9 @@
       "自动化回归校验在检测到任何已发布 UI key 被重命名或移除时必须失败。 Refs: Game.Core.Tests/Tasks/Task28LocalizationKeyStabilityTests.cs",
       "单次自动化联测要同时验证：en-US/zh-CN 运行时切换会刷新已显示 UI、缺失 key 回退为字面量、两套语言资源均可加载并解析。 Refs: Tests.Godot/tests/Integration/test_i18n_full_behavior_sweep.gd",
       "必须交付可验证的 LocalizationManager 能力：为每个支持语言加载翻译文件（如 CSV 或 JSON）；缺失该能力则不通过。 Refs: Game.Core.Tests/Services/LocalizationManagerTests.cs Tests.Godot/tests/Integration/test_locale_resource_load_guard.gd",
-      "首发 i18n key 契约被明确定义，且契约中的每个必需 key 在 en-US 与 zh-CN 资源中都存在；任一 locale 缺 key 时校验失败。",
-      "缺失 key 的回退在同一会话内对重复查询和语言重载保持确定性：同一缺失 key 始终得到同一回退结果。",
-      "回归/键审计测试会产出未解析 key 与回退路径诊断；每条诊断至少包含 active locale 与 key identifier。"
+      "首发 i18n key 契约被明确定义，且契约中的每个必需 key 在 en-US 与 zh-CN 资源中都存在；任一 locale 缺 key 时校验失败。 Refs: Tests.Godot/tests/UI/test_settings_locale.gd",
+      "缺失 key 的回退在同一会话内对重复查询和语言重载保持确定性：同一缺失 key 始终得到同一回退结果。 Refs: Tests.Godot/tests/UI/test_settings_locale_persist.gd",
+      "回归/键审计测试会产出未解析 key 与回退路径诊断；每条诊断至少包含 active locale 与 key identifier。 Refs: Tests.Godot/tests/Integration/test_settings_event_integration.gd"
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #28 primary behavior.",
@@ -2308,7 +2377,8 @@
     "taskmaster_id": 28,
     "contractRefs": [
       "Game.Core/Contracts/DomainEvent.cs"
-    ]
+    ],
+    "evidence_refs": []
   },
   {
     "id": "NG-0029",
@@ -2531,8 +2601,8 @@
       "Acceptance fails if config workspace wiring entrypoints are missing, unreachable, or not connected to the declared config paths. Refs: Game.Core.Tests/Tasks/Task31ConfigContractWiringTests.cs",
       "Scope boundary is enforceable: this task modifies the T21 baseline in place; creating or recreating a standalone Godot project fails acceptance. Refs: Game.Core.Tests/Tasks/Task31ConfigWorkspaceGuardrailsTests.cs",
       "Hard gate: both config/schemas and config/samples plus working wiring entrypoints are required; directory-only scaffolding fails acceptance. Refs: Game.Core.Tests/Tasks/Task31ConfigContractWiringTests.cs Game.Core.Tests/Tasks/Task31ConfigWorkspaceGuardrailsTests.cs",
-      "Contract artifacts under config/schemas/ and config/samples/ follow the canonical workspace naming/path conventions and include all required metadata fields; any missing required metadata or naming mismatch fails acceptance.",
-      "Running the scaffold repeatedly on the same inherited T21 project root is idempotent: no duplicate project root or reinitialized artifacts are created, required directories and wiring remain valid, and CI-verifiable scaffold evidence is produced for troubleshooting."
+      "Contract artifacts under config/schemas/ and config/samples/ follow the canonical workspace naming/path conventions and include all required metadata fields; any missing required metadata or naming mismatch fails acceptance. Refs: Game.Core.Tests/Domain/GameConfigTests.cs",
+      "Running the scaffold repeatedly on the same inherited T21 project root is idempotent: no duplicate project root or reinitialized artifacts are created, required directories and wiring remain valid, and CI-verifiable scaffold evidence is produced for troubleshooting. Refs: Tests.Godot/tests/Scenes/Smoke/test_glue_connections.gd"
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #31 primary behavior.",
@@ -2542,7 +2612,8 @@
     "taskmaster_id": 31,
     "contractRefs": [
       "Game.Core/Contracts/DomainEvent.cs"
-    ]
+    ],
+    "evidence_refs": []
   },
   {
     "id": "NG-0032",
@@ -2658,7 +2729,9 @@
       "Game.Core.Tests/Domain/GameConfigTests.cs",
       "Game.Core.Tests/Engine/GameEngineDifficultyLockTests.cs",
       "Game.Core.Tests/Domain/DifficultyConfigSchemaTests.cs",
-      "Game.Core.Tests/Engine/GameEngineCoreEventTests.cs"
+      "Game.Core.Tests/Engine/GameEngineCoreEventTests.cs",
+      "Game.Core.Tests/Services/DifficultyConfigSchemaValidationTests.cs",
+      "Game.Core.Tests/State/GameStateManagerTests.cs"
     ],
     "acceptance": [
       "After a run starts, any request to change active difficulty is rejected and the active difficulty remains unchanged. Refs: Game.Core.Tests/Engine/GameEngineDifficultyLockTests.cs",
@@ -2682,9 +2755,9 @@
       "Obligation lock O8: All configurable fields must remain tunable and must not be constrained to single constant values; validation tests must fail const/single-value restrictions for `version`, `difficulty_level`, and `modifiers`. Refs: Game.Core.Tests/Domain/DifficultyConfigSchemaTests.cs",
       "Schema validation accepts at least two valid `version` values matching `^\\d+\\.\\d+$` (e.g., `1.0` and `2.1`) with identical `difficulty_level` and `modifiers`. Refs: Game.Core.Tests/Domain/DifficultyConfigSchemaTests.cs",
       "If schema constrains `version` to a single constant value (e.g., `const` or single-value `enum`), validation test must fail. Refs: Game.Core.Tests/Domain/DifficultyConfigSchemaTests.cs",
-      "Subtask 1 coverage: acceptance explicitly requires tier definitions (`easy`,`medium`,`hard`), run-start lock semantics, and migration/backward-trackability metadata via required top-level `version` to be validated together.",
-      "Subtask 2 coverage: strict validation must return explicit reject reasons for invalid tier enum, missing required fields, type mismatch in `modifiers`, and any declared numeric bound violations.",
-      "Subtask 3 coverage: regression fixtures must keep pass/fail outcomes stable across runs, and loading an invalid difficulty config must refuse activation and preserve the last valid runtime state (or configured safe default)."
+      "Subtask 1 coverage: acceptance explicitly requires tier definitions (`easy`,`medium`,`hard`), run-start lock semantics, and migration/backward-trackability metadata via required top-level `version` to be validated together. Refs: Game.Core.Tests/Domain/GameConfigTests.cs",
+      "Subtask 2 coverage: strict validation must return explicit reject reasons for invalid tier enum, missing required fields, type mismatch in `modifiers`, and any declared numeric bound violations. Refs: Game.Core.Tests/Services/DifficultyConfigSchemaValidationTests.cs",
+      "Subtask 3 coverage: regression fixtures must keep pass/fail outcomes stable across runs, and loading an invalid difficulty config must refuse activation and preserve the last valid runtime state (or configured safe default). Refs: Game.Core.Tests/State/GameStateManagerTests.cs"
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #33 primary behavior.",
@@ -2694,7 +2767,8 @@
     "taskmaster_id": 33,
     "contractRefs": [
       "Game.Core/Contracts/Config/difficulty-config.schema.json"
-    ]
+    ],
+    "evidence_refs": []
   },
   {
     "id": "NG-0034",
@@ -3028,7 +3102,10 @@
       "Game.Core.Tests/Services/WaveSeedDeterminismTests.cs",
       "Game.Core.Tests/Services/EnemyStatConfigBindingTests.cs",
       "Game.Core.Tests/Services/SpawnTimingConfigBindingTests.cs",
-      "Game.Core.Tests/Services/GameplayConfigSetSwitchingTests.cs"
+      "Game.Core.Tests/Services/GameplayConfigSetSwitchingTests.cs",
+      "Game.Core.Tests/State/GameStateManagerTests.cs",
+      "Game.Core.Tests/Services/ConfigGovernanceAuditTests.cs",
+      "Game.Core.Tests/Services/ConfigGovernancePromotionServiceTests.cs"
     ],
     "acceptance": [
       "Runtime enemy stats and wave spawning parameters must resolve from ConfigManager-backed config values; if a hardcoded gameplay constant is the effective runtime value for those fields, acceptance fails. Refs: Game.Core.Tests/Tasks/Task38ConfigGovernanceTests.cs Game.Core.Tests/Services/GameplayTuningConfigIntegrationTests.cs",
@@ -3046,9 +3123,9 @@
       "With one executable/content build and two valid config sets A/B, switching A->B must change at least one enemy runtime stat and at least one wave output metric tied to changed config fields; no observable change after config-only switching fails acceptance. Refs: Game.Core.Tests/Services/GameplayConfigSetSwitchingTests.cs Game.Core.Tests/Services/SpawnTimingConfigBindingTests.cs",
       "With one executable/content build, switching config set A->B->A under the same seed must restore enemy stat outputs and wave composition/order outputs to the original A results; failure to restore fails acceptance. Refs: Game.Core.Tests/Services/GameplayConfigSetSwitchingTests.cs Game.Core.Tests/Services/WaveSeedDeterminismTests.cs",
       "Obligation lock O1 is mandatory: existing gameplay C# scripts must read tuning values from ConfigManager rather than hardcoded constants, with proof from tests or audit evidence; otherwise acceptance fails. Refs: Game.Core.Tests/Domain/GameConfigTests.cs",
-      "Before any tuning promotion, the config-governance policy contract must be enforced: all mandatory governance fields and promotion preconditions are validated, and if any required field/precondition is missing or invalid, promotion is rejected and active gameplay-config state remains unchanged.",
-      "Governance checks in the tuning workflow must execute fail-fast and emit deterministic reject reasons: for identical invalid input, repeated runs return the same reject outcome and reason, with no partial promotion side effects.",
-      "For every promotion attempt, governance regression/audit outputs must be produced for CI/manual review handoff and include allow/reject decision plus evaluated governance criteria; missing governance audit output for any attempt fails acceptance.",
+      "Before any tuning promotion, the config-governance policy contract must be enforced: all mandatory governance fields and promotion preconditions are validated, and if any required field/precondition is missing or invalid, promotion is rejected and active gameplay-config state remains unchanged. Refs: Game.Core.Tests/Domain/GameConfigTests.cs",
+      "Governance checks in the tuning workflow must execute fail-fast and emit deterministic reject reasons: for identical invalid input, repeated runs return the same reject outcome and reason, with no partial promotion side effects. Refs: Game.Core.Tests/State/GameStateManagerTests.cs",
+      "For every promotion attempt, governance regression/audit outputs must be produced for CI/manual review handoff and include allow/reject decision plus evaluated governance criteria; missing governance audit output for any attempt fails acceptance. Refs: Game.Core.Tests/Services/ConfigGovernanceAuditTests.cs Game.Core.Tests/Services/ConfigGovernancePromotionServiceTests.cs",
       "Contract tests must validate governance metadata required fields and promotion prerequisites before tuning promotion. Refs: Game.Core.Tests/Tasks/Task38ConfigGovernanceTests.cs",
       "If any governance field or prerequisite is missing or invalid, contract tests must deterministically fail with comparable reason code. Refs: Game.Core.Tests/Tasks/Task38ConfigGovernanceTests.cs",
       "Workflow tests must assert missing governance criteria blocks promotion and keeps active gameplay-config state unchanged. Refs: Game.Core.Tests/Services/GameplayTuningConfigIntegrationTests.cs",
@@ -3064,7 +3141,8 @@
     "taskmaster_id": 38,
     "contractRefs": [
       "Game.Core/Contracts/Config/config-change-audit.schema.json"
-    ]
+    ],
+    "evidence_refs": []
   },
   {
     "id": "NG-0039",
@@ -3174,7 +3252,9 @@
     "test_refs": [
       "Game.Core.Tests/Domain/GameConfigTests.cs",
       "Game.Core.Tests/Services/ConfigManagerVersionPolicyTests.cs",
-      "Game.Core.Tests/Services/ConfigManagerMigrationLoggingTests.cs"
+      "Game.Core.Tests/Services/ConfigManagerMigrationLoggingTests.cs",
+      "Game.Core.Tests/Services/ConfigManagerTests.cs",
+      "Game.Core.Tests/Services/ConfigMigrationExecutorTests.cs"
     ],
     "acceptance": [
       "可通过测试证明：当加载配置的 version 不等于 expectedVersion 时，ConfigManager 必须拒绝该配置并回退默认配置；当两者相等时必须接受加载配置。 Refs: Game.Core.Tests/Services/ConfigManagerVersionPolicyTests.cs Game.Core.Tests/Services/ConfigManagerMigrationLoggingTests.cs",
@@ -3189,9 +3269,9 @@
       "单元测试必须显式验证：版本不匹配处理不会激活任何兼容模式或自动适配路径。 Refs: Game.Core.Tests/Services/ConfigManagerVersionPolicyTests.cs",
       "版本处理必须遵循唯一的 expectedVersion 相等性规则：任何非相等版本都按拒绝加载、默认回退、迁移必需日志处理。 Refs: Game.Core.Tests/Services/ConfigManagerVersionPolicyTests.cs Game.Core.Tests/Services/ConfigManagerMigrationLoggingTests.cs",
       "O1 义务必须可测试：ConfigManager 在选择加载配置路径或默认回退路径前，必须先比较 loaded config version 与 expectedVersion。 Refs: Game.Core.Tests/Services/ConfigManagerVersionPolicyTests.cs",
-      "子任务1（强制迁移契约）必须可验证：触发矩阵中，expectedVersion 匹配时保留加载配置；任一非相等版本或不可恢复迁移失败时拒绝加载配置并保持默认运行状态。",
-      "子任务2（迁移执行器）必须可验证：迁移过程按确定性顺序执行并进行逐步严格校验；不支持路径或致命步骤结果必须确定性收敛为拒绝加载并回退默认。",
-      "子任务3（回归与失败路径）必须可验证：自动化测试覆盖版本不匹配与致命迁移场景，要求输出迁移诊断，并证明运行时保持默认状态且不存在部分接受加载配置。",
+      "子任务1（强制迁移契约）必须可验证：触发矩阵中，expectedVersion 匹配时保留加载配置；任一非相等版本或不可恢复迁移失败时拒绝加载配置并保持默认运行状态。 Refs: Game.Core.Tests/Services/ConfigManagerTests.cs",
+      "子任务2（迁移执行器）必须可验证：迁移过程按确定性顺序执行并进行逐步严格校验；不支持路径或致命步骤结果必须确定性收敛为拒绝加载并回退默认。 Refs: Game.Core.Tests/Services/ConfigMigrationExecutorTests.cs",
+      "子任务3（回归与失败路径）必须可验证：自动化测试覆盖版本不匹配与致命迁移场景，要求输出迁移诊断，并证明运行时保持默认状态且不存在部分接受加载配置。 Refs: Game.Core.Tests/Services/ConfigManagerTests.cs Game.Core.Tests/Services/ConfigMigrationExecutorTests.cs",
       "Regression tests must assert deterministic migration step order and deterministic final result for identical inputs. Refs: Game.Core.Tests/Services/ConfigManagerMigrationLoggingTests.cs",
       "Regression tests must assert rejection paths keep default runtime state unchanged and never allow partial acceptance. Refs: Game.Core.Tests/Services/ConfigManagerVersionPolicyTests.cs",
       "Mutual-exclusive policy must be explicit: if config.version != expectedVersion, system must always refuse loaded config and force default fallback. Refs: Game.Core.Tests/Services/ConfigManagerVersionPolicyTests.cs",
@@ -3210,6 +3290,7 @@
     "taskmaster_id": 40,
     "contractRefs": [
       "Game.Core/Contracts/Config/difficulty-config.schema.json"
-    ]
+    ],
+    "evidence_refs": []
   }
 ]
