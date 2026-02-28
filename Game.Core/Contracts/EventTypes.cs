@@ -1,11 +1,13 @@
 namespace Game.Core.Contracts;
 
 /// <summary>
-/// Stable domain event type constants (CloudEvents-like type values).
+/// Stable domain event type constants (CloudEvents type values).
 /// </summary>
 /// <remarks>
 /// ADR refs: ADR-0004, ADR-0020.
-/// Overlay ref: docs/architecture/overlays/PRD-NEWROUGE-GAME-0001/08/08-Contracts-M1.md
+/// Overlay refs:
+/// - docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md
+/// - docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md
 /// </remarks>
 public static class EventTypes
 {
@@ -68,4 +70,10 @@ public static class EventTypes
     public const string GuildMemberJoined = "core.guild.member.joined";
     public const string ScoreUpdated = "core.score.updated";
     public const string HealthUpdated = "core.health.updated";
+    public const string LastkingDayStarted = "core.lastking.day.started";
+    public const string LastkingNightStarted = "core.lastking.night.started";
+    public const string LastkingWaveSpawned = "core.lastking.wave.spawned";
+    public const string LastkingCastleHpChanged = "core.lastking.castle.hp_changed";
+    public const string LastkingRewardOffered = "core.lastking.reward.offered";
+    public const string LastkingSaveAutosaved = "core.lastking.save.autosaved";
 }

@@ -13,6 +13,7 @@ ADR-Refs:
 Test-Refs:
   - Game.Core.Tests/State/GameStateMachineTests.cs
   - Game.Core.Tests/Domain/GameConfigTests.cs
+  - Game.Core.Tests/Contracts/Lastking/LastkingContractsTests.cs
   - Tests.Godot/tests/UI/test_hud_scene.gd
   - Tests.Godot/tests/Integration/test_backup_restore_savegame.gd
 ---
@@ -49,6 +50,50 @@ Test-Refs:
 - `core.lastking.castle.hp_changed`
 - `core.lastking.reward.offered`
 - `core.lastking.save.autosaved`
+
+## 契约定义（Core Loop）
+
+### 事件
+- **DayStarted** (`core.lastking.day.started`)
+  - 触发时机：白天阶段进入运行态时。
+  - 字段：`RunId`, `DayNumber`, `StartedAt`
+  - 契约位置：`Game.Core/Contracts/Lastking/DayStarted.cs`
+- **NightStarted** (`core.lastking.night.started`)
+  - 触发时机：白天结束转入夜晚时。
+  - 字段：`RunId`, `DayNumber`, `NightNumber`, `StartedAt`
+  - 契约位置：`Game.Core/Contracts/Lastking/NightStarted.cs`
+- **WaveSpawned** (`core.lastking.wave.spawned`)
+  - 触发时机：夜晚刷怪批次提交后。
+  - 字段：`RunId`, `DayNumber`, `NightNumber`, `LaneId`, `SpawnCount`, `WaveBudget`, `SpawnedAt`
+  - 契约位置：`Game.Core/Contracts/Lastking/WaveSpawned.cs`
+- **CastleHpChanged** (`core.lastking.castle.hp_changed`)
+  - 触发时机：城堡耐久发生变化后。
+  - 字段：`RunId`, `DayNumber`, `PreviousHp`, `CurrentHp`, `ChangedAt`
+  - 契约位置：`Game.Core/Contracts/Lastking/CastleHpChanged.cs`
+- **RewardOffered** (`core.lastking.reward.offered`)
+  - 触发时机：夜晚结算奖励三选一展示时。
+  - 字段：`RunId`, `DayNumber`, `IsEliteNight`, `IsBossNight`, `OptionA`, `OptionB`, `OptionC`, `OfferedAt`
+  - 契约位置：`Game.Core/Contracts/Lastking/RewardOffered.cs`
+- **SaveAutosaved** (`core.lastking.save.autosaved`)
+  - 触发时机：天开始自动存档成功后。
+  - 字段：`RunId`, `DayNumber`, `SlotId`, `ConfigHash`, `SavedAt`
+  - 契约位置：`Game.Core/Contracts/Lastking/SaveAutosaved.cs`
+
+### DTO
+- **WaveBudgetDto**
+  - 用途：夜晚预算计算输出。
+  - 字段：`DayNumber`, `NightNumber`, `NormalBudget`, `EliteBudget`, `BossBudget`, `ComputedAt`
+  - 契约位置：`Game.Core/Contracts/Lastking/WaveBudgetDto.cs`
+- **RewardOfferDto**
+  - 用途：奖励三选一面板输入。
+  - 字段：`DayNumber`, `IsEliteNight`, `IsBossNight`, `OptionA`, `OptionB`, `OptionC`
+  - 契约位置：`Game.Core/Contracts/Lastking/RewardOfferDto.cs`
+
+### 接口
+- **IWaveBudgetPolicy**
+  - 用途：预算计算策略边界。
+  - 方法：`Compute(dayNumber, nightNumber, isEliteNight, isBossNight) -> WaveBudgetDto`
+  - 契约位置：`Game.Core/Contracts/Interfaces/IWaveBudgetPolicy.cs`
 
 ## Runtime State Machine
 
