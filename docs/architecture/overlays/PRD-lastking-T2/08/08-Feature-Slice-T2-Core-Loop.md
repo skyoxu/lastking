@@ -120,6 +120,10 @@ Test-Refs:
 - Reward choice applies once per qualified night and cannot be duplicated.
 - Enemy targeting priority obeys `nearest blocker` fallback policy from ADR-0031.
 - Elite/Boss budget isolation obeys ADR-0032, pool exhaustion fallback obeys ADR-0033.
+- `T22` 镜头交互要求边缘滚屏 + 键盘滚屏同时生效，且镜头严格受地图边界约束。
+- `T23` 速度档位 `Pause/1x/2x` 切换时，波次计时和关键运行时计时器必须冻结/恢复一致。
+- `T28` 语言切换至少覆盖 `zh-CN/en-US`，切换后界面文本即时生效并持久化。
+- `T29` 音频设置至少覆盖 `Music/SFX` 两通道，变更即时生效并持久化。
 
 ## Canonical References
 
@@ -168,6 +172,10 @@ Test-Refs:
   - 暂停时计时器未冻结；
   - 存档迁移失败路径不一致；
   - 云端冲突分支无审计。
+  - `T22` 边缘滚屏阈值和键盘输入叠加后出现镜头抖动或越界；
+  - `T23` 暂停后仍有计时推进，或恢复后时间尺度不一致；
+  - `T28` 语言切换后文案未刷新或未持久化；
+  - `T29` 音频通道参数未即时应用或重启后丢失。
 
 ### Slice C — Config Governance (`T31-T40`)
 

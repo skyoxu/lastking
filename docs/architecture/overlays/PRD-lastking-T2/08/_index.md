@@ -21,6 +21,7 @@ Updated: true
 - 测试索引：`docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md`
 - 可观测性索引：`docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md`
 - 验收清单：`docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md`
+- 页面清单（SSoT）：`docs/architecture/overlays/PRD-lastking-T2/08/overlay-manifest.json`
 
 ## Execution Invariants
 
@@ -30,10 +31,12 @@ Updated: true
 - 任一执行步骤必须产生可定位的日志工件路径。
 - 任务映射粒度至少覆盖三段执行面：`11-20`（经济/建造/战斗）、`21-30`（运行时 UX/存档/平台）、`31-40`（配置契约治理）。
 - 若任务语义不在上述三段内可定位到对应条目，视为 Overlay 回链语义不足，需先补文档再进入实现。
+- `overlay-manifest.json` 是页面路径口径的唯一来源；任何页面新增/重命名后必须同步更新 manifest。
 
 ## Validation Commands (Windows)
 
 - `py -3 scripts/python/validate_overlay_execution.py --prd-id PRD-lastking-T2`
 - `py -3 scripts/python/check_tasks_all_refs.py`
 - `py -3 scripts/python/validate_task_master_triplet.py`
+- `py -3 scripts/python/sync_task_overlay_refs.py --dry-run --prd-id PRD-lastking-T2`
 - `py -3 scripts/python/guard_archived_overlays.py --strict-git`

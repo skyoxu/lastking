@@ -27,16 +27,23 @@ Test-Refs:
 | RQ-CORE-LOOP-STATE | 1-10 | `Game.Core.Tests/State/GameStateMachineTests.cs` | `logs/ci/<YYYY-MM-DD>/task-triplet-audit/report.json` |
 | RQ-ECONOMY-BUILD-RULES | 11-15 | `Game.Core.Tests/Domain/GameConfigTests.cs` | `logs/unit/<YYYY-MM-DD>/coverage.json` |
 | RQ-COMBAT-QUEUE-TECH | 16-20 | `Game.Core.Tests/Domain/GameConfigTests.cs`, `Game.Core.Tests/Contracts/Lastking/LastkingContractsTests.cs` | `logs/unit/<YYYY-MM-DD>/coverage.json` |
-| RQ-RUNTIME-INTERACTION | 21-24 | `Tests.Godot/tests/UI/test_hud_scene.gd` | `logs/e2e/<YYYY-MM-DD>/` |
-| RQ-SAVE-MIGRATION-CLOUD | 25-27 | `Tests.Godot/tests/Integration/test_backup_restore_savegame.gd` | `logs/ci/<YYYY-MM-DD>/release-health.json` |
-| RQ-I18N-AUDIO-SETTINGS | 28-29 | `Tests.Godot/tests/UI/test_hud_scene.gd` | `logs/e2e/<YYYY-MM-DD>/` |
+| RQ-CAMERA-SCROLL | 22 | `Tests.Godot/tests/UI/test_hud_scene.gd` | `logs/e2e/<YYYY-MM-DD>/runtime-ui/summary.json` |
+| RQ-RUNTIME-SPEED-MODES | 23 | `Tests.Godot/tests/UI/test_hud_scene.gd` | `logs/e2e/<YYYY-MM-DD>/runtime-ui/summary.json` |
+| RQ-RUNTIME-ERROR-FEEDBACK | 24 | `Tests.Godot/tests/UI/test_hud_scene.gd` | `logs/e2e/<YYYY-MM-DD>/runtime-ui/summary.json` |
+| RQ-RUNTIME-INTERACTION | 21 | `Tests.Godot/tests/UI/test_hud_scene.gd` | `logs/ci/<YYYY-MM-DD>/export.log` |
+| RQ-SAVE-MIGRATION-CLOUD | 25-27 | `Tests.Godot/tests/Integration/test_backup_restore_savegame.gd` | `logs/ci/<YYYY-MM-DD>/save-migration/report.json`, `logs/ci/<YYYY-MM-DD>/steam-cloud/report.json` |
+| RQ-I18N-LANG-SWITCH | 28 | `Tests.Godot/tests/UI/test_hud_scene.gd` | `logs/e2e/<YYYY-MM-DD>/settings/summary.json` |
+| RQ-AUDIO-CHANNEL-SETTINGS | 29 | `Tests.Godot/tests/UI/test_hud_scene.gd` | `logs/e2e/<YYYY-MM-DD>/settings/summary.json` |
 | RQ-PERF-GATE | 30 | `Tests.Godot/tests/Integration/test_backup_restore_savegame.gd` | `logs/perf/<YYYY-MM-DD>/summary.json` |
 | RQ-CONFIG-CONTRACT-GOV | 31-40 | `Game.Core.Tests/Domain/GameConfigTests.cs`, `Game.Core.Tests/Contracts/DomainEventPayloadTests.cs` | `logs/ci/<YYYY-MM-DD>/overlay-lint/report.json` |
 
 ## Task-to-Test Focus (P0)
 
-- `T21/T22/T23/T24`: 运行时交互与速度冻结优先走 Scene/Integration 冒烟，避免只做纯单测。
+- `T21/T22`: 镜头与交互至少覆盖边缘滚屏阈值、键盘滚屏、镜头边界三项行为。
+- `T23`: `Pause/1x/2x` 切换必须验证计时冻结、恢复一致性和倍率切换顺序。
 - `T25/T26/T27`: 迁移/云存档/成就必须附可机读审计摘要，避免仅 UI 提示通过。
+- `T28`: 语言切换至少验证 `zh-CN/en-US` 的即时刷新与重启后保持。
+- `T29`: 音频设置至少验证 `Music/SFX` 两通道即时应用和持久化。
 - `T30`: 性能任务验收以 `logs/perf/<YYYY-MM-DD>/summary.json` 为主，不以主观可玩感替代。
 - `T31-T40`: 配置契约任务优先契约校验 + 领域测试双证据，防止只改 schema 不改运行时约束。
 

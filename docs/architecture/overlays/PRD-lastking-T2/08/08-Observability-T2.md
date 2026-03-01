@@ -35,16 +35,26 @@ Test-Refs:
 
 ## Task Evidence Matrix (P0)
 
+备注：`T22/T23/T28/T29` 的证据字段必须可机读，禁止仅截图作为唯一证据。
+
 | Task Group | Required Artifact | Minimum Fields |
 | --- | --- | --- |
 | `T21` Windows export/runtime | `logs/ci/<YYYY-MM-DD>/export.log` | `platform`, `profile`, `status`, `duration_ms` |
-| `T22-T24` interaction/speed/feedback | `logs/e2e/<YYYY-MM-DD>/runtime-ui/summary.json` | `scene`, `case`, `status`, `evidence_path` |
+| `T22` camera scroll | `logs/e2e/<YYYY-MM-DD>/runtime-ui/summary.json` | `camera_mode`, `edge_threshold_px`, `keyboard_vector`, `clamped` |
+| `T23` speed modes | `logs/e2e/<YYYY-MM-DD>/runtime-ui/summary.json` | `speed_mode`, `timers_frozen`, `resume_tick`, `status` |
+| `T24` runtime feedback | `logs/e2e/<YYYY-MM-DD>/runtime-ui/summary.json` | `error_code`, `message_key`, `displayed`, `duration_ms` |
 | `T25` save + migration | `logs/ci/<YYYY-MM-DD>/save-migration/report.json` | `save_version`, `migration_path`, `result`, `error_code` |
 | `T26` steam cloud binding | `logs/ci/<YYYY-MM-DD>/steam-cloud/report.json` | `account_id_hash`, `sync_direction`, `conflict_policy`, `result` |
 | `T27` achievements | `logs/ci/<YYYY-MM-DD>/achievements/report.json` | `achievement_id`, `trigger`, `deterministic_key`, `result` |
-| `T28-T29` i18n/audio | `logs/e2e/<YYYY-MM-DD>/settings/summary.json` | `language`, `audio_channel`, `value`, `applied` |
+| `T28` i18n switch | `logs/e2e/<YYYY-MM-DD>/settings/summary.json` | `language_from`, `language_to`, `applied`, `persisted` |
+| `T29` audio settings | `logs/e2e/<YYYY-MM-DD>/settings/summary.json` | `channel`, `value`, `applied`, `persisted` |
 | `T30` performance | `logs/perf/<YYYY-MM-DD>/summary.json` | `avg_fps`, `fps_1pct_low`, `samples`, `gate` |
 | `T31-T40` config governance | `logs/ci/<YYYY-MM-DD>/config-governance/report.json` | `config_hash`, `schema_version`, `fallback_used`, `status` |
+
+## Manifest Drift Guard
+
+- 任务回链路径由 `overlay-manifest.json` 统一声明，变更页面文件名时必须先更新 manifest。
+- 运行 `py -3 scripts/python/sync_task_overlay_refs.py --dry-run --prd-id PRD-lastking-T2` 作为预检，防止路径漂移。
 
 ## Conflict and Rejection Evidence
 
