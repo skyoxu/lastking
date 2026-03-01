@@ -21,12 +21,17 @@ public class CombatService
     {
         // Placeholder for future type-based mitigation; for now apply raw amount
         player.TakeDamage(damage.EffectiveAmount);
-        _ = _bus?.PublishAsync(new Contracts.DomainEvent(
-            Type: "player.damaged",
-            Source: nameof(CombatService),
-            Data: new { amount = damage.EffectiveAmount, type = damage.Type.ToString(), critical = damage.IsCritical },
-            Timestamp: DateTime.UtcNow,
-            Id: $"dmg-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}"
+        var payload = new PlayerDamagedPayload(
+            Amount: damage.EffectiveAmount,
+            Type: damage.Type.ToString(),
+            Critical: damage.IsCritical
+        );
+        _ = _bus?.PublishAsync(Contracts.DomainEvent.Create(
+            type: "player.damaged",
+            source: nameof(CombatService),
+            payload: payload,
+            timestamp: DateTime.UtcNow,
+            id: $"dmg-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}"
         ));
     }
 
@@ -53,12 +58,19 @@ public class CombatService
     {
         var final = CalculateDamage(damage, config);
         player.TakeDamage(final);
-        _ = _bus?.PublishAsync(new Contracts.DomainEvent(
-            Type: "player.damaged",
-            Source: nameof(CombatService),
-            Data: new { amount = final, type = damage.Type.ToString(), critical = damage.IsCritical },
-            Timestamp: DateTime.UtcNow,
-            Id: $"dmg-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}"
+        var payload = new PlayerDamagedPayload(
+            Amount: final,
+            Type: damage.Type.ToString(),
+            Critical: damage.IsCritical
+        );
+        _ = _bus?.PublishAsync(Contracts.DomainEvent.Create(
+            type: "player.damaged",
+            source: nameof(CombatService),
+            payload: payload,
+            timestamp: DateTime.UtcNow,
+            id: $"dmg-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}"
         ));
     }
+
+    private sealed record PlayerDamagedPayload(int Amount, string Type, bool Critical);
 }

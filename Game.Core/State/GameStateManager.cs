@@ -29,12 +29,12 @@ public class GameStateManager
         if (config is not null)
             _currentConfig = config with { };
 
-        Publish(new DomainEvent(
-            Type: "game.state.manager.updated",
-            Source: nameof(GameStateManager),
-            Data: new { state, config },
-            Timestamp: DateTime.UtcNow,
-            Id: $"state-update-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}"
+        Publish(DomainEvent.Create(
+            type: "game.state.manager.updated",
+            source: nameof(GameStateManager),
+            payload: new StateUpdatedPayload(state, config),
+            timestamp: DateTime.UtcNow,
+            id: $"state-update-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}"
         ));
     }
 
@@ -71,12 +71,12 @@ public class GameStateManager
         await UpdateIndexAsync(add: saveId);
         await CleanupOldSavesAsync();
 
-        Publish(new DomainEvent(
-            Type: "game.save.created",
-            Source: nameof(GameStateManager),
-            Data: new { saveId },
-            Timestamp: now,
-            Id: $"save-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}"
+        Publish(DomainEvent.Create(
+            type: "game.save.created",
+            source: nameof(GameStateManager),
+            payload: new SaveRefPayload(saveId),
+            timestamp: now,
+            id: $"save-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}"
         ));
 
         return saveId;
@@ -92,12 +92,12 @@ public class GameStateManager
         _currentState = save.State with { };
         _currentConfig = save.Config with { };
 
-        Publish(new DomainEvent(
-            Type: "game.save.loaded",
-            Source: nameof(GameStateManager),
-            Data: new { saveId },
-            Timestamp: DateTime.UtcNow,
-            Id: $"load-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}"
+        Publish(DomainEvent.Create(
+            type: "game.save.loaded",
+            source: nameof(GameStateManager),
+            payload: new SaveRefPayload(saveId),
+            timestamp: DateTime.UtcNow,
+            id: $"load-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}"
         ));
 
         return (_currentState, _currentConfig);
@@ -108,12 +108,12 @@ public class GameStateManager
         await _store.DeleteAsync(saveId);
         await UpdateIndexAsync(remove: saveId);
 
-        Publish(new DomainEvent(
-            Type: "game.save.deleted",
-            Source: nameof(GameStateManager),
-            Data: new { saveId },
-            Timestamp: DateTime.UtcNow,
-            Id: $"delete-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}"
+        Publish(DomainEvent.Create(
+            type: "game.save.deleted",
+            source: nameof(GameStateManager),
+            payload: new SaveRefPayload(saveId),
+            timestamp: DateTime.UtcNow,
+            id: $"delete-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}"
         ));
     }
 
@@ -135,12 +135,12 @@ public class GameStateManager
     {
         if (_autoSaveEnabled) return;
         _autoSaveEnabled = true;
-        Publish(new DomainEvent(
-            Type: "game.autosave.enabled",
-            Source: nameof(GameStateManager),
-            Data: new { interval = _options.AutoSaveInterval.TotalMilliseconds },
-            Timestamp: DateTime.UtcNow,
-            Id: $"autosave-enable-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}"
+        Publish(DomainEvent.Create(
+            type: "game.autosave.enabled",
+            source: nameof(GameStateManager),
+            payload: new AutoSaveIntervalPayload(_options.AutoSaveInterval.TotalMilliseconds),
+            timestamp: DateTime.UtcNow,
+            id: $"autosave-enable-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}"
         ));
     }
 
@@ -148,12 +148,12 @@ public class GameStateManager
     {
         if (!_autoSaveEnabled) return;
         _autoSaveEnabled = false;
-        Publish(new DomainEvent(
-            Type: "game.autosave.disabled",
-            Source: nameof(GameStateManager),
-            Data: new { },
-            Timestamp: DateTime.UtcNow,
-            Id: $"autosave-disable-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}"
+        Publish(DomainEvent.Create(
+            type: "game.autosave.disabled",
+            source: nameof(GameStateManager),
+            payload: EmptyPayload.Instance,
+            timestamp: DateTime.UtcNow,
+            id: $"autosave-disable-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}"
         ));
     }
 
@@ -163,12 +163,12 @@ public class GameStateManager
         if (_autoSaveEnabled && _currentState is not null && _currentConfig is not null)
         {
             await SaveGameAsync($"auto-save-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}");
-            Publish(new DomainEvent(
-                Type: "game.autosave.completed",
-                Source: nameof(GameStateManager),
-                Data: new { interval = _options.AutoSaveInterval.TotalMilliseconds },
-                Timestamp: DateTime.UtcNow,
-                Id: $"autosave-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}"
+            Publish(DomainEvent.Create(
+                type: "game.autosave.completed",
+                source: nameof(GameStateManager),
+                payload: new AutoSaveIntervalPayload(_options.AutoSaveInterval.TotalMilliseconds),
+                timestamp: DateTime.UtcNow,
+                id: $"autosave-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}"
             ));
         }
     }
@@ -265,6 +265,19 @@ public class GameStateManager
         {
             try { cb(evt); } catch { /* ignore */ }
         }
+    }
+
+    private sealed record StateUpdatedPayload(GameState State, GameConfig? Config);
+    private sealed record SaveRefPayload(string SaveId);
+    private sealed record AutoSaveIntervalPayload(double IntervalMilliseconds);
+
+    private sealed class EmptyPayload
+    {
+        private EmptyPayload()
+        {
+        }
+
+        public static EmptyPayload Instance { get; } = new();
     }
 
     private static string CompressToBase64(string text)

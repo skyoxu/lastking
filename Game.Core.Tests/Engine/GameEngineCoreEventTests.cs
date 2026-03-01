@@ -61,7 +61,7 @@ public class GameEngineCoreEventTests
         var evt = bus.Published[0];
         evt.Type.Should().Be("game.started");
         evt.Source.Should().Be(nameof(GameEngineCore));
-        evt.Data.Should().NotBeNull();
+        evt.DataElement.HasValue.Should().BeTrue();
     }
 
     [Fact]
@@ -80,7 +80,7 @@ public class GameEngineCoreEventTests
         var evt = bus.Published[0];
         evt.Type.Should().Be("score.changed");
         evt.Source.Should().Be(nameof(GameEngineCore));
-        evt.Data.Should().NotBeNull();
+        evt.DataElement.HasValue.Should().BeTrue();
     }
 
     [Fact]
@@ -99,6 +99,6 @@ public class GameEngineCoreEventTests
         var evt = bus.Published[0];
         evt.Type.Should().Be("player.health.changed");
         evt.Source.Should().Be(nameof(GameEngineCore));
-        evt.Data.Should().NotBeNull();
+        evt.DataElement.HasValue.Should().BeTrue();
     }
 }

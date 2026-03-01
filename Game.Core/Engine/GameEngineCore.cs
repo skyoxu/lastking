@@ -93,8 +93,14 @@ public class GameEngineCore
         return result;
     }
 
-    private void Publish(string type, object data)
+    private void Publish<TPayload>(string type, TPayload payload)
     {
-        _ = _bus?.PublishAsync(new DomainEvent(type, nameof(GameEngineCore), data, DateTime.UtcNow, Guid.NewGuid().ToString("N")));
+        _ = _bus?.PublishAsync(DomainEvent.Create(
+            type: type,
+            source: nameof(GameEngineCore),
+            payload: payload,
+            timestamp: DateTime.UtcNow,
+            id: Guid.NewGuid().ToString("N")
+        ));
     }
 }

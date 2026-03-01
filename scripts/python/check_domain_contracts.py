@@ -47,6 +47,8 @@ EVENT_TYPES_CONST_RE = re.compile(
 DOC_DOMAIN_EVENT_RE = re.compile(r"\bDomain\s+event:\s*([a-z0-9._]+)\b", re.IGNORECASE)
 EVENT_TYPE_LITERAL_RE = re.compile(r"\"([^\"]+)\"")
 EVENT_TYPE_REF_RE = re.compile(r"EventTypes\.([A-Za-z_][A-Za-z0-9_]*)")
+LEGACY_DOMAIN_EVENT_NEW_RE = re.compile(r"\bnew\s+DomainEvent\s*\(")
+LEGACY_ANON_PAYLOAD_RE = re.compile(r"\b(?:Data|payload)\s*:\s*new\s*\{")
 
 
 @dataclass(frozen=True)
@@ -91,6 +93,51 @@ def _load_event_types_map(contracts_dir: Path) -> dict[str, str]:
     for name, value in EVENT_TYPES_CONST_RE.findall(text):
         mapping[name] = value
     return mapping
+
+
+def _iter_cs_files(root_dir: Path) -> list[Path]:
+    files: list[Path] = []
+    if not root_dir.exists():
+        return files
+
+    for file_path in root_dir.rglob("*.cs"):
+        if not file_path.is_file():
+            continue
+        if any(part in {"bin", "obj"} for part in file_path.parts):
+            continue
+        files.append(file_path)
+    return sorted(files)
+
+
+def _scan_legacy_domain_event_usage(root: Path) -> list[dict[str, Any]]:
+    findings: list[dict[str, Any]] = []
+    scan_roots = [root / "Game.Core", root / "Game.Godot"]
+    for scan_root in scan_roots:
+        for cs_file in _iter_cs_files(scan_root):
+            rel = _to_posix(cs_file.relative_to(root))
+            if rel.startswith("Game.Core.Tests/"):
+                continue
+            if rel == "Game.Core/Contracts/DomainEvent.cs":
+                continue
+
+            text = cs_file.read_text(encoding="utf-8", errors="ignore")
+            if LEGACY_DOMAIN_EVENT_NEW_RE.search(text):
+                findings.append(
+                    {
+                        "file": rel,
+                        "code": "legacy_domainevent_constructor_usage",
+                        "message": "Use DomainEvent.Create<TPayload>(...) instead of new DomainEvent(...).",
+                    }
+                )
+            if LEGACY_ANON_PAYLOAD_RE.search(text):
+                findings.append(
+                    {
+                        "file": rel,
+                        "code": "anonymous_payload_forbidden",
+                        "message": "Anonymous payload is forbidden for DomainEvent. Use explicit payload record/DTO.",
+                    }
+                )
+    return findings
 
 
 def _resolve_event_type_rhs(rhs: str, event_types_map: dict[str, str]) -> tuple[str | None, str | None]:
@@ -201,7 +248,8 @@ def main() -> int:
 
     issues_count = sum(1 for finding in findings if finding.issues)
     warnings_count = sum(len(finding.warnings) for finding in findings)
-    status = "ok" if (issues_count == 0 and not dup_issues) else "fail"
+    legacy_usage_issues = _scan_legacy_domain_event_usage(root)
+    status = "ok" if (issues_count == 0 and not dup_issues and not legacy_usage_issues) else "fail"
 
     report = {
         "status": status,
@@ -215,6 +263,7 @@ def main() -> int:
             "event_types_map": len(event_types_map),
         },
         "duplicate_event_types": dup_issues,
+        "legacy_usage_issues": legacy_usage_issues,
         "findings": [finding.__dict__ for finding in findings],
     }
     out_path.write_text(json.dumps(report, ensure_ascii=True, indent=2) + "\n", encoding="utf-8")

@@ -15,23 +15,23 @@ public class EventBusTests
         int called = 0;
         var sub = bus.Subscribe(async e => { called++; await Task.CompletedTask; });
 
-        await bus.PublishAsync(new DomainEvent(
-            Type: "test.evt",
-            Source: nameof(EventBusTests),
-            Data: new { ok = true },
-            Timestamp: DateTime.UtcNow,
-            Id: Guid.NewGuid().ToString()
+        await bus.PublishAsync(DomainEvent.Create(
+            type: "test.evt",
+            source: nameof(EventBusTests),
+            payload: new EventPayload(true),
+            timestamp: DateTime.UtcNow,
+            id: Guid.NewGuid().ToString("N")
         ));
 
         Assert.Equal(1, called);
         sub.Dispose();
 
-        await bus.PublishAsync(new DomainEvent(
-            Type: "test.evt2",
-            Source: nameof(EventBusTests),
-            Data: null,
-            Timestamp: DateTime.UtcNow,
-            Id: Guid.NewGuid().ToString()
+        await bus.PublishAsync(DomainEvent.Create(
+            type: "test.evt2",
+            source: nameof(EventBusTests),
+            payload: EmptyPayload.Instance,
+            timestamp: DateTime.UtcNow,
+            id: Guid.NewGuid().ToString("N")
         ));
         Assert.Equal(1, called);
     }
@@ -44,13 +44,24 @@ public class EventBusTests
         bus.Subscribe(_ => throw new InvalidOperationException("boom"));
         bus.Subscribe(_ => { ok++; return Task.CompletedTask; });
 
-        await bus.PublishAsync(new DomainEvent(
-            Type: "evt",
-            Source: nameof(EventBusTests),
-            Data: null,
-            Timestamp: DateTime.UtcNow,
-            Id: Guid.NewGuid().ToString()
+        await bus.PublishAsync(DomainEvent.Create(
+            type: "evt",
+            source: nameof(EventBusTests),
+            payload: EmptyPayload.Instance,
+            timestamp: DateTime.UtcNow,
+            id: Guid.NewGuid().ToString("N")
         ));
         Assert.Equal(1, ok);
+    }
+
+    private sealed record EventPayload(bool Ok);
+
+    private sealed class EmptyPayload
+    {
+        private EmptyPayload()
+        {
+        }
+
+        public static EmptyPayload Instance { get; } = new();
     }
 }
