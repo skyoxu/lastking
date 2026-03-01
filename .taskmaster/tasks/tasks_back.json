@@ -22,9 +22,7 @@
     "overlay_refs": [
       "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
-      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
-      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
     ],
     "labels": [
@@ -115,9 +113,7 @@
     "overlay_refs": [
       "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
-      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
-      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
     ],
     "labels": [
@@ -209,9 +205,7 @@
     "overlay_refs": [
       "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
-      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
-      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
     ],
     "labels": [
@@ -287,9 +281,7 @@
     "overlay_refs": [
       "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
-      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
-      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
     ],
     "labels": [
@@ -360,9 +352,7 @@
     "overlay_refs": [
       "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
-      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
-      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
     ],
     "labels": [
@@ -443,9 +433,7 @@
     "overlay_refs": [
       "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
-      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
-      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
     ],
     "labels": [
@@ -531,9 +519,7 @@
     "overlay_refs": [
       "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
-      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
-      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
     ],
     "labels": [
@@ -620,9 +606,7 @@
     "overlay_refs": [
       "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
-      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
-      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
     ],
     "labels": [
@@ -693,9 +677,7 @@
     "overlay_refs": [
       "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
-      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
-      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
     ],
     "labels": [
@@ -780,9 +762,7 @@
     "overlay_refs": [
       "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
-      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
-      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
     ],
     "labels": [
@@ -867,7 +847,6 @@
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
-      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
     ],
     "labels": [
@@ -962,7 +941,6 @@
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
-      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
     ],
     "labels": [
@@ -1044,7 +1022,6 @@
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
-      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
     ],
     "labels": [
@@ -1133,7 +1110,6 @@
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
-      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
     ],
     "labels": [
@@ -1222,7 +1198,6 @@
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
-      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
     ],
     "labels": [
@@ -1312,7 +1287,6 @@
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
-      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
     ],
     "labels": [
@@ -1396,7 +1370,6 @@
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
-      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
     ],
     "labels": [
@@ -1493,7 +1466,6 @@
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
-      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
     ],
     "labels": [
@@ -1574,7 +1546,6 @@
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
-      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
     ],
     "labels": [
@@ -1662,7 +1633,6 @@
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
-      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
     ],
     "labels": [
@@ -1735,7 +1705,6 @@
     "overlay_refs": [
       "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
-      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
@@ -1817,7 +1786,6 @@
     "overlay_refs": [
       "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
-      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
@@ -1892,7 +1860,6 @@
     "overlay_refs": [
       "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
-      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
@@ -1987,7 +1954,6 @@
     "overlay_refs": [
       "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
-      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
@@ -2077,7 +2043,6 @@
     "overlay_refs": [
       "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
-      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
@@ -2155,7 +2120,6 @@
     "overlay_refs": [
       "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
-      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
@@ -2242,7 +2206,6 @@
     "overlay_refs": [
       "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
-      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
@@ -2323,7 +2286,6 @@
     "overlay_refs": [
       "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
-      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
@@ -2406,7 +2368,6 @@
     "overlay_refs": [
       "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
-      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
@@ -2486,7 +2447,6 @@
     "overlay_refs": [
       "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
-      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"

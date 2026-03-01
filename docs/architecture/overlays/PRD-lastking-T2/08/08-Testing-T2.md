@@ -24,10 +24,21 @@ Test-Refs:
 
 | Requirement ID | Taskmaster IDs | Primary Tests | Expected Logs |
 | --- | --- | --- | --- |
-| RQ-CORE-LOOP | 1-10 | `Game.Core.Tests/State/GameStateMachineTests.cs` | `logs/ci/<YYYY-MM-DD>/task-triplet-audit/report.json` |
-| RQ-ECONOMY-COMBAT | 11-20 | `Game.Core.Tests/Domain/GameConfigTests.cs` | `logs/unit/<YYYY-MM-DD>/coverage.json` |
-| RQ-UX-SAVE-PERF | 21-30 | `Tests.Godot/tests/UI/test_hud_scene.gd`, `Tests.Godot/tests/Integration/test_backup_restore_savegame.gd` | `logs/e2e/<YYYY-MM-DD>/` |
-| RQ-CONFIG-GOVERNANCE | 31-40 | `Game.Core.Tests/Domain/GameConfigTests.cs` | `logs/ci/<YYYY-MM-DD>/overlay-lint/report.json` |
+| RQ-CORE-LOOP-STATE | 1-10 | `Game.Core.Tests/State/GameStateMachineTests.cs` | `logs/ci/<YYYY-MM-DD>/task-triplet-audit/report.json` |
+| RQ-ECONOMY-BUILD-RULES | 11-15 | `Game.Core.Tests/Domain/GameConfigTests.cs` | `logs/unit/<YYYY-MM-DD>/coverage.json` |
+| RQ-COMBAT-QUEUE-TECH | 16-20 | `Game.Core.Tests/Domain/GameConfigTests.cs`, `Game.Core.Tests/Contracts/Lastking/LastkingContractsTests.cs` | `logs/unit/<YYYY-MM-DD>/coverage.json` |
+| RQ-RUNTIME-INTERACTION | 21-24 | `Tests.Godot/tests/UI/test_hud_scene.gd` | `logs/e2e/<YYYY-MM-DD>/` |
+| RQ-SAVE-MIGRATION-CLOUD | 25-27 | `Tests.Godot/tests/Integration/test_backup_restore_savegame.gd` | `logs/ci/<YYYY-MM-DD>/release-health.json` |
+| RQ-I18N-AUDIO-SETTINGS | 28-29 | `Tests.Godot/tests/UI/test_hud_scene.gd` | `logs/e2e/<YYYY-MM-DD>/` |
+| RQ-PERF-GATE | 30 | `Tests.Godot/tests/Integration/test_backup_restore_savegame.gd` | `logs/perf/<YYYY-MM-DD>/summary.json` |
+| RQ-CONFIG-CONTRACT-GOV | 31-40 | `Game.Core.Tests/Domain/GameConfigTests.cs`, `Game.Core.Tests/Contracts/DomainEventPayloadTests.cs` | `logs/ci/<YYYY-MM-DD>/overlay-lint/report.json` |
+
+## Task-to-Test Focus (P0)
+
+- `T21/T22/T23/T24`: 运行时交互与速度冻结优先走 Scene/Integration 冒烟，避免只做纯单测。
+- `T25/T26/T27`: 迁移/云存档/成就必须附可机读审计摘要，避免仅 UI 提示通过。
+- `T30`: 性能任务验收以 `logs/perf/<YYYY-MM-DD>/summary.json` 为主，不以主观可玩感替代。
+- `T31-T40`: 配置契约任务优先契约校验 + 领域测试双证据，防止只改 schema 不改运行时约束。
 
 ## Test Execution Matrix (Windows)
 

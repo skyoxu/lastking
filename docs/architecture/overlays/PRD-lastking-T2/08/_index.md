@@ -28,6 +28,8 @@ Updated: true
 - `08-Feature-Slice-T2-Core-Loop.md`、`08-Contracts-T2.md`、`08-Testing-T2.md` 的 `Test-Refs` 至少要有 1 条现存测试文件路径。
 - `08-Observability-T2.md` 的 `Test-Refs` 允许使用日志工件路径作为证据引用。
 - 任一执行步骤必须产生可定位的日志工件路径。
+- 任务映射粒度至少覆盖三段执行面：`11-20`（经济/建造/战斗）、`21-30`（运行时 UX/存档/平台）、`31-40`（配置契约治理）。
+- 若任务语义不在上述三段内可定位到对应条目，视为 Overlay 回链语义不足，需先补文档再进入实现。
 
 ## Validation Commands (Windows)
 

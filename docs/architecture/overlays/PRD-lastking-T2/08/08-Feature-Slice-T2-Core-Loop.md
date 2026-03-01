@@ -140,3 +140,45 @@ Test-Refs:
 - Taskmaster IDs 11-20: economy/building/combat systems.
 - Taskmaster IDs 21-30: runtime UX/save/performance envelope.
 - Taskmaster IDs 31-40: config contracts and governance.
+
+## Execution Slices (P0)
+
+### Slice A — Economy/Build/Combat (`T11-T20`)
+
+- Scope: 项目结构稳固、整数资源系统、建筑占地/堵路、税收、升级维修互斥、训练队列、科技数值、无友伤战斗接入。
+- Key tasks: `T11`, `T12`, `T13`, `T14`, `T15`, `T16`, `T17`, `T18`, `T19`, `T20`.
+- Contract anchor:
+  - `Game.Core/Contracts/Lastking/WaveBudgetDto.cs`
+  - `Game.Core/Contracts/Lastking/WaveSpawned.cs`
+  - `Game.Core/Contracts/Lastking/CastleHpChanged.cs`
+- Failure focus:
+  - 路径被完全堵死但目标不可达；
+  - 维修/升级并发违规；
+  - 经济整数溢出或负债停工规则偏离。
+
+### Slice B — Runtime UX/Save/Platform (`T21-T30`)
+
+- Scope: Windows 导出与启动、镜头与交互、速度档位冻结、错误提示、本地存档与迁移、云存档绑定、成就、i18n、音频、性能门禁。
+- Key tasks: `T21`, `T22`, `T23`, `T24`, `T25`, `T26`, `T27`, `T28`, `T29`, `T30`.
+- Contract anchor:
+  - `Game.Core/Contracts/Lastking/SaveAutosaved.cs`
+  - `Game.Core/Contracts/DomainEvent.cs`
+  - `Game.Core/Contracts/EventTypes.cs`
+- Failure focus:
+  - 暂停时计时器未冻结；
+  - 存档迁移失败路径不一致；
+  - 云端冲突分支无审计。
+
+### Slice C — Config Governance (`T31-T40`)
+
+- Scope: 配置契约脚手架、敌军/难度/刷怪/压力归一化 schema、sample 配置、运行时校验与回退、版本迁移规则。
+- Key tasks: `T31`, `T32`, `T33`, `T34`, `T35`, `T36`, `T37`, `T38`, `T39`, `T40`.
+- Contract anchor:
+  - `Game.Core/Contracts/Config/enemy-config.schema.json`
+  - `Game.Core/Contracts/Config/difficulty-config.schema.json`
+  - `Game.Core/Contracts/Config/spawn-config.schema.json`
+  - `Game.Core/Contracts/Config/pressure-normalization.config.schema.json`
+- Failure focus:
+  - 配置缺失未回退内置安全默认；
+  - 契约版本迁移策略未强制执行；
+  - 报告缺少 config hash/version 审计字段。

@@ -33,6 +33,25 @@ Test-Refs:
 - Release health fails: block release promotion; keep deployment artifacts for rollback.
 - Perf gate fails: block hard gate path or downgrade to soft gate only via explicit env flag.
 
+## Task Evidence Matrix (P0)
+
+| Task Group | Required Artifact | Minimum Fields |
+| --- | --- | --- |
+| `T21` Windows export/runtime | `logs/ci/<YYYY-MM-DD>/export.log` | `platform`, `profile`, `status`, `duration_ms` |
+| `T22-T24` interaction/speed/feedback | `logs/e2e/<YYYY-MM-DD>/runtime-ui/summary.json` | `scene`, `case`, `status`, `evidence_path` |
+| `T25` save + migration | `logs/ci/<YYYY-MM-DD>/save-migration/report.json` | `save_version`, `migration_path`, `result`, `error_code` |
+| `T26` steam cloud binding | `logs/ci/<YYYY-MM-DD>/steam-cloud/report.json` | `account_id_hash`, `sync_direction`, `conflict_policy`, `result` |
+| `T27` achievements | `logs/ci/<YYYY-MM-DD>/achievements/report.json` | `achievement_id`, `trigger`, `deterministic_key`, `result` |
+| `T28-T29` i18n/audio | `logs/e2e/<YYYY-MM-DD>/settings/summary.json` | `language`, `audio_channel`, `value`, `applied` |
+| `T30` performance | `logs/perf/<YYYY-MM-DD>/summary.json` | `avg_fps`, `fps_1pct_low`, `samples`, `gate` |
+| `T31-T40` config governance | `logs/ci/<YYYY-MM-DD>/config-governance/report.json` | `config_hash`, `schema_version`, `fallback_used`, `status` |
+
+## Conflict and Rejection Evidence
+
+- 云存档冲突必须有单独证据文件：`logs/ci/<YYYY-MM-DD>/steam-cloud/conflict-report.json`。
+- 迁移拒绝必须给出稳定错误码，并写入：`logs/ci/<YYYY-MM-DD>/save-migration/reject-report.json`。
+- 配置回退必须记录触发原因与生效默认值快照，避免“静默自愈”不可追溯。
+
 ## Release Health Linkage
 
 - CI release-health job is the authoritative gate for Crash-Free enforcement.
