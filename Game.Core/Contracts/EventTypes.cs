@@ -76,4 +76,7 @@ public static class EventTypes
     public const string LastkingCastleHpChanged = "core.lastking.castle.hp_changed";
     public const string LastkingRewardOffered = "core.lastking.reward.offered";
     public const string LastkingSaveAutosaved = "core.lastking.save.autosaved";
+    public const string LastkingTimeScaleChanged = "core.lastking.time_scale.changed";
+    public const string LastkingUiFeedbackRaised = "core.lastking.ui_feedback.raised";
+    public const string LastkingCloudSaveSyncCompleted = "core.lastking.cloud_save.sync.completed";
 }

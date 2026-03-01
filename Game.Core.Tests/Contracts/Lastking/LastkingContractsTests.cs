@@ -18,6 +18,9 @@ public class LastkingContractsTests
         CastleHpChanged.EventType.Should().Be(EventTypes.LastkingCastleHpChanged);
         RewardOffered.EventType.Should().Be(EventTypes.LastkingRewardOffered);
         SaveAutosaved.EventType.Should().Be(EventTypes.LastkingSaveAutosaved);
+        TimeScaleChanged.EventType.Should().Be(EventTypes.LastkingTimeScaleChanged);
+        UiFeedbackRaised.EventType.Should().Be(EventTypes.LastkingUiFeedbackRaised);
+        CloudSaveSyncCompleted.EventType.Should().Be(EventTypes.LastkingCloudSaveSyncCompleted);
     }
 
     [Fact]
@@ -47,6 +50,9 @@ public class LastkingContractsTests
         var computedAt = DateTimeOffset.UtcNow;
         var waveBudget = new WaveBudgetDto(5, 5, 2500, 600, 800, computedAt);
         var rewardOffer = new RewardOfferDto(5, true, false, "artifact", "gold", "tech");
+        var timeScale = new TimeScaleStateDto("run-1", 100, false, computedAt);
+        var feedback = new UiFeedbackDto("BUILD_INVALID_TILE", "ui.feedback.build.invalid_tile", "warning", "tile_blocked");
+        var syncResult = new CloudSaveSyncResultDto("autosave", "upload", true, string.Empty, "rev-1", computedAt);
 
         waveBudget.DayNumber.Should().Be(5);
         waveBudget.NormalBudget.Should().Be(2500);
@@ -55,6 +61,15 @@ public class LastkingContractsTests
         rewardOffer.DayNumber.Should().Be(5);
         rewardOffer.IsEliteNight.Should().BeTrue();
         rewardOffer.OptionC.Should().Be("tech");
+
+        timeScale.CurrentScalePercent.Should().Be(100);
+        timeScale.IsPaused.Should().BeFalse();
+
+        feedback.Severity.Should().Be("warning");
+        feedback.MessageKey.Should().Be("ui.feedback.build.invalid_tile");
+
+        syncResult.Success.Should().BeTrue();
+        syncResult.RemoteRevision.Should().Be("rev-1");
     }
 
     [Fact]
@@ -67,6 +82,19 @@ public class LastkingContractsTests
         result.DayNumber.Should().Be(3);
         result.NightNumber.Should().Be(3);
         result.NormalBudget.Should().Be(1800);
+
+        ITimeScaleController timeScaleController = new StubTimeScaleController();
+        var scaleState = timeScaleController.SetScale("run-1", 200, isPaused: false);
+        scaleState.CurrentScalePercent.Should().Be(200);
+
+        IFeedbackDispatcher feedbackDispatcher = new StubFeedbackDispatcher();
+        var payload = new UiFeedbackDto("CODE", "ui.feedback.code", "info", "ok");
+        var dispatched = feedbackDispatcher.Publish(payload);
+        dispatched.MessageKey.Should().Be("ui.feedback.code");
+
+        ICloudSaveSyncService cloudSaveSyncService = new StubCloudSaveSyncService();
+        var syncResult = cloudSaveSyncService.Sync("run-1", "autosave", "upload", "steam-acc-1");
+        syncResult.Success.Should().BeTrue();
     }
 
     private sealed class StubWaveBudgetPolicy : IWaveBudgetPolicy
@@ -80,6 +108,37 @@ public class LastkingContractsTests
                 EliteBudget: isEliteNight ? 600 : 0,
                 BossBudget: isBossNight ? 1200 : 0,
                 ComputedAt: DateTimeOffset.UtcNow
+            );
+        }
+    }
+
+    private sealed class StubTimeScaleController : ITimeScaleController
+    {
+        public TimeScaleStateDto SetScale(string runId, int currentScalePercent, bool isPaused)
+        {
+            return new TimeScaleStateDto(runId, currentScalePercent, isPaused, DateTimeOffset.UtcNow);
+        }
+    }
+
+    private sealed class StubFeedbackDispatcher : IFeedbackDispatcher
+    {
+        public UiFeedbackDto Publish(UiFeedbackDto feedback)
+        {
+            return feedback;
+        }
+    }
+
+    private sealed class StubCloudSaveSyncService : ICloudSaveSyncService
+    {
+        public CloudSaveSyncResultDto Sync(string runId, string slotId, string direction, string steamAccountId)
+        {
+            return new CloudSaveSyncResultDto(
+                slotId,
+                direction,
+                true,
+                string.Empty,
+                "rev-1",
+                DateTimeOffset.UtcNow
             );
         }
     }

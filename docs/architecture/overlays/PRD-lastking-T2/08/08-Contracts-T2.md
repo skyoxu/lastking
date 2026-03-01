@@ -38,9 +38,18 @@ Test-Refs:
 | `Game.Core/Contracts/Lastking/CastleHpChanged.cs` | Event | Castle durability delta event |
 | `Game.Core/Contracts/Lastking/RewardOffered.cs` | Event | Reward 3-option presentation event |
 | `Game.Core/Contracts/Lastking/SaveAutosaved.cs` | Event | Day-boundary autosave success event |
+| `Game.Core/Contracts/Lastking/TimeScaleChanged.cs` | Event | Runtime speed state transition event |
+| `Game.Core/Contracts/Lastking/UiFeedbackRaised.cs` | Event | Core-to-UI feedback dispatch event |
+| `Game.Core/Contracts/Lastking/CloudSaveSyncCompleted.cs` | Event | Cloud save sync completion event |
 | `Game.Core/Contracts/Lastking/WaveBudgetDto.cs` | DTO | Deterministic budget output for wave scheduling |
 | `Game.Core/Contracts/Lastking/RewardOfferDto.cs` | DTO | Night reward options payload |
+| `Game.Core/Contracts/Lastking/TimeScaleStateDto.cs` | DTO | Runtime speed state snapshot |
+| `Game.Core/Contracts/Lastking/UiFeedbackDto.cs` | DTO | UI feedback payload |
+| `Game.Core/Contracts/Lastking/CloudSaveSyncResultDto.cs` | DTO | Cloud save sync result payload |
 | `Game.Core/Contracts/Interfaces/IWaveBudgetPolicy.cs` | Interface | Runtime budget policy boundary |
+| `Game.Core/Contracts/Interfaces/ITimeScaleController.cs` | Interface | Runtime speed control boundary |
+| `Game.Core/Contracts/Interfaces/IFeedbackDispatcher.cs` | Interface | UI feedback dispatch boundary |
+| `Game.Core/Contracts/Interfaces/ICloudSaveSyncService.cs` | Interface | Cloud save sync boundary |
 
 ## Event Definitions
 
@@ -69,6 +78,18 @@ Test-Refs:
   - 触发时机：天开始自动存档成功后。
   - 字段：`RunId`, `DayNumber`, `SlotId`, `ConfigHash`, `SavedAt`
   - 契约位置：`Game.Core/Contracts/Lastking/SaveAutosaved.cs`
+- **TimeScaleChanged** (`core.lastking.time_scale.changed`)
+  - 触发时机：局内速度切换（暂停/1x/2x）提交后。
+  - 字段：`RunId`, `PreviousScalePercent`, `CurrentScalePercent`, `IsPaused`, `ChangedAt`
+  - 契约位置：`Game.Core/Contracts/Lastking/TimeScaleChanged.cs`
+- **UiFeedbackRaised** (`core.lastking.ui_feedback.raised`)
+  - 触发时机：核心逻辑发出无效操作或错误反馈时。
+  - 字段：`RunId`, `Code`, `MessageKey`, `Severity`, `Details`, `RaisedAt`
+  - 契约位置：`Game.Core/Contracts/Lastking/UiFeedbackRaised.cs`
+- **CloudSaveSyncCompleted** (`core.lastking.cloud_save.sync.completed`)
+  - 触发时机：一次云存档上传/下载结束后。
+  - 字段：`RunId`, `SlotId`, `Direction`, `SteamAccountId`, `Success`, `ErrorCode`, `RemoteRevision`, `SyncedAt`
+  - 契约位置：`Game.Core/Contracts/Lastking/CloudSaveSyncCompleted.cs`
 
 ### DTO
 - **WaveBudgetDto**
@@ -79,12 +100,50 @@ Test-Refs:
   - 用途：封装奖励三选一面板输入数据。
   - 字段：`DayNumber`, `IsEliteNight`, `IsBossNight`, `OptionA`, `OptionB`, `OptionC`
   - 契约位置：`Game.Core/Contracts/Lastking/RewardOfferDto.cs`
+- **TimeScaleStateDto**
+  - 用途：承载运行时速度状态快照。
+  - 字段：`RunId`, `CurrentScalePercent`, `IsPaused`, `UpdatedAt`
+  - 契约位置：`Game.Core/Contracts/Lastking/TimeScaleStateDto.cs`
+- **UiFeedbackDto**
+  - 用途：承载 UI 反馈数据（键值与严重级别）。
+  - 字段：`Code`, `MessageKey`, `Severity`, `Details`
+  - 契约位置：`Game.Core/Contracts/Lastking/UiFeedbackDto.cs`
+- **CloudSaveSyncResultDto**
+  - 用途：承载云存档同步结果。
+  - 字段：`SlotId`, `Direction`, `Success`, `ErrorCode`, `RemoteRevision`, `SyncedAt`
+  - 契约位置：`Game.Core/Contracts/Lastking/CloudSaveSyncResultDto.cs`
 
 ### Interface
 - **IWaveBudgetPolicy**
   - 用途：约束预算策略实现边界，隔离核心计算与运行时适配层。
   - 方法：`Compute(dayNumber, nightNumber, isEliteNight, isBossNight) -> WaveBudgetDto`
   - 契约位置：`Game.Core/Contracts/Interfaces/IWaveBudgetPolicy.cs`
+- **ITimeScaleController**
+  - 用途：约束局内速度切换接口边界。
+  - 方法：`SetScale(runId, currentScalePercent, isPaused) -> TimeScaleStateDto`
+  - 契约位置：`Game.Core/Contracts/Interfaces/ITimeScaleController.cs`
+- **IFeedbackDispatcher**
+  - 用途：约束核心到表现层反馈分发边界。
+  - 方法：`Publish(feedback) -> UiFeedbackDto`
+  - 契约位置：`Game.Core/Contracts/Interfaces/IFeedbackDispatcher.cs`
+- **ICloudSaveSyncService**
+  - 用途：约束云存档同步边界。
+  - 方法：`Sync(runId, slotId, direction, steamAccountId) -> CloudSaveSyncResultDto`
+  - 契约位置：`Game.Core/Contracts/Interfaces/ICloudSaveSyncService.cs`
+
+## Retrospective Review (6-point Checklist)
+
+- 审查范围：Game.Core/Contracts 下所有 `.cs` 契约文件（含本次新增）。
+- 自动化补充：`py -3 scripts/python/validate_contracts.py`、`py -3 scripts/python/check_domain_contracts.py`。
+
+| Checkpoint | Result | Notes |
+| --- | --- | --- |
+| EventType 命名符合 ADR-0004 | pass | 统一为 `core.*.*` |
+| XML 注释完整（summary/remarks） | pass | Event 契约具备 `<summary>` 与 `<remarks>` |
+| EventType 常量与 EventTypes SSoT 一致 | pass | 常量全部引用 `EventTypes.<Name>` |
+| BCL-only（无 Godot 依赖） | pass | 未引入 `Godot.*` |
+| 字段类型明确（无 dynamic） | pass with caveat | `DomainEvent.Data` 为历史兼容字段（`[Obsolete] object?`），新增契约均为强类型 |
+| Overlay 08 回链完整 | pass | 本页已登记全部新增契约路径 |
 
 ## Field Constraints
 
