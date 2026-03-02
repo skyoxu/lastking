@@ -21,6 +21,15 @@ public class LastkingContractsTests
         TimeScaleChanged.EventType.Should().Be(EventTypes.LastkingTimeScaleChanged);
         UiFeedbackRaised.EventType.Should().Be(EventTypes.LastkingUiFeedbackRaised);
         CloudSaveSyncCompleted.EventType.Should().Be(EventTypes.LastkingCloudSaveSyncCompleted);
+        BootstrapReady.EventType.Should().Be(EventTypes.LastkingBootstrapReady);
+        ConfigLoaded.EventType.Should().Be(EventTypes.LastkingConfigLoaded);
+        ResourcesChanged.EventType.Should().Be(EventTypes.LastkingResourcesChanged);
+        TaxCollected.EventType.Should().Be(EventTypes.LastkingTaxCollected);
+        TechApplied.EventType.Should().Be(EventTypes.LastkingTechApplied);
+        WindowsRuntimeValidated.EventType.Should().Be(EventTypes.LastkingWindowsRuntimeValidated);
+        CameraScrolled.EventType.Should().Be(EventTypes.LastkingCameraScrolled);
+        AudioSettingsChanged.EventType.Should().Be(EventTypes.LastkingAudioSettingsChanged);
+        PerfSampled.EventType.Should().Be(EventTypes.LastkingPerfSampled);
     }
 
     [Fact]
@@ -30,6 +39,15 @@ public class LastkingContractsTests
         var dayStarted = new DayStarted("run-1", 1, now);
         var waveSpawned = new WaveSpawned("run-1", 1, 1, "lane-left", 50, 1200, now);
         var rewardOffered = new RewardOffered("run-1", 5, true, false, "tech+3", "gold+600", "unit+tank", now);
+        var bootstrapReady = new BootstrapReady("run-1", "F:/Lastking", true, now);
+        var configLoaded = new ConfigLoaded("run-1", "1.2.0", "hash-1", "config/samples", now);
+        var resourcesChanged = new ResourcesChanged("run-1", 1, 800, 150, 50, now);
+        var taxCollected = new TaxCollected("run-1", 1, "residence-01", 50, 850, now);
+        var techApplied = new TechApplied("run-1", "tech-rate-1", "attack_speed_percent", 100, 110, now);
+        var windowsValidated = new WindowsRuntimeValidated("run-1", "480", true, "startup+export", now);
+        var cameraScrolled = new CameraScrolled("run-1", 320, 128, "edge", now);
+        var audioSettingsChanged = new AudioSettingsChanged("run-1", 60, 75, now);
+        var perfSampled = new PerfSampled("run-1", "main", 60, 45, 300, now);
 
         dayStarted.RunId.Should().Be("run-1");
         dayStarted.DayNumber.Should().Be(1);
@@ -42,6 +60,33 @@ public class LastkingContractsTests
         rewardOffered.IsEliteNight.Should().BeTrue();
         rewardOffered.IsBossNight.Should().BeFalse();
         rewardOffered.OptionA.Should().Be("tech+3");
+
+        bootstrapReady.ProjectRoot.Should().Be("F:/Lastking");
+        bootstrapReady.ExportProfileReady.Should().BeTrue();
+
+        configLoaded.ConfigVersion.Should().Be("1.2.0");
+        configLoaded.ConfigHash.Should().Be("hash-1");
+
+        resourcesChanged.Gold.Should().Be(800);
+        resourcesChanged.Iron.Should().Be(150);
+
+        taxCollected.GoldDelta.Should().Be(50);
+        taxCollected.TotalGold.Should().Be(850);
+
+        techApplied.StatKey.Should().Be("attack_speed_percent");
+        techApplied.CurrentValue.Should().Be(110);
+
+        windowsValidated.StartupPassed.Should().BeTrue();
+        windowsValidated.ValidationScope.Should().Be("startup+export");
+
+        cameraScrolled.InputMode.Should().Be("edge");
+        cameraScrolled.PositionX.Should().Be(320);
+
+        audioSettingsChanged.MusicVolumePercent.Should().Be(60);
+        audioSettingsChanged.SfxVolumePercent.Should().Be(75);
+
+        perfSampled.AverageFps.Should().Be(60);
+        perfSampled.Low1PercentFps.Should().Be(45);
     }
 
     [Fact]

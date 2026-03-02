@@ -82,7 +82,7 @@
     ],
     "taskmaster_id": 1,
     "contractRefs": [
-      "Game.Core/Contracts/DomainEvent.cs"
+      "Game.Core/Contracts/Lastking/BootstrapReady.cs"
     ]
   },
   {
@@ -173,7 +173,7 @@
     ],
     "taskmaster_id": 2,
     "contractRefs": [
-      "Game.Core/Contracts/DomainEvent.cs"
+      "Game.Core/Contracts/Lastking/ConfigLoaded.cs"
     ],
     "evidence_refs": []
   },
@@ -250,7 +250,8 @@
     ],
     "taskmaster_id": 3,
     "contractRefs": [
-      "Game.Core/Contracts/DomainEvent.cs"
+      "Game.Core/Contracts/Lastking/DayStarted.cs",
+      "Game.Core/Contracts/Lastking/NightStarted.cs"
     ],
     "evidence_refs": []
   },
@@ -322,7 +323,7 @@
     ],
     "taskmaster_id": 4,
     "contractRefs": [
-      "Game.Core/Contracts/DomainEvent.cs"
+      "Game.Core/Contracts/Lastking/WaveSpawned.cs"
     ]
   },
   {
@@ -403,7 +404,7 @@
     ],
     "taskmaster_id": 5,
     "contractRefs": [
-      "Game.Core/Contracts/DomainEvent.cs"
+      "Game.Core/Contracts/Lastking/WaveSpawned.cs"
     ],
     "evidence_refs": []
   },
@@ -461,15 +462,15 @@
       "Tests.Godot/tests/Integration/test_enemy_ai_blocked_map_fallback_timeout.gd"
     ],
     "acceptance": [
-      "Taskmaster #6 is complete only if combat runs show enemies selecting targets by defined priority and executing blocked-path fallback attacks when routes are obstructed. Refs: Game.Core.Tests/Services/EnemyAiTargetSelectionTests.cs Tests.Godot/tests/Scenes/Combat/test_enemy_ai_blocked_route_fallback.gd",
-      "On the Windows Godot+C# baseline, automated suites for priority selection, blocked-path fallback, fixed-seed determinism, and friendly-fire disablement all pass. Refs: Tests.Godot/tests/Integration/test_combat_friendly_fire_disabled.gd",
-      "With unchanged initial state and fixed seed, deterministic simulation loop outputs match baseline; any divergence is a determinism regression. Refs: Game.Core.Tests/Services/EnemyAiDecisionDeterminismTests.cs Game.Core.Tests/Engine/DeterministicSimulationLoopTests.cs",
-      "Given mixed targets and at least one reachable option, each enemy selects the highest reachable class in strict order: unit > castle > armed defense > wall/gate. Refs: Game.Core.Tests/Services/EnemyAiTargetSelectionTests.cs Tests.Godot/tests/Scenes/Combat/test_enemy_ai_navigation_priority.gd",
+      "Taskmaster #6 passes only when combat runs show enemies selecting targets by the defined priority and executing blocked-path fallback attacks whenever routes are obstructed. Refs: Game.Core.Tests/Services/EnemyAiTargetSelectionTests.cs Tests.Godot/tests/Scenes/Combat/test_enemy_ai_blocked_route_fallback.gd",
+      "On the Windows Godot+C# baseline, automated suites for priority selection, blocked-path fallback, fixed-seed determinism, and friendly-fire disablement all pass; any failing suite fails acceptance. Refs: Tests.Godot/tests/Integration/test_combat_friendly_fire_disabled.gd",
+      "With unchanged initial state and a fixed seed, deterministic simulation loop outputs match the approved baseline; any divergence is a determinism regression. Refs: Game.Core.Tests/Services/EnemyAiDecisionDeterminismTests.cs Game.Core.Tests/Engine/DeterministicSimulationLoopTests.cs",
+      "Given mixed targets and at least one reachable candidate, each enemy selects the highest reachable class in strict order: unit > castle > armed defense > wall/gate. Refs: Game.Core.Tests/Services/EnemyAiTargetSelectionTests.cs Tests.Godot/tests/Scenes/Combat/test_enemy_ai_navigation_priority.gd",
       "With identical initial state and the same fixed seed, ties among equal-priority candidates resolve to the same target across repeated executions. Refs: Game.Core.Tests/Services/EnemyAiDecisionDeterminismTests.cs",
-      "When higher-priority targets are blocked, the enemy attacks the nearest structure that blocks the route and must not idle or switch to unrelated non-blocking targets. Refs: Game.Core.Tests/Services/EnemyAiTargetSelectionTests.cs Tests.Godot/tests/Scenes/Combat/test_enemy_ai_blocked_route_fallback.gd",
+      "When higher-priority targets are blocked, the enemy attacks the nearest structure blocking the route and does not idle or switch to unrelated non-blocking targets. Refs: Game.Core.Tests/Services/EnemyAiTargetSelectionTests.cs Tests.Godot/tests/Scenes/Combat/test_enemy_ai_blocked_route_fallback.gd",
       "Movement decisions obey Godot navigation constraints: enemies follow navigable paths only and cannot traverse blocked geometry. Refs: Tests.Godot/tests/Scenes/Combat/test_enemy_ai_navigation_priority.gd",
-      "Every combat enemy node has an active EnemyAI C# attachment at runtime; missing attachment fails validation/tests. Refs: Tests.Godot/tests/Scenes/Combat/test_enemy_ai_attachment_validation.gd",
-      "Player-origin attacks are configured to prevent friendly/player damage, and friendly-fire hit events do not occur under collision layer/mask checks. Refs: Tests.Godot/tests/Integration/test_combat_friendly_fire_disabled.gd",
+      "Every combat enemy node has an active EnemyAI C# attachment at runtime; any missing attachment fails validation/tests. Refs: Tests.Godot/tests/Scenes/Combat/test_enemy_ai_attachment_validation.gd",
+      "Player-origin attacks are configured so collision layers/masks prevent friendly/player damage, and friendly-fire hit events do not occur. Refs: Tests.Godot/tests/Integration/test_combat_friendly_fire_disabled.gd",
       "In any decision cycle, selecting a lower-priority target while a higher-priority reachable target exists is a failure. Refs: Game.Core.Tests/Services/EnemyAiTargetSelectionTests.cs Tests.Godot/tests/Scenes/Combat/test_enemy_ai_navigation_priority.gd",
       "Blocked-route tests confirm the fallback target is the nearest blocking structure by distance, and emitted attack events are directed to that blocker. Refs: Game.Core.Tests/Services/EnemyAiTargetSelectionTests.cs Tests.Godot/tests/Scenes/Combat/test_enemy_ai_blocked_route_fallback.gd",
       "Across full player-attack combat runs, friendly/player damage events remain zero from start to finish. Refs: Tests.Godot/tests/Integration/test_combat_friendly_fire_disabled.gd",
@@ -488,7 +489,7 @@
     ],
     "taskmaster_id": 6,
     "contractRefs": [
-      "Game.Core/Contracts/DomainEvent.cs"
+      "Game.Core/Contracts/Lastking/CastleHpChanged.cs"
     ],
     "evidence_refs": []
   },
@@ -575,7 +576,7 @@
     ],
     "taskmaster_id": 7,
     "contractRefs": [
-      "Game.Core/Contracts/DomainEvent.cs"
+      "Game.Core/Contracts/Lastking/CastleHpChanged.cs"
     ],
     "evidence_refs": []
   },
@@ -646,7 +647,8 @@
     ],
     "taskmaster_id": 8,
     "contractRefs": [
-      "Game.Core/Contracts/DomainEvent.cs"
+      "Game.Core/Contracts/Lastking/DayStarted.cs",
+      "Game.Core/Contracts/Lastking/CastleHpChanged.cs"
     ]
   },
   {
@@ -724,7 +726,9 @@
     ],
     "taskmaster_id": 9,
     "contractRefs": [
-      "Game.Core/Contracts/DomainEvent.cs"
+      "Game.Core/Contracts/Lastking/DayStarted.cs",
+      "Game.Core/Contracts/Lastking/NightStarted.cs",
+      "Game.Core/Contracts/Lastking/CastleHpChanged.cs"
     ],
     "evidence_refs": []
   },
@@ -819,7 +823,12 @@
     ],
     "taskmaster_id": 10,
     "contractRefs": [
-      "Game.Core/Contracts/DomainEvent.cs"
+      "Game.Core/Contracts/Lastking/DayStarted.cs",
+      "Game.Core/Contracts/Lastking/NightStarted.cs",
+      "Game.Core/Contracts/Lastking/WaveSpawned.cs",
+      "Game.Core/Contracts/Lastking/CastleHpChanged.cs",
+      "Game.Core/Contracts/Lastking/RewardOffered.cs",
+      "Game.Core/Contracts/Lastking/SaveAutosaved.cs"
     ]
   },
   {
@@ -909,7 +918,7 @@
     ],
     "taskmaster_id": 11,
     "contractRefs": [
-      "Game.Core/Contracts/DomainEvent.cs"
+      "Game.Core/Contracts/Lastking/BootstrapReady.cs"
     ],
     "evidence_refs": []
   },
@@ -987,7 +996,7 @@
     ],
     "taskmaster_id": 12,
     "contractRefs": [
-      "Game.Core/Contracts/DomainEvent.cs"
+      "Game.Core/Contracts/Lastking/ResourcesChanged.cs"
     ],
     "evidence_refs": []
   },
@@ -1074,7 +1083,7 @@
     ],
     "taskmaster_id": 13,
     "contractRefs": [
-      "Game.Core/Contracts/DomainEvent.cs"
+      "Game.Core/Contracts/Lastking/UiFeedbackRaised.cs"
     ],
     "evidence_refs": []
   },
@@ -1165,7 +1174,8 @@
     ],
     "taskmaster_id": 14,
     "contractRefs": [
-      "Game.Core/Contracts/DomainEvent.cs"
+      "Game.Core/Contracts/Lastking/ResourcesChanged.cs",
+      "Game.Core/Contracts/Lastking/TaxCollected.cs"
     ],
     "evidence_refs": []
   },
@@ -1254,7 +1264,7 @@
     ],
     "taskmaster_id": 15,
     "contractRefs": [
-      "Game.Core/Contracts/DomainEvent.cs"
+      "Game.Core/Contracts/Lastking/UiFeedbackRaised.cs"
     ],
     "evidence_refs": []
   },
@@ -1338,7 +1348,7 @@
     ],
     "taskmaster_id": 16,
     "contractRefs": [
-      "Game.Core/Contracts/DomainEvent.cs"
+      "Game.Core/Contracts/Lastking/UiFeedbackRaised.cs"
     ]
   },
   {
@@ -1433,7 +1443,7 @@
     ],
     "taskmaster_id": 17,
     "contractRefs": [
-      "Game.Core/Contracts/DomainEvent.cs"
+      "Game.Core/Contracts/Lastking/TechApplied.cs"
     ],
     "evidence_refs": []
   },
@@ -1514,7 +1524,7 @@
     ],
     "taskmaster_id": 18,
     "contractRefs": [
-      "Game.Core/Contracts/DomainEvent.cs"
+      "Game.Core/Contracts/Lastking/RewardOffered.cs"
     ]
   },
   {
@@ -1599,7 +1609,9 @@
     ],
     "taskmaster_id": 19,
     "contractRefs": [
-      "Game.Core/Contracts/DomainEvent.cs"
+      "Game.Core/Contracts/Lastking/DayStarted.cs",
+      "Game.Core/Contracts/Lastking/NightStarted.cs",
+      "Game.Core/Contracts/Lastking/CastleHpChanged.cs"
     ],
     "evidence_refs": []
   },
@@ -1678,7 +1690,7 @@
     ],
     "taskmaster_id": 20,
     "contractRefs": [
-      "Game.Core/Contracts/DomainEvent.cs"
+      "Game.Core/Contracts/Lastking/CastleHpChanged.cs"
     ],
     "evidence_refs": []
   },
@@ -1757,7 +1769,7 @@
     ],
     "taskmaster_id": 21,
     "contractRefs": [
-      "Game.Core/Contracts/DomainEvent.cs"
+      "Game.Core/Contracts/Lastking/WindowsRuntimeValidated.cs"
     ]
   },
   {
@@ -1809,19 +1821,19 @@
       "Tests.Godot/tests/Adapters/test_camera_controller_mode_transitions.gd"
     ],
     "acceptance": [
-      "Taskmaster #22 delivers a playable world-navigation camera where edge scrolling and keyboard scrolling are both functional. Refs: Tests.Godot/tests/Scenes/Camera/test_camera_controller_scroll_inputs.gd Tests.Godot/tests/Scenes/Camera/test_main_scene_camera_wiring.gd",
-      "Automated tests on the Windows Godot+C# baseline pass and explicitly validate edge scrolling, keyboard scrolling, and world-boundary clamping behaviors. Refs: Tests.Godot/tests/Scenes/Camera/test_camera_controller_scroll_inputs.gd Tests.Godot/tests/Scenes/Camera/test_camera_controller_delta_speed_and_bounds.gd",
-      "Camera scrolling is regression-safe in the core loop: with no scroll input camera position stays unchanged, and with sustained scroll input updates remain continuous without observable stutter. Refs: Tests.Godot/tests/Scenes/Camera/test_camera_controller_scroll_inputs.gd Tests.Godot/tests/Scenes/Camera/test_camera_controller_delta_speed_and_bounds.gd",
-      "When the mouse cursor enters the configurable edge margin at any viewport border, the camera moves in the corresponding world direction; when the cursor is outside all edge margins and no scroll keys are pressed, camera position does not change. Refs: Tests.Godot/tests/Scenes/Camera/test_camera_controller_scroll_inputs.gd",
-      "Pressing scroll actions mapped to Arrow keys and WASD moves the camera in the expected cardinal directions, and releasing those actions stops keyboard-driven scrolling. Refs: Tests.Godot/tests/Scenes/Camera/test_camera_controller_scroll_inputs.gd",
-      "Camera translation is smooth and frame-rate independent, with movement scaled by delta time and a configurable scroll speed value that can be adjusted without source-code changes. Refs: Tests.Godot/tests/Scenes/Camera/test_camera_controller_delta_speed_and_bounds.gd",
-      "Camera movement is clamped to configured world boundaries so the visible area cannot be scrolled beyond map limits on any side. Refs: Tests.Godot/tests/Scenes/Camera/test_camera_controller_delta_speed_and_bounds.gd",
-      "Edge scrolling and keyboard scrolling can both be active in the same frame without dropped input, and resulting movement remains continuous. Refs: Tests.Godot/tests/Scenes/Camera/test_camera_controller_scroll_inputs.gd",
-      "A CameraController with an active Camera2D is present in the playable scene, and camera movement is applied through that Camera2D. Refs: Tests.Godot/tests/Scenes/Camera/test_main_scene_camera_wiring.gd",
-      "With default configuration, entering within 20 pixels of any viewport edge triggers movement toward that edge, and scroll input is read through Godot Input plus viewport mouse-position events. Refs: Tests.Godot/tests/Scenes/Camera/test_camera_controller_scroll_inputs.gd",
-      "A camera movement contract defines scroll speed, edge-margin threshold, bounds-clamping invariants, and lock-state interaction rules; contract tests fail if movement occurs while locked or if movement exceeds configured bounds. Refs: Game.Core.Tests/State/CameraMovementContractTests.cs Tests.Godot/tests/Adapters/test_camera_controller_bounds_and_lock.gd",
-      "Runtime behavior is state-aware: in active state, edge and keyboard inputs move the camera continuously; in paused state, the same inputs do not change camera position, and bounds invariants remain satisfied. Refs: Tests.Godot/tests/Adapters/test_camera_controller_active_paused_scroll.gd",
-      "Camera state diagnostics are emitted for movement-mode transitions (idle, edge, keyboard, combined, locked), and regression checks verify consistent transition behavior with no boundary escape under repeated input sequences. Refs: Tests.Godot/tests/Adapters/test_camera_controller_mode_transitions.gd"
+      "Taskmaster #22 is complete only when the playable scene allows continuous world navigation using both edge scrolling and keyboard scrolling. Refs: Tests.Godot/tests/Scenes/Camera/test_camera_controller_scroll_inputs.gd Tests.Godot/tests/Scenes/Camera/test_main_scene_camera_wiring.gd",
+      "On the Windows Godot+C# baseline, automated tests pass and explicitly assert edge scrolling, keyboard scrolling, and world-boundary clamping outcomes. Refs: Tests.Godot/tests/Scenes/Camera/test_camera_controller_scroll_inputs.gd Tests.Godot/tests/Scenes/Camera/test_camera_controller_delta_speed_and_bounds.gd",
+      "With no scroll input across frames, camera position remains unchanged; with sustained scroll input, position updates continuously frame-to-frame without visible discontinuity. Refs: Tests.Godot/tests/Scenes/Camera/test_camera_controller_scroll_inputs.gd Tests.Godot/tests/Scenes/Camera/test_camera_controller_delta_speed_and_bounds.gd",
+      "When the mouse enters the configured edge margin at any viewport border, the camera moves in the corresponding world direction; when the mouse is outside all edge margins and no scroll keys are pressed, camera position does not change. Refs: Tests.Godot/tests/Scenes/Camera/test_camera_controller_scroll_inputs.gd",
+      "Pressing scroll actions mapped to Arrow keys and WASD moves the camera in the expected cardinal direction, and releasing those actions stops keyboard-driven scrolling. Refs: Tests.Godot/tests/Scenes/Camera/test_camera_controller_scroll_inputs.gd",
+      "Camera translation is smooth and frame-rate independent by scaling movement with delta time and configurable scroll speed, and speed adjustments take effect without source edits. Refs: Tests.Godot/tests/Scenes/Camera/test_camera_controller_delta_speed_and_bounds.gd",
+      "Camera movement is clamped to configured world boundaries on every side, and attempted movement beyond limits does not move the visible area outside map bounds. Refs: Tests.Godot/tests/Scenes/Camera/test_camera_controller_delta_speed_and_bounds.gd",
+      "If edge scrolling and keyboard scrolling are active in the same frame, both inputs are applied without dropped input and movement remains continuous. Refs: Tests.Godot/tests/Scenes/Camera/test_camera_controller_scroll_inputs.gd",
+      "The playable scene includes a CameraController with an active Camera2D, and runtime camera movement is applied through that Camera2D. Refs: Tests.Godot/tests/Scenes/Camera/test_main_scene_camera_wiring.gd",
+      "With default settings, entering within 20 pixels of any viewport edge triggers movement toward that edge, and scroll input is read via Godot Input plus viewport mouse position. Refs: Tests.Godot/tests/Scenes/Camera/test_camera_controller_scroll_inputs.gd",
+      "A camera movement contract defines scroll speed, edge-margin threshold, bounds-clamping invariants, and lock-state interaction rules; contract tests fail when locked state allows movement or movement exceeds configured bounds. Refs: Game.Core.Tests/State/CameraMovementContractTests.cs Tests.Godot/tests/Adapters/test_camera_controller_bounds_and_lock.gd",
+      "Runtime behavior is state-aware: in active state, edge and keyboard inputs move the camera continuously; in paused state, the same inputs do not change camera position, while bounds invariants remain satisfied. Refs: Tests.Godot/tests/Adapters/test_camera_controller_active_paused_scroll.gd",
+      "Camera state diagnostics are emitted for movement-mode transitions (idle, edge, keyboard, combined, locked), and regression checks verify stable transitions and no boundary escape under repeated input sequences. Refs: Tests.Godot/tests/Adapters/test_camera_controller_mode_transitions.gd"
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #22 primary behavior.",
@@ -1830,7 +1842,7 @@
     ],
     "taskmaster_id": 22,
     "contractRefs": [
-      "Game.Core/Contracts/DomainEvent.cs"
+      "Game.Core/Contracts/Lastking/CameraScrolled.cs"
     ],
     "evidence_refs": []
   },
@@ -1924,7 +1936,7 @@
     ],
     "taskmaster_id": 23,
     "contractRefs": [
-      "Game.Core/Contracts/DomainEvent.cs"
+      "Game.Core/Contracts/Lastking/TimeScaleChanged.cs"
     ],
     "evidence_refs": []
   },
@@ -2015,7 +2027,7 @@
     ],
     "taskmaster_id": 24,
     "contractRefs": [
-      "Game.Core/Contracts/DomainEvent.cs"
+      "Game.Core/Contracts/Lastking/UiFeedbackRaised.cs"
     ],
     "evidence_refs": []
   },
@@ -2093,7 +2105,7 @@
     ],
     "taskmaster_id": 25,
     "contractRefs": [
-      "Game.Core/Contracts/DomainEvent.cs"
+      "Game.Core/Contracts/Lastking/SaveAutosaved.cs"
     ]
   },
   {
@@ -2178,7 +2190,8 @@
     ],
     "taskmaster_id": 26,
     "contractRefs": [
-      "Game.Core/Contracts/DomainEvent.cs"
+      "Game.Core/Contracts/Lastking/SaveAutosaved.cs",
+      "Game.Core/Contracts/Lastking/CloudSaveSyncCompleted.cs"
     ],
     "evidence_refs": []
   },
@@ -2258,7 +2271,9 @@
     ],
     "taskmaster_id": 27,
     "contractRefs": [
-      "Game.Core/Contracts/DomainEvent.cs"
+      "Game.Core/Contracts/Lastking/DayStarted.cs",
+      "Game.Core/Contracts/Lastking/CastleHpChanged.cs",
+      "Game.Core/Contracts/Lastking/RewardOffered.cs"
     ]
   },
   {
@@ -2339,7 +2354,7 @@
     ],
     "taskmaster_id": 28,
     "contractRefs": [
-      "Game.Core/Contracts/DomainEvent.cs"
+      "Game.Core/Contracts/Lastking/UiFeedbackRaised.cs"
     ],
     "evidence_refs": []
   },
@@ -2413,7 +2428,7 @@
     ],
     "taskmaster_id": 29,
     "contractRefs": [
-      "Game.Core/Contracts/DomainEvent.cs"
+      "Game.Core/Contracts/Lastking/AudioSettingsChanged.cs"
     ]
   },
   {
@@ -2502,7 +2517,7 @@
     ],
     "taskmaster_id": 30,
     "contractRefs": [
-      "Game.Core/Contracts/DomainEvent.cs"
+      "Game.Core/Contracts/Lastking/PerfSampled.cs"
     ]
   },
   {
@@ -2574,7 +2589,10 @@
     ],
     "taskmaster_id": 31,
     "contractRefs": [
-      "Game.Core/Contracts/DomainEvent.cs"
+      "Game.Core/Contracts/Config/enemy-config.schema.json",
+      "Game.Core/Contracts/Config/difficulty-config.schema.json",
+      "Game.Core/Contracts/Config/spawn-config.schema.json",
+      "Game.Core/Contracts/Config/pressure-normalization.config.schema.json"
     ],
     "evidence_refs": []
   },

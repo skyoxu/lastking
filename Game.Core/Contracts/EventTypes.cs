@@ -79,4 +79,13 @@ public static class EventTypes
     public const string LastkingTimeScaleChanged = "core.lastking.time_scale.changed";
     public const string LastkingUiFeedbackRaised = "core.lastking.ui_feedback.raised";
     public const string LastkingCloudSaveSyncCompleted = "core.lastking.cloud_save.sync.completed";
+    public const string LastkingBootstrapReady = "core.lastking.bootstrap.ready";
+    public const string LastkingConfigLoaded = "core.lastking.config.loaded";
+    public const string LastkingResourcesChanged = "core.lastking.resources.changed";
+    public const string LastkingTaxCollected = "core.lastking.tax.collected";
+    public const string LastkingTechApplied = "core.lastking.tech.applied";
+    public const string LastkingWindowsRuntimeValidated = "core.lastking.windows_runtime.validated";
+    public const string LastkingCameraScrolled = "core.lastking.camera.scrolled";
+    public const string LastkingAudioSettingsChanged = "core.lastking.audio_settings.changed";
+    public const string LastkingPerfSampled = "core.lastking.perf.sampled";
 }

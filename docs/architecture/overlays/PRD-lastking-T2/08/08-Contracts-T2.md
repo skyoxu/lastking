@@ -41,6 +41,15 @@ Test-Refs:
 | `Game.Core/Contracts/Lastking/TimeScaleChanged.cs` | Event | Runtime speed state transition event |
 | `Game.Core/Contracts/Lastking/UiFeedbackRaised.cs` | Event | Core-to-UI feedback dispatch event |
 | `Game.Core/Contracts/Lastking/CloudSaveSyncCompleted.cs` | Event | Cloud save sync completion event |
+| `Game.Core/Contracts/Lastking/BootstrapReady.cs` | Event | Baseline bootstrap validated event |
+| `Game.Core/Contracts/Lastking/ConfigLoaded.cs` | Event | Config set loaded and bound event |
+| `Game.Core/Contracts/Lastking/ResourcesChanged.cs` | Event | Economy resources snapshot changed event |
+| `Game.Core/Contracts/Lastking/TaxCollected.cs` | Event | Residence tax settlement event |
+| `Game.Core/Contracts/Lastking/TechApplied.cs` | Event | Technology modifier committed event |
+| `Game.Core/Contracts/Lastking/WindowsRuntimeValidated.cs` | Event | Windows runtime validation passed event |
+| `Game.Core/Contracts/Lastking/CameraScrolled.cs` | Event | Camera position updated event |
+| `Game.Core/Contracts/Lastking/AudioSettingsChanged.cs` | Event | Audio settings updated event |
+| `Game.Core/Contracts/Lastking/PerfSampled.cs` | Event | Performance sampling window completed event |
 | `Game.Core/Contracts/Lastking/WaveBudgetDto.cs` | DTO | Deterministic budget output for wave scheduling |
 | `Game.Core/Contracts/Lastking/RewardOfferDto.cs` | DTO | Night reward options payload |
 | `Game.Core/Contracts/Lastking/TimeScaleStateDto.cs` | DTO | Runtime speed state snapshot |
@@ -90,6 +99,42 @@ Test-Refs:
   - 触发时机：一次云存档上传/下载结束后。
   - 字段：`RunId`, `SlotId`, `Direction`, `SteamAccountId`, `Success`, `ErrorCode`, `RemoteRevision`, `SyncedAt`
   - 契约位置：`Game.Core/Contracts/Lastking/CloudSaveSyncCompleted.cs`
+- **BootstrapReady** (`core.lastking.bootstrap.ready`)
+  - 触发时机：基线工程初始化与导出预检完成后。
+  - 字段：`RunId`, `ProjectRoot`, `ExportProfileReady`, `ReadyAt`
+  - 契约位置：`Game.Core/Contracts/Lastking/BootstrapReady.cs`
+- **ConfigLoaded** (`core.lastking.config.loaded`)
+  - 触发时机：配置集加载并绑定到运行态后。
+  - 字段：`RunId`, `ConfigVersion`, `ConfigHash`, `SourcePath`, `LoadedAt`
+  - 契约位置：`Game.Core/Contracts/Lastking/ConfigLoaded.cs`
+- **ResourcesChanged** (`core.lastking.resources.changed`)
+  - 触发时机：金币/铁矿/人口上限任一资源变化后。
+  - 字段：`RunId`, `DayNumber`, `Gold`, `Iron`, `PopulationCap`, `ChangedAt`
+  - 契约位置：`Game.Core/Contracts/Lastking/ResourcesChanged.cs`
+- **TaxCollected** (`core.lastking.tax.collected`)
+  - 触发时机：住所税收结算 Tick 完成后。
+  - 字段：`RunId`, `DayNumber`, `ResidenceId`, `GoldDelta`, `TotalGold`, `CollectedAt`
+  - 契约位置：`Game.Core/Contracts/Lastking/TaxCollected.cs`
+- **TechApplied** (`core.lastking.tech.applied`)
+  - 触发时机：科技节点生效并写入运行参数后。
+  - 字段：`RunId`, `TechId`, `StatKey`, `PreviousValue`, `CurrentValue`, `AppliedAt`
+  - 契约位置：`Game.Core/Contracts/Lastking/TechApplied.cs`
+- **WindowsRuntimeValidated** (`core.lastking.windows_runtime.validated`)
+  - 触发时机：Windows 导出配置与 Steam 启动路径验证通过后。
+  - 字段：`RunId`, `SteamAppId`, `StartupPassed`, `ValidationScope`, `ValidatedAt`
+  - 契约位置：`Game.Core/Contracts/Lastking/WindowsRuntimeValidated.cs`
+- **CameraScrolled** (`core.lastking.camera.scrolled`)
+  - 触发时机：边缘滚屏或键盘滚屏导致镜头位置更新后。
+  - 字段：`RunId`, `PositionX`, `PositionY`, `InputMode`, `ScrolledAt`
+  - 契约位置：`Game.Core/Contracts/Lastking/CameraScrolled.cs`
+- **AudioSettingsChanged** (`core.lastking.audio_settings.changed`)
+  - 触发时机：音乐/音效音量设置提交后。
+  - 字段：`RunId`, `MusicVolumePercent`, `SfxVolumePercent`, `ChangedAt`
+  - 契约位置：`Game.Core/Contracts/Lastking/AudioSettingsChanged.cs`
+- **PerfSampled** (`core.lastking.perf.sampled`)
+  - 触发时机：性能采样窗口结束并产出指标后。
+  - 字段：`RunId`, `SceneId`, `AverageFps`, `Low1PercentFps`, `SampleCount`, `SampledAt`
+  - 契约位置：`Game.Core/Contracts/Lastking/PerfSampled.cs`
 
 ### DTO
 - **WaveBudgetDto**
