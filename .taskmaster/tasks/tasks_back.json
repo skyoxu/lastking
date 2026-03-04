@@ -7,7 +7,7 @@
     "taskmaster_exported": false,
     "title": "Establish baseline Godot 4.5.1 C# Windows project",
     "description": "Create the canonical baseline Godot 4.5.1 C# Windows project used by all later setup tasks.",
-    "status": "pending",
+    "status": "done",
     "priority": "P1",
     "layer": "ci",
     "adr_refs": [
