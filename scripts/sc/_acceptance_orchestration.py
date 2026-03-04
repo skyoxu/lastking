@@ -228,15 +228,26 @@ def run_tests_bundle(
     steps.append(step_tests_all(out_dir, godot_bin, run_id=run_id, test_type=test_type, task_id=str(triplet.task_id)))
 
     if require_headless_e2e:
-        steps.append(step_headless_e2e_evidence(out_dir, expected_run_id=run_id))
-        steps.append(
-            step_post_evidence_integration(
-                out_dir,
-                task_id=int(triplet.task_id),
-                expected_run_id=run_id,
-                godot_bin=godot_bin,
+        headless_step = step_headless_e2e_evidence(out_dir, expected_run_id=run_id)
+        steps.append(headless_step)
+        if headless_step.status == "ok":
+            steps.append(
+                step_post_evidence_integration(
+                    out_dir,
+                    task_id=int(triplet.task_id),
+                    expected_run_id=run_id,
+                    godot_bin=godot_bin,
+                )
             )
-        )
+        else:
+            steps.append(
+                StepResult(
+                    name="post-evidence-integration",
+                    status="skipped",
+                    rc=0,
+                    details={"reason": "headless_e2e_evidence_failed"},
+                )
+            )
     if require_executed_refs:
         steps.append(step_acceptance_executed_refs(out_dir, task_id=int(triplet.task_id), expected_run_id=run_id))
 
