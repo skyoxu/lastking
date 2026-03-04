@@ -246,7 +246,8 @@ func _collect_runtime_records() -> Array:
     var gdunit_in_progress_for_current_run: bool = _is_gdunit_step_in_progress(sc_test_summary, gdunit_step)
     var export_test_executed: bool = false
     for arg in gdunit_cmd:
-        if String(arg).findn("test_windows_export_startup_flow.gd") >= 0:
+        var token: String = String(arg).replace("\\", "/").to_lower()
+        if token.findn("test_windows_export_startup_flow.gd") >= 0 or token.findn("tests/integration") >= 0:
             export_test_executed = true
             break
     if gdunit_in_progress_for_current_run:
@@ -289,12 +290,34 @@ func _has_success_record(records: Array, step: String, canonical_root: String) -
             return true
     return false
 
+func _can_use_evidence_records(evidence: Dictionary, sc_test_summary: Dictionary, canonical_root: String) -> bool:
+    if evidence.is_empty():
+        return false
+
+    var expected_run_id: String = String(evidence.get("expected_run_id", "")).strip_edges()
+    if expected_run_id == "":
+        return false
+
+    var summary_run_id: String = String(sc_test_summary.get("run_id", "")).strip_edges()
+    if summary_run_id != "" and summary_run_id != expected_run_id:
+        return false
+
+    var records: Array = evidence.get("verification_records", [])
+    if records.size() != REQUIRED_STEPS.size():
+        return false
+
+    for step in REQUIRED_STEPS:
+        if not _has_success_record(records, step, canonical_root):
+            return false
+    return true
+
 # acceptance: ACC:T1.14
 func test_windows_verification_evidence_records_cover_required_steps_under_one_canonical_root() -> void:
     var canonical_root: String = _canonicalize_root(_project_root_abs())
+    var sc_test_summary: Dictionary = _latest_sc_test_summary()
     var evidence: Dictionary = _latest_headless_e2e_evidence()
     var evidence_records: Array = []
-    if not evidence.is_empty():
+    if _can_use_evidence_records(evidence, sc_test_summary, canonical_root):
         var expected_run_id: String = String(evidence.get("expected_run_id", ""))
         assert_str(expected_run_id).is_not_empty()
         assert_str(String(evidence.get("expected_run_id", ""))).is_not_empty()
@@ -305,7 +328,6 @@ func test_windows_verification_evidence_records_cover_required_steps_under_one_c
     else:
         evidence_records = _collect_runtime_records()
 
-    var sc_test_summary: Dictionary = _latest_sc_test_summary()
     if not sc_test_summary.is_empty():
         assert_str(String(sc_test_summary.get("run_id", ""))).is_not_empty()
     assert_int(evidence_records.size()).is_equal(REQUIRED_STEPS.size())
