@@ -10,6 +10,7 @@ from typing import Any, Callable
 from _acceptance_evidence_steps import (
     step_acceptance_executed_refs,
     step_headless_e2e_evidence,
+    step_post_evidence_integration,
     step_security_audit_evidence,
 )
 from _acceptance_steps import (
@@ -49,6 +50,7 @@ def build_step_plan(
     require_executed_refs: bool,
     audit_evidence_mode: str,
     perf_p95_ms: int,
+    task_id: int,
 ) -> list[dict[str, Any]]:
     plan: list[dict[str, Any]] = []
 
@@ -104,6 +106,14 @@ def build_step_plan(
         tests_enabled and require_headless_e2e,
         "hard",
         None if (tests_enabled and require_headless_e2e) else ("not_required" if tests_enabled else "tests_disabled"),
+    )
+    add(
+        "post-evidence-integration",
+        tests_enabled and require_headless_e2e and task_id == 1,
+        "hard",
+        None
+        if (tests_enabled and require_headless_e2e and task_id == 1)
+        else ("task_not_targeted" if tests_enabled and require_headless_e2e else ("not_required" if tests_enabled else "tests_disabled")),
     )
     add(
         "acceptance-executed-refs",
@@ -219,6 +229,14 @@ def run_tests_bundle(
 
     if require_headless_e2e:
         steps.append(step_headless_e2e_evidence(out_dir, expected_run_id=run_id))
+        steps.append(
+            step_post_evidence_integration(
+                out_dir,
+                task_id=int(triplet.task_id),
+                expected_run_id=run_id,
+                godot_bin=godot_bin,
+            )
+        )
     if require_executed_refs:
         steps.append(step_acceptance_executed_refs(out_dir, task_id=int(triplet.task_id), expected_run_id=run_id))
 
