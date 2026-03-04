@@ -108,3 +108,9 @@ py -3 scripts/sc/git.py commit --smart-commit --task-ref "#10.1"
 说明：
 - 该检查是 **soft warning**，仅预警不阻断流水线。
 - 阻断仍由 `forbid_manual_sc_triplet_examples.py` 的 hard gate + whitelist metadata require 负责。
+
+## Lightweight Convention (Single Developer)
+
+- If any summary field/structure changes under `scripts/sc`, update the matching schema in `scripts/sc/schemas/*.schema.json` in the same change set.
+- After this type of change, run at least once: `py -3 scripts/sc/run_review_pipeline.py --task-id 1 --dry-run --skip-llm-review`.
+- Do not commit summary-contract changes if this minimal self-check fails.

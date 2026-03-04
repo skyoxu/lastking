@@ -16,6 +16,7 @@ import uuid
 from pathlib import Path
 from typing import Any
 
+from _summary_schema import SummarySchemaError, validate_pipeline_summary
 from _util import repo_root, run_cmd, today_str, write_json, write_text
 
 OUT_RE = re.compile(r"\bout=([^\r\n]+)")
@@ -172,18 +173,37 @@ def main() -> int:
         "steps": [],
     }
 
-    def persist() -> None:
+    schema_error_log = out_dir / "summary-schema-validation-error.log"
+
+    def persist() -> bool:
+        try:
+            validate_pipeline_summary(summary)
+        except SummarySchemaError as exc:
+            error_message = f"{exc}\n"
+            write_text(schema_error_log, error_message)
+            write_json(out_dir / "summary.invalid.json", summary)
+            _write_latest_index(task_id=task_id, run_id=run_id, out_dir=out_dir, status="fail")
+            print(f"[sc-review-pipeline] ERROR: summary schema validation failed. details={schema_error_log}")
+            return False
+        invalid_summary_path = out_dir / "summary.invalid.json"
+        if schema_error_log.exists():
+            schema_error_log.unlink(missing_ok=True)
+        if invalid_summary_path.exists():
+            invalid_summary_path.unlink(missing_ok=True)
         write_json(out_dir / "summary.json", summary)
         _write_latest_index(task_id=task_id, run_id=run_id, out_dir=out_dir, status=str(summary.get("status", "fail")))
+        return True
 
     def add_step(step: dict[str, Any]) -> bool:
         summary["steps"].append(step)
         if step.get("status") == "fail":
             summary["status"] = "fail"
-        persist()
+        if not persist():
+            return False
         return step.get("status") != "fail"
 
-    persist()
+    if not persist():
+        return 2
 
     steps: list[tuple[str, list[str], int, bool]] = []
 
@@ -244,19 +264,26 @@ def main() -> int:
     for step_name, cmd, timeout_sec, skipped in steps:
         if skipped:
             if not add_step({"name": step_name, "status": "skipped", "rc": 0, "cmd": cmd}):
+                if schema_error_log.exists():
+                    return 2
                 break
             continue
         if args.dry_run:
             print(f"[dry-run] {step_name}: {' '.join(cmd)}")
             if not add_step({"name": step_name, "status": "planned", "rc": 0, "cmd": cmd}):
+                if schema_error_log.exists():
+                    return 2
                 break
             continue
 
         ok = add_step(_run_step(out_dir=out_dir, name=step_name, cmd=cmd, timeout_sec=timeout_sec))
         if not ok:
+            if schema_error_log.exists():
+                return 2
             break
 
-    persist()
+    if not persist():
+        return 2
     print(f"SC_REVIEW_PIPELINE status={summary['status']} out={out_dir}")
     return 0 if summary["status"] == "ok" else 1
 
