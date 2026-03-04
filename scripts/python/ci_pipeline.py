@@ -17,6 +17,7 @@ import datetime as dt
 import io
 import json
 import os
+import re
 import subprocess
 import sys
 
@@ -39,6 +40,63 @@ def read_json(path):
             return json.load(f)
     except Exception:
         return None
+
+
+def copy_if_exists(src_path: str, dst_path: str) -> bool:
+    if not src_path or not os.path.exists(src_path):
+        return False
+    try:
+        with io.open(src_path, 'r', encoding='utf-8', errors='ignore') as rf:
+            content = rf.read()
+        with io.open(dst_path, 'w', encoding='utf-8') as wf:
+            wf.write(content)
+        return True
+    except Exception:
+        return False
+
+
+def extract_failed_tests(dotnet_test_output: str):
+    """
+    Parse failed test names from dotnet test console output.
+    Compatible with common VSTest/xUnit output lines, for example:
+      Failed Namespace.Class.TestName [123 ms]
+      [FAIL] Namespace.Class.TestName
+    """
+    if not dotnet_test_output:
+        return []
+
+    failed = []
+    for raw in dotnet_test_output.splitlines():
+        line = raw.strip()
+        if not line:
+            continue
+
+        # Pattern: "Failed Namespace.Class.Test [123 ms]"
+        m = re.match(r'^Failed\s+(.+?)\s+\[[0-9]+(?:\.[0-9]+)?\s*ms\]$', line)
+        if m:
+            failed.append(m.group(1).strip())
+            continue
+
+        # Pattern: "[FAIL] Namespace.Class.Test"
+        m = re.match(r'^\[FAIL\]\s+(.+)$', line)
+        if m:
+            failed.append(m.group(1).strip())
+            continue
+
+        # Pattern: "X Namespace.Class.Test [123ms]"
+        m = re.match(r'^[xX]\s+(.+?)\s+\[[0-9]+(?:\.[0-9]+)?\s*ms\]$', line)
+        if m:
+            failed.append(m.group(1).strip())
+
+    # Stable de-duplication, keep first occurrence.
+    seen = set()
+    deduped = []
+    for item in failed:
+        if item in seen:
+            continue
+        seen.add(item)
+        deduped.append(item)
+    return deduped
 
 
 def main():
@@ -113,12 +171,30 @@ def main():
     rc, out = run_cmd(['py', '-3', 'scripts/python/run_dotnet.py',
                        '--solution', args.solution,
                        '--configuration', args.configuration], cwd=root)
+    with io.open(os.path.join(ci_dir, 'run-dotnet-console.txt'), 'w', encoding='utf-8') as f:
+        f.write(out)
     dotnet_sum = read_json(os.path.join('logs', 'unit', date, 'summary.json')) or {}
+    dotnet_out_dir = dotnet_sum.get('out_dir') if isinstance(dotnet_sum, dict) else None
+    dotnet_test_output_src = os.path.join(dotnet_out_dir, 'dotnet-test-output.txt') if dotnet_out_dir else ''
+    dotnet_test_output_ci = os.path.join(ci_dir, 'dotnet-test-output.txt')
+    copied_test_output = copy_if_exists(dotnet_test_output_src, dotnet_test_output_ci)
+    dotnet_test_output_text = ''
+    if copied_test_output:
+        try:
+            with io.open(dotnet_test_output_ci, 'r', encoding='utf-8', errors='ignore') as f:
+                dotnet_test_output_text = f.read()
+        except Exception:
+            dotnet_test_output_text = ''
+    failed_tests = extract_failed_tests(dotnet_test_output_text)
     summary['dotnet'] = {
         'rc': rc,
         'line_pct': (dotnet_sum.get('coverage') or {}).get('line_pct'),
         'branch_pct': (dotnet_sum.get('coverage') or {}).get('branch_pct'),
-        'status': dotnet_sum.get('status')
+        'status': dotnet_sum.get('status'),
+        'run_dotnet_console_log': os.path.join(ci_dir, 'run-dotnet-console.txt'),
+        'dotnet_test_output_log': dotnet_test_output_ci if copied_test_output else None,
+        'failed_tests_count': len(failed_tests),
+        'failed_tests': failed_tests[:50],
     }
     if rc not in (0, 2) or summary['dotnet']['status'] == 'tests_failed':
         hard_fail = True
