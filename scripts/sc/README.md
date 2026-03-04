@@ -65,6 +65,19 @@
   - 仓库内：`.claude/agents/*.md`
   - 用户目录：`%USERPROFILE%\\.claude\\agents\\lst97\\*.md`（可用 `--claude-agents-root` 或 `CLAUDE_AGENTS_ROOT` 覆盖）
 
+## Artifact Assertion Guardrails（防误判）
+
+- 当使用 `--only tests` 等“部分执行”模式时，`acceptance-summary` 可能不完整。
+- 在 GdUnit/集成层读取工件做断言前，必须先做两层守卫：
+  - `run_id` 绑定校验（只消费当前运行批次工件）。
+  - 必需步骤完整性校验（例如 `headless-e2e-evidence` 与 `acceptance-executed-refs` 已成功且可追溯）。
+- 若守卫未通过，测试应按“上下文不完整”路径退出，不得把历史工件或半成品工件当作失败依据。
+- 依赖真实工件的硬断言，统一放在 `post-evidence-integration` 阶段执行，不放在纯单元测试中。
+- 如新增工件型断言，同步更新：
+  - `scripts/sc/_acceptance_orchestration.py`
+  - `scripts/sc/_acceptance_evidence_steps.py`
+  - 相关 GdUnit 集成用例的守卫逻辑
+
 ## Windows 用法示例
 
 ```powershell
