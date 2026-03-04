@@ -225,3 +225,62 @@ def step_security_audit_evidence(out_dir: Path, *, expected_run_id: str) -> Step
     log_path = out_dir / "security-audit-executed-evidence.log"
     write_text(log_path, out)
     return StepResult(name="security-audit-executed-evidence", status="ok" if rc == 0 else "fail", rc=rc, cmd=cmd, log=str(log_path))
+
+
+def step_post_evidence_integration(
+    out_dir: Path,
+    *,
+    task_id: int,
+    expected_run_id: str,
+    godot_bin: str | None,
+) -> StepResult:
+    if task_id != 1:
+        return StepResult(
+            name="post-evidence-integration",
+            status="skipped",
+            rc=0,
+            details={"reason": "task_not_targeted"},
+        )
+
+    if not godot_bin:
+        return StepResult(
+            name="post-evidence-integration",
+            status="fail",
+            rc=2,
+            details={"error": "missing_godot_bin", "hint": "set --godot-bin or env GODOT_BIN"},
+        )
+
+    root = repo_root()
+    report_dir_rel = Path("logs") / "e2e" / today_str() / "sc-acceptance-post-evidence-task-1"
+    report_dir = root / report_dir_rel
+    cmd = [
+        "py",
+        "-3",
+        "scripts/python/run_gdunit.py",
+        "--prewarm",
+        "--godot-bin",
+        godot_bin,
+        "--project",
+        "Tests.Godot",
+        "--add",
+        "tests/Integration/test_windows_verification_evidence_records.gd",
+        "--timeout-sec",
+        "600",
+        "--rd",
+        str(report_dir_rel).replace("\\", "/"),
+    ]
+    rc, out = run_cmd(cmd, cwd=root, timeout_sec=900)
+    log_path = out_dir / "post-evidence-integration.log"
+    write_text(log_path, out)
+    return StepResult(
+        name="post-evidence-integration",
+        status="ok" if rc == 0 else "fail",
+        rc=rc,
+        cmd=cmd,
+        log=str(log_path),
+        details={
+            "task_id": task_id,
+            "expected_run_id": expected_run_id,
+            "report_dir": str(report_dir_rel).replace("\\", "/"),
+        },
+    )
