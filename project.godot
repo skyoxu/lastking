@@ -16,6 +16,7 @@ config/name="鏂板缓娓告垙椤圭洰"
 run/main_scene="res://Game.Godot/Scenes/Main.tscn"
 config/features=PackedStringArray("4.5", "Forward Plus")
 config/icon="res://icon.svg"
+config/asset_reference_anchor="res://Game.Godot/Assets/Textures/.keep"
 
 [autoload]
 

@@ -6,6 +6,9 @@ namespace Game.Godot.Scripts.UI;
 
 public partial class HUD : Control
 {
+    private static readonly JsonDocumentOptions EventJsonOptions = new() { MaxDepth = 16 };
+
+    private EventBusAdapter? _bus;
     private Label _score = default!;
     private Label _health = default!;
 
@@ -14,20 +17,42 @@ public partial class HUD : Control
         _score = GetNode<Label>("TopBar/HBox/ScoreLabel");
         _health = GetNode<Label>("TopBar/HBox/HealthLabel");
 
-        var bus = GetNodeOrNull<EventBusAdapter>("/root/EventBus");
-        if (bus != null)
+        _bus = GetNodeOrNull<EventBusAdapter>("/root/EventBus");
+        if (_bus != null)
         {
-            bus.Connect(EventBusAdapter.SignalName.DomainEventEmitted, new Callable(this, nameof(OnDomainEventEmitted)));
+            _bus.Connect(EventBusAdapter.SignalName.DomainEventEmitted, new Callable(this, nameof(OnDomainEventEmitted)));
+        }
+    }
+
+    public override void _ExitTree()
+    {
+        if (_bus != null)
+        {
+            var callable = new Callable(this, nameof(OnDomainEventEmitted));
+            if (_bus.IsConnected(EventBusAdapter.SignalName.DomainEventEmitted, callable))
+            {
+                _bus.Disconnect(EventBusAdapter.SignalName.DomainEventEmitted, callable);
+            }
         }
     }
 
     private void OnDomainEventEmitted(string type, string source, string dataJson, string id, string specVersion, string dataContentType, string timestampIso)
     {
+        if (source.Length == 0 || dataJson.Length > 2048)
+        {
+            return;
+        }
+
         if (type == "core.score.updated" || type == "score.changed")
         {
             try
             {
-                var doc = JsonDocument.Parse(dataJson);
+                if (dataJson.Length > 2048)
+                {
+                    return;
+                }
+
+                using var doc = JsonDocument.Parse(dataJson, EventJsonOptions);
                 int v = 0;
                 if (doc.RootElement.TryGetProperty("value", out var val)) v = val.GetInt32();
                 else if (doc.RootElement.TryGetProperty("score", out var sc)) v = sc.GetInt32();
@@ -39,7 +64,12 @@ public partial class HUD : Control
         {
             try
             {
-                var doc = JsonDocument.Parse(dataJson);
+                if (dataJson.Length > 2048)
+                {
+                    return;
+                }
+
+                using var doc = JsonDocument.Parse(dataJson, EventJsonOptions);
                 int v = 0;
                 if (doc.RootElement.TryGetProperty("value", out var val)) v = val.GetInt32();
                 else if (doc.RootElement.TryGetProperty("health", out var hp)) v = hp.GetInt32();

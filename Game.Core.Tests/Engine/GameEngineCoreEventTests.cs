@@ -48,7 +48,7 @@ public class GameEngineCoreEventTests
     }
 
     [Fact]
-    public void Start_publishes_game_started_event()
+    public void ShouldPublishGameStartedEvent_WhenStartCalled()
     {
         // Arrange
         var engine = CreateEngineAndBus(out var bus);
@@ -65,7 +65,7 @@ public class GameEngineCoreEventTests
     }
 
     [Fact]
-    public void AddScore_publishes_score_changed_event()
+    public void ShouldPublishScoreChangedEvent_WhenAddScoreCalled()
     {
         // Arrange
         var engine = CreateEngineAndBus(out var bus);
@@ -84,7 +84,7 @@ public class GameEngineCoreEventTests
     }
 
     [Fact]
-    public void ApplyDamage_publishes_player_health_changed_event()
+    public void ShouldPublishPlayerHealthChangedEvent_WhenApplyDamageCalled()
     {
         // Arrange
         var engine = CreateEngineAndBus(out var bus);
@@ -100,5 +100,37 @@ public class GameEngineCoreEventTests
         evt.Type.Should().Be("player.health.changed");
         evt.Source.Should().Be(nameof(GameEngineCore));
         evt.DataElement.HasValue.Should().BeTrue();
+    }
+
+    [Fact]
+    public void ShouldUpdateStateAndPublishPlayerMovedEvent_WhenMoveCalled()
+    {
+        var engine = CreateEngineAndBus(out var bus);
+        engine.Start();
+        bus.Published.Clear();
+
+        var state = engine.Move(3, 4);
+
+        state.Position.X.Should().Be(3);
+        state.Position.Y.Should().Be(4);
+        bus.Published.Should().ContainSingle();
+        bus.Published[0].Type.Should().Be("player.moved");
+    }
+
+    [Fact]
+    public void ShouldPublishGameEndedEventAndReturnResult_WhenEndCalled()
+    {
+        var engine = CreateEngineAndBus(out var bus);
+        engine.Start();
+        engine.Move(1, 2);
+        engine.AddScore(5);
+        bus.Published.Clear();
+
+        var result = engine.End();
+
+        result.FinalScore.Should().BeGreaterThanOrEqualTo(5);
+        result.Statistics.TotalMoves.Should().Be(1);
+        bus.Published.Should().ContainSingle();
+        bus.Published[0].Type.Should().Be("game.ended");
     }
 }

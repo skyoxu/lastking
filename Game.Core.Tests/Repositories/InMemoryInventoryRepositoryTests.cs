@@ -9,7 +9,7 @@ namespace Game.Core.Tests.Repositories;
 public class InMemoryInventoryRepositoryTests
 {
     [Fact]
-    public async Task Add_get_all_flow()
+    public async Task ShouldReturnItems_WhenAddedAndQueried()
     {
         var repo = new InMemoryInventoryRepository();
         var i1 = await repo.AddAsync("iron", 3);

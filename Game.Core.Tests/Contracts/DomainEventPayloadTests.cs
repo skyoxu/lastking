@@ -9,7 +9,7 @@ namespace Game.Core.Tests.Contracts;
 public class DomainEventPayloadTests
 {
     [Fact]
-    public void Create_should_serialize_typed_payload_to_json_element()
+    public void ShouldSerializeTypedPayloadToJsonElement_WhenCreateCalled()
     {
         var payload = new DamagePayload(123, "Fire", true);
         var evt = DomainEvent.Create(
@@ -30,7 +30,7 @@ public class DomainEventPayloadTests
     }
 
     [Fact]
-    public void Legacy_constructor_should_keep_data_and_generate_data_element()
+    public void ShouldKeepDataAndGenerateDataElement_WhenLegacyConstructorUsed()
     {
 #pragma warning disable CS0618
         var evt = new DomainEvent(
@@ -48,7 +48,7 @@ public class DomainEventPayloadTests
     }
 
     [Fact]
-    public void String_json_payload_should_be_parsed_as_json_object()
+    public void ShouldParseJsonObject_WhenPayloadStringIsJson()
     {
         var evt = new DomainEvent(
             Type: "core.test.json.payload",
@@ -64,7 +64,7 @@ public class DomainEventPayloadTests
     }
 
     [Fact]
-    public void DeserializeData_should_roundtrip_payload()
+    public void ShouldRoundtripPayload_WhenDeserializeDataCalled()
     {
         var payload = new DamagePayload(12, "Arcane", false);
         var evt = DomainEvent.Create(
@@ -80,6 +80,62 @@ public class DomainEventPayloadTests
         back!.Amount.Should().Be(12);
         back.Type.Should().Be("Arcane");
         back.Critical.Should().BeFalse();
+    }
+
+    [Fact]
+    public void ShouldHandleNullPayloadAndDeserializeDefault_WhenCreateCalled()
+    {
+        var evt = DomainEvent.Create<object?>(
+            type: "core.test.null.payload",
+            source: nameof(DomainEventPayloadTests),
+            payload: null,
+            timestamp: DateTime.UtcNow,
+            id: Guid.NewGuid().ToString("N")
+        );
+
+        evt.DataElement.HasValue.Should().BeFalse();
+        evt.DataJson.Should().Be("{}");
+        evt.DeserializeData<DamagePayload>().Should().BeNull();
+    }
+
+    [Fact]
+    public void ShouldHandleWhitespaceAndInvalidJson_WhenConstructorGivenPayloadString()
+    {
+        var white = new DomainEvent(
+            Type: "core.test.whitespace.payload",
+            Source: nameof(DomainEventPayloadTests),
+            Data: "   ",
+            Timestamp: DateTime.UtcNow,
+            Id: Guid.NewGuid().ToString("N")
+        );
+        var invalid = new DomainEvent(
+            Type: "core.test.invalid.payload",
+            Source: nameof(DomainEventPayloadTests),
+            Data: "{bad_json",
+            Timestamp: DateTime.UtcNow,
+            Id: Guid.NewGuid().ToString("N")
+        );
+
+        white.DataElement.HasValue.Should().BeTrue();
+        white.DataElement!.Value.ValueKind.Should().Be(JsonValueKind.Object);
+        invalid.DataElement.HasValue.Should().BeTrue();
+        invalid.DataElement!.Value.ValueKind.Should().Be(JsonValueKind.String);
+    }
+
+    [Fact]
+    public void ShouldCloneJsonElementPayload_WhenConstructorReceivesPayload()
+    {
+        using var doc = JsonDocument.Parse("{\"hp\":100}");
+        var evt = new DomainEvent(
+            Type: "core.test.element.payload",
+            Source: nameof(DomainEventPayloadTests),
+            Data: doc.RootElement,
+            Timestamp: DateTime.UtcNow,
+            Id: Guid.NewGuid().ToString("N")
+        );
+
+        evt.DataElement.HasValue.Should().BeTrue();
+        evt.DataElement!.Value.GetProperty("hp").GetInt32().Should().Be(100);
     }
 
     private sealed record DamagePayload(int Amount, string Type, bool Critical);

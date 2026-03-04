@@ -10,7 +10,7 @@ namespace Game.Core.Tests.Contracts.Lastking;
 public class LastkingContractsTests
 {
     [Fact]
-    public void Event_types_should_match_eventtypes_ssot()
+    public void ShouldMatchEventTypesSsot_WhenValidatingEventTypeConstants()
     {
         DayStarted.EventType.Should().Be(EventTypes.LastkingDayStarted);
         NightStarted.EventType.Should().Be(EventTypes.LastkingNightStarted);
@@ -33,7 +33,7 @@ public class LastkingContractsTests
     }
 
     [Fact]
-    public void Event_records_should_keep_constructor_values()
+    public void ShouldKeepConstructorValues_WhenCreatingEventRecords()
     {
         var now = DateTimeOffset.UtcNow;
         var dayStarted = new DayStarted("run-1", 1, now);
@@ -90,7 +90,7 @@ public class LastkingContractsTests
     }
 
     [Fact]
-    public void Dto_records_should_be_constructible()
+    public void ShouldBeConstructible_WhenCreatingDtoRecords()
     {
         var computedAt = DateTimeOffset.UtcNow;
         var waveBudget = new WaveBudgetDto(5, 5, 2500, 600, 800, computedAt);
@@ -118,7 +118,7 @@ public class LastkingContractsTests
     }
 
     [Fact]
-    public void Interface_contract_should_compile_with_stub_implementation()
+    public void ShouldCompileWithStubImplementation_WhenImplementingInterfaceContract()
     {
         IWaveBudgetPolicy policy = new StubWaveBudgetPolicy();
 

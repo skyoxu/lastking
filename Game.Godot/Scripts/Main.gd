@@ -85,7 +85,7 @@ func _on_lose_hp() -> void:
             bus.PublishSimple("core.health.updated", "ui", "{\"value\":%d}" % _hp)
     _label.text = "HP = %d" % _hp
 
-func _on_domain_event(type: String, source: String, data_json: String, id: String, spec: String, ct: String, ts: String) -> void:
+func _on_domain_event(type: String, _source: String, _data_json: String, _id: String, _spec: String, _ct: String, _ts: String) -> void:
     if type == "ui.menu.start":
         var demo = get_node_or_null("/root/Main/EngineDemo")
         if demo != null and demo.has_method("StartGame"):
