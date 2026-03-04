@@ -39,7 +39,14 @@ Test-Refs:
 
 ## 四、测试框架验收
 
-### Required Commands (Windows)
+## Quantified Pass/Fail Criteria
+
+- `validate_overlay_execution` 结果必须为 `status=ok` 且 `errors=0`。
+- `validate_task_master_triplet` 必须无结构性错误与必填字段缺失。
+- `check_tasks_all_refs` 与 `check_tasks_back_references` 必须无断链与坏引用。
+- 任一 hard gate 失败即本清单验收失败，不允许以 warning 通过。
+
+## Required Commands (Windows)
 
 - `py -3 scripts/python/validate_overlay_execution.py --prd-id PRD-lastking-T2`
 - `py -3 scripts/python/check_tasks_back_references.py`
@@ -47,7 +54,7 @@ Test-Refs:
 - `py -3 scripts/python/validate_task_master_triplet.py`
 - `py -3 scripts/python/guard_archived_overlays.py --strict-git`
 
-### DoD Anchors
+## DoD Anchors
 
 - 文档层：Overlay 页面结构、Front-Matter、引用路径齐全。
 - 任务层：Taskmaster 三件套回链一致、无漂移。
