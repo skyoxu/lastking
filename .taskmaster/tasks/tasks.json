@@ -8,6 +8,15 @@
         "details": "Create the single canonical Godot 4.5.1 .NET project on Windows, verify C# compile/run, define core folder layout, and produce a runnable Windows export baseline. This task owns initial project creation and must not be duplicated by downstream setup tasks.",
         "testStrategy": "Verify editor open, C# build, main scene run, and Windows export run from the same canonical project root. Fail if any downstream setup task creates a second independent project root.",
         "priority": "high",
+        "adrRefs": [
+          "ADR-0011",
+          "ADR-0018"
+        ],
+        "archRefs": [
+          "CH07",
+          "CH10",
+          "CH01"
+        ],
         "dependencies": [],
         "status": "pending",
         "subtasks": [

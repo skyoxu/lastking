@@ -53,6 +53,9 @@ AUTO_BEGIN = "<!-- BEGIN AUTO:TEST_ORG_NAMING_REFS -->"
 AUTO_END = "<!-- END AUTO:TEST_ORG_NAMING_REFS -->"
 
 ALLOWED_TEST_PREFIXES = ("Game.Core.Tests/", "Tests.Godot/tests/", "Tests/")
+STRICT_TEST_NAME_RE = re.compile(r"^Should[A-Z][A-Za-z0-9]*_When[A-Z][A-Za-z0-9]*$")
+TEST_ATTR_RE = re.compile(r"^\s*\[(?:Fact|Theory)(?:\s*\(.*\))?\]\s*$")
+TEST_METHOD_SIG_RE = re.compile(r"\b(?:public|private|internal|protected)\s+(?:async\s+)?(?:void|Task(?:<[^>]+>)?)\s+(\w+)\s*\(")
 
 
 @dataclass(frozen=True)
@@ -260,6 +263,48 @@ def _validate_anchor_binding(*, ref: str, content: str, required_anchors: list[s
     return False, "; ".join(parts)
 
 
+def _validate_csharp_test_naming(content: str, *, lookahead: int = 40) -> tuple[bool, str | None]:
+    lines = content.replace("\r\n", "\n").split("\n")
+    invalid_names: list[str] = []
+    window = max(1, int(lookahead))
+
+    for idx, line in enumerate(lines):
+        if not TEST_ATTR_RE.search(line):
+            continue
+        start = idx + 1
+        end = min(len(lines), idx + 1 + window)
+        for j in range(start, end):
+            candidate = lines[j].strip()
+            if not candidate or candidate.startswith("//") or candidate.startswith("["):
+                continue
+            m = TEST_METHOD_SIG_RE.search(candidate)
+            if not m:
+                continue
+            method_name = m.group(1)
+            if not STRICT_TEST_NAME_RE.match(method_name):
+                invalid_names.append(method_name)
+            break
+
+    if not invalid_names:
+        return True, None
+    shown = ", ".join(sorted(set(invalid_names))[:6])
+    return False, f"invalid C# test method naming (require ShouldX_WhenY): {shown}"
+
+
+def _build_retry_prompt(*, base_prompt: str, ref: str, validation_error: str) -> str:
+    retry_block = "\n".join(
+        [
+            "Retry instruction (must follow):",
+            f"- Previous output failed validation: {validation_error}",
+            f"- Keep file_path exactly: {ref}",
+            "- Regenerate the FULL JSON object from scratch.",
+            "- C# test method names MUST be strict ShouldX_WhenY only.",
+            "- Do not include any explanation text outside the JSON object.",
+        ]
+    )
+    return "\n\n".join([base_prompt.rstrip(), retry_block]).strip() + "\n"
+
+
 def _load_optional_prd_excerpt(*, include_prd_context: bool, prd_context_path: str) -> str:
     if not include_prd_context:
         return ""
@@ -295,7 +340,8 @@ def _prompt_for_ref(
             "Target file type: C# xUnit test file.",
             "- Must be valid C# code, English only (no Chinese in code/comments/strings).",
             "- Use xUnit + FluentAssertions only.",
-            "- Use Should_ naming style.",
+            "- Test naming MUST follow strict ShouldX_WhenY (example: ShouldStartGame_WhenMenuPlayClicked).",
+            "- Do NOT use legacy Should_ prefixes or snake_case test method names.",
             "- For each required ACC anchor, place it within 5 lines ABOVE a [Fact]/[Theory] attribute (as a comment).",
         ]
 
@@ -480,6 +526,18 @@ def main() -> int:
     ap.add_argument("--task-id", required=True, help="Task id (master id, e.g. 11).")
     ap.add_argument("--timeout-sec", type=int, default=600, help="Per-file codex exec timeout (seconds).")
     ap.add_argument("--select-timeout-sec", type=int, default=120, help="LLM primary-ref selection timeout (seconds).")
+    ap.add_argument(
+        "--naming-retry-max",
+        type=int,
+        default=1,
+        help="Maximum retries after naming validation failure (default: 1).",
+    )
+    ap.add_argument(
+        "--nonzero-rc-retry-max",
+        type=int,
+        default=1,
+        help="Maximum retries after codex returns non-zero rc (default: 1).",
+    )
     ap.add_argument("--tdd-stage", choices=["normal", "red-first"], default="normal")
     ap.add_argument("--verify", choices=["none", "unit", "all", "auto"], default="auto")
     ap.add_argument("--godot-bin", default=None, help="Required when verify=all/auto and .gd files are involved.")
@@ -499,6 +557,10 @@ def main() -> int:
     if not task_id.isdigit():
         print("SC_LLM_ACCEPTANCE_TESTS ERROR: --task-id must be a numeric master id.")
         return 2
+
+    naming_retry_max = max(0, int(args.naming_retry_max))
+    nonzero_rc_retry_max = max(0, int(args.nonzero_rc_retry_max))
+    max_attempts = 1 + naming_retry_max + nonzero_rc_retry_max
 
     out_dir = ci_dir("sc-llm-acceptance-tests")
 
@@ -640,6 +702,15 @@ def main() -> int:
 
     any_gd = any(Path(r).suffix.lower() == ".gd" for r in refs)
     created = 0
+    naming_retry_attempted = 0
+    naming_retry_recovered = 0
+    naming_retry_failed = 0
+    recovered_from_nonzero_rc = 0
+    retry_buckets: dict[str, dict[str, int]] = {
+        "naming": {"attempted": 0, "recovered": 0, "failed": 0},
+        "json": {"attempted": 0, "recovered": 0, "failed": 0},
+        "rc": {"attempted": 0, "recovered": 0, "failed": 0},
+    }
 
     primary_ref = None
     context_excerpt = _load_optional_prd_excerpt(
@@ -672,7 +743,7 @@ def main() -> int:
             intent = "scaffold"
 
         required_anchors = sorted({x.get("anchor", "") for x in by_ref.get(ref, []) if str(x.get("anchor", "")).strip()})
-        prompt = _prompt_for_ref(
+        base_prompt = _prompt_for_ref(
             task_id=task_id,
             title=title,
             ref=ref_norm,
@@ -682,68 +753,119 @@ def main() -> int:
             task_context_markdown=task_context_md,
         )
         artifact_token = _artifact_token_for_ref(ref_norm)
-        prompt_path = out_dir / f"prompt-{task_id}-{artifact_token}.txt"
-        write_text(prompt_path, prompt)
-        output_path = out_dir / f"codex-last-{task_id}-{artifact_token}.txt"
-        trace_path = out_dir / f"codex-trace-{task_id}-{artifact_token}.log"
+        current_prompt = base_prompt
+        generated_ok = False
+        last_error = ""
+        final_prompt_path = ""
+        final_trace_path = ""
+        final_output_path = ""
+        final_rc = 0
+        naming_retry_used = False
+        rc_retry_used = False
 
-        rc, trace_out, _cmd = _run_codex_exec(prompt=prompt, out_last_message=output_path, timeout_sec=int(args.timeout_sec))
-        write_text(trace_path, trace_out)
-        last_msg = _read_text(output_path) if output_path.exists() else ""
-        if rc != 0 or not last_msg.strip():
-            results.append(
-                GenResult(
+        for attempt in range(1, max_attempts + 1):
+            suffix = "" if attempt == 1 else f"-retry{attempt - 1}"
+            prompt_path = out_dir / f"prompt-{task_id}-{artifact_token}{suffix}.txt"
+            output_path = out_dir / f"codex-last-{task_id}-{artifact_token}{suffix}.txt"
+            trace_path = out_dir / f"codex-trace-{task_id}-{artifact_token}{suffix}.log"
+            final_prompt_path = str(prompt_path)
+            final_trace_path = str(trace_path)
+            final_output_path = str(output_path)
+            write_text(prompt_path, current_prompt)
+
+            rc, trace_out, _cmd = _run_codex_exec(prompt=current_prompt, out_last_message=output_path, timeout_sec=int(args.timeout_sec))
+            final_rc = rc
+            write_text(trace_path, trace_out)
+            last_msg = _read_text(output_path) if output_path.exists() else ""
+            if rc != 0:
+                if retry_buckets["rc"]["attempted"] < nonzero_rc_retry_max and attempt < max_attempts:
+                    retry_buckets["rc"]["attempted"] += 1
+                    rc_retry_used = True
+                    continue
+                retry_buckets["rc"]["failed"] += 1
+                last_error = "codex exec non-zero rc"
+                break
+            if not last_msg.strip():
+                retry_buckets["json"]["failed"] += 1
+                last_error = "codex exec empty output"
+                break
+
+            try:
+                try:
+                    obj = _extract_json_object(last_msg)
+                except Exception as exc:  # noqa: BLE001
+                    retry_buckets["json"]["failed"] += 1
+                    raise ValueError(f"json_parse_error: {exc}")
+                fp = str(obj.get("file_path") or "").replace("\\", "/")
+                content = str(obj.get("content") or "")
+                if fp != ref_norm:
+                    retry_buckets["json"]["failed"] += 1
+                    raise ValueError(f"unexpected file_path: {fp}")
+                if not content.strip():
+                    retry_buckets["json"]["failed"] += 1
+                    raise ValueError("empty content")
+                ok, anchor_error = _validate_anchor_binding(
                     ref=ref_norm,
-                    status="fail",
-                    rc=rc,
-                    prompt_path=str(prompt_path),
-                    trace_path=str(trace_path),
-                    output_path=str(output_path),
-                    error="codex exec failed/empty output",
+                    content=content,
+                    required_anchors=required_anchors,
                 )
-            )
-            continue
+                if not ok:
+                    raise ValueError(anchor_error or "anchor binding validation failed")
+                if ref_norm.lower().endswith(".cs"):
+                    ok_name, naming_error = _validate_csharp_test_naming(content, lookahead=40)
+                    if not ok_name:
+                        if retry_buckets["naming"]["attempted"] < naming_retry_max and attempt < max_attempts:
+                            naming_retry_attempted += 1
+                            retry_buckets["naming"]["attempted"] += 1
+                            naming_retry_used = True
+                            current_prompt = _build_retry_prompt(
+                                base_prompt=base_prompt,
+                                ref=ref_norm,
+                                validation_error=str(naming_error or "csharp test naming validation failed"),
+                            )
+                            continue
+                        naming_retry_failed += 1
+                        retry_buckets["naming"]["failed"] += 1
+                        raise ValueError(naming_error or "csharp test naming validation failed")
+                disk.parent.mkdir(parents=True, exist_ok=True)
+                disk.write_text(content.replace("\r\n", "\n"), encoding="utf-8", newline="\n")
+                if naming_retry_used:
+                    naming_retry_recovered += 1
+                    retry_buckets["naming"]["recovered"] += 1
+                if rc_retry_used:
+                    recovered_from_nonzero_rc += 1
+                    retry_buckets["rc"]["recovered"] += 1
+                created += 1
+                generated_ok = True
+                break
+            except Exception as exc:  # noqa: BLE001
+                last_error = str(exc)
+                break
 
-        try:
-            obj = _extract_json_object(last_msg)
-            fp = str(obj.get("file_path") or "").replace("\\", "/")
-            content = str(obj.get("content") or "")
-            if fp != ref_norm:
-                raise ValueError(f"unexpected file_path: {fp}")
-            if not content.strip():
-                raise ValueError("empty content")
-            ok, anchor_error = _validate_anchor_binding(
-                ref=ref_norm,
-                content=content,
-                required_anchors=required_anchors,
-            )
-            if not ok:
-                raise ValueError(anchor_error or "anchor binding validation failed")
-            disk.parent.mkdir(parents=True, exist_ok=True)
-            disk.write_text(content.replace("\r\n", "\n"), encoding="utf-8", newline="\n")
-            created += 1
+        if generated_ok:
             results.append(
                 GenResult(
                     ref=ref_norm,
                     status="ok",
                     rc=0,
-                    prompt_path=str(prompt_path),
-                    trace_path=str(trace_path),
-                    output_path=str(output_path),
+                    prompt_path=final_prompt_path,
+                    trace_path=final_trace_path,
+                    output_path=final_output_path,
                 )
             )
-        except Exception as exc:  # noqa: BLE001
-            results.append(
-                GenResult(
-                    ref=ref_norm,
-                    status="fail",
-                    rc=1,
-                    prompt_path=str(prompt_path),
-                    trace_path=str(trace_path),
-                    output_path=str(output_path),
-                    error=str(exc),
-                )
+            continue
+
+        results.append(
+            GenResult(
+                ref=ref_norm,
+                status="fail",
+                rc=final_rc or 1,
+                prompt_path=final_prompt_path,
+                trace_path=final_trace_path,
+                output_path=final_output_path,
+                error=last_error or "generation failed",
             )
+        )
 
     # Sync test_refs from acceptance refs (task-level union evidence).
     sync_cmd = [
@@ -790,6 +912,17 @@ def main() -> int:
         "primary_ref": primary_ref,
         "refs_total": len(refs),
         "created": created,
+        "naming_retry_max": naming_retry_max,
+        "nonzero_rc_retry_max": nonzero_rc_retry_max,
+        "max_attempts": max_attempts,
+        "naming_retry_attempted": naming_retry_attempted,
+        "naming_retry_recovered": naming_retry_recovered,
+        "naming_retry_failed": naming_retry_failed,
+        "nonzero_rc_retry_attempted": retry_buckets["rc"]["attempted"],
+        "nonzero_rc_retry_recovered": retry_buckets["rc"]["recovered"],
+        "nonzero_rc_retry_failed": retry_buckets["rc"]["failed"],
+        "recovered_from_nonzero_rc": recovered_from_nonzero_rc,
+        "retry_buckets": retry_buckets,
         "sync_test_refs_rc": sync_rc,
         "verify_mode": verify,
         "test_step": test_step,

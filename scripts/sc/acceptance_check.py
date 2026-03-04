@@ -213,7 +213,9 @@ def main() -> int:
             print(f"[sc-acceptance-check] ERROR: {e}")
         return 2
 
-    run_id = uuid.uuid4().hex
+    run_id = str(args.run_id or os.environ.get("SC_ACCEPTANCE_RUN_ID") or "").strip() or uuid.uuid4().hex
+    os.environ["SC_ACCEPTANCE_RUN_ID"] = run_id
+    os.environ["SC_TEST_RUN_ID"] = run_id
     godot_bin = args.godot_bin or os.environ.get("GODOT_BIN")
 
     if bool(getattr(args, "dry_run_plan", False)):

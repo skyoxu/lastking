@@ -1,3 +1,5 @@
+> NOTE (Unified Entry): Task-level test + acceptance + LLM review should run via `py -3 scripts/sc/run_review_pipeline.py --task-id <id>`; do not manually chain `scripts/sc/test.py` + `scripts/sc/acceptance_check.py` + `scripts/sc/llm_review.py`.
+
 ---
 ADR-ID: ADR-0005
 title: 质量门禁（Windows-only）- Godot + C# 统一入口

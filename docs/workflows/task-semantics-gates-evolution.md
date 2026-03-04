@@ -1,5 +1,8 @@
 # 工作流说明：任务语义门禁与测试证据链（当前版本）
 
+> NOTE (Unified Entry): Task-level test + acceptance + LLM review should run via `py -3 scripts/sc/run_review_pipeline.py --task-id <id>`; do not manually chain `scripts/sc/test.py` + `scripts/sc/acceptance_check.py` + `scripts/sc/llm_review.py`.
+
+
 本文档记录本仓库近期对“每任务交付工作流”的增量优化，目标是降低“done 不真实”的概率：让脚本不仅对编译/单测负责，也能对任务语义（acceptance/test_strategy）形成可核验的证据链，并在关键阶段 fail-fast。
 
 ## 关键文件与脚本索引（截至当前版本）

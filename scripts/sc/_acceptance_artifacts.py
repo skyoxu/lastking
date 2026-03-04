@@ -11,6 +11,7 @@ Goal:
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -21,7 +22,7 @@ def _to_posix(path: Path) -> str:
     return str(path).replace("\\", "/")
 
 
-def find_latest_acceptance_dir(*, task_id: str | None) -> Path | None:
+def find_latest_acceptance_dir(*, task_id: str | None, expected_run_id: str | None = None) -> Path | None:
     ci_root = repo_root() / "logs" / "ci"
     if not ci_root.exists():
         return None
@@ -41,6 +42,7 @@ def find_latest_acceptance_dir(*, task_id: str | None) -> Path | None:
 
     best: Path | None = None
     best_mtime = -1.0
+    expected = str(expected_run_id or "").strip()
     for p in candidates:
         summary = p / "summary.json"
         try:
@@ -48,6 +50,8 @@ def find_latest_acceptance_dir(*, task_id: str | None) -> Path | None:
         except Exception:
             continue
         if task_id and str(data.get("task_id") or "") != str(task_id):
+            continue
+        if expected and str(data.get("run_id") or "").strip() != expected:
             continue
         try:
             mtime = summary.stat().st_mtime
@@ -71,9 +75,13 @@ def build_acceptance_evidence(*, task_id: str | None, max_chars: int = 4000) -> 
     """
     Returns (markdown_snippet, meta).
     """
-    acc_dir = find_latest_acceptance_dir(task_id=task_id)
+    expected_run_id = (
+        str(os.environ.get("SC_ACCEPTANCE_RUN_ID") or "").strip()
+        or str(os.environ.get("SC_TEST_RUN_ID") or "").strip()
+    )
+    acc_dir = find_latest_acceptance_dir(task_id=task_id, expected_run_id=expected_run_id or None)
     if not acc_dir:
-        return "", {"status": "missing"}
+        return "", {"status": "missing", "expected_run_id": expected_run_id or None}
 
     root = repo_root()
     summary_path = acc_dir / "summary.json"
@@ -142,6 +150,7 @@ def build_acceptance_evidence(*, task_id: str | None, max_chars: int = 4000) -> 
         "acceptance_dir": rel_dir,
         "acceptance_status": status,
         "failing_steps": failing_steps,
+        "expected_run_id": expected_run_id or None,
+        "found_run_id": str(summary.get("run_id") or ""),
     }
     return md, meta
-

@@ -12,7 +12,7 @@
     "layer": "ci",
     "adr_refs": [
       "ADR-0011",
-      "ADR-0001"
+      "ADR-0018"
     ],
     "chapter_refs": [
       "CH07",
@@ -50,12 +50,12 @@
     ],
     "acceptance": [
       "A single canonical Godot 4.5.1 .NET Windows project root is explicitly defined, and baseline creation, C# verification, core layout definition, and runnable Windows export verification all execute from that same root. Refs: Tests.Godot/tests/Integration/test_project_bootstrap_editor_compile_run.gd Tests.Godot/tests/Integration/test_windows_export_startup_flow.gd",
-      "Baseline verification passes only if the editor opens the canonical root, C# compilation succeeds, and the configured startup scene runs with its attached C# script. Refs: Tests.Godot/tests/Scenes/Smoke/test_main_scene_smoke.gd",
+      "Baseline verification passes only if the editor opens the canonical root, C# compilation succeeds, and the configured startup scene runs with its attached C# script. Refs: Tests.Godot/tests/Scenes/Smoke/test_main_scene_smoke.gd Tests.Godot/tests/Integration/test_project_bootstrap_editor_compile_run.gd",
       "After a clean editor restart, two consecutive runs from the canonical root must enter the same startup flow, with any setup-introduced regression causing failure. Refs: Tests.Godot/tests/Integration/test_project_bootstrap_restart_stability.gd",
       "On Windows, baseline verification requires Godot 4.5.1 .NET editor and a compatible .NET SDK to be installed and detected, with no missing-SDK warning. Refs: Tests.Godot/tests/Integration/test_project_bootstrap_windows_sdk_resolution.gd",
       "Canonical bootstrap is performed in C# mode, and at least one node-attached C# script must compile successfully in the editor. Refs: Tests.Godot/tests/Integration/test_project_creation_csharp_mode.gd Tests.Godot/tests/Integration/test_project_bootstrap_editor_compile_run.gd",
       "Running the startup scene in the editor must complete scene load and script execution without C# binding errors, assembly-load errors, or runtime script errors. Refs: Tests.Godot/tests/Scenes/Smoke/test_main_scene_smoke.gd",
-      "The canonical root must include baseline core directories for scenes, scripts, and assets, and each directory must contain at least one file referenced by the project. Refs: Tests.Godot/tests/Integration/test_project_structure_referenced_assets.gd",
+      "The canonical root must define and preserve the baseline folder contract required by downstream setup tasks: Game.Core/Contracts/, Game.Godot/Scripts/, Game.Godot/Scenes/, and Game.Godot/Assets/, with fixed relative paths and at least one project-referenced artifact in each required area. Refs: Tests.Godot/tests/Integration/test_project_structure_referenced_assets.gd Game.Core.Tests/Tasks/Task1BaselineVerificationGateTests.cs",
       "A Windows Desktop export preset is defined in the canonical root, and executing export produces the expected Windows build artifact. Refs: Tests.Godot/tests/Integration/test_windows_export_preset_artifact.gd",
       "Launching the exported Windows artifact as a standalone run must reach the baseline startup flow. Refs: Tests.Godot/tests/Integration/test_windows_export_startup_flow.gd",
       "Startup-path scene creation, node wiring, and script attachment are persisted and observable in saved SceneTree and Inspector bindings. Refs: Tests.Godot/tests/Scenes/Smoke/test_glue_connections.gd",
@@ -71,9 +71,10 @@
       "Windows export validation must execute the produced build and confirm it reaches the baseline startup flow. Refs: Tests.Godot/tests/Integration/test_windows_export_startup_flow.gd Tests.Godot/tests/Integration/test_windows_export_preset_artifact.gd",
       "Standalone desktop launch compatibility is accepted only when the exported Windows build starts and reaches expected startup flow without blocking initialization errors. Refs: Tests.Godot/tests/Integration/test_windows_export_startup_flow.gd",
       "Acceptance is rejected if verification bypasses any required check, including C# build, script-attachment validation, startup scene execution, export execution, or root-uniqueness validation. Refs: Game.Core.Tests/Tasks/Task1BaselineVerificationGateTests.cs Game.Core.Tests/Tasks/Task1ProjectRootUniquenessTests.cs",
-      "Acceptance fails if this task or any downstream setup task creates a second independent Godot project root instead of reusing the canonical root. Refs: Game.Core.Tests/Tasks/Task1ProjectRootUniquenessTests.cs",
-      "Canonical-root contract evidence must be persisted and auditable, including root identifier, mandatory directory structure, and startup binding constraints; missing evidence fails acceptance. Refs: Game.Core.Tests/Tasks/Task1BaselineVerificationGateTests.cs Game.Core.Tests/Tasks/Task1ProjectRootUniquenessTests.cs",
-      "Deterministic bootstrap evidence artifacts must use fixed field schema and stable naming; repeated runs with the same input must produce comparable structure, otherwise gate fails. Refs: Game.Core.Tests/Tasks/Task1BaselineVerificationGateTests.cs"
+      "Acceptance fails if this task or any downstream setup task re-initializes or recreates baseline project scaffold metadata (project config, solution wiring, startup-scene bindings) instead of extending the existing canonical baseline in place, and also fails when a second independent project root is created. Refs: Game.Core.Tests/Tasks/Task1ProjectRootUniquenessTests.cs Tests.Godot/tests/Integration/test_project_bootstrap_restart_stability.gd",
+      "Canonical-root validation must assert one stable project identity and required baseline directories at verification time; missing either fails acceptance. Refs: Game.Core.Tests/Tasks/Task1BaselineVerificationGateTests.cs Game.Core.Tests/Tasks/Task1ProjectRootUniquenessTests.cs",
+      "Repeated bootstrap verification against the same canonical root must produce the same pass/fail decision for root identity, startup bindings, and required baseline directories. Refs: Game.Core.Tests/Tasks/Task1BaselineVerificationGateTests.cs",
+      "If the canonical project root already exists, bootstrap verification must be idempotent: it reuses the same root and project identity, does not create a second project root, and does not rewrite startup bindings unless this task explicitly requests it. Refs: Tests.Godot/tests/Integration/test_project_bootstrap_restart_stability.gd Game.Core.Tests/Tasks/Task1ProjectRootUniquenessTests.cs"
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #1 primary behavior.",
