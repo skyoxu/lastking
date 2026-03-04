@@ -5,7 +5,7 @@ func _new_db() -> Node:
     if ClassDB.class_exists("SqliteDataStore"):
         db = ClassDB.instantiate("SqliteDataStore")
     else:
-        var s = load("res://Game.Godot/Adapters/SqliteDataStore.cs")
+        var s: Script = load("res://Game.Godot/Adapters/SqliteDataStore.cs")
         db = Node.new()
         db.set_script(s)
     db.name = "DbPathSecurity"
@@ -17,13 +17,13 @@ func _new_db() -> Node:
 
 
 func test_sqlite_path_security_rejects_absolute_and_traversal() -> void:
-    var db = await _new_db()
+    var db: Node = await _new_db()
 
     var ok_user: bool = db.TryOpen("user://security_path_ok.db")
     assert_bool(ok_user).is_true()
 
-    var abs: bool = db.TryOpen("C:/temp/security_path_bad.db")
-    assert_bool(abs).is_false()
+    var absolute_open_result: bool = db.TryOpen("C:/temp/security_path_bad.db")
+    assert_bool(absolute_open_result).is_false()
 
     var trav: bool = db.TryOpen("user://../security_path_bad.db")
     assert_bool(trav).is_false()

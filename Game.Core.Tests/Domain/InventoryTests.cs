@@ -6,7 +6,7 @@ namespace Game.Core.Tests.Domain;
 public class InventoryTests
 {
     [Fact]
-    public void Add_and_Remove_respect_max_stack_and_counts()
+    public void ShouldRespectMaxStackAndCounts_WhenAddingAndRemovingItems()
     {
         var inv = new Inventory();
         Assert.Equal(0, inv.CountItem("potion"));

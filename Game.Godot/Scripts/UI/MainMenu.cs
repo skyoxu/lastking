@@ -1,5 +1,6 @@
 using Godot;
 using Game.Godot.Adapters;
+using System;
 
 namespace Game.Godot.Scripts.UI;
 
@@ -23,10 +24,16 @@ public partial class MainMenu : Control
     public void ShowMenu() => Visible = true;
     public void HideMenu() => Visible = false;
 
-    private void Publish(string type, string source, string dataJson = "{}")
+    private void Publish(string type, string source, string dataJson = "")
     {
+        if (string.IsNullOrWhiteSpace(source))
+        {
+            return;
+        }
+
+        var payload = string.IsNullOrWhiteSpace(dataJson) ? "{}" : dataJson;
         var bus = GetNodeOrNull<EventBusAdapter>("/root/EventBus");
-        bus?.PublishSimple(type, source, dataJson);
+        bus?.PublishSimple(type, source, payload);
     }
 
     private void OnPlayPressed()

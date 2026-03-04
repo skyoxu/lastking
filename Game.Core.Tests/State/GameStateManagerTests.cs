@@ -42,7 +42,7 @@ public class GameStateManagerTests
         );
 
     [Fact]
-    public async Task Save_load_delete_and_index_flow_works_with_compression()
+    public async Task ShouldSupportSaveLoadDeleteAndIndex_WhenCompressionEnabled()
     {
         var store = new InMemoryDataStore();
         var opts = new GameStateManagerOptions(MaxSaves: 2, EnableCompression: true);
@@ -86,7 +86,7 @@ public class GameStateManagerTests
     }
 
     [Fact]
-    public async Task AutoSave_toggle_and_tick()
+    public async Task ShouldToggleAndTickAutosave_WhenConfigurationChanges()
     {
         var store = new InMemoryDataStore();
         var mgr = new GameStateManager(store);
@@ -99,7 +99,7 @@ public class GameStateManagerTests
     }
 
     [Fact]
-    public async Task Save_throws_when_state_missing_or_title_too_long()
+    public async Task ShouldThrow_WhenSavingWithoutStateOrWithTooLongTitle()
     {
         var store = new InMemoryDataStore();
         var mgr = new GameStateManager(store);
@@ -108,6 +108,66 @@ public class GameStateManagerTests
         mgr.SetState(MakeState(), MakeConfig());
         var tooLong = new string('x', 101);
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(async () => await mgr.SaveGameAsync(tooLong));
+    }
+
+    [Fact]
+    public async Task ShouldThrow_WhenScreenshotPayloadIsTooLarge()
+    {
+        var store = new InMemoryDataStore();
+        var mgr = new GameStateManager(store);
+        mgr.SetState(MakeState(), MakeConfig());
+        var tooLargeScreenshot = new string('a', 2_000_001);
+
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(async () => await mgr.SaveGameAsync("slot", tooLargeScreenshot));
+    }
+
+    [Fact]
+    public async Task ShouldThrow_WhenLoadingCorruptedSaveChecksum()
+    {
+        var store = new InMemoryDataStore();
+        var mgr = new GameStateManager(store, new GameStateManagerOptions(EnableCompression: false));
+        mgr.SetState(MakeState(level: 2), MakeConfig());
+        var saveId = await mgr.SaveGameAsync("slot-corrupt");
+
+        var raw = await store.LoadAsync(saveId);
+        Assert.NotNull(raw);
+        var save = JsonSerializer.Deserialize<SaveData>(raw!)!;
+        var corrupted = save with { Metadata = save.Metadata with { Checksum = "BAD-CHECKSUM" } };
+        await store.SaveAsync(saveId, JsonSerializer.Serialize(corrupted));
+
+        await Assert.ThrowsAsync<InvalidOperationException>(async () => await mgr.LoadGameAsync(saveId));
+    }
+
+    [Fact]
+    public async Task ShouldNoop_WhenAutosaveTickRunsWithoutStateOrWhenDisabled()
+    {
+        var store = new InMemoryDataStore();
+        var mgr = new GameStateManager(store);
+
+        await mgr.AutoSaveTickAsync();
+        mgr.EnableAutoSave();
+        mgr.DisableAutoSave();
+        await mgr.AutoSaveTickAsync();
+
+        var idx = await store.LoadAsync("guild-manager-game:index");
+        Assert.Null(idx);
+    }
+
+    [Fact]
+    public async Task ShouldIgnoreBrokenEntries_WhenLoadingSaveList()
+    {
+        var store = new InMemoryDataStore();
+        var mgr = new GameStateManager(store, new GameStateManagerOptions(EnableCompression: false));
+        mgr.SetState(MakeState(level: 3), MakeConfig());
+        var goodSaveId = await mgr.SaveGameAsync("slot-good");
+        await store.SaveAsync("bad-save", "{not-json");
+        var indexKey = "guild-manager-game:index";
+        await store.SaveAsync(indexKey, "[\"bad-save\",\"" + goodSaveId + "\"]");
+
+        var saves = await mgr.GetSaveListAsync();
+
+        Assert.Single(saves);
+        Assert.Equal(goodSaveId, saves[0].Id);
     }
 }
 

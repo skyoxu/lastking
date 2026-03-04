@@ -239,26 +239,8 @@ public partial class SqliteDataStore : Node, ISqlDatabase
 
     private bool TryOpenPlugin(string absPath)
     {
-        try
-        {
-            var v = ClassDB.Instantiate("SQLite");
-            if (v.VariantType != Variant.Type.Object) return false;
-            var obj = v.As<GodotObject>();
-            _pluginDb = obj;
-            // Prefer setting Path then calling OpenDb, if exposed
-            try { _pluginDb.Set("Path", absPath); } catch { }
-            var ok = _pluginDb.Call("OpenDb").AsBool();
-            if (!ok)
-            {
-                // Some variants expect path in open
-                ok = _pluginDb.Call("OpenDb", absPath).AsBool();
-            }
-            if (ok) GD.Print("[DB] backend=plugin (godot-sqlite)"); return ok;
-        }
-        catch
-        {
-            return false;
-        }
+        _ = absPath;
+        return false;
     }
 
     private void TryInitSchema()
@@ -359,8 +341,6 @@ public partial class SqliteDataStore : Node, ISqlDatabase
         return s.Length <= max ? s : s.Substring(0, max);
     }
 }
-
-
 
 
 
