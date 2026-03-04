@@ -62,12 +62,52 @@ def main():
     os.makedirs(ci_dir, exist_ok=True)
 
     summary = {
+        'manual_triplet_examples': {},
+        'whitelist_expiry_warning': {},
         'dotnet': {},
         'selfcheck': {},
         'encoding': {},
         'status': 'ok'
     }
     hard_fail = False
+
+    # 0) Enforce unified task-level entrypoint command policy (hard gate)
+    rc0, out0 = run_cmd([
+        'py', '-3', 'scripts/python/forbid_manual_sc_triplet_examples.py',
+        '--root', '.',
+        '--mode', 'all',
+        '--whitelist', 'docs/workflows/unified-pipeline-command-whitelist.txt',
+        '--whitelist-metadata', 'require',
+    ], cwd=root)
+    with io.open(os.path.join(ci_dir, 'forbid-manual-sc-triplet-examples.log'), 'w', encoding='utf-8') as f:
+        f.write(out0)
+    manual_sum = read_json(os.path.join('logs', 'ci', date, 'forbid-manual-sc-triplet-examples.json')) or {}
+    summary['manual_triplet_examples'] = {
+        'rc': rc0,
+        'status': 'ok' if rc0 == 0 else 'fail',
+        'hits_count': manual_sum.get('hits_count'),
+        'scanned_files': manual_sum.get('scanned_files'),
+        'mode': manual_sum.get('mode'),
+    }
+    if rc0 != 0:
+        hard_fail = True
+
+    # 0.5) Soft warning: whitelist expiry horizon.
+    rcw, outw = run_cmd([
+        'py', '-3', 'scripts/python/warn_whitelist_expiry.py',
+        '--root', '.',
+        '--whitelist', 'docs/workflows/unified-pipeline-command-whitelist.txt',
+    ], cwd=root)
+    with io.open(os.path.join(ci_dir, 'whitelist-expiry-warning.log'), 'w', encoding='utf-8') as f:
+        f.write(outw)
+    warn_sum = read_json(os.path.join('logs', 'ci', date, 'whitelist-expiry-warning.json')) or {}
+    summary['whitelist_expiry_warning'] = {
+        'rc': rcw,
+        'status': warn_sum.get('status') or ('ok' if rcw == 0 else 'warn'),
+        'expiring_soon_count': warn_sum.get('expiring_soon_count'),
+        'expired_count': warn_sum.get('expired_count'),
+        'warn_days': warn_sum.get('warn_days'),
+    }
 
     # 1) Dotnet tests + coverage (soft gate on coverage)
     rc, out = run_cmd(['py', '-3', 'scripts/python/run_dotnet.py',
@@ -137,7 +177,12 @@ def main():
     with io.open(os.path.join(ci_dir, 'ci-pipeline-summary.json'), 'w', encoding='utf-8') as f:
         json.dump(summary, f, ensure_ascii=False, indent=2)
 
-    print(f"CI_PIPELINE status={summary['status']} dotnet={summary['dotnet'].get('status')} selfcheck={summary['selfcheck'].get('status')} encoding_bad={summary['encoding'].get('bad', 'n/a')}")
+    print(
+        f"CI_PIPELINE status={summary['status']} manual_examples={summary['manual_triplet_examples'].get('status')} "
+        f"whitelist_expiry={summary['whitelist_expiry_warning'].get('status')} "
+        f"dotnet={summary['dotnet'].get('status')} selfcheck={summary['selfcheck'].get('status')} "
+        f"encoding_bad={summary['encoding'].get('bad', 'n/a')}"
+    )
     return 0 if not hard_fail else 1
 
 
