@@ -213,7 +213,7 @@ public sealed class Task1ProjectRootUniquenessTests
     private static string FindLatestAcceptanceDir()
     {
         var boundDir = TryResolveBoundAcceptanceDir();
-        if (!string.IsNullOrWhiteSpace(boundDir))
+        if (!string.IsNullOrWhiteSpace(boundDir) && IsSummaryEvidenceRunIdConsistent(boundDir))
         {
             return boundDir;
         }
@@ -227,6 +227,11 @@ public sealed class Task1ProjectRootUniquenessTests
             .Where(Directory.Exists)
             .Where(dir => File.Exists(Path.Combine(dir, "summary.json")))
             .ToArray();
+        var consistentCandidates = allCandidates.Where(IsSummaryEvidenceRunIdConsistent).ToArray();
+        if (consistentCandidates.Length > 0)
+        {
+            allCandidates = consistentCandidates;
+        }
 
         allCandidates.Should().NotBeEmpty("acceptance artifacts are required");
         return allCandidates[0];
@@ -293,6 +298,23 @@ public sealed class Task1ProjectRootUniquenessTests
         using var doc = JsonDocument.Parse(File.ReadAllText(summaryPath));
         var runId = doc.RootElement.TryGetProperty("run_id", out var node) ? node.GetString() : null;
         return string.Equals(runId, expectedRunId, StringComparison.Ordinal);
+    }
+
+    private static bool IsSummaryEvidenceRunIdConsistent(string acceptanceDir)
+    {
+        var summaryPath = Path.Combine(acceptanceDir, "summary.json");
+        var evidencePath = Path.Combine(acceptanceDir, "headless-e2e-evidence.json");
+        if (!File.Exists(summaryPath) || !File.Exists(evidencePath))
+        {
+            return false;
+        }
+
+        using var summaryDoc = JsonDocument.Parse(File.ReadAllText(summaryPath));
+        using var evidenceDoc = JsonDocument.Parse(File.ReadAllText(evidencePath));
+        var summaryRunId = summaryDoc.RootElement.TryGetProperty("run_id", out var runNode) ? runNode.GetString() : null;
+        var expectedRunId = evidenceDoc.RootElement.TryGetProperty("expected_run_id", out var expectedNode) ? expectedNode.GetString() : null;
+        return !string.IsNullOrWhiteSpace(summaryRunId) &&
+               string.Equals(summaryRunId, expectedRunId, StringComparison.Ordinal);
     }
 
     private static string FirstNonEmptyEnvironmentValue(params string[] names)
