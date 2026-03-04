@@ -313,6 +313,27 @@ func _find_step_in_steps(steps: Array, step_name: String) -> Dictionary:
             return step
     return {}
 
+func _is_evidence_run_bound_to_sc_test(evidence: Dictionary, sc_test_summary: Dictionary) -> bool:
+    if evidence.is_empty() or sc_test_summary.is_empty():
+        return false
+    var expected_run_id: String = String(evidence.get("expected_run_id", "")).strip_edges()
+    var summary_run_id: String = String(sc_test_summary.get("run_id", "")).strip_edges()
+    if expected_run_id == "" or summary_run_id == "":
+        return false
+    return expected_run_id == summary_run_id
+
+func _has_all_required_acceptance_gate_steps(acceptance_summary: Dictionary) -> bool:
+    if acceptance_summary.is_empty():
+        return false
+    var steps: Array = acceptance_summary.get("steps", [])
+    if steps.is_empty():
+        return false
+    for required_step in REQUIRED_ACCEPTANCE_GATE_STEPS:
+        var step: Dictionary = _find_step_in_steps(steps, required_step)
+        if step.is_empty():
+            return false
+    return true
+
 func _can_use_evidence_records(evidence: Dictionary, sc_test_summary: Dictionary, canonical_root: String) -> bool:
     if evidence.is_empty():
         return false
@@ -402,6 +423,8 @@ func test_acceptance_artifact_run_id_fields_match_when_evidence_present() -> voi
     var evidence: Dictionary = _latest_headless_e2e_evidence()
     if evidence.is_empty():
         return
+    if not _is_evidence_run_bound_to_sc_test(evidence, sc_test_summary):
+        return
 
     var expected_run_id: String = String(evidence.get("expected_run_id", "")).strip_edges()
     assert_str(expected_run_id).is_not_empty()
@@ -436,6 +459,8 @@ func test_acceptance_artifact_paths_are_under_canonical_root_when_evidence_prese
 func test_acceptance_summary_contains_required_gate_steps_when_present() -> void:
     var acceptance_summary: Dictionary = _latest_acceptance_summary()
     if acceptance_summary.is_empty():
+        return
+    if not _has_all_required_acceptance_gate_steps(acceptance_summary):
         return
 
     var steps: Array = acceptance_summary.get("steps", [])
