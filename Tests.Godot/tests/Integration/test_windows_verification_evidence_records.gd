@@ -7,6 +7,14 @@ const REQUIRED_STEPS: Array[String] = [
     "startup_scene_execution",
     "export_launch",
 ]
+const REQUIRED_ACCEPTANCE_GATE_STEPS: Array[String] = [
+    "dotnet-build-warnaserror",
+    "tests-all",
+    "headless-e2e-evidence",
+    "acceptance-executed-refs",
+    "acceptance-anchors",
+    "acceptance-refs",
+]
 const CI_DATE_PATTERN_LENGTH: int = 10
 
 func _canonicalize_root(path: String) -> String:
@@ -97,6 +105,12 @@ func _latest_headless_e2e_evidence() -> Dictionary:
     if date_dir == "":
         return {}
     return _read_json_if_exists(date_dir.path_join("sc-acceptance-check-task-1").path_join("headless-e2e-evidence.json"))
+
+func _latest_acceptance_summary() -> Dictionary:
+    var date_dir: String = _latest_ci_date_dir()
+    if date_dir == "":
+        return {}
+    return _read_json_if_exists(date_dir.path_join("sc-acceptance-check-task-1").path_join("summary.json"))
 
 func _find_step(summary: Dictionary, step_name: String) -> Dictionary:
     var steps: Array = summary.get("steps", [])
@@ -290,6 +304,15 @@ func _has_success_record(records: Array, step: String, canonical_root: String) -
             return true
     return false
 
+func _find_step_in_steps(steps: Array, step_name: String) -> Dictionary:
+    for item in steps:
+        if not (item is Dictionary):
+            continue
+        var step: Dictionary = item
+        if String(step.get("name", "")) == step_name:
+            return step
+    return {}
+
 func _can_use_evidence_records(evidence: Dictionary, sc_test_summary: Dictionary, canonical_root: String) -> bool:
     if evidence.is_empty():
         return false
@@ -372,3 +395,51 @@ func test_runtime_records_fail_when_required_step_is_missing() -> void:
         {"step": "startup_scene_execution", "status": "success", "canonical_root": canonical_root}
     ]
     assert_bool(_has_success_record(broken_records, "export_launch", canonical_root)).is_false()
+
+# acceptance: ACC:T1.11
+func test_acceptance_artifact_run_id_fields_match_when_evidence_present() -> void:
+    var sc_test_summary: Dictionary = _latest_sc_test_summary()
+    var evidence: Dictionary = _latest_headless_e2e_evidence()
+    if evidence.is_empty():
+        return
+
+    var expected_run_id: String = String(evidence.get("expected_run_id", "")).strip_edges()
+    assert_str(expected_run_id).is_not_empty()
+    assert_str(String(evidence.get("run_id_in_summary", "")).strip_edges()).is_equal(expected_run_id)
+    assert_str(String(evidence.get("run_id_in_file", "")).strip_edges()).is_equal(expected_run_id)
+    assert_str(String(evidence.get("e2e_run_id_value", "")).strip_edges()).is_equal(expected_run_id)
+
+    if not sc_test_summary.is_empty():
+        assert_str(String(sc_test_summary.get("run_id", "")).strip_edges()).is_equal(expected_run_id)
+
+# acceptance: ACC:T1.24
+func test_acceptance_artifact_paths_are_under_canonical_root_when_evidence_present() -> void:
+    var evidence: Dictionary = _latest_headless_e2e_evidence()
+    if evidence.is_empty():
+        return
+
+    var canonical_root: String = _canonicalize_root(_project_root_abs())
+    var path_fields: Array[String] = [
+        "sc_test_summary",
+        "sc_test_run_id_file",
+        "e2e_dir",
+        "e2e_run_id_file",
+    ]
+    for field_name in path_fields:
+        var relative_path: String = String(evidence.get(field_name, "")).strip_edges()
+        assert_str(relative_path).is_not_empty()
+        var normalized_relative: String = relative_path.replace("\\", "/")
+        var absolute_path: String = ProjectSettings.globalize_path("res://../" + normalized_relative).simplify_path()
+        assert_bool(_canonicalize_root(absolute_path).begins_with(canonical_root)).is_true()
+
+# acceptance: ACC:T1.11 / ACC:T1.22
+func test_acceptance_summary_contains_required_gate_steps_when_present() -> void:
+    var acceptance_summary: Dictionary = _latest_acceptance_summary()
+    if acceptance_summary.is_empty():
+        return
+
+    var steps: Array = acceptance_summary.get("steps", [])
+    for required_step in REQUIRED_ACCEPTANCE_GATE_STEPS:
+        var step: Dictionary = _find_step_in_steps(steps, required_step)
+        assert_bool(not step.is_empty()).is_true()
+        assert_str(String(step.get("status", ""))).is_not_empty()
