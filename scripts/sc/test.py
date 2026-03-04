@@ -22,6 +22,7 @@ import uuid
 from pathlib import Path
 from typing import Any
 
+from _summary_schema import SummarySchemaError, validate_sc_test_summary
 from _util import ci_dir, repo_root, run_cmd, today_str, write_json, write_text
 
 
@@ -48,7 +49,14 @@ def run_unit(out_dir: Path, solution: str, configuration: str, *, run_id: str) -
     write_text(log_path, out)
     unit_artifacts_dir = repo_root() / "logs" / "unit" / today_str()
     write_text(unit_artifacts_dir / "run_id.txt", run_id + "\n")
-    return {"name": "unit", "cmd": cmd, "rc": rc, "log": str(log_path), "artifacts_dir": str(unit_artifacts_dir)}
+    return {
+        "name": "unit",
+        "cmd": cmd,
+        "rc": rc,
+        "log": str(log_path),
+        "artifacts_dir": str(unit_artifacts_dir),
+        "status": "ok" if rc == 0 else "fail",
+    }
 
 
 def run_coverage_report(out_dir: Path, unit_artifacts_dir: Path) -> dict[str, Any]:
@@ -212,7 +220,14 @@ def run_gdunit_hard(
     log_path = out_dir / "gdunit-hard.log"
     write_text(log_path, out)
     write_text(repo_root() / report_dir / "run_id.txt", run_id + "\n")
-    return {"name": "gdunit-hard", "cmd": cmd, "rc": rc, "log": str(log_path), "report_dir": str(report_dir)}
+    return {
+        "name": "gdunit-hard",
+        "cmd": cmd,
+        "rc": rc,
+        "log": str(log_path),
+        "report_dir": str(report_dir),
+        "status": "ok" if rc == 0 else "fail",
+    }
 
 
 def run_smoke(out_dir: Path, godot_bin: str, scene: str, task_id: str | None = None) -> dict[str, Any]:
@@ -222,7 +237,14 @@ def run_smoke(out_dir: Path, godot_bin: str, scene: str, task_id: str | None = N
             msg = f"[sc-test] ERROR: smoke scene not found on disk: {disk_path}\n"
             log_path = out_dir / "smoke.log"
             write_text(log_path, msg)
-            return {"name": "smoke", "cmd": [], "rc": 2, "log": str(log_path), "error": "smoke_scene_missing"}
+            return {
+                "name": "smoke",
+                "cmd": [],
+                "rc": 2,
+                "log": str(log_path),
+                "error": "smoke_scene_missing",
+                "status": "fail",
+            }
     cmd = [
         "py",
         "-3",
@@ -242,7 +264,13 @@ def run_smoke(out_dir: Path, godot_bin: str, scene: str, task_id: str | None = N
     rc, out = run_cmd(cmd, cwd=repo_root(), timeout_sec=120)
     log_path = out_dir / "smoke.log"
     write_text(log_path, out)
-    return {"name": "smoke", "cmd": cmd, "rc": rc, "log": str(log_path)}
+    return {
+        "name": "smoke",
+        "cmd": cmd,
+        "rc": rc,
+        "log": str(log_path),
+        "status": "ok" if rc == 0 else "fail",
+    }
 
 
 def main() -> int:
@@ -265,12 +293,31 @@ def main() -> int:
         "status": "fail",
         "steps": [],
     }
+    task_root_id = _normalize_task_root_id(args.task_id)
+    if task_root_id:
+        summary["task_id"] = task_root_id
 
-    def _persist_summary() -> None:
+    schema_error_log = out_dir / "summary-schema-validation-error.log"
+
+    def _persist_summary() -> bool:
+        try:
+            validate_sc_test_summary(summary)
+        except SummarySchemaError as exc:
+            write_text(schema_error_log, f"{exc}\n")
+            write_json(out_dir / "summary.invalid.json", summary)
+            print(f"[sc-test] ERROR: summary schema validation failed. details={schema_error_log}")
+            return False
+        invalid_summary_path = out_dir / "summary.invalid.json"
+        if schema_error_log.exists():
+            schema_error_log.unlink(missing_ok=True)
+        if invalid_summary_path.exists():
+            invalid_summary_path.unlink(missing_ok=True)
         write_json(out_dir / "summary.json", summary)
+        return True
 
     hard_fail = False
-    _persist_summary()
+    if not _persist_summary():
+        return 2
 
     if args.type in ("unit", "all"):
         if not args.no_coverage_gate:
@@ -279,14 +326,16 @@ def main() -> int:
 
         step = run_unit(out_dir, args.solution, args.configuration, run_id=run_id)
         summary["steps"].append(step)
-        _persist_summary()
+        if not _persist_summary():
+            return 2
         if step["rc"] != 0:
             hard_fail = True
         else:
             if not args.no_coverage_report:
                 cov = run_coverage_report(out_dir, Path(step["artifacts_dir"]))
                 summary["steps"].append(cov)
-                _persist_summary()
+                if not _persist_summary():
+                    return 2
                 if cov.get("status") == "fail":
                     hard_fail = True
 
@@ -298,18 +347,21 @@ def main() -> int:
         if not args.skip_smoke:
             sm = run_smoke(out_dir, godot_bin, args.smoke_scene, task_id=args.task_id)
             summary["steps"].append(sm)
-            _persist_summary()
+            if not _persist_summary():
+                return 2
             if sm["rc"] != 0:
                 hard_fail = True
 
         step = run_gdunit_hard(out_dir, godot_bin, args.timeout_sec, run_id=run_id, task_id=args.task_id)
         summary["steps"].append(step)
-        _persist_summary()
+        if not _persist_summary():
+            return 2
         if step["rc"] != 0:
             hard_fail = True
 
     summary["status"] = "ok" if not hard_fail else "fail"
-    write_json(out_dir / "summary.json", summary)
+    if not _persist_summary():
+        return 2
 
     print(f"SC_TEST status={summary['status']} out={out_dir}")
     return 0 if not hard_fail else 1
