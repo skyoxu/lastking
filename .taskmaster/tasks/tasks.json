@@ -18,13 +18,13 @@
           "CH01"
         ],
         "dependencies": [],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": "1",
             "title": "Lock canonical project-root contract",
             "description": "Define single-root constraints, required folders, and startup-scene ownership for the baseline Windows C# project.",
-            "status": "pending",
+            "status": "done",
             "priority": "high",
             "dependencies": [],
             "details": "Document canonical root, mandatory structure, and startup binding constraints used by all downstream tasks.",
@@ -35,7 +35,7 @@
             "id": "2",
             "title": "Implement baseline bootstrap and verification flow",
             "description": "Create/open baseline project, validate C# compile, and verify editor startup flow and export preset availability.",
-            "status": "pending",
+            "status": "done",
             "priority": "high",
             "dependencies": [
               "1"
@@ -48,7 +48,7 @@
             "id": "3",
             "title": "Publish baseline evidence and hard-gate tests",
             "description": "Emit baseline verification evidence and gate failures for missing compile/startup/export conditions.",
-            "status": "pending",
+            "status": "done",
             "priority": "high",
             "dependencies": [
               "2"
