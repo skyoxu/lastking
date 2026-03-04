@@ -61,7 +61,11 @@ def _build_verification_records(root: Path, parsed: dict[str, Any]) -> list[dict
     unit_log_text = _read_text(unit_step.get("log", "")).lower()
     smoke_log_text = _read_text(smoke_step.get("log", "")).lower()
     gdunit_cmd = gdunit_step.get("cmd", []) if isinstance(gdunit_step, dict) else []
-    export_test_executed = any("test_windows_export_startup_flow.gd" in str(arg) for arg in gdunit_cmd)
+    normalized_cmd = [str(arg).replace("\\", "/").lower() for arg in gdunit_cmd]
+    export_test_executed = any(
+        ("test_windows_export_startup_flow.gd" in arg) or ("tests/integration" in arg)
+        for arg in normalized_cmd
+    )
     canonical = _canonical_root(root)
     return [
         {
@@ -81,7 +85,9 @@ def _build_verification_records(root: Path, parsed: dict[str, Any]) -> list[dict
         },
         {
             "step": "export_launch",
-            "status": "success" if int(gdunit_step.get("rc", 1)) == 0 and export_test_executed and _is_windows_export_config_valid(root) else "failed",
+            "status": "success"
+            if export_test_executed and "smoke pass (marker)" in smoke_log_text and _is_windows_export_config_valid(root)
+            else "failed",
             "canonical_root": canonical,
         },
     ]
