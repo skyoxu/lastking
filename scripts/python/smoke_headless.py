@@ -23,6 +23,7 @@ from __future__ import annotations
 import argparse
 import datetime as _dt
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -66,6 +67,8 @@ def _run_smoke(
     err_path = dest / "headless.err.log"
     log_path = dest / "headless.log"
     summary_path = dest / "summary.json"
+    sc_test_run_id = str(os.environ.get("SC_TEST_RUN_ID", "")).strip()
+    run_id_path = dest / "run_id.txt"
 
     cmd = [str(bin_path), "--headless", "--path", project_path, "--scene", scene]
     cmd_text = " ".join(cmd)
@@ -119,6 +122,7 @@ def _run_smoke(
 
     summary = {
         "runId": f"smoke-{ts}",
+        "sc_test_run_id": sc_test_run_id,
         "date": day,
         "timestamp": ts,
         "godot_bin": str(bin_path),
@@ -146,6 +150,8 @@ def _run_smoke(
         encoding="utf-8",
         errors="ignore",
     )
+    if sc_test_run_id:
+        run_id_path.write_text(sc_test_run_id + "\n", encoding="utf-8", errors="ignore")
 
     if task_id is not None:
         task_summary = Path("logs") / "ci" / day / f"task-{int(task_id):04d}.json"

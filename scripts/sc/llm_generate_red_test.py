@@ -41,6 +41,10 @@ _bootstrap_imports()
 from _taskmaster import resolve_triplet  # noqa: E402
 from _util import ci_dir, repo_root, run_cmd, write_json, write_text  # noqa: E402
 
+STRICT_TEST_NAME_RE = re.compile(r"^Should[A-Z][A-Za-z0-9]*_When[A-Z][A-Za-z0-9]*$")
+TEST_ATTR_RE = re.compile(r"^\s*\[(?:Fact|Theory)(?:\s*\(.*\))?\]\s*$")
+TEST_METHOD_SIG_RE = re.compile(r"\b(?:public|private|internal|protected)\s+(?:async\s+)?(?:void|Task(?:<[^>]+>)?)\s+(\w+)\s*\(")
+
 
 def _read_text(path: Path) -> str:
     return path.read_text(encoding="utf-8", errors="ignore")
@@ -90,6 +94,48 @@ def _extract_testing_framework_excerpt() -> str:
         return ""
     excerpt = text[a + len(AUTO_BEGIN) : b].strip()
     return excerpt
+
+
+def _validate_csharp_test_naming(content: str, *, lookahead: int = 40) -> tuple[bool, str | None]:
+    lines = content.replace("\r\n", "\n").split("\n")
+    invalid_names: list[str] = []
+    window = max(1, int(lookahead))
+
+    for idx, line in enumerate(lines):
+        if not TEST_ATTR_RE.search(line):
+            continue
+        start = idx + 1
+        end = min(len(lines), idx + 1 + window)
+        for j in range(start, end):
+            candidate = lines[j].strip()
+            if not candidate or candidate.startswith("//") or candidate.startswith("["):
+                continue
+            m = TEST_METHOD_SIG_RE.search(candidate)
+            if not m:
+                continue
+            method_name = m.group(1)
+            if not STRICT_TEST_NAME_RE.match(method_name):
+                invalid_names.append(method_name)
+            break
+
+    if not invalid_names:
+        return True, None
+    shown = ", ".join(sorted(set(invalid_names))[:6])
+    return False, f"invalid C# test method naming (require ShouldX_WhenY): {shown}"
+
+
+def _build_retry_prompt(*, base_prompt: str, expected_path: str, validation_error: str) -> str:
+    retry_block = "\n".join(
+        [
+            "Retry instruction (must follow):",
+            f"- Previous output failed validation: {validation_error}",
+            f"- Keep file_path exactly: {expected_path}",
+            "- Regenerate the FULL JSON object from scratch.",
+            "- Test method names MUST be strict ShouldX_WhenY only.",
+            "- Do not include any explanation text outside the JSON object.",
+        ]
+    )
+    return "\n\n".join([base_prompt.rstrip(), retry_block]).strip() + "\n"
 
 
 def _run_codex_exec(*, prompt: str, out_last_message: Path, timeout_sec: int) -> tuple[int, str, list[str]]:
@@ -155,7 +201,8 @@ def _build_prompt(*, task_id: str, context: dict[str, Any]) -> str:
             "- file_path MUST be: Game.Core.Tests/Tasks/Task<id>RedTests.cs for this task id.",
             "- content MUST be UTF-8 text, C# only, English only (no Chinese in code/comments/strings).",
             "- Use xUnit + FluentAssertions only; do not introduce new packages.",
-            "- Test naming MUST follow Should_ style (e.g. ShouldDoX_WhenY).",
+            "- Test naming MUST follow strict ShouldX_WhenY (example: ShouldStartGame_WhenMenuPlayClicked).",
+            "- Do NOT use legacy Should_ prefixes or snake_case test method names.",
             "- The test(s) MUST reflect acceptance/test_strategy intent and MUST be failing under current code (red stage).",
             "- Prefer a deterministic assertion failure over compile errors, but compile errors are acceptable if unavoidable.",
         ]
@@ -207,6 +254,18 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="Generate a task-aligned red test file using Codex CLI.")
     ap.add_argument("--task-id", required=True, help="Task id (master id, e.g. 11).")
     ap.add_argument("--timeout-sec", type=int, default=600, help="codex exec timeout in seconds (default: 600).")
+    ap.add_argument(
+        "--naming-retry-max",
+        type=int,
+        default=1,
+        help="Maximum retries after naming validation failure (default: 1).",
+    )
+    ap.add_argument(
+        "--nonzero-rc-retry-max",
+        type=int,
+        default=1,
+        help="Maximum retries after codex returns non-zero rc (default: 1).",
+    )
     ap.add_argument("--verify-red", action="store_true", help="Run sc-build tdd --stage red after writing the file.")
     args = ap.parse_args()
 
@@ -214,6 +273,10 @@ def main() -> int:
     if not task_id.isdigit():
         print("SC_LLM_RED_TEST ERROR: --task-id must be a numeric master id (e.g. 11).")
         return 2
+
+    naming_retry_max = max(0, int(args.naming_retry_max))
+    nonzero_rc_retry_max = max(0, int(args.nonzero_rc_retry_max))
+    max_attempts = 1 + naming_retry_max + nonzero_rc_retry_max
 
     out_dir = ci_dir("sc-llm-red-test")
 
@@ -272,33 +335,169 @@ def main() -> int:
         print(f"SC_LLM_RED_TEST ERROR: task mapping missing in tasks_back/tasks_gameplay for task_id={task_id}")
         return 1
 
-    prompt = _build_prompt(task_id=task_id, context=context)
-    prompt_path = out_dir / f"prompt-{task_id}.txt"
-    write_text(prompt_path, prompt)
-
-    last_msg_path = out_dir / f"codex-last-message-{task_id}.txt"
-    trace_path = out_dir / f"codex-trace-{task_id}.log"
-    rc, trace_out, cmd = _run_codex_exec(prompt=prompt, out_last_message=last_msg_path, timeout_sec=int(args.timeout_sec))
-    write_text(trace_path, trace_out)
-
-    last_msg = _read_text(last_msg_path) if last_msg_path.exists() else ""
-    meta = {"task_id": task_id, "rc": rc, "cmd": cmd, "prompt": str(prompt_path), "trace": str(trace_path), "last_msg": str(last_msg_path)}
-    write_json(out_dir / f"meta-{task_id}.json", meta)
-
-    if rc != 0 or not last_msg.strip():
-        print(f"SC_LLM_RED_TEST ERROR: codex exec failed/empty rc={rc} out={out_dir}")
-        return 1
-
-    obj = _extract_json_object(last_msg)
-    file_path = str(obj.get("file_path") or "")
-    content = str(obj.get("content") or "")
     expected_path = f"Game.Core.Tests/Tasks/Task{task_id}RedTests.cs"
-    if file_path.replace("\\", "/") != expected_path:
-        print(f"SC_LLM_RED_TEST ERROR: unexpected file_path. expected={expected_path} got={file_path}")
-        return 1
-    if not content.strip():
-        print("SC_LLM_RED_TEST ERROR: empty content")
-        return 1
+    base_prompt = _build_prompt(task_id=task_id, context=context)
+    current_prompt = base_prompt
+    naming_failures = 0
+    naming_retry_attempted = 0
+    naming_retry_failed = 0
+    recovered_from_nonzero_rc = 0
+    recovered_from_naming_retry = False
+    retry_buckets: dict[str, dict[str, int]] = {
+        "naming": {"attempted": 0, "recovered": 0, "failed": 0},
+        "json": {"attempted": 0, "recovered": 0, "failed": 0},
+        "rc": {"attempted": 0, "recovered": 0, "failed": 0},
+    }
+    final_cmd: list[str] = []
+    attempt_logs: list[dict[str, Any]] = []
+    content = ""
+
+    for attempt in range(1, max_attempts + 1):
+        suffix = "" if attempt == 1 else f"-retry{attempt - 1}"
+        prompt_path = out_dir / f"prompt-{task_id}{suffix}.txt"
+        last_msg_path = out_dir / f"codex-last-message-{task_id}{suffix}.txt"
+        trace_path = out_dir / f"codex-trace-{task_id}{suffix}.log"
+        write_text(prompt_path, current_prompt)
+
+        rc, trace_out, cmd = _run_codex_exec(prompt=current_prompt, out_last_message=last_msg_path, timeout_sec=int(args.timeout_sec))
+        final_cmd = cmd
+        write_text(trace_path, trace_out)
+        last_msg = _read_text(last_msg_path) if last_msg_path.exists() else ""
+        attempt_logs.append(
+            {
+                "attempt": attempt,
+                "rc": rc,
+                "prompt": str(prompt_path),
+                "trace": str(trace_path),
+                "last_msg": str(last_msg_path),
+            }
+        )
+
+        if rc != 0:
+            if retry_buckets["rc"]["attempted"] < nonzero_rc_retry_max and attempt < max_attempts:
+                retry_buckets["rc"]["attempted"] += 1
+                continue
+            retry_buckets["rc"]["failed"] += 1
+            meta = {
+                "task_id": task_id,
+                "rc": rc,
+                "cmd": final_cmd,
+                "attempts": attempt_logs,
+                "naming_retry_max": naming_retry_max,
+                "nonzero_rc_retry_max": nonzero_rc_retry_max,
+                "max_attempts": max_attempts,
+                "naming_failures": naming_failures,
+                "naming_retry_attempted": naming_retry_attempted,
+                "naming_retry_failed": naming_retry_failed,
+                "nonzero_rc_retry_attempted": retry_buckets["rc"]["attempted"],
+                "nonzero_rc_retry_failed": retry_buckets["rc"]["failed"],
+                "recovered_from_nonzero_rc": recovered_from_nonzero_rc,
+                "recovered_from_naming_retry": recovered_from_naming_retry,
+                "retry_buckets": retry_buckets,
+            }
+            write_json(out_dir / f"meta-{task_id}.json", meta)
+            print(f"SC_LLM_RED_TEST ERROR: codex exec failed rc={rc} out={out_dir}")
+            return 1
+        if not last_msg.strip():
+            retry_buckets["json"]["failed"] += 1
+            meta = {
+                "task_id": task_id,
+                "rc": 1,
+                "cmd": final_cmd,
+                "attempts": attempt_logs,
+                "naming_retry_max": naming_retry_max,
+                "nonzero_rc_retry_max": nonzero_rc_retry_max,
+                "max_attempts": max_attempts,
+                "naming_failures": naming_failures,
+                "naming_retry_attempted": naming_retry_attempted,
+                "naming_retry_failed": naming_retry_failed,
+                "nonzero_rc_retry_attempted": retry_buckets["rc"]["attempted"],
+                "nonzero_rc_retry_failed": retry_buckets["rc"]["failed"],
+                "recovered_from_nonzero_rc": recovered_from_nonzero_rc,
+                "recovered_from_naming_retry": recovered_from_naming_retry,
+                "retry_buckets": retry_buckets,
+            }
+            write_json(out_dir / f"meta-{task_id}.json", meta)
+            print(f"SC_LLM_RED_TEST ERROR: codex exec empty output out={out_dir}")
+            return 1
+
+        try:
+            try:
+                obj = _extract_json_object(last_msg)
+            except Exception as exc:  # noqa: BLE001
+                retry_buckets["json"]["failed"] += 1
+                raise ValueError(f"json_parse_error: {exc}")
+            file_path = str(obj.get("file_path") or "")
+            content = str(obj.get("content") or "")
+            if file_path.replace("\\", "/") != expected_path:
+                retry_buckets["json"]["failed"] += 1
+                raise ValueError(f"unexpected file_path. expected={expected_path} got={file_path}")
+            if not content.strip():
+                retry_buckets["json"]["failed"] += 1
+                raise ValueError("empty content")
+            ok, naming_error = _validate_csharp_test_naming(content, lookahead=40)
+            if not ok:
+                naming_failures += 1
+                if retry_buckets["naming"]["attempted"] < naming_retry_max and attempt < max_attempts:
+                    naming_retry_attempted += 1
+                    retry_buckets["naming"]["attempted"] += 1
+                    current_prompt = _build_retry_prompt(
+                        base_prompt=base_prompt,
+                        expected_path=expected_path,
+                        validation_error=str(naming_error or "csharp test naming validation failed"),
+                    )
+                    continue
+                naming_retry_failed += 1
+                retry_buckets["naming"]["failed"] += 1
+                raise ValueError(naming_error or "csharp test naming validation failed")
+            if retry_buckets["naming"]["attempted"] > 0 and retry_buckets["naming"]["failed"] == 0:
+                recovered_from_naming_retry = True
+                retry_buckets["naming"]["recovered"] = 1
+            if retry_buckets["rc"]["attempted"] > 0 and retry_buckets["rc"]["failed"] == 0:
+                recovered_from_nonzero_rc = 1
+                retry_buckets["rc"]["recovered"] = 1
+            break
+        except Exception as exc:  # noqa: BLE001
+            meta = {
+                "task_id": task_id,
+                "rc": 1,
+                "cmd": final_cmd,
+                "attempts": attempt_logs,
+                "naming_retry_max": naming_retry_max,
+                "nonzero_rc_retry_max": nonzero_rc_retry_max,
+                "max_attempts": max_attempts,
+                "naming_failures": naming_failures,
+                "naming_retry_attempted": naming_retry_attempted,
+                "naming_retry_failed": naming_retry_failed,
+                "nonzero_rc_retry_attempted": retry_buckets["rc"]["attempted"],
+                "nonzero_rc_retry_failed": retry_buckets["rc"]["failed"],
+                "recovered_from_nonzero_rc": recovered_from_nonzero_rc,
+                "recovered_from_naming_retry": recovered_from_naming_retry,
+                "retry_buckets": retry_buckets,
+                "error": str(exc),
+            }
+            write_json(out_dir / f"meta-{task_id}.json", meta)
+            print(f"SC_LLM_RED_TEST ERROR: {exc}")
+            return 1
+
+    meta = {
+        "task_id": task_id,
+        "rc": 0,
+        "cmd": final_cmd,
+        "attempts": attempt_logs,
+        "naming_retry_max": naming_retry_max,
+        "nonzero_rc_retry_max": nonzero_rc_retry_max,
+        "max_attempts": max_attempts,
+        "naming_failures": naming_failures,
+        "naming_retry_attempted": naming_retry_attempted,
+        "naming_retry_failed": naming_retry_failed,
+        "nonzero_rc_retry_attempted": retry_buckets["rc"]["attempted"],
+        "nonzero_rc_retry_failed": retry_buckets["rc"]["failed"],
+        "recovered_from_nonzero_rc": recovered_from_nonzero_rc,
+        "recovered_from_naming_retry": recovered_from_naming_retry,
+        "retry_buckets": retry_buckets,
+    }
+    write_json(out_dir / f"meta-{task_id}.json", meta)
 
     target = repo_root() / expected_path
     target.parent.mkdir(parents=True, exist_ok=True)

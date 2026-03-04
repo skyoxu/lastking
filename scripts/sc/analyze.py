@@ -158,7 +158,7 @@ def run_checks(out_dir: Path, focus: str) -> list[dict[str, Any]]:
     if focus in ("all", "quality"):
         run_check(
             "check_test_naming",
-            ["py", "-3", "scripts/python/check_test_naming.py"],
+            ["py", "-3", "scripts/python/check_test_naming.py", "--style", "legacy", "--max-lookahead", "40"],
             requires_relpaths=["scripts/python/check_test_naming.py"],
         )
         run_check(

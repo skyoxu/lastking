@@ -100,6 +100,9 @@ def run_dotnet_test_filtered(task_id: str, *, solution: str, configuration: str,
 def run_sc_analyze_task_context(*, task_id: str, out_dir: Path) -> dict[str, Any]:
     # Ensure logs/ci/<date>/sc-analyze/task_context.json exists and is fresh enough for this TDD stage.
     # We intentionally use the repo's deterministic analyzer (no LLM).
+    focus = os.environ.get("SC_TDD_ANALYZE_FOCUS", "all").strip().lower()
+    if focus not in {"all", "quality", "security", "performance", "architecture"}:
+        focus = "all"
     cmd = [
         "py",
         "-3",
@@ -107,7 +110,7 @@ def run_sc_analyze_task_context(*, task_id: str, out_dir: Path) -> dict[str, Any
         "--task-id",
         str(task_id),
         "--focus",
-        "all",
+        focus,
         "--depth",
         "quick",
         "--format",
@@ -251,7 +254,7 @@ def run_refactor_checks(out_dir: Path, *, task_id: str) -> list[dict[str, Any]]:
         }
     )
     candidates = [
-        ("check_test_naming", ["py", "-3", "scripts/python/check_test_naming.py", "--task-id", str(task_id), "--style", "should_when"], "scripts/python/check_test_naming.py"),
+        ("check_test_naming", ["py", "-3", "scripts/python/check_test_naming.py", "--task-id", str(task_id), "--style", "strict", "--max-lookahead", "40"], "scripts/python/check_test_naming.py"),
         ("check_tasks_all_refs", ["py", "-3", "scripts/python/check_tasks_all_refs.py"], "scripts/python/check_tasks_all_refs.py"),
         ("validate_contracts", ["py", "-3", "scripts/python/validate_contracts.py"], "scripts/python/validate_contracts.py"),
     ]

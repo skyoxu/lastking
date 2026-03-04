@@ -180,9 +180,14 @@ def main():
     date = dt.date.today().strftime('%Y-%m-%d')
     out_dir = os.path.join(root, 'logs', 'e2e', date)
     os.makedirs(out_dir, exist_ok=True)
+    reports_dir = os.path.join(proj, 'reports')
 
     # Hard gate before any Godot invocation.
     ensure_tests_project_junction(repo_root=root, project_abs=proj, out_dir=out_dir)
+
+    # Ensure report evidence is scoped to the current invocation only.
+    if os.path.isdir(reports_dir):
+        shutil.rmtree(reports_dir, ignore_errors=True)
 
     # Optional prewarm with fallback
     prewarm_rc = None
@@ -247,7 +252,6 @@ def main():
     _rc2, _out2 = run_cmd([args.godot_bin, '--headless', '--path', proj, '--quiet', '-s', 'res://addons/gdUnit4/bin/GdUnitCopyLog.gd'], cwd=proj)
 
     # Archive reports
-    reports_dir = os.path.join(proj, 'reports')
     dest = args.report_dir if args.report_dir else os.path.join(out_dir, 'gdunit-reports')
     # Always create a destination folder with at least the console log and a summary
     if os.path.isdir(dest):

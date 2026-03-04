@@ -88,7 +88,7 @@ def is_allowed_test_method_name(name: str, *, style: str) -> bool:
     raise ValueError(f"Unknown style: {style}")
 
 
-def extract_test_methods(file_path: Path) -> List[Tuple[int, str]]:
+def extract_test_methods(file_path: Path, *, lookahead: int) -> List[Tuple[int, str]]:
     """
     Extract test method names and their line numbers from a C# test file.
 
@@ -110,8 +110,9 @@ def extract_test_methods(file_path: Path) -> List[Tuple[int, str]]:
 
             # Check if this line has [Fact] or [Theory] attribute
             if line.startswith('[Fact]') or line.startswith('[Theory]'):
-                # Next non-empty line should be the method definition
-                for j in range(i, min(i + 5, len(lines) + 1)):  # Check next few lines
+                # Next method definition can appear after multiple attributes (e.g. many InlineData lines).
+                # Scan forward with a configurable window to avoid false negatives.
+                for j in range(i + 1, min(i + max(1, lookahead), len(lines) + 1)):
                     next_line = lines[j - 1].strip()
                     if not next_line or next_line.startswith('//') or next_line.startswith('['):
                         continue
@@ -130,7 +131,7 @@ def extract_test_methods(file_path: Path) -> List[Tuple[int, str]]:
     return test_methods
 
 
-def scan_test_files(test_dir: Path, *, style: str) -> dict:
+def scan_test_files(test_dir: Path, *, style: str, lookahead: int) -> dict:
     """
     Scan all test files and find naming violations.
 
@@ -146,7 +147,7 @@ def scan_test_files(test_dir: Path, *, style: str) -> dict:
     test_files = list(test_dir.rglob('*Tests.cs'))
 
     for test_file in test_files:
-        test_methods = extract_test_methods(test_file)
+        test_methods = extract_test_methods(test_file, lookahead=lookahead)
         file_violations = []
 
         for line_num, method_name in test_methods:
@@ -218,12 +219,12 @@ def load_task_test_refs(*, root: Path, task_id: str) -> List[Path]:
     return paths
 
 
-def scan_specific_files(*, files: List[Path], style: str) -> dict:
+def scan_specific_files(*, files: List[Path], style: str, lookahead: int) -> dict:
     violations = {}
     for test_file in files:
         if not test_file.exists():
             continue
-        test_methods = extract_test_methods(test_file)
+        test_methods = extract_test_methods(test_file, lookahead=lookahead)
         file_violations = []
         for line_num, method_name in test_methods:
             if not is_allowed_test_method_name(method_name, style=style):
@@ -237,6 +238,12 @@ def main():
     """Main entry point for the script."""
     ap = argparse.ArgumentParser(description="Validate test method naming conventions for Game.Core.Tests.")
     ap.add_argument("--style", choices=["legacy", "strict"], default="legacy", help="Naming style to enforce.")
+    ap.add_argument(
+        "--max-lookahead",
+        type=int,
+        default=40,
+        help="Maximum number of lines to scan forward after [Fact]/[Theory] to find method signature.",
+    )
     ap.add_argument("--task-id", default=None, help="If set, validate only the task's C# test_refs (.cs).")
     args = ap.parse_args()
 
@@ -254,13 +261,14 @@ def main():
     print("Scanning Game.Core.Tests for test method naming violations...")
     print(f"Scope: {scope}")
     print(f"Style: {args.style}")
+    print(f"Max lookahead: {args.max_lookahead}")
     print()
 
     if args.task_id:
         files = load_task_test_refs(root=project_root, task_id=str(args.task_id).split(".", 1)[0])
-        violations = scan_specific_files(files=files, style=args.style)
+        violations = scan_specific_files(files=files, style=args.style, lookahead=args.max_lookahead)
     else:
-        violations = scan_test_files(test_dir, style=args.style)
+        violations = scan_test_files(test_dir, style=args.style, lookahead=args.max_lookahead)
 
     if not violations:
         print("[OK] All test methods follow approved naming conventions")

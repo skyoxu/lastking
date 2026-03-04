@@ -249,7 +249,10 @@ def main() -> int:
     args = build_parser().parse_args()
     out_dir = ci_dir("sc-test")
     run_id = str(args.run_id or "").strip() or uuid.uuid4().hex
+    run_date = today_str()
     write_text(out_dir / "run_id.txt", run_id + "\n")
+    os.environ["SC_TEST_RUN_ID"] = run_id
+    os.environ["SC_TEST_DATE"] = run_date
 
     godot_bin = args.godot_bin or os.environ.get("GODOT_BIN")
 
@@ -263,7 +266,11 @@ def main() -> int:
         "steps": [],
     }
 
+    def _persist_summary() -> None:
+        write_json(out_dir / "summary.json", summary)
+
     hard_fail = False
+    _persist_summary()
 
     if args.type in ("unit", "all"):
         if not args.no_coverage_gate:
@@ -272,12 +279,14 @@ def main() -> int:
 
         step = run_unit(out_dir, args.solution, args.configuration, run_id=run_id)
         summary["steps"].append(step)
+        _persist_summary()
         if step["rc"] != 0:
             hard_fail = True
         else:
             if not args.no_coverage_report:
                 cov = run_coverage_report(out_dir, Path(step["artifacts_dir"]))
                 summary["steps"].append(cov)
+                _persist_summary()
                 if cov.get("status") == "fail":
                     hard_fail = True
 
@@ -286,16 +295,18 @@ def main() -> int:
             print("[sc-test] ERROR: --godot-bin (or env GODOT_BIN) is required for e2e/integration tests.")
             return 2
 
-        step = run_gdunit_hard(out_dir, godot_bin, args.timeout_sec, run_id=run_id, task_id=args.task_id)
-        summary["steps"].append(step)
-        if step["rc"] != 0:
-            hard_fail = True
-
         if not args.skip_smoke:
             sm = run_smoke(out_dir, godot_bin, args.smoke_scene, task_id=args.task_id)
             summary["steps"].append(sm)
+            _persist_summary()
             if sm["rc"] != 0:
                 hard_fail = True
+
+        step = run_gdunit_hard(out_dir, godot_bin, args.timeout_sec, run_id=run_id, task_id=args.task_id)
+        summary["steps"].append(step)
+        _persist_summary()
+        if step["rc"] != 0:
+            hard_fail = True
 
     summary["status"] = "ok" if not hard_fail else "fail"
     write_json(out_dir / "summary.json", summary)

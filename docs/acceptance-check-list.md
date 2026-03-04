@@ -1,5 +1,8 @@
 # acceptance-check 清单（模板）
 
+> NOTE (Unified Entry): Task-level test + acceptance + LLM review should run via `py -3 scripts/sc/run_review_pipeline.py --task-id <id>`; do not manually chain `scripts/sc/test.py` + `scripts/sc/acceptance_check.py` + `scripts/sc/llm_review.py`.
+
+
 本文件用于说明 `scripts/sc/acceptance_check.py` 的用途、运行方式、产物位置与关键步骤含义，避免把验收口径写散到各处。
 
 ## 1. 前置条件（Windows）
