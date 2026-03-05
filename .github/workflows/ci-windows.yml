@@ -140,6 +140,94 @@ jobs:
         run: |
           py -3 scripts/python/ci_pipeline.py all --solution Game.sln --configuration Debug --godot-bin "$env:GODOT_BIN" --build-solutions
 
+      - name: Resolve acceptance task id (PR label / branch)
+        id: resolve_acceptance_task
+        shell: pwsh
+        run: |
+          @'
+          import json
+          import os
+          import re
+          from pathlib import Path
+          
+          def parse_task_id_from_labels(labels: list[str]) -> tuple[str, str]:
+              patterns = [
+                  r"(?i)^task[:\\s_/-]*t?(\\d+)$",
+                  r"(?i)^acceptance[:\\s_/-]*task[:\\s_/-]*t?(\\d+)$",
+                  r"(?i)^t(\\d+)$",
+              ]
+              for label in labels:
+                  name = str(label or "").strip()
+                  for pattern in patterns:
+                      match = re.match(pattern, name)
+                      if match:
+                          return match.group(1), f"label:{name}"
+              return "", ""
+          
+          def parse_task_id_from_branch(branch: str) -> tuple[str, str]:
+              text = str(branch or "").strip()
+              if not text:
+                  return "", ""
+              patterns = [
+                  r"(?i)(?:^|[\\/_-])task[\\/_-]?t?(\\d+)(?:$|[\\/_-])",
+                  r"(?i)(?:^|[\\/_-])t(\\d+)(?:$|[\\/_-])",
+              ]
+              for pattern in patterns:
+                  match = re.search(pattern, text)
+                  if match:
+                      return match.group(1), f"branch:{text}"
+              return "", ""
+          
+          event_name = os.environ.get("GITHUB_EVENT_NAME", "").strip()
+          event_path = os.environ.get("GITHUB_EVENT_PATH", "").strip()
+          branch_name = os.environ.get("GITHUB_HEAD_REF", "").strip() or os.environ.get("GITHUB_REF_NAME", "").strip()
+          
+          labels: list[str] = []
+          if event_name == "pull_request" and event_path and Path(event_path).is_file():
+              try:
+                  event_payload = json.loads(Path(event_path).read_text(encoding="utf-8"))
+                  labels = [
+                      str(item.get("name", "")).strip()
+                      for item in ((event_payload.get("pull_request") or {}).get("labels") or [])
+                      if isinstance(item, dict)
+                  ]
+              except Exception:
+                  labels = []
+          
+          task_id, source = parse_task_id_from_labels(labels)
+          if not task_id:
+              task_id, source = parse_task_id_from_branch(branch_name)
+          
+          output_path = os.environ.get("GITHUB_OUTPUT", "").strip()
+          if output_path:
+              with open(output_path, "a", encoding="utf-8") as handle:
+                  handle.write(f"task_id={task_id}\\n")
+                  handle.write(f"task_source={source}\\n")
+          
+          print(f"ACCEPTANCE_TASK_ID={task_id}")
+          print(f"ACCEPTANCE_TASK_SOURCE={source}")
+          '@ | py -3 -
+
+      - name: Acceptance post-evidence integration gate (hard, task-derived)
+        if: steps.resolve_acceptance_task.outputs.task_id != ''
+        shell: pwsh
+        run: |
+          py -3 scripts/sc/acceptance_check.py `
+            --task-id "${{ steps.resolve_acceptance_task.outputs.task_id }}" `
+            --run-id "gha-${{ github.run_id }}-task${{ steps.resolve_acceptance_task.outputs.task_id }}" `
+            --godot-bin "$env:GODOT_BIN" `
+            --security-profile host-safe `
+            --require-headless-e2e `
+            --require-executed-refs `
+            --out-per-task `
+            --only tests
+
+      - name: Acceptance gate skipped (no task id resolved)
+        if: steps.resolve_acceptance_task.outputs.task_id == ''
+        shell: pwsh
+        run: |
+          Write-Host "Acceptance post-evidence integration gate skipped: no task id resolved from PR labels or branch."
+
       - name: Upload CI logs (always)
         if: always()
         uses: actions/upload-artifact@v4
@@ -178,12 +266,6 @@ jobs:
             --add tests/Adapters/Config `
             --add tests/Security/Hard `
             --timeout-sec 300 --rd "logs/e2e/${{ github.run_id }}/gdunit-reports/adapters-security"
-
-      - name: GdUnit4 integration tests (Python, soft gate)
-        shell: pwsh
-        continue-on-error: true
-        run: |
-          py -3 scripts/python/run_gdunit.py --prewarm --godot-bin "$env:GODOT_BIN" --project Tests.Godot --add tests/Integration --add tests/Adapters/Db --timeout-sec 480 --rd "logs/e2e/${{ github.run_id }}/gdunit-reports/integration"
 
       - name: GdUnit4 UI tests (Python, soft gate)
         shell: pwsh
