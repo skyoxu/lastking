@@ -13,6 +13,7 @@
           "ADR-0018"
         ],
         "archRefs": [
+          "CH06",
           "CH07",
           "CH10",
           "CH01"
@@ -145,7 +146,19 @@
             "parentId": "undefined"
           }
         ],
-        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+        "adrRefs": [
+          "ADR-0021",
+          "ADR-0022",
+          "ADR-0018"
+        ],
+        "archRefs": [
+          "CH05",
+          "CH06",
+          "CH04",
+          "CH01",
+          "CH07"
+        ]
       },
       {
         "id": 3,
@@ -231,7 +244,19 @@
             "parentId": "undefined"
           }
         ],
-        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+        "adrRefs": [
+          "ADR-0021",
+          "ADR-0022",
+          "ADR-0018"
+        ],
+        "archRefs": [
+          "CH05",
+          "CH06",
+          "CH04",
+          "CH01",
+          "CH07"
+        ]
       },
       {
         "id": 4,
@@ -284,7 +309,19 @@
             "subtasks": []
           }
         ],
-        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+        "adrRefs": [
+          "ADR-0021",
+          "ADR-0022",
+          "ADR-0018"
+        ],
+        "archRefs": [
+          "CH05",
+          "CH06",
+          "CH04",
+          "CH01",
+          "CH07"
+        ]
       },
       {
         "id": 5,
@@ -337,7 +374,19 @@
             "subtasks": []
           }
         ],
-        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+        "adrRefs": [
+          "ADR-0021",
+          "ADR-0022",
+          "ADR-0018"
+        ],
+        "archRefs": [
+          "CH05",
+          "CH06",
+          "CH04",
+          "CH01",
+          "CH07"
+        ]
       },
       {
         "id": 6,
@@ -389,7 +438,19 @@
             "subtasks": []
           }
         ],
-        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+        "adrRefs": [
+          "ADR-0021",
+          "ADR-0022",
+          "ADR-0018"
+        ],
+        "archRefs": [
+          "CH05",
+          "CH06",
+          "CH04",
+          "CH01",
+          "CH07"
+        ]
       },
       {
         "id": 7,
@@ -442,7 +503,19 @@
             "subtasks": []
           }
         ],
-        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+        "adrRefs": [
+          "ADR-0021",
+          "ADR-0022",
+          "ADR-0018"
+        ],
+        "archRefs": [
+          "CH05",
+          "CH06",
+          "CH04",
+          "CH01",
+          "CH07"
+        ]
       },
       {
         "id": 8,
@@ -457,7 +530,19 @@
         ],
         "status": "pending",
         "subtasks": [],
-        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+        "adrRefs": [
+          "ADR-0021",
+          "ADR-0022",
+          "ADR-0018"
+        ],
+        "archRefs": [
+          "CH05",
+          "CH06",
+          "CH04",
+          "CH01",
+          "CH07"
+        ]
       },
       {
         "id": 9,
@@ -511,7 +596,19 @@
             "subtasks": []
           }
         ],
-        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+        "adrRefs": [
+          "ADR-0021",
+          "ADR-0022",
+          "ADR-0018"
+        ],
+        "archRefs": [
+          "CH05",
+          "CH06",
+          "CH04",
+          "CH01",
+          "CH07"
+        ]
       },
       {
         "id": 10,
@@ -608,7 +705,19 @@
             "subtasks": []
           }
         ],
-        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+        "adrRefs": [
+          "ADR-0021",
+          "ADR-0022",
+          "ADR-0018"
+        ],
+        "archRefs": [
+          "CH05",
+          "CH06",
+          "CH04",
+          "CH01",
+          "CH07"
+        ]
       },
       {
         "id": 11,
@@ -660,7 +769,31 @@
             "subtasks": []
           }
         ],
-        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+        "adrRefs": [
+          "ADR-0011",
+          "ADR-0001"
+        ],
+        "archRefs": [
+          "CH07",
+          "CH10",
+          "CH01"
+        ],
+        "testRefs": [
+          "Game.Core.Tests/Tasks/Task11ProjectReuseGuardsTests.cs",
+          "Tests.Godot/tests/Scenes/Smoke/test_main_scene_smoke.gd",
+          "Game.Core.Tests/Tasks/Task11WindowsCSharpBaselineGateTests.cs",
+          "Tests.Godot/tests/Scenes/Smoke/test_glue_connections.gd",
+          "Game.Core.Tests/Tasks/Task11ProjectStructureStandardsTests.cs",
+          "Tests.Godot/tests/Scenes/Smoke/test_main_scene_bootstrap_path.gd",
+          "Game.Core.Tests/Domain/GameConfigTests.cs",
+          "Tests.Godot/tests/Integration/test_editor_reopen_rebuild_stability.gd",
+          "Tests.Godot/tests/Integration/test_singleplayer_startup_flow.gd",
+          "Game.Core.Tests/Services/StartupBootstrapServiceTests.cs",
+          "Game.Core.Tests/Engine/BootstrapStructureContractTests.cs",
+          "Tests.Godot/tests/Integration/test_screen_navigator.gd",
+          "Tests.Godot/tests/Security/Hard/test_db_open_denied_writes_audit_log.gd"
+        ]
       },
       {
         "id": 12,
@@ -747,7 +880,19 @@
             "parentId": "undefined"
           }
         ],
-        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+        "adrRefs": [
+          "ADR-0021",
+          "ADR-0022",
+          "ADR-0018"
+        ],
+        "archRefs": [
+          "CH05",
+          "CH06",
+          "CH04",
+          "CH01",
+          "CH07"
+        ]
       },
       {
         "id": 13,
@@ -838,7 +983,19 @@
             "parentId": "undefined"
           }
         ],
-        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+        "adrRefs": [
+          "ADR-0021",
+          "ADR-0022",
+          "ADR-0018"
+        ],
+        "archRefs": [
+          "CH05",
+          "CH06",
+          "CH04",
+          "CH01",
+          "CH07"
+        ]
       },
       {
         "id": 14,
@@ -891,7 +1048,19 @@
             "subtasks": []
           }
         ],
-        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+        "adrRefs": [
+          "ADR-0021",
+          "ADR-0022",
+          "ADR-0018"
+        ],
+        "archRefs": [
+          "CH05",
+          "CH06",
+          "CH04",
+          "CH01",
+          "CH07"
+        ]
       },
       {
         "id": 15,
@@ -944,7 +1113,19 @@
             "subtasks": []
           }
         ],
-        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+        "adrRefs": [
+          "ADR-0021",
+          "ADR-0022",
+          "ADR-0018"
+        ],
+        "archRefs": [
+          "CH05",
+          "CH06",
+          "CH04",
+          "CH01",
+          "CH07"
+        ]
       },
       {
         "id": 16,
@@ -997,7 +1178,19 @@
             "subtasks": []
           }
         ],
-        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+        "adrRefs": [
+          "ADR-0021",
+          "ADR-0022",
+          "ADR-0018"
+        ],
+        "archRefs": [
+          "CH05",
+          "CH06",
+          "CH04",
+          "CH01",
+          "CH07"
+        ]
       },
       {
         "id": 17,
@@ -1050,7 +1243,19 @@
             "subtasks": []
           }
         ],
-        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+        "adrRefs": [
+          "ADR-0021",
+          "ADR-0022",
+          "ADR-0018"
+        ],
+        "archRefs": [
+          "CH05",
+          "CH06",
+          "CH04",
+          "CH01",
+          "CH07"
+        ]
       },
       {
         "id": 18,
@@ -1065,7 +1270,19 @@
         ],
         "status": "pending",
         "subtasks": [],
-        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+        "adrRefs": [
+          "ADR-0021",
+          "ADR-0022",
+          "ADR-0018"
+        ],
+        "archRefs": [
+          "CH05",
+          "CH06",
+          "CH04",
+          "CH01",
+          "CH07"
+        ]
       },
       {
         "id": 19,
@@ -1157,7 +1374,19 @@
             "parentId": "undefined"
           }
         ],
-        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+        "adrRefs": [
+          "ADR-0021",
+          "ADR-0022",
+          "ADR-0018"
+        ],
+        "archRefs": [
+          "CH05",
+          "CH06",
+          "CH04",
+          "CH01",
+          "CH07"
+        ]
       },
       {
         "id": 20,
@@ -1211,7 +1440,19 @@
             "subtasks": []
           }
         ],
-        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+        "adrRefs": [
+          "ADR-0021",
+          "ADR-0022",
+          "ADR-0018"
+        ],
+        "archRefs": [
+          "CH05",
+          "CH06",
+          "CH04",
+          "CH01",
+          "CH07"
+        ]
       },
       {
         "id": 21,
@@ -1263,7 +1504,16 @@
             "subtasks": []
           }
         ],
-        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+        "adrRefs": [
+          "ADR-0011",
+          "ADR-0001"
+        ],
+        "archRefs": [
+          "CH07",
+          "CH10",
+          "CH01"
+        ]
       },
       {
         "id": 22,
@@ -1315,7 +1565,19 @@
             "subtasks": []
           }
         ],
-        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+        "adrRefs": [
+          "ADR-0021",
+          "ADR-0022",
+          "ADR-0018"
+        ],
+        "archRefs": [
+          "CH05",
+          "CH06",
+          "CH04",
+          "CH01",
+          "CH07"
+        ]
       },
       {
         "id": 23,
@@ -1367,7 +1629,19 @@
             "subtasks": []
           }
         ],
-        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+        "adrRefs": [
+          "ADR-0021",
+          "ADR-0022",
+          "ADR-0018"
+        ],
+        "archRefs": [
+          "CH05",
+          "CH06",
+          "CH04",
+          "CH01",
+          "CH07"
+        ]
       },
       {
         "id": 24,
@@ -1419,7 +1693,19 @@
             "subtasks": []
           }
         ],
-        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+        "adrRefs": [
+          "ADR-0021",
+          "ADR-0022",
+          "ADR-0018"
+        ],
+        "archRefs": [
+          "CH05",
+          "CH06",
+          "CH04",
+          "CH01",
+          "CH07"
+        ]
       },
       {
         "id": 25,
@@ -1508,7 +1794,17 @@
             "parentId": "undefined"
           }
         ],
-        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+        "adrRefs": [
+          "ADR-0006",
+          "ADR-0008",
+          "ADR-0011"
+        ],
+        "archRefs": [
+          "CH05",
+          "CH10",
+          "CH07"
+        ]
       },
       {
         "id": 26,
@@ -1560,7 +1856,17 @@
             "subtasks": []
           }
         ],
-        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+        "adrRefs": [
+          "ADR-0006",
+          "ADR-0008",
+          "ADR-0011"
+        ],
+        "archRefs": [
+          "CH05",
+          "CH10",
+          "CH07"
+        ]
       },
       {
         "id": 27,
@@ -1612,7 +1918,17 @@
             "subtasks": []
           }
         ],
-        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+        "adrRefs": [
+          "ADR-0006",
+          "ADR-0008",
+          "ADR-0011"
+        ],
+        "archRefs": [
+          "CH05",
+          "CH10",
+          "CH07"
+        ]
       },
       {
         "id": 28,
@@ -1664,7 +1980,17 @@
             "subtasks": []
           }
         ],
-        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+        "adrRefs": [
+          "ADR-0006",
+          "ADR-0008",
+          "ADR-0011"
+        ],
+        "archRefs": [
+          "CH05",
+          "CH10",
+          "CH07"
+        ]
       },
       {
         "id": 29,
@@ -1678,7 +2004,17 @@
         "details": "Create an AudioManager that handles music and SFX playback. Add settings in UI to adjust volume sliders for music and SFX channels. Save audio preferences to config file. Use Godot's AudioStreamPlayer nodes. Ensure settings apply immediately and persist between sessions.\n\nPseudo-code:\n// AudioManager.cs\npublic partial class AudioManager : Node\n{\n    private AudioStreamPlayer _musicPlayer;\n    private AudioStreamPlayer _sfxPlayer;\n    private float _musicVolume = 1.0f;\n    private float _sfxVolume = 1.0f;\n\n    public override void _Ready() {\n        _musicPlayer = GetNode<AudioStreamPlayer>(\"MusicPlayer\");\n        _sfxPlayer = GetNode<AudioStreamPlayer>(\"SFXPlayer\");\n        LoadSettings();\n    }\n\n    public void SetMusicVolume(float volume) {\n        _musicVolume = volume;\n        _musicPlayer.VolumeDb = LinearToDb(volume);\n        SaveSettings();\n    }\n}",
         "testStrategy": "Test volume sliders: adjust music and SFX, verify audio levels change. Save and reload game, check settings persist. Play sounds to ensure channels work independently. Validate no audio glitches.",
         "subtasks": [],
-        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+        "adrRefs": [
+          "ADR-0006",
+          "ADR-0008",
+          "ADR-0011"
+        ],
+        "archRefs": [
+          "CH05",
+          "CH10",
+          "CH07"
+        ]
       },
       {
         "id": 30,
@@ -1774,7 +2110,17 @@
             "subtasks": []
           }
         ],
-        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+        "adrRefs": [
+          "ADR-0015",
+          "ADR-0005",
+          "ADR-0011"
+        ],
+        "archRefs": [
+          "CH09",
+          "CH07",
+          "CH10"
+        ]
       },
       {
         "id": 31,
@@ -1826,7 +2172,16 @@
             "subtasks": []
           }
         ],
-        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+        "adrRefs": [
+          "ADR-0011",
+          "ADR-0001"
+        ],
+        "archRefs": [
+          "CH07",
+          "CH10",
+          "CH01"
+        ]
       },
       {
         "id": 32,
@@ -1840,7 +2195,17 @@
         ],
         "status": "pending",
         "subtasks": [],
-        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+        "adrRefs": [
+          "ADR-0023",
+          "ADR-0007",
+          "ADR-0005"
+        ],
+        "archRefs": [
+          "CH05",
+          "CH06",
+          "CH07"
+        ]
       },
       {
         "id": 33,
@@ -1892,7 +2257,17 @@
             "subtasks": []
           }
         ],
-        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+        "adrRefs": [
+          "ADR-0023",
+          "ADR-0007",
+          "ADR-0005"
+        ],
+        "archRefs": [
+          "CH05",
+          "CH06",
+          "CH07"
+        ]
       },
       {
         "id": 34,
@@ -1906,7 +2281,17 @@
         ],
         "status": "pending",
         "subtasks": [],
-        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+        "adrRefs": [
+          "ADR-0023",
+          "ADR-0007",
+          "ADR-0005"
+        ],
+        "archRefs": [
+          "CH05",
+          "CH06",
+          "CH07"
+        ]
       },
       {
         "id": 35,
@@ -1958,7 +2343,17 @@
             "subtasks": []
           }
         ],
-        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+        "adrRefs": [
+          "ADR-0023",
+          "ADR-0007",
+          "ADR-0005"
+        ],
+        "archRefs": [
+          "CH05",
+          "CH06",
+          "CH07"
+        ]
       },
       {
         "id": 36,
@@ -2031,7 +2426,17 @@
             "subtasks": []
           }
         ],
-        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+        "adrRefs": [
+          "ADR-0023",
+          "ADR-0007",
+          "ADR-0005"
+        ],
+        "archRefs": [
+          "CH05",
+          "CH06",
+          "CH07"
+        ]
       },
       {
         "id": 37,
@@ -2106,7 +2511,17 @@
             "subtasks": []
           }
         ],
-        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+        "adrRefs": [
+          "ADR-0023",
+          "ADR-0007",
+          "ADR-0005"
+        ],
+        "archRefs": [
+          "CH05",
+          "CH06",
+          "CH07"
+        ]
       },
       {
         "id": 38,
@@ -2158,7 +2573,17 @@
             "subtasks": []
           }
         ],
-        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+        "adrRefs": [
+          "ADR-0023",
+          "ADR-0007",
+          "ADR-0005"
+        ],
+        "archRefs": [
+          "CH05",
+          "CH06",
+          "CH07"
+        ]
       },
       {
         "id": 39,
@@ -2172,7 +2597,17 @@
         ],
         "status": "pending",
         "subtasks": [],
-        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+        "adrRefs": [
+          "ADR-0023",
+          "ADR-0007",
+          "ADR-0005"
+        ],
+        "archRefs": [
+          "CH05",
+          "CH06",
+          "CH07"
+        ]
       },
       {
         "id": 40,
@@ -2224,7 +2659,17 @@
             "subtasks": []
           }
         ],
-        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+        "adrRefs": [
+          "ADR-0006",
+          "ADR-0008",
+          "ADR-0011"
+        ],
+        "archRefs": [
+          "CH05",
+          "CH10",
+          "CH07"
+        ]
       }
     ],
     "metadata": {
