@@ -74,30 +74,33 @@ def _run_smoke(
     cmd_text = " ".join(cmd)
     print(f"[smoke_headless] starting Godot: {' '.join(cmd)} (timeout={timeout_sec}s)")
 
-    with out_path.open("w", encoding="utf-8", errors="ignore") as f_out, \
-            err_path.open("w", encoding="utf-8", errors="ignore") as f_err:
+    try:
+        proc = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding="utf-8",
+            errors="ignore",
+        )
+    except Exception as exc:  # pragma: no cover - environment-specific failure
+        print(f"[smoke_headless] failed to start Godot: {exc}", file=sys.stderr)
+        return 1
+
+    try:
+        stdout_text, stderr_text = proc.communicate(timeout=timeout_sec)
+    except subprocess.TimeoutExpired:
+        print("[smoke_headless] timeout reached; terminating Godot (expected for smoke)")
         try:
-            proc = subprocess.Popen(cmd, stdout=f_out, stderr=f_err, text=True)
-        except Exception as exc:  # pragma: no cover - environment-specific failure
-            print(f"[smoke_headless] failed to start Godot: {exc}", file=sys.stderr)
-            return 1
+            proc.kill()
+        except Exception:
+            pass
+        stdout_text, stderr_text = proc.communicate()
 
-        try:
-            proc.wait(timeout=timeout_sec)
-        except subprocess.TimeoutExpired:
-            print("[smoke_headless] timeout reached; terminating Godot (expected for smoke)")
-            try:
-                proc.kill()
-            except Exception:
-                pass
+    out_path.write_text(stdout_text or "", encoding="utf-8", errors="ignore")
+    err_path.write_text(stderr_text or "", encoding="utf-8", errors="ignore")
 
-    content_parts: list[str] = []
-    if out_path.is_file():
-        content_parts.append(out_path.read_text(encoding="utf-8", errors="ignore"))
-    if err_path.is_file():
-        content_parts.append("\n" + err_path.read_text(encoding="utf-8", errors="ignore"))
-
-    combined = "".join(content_parts)
+    combined = (stdout_text or "") + (("\n" + stderr_text) if stderr_text else "")
     log_path.write_text(combined, encoding="utf-8", errors="ignore")
     print(f"[smoke_headless] log saved at {log_path} (out={out_path}, err={err_path})")
 

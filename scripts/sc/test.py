@@ -35,6 +35,7 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("--godot-bin", default=None, help="Godot mono console binary (required for e2e/all)")
     ap.add_argument("--run-id", default=None, help="Optional run identifier for evidence binding (default: auto-generate).")
     ap.add_argument("--smoke-scene", default="res://Game.Godot/Scenes/Main.tscn", help="Main scene for smoke test")
+    ap.add_argument("--smoke-timeout-sec", type=int, default=15, help="Timeout seconds for strict smoke evidence (default: 15)")
     ap.add_argument("--timeout-sec", type=int, default=600)
     ap.add_argument("--skip-smoke", action="store_true")
     ap.add_argument("--no-coverage-gate", action="store_true", help="do not enforce default coverage thresholds")
@@ -230,7 +231,14 @@ def run_gdunit_hard(
     }
 
 
-def run_smoke(out_dir: Path, godot_bin: str, scene: str, task_id: str | None = None) -> dict[str, Any]:
+def run_smoke(
+    out_dir: Path,
+    godot_bin: str,
+    scene: str,
+    *,
+    timeout_sec: int,
+    task_id: str | None = None,
+) -> dict[str, Any]:
     if scene.startswith("res://"):
         disk_path = repo_root() / scene[len("res://") :]
         if not disk_path.exists():
@@ -256,7 +264,7 @@ def run_smoke(out_dir: Path, godot_bin: str, scene: str, task_id: str | None = N
         "--scene",
         scene,
         "--timeout-sec",
-        "5",
+        str(timeout_sec),
         "--strict",
     ]
     if str(task_id or "").strip():
@@ -283,6 +291,8 @@ def main() -> int:
     os.environ["SC_TEST_DATE"] = run_date
 
     godot_bin = args.godot_bin or os.environ.get("GODOT_BIN")
+    if godot_bin:
+        os.environ["GODOT_BIN"] = godot_bin
 
     summary: dict[str, Any] = {
         "cmd": "sc-test",
@@ -345,7 +355,13 @@ def main() -> int:
             return 2
 
         if not args.skip_smoke:
-            sm = run_smoke(out_dir, godot_bin, args.smoke_scene, task_id=args.task_id)
+            sm = run_smoke(
+                out_dir,
+                godot_bin,
+                args.smoke_scene,
+                timeout_sec=args.smoke_timeout_sec,
+                task_id=args.task_id,
+            )
             summary["steps"].append(sm)
             if not _persist_summary():
                 return 2
