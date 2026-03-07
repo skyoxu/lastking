@@ -3,6 +3,9 @@ extends "res://addons/gdUnit4/src/GdUnitTestSuite.gd"
 const CiRunBinding = preload("res://tests/Helpers/ci_run_binding.gd")
 const CI_DATE_PATTERN_LENGTH: int = 10
 const EXTERNAL_SMOKE_TIMEOUT_SEC: int = 5
+const CANONICAL_MAIN_SCENE_PATH: String = "res://Game.Godot/Scenes/Main.tscn"
+const CANONICAL_MAIN_SCRIPT_PATH: String = "res://Game.Godot/Scripts/Main.gd"
+const ROOT_PROJECT_CONFIG: String = "res://../project.godot"
 
 func _instantiate_main_scene() -> Node:
     var packed_scene: PackedScene = preload("res://Game.Godot/Scenes/Main.tscn")
@@ -99,6 +102,20 @@ func _latest_sc_test_smoke_log_text() -> String:
         return ""
     return FileAccess.get_file_as_string(smoke_log_path)
 
+
+func _read_root_project_setting(key: String) -> String:
+    var text: String = FileAccess.get_file_as_string(ROOT_PROJECT_CONFIG)
+    var prefix: String = key + "=\""
+    for line in text.split("\n"):
+        var trimmed: String = line.strip_edges()
+        if not trimmed.begins_with(prefix):
+            continue
+        var value_start: int = prefix.length()
+        var value_end: int = trimmed.find("\"", value_start)
+        if value_end > value_start:
+            return trimmed.substr(value_start, value_end - value_start)
+    return ""
+
 func _contains_runtime_error_markers(text: String) -> bool:
     var lowered: String = text.to_lower()
     var markers: PackedStringArray = PackedStringArray([
@@ -137,7 +154,7 @@ func _run_external_scene_probe() -> Dictionary:
         "--path",
         project_root,
         "--scene",
-        "res://Game.Godot/Scenes/Main.tscn",
+        CANONICAL_MAIN_SCENE_PATH,
         "--quit-after",
         str(EXTERNAL_SMOKE_TIMEOUT_SEC)
     ])
@@ -153,6 +170,7 @@ func _run_external_scene_probe() -> Dictionary:
 # ACC:T1.6
 # ACC:T1.13
 # ACC:T1.16
+# ACC:T11.2 ACC:T11.24
 func test_main_scene_instantiates_and_visible() -> void:
     var scene: Node = _instantiate_main_scene()
     await get_tree().process_frame
@@ -160,6 +178,31 @@ func test_main_scene_instantiates_and_visible() -> void:
     var csharp_bindings: Array = _collect_csharp_script_paths(scene)
     assert_int(csharp_bindings.size()).is_greater(0)
 
+# ACC:T11.24
+func test_main_scene_naming_and_bootstrap_paths_follow_canonical_convention() -> void:
+    var scene: Node = _instantiate_main_scene()
+    await get_tree().process_frame
+    var configured_main_scene: String = _read_root_project_setting("run/main_scene")
+    assert_bool(configured_main_scene == CANONICAL_MAIN_SCENE_PATH).is_true()
+    assert_bool(String(scene.scene_file_path) == configured_main_scene).is_true()
+    assert_str(scene.name).is_equal("Main")
+    var root_script: Script = scene.get_script() as Script
+    assert_object(root_script).is_not_null()
+    assert_bool(String(root_script.resource_path) == CANONICAL_MAIN_SCRIPT_PATH).is_true()
+
+    var required_bootstrap_nodes := {
+        "InputMapper": "res://Game.Godot/Scripts/Bootstrap/InputMapper.cs",
+        "SettingsLoader": "res://Game.Godot/Scripts/UI/SettingsLoader.cs",
+        "ScreenNavigator": "res://Game.Godot/Scripts/Navigation/ScreenNavigator.cs"
+    }
+    for node_name in required_bootstrap_nodes.keys():
+        var node: Node = scene.get_node_or_null(String(node_name))
+        assert_object(node).is_not_null()
+        var script_value: Variant = node.get_script()
+        assert_bool(script_value is Script).is_true()
+        assert_bool(String((script_value as Script).resource_path) == String(required_bootstrap_nodes[node_name])).is_true()
+
+# ACC:T11.6 ACC:T11.8 ACC:T11.14
 func test_main_scene_csharp_bindings_can_be_invoked_without_runtime_errors() -> void:
     var scene: Node = _instantiate_main_scene()
     await get_tree().process_frame
@@ -200,6 +243,7 @@ func test_settings_screen_can_load() -> void:
     assert_bool(inst.is_inside_tree()).is_true()
 
 # ACC:T1.13
+# ACC:T11.13
 func test_main_scene_bindings_are_stable_across_recent_restart_runs() -> void:
     var smoke_summaries: Array = _latest_smoke_summaries(2)
     var expected_run_id: String = CiRunBinding.expected_run_id()
