@@ -2,12 +2,14 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using FluentAssertions;
 using Game.Core.Domain;
+using Game.Core.Services;
 using Xunit;
 
 namespace Game.Core.Tests.Domain;
 
 public class GameConfigTests
 {
+    // ACC:T2.16
     [Fact]
     public void ShouldSetPropertiesAsExpected_WhenConstructed()
     {
@@ -26,6 +28,90 @@ public class GameConfigTests
         config.ScoreMultiplier.Should().Be(2.5);
         config.AutoSave.Should().BeTrue();
         config.Difficulty.Should().Be(Difficulty.Hard);
+    }
+
+    // ACC:T2.16
+    [Fact]
+    public void ShouldExposeTypedBalanceSnapshotWithDeterministicDefaults_WhenOptionalFieldsAreMissing()
+    {
+        var manager = new ConfigManager();
+        const string json = """
+                            {
+                              "time": { "day_seconds": 240, "night_seconds": 120 },
+                              "waves": { "normal": { "day1_budget": 50, "daily_growth": 1.2 } },
+                              "channels": { "elite": "elite", "boss": "boss" }
+                            }
+                            """;
+
+        var result = manager.LoadInitialFromJson(json, "res://Config/balance.json");
+
+        result.Accepted.Should().BeTrue();
+        result.Source.Should().Be("initial");
+        result.Snapshot.DaySeconds.Should().Be(240);
+        result.Snapshot.NightSeconds.Should().Be(120);
+        result.Snapshot.Day1Budget.Should().Be(50);
+        result.Snapshot.DailyGrowth.Should().Be(1.2m);
+        result.Snapshot.EliteChannel.Should().Be("elite");
+        result.Snapshot.BossChannel.Should().Be("boss");
+        result.Snapshot.SpawnCadenceSeconds.Should().Be(10);
+        result.Snapshot.BossCount.Should().Be(2);
+    }
+
+    // ACC:T2.2
+    [Fact]
+    public void ShouldKeepLoadReloadFallbackOrderDeterministic_WhenAppliedInSequence()
+    {
+        var manager = new ConfigManager();
+        const string initialJson = """
+                                   {
+                                     "time": { "day_seconds": 240, "night_seconds": 120 },
+                                     "waves": { "normal": { "day1_budget": 50, "daily_growth": 1.2 } },
+                                     "channels": { "elite": "elite", "boss": "boss" },
+                                     "spawn": { "cadence_seconds": 10 },
+                                     "boss": { "count": 2 }
+                                   }
+                                   """;
+        const string reloadJson = """
+                                  {
+                                    "time": { "day_seconds": 180, "night_seconds": 90 },
+                                    "waves": { "normal": { "day1_budget": 75, "daily_growth": 1.3 } },
+                                    "channels": { "elite": "elite", "boss": "boss" },
+                                    "spawn": { "cadence_seconds": 8 },
+                                    "boss": { "count": 2 }
+                                  }
+                                  """;
+        const string brokenJson = "{ invalid_payload";
+
+        var first = manager.LoadInitialFromJson(initialJson, "res://Config/balance.json");
+        var second = manager.ReloadFromJson(reloadJson, "res://Config/balance.json");
+        var third = manager.ReloadFromJson(brokenJson, "res://Config/balance.json");
+
+        first.Source.Should().Be("initial");
+        second.Source.Should().Be("reload");
+        third.Source.Should().Be("fallback");
+        third.Snapshot.Should().Be(second.Snapshot);
+        third.ReasonCodes.Should().Contain(ConfigManager.ParseErrorReason);
+    }
+
+    [Fact]
+    public void ShouldFailOrderValidation_WhenReloadAppearsBeforeInitialLoad()
+    {
+        var manager = new ConfigManager();
+        const string reloadJson = """
+                                  {
+                                    "time": { "day_seconds": 180, "night_seconds": 90 },
+                                    "waves": { "normal": { "day1_budget": 75, "daily_growth": 1.3 } },
+                                    "channels": { "elite": "elite", "boss": "boss" },
+                                    "spawn": { "cadence_seconds": 8 },
+                                    "boss": { "count": 2 }
+                                  }
+                                  """;
+
+        var first = manager.ReloadFromJson(reloadJson, "res://Config/balance.json");
+
+        first.Accepted.Should().BeFalse();
+        first.Source.Should().Be("fallback");
+        first.ReasonCodes.Should().Contain(ConfigManager.InvalidOrderReason);
     }
 
     // ACC:T11.11

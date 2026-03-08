@@ -125,7 +125,9 @@
       "core"
     ],
     "test_refs": [
+      "Tests.Godot/tests/Adapters/Config/test_settings_persistence.gd",
       "Game.Core.Tests/Domain/GameConfigTests.cs",
+      "Tests.Godot/tests/Security/Hard/test_settings_config_security.gd",
       "Tests.Godot/tests/Integration/test_balance_runtime_config_reload.gd",
       "Tests.Godot/tests/Integration/test_balance_simulation_determinism.gd",
       "Game.Core.Tests/Services/ConfigManagerAccessSurfaceTests.cs",
@@ -138,21 +140,20 @@
       "Tests.Godot/tests/Integration/test_balance_runtime_spawn_and_boss_from_config.gd",
       "Game.Core.Tests/Services/WaveChannelSelectionTests.cs",
       "Tests.Godot/tests/Integration/test_balance_runtime_channel_selection_from_config.gd",
-      "Tests.Godot/tests/Adapters/Config/test_settings_persistence.gd",
       "Game.Core.Tests/Services/ConfigDrivenRuntimeLoopTests.cs",
       "Game.Core.Tests/Services/ConfigReloadBehaviorTests.cs",
       "Game.Core.Tests/Domain/GameConfigContractTests.cs",
       "Game.Core.Tests/Domain/GameConfigValidationTests.cs",
       "Tests.Godot/tests/Security/Hard/test_balance_config_validation_audit.gd",
       "Tests.Godot/tests/Adapters/Config/test_settings_config_utf8.gd",
-      "Tests.Godot/tests/Security/Hard/test_settings_config_security.gd"
+      "Game.Core.Tests/Services/ConfigManagerBehaviorTests.cs"
     ],
     "acceptance": [
       "Hard gate: malformed JSON/INI input must deterministically fail with a fixed reason code, and parse failure must not advance runtime config snapshot (must keep last-known-good or documented fallback). Refs: Tests.Godot/tests/Adapters/Config/test_settings_persistence.gd",
       "Hard gate: ConfigManager load order must be deterministic and explicitly verified across initial load, reload, and fallback paths; any order drift fails acceptance. Refs: Game.Core.Tests/Domain/GameConfigTests.cs Tests.Godot/tests/Adapters/Config/test_settings_persistence.gd",
-      "Hard gate: acceptance requires both anti-hardcode source-scan gate and config-driven runtime behavior regression gate; missing either gate fails acceptance. Refs: Tests.Godot/tests/Security/Hard/test_settings_config_security.gd",
+      "Hard gate: runtime regression must prove loop/wave/spawn/boss outputs are driven only by current config snapshot (same input same output; changed config changes output), and source-scan must fail when hardcoded balance constants appear. Refs: Tests.Godot/tests/Security/Hard/test_settings_config_security.gd Tests.Godot/tests/Integration/test_balance_runtime_config_reload.gd",
       "只有当运行时可观察到日夜循环、波次预算与刷怪行为由配置值驱动且不依赖代码常量时，本任务才可判定通过。 Refs: Tests.Godot/tests/Integration/test_balance_runtime_config_reload.gd",
-      "本任务关联的自动化测试在 Windows Godot + C# 基线环境必须全部通过，任一失败即不通过。 Refs: Tests.Godot/tests/Integration/test_balance_runtime_config_reload.gd",
+      "??????????????????????????fallback ??????runtime ???????????????????????????? CI ????????? Refs: Tests.Godot/tests/Integration/test_balance_runtime_config_reload.gd Tests.Godot/tests/Integration/test_balance_simulation_determinism.gd",
       "在配置输入不变的条件下，重复执行确定性模拟必须产生一致的核心循环输出，出现任意差异即判失败。 Refs: Tests.Godot/tests/Integration/test_balance_simulation_determinism.gd",
       "系统必须仅采用一个 JSON 或 INI 平衡配置源，且 loop/wave/spawn 只能通过唯一全局 ConfigManager 访问面读取平衡值。 Refs: Game.Core.Tests/Services/ConfigManagerAccessSurfaceTests.cs Tests.Godot/tests/Adapters/Config/test_balance_config_single_source.gd",
       "日夜时长必须由配置解析得到，且运行时实测值必须为 Day=240 秒、Night=120 秒。 Refs: Game.Core.Tests/Services/ConfigManagerParsingTests.cs Tests.Godot/tests/Integration/test_balance_runtime_day_night_from_config.gd",
@@ -165,8 +166,8 @@
       "必须定义规范化配置契约（必填 sections/keys、稳定键名、必填键到运行时消费方映射），并可核验日夜时长、普通波次 day1 预算、普通波次日增长、elite channel、boss channel、spawn cadence、boss count 的加载值。 Refs: Game.Core.Tests/Domain/GameConfigContractTests.cs Game.Core.Tests/Services/ConfigManagerParsingTests.cs",
       "初次加载后必须提供全局可访问的强类型平衡快照/API，暴露日时长、夜时长、普通波次 day1 预算、普通波次日增长、elite channel、boss channel、spawn cadence、boss count；缺失可选字段时必须采用确定性默认值。 Refs: Game.Core.Tests/Domain/GameConfigTests.cs",
       "对缺失键、类型错误、越界值，系统必须执行既定 reject/fallback 规则，输出可执行 reason code 审计轨迹，并使运行时保持在文档化 fallback 状态。 Refs: Game.Core.Tests/Domain/GameConfigValidationTests.cs Tests.Godot/tests/Security/Hard/test_balance_config_validation_audit.gd",
-      "Obligation lock O9：必须通过测试或审计证据证明“加载配置文件并正确解析值”已满足；无法证明即不通过。 Refs: Tests.Godot/tests/Adapters/Config/test_settings_config_utf8.gd",
-      "Obligation lock O11：必须通过测试或审计证据证明“使用 Godot's Resource system or custom file I/O”已满足；无法证明即不通过。 Refs: Tests.Godot/tests/Adapters/Config/test_settings_config_utf8.gd Tests.Godot/tests/Security/Hard/test_settings_config_security.gd"
+      "ConfigManager must load balance values from real config artifacts (not only in-memory literals), parse successfully, and expose typed runtime snapshot values with deterministic reason codes on failure. Refs: Game.Core.Tests/Services/ConfigManagerBehaviorTests.cs Tests.Godot/tests/Adapters/Config/test_settings_config_utf8.gd",
+      "Loading path must be implemented by runtime file I/O or resource-backed path, and switching artifact content without code changes must change observed gameplay outputs after reload. Refs: Tests.Godot/tests/Adapters/Config/test_settings_config_utf8.gd Tests.Godot/tests/Security/Hard/test_settings_config_security.gd"
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #2 primary behavior.",
