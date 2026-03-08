@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
-RUN_ID_RE = re.compile(r"^[A-Fa-f0-9]{32}$")
+RUN_ID_RE = re.compile(r"^(?:[A-Fa-f0-9]{32}|[A-Za-z0-9][A-Za-z0-9._:-]{2,127})$")
 TASK_ID_RE = re.compile(r"^[0-9]+$")
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 SEMVER_RE = re.compile(r"^\d+\.\d+\.\d+$")
@@ -102,7 +102,7 @@ def validate_pipeline_without_jsonschema(payload: dict[str, Any]) -> list[str]:
 
     run_id = payload.get("run_id")
     if not isinstance(run_id, str) or not RUN_ID_RE.match(run_id):
-        errors.append("$.run_id: must match /^[A-Fa-f0-9]{32}$/")
+        errors.append("$.run_id: must match /^[A-Fa-f0-9]{32}$/ or /^[A-Za-z0-9][A-Za-z0-9._:-]{2,127}$/")
 
     for key in ("allow_overwrite", "force_new_run_id"):
         if not isinstance(payload.get(key), bool):
@@ -174,7 +174,7 @@ def validate_sc_test_without_jsonschema(payload: dict[str, Any]) -> list[str]:
     if payload.get("cmd") != "sc-test":
         errors.append("$.cmd: must equal 'sc-test'")
     if not isinstance(payload.get("run_id"), str) or not RUN_ID_RE.match(payload.get("run_id")):
-        errors.append("$.run_id: must match /^[A-Fa-f0-9]{32}$/")
+        errors.append("$.run_id: must match /^[A-Fa-f0-9]{32}$/ or /^[A-Za-z0-9][A-Za-z0-9._:-]{2,127}$/")
 
     task_id = payload.get("task_id")
     if task_id is not None and (not isinstance(task_id, str) or not task_id.strip() or not TASK_ID_RE.match(task_id)):
@@ -323,7 +323,7 @@ def validate_sc_acceptance_without_jsonschema(payload: dict[str, Any]) -> list[s
             errors.append("$.arg_validation.valid: must be boolean")
 
     if "run_id" in payload and (not isinstance(payload.get("run_id"), str) or not RUN_ID_RE.match(payload.get("run_id"))):
-        errors.append("$.run_id: must match /^[A-Fa-f0-9]{32}$/ when present")
+        errors.append("$.run_id: must match /^[A-Fa-f0-9]{32}$/ or /^[A-Za-z0-9][A-Za-z0-9._:-]{2,127}$/ when present")
     if "task_id" in payload and (not isinstance(payload.get("task_id"), str) or not TASK_ID_RE.match(payload.get("task_id"))):
         errors.append("$.task_id: must be numeric string when present")
     if "title" in payload and not isinstance(payload.get("title"), str):

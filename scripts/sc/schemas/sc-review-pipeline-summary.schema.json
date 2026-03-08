@@ -28,7 +28,7 @@
     },
     "run_id": {
       "type": "string",
-      "pattern": "^[A-Fa-f0-9]{32}$"
+      "pattern": "^([A-Fa-f0-9]{32}|[A-Za-z0-9][A-Za-z0-9._:-]{2,127})$"
     },
     "allow_overwrite": {
       "type": "boolean"
