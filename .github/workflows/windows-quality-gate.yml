@@ -223,8 +223,8 @@ jobs:
           output_path = os.environ.get("GITHUB_OUTPUT", "").strip()
           if output_path:
               with open(output_path, "a", encoding="utf-8") as handle:
-                  handle.write(f"task_id={task_id}\\n")
-                  handle.write(f"task_source={source}\\n")
+                  handle.write(f"task_id={task_id}\n")
+                  handle.write(f"task_source={source}\n")
           
           print(f"ACCEPTANCE_TASK_ID={task_id}")
           print(f"ACCEPTANCE_TASK_SOURCE={source}")
@@ -256,6 +256,14 @@ jobs:
         with:
           name: ci-logs
           path: logs/ci/**
+          if-no-files-found: ignore
+
+      - name: Upload acceptance task logs (always)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: acceptance-task-logs
+          path: logs/ci/**/sc-acceptance-check-task-*/**
           if-no-files-found: ignore
 
       - name: GdUnit4 tests (Python, soft gate)
