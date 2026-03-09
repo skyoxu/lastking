@@ -9,6 +9,7 @@ public class GameStateManager
 {
     private readonly GameStateManagerOptions _options;
     private readonly IDataStore _store;
+    private readonly DayNightRuntimeStateMachine _dayNightRuntime;
     private readonly List<Action<DomainEvent>> _callbacks = new();
 
     private GameState? _currentState;
@@ -17,11 +18,24 @@ public class GameStateManager
 
     private const string IndexSuffix = ":index";
 
-    public GameStateManager(IDataStore store, GameStateManagerOptions? options = null)
+    public GameStateManager(
+        IDataStore store,
+        GameStateManagerOptions? options = null,
+        int dayNightSeed = 0,
+        DayNightCycleConfig? dayNightConfig = null)
     {
         _store = store;
         _options = options ?? GameStateManagerOptions.Default;
+        _dayNightRuntime = new DayNightRuntimeStateMachine(dayNightSeed, dayNightConfig);
+        _dayNightRuntime.OnCheckpoint += HandleDayNightCheckpoint;
+        _dayNightRuntime.OnTerminal += HandleDayNightTerminal;
     }
+
+    public DayNightPhase CurrentDayNightPhase => _dayNightRuntime.CurrentPhase;
+    public int CurrentDayNightDay => _dayNightRuntime.CurrentDay;
+    public int DayNightCheckpointCount => _dayNightRuntime.CheckpointCount;
+    public event Action<DayNightCheckpoint>? OnDayNightCheckpoint;
+    public event Action<DayNightTerminal>? OnDayNightTerminal;
 
     public void SetState(GameState state, GameConfig? config = null)
     {
@@ -40,6 +54,21 @@ public class GameStateManager
 
     public GameState? GetState() => _currentState is null ? null : _currentState with { };
     public GameConfig? GetConfig() => _currentConfig is null ? null : _currentConfig with { };
+
+    public void UpdateDayNightRuntime(double deltaSeconds, bool isActiveUpdate = true)
+    {
+        _dayNightRuntime.Update(deltaSeconds, isActiveUpdate);
+    }
+
+    public bool ForceDayNightTerminal()
+    {
+        return _dayNightRuntime.ForceTerminal();
+    }
+
+    public bool RequestDayNightTransition(DayNightPhase requestedPhase)
+    {
+        return _dayNightRuntime.RequestTransition(requestedPhase);
+    }
 
     private const int MaxTitleLength = 100;
     private const int MaxScreenshotChars = 2_000_000; // ~>1.5MB base64
@@ -270,6 +299,8 @@ public class GameStateManager
     private sealed record StateUpdatedPayload(GameState State, GameConfig? Config);
     private sealed record SaveRefPayload(string SaveId);
     private sealed record AutoSaveIntervalPayload(double IntervalMilliseconds);
+    private sealed record DayNightCheckpointPayload(int Day, string From, string To, long Tick, int RandomToken);
+    private sealed record DayNightTerminalPayload(int Day, long Tick);
 
     private sealed class EmptyPayload
     {
@@ -299,5 +330,48 @@ public class GameStateManager
         using var outMs = new MemoryStream();
         gz.CopyTo(outMs);
         return System.Text.Encoding.UTF8.GetString(outMs.ToArray());
+    }
+
+    private void HandleDayNightCheckpoint(DayNightCheckpoint checkpoint)
+    {
+        OnDayNightCheckpoint?.Invoke(checkpoint);
+        var eventType = checkpoint.To == DayNightPhase.Day
+            ? EventTypes.LastkingDayStarted
+            : EventTypes.LastkingNightStarted;
+        Publish(DomainEvent.Create(
+            type: eventType,
+            source: nameof(GameStateManager),
+            payload: new DayNightCheckpointPayload(
+                checkpoint.Day,
+                checkpoint.From.ToString(),
+                checkpoint.To.ToString(),
+                checkpoint.Tick,
+                checkpoint.RandomToken),
+            timestamp: DateTime.UtcNow,
+            id: $"day-night-checkpoint-{checkpoint.Tick}-{checkpoint.DayNightPhaseHash()}"
+        ));
+    }
+
+    private void HandleDayNightTerminal(DayNightTerminal terminal)
+    {
+        OnDayNightTerminal?.Invoke(terminal);
+        Publish(DomainEvent.Create(
+            type: "core.lastking.daynight.terminal",
+            source: nameof(GameStateManager),
+            payload: new DayNightTerminalPayload(terminal.Day, terminal.Tick),
+            timestamp: DateTime.UtcNow,
+            id: $"day-night-terminal-{terminal.Tick}-{terminal.Day}"
+        ));
+    }
+}
+
+file static class DayNightCheckpointExtensions
+{
+    public static int DayNightPhaseHash(this DayNightCheckpoint checkpoint)
+    {
+        unchecked
+        {
+            return ((int)checkpoint.From * 397) ^ (int)checkpoint.To;
+        }
     }
 }
