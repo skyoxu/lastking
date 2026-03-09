@@ -71,13 +71,13 @@
         "dependencies": [
           1
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": "1",
             "title": "Define balancing config contract and file layout",
             "description": "Specify config structure and required fields for day/night timing, wave budgets, channels, cadence, and boss rules.",
-            "status": "pending",
+            "status": "done",
             "priority": "high",
             "dependencies": [
               "1"
@@ -91,7 +91,7 @@
             "id": "2",
             "title": "Implement ConfigManager loading and typed parsing",
             "description": "Build a C# ConfigManager that loads config files and parses them into typed runtime models.",
-            "status": "pending",
+            "status": "done",
             "priority": "high",
             "dependencies": [
               "2.1",
@@ -106,7 +106,7 @@
             "id": "3",
             "title": "Expose runtime accessors for balancing values",
             "description": "Provide stable access APIs for day/night durations, wave budgets, channel budgets, spawn cadence, and boss count.",
-            "status": "pending",
+            "status": "done",
             "priority": "high",
             "dependencies": [
               "2.2"
@@ -120,7 +120,7 @@
             "id": "4",
             "title": "Add invalid-config fallback and audit traces",
             "description": "Implement deterministic fallback behavior for invalid config and emit audit evidence for failure paths.",
-            "status": "pending",
+            "status": "done",
             "priority": "medium",
             "dependencies": [
               "2.2"
@@ -134,7 +134,7 @@
             "id": "5",
             "title": "Harden with anti-hardcode and regression tests",
             "description": "Add tests that enforce config-first ownership and prevent reintroduction of hardcoded balance constants.",
-            "status": "pending",
+            "status": "done",
             "priority": "medium",
             "dependencies": [
               "2.3",
@@ -170,13 +170,13 @@
         "dependencies": [
           2
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": "1",
             "title": "Define runtime state machine model and transitions",
             "description": "Design explicit Day and Night states, transition guards, and deterministic state events.",
-            "status": "pending",
+            "status": "done",
             "priority": "high",
             "dependencies": [
               "2"
@@ -190,7 +190,7 @@
             "id": "2",
             "title": "Implement timer-driven Day/Night progression",
             "description": "Implement 4-minute Day and 2-minute Night timers with deterministic day counter advancement.",
-            "status": "pending",
+            "status": "done",
             "priority": "high",
             "dependencies": [
               "3.1",
@@ -205,7 +205,7 @@
             "id": "3",
             "title": "Integrate fixed-seed deterministic progression",
             "description": "Bind fixed-seed randomness and transition checkpoints to guarantee repeatable cycle behavior.",
-            "status": "pending",
+            "status": "done",
             "priority": "high",
             "dependencies": [
               "3.2"
@@ -219,7 +219,7 @@
             "id": "4",
             "title": "Implement Day15 terminal trigger and state lock",
             "description": "Trigger terminal flow when Day15 cycle completes and lock further progression updates.",
-            "status": "pending",
+            "status": "done",
             "priority": "medium",
             "dependencies": [
               "3.3"
@@ -233,7 +233,7 @@
             "id": "5",
             "title": "Add deterministic cycle verification tests",
             "description": "Create unit and scene tests covering timing, transitions, and terminal conditions.",
-            "status": "pending",
+            "status": "done",
             "priority": "medium",
             "dependencies": [
               "3.4"
@@ -246,9 +246,9 @@
         ],
         "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
         "adrRefs": [
-          "ADR-0021",
-          "ADR-0022",
-          "ADR-0018"
+          "ADR-0004",
+          "ADR-0018",
+          "ADR-0019"
         ],
         "archRefs": [
           "CH05",
@@ -729,13 +729,13 @@
         "dependencies": [
           1
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": "1",
             "title": "Define bootstrap refinement standards",
             "description": "Define canonical main-scene, folder layout, and startup script standards for baseline refinement.",
-            "status": "pending",
+            "status": "done",
             "priority": "high",
             "dependencies": [],
             "details": "Lock naming conventions and mandatory bootstrap assets on existing root.",
@@ -746,7 +746,7 @@
             "id": "2",
             "title": "Implement refined bootstrap wiring",
             "description": "Apply main-scene and structure refinements while preserving canonical root invariants.",
-            "status": "pending",
+            "status": "done",
             "priority": "high",
             "dependencies": [
               "1"
@@ -759,7 +759,7 @@
             "id": "3",
             "title": "Add structure-regression and gate checks",
             "description": "Add checks that fail when refined standards regress or startup bindings are broken.",
-            "status": "pending",
+            "status": "done",
             "priority": "high",
             "dependencies": [
               "2"
