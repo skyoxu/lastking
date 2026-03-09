@@ -97,7 +97,7 @@
     "taskmaster_exported": false,
     "title": "Implement config-first balancing system",
     "description": "Create a configuration system to manage game balance values (e.g., wave budgets, day durations) without hardcoding.",
-    "status": "pending",
+    "status": "done",
     "priority": "P1",
     "layer": "core",
     "adr_refs": [
@@ -153,7 +153,7 @@
       "Hard gate: ConfigManager load order must be deterministic and explicitly verified across initial load, reload, and fallback paths; any order drift fails acceptance. Refs: Game.Core.Tests/Domain/GameConfigTests.cs Tests.Godot/tests/Adapters/Config/test_settings_persistence.gd",
       "Hard gate: runtime regression must prove loop/wave/spawn/boss outputs are driven only by current config snapshot (same input same output; changed config changes output), and source-scan must fail when hardcoded balance constants appear. Refs: Tests.Godot/tests/Security/Hard/test_settings_config_security.gd Tests.Godot/tests/Integration/test_balance_runtime_config_reload.gd",
       "只有当运行时可观察到日夜循环、波次预算与刷怪行为由配置值驱动且不依赖代码常量时，本任务才可判定通过。 Refs: Tests.Godot/tests/Integration/test_balance_runtime_config_reload.gd",
-      "??????????????????????????fallback ??????runtime ???????????????????????????? CI ????????? Refs: Tests.Godot/tests/Integration/test_balance_runtime_config_reload.gd Tests.Godot/tests/Integration/test_balance_simulation_determinism.gd",
+      "本任务关联的自动化测试在 Windows Godot + C# 基线环境必须全部通过，任一失败即不通过。 Refs: Tests.Godot/tests/Integration/test_balance_runtime_config_reload.gd Tests.Godot/tests/Integration/test_balance_simulation_determinism.gd",
       "在配置输入不变的条件下，重复执行确定性模拟必须产生一致的核心循环输出，出现任意差异即判失败。 Refs: Tests.Godot/tests/Integration/test_balance_simulation_determinism.gd",
       "系统必须仅采用一个 JSON 或 INI 平衡配置源，且 loop/wave/spawn 只能通过唯一全局 ConfigManager 访问面读取平衡值。 Refs: Game.Core.Tests/Services/ConfigManagerAccessSurfaceTests.cs Tests.Godot/tests/Adapters/Config/test_balance_config_single_source.gd",
       "日夜时长必须由配置解析得到，且运行时实测值必须为 Day=240 秒、Night=120 秒。 Refs: Game.Core.Tests/Services/ConfigManagerParsingTests.cs Tests.Godot/tests/Integration/test_balance_runtime_day_night_from_config.gd",
@@ -190,13 +190,13 @@
     "taskmaster_exported": false,
     "title": "Develop runtime state machine for Day/Night cycles",
     "description": "Implement a state machine to manage Day and Night cycles with deterministic progression up to Day15.",
-    "status": "pending",
+    "status": "done",
     "priority": "P1",
     "layer": "core",
     "adr_refs": [
-      "ADR-0021",
-      "ADR-0022",
-      "ADR-0018"
+      "ADR-0004",
+      "ADR-0018",
+      "ADR-0019"
     ],
     "chapter_refs": [
       "CH05",
@@ -219,9 +219,11 @@
     ],
     "test_refs": [
       "Game.Core.Tests/State/GameStateMachineTests.cs",
-      "Game.Core.Tests/Tasks/Task3DayNightScopeGuardTests.cs",
       "Game.Core.Tests/State/GameStateManagerTests.cs",
-      "Game.Core.Tests/Tasks/Task3DayNightDesignArtifactTests.cs"
+      "Game.Core.Tests/Tasks/Task3DayNightScopeGuardTests.cs",
+      "Game.Core.Tests/Tasks/Task3DayNightDesignArtifactTests.cs",
+      "Tests.Godot/tests/Integration/test_day_night_cycle_runtime_loop.gd",
+      "Tests.Godot/tests/UI/test_hud_day_night_cycle_status.gd"
     ],
     "acceptance": [
       "Hard gate: deterministic cycle verification must include a fixed-seed forced-terminal scenario, not only natural Day15 completion paths. Refs: Game.Core.Tests/State/GameStateMachineTests.cs Game.Core.Tests/State/GameStateManagerTests.cs",
@@ -230,7 +232,7 @@
       "在 Windows Godot+C# 基线下，本任务相关自动化测试必须全部通过，并覆盖正常推进、计时边界、固定种子重放一致性与 Day15 终局场景。 Refs: Game.Core.Tests/State/GameStateManagerTests.cs",
       "在 Day/Night 循环条件未变化且输入序列相同的前提下，本功能之外的确定性模拟输出与核心循环可观察行为必须保持不变。 Refs: Game.Core.Tests/State/GameStateManagerTests.cs",
       "终局触发前，状态机仅暴露 Day 与 Night 两个非终局状态，并且只允许 Day<->Night 合法迁移；任何其他迁移请求必须被拒绝且状态不变。 Refs: Game.Core.Tests/State/GameStateMachineTests.cs",
-      "采用配置时长时，Day 阶段在该阶段累计时间达到 4:00 才能迁移，Night 阶段在达到 2:00 才能迁移；未达阈值不得迁移。 Refs: Game.Core.Tests/State/GameStateManagerTests.cs",
+      "Day/Night phase durations must be configuration-driven (not hardcoded): default Day=4:00 and Night=2:00; transition is allowed only when the active phase reaches its configured threshold, and transition cannot be manually forced before threshold. Refs: Game.Core.Tests/State/GameStateManagerTests.cs",
       "day 计数从 1 初始化并按顺序逐日递增，不允许跳号或回退，且不得超出 1-15 的闭区间。 Refs: Game.Core.Tests/State/GameStateManagerTests.cs",
       "使用相同固定种子且输入/更新序列一致时，多次运行必须产生完全一致的阶段顺序、随机结果与阶段边界检查点序列。 Refs: Game.Core.Tests/State/GameStateManagerTests.cs",
       "仅在 Day15 完成时发出且仅发出一次终局胜利结果；Day15 完成前不得发出任何终局或胜利结果。 Refs: Game.Core.Tests/State/GameStateManagerTests.cs",
@@ -240,9 +242,10 @@
       "Day15 完成并发出终局胜利后，后续更新不得将 day 推进到 15 以上，且不得再次发出终局或胜利结果。 Refs: Game.Core.Tests/State/GameStateManagerTests.cs",
       "任一阶段在未达到配置阈值前，阶段状态与 day 必须保持不变；仅在活动更新中达到阈值时才允许发生迁移。 Refs: Game.Core.Tests/State/GameStateManagerTests.cs",
       "运行时 C# GameStateManager 实例必须可观测地提供当前阶段状态（Day/Night）、当前 day（1-15）以及供下游消费的迁移/终局信号。 Refs: Game.Core.Tests/State/GameStateManagerTests.cs",
-      "必须交付并关联已评审的运行时状态机设计工件，明确 Day/Night 状态图、迁移条件与下游事件消费者；缺失工件即判定不通过。 Refs: Game.Core.Tests/Tasks/Task3DayNightDesignArtifactTests.cs",
+      "A reviewed runtime state-machine design artifact must be linked, and its state diagram, transition rules, and downstream consumer mapping must stay consistent with runtime behavior. Refs: Game.Core.Tests/Tasks/Task3DayNightDesignArtifactTests.cs",
       "At every Day<->Night boundary, runtime must emit exactly one deterministic checkpoint event; no missing and no extra checkpoint events are allowed. Refs: Game.Core.Tests/State/GameStateManagerTests.cs",
-      "Replay validation must assert checkpoint-event count equals observed boundary-transition count for the same run input. Refs: Game.Core.Tests/State/GameStateManagerTests.cs"
+      "Replay validation must assert checkpoint-event count equals observed boundary-transition count for the same run input. Refs: Game.Core.Tests/State/GameStateManagerTests.cs",
+      "Day/Night runtime updates must be driven by the Godot process loop (_Process and/or _PhysicsProcess) into GameStateManager.UpdateDayNightRuntime; when loop updates are paused or stopped, cycle progression must not advance. Refs: Tests.Godot/tests/Integration/test_day_night_cycle_runtime_loop.gd"
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #3 primary behavior.",
@@ -842,7 +845,7 @@
     "taskmaster_exported": false,
     "title": "Refine baseline bootstrap with main-scene and structure standards",
     "description": "Refine the existing T1 project with stricter main-scene, startup bootstrap script, and folder standards.",
-    "status": "pending",
+    "status": "done",
     "priority": "P1",
     "layer": "ci",
     "adr_refs": [

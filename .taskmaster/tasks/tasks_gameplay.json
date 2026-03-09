@@ -97,7 +97,7 @@
     "taskmaster_exported": true,
     "title": "Implement config-first balancing system",
     "description": "Create a configuration system to manage game balance values (e.g., wave budgets, day durations) without hardcoding.",
-    "status": "pending",
+    "status": "done",
     "priority": "P1",
     "layer": "core",
     "adr_refs": [
@@ -153,7 +153,7 @@
       "Hard gate: ConfigManager load order must be deterministic and explicitly verified across initial load, reload, and fallback paths; any order drift fails acceptance. Refs: Game.Core.Tests/Domain/GameConfigTests.cs Tests.Godot/tests/Adapters/Config/test_settings_persistence.gd",
       "Hard gate: runtime regression must prove loop/wave/spawn/boss outputs are driven only by current config snapshot (same input same output; changed config changes output), and source-scan must fail when hardcoded balance constants appear. Refs: Tests.Godot/tests/Security/Hard/test_settings_config_security.gd Tests.Godot/tests/Integration/test_balance_runtime_config_reload.gd",
       "只有当运行时可观察到日夜循环、波次预算与刷怪行为由配置值驱动且不依赖代码常量时，本任务才可判定通过。 Refs: Tests.Godot/tests/Integration/test_balance_runtime_config_reload.gd",
-      "??????????????????????????fallback ??????runtime ???????????????????????????? CI ????????? Refs: Tests.Godot/tests/Integration/test_balance_runtime_config_reload.gd Tests.Godot/tests/Integration/test_balance_simulation_determinism.gd",
+      "本任务关联的自动化测试在 Windows Godot + C# 基线环境必须全部通过，任一失败即不通过。 Refs: Tests.Godot/tests/Integration/test_balance_runtime_config_reload.gd Tests.Godot/tests/Integration/test_balance_simulation_determinism.gd",
       "在配置输入不变的条件下，重复执行确定性模拟必须产生一致的核心循环输出，出现任意差异即判失败。 Refs: Tests.Godot/tests/Integration/test_balance_simulation_determinism.gd",
       "系统必须仅采用一个 JSON 或 INI 平衡配置源，且 loop/wave/spawn 只能通过唯一全局 ConfigManager 访问面读取平衡值。 Refs: Game.Core.Tests/Services/ConfigManagerAccessSurfaceTests.cs Tests.Godot/tests/Adapters/Config/test_balance_config_single_source.gd",
       "日夜时长必须由配置解析得到，且运行时实测值必须为 Day=240 秒、Night=120 秒。 Refs: Game.Core.Tests/Services/ConfigManagerParsingTests.cs Tests.Godot/tests/Integration/test_balance_runtime_day_night_from_config.gd",
@@ -190,13 +190,13 @@
     "taskmaster_exported": true,
     "title": "Develop runtime state machine for Day/Night cycles",
     "description": "Implement a state machine to manage Day and Night cycles with deterministic progression up to Day15.",
-    "status": "pending",
+    "status": "done",
     "priority": "P1",
     "layer": "core",
     "adr_refs": [
-      "ADR-0021",
-      "ADR-0022",
-      "ADR-0018"
+      "ADR-0004",
+      "ADR-0018",
+      "ADR-0019"
     ],
     "chapter_refs": [
       "CH05",
@@ -219,20 +219,20 @@
     ],
     "test_refs": [
       "Game.Core.Tests/State/GameStateMachineTests.cs",
-      "Game.Core.Tests/Tasks/Task3DayNightScopeGuardTests.cs",
-      "Tests.Godot/tests/Integration/test_day_night_cycle_runtime_loop.gd",
       "Game.Core.Tests/State/GameStateManagerTests.cs",
-      "Tests.Godot/tests/UI/test_hud_day_night_cycle_status.gd",
-      "Game.Core.Tests/Tasks/Task3DayNightDesignArtifactTests.cs"
+      "Game.Core.Tests/Tasks/Task3DayNightScopeGuardTests.cs",
+      "Game.Core.Tests/Tasks/Task3DayNightDesignArtifactTests.cs",
+      "Tests.Godot/tests/Integration/test_day_night_cycle_runtime_loop.gd",
+      "Tests.Godot/tests/UI/test_hud_day_night_cycle_status.gd"
     ],
     "acceptance": [
       "Hard gate: deterministic cycle verification must include a fixed-seed forced-terminal scenario, not only natural Day15 completion paths. Refs: Game.Core.Tests/State/GameStateMachineTests.cs Game.Core.Tests/State/GameStateManagerTests.cs",
       "Hard gate: forced-terminal verification must assert exactly one terminal emission, zero post-terminal progression, and checkpoint replay parity against baseline. Refs: Game.Core.Tests/State/GameStateManagerTests.cs Game.Core.Tests/State/GameStateMachineTests.cs",
-      "Taskmaster #3 的玩法范围仅限 Day/Night 循环推进至 Day15；若引入与该循环无关的玩法行为变更则判定失败。 Refs: Game.Core.Tests/Tasks/Task3DayNightScopeGuardTests.cs Tests.Godot/tests/Integration/test_day_night_cycle_runtime_loop.gd",
+      "Taskmaster #3 的玩法范围仅限 Day/Night 循环推进至 Day15；若引入与该循环无关的玩法行为变更则判定失败。 Refs: Game.Core.Tests/Tasks/Task3DayNightScopeGuardTests.cs Game.Core.Tests/State/GameStateManagerTests.cs",
       "在 Windows Godot+C# 基线下，引用的自动化玩法测试必须全部通过，并覆盖正常流程、计时边界、固定种子重放一致性与 Day15 终局场景。 Refs: Game.Core.Tests/State/GameStateManagerTests.cs",
-      "对 Day/Night 功能之外的玩法系统，在输入序列不变时，确定性模拟输出与核心循环可观察行为必须保持不变。 Refs: Tests.Godot/tests/Integration/test_day_night_cycle_runtime_loop.gd",
+      "对 Day/Night 功能之外的玩法系统，在输入序列不变时，确定性模拟输出与核心循环可观察行为必须保持不变。 Refs: Game.Core.Tests/State/GameStateManagerTests.cs",
       "终局前玩家可观察的循环阶段仅有 Day 与 Night，且只会出现合法的 Day<->Night 切换；非法切换不得出现。 Refs: Game.Core.Tests/State/GameStateMachineTests.cs",
-      "在玩法中使用配置时长时，每个 Day 阶段在 4:00 切换、每个 Night 阶段在 2:00 切换，且未达阈值前不得切换。 Refs: Game.Core.Tests/State/GameStateManagerTests.cs",
+      "Day/Night phase durations must be configuration-driven (not hardcoded): default Day=4:00 and Night=2:00; transition is allowed only when the active phase reaches its configured threshold, and transition cannot be manually forced before threshold. Refs: Game.Core.Tests/State/GameStateManagerTests.cs",
       "可见 day 计数从 Day1 开始并顺序递增，不跳号、不回退，且始终保持在 1-15 范围内。 Refs: Game.Core.Tests/State/GameStateManagerTests.cs",
       "固定种子且输入/更新序列一致时，重复运行必须产生一致的阶段序列、随机结果与阶段边界检查点。 Refs: Game.Core.Tests/State/GameStateManagerTests.cs",
       "仅在 Day15 完成时向玩家呈现一次胜利条件；在 Day15 完成前不得呈现任何胜利。 Refs: Game.Core.Tests/State/GameStateManagerTests.cs",
@@ -241,10 +241,11 @@
       "当玩法更新暂停或停止时，阶段切换、循环累计时间与 day 计数均不得变化，直至更新恢复。 Refs: Game.Core.Tests/State/GameStateManagerTests.cs",
       "Day15 胜利时刻之后，玩家不得观察到 day>15、重复胜利呈现或进一步循环推进。 Refs: Game.Core.Tests/State/GameStateManagerTests.cs",
       "在每个阶段达到配置阈值之前，玩家不得观察到 Day/Night 切换或 day 递增；仅在活动更新中达到阈值时才出现这些变化。 Refs: Game.Core.Tests/State/GameStateManagerTests.cs",
-      "全新开局时，在任何阶段阈值到达之前且首次切换发生之前，界面可见循环状态必须为 Day1。 Refs: Tests.Godot/tests/UI/test_hud_day_night_cycle_status.gd",
-      "必须交付并关联已评审的运行时状态机设计工件，明确 Day/Night 状态图、迁移条件与下游事件消费者；缺失工件即判定不通过。 Refs: Game.Core.Tests/Tasks/Task3DayNightDesignArtifactTests.cs",
+      "At a fresh run start, before the first threshold-driven transition, the player-visible cycle status must remain Day1. Refs: Tests.Godot/tests/UI/test_hud_day_night_cycle_status.gd Game.Core.Tests/State/GameStateManagerTests.cs",
+      "A reviewed runtime state-machine design artifact must be linked, and its state diagram, transition rules, and downstream consumer mapping must stay consistent with runtime behavior. Refs: Game.Core.Tests/Tasks/Task3DayNightDesignArtifactTests.cs",
       "At every Day<->Night boundary, runtime must emit exactly one deterministic checkpoint event; no missing and no extra checkpoint events are allowed. Refs: Game.Core.Tests/State/GameStateManagerTests.cs",
-      "Replay validation must assert checkpoint-event count equals observed boundary-transition count for the same run input. Refs: Game.Core.Tests/State/GameStateManagerTests.cs"
+      "Replay validation must assert checkpoint-event count equals observed boundary-transition count for the same run input. Refs: Game.Core.Tests/State/GameStateManagerTests.cs",
+      "Day/Night runtime updates must be driven by the Godot process loop (_Process and/or _PhysicsProcess) into GameStateManager.UpdateDayNightRuntime; when loop updates are paused or stopped, cycle progression must not advance. Refs: Tests.Godot/tests/Integration/test_day_night_cycle_runtime_loop.gd"
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #3 primary behavior.",
@@ -844,7 +845,7 @@
     "taskmaster_exported": true,
     "title": "Refine baseline bootstrap with main-scene and structure standards",
     "description": "Refine the existing T1 project with stricter main-scene, startup bootstrap script, and folder standards.",
-    "status": "pending",
+    "status": "done",
     "priority": "P1",
     "layer": "ci",
     "adr_refs": [
