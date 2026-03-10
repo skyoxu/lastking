@@ -450,7 +450,6 @@
       "core"
     ],
     "test_refs": [
-      "Game.Core.Tests/Services/CollisionServiceTests.cs",
       "Game.Core.Tests/Services/EnemyAiTargetSelectionTests.cs",
       "Tests.Godot/tests/Scenes/Combat/test_enemy_ai_blocked_route_fallback.gd",
       "Tests.Godot/tests/Integration/test_combat_friendly_fire_disabled.gd",
@@ -467,8 +466,8 @@
     ],
     "acceptance": [
       "Taskmaster #6 passes only when combat runs show enemies selecting targets by the defined priority and executing blocked-path fallback attacks whenever routes are obstructed. Refs: Game.Core.Tests/Services/EnemyAiTargetSelectionTests.cs Tests.Godot/tests/Scenes/Combat/test_enemy_ai_blocked_route_fallback.gd",
-      "On the Windows Godot+C# baseline, automated suites for priority selection, blocked-path fallback, fixed-seed determinism, and friendly-fire disablement all pass; any failing suite fails acceptance. Refs: Tests.Godot/tests/Integration/test_combat_friendly_fire_disabled.gd",
-      "With unchanged initial state and a fixed seed, deterministic simulation loop outputs match the approved baseline; any divergence is a determinism regression. Refs: Game.Core.Tests/Services/EnemyAiDecisionDeterminismTests.cs Game.Core.Tests/Engine/DeterministicSimulationLoopTests.cs",
+      "ACC:T6.2 On the Windows Godot+C# baseline, acceptance is determined by the specific semantic checks ACC:T6.4-ACC:T6.19; this line is a suite-gate summary only and not standalone semantic evidence. Refs: Tests.Godot/tests/Integration/test_combat_friendly_fire_disabled.gd",
+      "ACC:T6.3 With unchanged initial combat state and a fixed seed, EnemyAI decision traces (target picks + fallback labels) match the approved baseline; any divergence is a determinism regression. Refs: Game.Core.Tests/Services/EnemyAiDecisionDeterminismTests.cs Tests.Godot/tests/Integration/test_enemy_ai_target_selection_determinism.gd",
       "Given mixed targets and at least one reachable candidate, each enemy selects the highest reachable class in strict order: unit > castle > armed defense > wall/gate. Refs: Game.Core.Tests/Services/EnemyAiTargetSelectionTests.cs Tests.Godot/tests/Scenes/Combat/test_enemy_ai_navigation_priority.gd",
       "With identical initial state and the same fixed seed, ties among equal-priority candidates resolve to the same target across repeated executions. Refs: Game.Core.Tests/Services/EnemyAiDecisionDeterminismTests.cs",
       "When higher-priority targets are blocked, the enemy attacks the nearest structure blocking the route and does not idle or switch to unrelated non-blocking targets. Refs: Game.Core.Tests/Services/EnemyAiTargetSelectionTests.cs Tests.Godot/tests/Scenes/Combat/test_enemy_ai_blocked_route_fallback.gd",
@@ -484,7 +483,8 @@
       "Obligation lock O9 is satisfied only when automated tests verify fixed-seed deterministic behavior across repeated runs for this task. Refs: Game.Core.Tests/Services/EnemyAiDecisionDeterminismTests.cs",
       "For reachable candidates at the same priority, target selection compares deterministic path cost, and equal-cost ties are resolved only by the fixed seed so repeated runs stay identical. Refs: Game.Core.Tests/Services/EnemyAiTargetingServiceTests.cs Tests.Godot/tests/Integration/test_enemy_ai_target_selection_determinism.gd",
       "If the current target becomes unreachable or invalid at runtime, the enemy switches to the next reachable target under reachability-plus-priority rules and does not traverse non-navigable space to keep the old target. Refs: Game.Core.Tests/Services/EnemyAiRetargetingServiceTests.cs Tests.Godot/tests/Scenes/Combat/test_enemy_ai_retarget_unreachable_target.gd",
-      "Blocked-map regression runs emit pathing diagnostics for each fallback decision, and each enemy reaches a fallback attack within timeout instead of entering a no-move/no-attack deadlock. Refs: Game.Core.Tests/Services/EnemyAiPathingDiagnosticsTests.cs Tests.Godot/tests/Integration/test_enemy_ai_blocked_map_fallback_timeout.gd"
+      "Blocked-map regression runs emit pathing diagnostics for each fallback decision, and each enemy reaches a fallback attack within timeout instead of entering a no-move/no-attack deadlock. Refs: Game.Core.Tests/Services/EnemyAiPathingDiagnosticsTests.cs Tests.Godot/tests/Integration/test_enemy_ai_blocked_map_fallback_timeout.gd",
+      "ACC:T6.20 When at least one higher-priority target has a valid navigable path, EnemyAI must not enter blocked-path fallback mode or attack blocking structures; fallback is allowed only when routes to priority targets are obstructed. Refs: Game.Core.Tests/Services/EnemyAiTargetSelectionTests.cs Tests.Godot/tests/Scenes/Combat/test_enemy_ai_navigation_priority.gd"
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #6 primary behavior.",
