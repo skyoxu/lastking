@@ -8,6 +8,13 @@
 - Security profile: `host-safe`
 - Primary runtime: Windows desktop only
 
+## Quick Links
+
+- Project health dashboard: `docs/workflows/project-health-dashboard.md`
+- Stable public entrypoints: `docs/workflows/stable-public-entrypoints.md`
+- Script entrypoints index: `docs/workflows/script-entrypoints-index.md`
+- Prototype lane: `docs/workflows/prototype-lane.md`
+
 ## Quick Start (Windows)
 
 1. Install Godot .NET 4.5.1 and .NET 8 SDK.
@@ -38,6 +45,8 @@
 
 - Local hard checks:
   - `py -3 scripts/python/dev_cli.py run-local-hard-checks --godot-bin "$env:GODOT_BIN"`
+- Task recovery (canonical):
+  - `py -3 scripts/python/dev_cli.py resume-task --task-id <id>`
 - Gate bundle only:
   - `py -3 scripts/python/run_gate_bundle.py --mode hard --task-files .taskmaster/tasks/tasks_back.json .taskmaster/tasks/tasks_gameplay.json`
 - Task review pipeline:

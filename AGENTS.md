@@ -26,9 +26,11 @@ This file is the routing layer for `lastking`. Keep it short. Put durable detail
 4. `docs/agents/13-rag-sources-and-session-ssot.md`
 5. `DELIVERY_PROFILE.md`
 6. `docs/testing-framework.md`
-7. Newest file in `execution-plans/`
-8. Newest file in `decision-logs/`
-9. If a local review already ran: `logs/ci/<date>/sc-review-pipeline-task-<task>/latest.json`
+7. `docs/agents/16-directory-responsibilities.md`
+8. `docs/workflows/prototype-lane.md`
+9. Newest file in `execution-plans/`
+10. Newest file in `decision-logs/`
+11. If a local review already ran: `logs/ci/<date>/sc-review-pipeline-task-<task>/latest.json`
 
 ## Authoritative Sources
 Use these sources first. Do not rebuild ad-hoc indexes unless the task explicitly requires it.
@@ -43,6 +45,8 @@ Use these sources first. Do not rebuild ad-hoc indexes unless the task explicitl
 ## Core Execution Entry Points
 - Repo-scoped hard validation:
   - `py -3 scripts/python/dev_cli.py run-local-hard-checks --godot-bin <path>`
+- Canonical task recovery:
+  - `py -3 scripts/python/dev_cli.py resume-task --task-id <id>`
 - Task-scoped review pipeline:
   - `py -3 scripts/sc/run_review_pipeline.py --task-id <id> --godot-bin <path>`
 - Recovery doc validation:
