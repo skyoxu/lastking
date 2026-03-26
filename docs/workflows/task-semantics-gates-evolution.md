@@ -1,8 +1,5 @@
 # 工作流说明：任务语义门禁与测试证据链（当前版本）
 
-> NOTE (Unified Entry): Task-level test + acceptance + LLM review should run via `py -3 scripts/sc/run_review_pipeline.py --task-id <id>`; do not manually chain `scripts/sc/test.py` + `scripts/sc/acceptance_check.py` + `scripts/sc/llm_review.py`.
-
-
 本文档记录本仓库近期对“每任务交付工作流”的增量优化，目标是降低“done 不真实”的概率：让脚本不仅对编译/单测负责，也能对任务语义（acceptance/test_strategy）形成可核验的证据链，并在关键阶段 fail-fast。
 
 ## 关键文件与脚本索引（截至当前版本）
@@ -397,24 +394,20 @@ py -3 scripts/sc/build.py tdd --task-id <id> --stage refactor
 - 只做局部复核（快）：用 `--only` 过滤步骤。
 - 涉及 Godot `.gd` 测试：传 `--godot-bin`（或设置 `GODOT_BIN`）；需要把 headless 工件作为证据链时加 `--require-headless-e2e`。
 - 需要“证据链严格”：加 `--require-task-test-refs` 与 `--require-executed-refs`。
-- 安全姿态建议显式传参：日常用 `--security-profile host-safe`；发布收口或高风险改动用 `--security-profile strict`。
 
 ```powershell
 # 默认全跑（确定性）
-py -3 scripts/sc/acceptance_check.py --task-id <id> --out-per-task --security-profile host-safe
+py -3 scripts/sc/acceptance_check.py --task-id <id> --out-per-task
 
 # 涉及 Godot 测试 + 性能硬门禁（p95）
 $env:GODOT_BIN="C:\Godot\Godot_v4.5.1-stable_mono_win64_console.exe"
-py -3 scripts/sc/acceptance_check.py --task-id <id> --out-per-task --security-profile host-safe --godot-bin "$env:GODOT_BIN" --perf-p95-ms 20
+py -3 scripts/sc/acceptance_check.py --task-id <id> --out-per-task --godot-bin "$env:GODOT_BIN" --perf-p95-ms 20
 
 # 证据链更严格（需要 anchors 被本次执行证明）
-py -3 scripts/sc/acceptance_check.py --task-id <id> --out-per-task --security-profile host-safe --require-task-test-refs --require-executed-refs
-
-# 发布收口/高风险任务（安全严格档位）
-py -3 scripts/sc/acceptance_check.py --task-id <id> --out-per-task --security-profile strict
+py -3 scripts/sc/acceptance_check.py --task-id <id> --out-per-task --require-task-test-refs --require-executed-refs
 
 # 只跑 links+tests（用于快速回归）
-py -3 scripts/sc/acceptance_check.py --task-id <id> --out-per-task --security-profile host-safe --only links,tests
+py -3 scripts/sc/acceptance_check.py --task-id <id> --out-per-task --only links,tests
 ```
 
 #### 2.6 LLM 软审查（结构化模板；用确定性证据约束跑偏）
@@ -709,10 +702,6 @@ py -3 scripts/python/check_test_naming.py --style legacy
 
 #### C5) 安全硬门/软扫（静态）与运行证据
 
-- `scripts/sc/acceptance_check.py --security-profile <host-safe|strict>`
-  - 作用：统一决定安全 gate 默认档位；解析顺序为 CLI > `SECURITY_PROFILE` > `host-safe`。
-  - 建议：本地与 CI 都显式传参，避免环境变量漂移。
-
 - `scripts/python/security_hard_path_gate.py`
   - 作用：路径安全不变量静态扫描（默认 hard gate）。
   - 参数：`--out <json>`。
@@ -768,3 +757,12 @@ py -3 scripts/python/check_test_naming.py --style legacy
   4) `py -3 scripts/sc/build.py tdd --task-id <id> --stage refactor`
   5) `py -3 scripts/sc/acceptance_check.py --task-id <id> --out-per-task --godot-bin "$env:GODOT_BIN" --perf-p95-ms 20`
   6) `py -3 scripts/sc/llm_review.py --task-id <id> --auto-commit --review-template scripts/sc/templates/llm_review/bmad-godot-review-template.txt`
+
+## 0) Delta alignment (2026-02)
+
+- `acceptance_check.py`: strengthened with `--security-profile`, `--require-task-test-refs`, `--require-executed-refs`, `--subtasks-coverage`, and `--out-per-task`.
+- `llm_review.py`: profile-aware risk context and task-scoped output path behavior.
+- `llm_extract_task_obligations.py`: stability controls via `--consensus-runs`, `--garbled-gate`, `--auto-escalate`.
+- `llm_check_subtasks_coverage.py`: supports `--consensus-runs`.
+- `llm_semantic_gate_all.py`: supports `--garbled-gate` precheck.
+- CI invariant: emit `SecurityProfile: <host-safe|strict>` in Step Summary.
