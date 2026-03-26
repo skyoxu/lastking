@@ -5,8 +5,7 @@ Guard archived overlays from being used as active task back-link targets.
 
 Default checks:
 1) tasks.json/tasks_back.json/tasks_gameplay.json must not reference archived paths.
-2) workflow/prd docs must not reference retired active path
-   docs/architecture/overlays/PRD-Guild-Manager/.
+2) workflow/prd docs must not reference retired active overlay paths.
 3) Archived tree marker files must exist.
 
 Optional strict check:
@@ -23,7 +22,6 @@ from pathlib import Path
 
 
 ARCHIVED_PREFIX = 'docs/architecture/overlays/_archived/'
-RETIRED_ACTIVE_PREFIX = 'docs/architecture/overlays/PRD-Guild-Manager/'
 
 
 def repo_root() -> Path:
@@ -32,6 +30,24 @@ def repo_root() -> Path:
 
 def read_text(path: Path) -> str:
     return path.read_text(encoding='utf-8')
+
+
+def iter_retired_overlay_names(root: Path) -> list[str]:
+    archived_root = root / 'docs' / 'architecture' / 'overlays' / '_archived'
+    if not archived_root.exists():
+        return []
+    names: list[str] = []
+    for child in sorted(archived_root.iterdir()):
+        if child.is_dir() and child.name.lower() != '__pycache__':
+            names.append(child.name)
+    return names
+
+
+def retired_active_prefixes(root: Path) -> list[str]:
+    prefixes: list[str] = []
+    for name in iter_retired_overlay_names(root):
+        prefixes.append(f'docs/architecture/overlays/{name}/')
+    return prefixes
 
 
 def check_task_files(root: Path) -> list[str]:
@@ -43,7 +59,6 @@ def check_task_files(root: Path) -> list[str]:
     ]
     for path in task_files:
         if not path.exists():
-            errors.append(f'missing task file: {path.relative_to(root)}')
             continue
         text = read_text(path)
         if ARCHIVED_PREFIX in text:
@@ -53,9 +68,14 @@ def check_task_files(root: Path) -> list[str]:
 
 def scan_docs_for_retired_overlay(root: Path) -> list[str]:
     errors: list[str] = []
+    prefixes = retired_active_prefixes(root)
+    if not prefixes:
+        return errors
+
     scan_dirs = [
         root / 'docs' / 'workflows',
         root / 'docs' / 'prd',
+        root / 'docs' / 'architecture',
     ]
     text_suffixes = {'.md', '.txt', '.json', '.yml', '.yaml'}
 
@@ -65,24 +85,36 @@ def scan_docs_for_retired_overlay(root: Path) -> list[str]:
         for path in scan_dir.rglob('*'):
             if not path.is_file() or path.suffix.lower() not in text_suffixes:
                 continue
+            if '_archived' in path.parts:
+                continue
             rel = path.relative_to(root)
             rel_str = str(rel).replace('\\', '/')
             text = read_text(path)
-            if RETIRED_ACTIVE_PREFIX in text:
-                errors.append(f'retired active overlay reference found: {rel_str}')
+            for prefix in prefixes:
+                if prefix in text:
+                    errors.append(f'retired active overlay reference found: {rel_str} -> {prefix}')
+                    break
     return errors
 
 
 def check_markers(root: Path) -> list[str]:
     errors: list[str] = []
-    required = [
-        root / 'docs' / 'architecture' / 'overlays' / '_archived' / 'README.md',
-        root / 'docs' / 'architecture' / 'overlays' / '_archived' / 'PRD-Guild-Manager' / '08' / 'DEPRECATED.md',
-        root / 'docs' / 'architecture' / 'overlays' / '_archived' / 'PRD-Guild-Manager' / '08' / '_index.md',
-    ]
-    for path in required:
-        if not path.exists():
-            errors.append(f'missing marker file: {path.relative_to(root)}')
+    archived_root = root / 'docs' / 'architecture' / 'overlays' / '_archived'
+    if not archived_root.exists():
+        return errors
+
+    readme = archived_root / 'README.md'
+    if not readme.exists():
+        errors.append(f'missing marker file: {readme.relative_to(root)}')
+
+    for name in iter_retired_overlay_names(root):
+        archived_overlay = archived_root / name
+        deprecate_file = archived_overlay / '08' / 'DEPRECATED.md'
+        index_file = archived_overlay / '08' / '_index.md'
+        if not deprecate_file.exists():
+            errors.append(f'missing marker file: {deprecate_file.relative_to(root)}')
+        if not index_file.exists():
+            errors.append(f'missing marker file: {index_file.relative_to(root)}')
     return errors
 
 

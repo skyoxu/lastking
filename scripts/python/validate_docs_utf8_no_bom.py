@@ -7,7 +7,7 @@ Default whitelist roots:
 - docs
 - .github
 - .taskmaster
-- Game.Core/Contracts/Config
+- Game.Core/Contracts
 
 Outputs:
 - logs/ci/<YYYY-MM-DD>/docs-utf8-guard/report.json
@@ -50,7 +50,7 @@ ALLOWED_ROOTS = [
     "docs",
     ".github",
     ".taskmaster",
-    "Game.Core/Contracts/Config",
+    "Game.Core/Contracts",
     "AGENTS.md",
 ]
 

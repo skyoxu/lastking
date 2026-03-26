@@ -26,6 +26,22 @@ def resolve_repo_path(path_text: str) -> Path:
         return path
     return repo_root() / path
 
+
+def known_delivery_profile_choices() -> list[str]:
+    config_path = repo_root() / "scripts" / "sc" / "config" / "delivery_profiles.json"
+    fallback = ["ea-fast", "normal", "rapid-commercial"]
+    if not config_path.exists():
+        return fallback
+    try:
+        data = json.loads(config_path.read_text(encoding="utf-8"))
+    except Exception:
+        return fallback
+    profiles = data.get("profiles")
+    if not isinstance(profiles, dict):
+        return fallback
+    choices = [str(key).strip() for key in profiles.keys() if str(key).strip()]
+    return sorted(set(choices)) or fallback
+
 def parse_args() -> argparse.Namespace:
     today = today_str()
     parser = argparse.ArgumentParser(description="Run obligations freeze orchestration pipeline.")
@@ -48,13 +64,23 @@ def parse_args() -> argparse.Namespace:
 
     # Pass-through knobs for run_obligations_jitter_batch5x3.py
     parser.add_argument("--task-ids", default="")
-    parser.add_argument("--tasks-file", default=".taskmaster/tasks/tasks.json")
+    parser.add_argument(
+        "--tasks-file",
+        default="",
+        help="Optional tasks file path. Empty lets downstream runner auto-resolve .taskmaster/tasks/tasks.json then examples/taskmaster/tasks.json.",
+    )
     parser.add_argument("--batch-size", type=int, default=5)
     parser.add_argument("--rounds", type=int, default=3)
     parser.add_argument("--start-group", type=int, default=1)
     parser.add_argument("--end-group", type=int, default=0)
     parser.add_argument("--timeout-sec", type=int, default=420)
     parser.add_argument("--round-id-prefix", default="jitter")
+    parser.add_argument(
+        "--delivery-profile",
+        default="",
+        choices=[""] + known_delivery_profile_choices(),
+        help="Optional delivery profile forwarded to jitter/extract steps.",
+    )
     parser.add_argument("--security-profile", default="", choices=("", "strict", "host-safe"))
     parser.add_argument("--consensus-runs", type=int, default=1)
     parser.add_argument("--min-obligations", type=int, default=0)
