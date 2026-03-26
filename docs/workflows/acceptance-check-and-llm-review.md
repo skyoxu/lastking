@@ -1,8 +1,5 @@
 # Acceptance Check 与 LLM Review：为何创建、如何演进、如何使用
 
-> NOTE (Unified Entry): Task-level test + acceptance + LLM review should run via `py -3 scripts/sc/run_review_pipeline.py --task-id <id>`; do not manually chain `scripts/sc/test.py` + `scripts/sc/acceptance_check.py` + `scripts/sc/llm_review.py`.
-
-
 本文件记录两个脚本的动机、演进与使用方式：
 
 - `scripts/sc/acceptance_check.py`：确定性“验收门禁”（目标对齐 Claude Code 的 `/acceptance-check`）
@@ -31,7 +28,6 @@
 - **硬门禁必须确定性**：构建/测试/回链/契约一致性/架构边界等，必须脚本化并可复现。
 - **LLM 只做软证据**：只做补充意见与留痕，不作为默认阻断（除非显式 `--strict`）。
 - **输出落盘**：所有检查写入 `logs/ci/<YYYY-MM-DD>/...`，便于对比、归档和排障。
-- **安全档位要显式**：命令优先显式传 `--security-profile`，避免环境变量导致跨机器结果漂移。
 
 ---
 
@@ -52,10 +48,6 @@
   - `tasks_back[].taskmaster_id`
   - `tasks_gameplay[].taskmaster_id`
 - 若存在 `taskdoc/<id>.md` 会作为附加上下文被记录在报告中（用于追溯）。
-- 安全档位解析顺序：
-  - 1) `--security-profile`
-  - 2) `SECURITY_PROFILE`
-  - 3) 默认 `host-safe`
 
 CI 集成说明（Windows Quality Gate）：
 
@@ -110,15 +102,6 @@ CI 集成说明（Windows Quality Gate）：
   - `py -3 scripts/sc/test.py --type all --godot-bin "$env:GODOT_BIN"`  
   或  
   - `py -3 scripts/python/smoke_headless.py --godot-bin "$env:GODOT_BIN" --project . --scene res://Game.Godot/Scenes/Main.tscn --timeout-sec 5 --mode strict`
-
-### 2.6 安全档位如何启用（建议显式）
-
-- 默认档位：`host-safe`（单机本地安全为硬门，反篡改默认降级）。
-- 严格档位：`strict`（安全相关 gate 全部硬门，适合发布收口或高风险改动）。
-- 示例：
-  - `py -3 scripts/sc/acceptance_check.py --task-id 10 --security-profile host-safe`
-  - `py -3 scripts/sc/acceptance_check.py --task-id 10 --security-profile strict`
-  - `py -3 scripts/sc/llm_review.py --task-id 10 --base main --security-profile host-safe`
 
 ---
 
@@ -193,9 +176,9 @@ py -3 scripts/sc/llm_review.py --task-id 10 --base main --strict
 每完成一个 `tasks.json` 的任务（或一个子任务提交）后：
 
 1) **硬门禁**：  
-   `py -3 scripts/sc/acceptance_check.py --task-id <id> --security-profile host-safe --godot-bin "$env:GODOT_BIN" --perf-p95-ms 20`
+   `py -3 scripts/sc/acceptance_check.py --task-id <id> --godot-bin "$env:GODOT_BIN" --perf-p95-ms 20`
 2) **软审查（可选）**：  
-   `py -3 scripts/sc/llm_review.py --task-id <id> --base main --security-profile host-safe`
+   `py -3 scripts/sc/llm_review.py --task-id <id> --base main`
 3) 通过后再进入下一个任务（避免质量债滚雪球）。
 
 ---
@@ -232,3 +215,12 @@ py -3 scripts/sc/llm_review.py --task-id 10 --base main --strict
 - 更新：`scripts/sc/README.md`（补充 llm_review 与 Claude agents 读取口径）
 
 > 说明：以上文件均属于“工具链/工作流层”，不应与游戏业务逻辑耦合。
+
+## 7. Update (2026-02)
+
+- `acceptance_check.py` (hard gate): profile-aware defaults via `--security-profile`; recommended to use `--require-task-test-refs` and `--require-executed-refs` for strict delivery phases.
+- `llm_review.py`: profile-aware risk context via `--security-profile`; task-specific output path is `sc-llm-review-task-<id>/` when `--task-id` is set.
+- `llm_extract_task_obligations.py`: use `--consensus-runs`, `--garbled-gate`, and `--auto-escalate` for stability.
+- `llm_check_subtasks_coverage.py`: supports `--consensus-runs`.
+- `llm_semantic_gate_all.py`: supports `--garbled-gate` precheck before LLM audit.
+- CI must emit: `SecurityProfile: <host-safe|strict>`.
