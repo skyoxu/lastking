@@ -1,4 +1,7 @@
 ---
+PRD-ID: PRD-lastking-T2
+Title: Day/Night Runtime State Machine
+Status: Locked
 review_status: approved
 reviewed_by: game-architect
 reviewed_at: 2026-03-09
