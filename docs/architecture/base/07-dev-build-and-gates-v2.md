@@ -4,7 +4,7 @@ status: base-SSoT
 generated_variant: deep-optimized
 ssot_scope: chapter-07-only
 reuse_level: base-clean
-adr_refs: [ADR-0011, ADR-0018, ADR-0025, ADR-0015, ADR-0019, ADR-0003]
+adr_refs: [ADR-0011, ADR-0018, ADR-0025, ADR-0015, ADR-0019, ADR-0031, ADR-0005, ADR-0003]
 placeholders: Unknown Product, unknown-product, gamedev, dev, 0.0.0, production, dev-team, dev-project
 derived_from: 07-dev-build-and-gates-v2.md
 last_generated: 2025-12-16
@@ -44,7 +44,9 @@ last_generated: 2025-12-16
 
 ### 3.2 Python（适合本地编排/扩展）
 
-- `py -3 scripts/python/quality_gates.py all --godot-bin \"$env:GODOT_BIN\" --solution Game.sln --configuration Debug --build-solutions`
+- 语义 / 契约硬门：`py -3 scripts/python/run_gate_bundle.py --mode hard --task-files .taskmaster/tasks/tasks_back.json .taskmaster/tasks/tasks_gameplay.json`
+- 领域单测 + 覆盖率：`py -3 scripts/python/run_dotnet.py --solution Game.sln --configuration Debug`
+- 含引擎小集：`py -3 scripts/python/quality_gates.py all --godot-bin $env:GODOT_BIN --gdunit-hard --smoke`
 
 ## 4) CI 工作流映射（仓库内）
 
@@ -57,3 +59,10 @@ last_generated: 2025-12-16
 
 - 统一目录：`logs/**`
 - 优先查看：`logs/ci/<YYYY-MM-DD>/`（门禁编排摘要、编码/文档扫描、Release Health 等）
+
+### 3.3 Task-scoped acceptance (recommended)
+
+- Fast ship profile (template default):
+  - `py -3 scripts/sc/run_review_pipeline.py --task-id <id> --godot-bin "$env:GODOT_BIN" --delivery-profile fast-ship --skip-llm-review`
+- Standard profile (release tightening):
+  - `py -3 scripts/sc/run_review_pipeline.py --task-id <id> --godot-bin "$env:GODOT_BIN" --delivery-profile standard --skip-llm-review`
