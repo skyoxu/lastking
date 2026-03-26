@@ -145,6 +145,11 @@ jobs:
         run: |
           py -3 scripts/python/ci_pipeline.py all --solution Game.sln --configuration Debug --godot-bin "$env:GODOT_BIN" --build-solutions
 
+      - name: Restore real taskmaster triplet before acceptance gate
+        shell: pwsh
+        run: |
+          git checkout -- .taskmaster/tasks/tasks.json .taskmaster/tasks/tasks_back.json .taskmaster/tasks/tasks_gameplay.json
+
       - name: Resolve acceptance task id (PR label / branch)
         id: resolve_acceptance_task
         shell: pwsh
