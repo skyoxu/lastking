@@ -356,7 +356,7 @@ public class GameStateManager
     {
         OnDayNightTerminal?.Invoke(terminal);
         Publish(DomainEvent.Create(
-            type: "core.lastking.daynight.terminal",
+            type: EventTypes.LastkingDayNightTerminal,
             source: nameof(GameStateManager),
             payload: new DayNightTerminalPayload(terminal.Day, terminal.Tick),
             timestamp: DateTime.UtcNow,

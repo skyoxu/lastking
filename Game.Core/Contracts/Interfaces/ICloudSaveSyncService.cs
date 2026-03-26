@@ -5,6 +5,11 @@ namespace Game.Core.Contracts.Interfaces;
 /// <summary>
 /// Encapsulates one-shot cloud save synchronization behavior.
 /// </summary>
+/// <remarks>
+/// ADR refs: ADR-0004.
+/// Overlay refs:
+/// - docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md
+/// </remarks>
 public interface ICloudSaveSyncService
 {
     /// <summary>

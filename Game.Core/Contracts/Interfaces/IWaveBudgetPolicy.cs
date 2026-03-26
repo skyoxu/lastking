@@ -5,6 +5,11 @@ namespace Game.Core.Contracts.Interfaces;
 /// <summary>
 /// Provides deterministic nightly budget computation for spawn planning.
 /// </summary>
+/// <remarks>
+/// ADR refs: ADR-0004, ADR-0032.
+/// Overlay refs:
+/// - docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md
+/// </remarks>
 public interface IWaveBudgetPolicy
 {
     /// <summary>

@@ -1,4 +1,5 @@
 using Godot;
+using Game.Core.Contracts;
 using Game.Godot.Adapters;
 using System.Text.Json;
 
@@ -43,7 +44,7 @@ public partial class HUD : Control
             return;
         }
 
-        if (type == "core.score.updated" || type == "score.changed")
+        if (type == EventTypes.ScoreUpdated || type == "score.changed")
         {
             try
             {
@@ -60,7 +61,7 @@ public partial class HUD : Control
             }
             catch { }
         }
-        else if (type == "core.health.updated" || type == "player.health.changed")
+        else if (type == EventTypes.HealthUpdated || type == "player.health.changed")
         {
             try
             {

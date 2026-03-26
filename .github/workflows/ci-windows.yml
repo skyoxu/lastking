@@ -44,6 +44,11 @@ jobs:
         with:
           python-version: '3.x'
 
+      - name: Run gate bundle (hard)
+        shell: pwsh
+        run: |
+          py -3 scripts/python/run_gate_bundle.py --mode hard --task-files .taskmaster/tasks/tasks_back.json .taskmaster/tasks/tasks_gameplay.json
+
       - name: Forbid manual sc triplet command examples (hard)
         shell: pwsh
         run: |
