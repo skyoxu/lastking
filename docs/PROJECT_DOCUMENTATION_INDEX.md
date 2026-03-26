@@ -1,49 +1,37 @@
-# lastking 文档索引
+# Project Documentation Index (lastking)
 
-> 项目名：`lastking`  
-> 技术口径：Godot 4.5.x + C#/.NET 8（Windows-only）
+This file is the top-level navigation for project docs.
 
-## 入口文档
+## Start Order After Context Reset
 
-- 项目总览：`README.md`
-- 协作规范：`AGENTS.md`
-- 架构与门禁口径：`CLAUDE.md`
+1. `README.md`
+2. `docs/agents/00-index.md`
+3. `docs/PROJECT_DOCUMENTATION_INDEX.md`
+4. `docs/agents/13-rag-sources-and-session-ssot.md`
+5. `DELIVERY_PROFILE.md`
+6. `docs/testing-framework.md`
+7. Newest file in `execution-plans/`
+8. Newest file in `decision-logs/`
+9. If available: `logs/ci/<date>/sc-review-pipeline-task-<task>/latest.json`
 
-## 快速开始
+## Authoritative Sources
 
-- 上手指南：`docs/TEMPLATE_GODOT_GETTING_STARTED.md`
-- 测试框架：`docs/testing-framework.md`
-- 手动发布：`docs/release/WINDOWS_MANUAL_RELEASE.md`
+- Taskmaster triplet: `.taskmaster/tasks/tasks.json`, `.taskmaster/tasks/tasks_back.json`, `.taskmaster/tasks/tasks_gameplay.json`
+- PRD: `.taskmaster/docs/prd.txt`, `docs/prd/**`
+- ADR: `docs/adr/ADR-*.md`, `docs/architecture/ADR_INDEX_GODOT.md`
+- Base architecture: `docs/architecture/base/**`
+- Overlay slices: `docs/architecture/overlays/PRD-lastking-T2/08/**`
+- Testing rules: `docs/testing-framework.md`
+- Delivery/run protocol: `DELIVERY_PROFILE.md`, `docs/workflows/run-protocol.md`, `docs/workflows/local-hard-checks.md`
 
-## 架构与 ADR
+## Workflow Docs
 
-- Base 架构总览：`docs/architecture/base/00-README.md`
-- ADR 索引：`docs/architecture/ADR_INDEX_GODOT.md`
-- ADR 目录：`docs/adr/`
+- Upgrade guide: `docs/workflows/business-repo-upgrade-guide.md`
+- Template upgrade protocol: `docs/workflows/template-upgrade-protocol.md`
+- Project health dashboard: `docs/workflows/project-health-dashboard.md`
+- Local hard checks: `docs/workflows/local-hard-checks.md`
 
-## 迁移资料（历史对照）
+## Evidence and Logs
 
-- 迁移索引：`docs/migration/MIGRATION_INDEX.md`
-- 迁移阶段文档：`docs/migration/`
-
-说明：`docs/migration/**` 用于历史迁移与对照，不作为当前运行时代码的唯一事实来源。
-
-## 工作流文档
-
-- 可玩度与发布流程：`docs/workflows/GM-NG-T2-playable-guide.md`
-- 文档收敛流程：`docs/workflows/doc-stack-convergence-guide.md`
-- SuperClaude 指令参考：`docs/workflows/superclaude-command-reference.md`
-- TaskMaster 集成：`docs/workflows/task-master-superclaude-integration.md`
-
-## 脚本入口
-
-- 质量门禁：`scripts/ci/quality_gate.ps1`
-- Base 文档校验：`scripts/ci/verify_base_clean.ps1`
-- 文档编码校验：`scripts/python/check_encoding.py`
-- 旧术语扫描：`scripts/python/scan_doc_stack_terms.py`
-
-## 日志目录
-
-- CI 日志：`logs/ci/`
-- 审计日志：`logs/security/`
-
+- CI and local evidence: `logs/ci/<YYYY-MM-DD>/`
+- Review pipeline artifact entry: `logs/ci/<YYYY-MM-DD>/sc-review-pipeline-task-<task>/latest.json`

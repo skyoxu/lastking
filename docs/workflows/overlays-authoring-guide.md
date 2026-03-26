@@ -171,8 +171,8 @@ overlays 只做引用：
 
 1) 口径文档（引用型）：
    - `docs/adr/ADR-0004-event-bus-and-contracts.md`
-   - `docs/architecture/overlays/<PRD-ID>/08/08-Contracts-CloudEvent.md`（示例见 `PRD-lastking-T2`）
-   - `docs/architecture/overlays/<PRD-ID>/08/08-Contracts-CloudEvents-Core.md`（示例见 `PRD-lastking-T2`）
+   - `docs/architecture/overlays/<PRD-ID>/08/08-Contracts-T2.md` (current project uses `PRD-lastking-T2`)
+   - `docs/architecture/overlays/<PRD-ID>/08/08-Feature-Slice-T2-Core-Loop.md` (current project uses `PRD-lastking-T2`)
 2) 契约自检（脚本生成报告，用于开工前对齐，非 SSoT）：
    - `py -3 scripts/python/check_domain_contracts.py`（输出到 `logs/ci/<YYYY-MM-DD>/domain-contracts-check/summary.json`）
    - `py -3 scripts/python/generate_contracts_catalog.py --prd-id <PRD-ID>`（输出到 `logs/ci/<YYYY-MM-DD>/contracts-catalog/`；说明见 `docs/workflows/contracts-catalog-guide.md`）
@@ -214,6 +214,21 @@ overlays 只做引用：
 5) 回填任务视图（最关键）：
    - 把每个 Task 的 `overlay_refs` 指到 `_index.md`、`ACCEPTANCE_CHECKLIST.md`、以及该任务对应页。
 6) 跑确定性校验（见下一节），确保回链不漂移。
+
+### 6.1 Overlay Generator Bootstrap
+
+When a new PRD wave first lands, do not hand-write the whole `08/` tree. Generate candidate pages first, then review and apply in small batches.
+
+- Quickstart: `docs/workflows/overlay-generation-quickstart.md`
+- SOP: `docs/workflows/overlay-generation-sop.md`
+- Batch entry: `py -3 scripts/sc/llm_generate_overlays_batch.py`
+- Single-page repair: `py -3 scripts/sc/llm_generate_overlays_from_prd.py`
+
+Stop-loss rules:
+
+- Every path listed in `--prd-docs` is treated as required input; a missing file hard-fails the run.
+- If `docs/architecture/overlays/<PRD-ID>/08/` already exists, the generator reuses the current page profile instead of forcing a rewrite.
+- First pass should be `dry-run -> simulate`; do not start with full `--apply`.
 
 ## 7. 推荐的确定性校验（Windows）
 
