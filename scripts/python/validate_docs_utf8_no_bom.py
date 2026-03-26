@@ -89,9 +89,23 @@ def normalize_rel(path: Path, root: Path) -> str:
     return str(path.relative_to(root)).replace("\\", "/")
 
 
+def _is_root_allowed(candidate: str, allowed_roots: list[str]) -> bool:
+    normalized = candidate.strip().replace("\\", "/").strip("/")
+    if not normalized:
+        return False
+    for allowed in allowed_roots:
+        base = allowed.strip().replace("\\", "/").strip("/")
+        if not base:
+            continue
+        if normalized == base:
+            return True
+        if normalized.startswith(base + "/"):
+            return True
+    return False
+
+
 def ensure_roots_allowed(roots: list[str]) -> tuple[list[str], list[str]]:
-    allowed = set(ALLOWED_ROOTS)
-    bad = [r for r in roots if r not in allowed]
+    bad = [r for r in roots if not _is_root_allowed(r, ALLOWED_ROOTS)]
     return roots, bad
 
 
