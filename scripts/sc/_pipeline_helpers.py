@@ -20,7 +20,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--run-id", default=None, help="New run id for normal/fork mode, or selector for resume/abort.")
     parser.add_argument("--fork-from-run-id", default=None, help="Optional source run id selector when using --fork.")
     parser.add_argument("--godot-bin", default=None, help="Godot binary path (or env GODOT_BIN).")
-    parser.add_argument("--delivery-profile", default=None, choices=["playable-ea", "fast-ship", "standard"], help="Delivery profile (default: env DELIVERY_PROFILE or fast-ship).")
+    parser.add_argument("--delivery-profile", default=None, choices=["playable-ea", "fast-ship", "standard"], help="Delivery profile (default: env DELIVERY_PROFILE or playable-ea).")
     parser.add_argument("--security-profile", default=None, choices=["strict", "host-safe"])
     parser.add_argument("--skip-test", action="store_true", help="Skip sc-test step.")
     parser.add_argument("--skip-acceptance", action="store_true", help="Skip sc-acceptance-check step.")

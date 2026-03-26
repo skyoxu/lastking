@@ -28,7 +28,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--delivery-profile",
         default=None,
         choices=DELIVERY_PROFILE_CHOICES,
-        help="Delivery profile (default: env DELIVERY_PROFILE or fast-ship).",
+        help="Delivery profile (default: env DELIVERY_PROFILE or playable-ea).",
     )
     ap.add_argument("--review-profile", default="default", choices=["default", "bmad-godot"], help="Inject a structured review template into prompts.")
     ap.add_argument("--review-template", default="", help="Optional template file path (relative to repo root). Overrides --review-profile.")

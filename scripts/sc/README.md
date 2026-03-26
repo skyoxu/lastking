@@ -90,7 +90,7 @@ py -3 scripts/sc/llm_generate_tests_from_acceptance_refs.py --task-id 11 --tdd-s
   - `--delivery-profile playable-ea`：最轻门禁，优先验证可玩性；默认派生 `security-profile=host-safe`；`agent_review.mode=skip`
   - `--delivery-profile fast-ship`：快速交付档位；默认派生 `security-profile=host-safe`；`agent_review.mode=warn`
   - `--delivery-profile standard`：标准收口档位；默认派生 `security-profile=strict`；`agent_review.mode=require`
-  - 解析顺序：CLI `--delivery-profile` > `DELIVERY_PROFILE` > `scripts/sc/config/delivery_profiles.json` 中的 `default_profile`（当前为 `fast-ship`）
+  - 解析顺序：CLI `--delivery-profile` > `DELIVERY_PROFILE` > `scripts/sc/config/delivery_profiles.json` 中的 `default_profile`（当前为 `playable-ea`）
   - `--security-profile` 仅用于显式覆写派生结果；解析顺序：CLI > `SECURITY_PROFILE` > 由 `delivery-profile` 派生
 
   - `run_review_pipeline.py` normalizes agent-review verdicts into marathon guidance: isolated `needs-fix` -> `resume`, cross-step `needs-fix` -> `refresh`, and cross-step `block` or high-severity integrity issues -> `fork`; these hints only update sidecars and do not rewrite `summary.json`.

@@ -59,7 +59,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--delivery-profile",
         default=None,
         choices=DELIVERY_PROFILE_CHOICES,
-        help="Delivery profile (default: env DELIVERY_PROFILE or fast-ship).",
+        help="Delivery profile (default: env DELIVERY_PROFILE or playable-ea).",
     )
     ap.add_argument(
         "--security-profile",

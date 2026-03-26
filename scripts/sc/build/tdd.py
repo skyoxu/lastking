@@ -69,7 +69,7 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("--task-id", default=None, help="task id; defaults to first status=in-progress in tasks.json")
     ap.add_argument("--solution", default="Game.sln")
     ap.add_argument("--configuration", default="Debug")
-    ap.add_argument("--delivery-profile", default=None, choices=DELIVERY_PROFILE_CHOICES, help="Delivery profile (default: env DELIVERY_PROFILE or fast-ship).")
+    ap.add_argument("--delivery-profile", default=None, choices=DELIVERY_PROFILE_CHOICES, help="Delivery profile (default: env DELIVERY_PROFILE or playable-ea).")
     ap.add_argument("--security-profile", default=None, choices=["strict", "host-safe"], help="Security profile override (default derives from delivery profile).")
     ap.add_argument("--generate-red-test", action="store_true", help="create a failing test skeleton if missing")
     ap.add_argument("--no-coverage-gate", action="store_true", help="do not enforce default coverage thresholds")

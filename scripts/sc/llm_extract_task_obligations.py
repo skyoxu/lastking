@@ -78,7 +78,7 @@ def main() -> int:
         "--delivery-profile",
         default=None,
         choices=["playable-ea", "fast-ship", "standard"],
-        help="Delivery profile (default: env DELIVERY_PROFILE or fast-ship).",
+        help="Delivery profile (default: env DELIVERY_PROFILE or playable-ea).",
     )
     parser.add_argument("--timeout-sec", type=int, default=None, help="codex exec timeout in seconds (default: profile).")
     parser.add_argument("--max-prompt-chars", type=int, default=None, help="Max prompt size (default: profile).")
