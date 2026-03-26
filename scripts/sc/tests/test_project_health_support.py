@@ -117,6 +117,8 @@ class ProjectHealthSupportTests(unittest.TestCase):
             self.assertIn("triplet missing", latest_html)
             self.assertIn("doctor ok", latest_html)
             self.assertIn("boundary fail", latest_html)
+            self.assertNotIn('http-equiv="refresh"', latest_html)
+            self.assertIn("Auto-refresh is disabled", latest_html)
 
 
 if __name__ == "__main__":

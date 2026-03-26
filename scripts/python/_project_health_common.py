@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import html
 import re
 from datetime import datetime
 from pathlib import Path
@@ -170,7 +171,219 @@ def load_latest_records(root: Path) -> list[dict[str, Any]]:
     return records
 
 
-def dashboard_html(records: list[dict[str, Any]], *, generated_at: str) -> str:
+def _safe(value: Any) -> str:
+    return html.escape(str(value), quote=True)
+
+
+def _read_json_if_exists(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {}
+    try:
+        payload = read_json(path)
+    except Exception:
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def _find_latest_local_hard_checks_latest(root: Path) -> tuple[Path | None, dict[str, Any]]:
+    candidates = sorted(
+        (root / "logs" / "ci").glob("*/local-hard-checks-latest.json"),
+        key=lambda item: item.stat().st_mtime,
+        reverse=True,
+    )
+    if not candidates:
+        return None, {}
+    chosen = candidates[0]
+    return chosen, _read_json_if_exists(chosen)
+
+
+def _render_kv_pairs(pairs: list[tuple[str, Any]]) -> str:
+    rows = []
+    for key, value in pairs:
+        rows.append(
+            f"<li><span class=\"k\">{_safe(key)}</span><code class=\"v\">{_safe(value)}</code></li>"
+        )
+    return "<ul class=\"kv\">" + "".join(rows) + "</ul>"
+
+
+def _render_record_details(item: dict[str, Any]) -> str:
+    kind = str(item.get("kind", "unknown"))
+    blocks: list[str] = []
+
+    blocks.append(
+        _render_kv_pairs(
+            [
+                ("generated_at", item.get("generated_at", "")),
+                ("history_json", item.get("history_json", "")),
+                ("latest_json", item.get("latest_json", "")),
+            ]
+        )
+    )
+
+    if kind == "detect-project-stage":
+        signals = item.get("signals", {}) if isinstance(item.get("signals"), dict) else {}
+        task_counts = signals.get("task_status_counts", {})
+        if isinstance(task_counts, dict):
+            blocks.append(
+                _render_kv_pairs(
+                    [
+                        ("task.done", task_counts.get("done", 0)),
+                        ("task.in_progress", task_counts.get("in_progress", 0)),
+                        ("task.other", task_counts.get("other", 0)),
+                    ]
+                )
+            )
+        signal_rows: list[tuple[str, Any]] = []
+        for key in (
+            "project_godot",
+            "readme",
+            "agents",
+            "real_task_triplet",
+            "example_task_triplet",
+            "overlay_indexes",
+            "contract_files",
+            "unit_test_files",
+        ):
+            if key in signals:
+                signal_rows.append((f"signal.{key}", signals.get(key)))
+        if signal_rows:
+            blocks.append(_render_kv_pairs(signal_rows))
+    elif kind == "doctor-project":
+        counts = item.get("counts", {}) if isinstance(item.get("counts"), dict) else {}
+        blocks.append(
+            _render_kv_pairs(
+                [
+                    ("check.ok", counts.get("ok", 0)),
+                    ("check.warn", counts.get("warn", 0)),
+                    ("check.fail", counts.get("fail", 0)),
+                ]
+            )
+        )
+        checks = item.get("checks", []) if isinstance(item.get("checks"), list) else []
+        selected = [entry for entry in checks if isinstance(entry, dict) and entry.get("status") != "ok"][:8]
+        if selected:
+            rows = []
+            for check in selected:
+                rows.append(
+                    f"<li><code>{_safe(check.get('id', 'unknown'))}</code> "
+                    f"<span class=\"pill { _safe(check.get('status', 'unknown')) }\">{_safe(check.get('status', 'unknown'))}</span> "
+                    f"<span>{_safe(check.get('summary', ''))}</span></li>"
+                )
+            blocks.append("<div class=\"sub\">non-ok checks</div><ul class=\"list\">" + "".join(rows) + "</ul>")
+    elif kind == "check-directory-boundaries":
+        violations = item.get("violations", []) if isinstance(item.get("violations"), list) else []
+        warnings = item.get("warnings", []) if isinstance(item.get("warnings"), list) else []
+        blocks.append(
+            _render_kv_pairs(
+                [
+                    ("boundary.violations", len(violations)),
+                    ("boundary.warnings", len(warnings)),
+                    ("rules_checked", len(item.get("rules_checked", [])) if isinstance(item.get("rules_checked"), list) else 0),
+                ]
+            )
+        )
+        preview_rows = []
+        for entry in (violations[:5] + warnings[:5]):
+            if not isinstance(entry, dict):
+                continue
+            preview_rows.append(
+                f"<li><code>{_safe(entry.get('rule_id', 'rule'))}</code> "
+                f"<span>{_safe(entry.get('path', ''))}</span></li>"
+            )
+        if preview_rows:
+            blocks.append("<div class=\"sub\">sample findings</div><ul class=\"list\">" + "".join(preview_rows) + "</ul>")
+
+    blocks.append(
+        "<details><summary>raw record</summary>"
+        + f"<pre>{_safe(json.dumps(item, ensure_ascii=False, indent=2))}</pre>"
+        + "</details>"
+    )
+    return "".join(blocks)
+
+
+def _render_context_panels(root: Path) -> str:
+    panels: list[str] = []
+
+    server = _read_json_if_exists(latest_dir(root) / "server.json")
+    if server:
+        panels.append(
+            "\n".join(
+                [
+                    "<section class=\"panel\">",
+                    "<h3>Server</h3>",
+                    _render_kv_pairs(
+                        [
+                            ("status", server.get("status", "")),
+                            ("url", server.get("url", "")),
+                            ("host", server.get("host", "")),
+                            ("port", server.get("port", "")),
+                            ("pid", server.get("pid", "")),
+                            ("started_at", server.get("started_at", "")),
+                            ("reused", server.get("reused", "")),
+                        ]
+                    ),
+                    "</section>",
+                ]
+            )
+        )
+
+    latest_path, latest_payload = _find_latest_local_hard_checks_latest(root)
+    if latest_payload:
+        summary_path = Path(str(latest_payload.get("summary_path", "")).strip())
+        summary = _read_json_if_exists(summary_path) if summary_path else {}
+        steps = summary.get("steps", []) if isinstance(summary.get("steps"), list) else []
+        ok_steps = sum(1 for step in steps if isinstance(step, dict) and str(step.get("status", "")).lower() == "ok")
+        fail_steps = sum(1 for step in steps if isinstance(step, dict) and str(step.get("status", "")).lower() == "fail")
+        warn_steps = sum(1 for step in steps if isinstance(step, dict) and str(step.get("status", "")).lower() == "warn")
+        panels.append(
+            "\n".join(
+                [
+                    "<section class=\"panel\">",
+                    "<h3>Latest Local Hard Checks</h3>",
+                    _render_kv_pairs(
+                        [
+                            ("latest_file", repo_rel(latest_path, root=root) if latest_path else ""),
+                            ("status", latest_payload.get("status", "")),
+                            ("run_id", latest_payload.get("run_id", "")),
+                            ("task_id", latest_payload.get("task_id", "")),
+                            ("summary_path", latest_payload.get("summary_path", "")),
+                            ("delivery_profile", summary.get("delivery_profile", "")),
+                            ("security_profile", summary.get("security_profile", "")),
+                            ("failed_step", summary.get("failed_step", "")),
+                            ("steps.total", len(steps)),
+                            ("steps.ok", ok_steps),
+                            ("steps.warn", warn_steps),
+                            ("steps.fail", fail_steps),
+                        ]
+                    ),
+                    "</section>",
+                ]
+            )
+        )
+
+    panels.append(
+        "\n".join(
+            [
+                "<section class=\"panel\">",
+                "<h3>Artifacts</h3>",
+                _render_kv_pairs(
+                    [
+                        ("dashboard.html", "logs/ci/project-health/latest.html"),
+                        ("dashboard.json", "logs/ci/project-health/latest.json"),
+                        ("stage.latest", "logs/ci/project-health/detect-project-stage.latest.json"),
+                        ("doctor.latest", "logs/ci/project-health/doctor-project.latest.json"),
+                        ("boundaries.latest", "logs/ci/project-health/check-directory-boundaries.latest.json"),
+                    ]
+                ),
+                "</section>",
+            ]
+        )
+    )
+
+    return "".join(panels)
+
+
+def dashboard_html(records: list[dict[str, Any]], *, generated_at: str, root: Path) -> str:
     overall = "ok"
     if any(item.get("status") == "fail" for item in records):
         overall = "fail"
@@ -187,6 +400,7 @@ def dashboard_html(records: list[dict[str, Any]], *, generated_at: str) -> str:
             extra.append(f"<div class=\"meta\">stage: {item['stage']}</div>")
         if item.get("history_json"):
             extra.append(f"<div class=\"meta\">history: {item['history_json']}</div>")
+        details_html = _render_record_details(item)
         cards.append(
             "\n".join(
                 [
@@ -196,16 +410,18 @@ def dashboard_html(records: list[dict[str, Any]], *, generated_at: str) -> str:
                     f"<p>{summary}</p>",
                     *extra,
                     f"<div class=\"meta\">latest json: {kind}.latest.json</div>",
+                    f"<div class=\"details\">{details_html}</div>",
                     "</section>",
                 ]
             )
         )
 
+    context_panels = _render_context_panels(root)
+
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="refresh" content="15">
   <title>Project Health Dashboard</title>
   <style>
     body {{ font-family: Segoe UI, Arial, sans-serif; background: #f4f6f8; color: #1f2933; margin: 0; }}
@@ -223,6 +439,23 @@ def dashboard_html(records: list[dict[str, Any]], *, generated_at: str) -> str:
     .card h2 {{ margin: 0 0 10px; font-size: 18px; }}
     .badge {{ display: inline-block; margin-bottom: 10px; font-size: 12px; font-weight: 700; text-transform: uppercase; }}
     .meta {{ color: #52606d; font-size: 12px; margin-top: 8px; word-break: break-all; }}
+    .details {{ margin-top: 10px; }}
+    .kv {{ list-style: none; padding: 0; margin: 0 0 10px; }}
+    .kv li {{ display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 10px; margin: 4px 0; align-items: baseline; }}
+    .kv .k {{ color: #52606d; font-size: 12px; }}
+    .kv .v {{ display: inline-block; font-size: 12px; word-break: break-all; }}
+    .sub {{ font-size: 12px; color: #52606d; margin: 10px 0 4px; text-transform: uppercase; letter-spacing: 0.02em; }}
+    .list {{ margin: 0 0 10px 18px; padding: 0; font-size: 12px; }}
+    .list li {{ margin: 4px 0; }}
+    .pill {{ display: inline-block; padding: 1px 6px; border-radius: 999px; font-size: 11px; text-transform: uppercase; margin-right: 6px; }}
+    .pill.warn {{ background: #fef3c7; color: #92400e; }}
+    .pill.fail {{ background: #fee2e2; color: #991b1b; }}
+    details {{ margin-top: 8px; }}
+    summary {{ cursor: pointer; color: #334e68; }}
+    pre {{ margin: 8px 0 0; padding: 10px; background: #0f172a; color: #e2e8f0; border-radius: 8px; max-height: 260px; overflow: auto; font-size: 11px; }}
+    .panels {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 22px; }}
+    .panel {{ background: #ffffff; border: 1px solid #d2d6dc; border-radius: 12px; padding: 16px; box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06); }}
+    .panel h3 {{ margin: 0 0 10px; font-size: 16px; }}
     .hint {{ margin-top: 20px; color: #52606d; font-size: 13px; }}
   </style>
 </head>
@@ -239,7 +472,10 @@ def dashboard_html(records: list[dict[str, Any]], *, generated_at: str) -> str:
     <div class="grid">
       {''.join(cards)}
     </div>
-    <div class="hint">Refresh is automatic every 15 seconds. The page only changes when one of the project-health commands writes a new latest record.</div>
+    <div class="panels">
+      {context_panels}
+    </div>
+    <div class="hint">Auto-refresh is disabled. Reload manually after running project-health or local-hard-check commands.</div>
   </main>
 </body>
 </html>
@@ -273,7 +509,7 @@ def refresh_dashboard(root: Path | str | None = None, *, now: datetime | None = 
     }
     latest_root = latest_dir(resolved_root)
     write_json(latest_root / "latest.json", payload)
-    write_text(latest_root / "latest.html", dashboard_html(records, generated_at=payload["generated_at"]))
+    write_text(latest_root / "latest.html", dashboard_html(records, generated_at=payload["generated_at"], root=resolved_root))
     return payload
 
 
