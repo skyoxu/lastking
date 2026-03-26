@@ -72,6 +72,7 @@ public static class EventTypes
     public const string HealthUpdated = "core.health.updated";
     public const string LastkingDayStarted = "core.lastking.day.started";
     public const string LastkingNightStarted = "core.lastking.night.started";
+    public const string LastkingDayNightTerminal = "core.lastking.daynight.terminal";
     public const string LastkingWaveSpawned = "core.lastking.wave.spawned";
     public const string LastkingCastleHpChanged = "core.lastking.castle.hp_changed";
     public const string LastkingRewardOffered = "core.lastking.reward.offered";

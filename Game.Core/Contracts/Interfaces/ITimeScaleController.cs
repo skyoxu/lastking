@@ -5,6 +5,11 @@ namespace Game.Core.Contracts.Interfaces;
 /// <summary>
 /// Controls and snapshots runtime speed state transitions.
 /// </summary>
+/// <remarks>
+/// ADR refs: ADR-0004, ADR-0030.
+/// Overlay refs:
+/// - docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md
+/// </remarks>
 public interface ITimeScaleController
 {
     /// <summary>

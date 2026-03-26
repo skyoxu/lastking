@@ -40,3 +40,33 @@ Updated: true
 - `py -3 scripts/python/validate_task_master_triplet.py`
 - `py -3 scripts/python/sync_task_overlay_refs.py --dry-run --prd-id PRD-lastking-T2`
 - `py -3 scripts/python/guard_archived_overlays.py --strict-git`
+
+## Task Drift Baseline
+
+<!-- TASK_BASELINE_START -->
+```json
+{
+  "generated_at": "2026-03-25T18:14:06.556133+00:00",
+  "files": [
+    {
+      "path": ".taskmaster/tasks/tasks.json",
+      "exists": true,
+      "sha256": "c23c64d8bd6edf7677f8d00d1dcf35986de870a911279cc677793140b0ea9ce1",
+      "bytes": 133580
+    },
+    {
+      "path": ".taskmaster/tasks/tasks_back.json",
+      "exists": true,
+      "sha256": "96fde113e518c4b2901a2eb2ae8267fa5d083c4a83b7ae9f8560b8bee44f949f",
+      "bytes": 282306
+    },
+    {
+      "path": ".taskmaster/tasks/tasks_gameplay.json",
+      "exists": true,
+      "sha256": "5e5bcd5e4239ef82bac76ec62d94ae6d615f28c9508b774aeb13e4ba7ea605e6",
+      "bytes": 280824
+    }
+  ]
+}
+```
+<!-- TASK_BASELINE_END -->

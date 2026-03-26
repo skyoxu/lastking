@@ -84,8 +84,9 @@
     ],
     "taskmaster_id": 1,
     "contractRefs": [
-      "Game.Core/Contracts/Lastking/BootstrapReady.cs"
-    ]
+      "core.lastking.bootstrap.ready"
+    ],
+    "semantic_review_tier": "targeted"
   },
   {
     "id": "GM-0102",
@@ -176,9 +177,10 @@
     ],
     "taskmaster_id": 2,
     "contractRefs": [
-      "Game.Core/Contracts/Lastking/ConfigLoaded.cs"
+      "core.lastking.config.loaded"
     ],
-    "evidence_refs": []
+    "evidence_refs": [],
+    "semantic_review_tier": "targeted"
   },
   {
     "id": "GM-0103",
@@ -199,7 +201,7 @@
       "ADR-0019"
     ],
     "chapter_refs": [
-      "CH05",
+      "CH02",
       "CH06",
       "CH04",
       "CH01",
@@ -254,10 +256,11 @@
     ],
     "taskmaster_id": 3,
     "contractRefs": [
-      "Game.Core/Contracts/Lastking/DayStarted.cs",
-      "Game.Core/Contracts/Lastking/NightStarted.cs"
+      "core.lastking.day.started",
+      "core.lastking.night.started"
     ],
-    "evidence_refs": []
+    "evidence_refs": [],
+    "semantic_review_tier": "targeted"
   },
   {
     "id": "GM-0104",
@@ -327,8 +330,9 @@
     ],
     "taskmaster_id": 4,
     "contractRefs": [
-      "Game.Core/Contracts/Lastking/WaveSpawned.cs"
-    ]
+      "core.lastking.wave.spawned"
+    ],
+    "semantic_review_tier": "targeted"
   },
   {
     "id": "GM-0105",
@@ -408,9 +412,10 @@
     ],
     "taskmaster_id": 5,
     "contractRefs": [
-      "Game.Core/Contracts/Lastking/WaveSpawned.cs"
+      "core.lastking.wave.spawned"
     ],
-    "evidence_refs": []
+    "evidence_refs": [],
+    "semantic_review_tier": "targeted"
   },
   {
     "id": "GM-0106",
@@ -493,9 +498,10 @@
     ],
     "taskmaster_id": 6,
     "contractRefs": [
-      "Game.Core/Contracts/Lastking/CastleHpChanged.cs"
+      "core.lastking.castle.hp_changed"
     ],
-    "evidence_refs": []
+    "evidence_refs": [],
+    "semantic_review_tier": "targeted"
   },
   {
     "id": "GM-0107",
@@ -580,9 +586,10 @@
     ],
     "taskmaster_id": 7,
     "contractRefs": [
-      "Game.Core/Contracts/Lastking/CastleHpChanged.cs"
+      "core.lastking.castle.hp_changed"
     ],
-    "evidence_refs": []
+    "evidence_refs": [],
+    "semantic_review_tier": "targeted"
   },
   {
     "id": "GM-0108",
@@ -651,9 +658,10 @@
     ],
     "taskmaster_id": 8,
     "contractRefs": [
-      "Game.Core/Contracts/Lastking/DayStarted.cs",
-      "Game.Core/Contracts/Lastking/CastleHpChanged.cs"
-    ]
+      "core.lastking.day.started",
+      "core.lastking.castle.hp_changed"
+    ],
+    "semantic_review_tier": "targeted"
   },
   {
     "id": "GM-0109",
@@ -730,11 +738,12 @@
     ],
     "taskmaster_id": 9,
     "contractRefs": [
-      "Game.Core/Contracts/Lastking/DayStarted.cs",
-      "Game.Core/Contracts/Lastking/NightStarted.cs",
-      "Game.Core/Contracts/Lastking/CastleHpChanged.cs"
+      "core.lastking.day.started",
+      "core.lastking.night.started",
+      "core.lastking.castle.hp_changed"
     ],
-    "evidence_refs": []
+    "evidence_refs": [],
+    "semantic_review_tier": "targeted"
   },
   {
     "id": "GM-0110",
@@ -827,13 +836,14 @@
     ],
     "taskmaster_id": 10,
     "contractRefs": [
-      "Game.Core/Contracts/Lastking/DayStarted.cs",
-      "Game.Core/Contracts/Lastking/NightStarted.cs",
-      "Game.Core/Contracts/Lastking/WaveSpawned.cs",
-      "Game.Core/Contracts/Lastking/CastleHpChanged.cs",
-      "Game.Core/Contracts/Lastking/RewardOffered.cs",
-      "Game.Core/Contracts/Lastking/SaveAutosaved.cs"
-    ]
+      "core.lastking.day.started",
+      "core.lastking.night.started",
+      "core.lastking.wave.spawned",
+      "core.lastking.castle.hp_changed",
+      "core.lastking.reward.offered",
+      "core.lastking.save.autosaved"
+    ],
+    "semantic_review_tier": "targeted"
   },
   {
     "id": "GM-0111",
@@ -921,9 +931,10 @@
     ],
     "taskmaster_id": 11,
     "contractRefs": [
-      "Game.Core/Contracts/Lastking/BootstrapReady.cs"
+      "core.lastking.bootstrap.ready"
     ],
-    "evidence_refs": []
+    "evidence_refs": [],
+    "semantic_review_tier": "targeted"
   },
   {
     "id": "GM-0112",
@@ -999,9 +1010,10 @@
     ],
     "taskmaster_id": 12,
     "contractRefs": [
-      "Game.Core/Contracts/Lastking/ResourcesChanged.cs"
+      "core.lastking.resources.changed"
     ],
-    "evidence_refs": []
+    "evidence_refs": [],
+    "semantic_review_tier": "targeted"
   },
   {
     "id": "GM-0113",
@@ -1086,9 +1098,10 @@
     ],
     "taskmaster_id": 13,
     "contractRefs": [
-      "Game.Core/Contracts/Lastking/UiFeedbackRaised.cs"
+      "core.lastking.ui_feedback.raised"
     ],
-    "evidence_refs": []
+    "evidence_refs": [],
+    "semantic_review_tier": "targeted"
   },
   {
     "id": "GM-0114",
@@ -1177,10 +1190,11 @@
     ],
     "taskmaster_id": 14,
     "contractRefs": [
-      "Game.Core/Contracts/Lastking/ResourcesChanged.cs",
-      "Game.Core/Contracts/Lastking/TaxCollected.cs"
+      "core.lastking.resources.changed",
+      "core.lastking.tax.collected"
     ],
-    "evidence_refs": []
+    "evidence_refs": [],
+    "semantic_review_tier": "targeted"
   },
   {
     "id": "GM-0115",
@@ -1267,9 +1281,10 @@
     ],
     "taskmaster_id": 15,
     "contractRefs": [
-      "Game.Core/Contracts/Lastking/UiFeedbackRaised.cs"
+      "core.lastking.ui_feedback.raised"
     ],
-    "evidence_refs": []
+    "evidence_refs": [],
+    "semantic_review_tier": "targeted"
   },
   {
     "id": "GM-0116",
@@ -1351,8 +1366,9 @@
     ],
     "taskmaster_id": 16,
     "contractRefs": [
-      "Game.Core/Contracts/Lastking/UiFeedbackRaised.cs"
-    ]
+      "core.lastking.ui_feedback.raised"
+    ],
+    "semantic_review_tier": "targeted"
   },
   {
     "id": "GM-0117",
@@ -1446,9 +1462,10 @@
     ],
     "taskmaster_id": 17,
     "contractRefs": [
-      "Game.Core/Contracts/Lastking/TechApplied.cs"
+      "core.lastking.tech.applied"
     ],
-    "evidence_refs": []
+    "evidence_refs": [],
+    "semantic_review_tier": "targeted"
   },
   {
     "id": "GM-0118",
@@ -1527,8 +1544,9 @@
     ],
     "taskmaster_id": 18,
     "contractRefs": [
-      "Game.Core/Contracts/Lastking/RewardOffered.cs"
-    ]
+      "core.lastking.reward.offered"
+    ],
+    "semantic_review_tier": "targeted"
   },
   {
     "id": "GM-0119",
@@ -1612,11 +1630,12 @@
     ],
     "taskmaster_id": 19,
     "contractRefs": [
-      "Game.Core/Contracts/Lastking/DayStarted.cs",
-      "Game.Core/Contracts/Lastking/NightStarted.cs",
-      "Game.Core/Contracts/Lastking/CastleHpChanged.cs"
+      "core.lastking.day.started",
+      "core.lastking.night.started",
+      "core.lastking.castle.hp_changed"
     ],
-    "evidence_refs": []
+    "evidence_refs": [],
+    "semantic_review_tier": "targeted"
   },
   {
     "id": "GM-0120",
@@ -1693,9 +1712,10 @@
     ],
     "taskmaster_id": 20,
     "contractRefs": [
-      "Game.Core/Contracts/Lastking/CastleHpChanged.cs"
+      "core.lastking.castle.hp_changed"
     ],
-    "evidence_refs": []
+    "evidence_refs": [],
+    "semantic_review_tier": "targeted"
   },
   {
     "id": "GM-0121",
@@ -1772,8 +1792,9 @@
     ],
     "taskmaster_id": 21,
     "contractRefs": [
-      "Game.Core/Contracts/Lastking/WindowsRuntimeValidated.cs"
-    ]
+      "core.lastking.windows_runtime.validated"
+    ],
+    "semantic_review_tier": "targeted"
   },
   {
     "id": "GM-0122",
@@ -1845,9 +1866,10 @@
     ],
     "taskmaster_id": 22,
     "contractRefs": [
-      "Game.Core/Contracts/Lastking/CameraScrolled.cs"
+      "core.lastking.camera.scrolled"
     ],
-    "evidence_refs": []
+    "evidence_refs": [],
+    "semantic_review_tier": "targeted"
   },
   {
     "id": "GM-0123",
@@ -1939,9 +1961,10 @@
     ],
     "taskmaster_id": 23,
     "contractRefs": [
-      "Game.Core/Contracts/Lastking/TimeScaleChanged.cs"
+      "core.lastking.time_scale.changed"
     ],
-    "evidence_refs": []
+    "evidence_refs": [],
+    "semantic_review_tier": "targeted"
   },
   {
     "id": "GM-0124",
@@ -2030,9 +2053,10 @@
     ],
     "taskmaster_id": 24,
     "contractRefs": [
-      "Game.Core/Contracts/Lastking/UiFeedbackRaised.cs"
+      "core.lastking.ui_feedback.raised"
     ],
-    "evidence_refs": []
+    "evidence_refs": [],
+    "semantic_review_tier": "targeted"
   },
   {
     "id": "GM-0125",
@@ -2108,8 +2132,9 @@
     ],
     "taskmaster_id": 25,
     "contractRefs": [
-      "Game.Core/Contracts/Lastking/SaveAutosaved.cs"
-    ]
+      "core.lastking.save.autosaved"
+    ],
+    "semantic_review_tier": "targeted"
   },
   {
     "id": "GM-0126",
@@ -2193,10 +2218,11 @@
     ],
     "taskmaster_id": 26,
     "contractRefs": [
-      "Game.Core/Contracts/Lastking/SaveAutosaved.cs",
-      "Game.Core/Contracts/Lastking/CloudSaveSyncCompleted.cs"
+      "core.lastking.save.autosaved",
+      "core.lastking.cloud_save.sync.completed"
     ],
-    "evidence_refs": []
+    "evidence_refs": [],
+    "semantic_review_tier": "targeted"
   },
   {
     "id": "GM-0127",
@@ -2274,10 +2300,11 @@
     ],
     "taskmaster_id": 27,
     "contractRefs": [
-      "Game.Core/Contracts/Lastking/DayStarted.cs",
-      "Game.Core/Contracts/Lastking/CastleHpChanged.cs",
-      "Game.Core/Contracts/Lastking/RewardOffered.cs"
-    ]
+      "core.lastking.day.started",
+      "core.lastking.castle.hp_changed",
+      "core.lastking.reward.offered"
+    ],
+    "semantic_review_tier": "targeted"
   },
   {
     "id": "GM-0128",
@@ -2357,9 +2384,10 @@
     ],
     "taskmaster_id": 28,
     "contractRefs": [
-      "Game.Core/Contracts/Lastking/UiFeedbackRaised.cs"
+      "core.lastking.ui_feedback.raised"
     ],
-    "evidence_refs": []
+    "evidence_refs": [],
+    "semantic_review_tier": "targeted"
   },
   {
     "id": "GM-0129",
@@ -2431,8 +2459,9 @@
     ],
     "taskmaster_id": 29,
     "contractRefs": [
-      "Game.Core/Contracts/Lastking/AudioSettingsChanged.cs"
-    ]
+      "core.lastking.audio_settings.changed"
+    ],
+    "semantic_review_tier": "targeted"
   },
   {
     "id": "GM-0130",
@@ -2520,8 +2549,9 @@
     ],
     "taskmaster_id": 30,
     "contractRefs": [
-      "Game.Core/Contracts/Lastking/PerfSampled.cs"
-    ]
+      "core.lastking.perf.sampled"
+    ],
+    "semantic_review_tier": "targeted"
   },
   {
     "id": "GM-0131",
@@ -2592,12 +2622,10 @@
     ],
     "taskmaster_id": 31,
     "contractRefs": [
-      "Game.Core/Contracts/Config/enemy-config.schema.json",
-      "Game.Core/Contracts/Config/difficulty-config.schema.json",
-      "Game.Core/Contracts/Config/spawn-config.schema.json",
-      "Game.Core/Contracts/Config/pressure-normalization.config.schema.json"
+      "core.lastking.config.loaded"
     ],
-    "evidence_refs": []
+    "evidence_refs": [],
+    "semantic_review_tier": "targeted"
   },
   {
     "id": "GM-0132",
@@ -2669,8 +2697,9 @@
     ],
     "taskmaster_id": 32,
     "contractRefs": [
-      "Game.Core/Contracts/Config/enemy-config.schema.json"
-    ]
+      "core.lastking.config.loaded"
+    ],
+    "semantic_review_tier": "targeted"
   },
   {
     "id": "GM-0133",
@@ -2750,9 +2779,10 @@
     ],
     "taskmaster_id": 33,
     "contractRefs": [
-      "Game.Core/Contracts/Config/difficulty-config.schema.json"
+      "core.lastking.config.loaded"
     ],
-    "evidence_refs": []
+    "evidence_refs": [],
+    "semantic_review_tier": "targeted"
   },
   {
     "id": "GM-0134",
@@ -2815,8 +2845,9 @@
     ],
     "taskmaster_id": 34,
     "contractRefs": [
-      "Game.Core/Contracts/Config/spawn-config.schema.json"
-    ]
+      "core.lastking.config.loaded"
+    ],
+    "semantic_review_tier": "targeted"
   },
   {
     "id": "GM-0135",
@@ -2888,8 +2919,9 @@
     ],
     "taskmaster_id": 35,
     "contractRefs": [
-      "Game.Core/Contracts/Config/pressure-normalization.config.schema.json"
-    ]
+      "core.lastking.config.loaded"
+    ],
+    "semantic_review_tier": "targeted"
   },
   {
     "id": "GM-0136",
@@ -2956,10 +2988,9 @@
     ],
     "taskmaster_id": 36,
     "contractRefs": [
-      "Game.Core/Contracts/Config/difficulty-config.sample.json",
-      "Game.Core/Contracts/Config/spawn-config.sample.json",
-      "Game.Core/Contracts/Config/pressure-normalization.config.sample.json"
-    ]
+      "core.lastking.config.loaded"
+    ],
+    "semantic_review_tier": "targeted"
   },
   {
     "id": "GM-0137",
@@ -3039,8 +3070,9 @@
     ],
     "taskmaster_id": 37,
     "contractRefs": [
-      "Game.Core/Contracts/Config/spawn-config.validator.rules.md"
-    ]
+      "core.lastking.config.loaded"
+    ],
+    "semantic_review_tier": "targeted"
   },
   {
     "id": "GM-0138",
@@ -3124,9 +3156,10 @@
     ],
     "taskmaster_id": 38,
     "contractRefs": [
-      "Game.Core/Contracts/Config/config-change-audit.schema.json"
+      "core.lastking.config.loaded"
     ],
-    "evidence_refs": []
+    "evidence_refs": [],
+    "semantic_review_tier": "targeted"
   },
   {
     "id": "GM-0139",
@@ -3193,8 +3226,9 @@
     ],
     "taskmaster_id": 39,
     "contractRefs": [
-      "Game.Core/Contracts/Config/config-change-audit.schema.json"
-    ]
+      "core.lastking.config.loaded"
+    ],
+    "semantic_review_tier": "targeted"
   },
   {
     "id": "GM-0140",
@@ -3273,8 +3307,9 @@
     ],
     "taskmaster_id": 40,
     "contractRefs": [
-      "Game.Core/Contracts/Config/difficulty-config.schema.json"
+      "core.lastking.config.loaded"
     ],
-    "evidence_refs": []
+    "evidence_refs": [],
+    "semantic_review_tier": "targeted"
   }
 ]
