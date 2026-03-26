@@ -6,6 +6,7 @@ Runner for the obligations freeze orchestration pipeline.
 from __future__ import annotations
 
 import subprocess
+from typing import Any
 
 from _obligations_freeze_pipeline_common import (
     parse_args,
@@ -61,8 +62,6 @@ def main() -> int:
                 "py",
                 "-3",
                 "scripts/python/run_obligations_jitter_batch5x3.py",
-                "--tasks-file",
-                args.tasks_file,
                 "--batch-size",
                 str(args.batch_size),
                 "--rounds",
@@ -90,8 +89,12 @@ def main() -> int:
                 "--out-raw",
                 str(raw_path),
             ]
+            if str(args.tasks_file).strip():
+                cmd += ["--tasks-file", args.tasks_file]
             if str(args.task_ids).strip():
                 cmd += ["--task-ids", args.task_ids]
+            if str(getattr(args, "delivery_profile", "")).strip():
+                cmd += ["--delivery-profile", str(args.delivery_profile).strip()]
             if str(args.security_profile).strip():
                 cmd += ["--security-profile", args.security_profile]
             if bool(args.reuse_last_ok):
@@ -267,3 +270,7 @@ def main() -> int:
         write_pipeline_summary(out_dir, pipeline)
         print(f"ERROR: {pipeline['error']}")
         return 124
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
