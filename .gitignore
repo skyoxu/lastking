@@ -117,3 +117,5 @@ node_modules/
 # Task files
 # tasks.json
 # tasks/ 
+# Local temporary workspace
+.tmp/
