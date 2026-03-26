@@ -542,7 +542,7 @@ def main() -> int:
         "--delivery-profile",
         default=None,
         choices=DELIVERY_PROFILE_CHOICES,
-        help="Delivery profile (default: env DELIVERY_PROFILE or fast-ship).",
+        help="Delivery profile (default: env DELIVERY_PROFILE or playable-ea).",
     )
     parser.add_argument(
         "--task-links-max-warnings",

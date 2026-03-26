@@ -4,7 +4,7 @@
 
 ## Project Posture
 
-- Delivery profile: `fast-ship`
+- Delivery profile: `playable-ea`
 - Security profile: `host-safe`
 - Primary runtime: Windows desktop only
 

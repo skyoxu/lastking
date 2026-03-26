@@ -25,7 +25,7 @@ def resolve_delivery_profile(value: str | None = None) -> str:
         raw = str(os.environ.get('DELIVERY_PROFILE') or '').strip().lower()
     config = _load_config()
     profiles = {str(name).lower() for name in (config.get('profiles') or {}).keys()}
-    default_profile = str(config.get('default_profile') or 'fast-ship').strip().lower() or 'fast-ship'
+    default_profile = str(config.get('default_profile') or 'playable-ea').strip().lower() or 'playable-ea'
     return raw if raw in profiles else default_profile
 
 
