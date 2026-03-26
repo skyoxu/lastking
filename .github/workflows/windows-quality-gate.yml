@@ -165,7 +165,18 @@ jobs:
       - name: Restore real taskmaster triplet before acceptance gate
         shell: pwsh
         run: |
-          git checkout -- .taskmaster/tasks/tasks.json .taskmaster/tasks/tasks_back.json .taskmaster/tasks/tasks_gameplay.json
+          git restore --source=HEAD --staged --worktree .taskmaster/tasks/tasks.json .taskmaster/tasks/tasks_back.json .taskmaster/tasks/tasks_gameplay.json
+          @'
+          import json
+          from pathlib import Path
+          tasks = json.loads(Path('.taskmaster/tasks/tasks.json').read_text(encoding='utf-8'))
+          items = (tasks.get('master') or {}).get('tasks') or []
+          t11 = next((x for x in items if str(x.get('id')) == '11'), None)
+          title = str((t11 or {}).get('title') or '')
+          print(f\"TASK11_TITLE={title}\")
+          if title.lower().startswith('example:'):
+              raise SystemExit('task triplet restore failed: task 11 is still example payload')
+          '@ | py -3 -
 
       - name: Resolve acceptance task id (PR label / branch)
         id: resolve_acceptance_task
