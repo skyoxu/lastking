@@ -173,7 +173,7 @@ jobs:
           items = (tasks.get('master') or {}).get('tasks') or []
           t11 = next((x for x in items if str(x.get('id')) == '11'), None)
           title = str((t11 or {}).get('title') or '')
-          print(f\"TASK11_TITLE={title}\")
+          print(f"TASK11_TITLE={title}")
           if title.lower().startswith('example:'):
               raise SystemExit('task triplet restore failed: task 11 is still example payload')
           '@ | py -3 -
