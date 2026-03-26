@@ -42,7 +42,13 @@ Historical snapshots are written under `logs/ci/<YYYY-MM-DD>/project-health/`.
 ## Visual Page
 
 Open `logs/ci/project-health/latest.html` in a browser or VS Code preview.
-The page auto-refreshes every 15 seconds, so it can stay open while you rerun health commands.
+Auto-refresh is disabled by design. Manually reload the page after each scan.
+The page now includes:
+
+- Stage/Doctor/Boundary cards with expanded detail blocks and raw JSON preview.
+- Local hard-check snapshot summary (when `local-hard-checks-latest.json` exists).
+- Current local server status (`server.json`) and dashboard artifact quick paths.
+
 It is still a static local file: the content only changes when one of the commands writes a new latest record.
 
 ## Template-Specific Interpretation
