@@ -3,7 +3,9 @@ from __future__ import annotations
 import re
 from typing import Any
 
-RUN_ID_RE = re.compile(r"^(?:[A-Fa-f0-9]{32}|[A-Za-z0-9][A-Za-z0-9._:-]{2,127})$")
+from _summary_schema_local_hard_checks import validate_local_hard_checks_without_jsonschema as _validate_local_hard_checks_impl
+
+RUN_ID_RE = re.compile(r"^[A-Fa-f0-9]{32}$")
 TASK_ID_RE = re.compile(r"^[0-9]+$")
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 SEMVER_RE = re.compile(r"^\d+\.\d+\.\d+$")
@@ -19,28 +21,18 @@ SC_ACCEPTANCE_MODES = {"self-check", "dry-run-plan", "run"}
 SC_ACCEPTANCE_STATUS = {"ok", "fail"}
 SC_ACCEPTANCE_SUBTASKS_MODE = {"skip", "warn", "require"}
 GATE_MODE = {"skip", "warn", "require"}
-
-
 def _is_int_not_bool(value: Any) -> bool:
     return isinstance(value, int) and not isinstance(value, bool)
-
-
 def _is_optional_int_not_bool(value: Any) -> bool:
     return value is None or _is_int_not_bool(value)
-
-
 def _is_non_empty_string(value: Any) -> bool:
     return isinstance(value, str) and bool(value.strip())
-
-
 def _is_string_list(value: Any, *, allow_empty: bool) -> bool:
     if not isinstance(value, list):
         return False
     if not allow_empty and len(value) == 0:
         return False
     return all(_is_non_empty_string(x) for x in value)
-
-
 def _validate_gate_mode_map(value: Any, *, base_path: str) -> list[str]:
     errors: list[str] = []
     required = {
@@ -64,8 +56,6 @@ def _validate_gate_mode_map(value: Any, *, base_path: str) -> list[str]:
         if not isinstance(gate_value, str) or gate_value not in GATE_MODE:
             errors.append(f"{base_path}.{key}: must be one of {sorted(GATE_MODE)}")
     return errors
-
-
 def validate_pipeline_without_jsonschema(payload: dict[str, Any]) -> list[str]:
     errors: list[str] = []
     if not isinstance(payload, dict):
@@ -102,7 +92,7 @@ def validate_pipeline_without_jsonschema(payload: dict[str, Any]) -> list[str]:
 
     run_id = payload.get("run_id")
     if not isinstance(run_id, str) or not RUN_ID_RE.match(run_id):
-        errors.append("$.run_id: must match /^[A-Fa-f0-9]{32}$/ or /^[A-Za-z0-9][A-Za-z0-9._:-]{2,127}$/")
+        errors.append("$.run_id: must match /^[A-Fa-f0-9]{32}$/")
 
     for key in ("allow_overwrite", "force_new_run_id"):
         if not isinstance(payload.get(key), bool):
@@ -174,7 +164,7 @@ def validate_sc_test_without_jsonschema(payload: dict[str, Any]) -> list[str]:
     if payload.get("cmd") != "sc-test":
         errors.append("$.cmd: must equal 'sc-test'")
     if not isinstance(payload.get("run_id"), str) or not RUN_ID_RE.match(payload.get("run_id")):
-        errors.append("$.run_id: must match /^[A-Fa-f0-9]{32}$/ or /^[A-Za-z0-9][A-Za-z0-9._:-]{2,127}$/")
+        errors.append("$.run_id: must match /^[A-Fa-f0-9]{32}$/")
 
     task_id = payload.get("task_id")
     if task_id is not None and (not isinstance(task_id, str) or not task_id.strip() or not TASK_ID_RE.match(task_id)):
@@ -323,7 +313,7 @@ def validate_sc_acceptance_without_jsonschema(payload: dict[str, Any]) -> list[s
             errors.append("$.arg_validation.valid: must be boolean")
 
     if "run_id" in payload and (not isinstance(payload.get("run_id"), str) or not RUN_ID_RE.match(payload.get("run_id"))):
-        errors.append("$.run_id: must match /^[A-Fa-f0-9]{32}$/ or /^[A-Za-z0-9][A-Za-z0-9._:-]{2,127}$/ when present")
+        errors.append("$.run_id: must match /^[A-Fa-f0-9]{32}$/ when present")
     if "task_id" in payload and (not isinstance(payload.get("task_id"), str) or not TASK_ID_RE.match(payload.get("task_id"))):
         errors.append("$.task_id: must be numeric string when present")
     if "title" in payload and not isinstance(payload.get("title"), str):
@@ -396,3 +386,12 @@ def validate_sc_acceptance_without_jsonschema(payload: dict[str, Any]) -> list[s
                 errors.append(f"$.{key}: required when mode=dry-run-plan")
 
     return errors
+
+
+def validate_local_hard_checks_without_jsonschema(payload: dict[str, Any]) -> list[str]:
+    return _validate_local_hard_checks_impl(
+        payload,
+        is_non_empty_string=_is_non_empty_string,
+        is_string_list=_is_string_list,
+        is_int_not_bool=_is_int_not_bool,
+    )

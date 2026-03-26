@@ -103,14 +103,6 @@ def _run_consensus_for_task(
     max_refs_per_item: int,
     consensus_runs: int,
 ) -> tuple[bool, dict[str, dict[int, list[str]]], list[dict[str, Any]], list[str]]:
-    def _try_parse_mapping(raw: str, *, max_refs: int) -> tuple[bool, dict[str, dict[int, list[str]]], str]:
-        try:
-            obj = extract_json_object(raw)
-            mapping = parse_model_items_to_paths(items=obj.get("items"), max_refs_per_item=max_refs)
-            return True, mapping, ""
-        except Exception as exc:  # noqa: BLE001
-            return False, {"back": {}, "gameplay": {}}, str(exc)
-
     run_results: list[dict[str, Any]] = []
     cmd_ref: list[str] = []
     for run_index in range(1, max(1, consensus_runs) + 1):
@@ -122,21 +114,19 @@ def _run_consensus_for_task(
         if not cmd_ref:
             cmd_ref = cmd
         last_msg = read_text(last_msg_path) if last_msg_path.exists() else ""
-        one = {"run": run_index, "rc": rc, "status": "fail", "error": "", "direct_mapped": 0, "note": ""}
-        if not last_msg.strip():
+        one = {"run": run_index, "rc": rc, "status": "fail", "error": "", "direct_mapped": 0}
+        if rc != 0 or not last_msg.strip():
             one["error"] = "codex_exec_failed_or_empty"
             run_results.append(one)
             continue
-
-        parsed_ok, mapping, parse_error = _try_parse_mapping(last_msg, max_refs=max_refs_per_item)
-        if parsed_ok:
+        try:
+            obj = extract_json_object(last_msg)
+            mapping = parse_model_items_to_paths(items=obj.get("items"), max_refs_per_item=max_refs_per_item)
             one["status"] = "ok"
             one["mapping"] = mapping
             one["direct_mapped"] = int(sum(len(v) for v in mapping.values()))
-            if rc != 0:
-                one["note"] = "recovered_from_nonzero_rc"
-        else:
-            one["error"] = parse_error if rc == 0 else f"codex_exec_failed_or_empty:{parse_error}"
+        except Exception as exc:  # noqa: BLE001
+            one["error"] = str(exc)
         run_results.append(one)
 
     ok_runs = [r for r in run_results if str(r.get("status")) == "ok"]
@@ -178,6 +168,10 @@ def main() -> int:
         print(f"SC_LLM_ACCEPTANCE_REFS_SELF_CHECK status={'ok' if ok else 'fail'} out={out_dir}")
         return 0 if ok else 1
 
+    if not bool(args.all) and not str(args.task_id or "").strip():
+        print("SC_LLM_ACCEPTANCE_REFS ERROR: specify --task-id <n> or --all")
+        return 2
+
     root = repo_root()
     out_dir = ci_dir("sc-llm-acceptance-refs")
     tasks_json_p, back_p, gameplay_p = default_paths()
@@ -218,7 +212,7 @@ def main() -> int:
             rewrite_placeholders=bool(args.rewrite_placeholders),
         )
         if not missing:
-            results.append({"task_id": tid, "status": "skipped", "reason": "no_missing_refs", "recovered_from_nonzero_rc": 0})
+            results.append({"task_id": tid, "status": "skipped", "reason": "no_missing_refs"})
             continue
 
         existing_candidates = pick_existing_candidates(all_tests=all_tests, task_id=tid, title=str((master or {}).get("title") or ""), limit=int(args.candidate_limit))
@@ -245,7 +239,6 @@ def main() -> int:
             max_refs_per_item=int(args.max_refs_per_item),
             consensus_runs=consensus_runs,
         )
-        recovered_count = int(sum(1 for run in run_results if str(run.get("note") or "") == "recovered_from_nonzero_rc"))
 
         task_result: dict[str, Any] = {
             "task_id": tid,
@@ -254,7 +247,6 @@ def main() -> int:
             "runs": run_results,
             "cmd": cmd_ref,
             "prompt": str(prompt_path.relative_to(root)).replace("\\", "/"),
-            "recovered_from_nonzero_rc": recovered_count,
         }
         if not ok:
             task_result["status"] = "fail"
@@ -312,12 +304,6 @@ def main() -> int:
                         missing_after += 1
 
     status = "fail" if hard_fail or (args.write and missing_after) else "ok"
-    recovered_from_nonzero_rc_total = int(
-        sum(int((r or {}).get("recovered_from_nonzero_rc") or 0) for r in results if isinstance(r, dict))
-    )
-    recovered_from_nonzero_rc_tasks = int(
-        sum(1 for r in results if isinstance(r, dict) and int(r.get("recovered_from_nonzero_rc") or 0) > 0)
-    )
     summary = {
         "cmd": "sc-llm-fill-acceptance-refs",
         "date": today_str(),
@@ -332,8 +318,6 @@ def main() -> int:
         "status": status,
         "consensus_runs": consensus_runs,
         "prd_source": prd_source,
-        "recovered_from_nonzero_rc_total": recovered_from_nonzero_rc_total,
-        "recovered_from_nonzero_rc_tasks": recovered_from_nonzero_rc_tasks,
     }
     schema_ok, schema_errors, checked_summary = validate_fill_acceptance_summary(summary)
     if not schema_ok:
