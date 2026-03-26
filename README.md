@@ -44,13 +44,15 @@
 ## Commands
 
 - Local hard checks:
+  - `py -3 scripts/python/dev_cli.py run-local-hard-checks --godot-bin "<godot-bin>"`
   - `py -3 scripts/python/dev_cli.py run-local-hard-checks --godot-bin "$env:GODOT_BIN"`
 - Task recovery (canonical):
-  - `py -3 scripts/python/dev_cli.py resume-task --task-id <id>`
+  - `py -3 scripts/python/dev_cli.py resume-task --task-id <task-id>`
 - Gate bundle only:
   - `py -3 scripts/python/run_gate_bundle.py --mode hard --task-files .taskmaster/tasks/tasks_back.json .taskmaster/tasks/tasks_gameplay.json`
 - Task review pipeline:
-  - `py -3 scripts/sc/run_review_pipeline.py --task-id <id> --godot-bin "$env:GODOT_BIN"`
+  - `py -3 scripts/sc/run_review_pipeline.py --task-id <task-id> --godot-bin "<godot-bin>"`
+  - `py -3 scripts/sc/run_review_pipeline.py --task-id <task-id> --godot-bin "$env:GODOT_BIN"`
 
 ## Engineering Rules
 

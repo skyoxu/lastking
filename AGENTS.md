@@ -22,15 +22,16 @@ This file is the routing layer for `lastking`. Keep it short. Put durable detail
 ## Start Order After Context Reset
 1. `README.md`
 2. `docs/agents/00-index.md`
-3. `docs/PROJECT_DOCUMENTATION_INDEX.md`
-4. `docs/agents/13-rag-sources-and-session-ssot.md`
-5. `DELIVERY_PROFILE.md`
-6. `docs/testing-framework.md`
-7. `docs/agents/16-directory-responsibilities.md`
-8. `docs/workflows/prototype-lane.md`
-9. Newest file in `execution-plans/`
-10. Newest file in `decision-logs/`
-11. If a local review already ran: `logs/ci/<date>/sc-review-pipeline-task-<task>/latest.json`
+3. `docs/agents/01-session-recovery.md`
+4. `docs/PROJECT_DOCUMENTATION_INDEX.md`
+5. `docs/agents/13-rag-sources-and-session-ssot.md`
+6. `DELIVERY_PROFILE.md`
+7. `docs/testing-framework.md`
+8. `docs/agents/16-directory-responsibilities.md`
+9. `docs/workflows/prototype-lane.md`
+10. Newest file in `execution-plans/`
+11. Newest file in `decision-logs/`
+12. If a local review already ran: `logs/ci/<date>/sc-review-pipeline-task-<task-id>/latest.json`
 
 ## Authoritative Sources
 Use these sources first. Do not rebuild ad-hoc indexes unless the task explicitly requires it.
@@ -44,11 +45,11 @@ Use these sources first. Do not rebuild ad-hoc indexes unless the task explicitl
 
 ## Core Execution Entry Points
 - Repo-scoped hard validation:
-  - `py -3 scripts/python/dev_cli.py run-local-hard-checks --godot-bin <path>`
+  - `py -3 scripts/python/dev_cli.py run-local-hard-checks --godot-bin <godot-bin>`
 - Canonical task recovery:
-  - `py -3 scripts/python/dev_cli.py resume-task --task-id <id>`
+  - `py -3 scripts/python/dev_cli.py resume-task --task-id <task-id>`
 - Task-scoped review pipeline:
-  - `py -3 scripts/sc/run_review_pipeline.py --task-id <id> --godot-bin <path>`
+  - `py -3 scripts/sc/run_review_pipeline.py --task-id <task-id> --godot-bin <godot-bin>`
 - Recovery doc validation:
   - `py -3 scripts/python/validate_recovery_docs.py --dir all`
 - Gate bundle only:
