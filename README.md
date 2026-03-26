@@ -1,43 +1,52 @@
-# lastking（Godot + C#）
+# lastking (Godot 4.5.1 + C#)
 
-`lastking` 是一个 Windows-only 的 Godot 4 + C#（.NET 8）项目模板。
+`lastking` is a Windows-only single-player game project built with Godot 4.5.1 and C# (.NET 8).
 
-## 项目定位
+## Project Posture
 
-- 目标：提供可直接开发、测试、导出的 Godot + C# 基线工程
-- 技术口径：Godot 4.5.x + C#/.NET 8 + xUnit + GdUnit4
-- 运行平台：Windows 桌面
+- Delivery profile: `fast-ship`
+- Security profile: `host-safe`
+- Primary runtime: Windows desktop only
 
-## 快速开始
+## Quick Start (Windows)
 
-1. 配置 Godot .NET 可执行路径：
-   - `setx GODOT_BIN C:\Godot\Godot_v4.5.1-stable_mono_win64.exe`
-2. 执行基础检查：
-   - `./scripts/test.ps1 -GodotBin "$env:GODOT_BIN"`
-3. 执行质量门禁：
-   - `./scripts/ci/quality_gate.ps1`
-4. 导出 Windows 可执行：
-   - `./scripts/ci/export_windows.ps1 -GodotBin "$env:GODOT_BIN" -Output build\lastking.exe`
+1. Install Godot .NET 4.5.1 and .NET 8 SDK.
+2. Set Godot binary path in shell:
+   - PowerShell: `$env:GODOT_BIN = "C:\Godot\Godot_v4.5.1-stable_mono_win64.exe"`
+3. Restore and build:
+   - `dotnet restore Game.sln`
+   - `dotnet build Game.sln -c Debug`
+4. Optional local hard checks:
+   - `py -3 scripts/python/dev_cli.py run-local-hard-checks --godot-bin "$env:GODOT_BIN"`
 
-## 常用入口
+## Core Repositories and Files
 
-- 文档总索引：`docs/PROJECT_DOCUMENTATION_INDEX.md`
-- Godot + C# 上手：`docs/TEMPLATE_GODOT_GETTING_STARTED.md`
-- 测试框架：`docs/testing-framework.md`
-- 架构骨干：`docs/architecture/base/00-README.md`
-- 手动发布：`docs/release/WINDOWS_MANUAL_RELEASE.md`
+- Taskmaster triplet:
+  - `.taskmaster/tasks/tasks.json`
+  - `.taskmaster/tasks/tasks_back.json`
+  - `.taskmaster/tasks/tasks_gameplay.json`
+- PRD input:
+  - `.taskmaster/docs/prd.txt`
+  - `docs/prd/**`
+- Architecture:
+  - `docs/architecture/base/**`
+  - `docs/architecture/overlays/PRD-lastking-T2/08/**`
+- ADR index:
+  - `docs/architecture/ADR_INDEX_GODOT.md`
 
-## 目录概览
+## Commands
 
-- `Game.Core/`：纯 C# 领域逻辑
-- `Game.Core.Tests/`：xUnit 单元测试
-- `Game.Godot/`：Godot 运行时适配层
-- `Game.Godot.Tests/`：Godot 相关测试
-- `docs/`：架构、迁移、流程与发布文档
-- `scripts/`：CI、本地工具、自动化脚本
+- Local hard checks:
+  - `py -3 scripts/python/dev_cli.py run-local-hard-checks --godot-bin "$env:GODOT_BIN"`
+- Gate bundle only:
+  - `py -3 scripts/python/run_gate_bundle.py --mode hard --task-files .taskmaster/tasks/tasks_back.json .taskmaster/tasks/tasks_gameplay.json`
+- Task review pipeline:
+  - `py -3 scripts/sc/run_review_pipeline.py --task-id <id> --godot-bin "$env:GODOT_BIN"`
 
-## 协作与规范
+## Engineering Rules
 
-- AI/协作规则：`AGENTS.md`
-- 架构与质量口径：`CLAUDE.md`
-
+- Contracts SSoT: `Game.Core/Contracts/**`
+- Contract code stays BCL-only, no `Godot.*` references.
+- Domain logic in `Game.Core/**`; engine integration in `Game.Godot/**`.
+- Logs and evidence go to `logs/**`.
+- Keep docs and tasks aligned through ADR + Base + Overlay + Task refs.

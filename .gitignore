@@ -1,4 +1,4 @@
-﻿# Godot 4+ specific ignores
+# Godot 4+ specific ignores
 .godot/
 .serena/
 /android/
@@ -74,6 +74,10 @@ Thumbs.db
 *.user
 *.suo
 .claude/settings.local.json.bak
+
+# Local upstream mirror clones used for upgrade comparison
+backup/godotgame_upstream_*/
+backup/*_upstream_*/
 
 # Debug symbols/build outputs not meant for VCS
 *.pdb
