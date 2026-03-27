@@ -4,7 +4,7 @@ CI pipeline driver (Python): dotnet tests+coverage (soft gate), Godot self-check
 
 Usage (Windows):
   py -3 scripts/python/ci_pipeline.py all \
-    --solution Game.sln --configuration Debug \
+    --solution auto --configuration Debug \
     --godot-bin "C:\\Godot\\Godot_v4.5.1-stable_mono_win64_console.exe" \
     --build-solutions
 
@@ -20,6 +20,8 @@ import os
 import re
 import subprocess
 import sys
+
+from solution_target import resolve_solution_arg
 
 
 def run_cmd(args, cwd=None, timeout=900_000):
@@ -103,7 +105,7 @@ def main():
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest='cmd', required=True)
     ap_all = sub.add_parser('all')
-    ap_all.add_argument('--solution', default='Game.sln')
+    ap_all.add_argument('--solution', default='')
     ap_all.add_argument('--configuration', default='Debug')
     ap_all.add_argument('--godot-bin', required=True)
     ap_all.add_argument('--project', default='project.godot')
@@ -115,11 +117,14 @@ def main():
         return 1
 
     root = os.getcwd()
+    resolved_solution = resolve_solution_arg(args.solution)
     date = dt.date.today().strftime('%Y-%m-%d')
     ci_dir = os.path.join('logs', 'ci', date)
     os.makedirs(ci_dir, exist_ok=True)
 
     summary = {
+        'solution': resolved_solution,
+        'solution_input': args.solution,
         'manual_triplet_examples': {},
         'whitelist_expiry_warning': {},
         'dotnet': {},
@@ -169,7 +174,7 @@ def main():
 
     # 1) Dotnet tests + coverage (soft gate on coverage)
     rc, out = run_cmd(['py', '-3', 'scripts/python/run_dotnet.py',
-                       '--solution', args.solution,
+                       '--solution', resolved_solution,
                        '--configuration', args.configuration], cwd=root)
     with io.open(os.path.join(ci_dir, 'run-dotnet-console.txt'), 'w', encoding='utf-8') as f:
         f.write(out)

@@ -34,6 +34,7 @@ from dev_cli_builders import (
     build_smoke_strict_cmd,
 )
 from local_hard_checks_harness import run_local_hard_checks
+from solution_target import resolve_solution_arg
 
 
 def run(cmd: list[str]) -> int:
@@ -47,6 +48,7 @@ def run(cmd: list[str]) -> int:
 def cmd_run_ci_basic(args: argparse.Namespace) -> int:
     """Run hard gate bundle, with optional legacy preflight appended."""
 
+    resolved_solution = resolve_solution_arg(args.solution)
     task_files = list(args.task_file or DEFAULT_GATE_BUNDLE_TASK_FILES)
     gate_cmd = build_gate_bundle_hard_cmd(
         delivery_profile=args.delivery_profile,
@@ -65,7 +67,7 @@ def cmd_run_ci_basic(args: argparse.Namespace) -> int:
 
     return run(
         build_legacy_ci_pipeline_cmd(
-            solution=args.solution,
+            solution=resolved_solution,
             configuration=args.configuration,
             godot_bin=args.godot_bin,
         )
@@ -75,9 +77,10 @@ def cmd_run_ci_basic(args: argparse.Namespace) -> int:
 def cmd_run_quality_gates(args: argparse.Namespace) -> int:
     """Run quality_gates.py all with optional hard GdUnit and smoke."""
 
+    resolved_solution = resolve_solution_arg(args.solution)
     return run(
         build_quality_gates_cmd(
-            solution=args.solution,
+            solution=resolved_solution,
             configuration=args.configuration,
             build_solutions=bool(args.build_solutions),
             godot_bin=args.godot_bin,
@@ -191,7 +194,7 @@ def build_parser() -> argparse.ArgumentParser:
         "run-ci-basic",
         help="run hard gate bundle first; optionally append legacy ci_pipeline preflight",
     )
-    p_ci.add_argument("--solution", default="Game.sln")
+    p_ci.add_argument("--solution", default="")
     p_ci.add_argument("--configuration", default="Debug")
     p_ci.add_argument("--godot-bin", default="")
     p_ci.add_argument("--delivery-profile", default="")
@@ -203,7 +206,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     # run-quality-gates
     p_qg = sub.add_parser("run-quality-gates", help="run quality_gates.py all with optional GdUnit hard and smoke")
-    p_qg.add_argument("--solution", default="Game.sln")
+    p_qg.add_argument("--solution", default="")
     p_qg.add_argument("--configuration", default="Debug")
     p_qg.add_argument("--build-solutions", action="store_true")
     p_qg.add_argument("--godot-bin", default="")
@@ -220,7 +223,7 @@ def build_parser() -> argparse.ArgumentParser:
         "run-local-hard-checks",
         help="run gate bundle hard + run_dotnet, and append gdunit/smoke when --godot-bin is provided",
     )
-    p_lh.add_argument("--solution", default="Game.sln")
+    p_lh.add_argument("--solution", default="")
     p_lh.add_argument("--configuration", default="Debug")
     p_lh.add_argument("--godot-bin", default="")
     p_lh.add_argument("--delivery-profile", default="")
