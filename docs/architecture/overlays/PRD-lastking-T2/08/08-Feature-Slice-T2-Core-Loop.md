@@ -2,6 +2,18 @@
 PRD-ID: PRD-lastking-T2
 Title: 功能纵切 — Lastking T2 Core Loop
 Status: Locked
+Arch-Refs:
+  - docs/architecture/base/04-system-context-c4-event-flows-v2.md
+  - docs/architecture/base/06-runtime-view-loops-state-machines-error-paths-v2.md
+  - docs/architecture/base/08-crosscutting-and-feature-slices.base.md
+ADRs:
+  - ADR-0011
+  - ADR-0018
+  - ADR-0021
+  - ADR-0022
+  - ADR-0031
+  - ADR-0032
+  - ADR-0033
 ADR-Refs:
   - ADR-0011
   - ADR-0018

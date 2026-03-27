@@ -2,6 +2,16 @@
 PRD-ID: PRD-lastking-T2
 Title: 契约索引 — Lastking T2
 Status: Locked
+Arch-Refs:
+  - docs/architecture/base/04-system-context-c4-event-flows-v2.md
+  - docs/architecture/base/05-data-models-and-storage-ports-v2.md
+  - docs/architecture/base/08-crosscutting-and-feature-slices.base.md
+ADRs:
+  - ADR-0020
+  - ADR-0023
+  - ADR-0031
+  - ADR-0032
+  - ADR-0033
 ADR-Refs:
   - ADR-0020
   - ADR-0023
