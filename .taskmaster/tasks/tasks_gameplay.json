@@ -23,7 +23,9 @@
     "overlay_refs": [
       "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
     ],
     "labels": [
@@ -86,7 +88,7 @@
     "contractRefs": [
       "core.lastking.bootstrap.ready"
     ],
-    "semantic_review_tier": "targeted"
+    "semantic_review_tier": "full"
   },
   {
     "id": "GM-0102",
@@ -116,7 +118,9 @@
     "overlay_refs": [
       "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
     ],
     "labels": [
@@ -180,7 +184,7 @@
       "core.lastking.config.loaded"
     ],
     "evidence_refs": [],
-    "semantic_review_tier": "targeted"
+    "semantic_review_tier": "full"
   },
   {
     "id": "GM-0103",
@@ -210,7 +214,9 @@
     "overlay_refs": [
       "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
     ],
     "labels": [
@@ -260,7 +266,7 @@
       "core.lastking.night.started"
     ],
     "evidence_refs": [],
-    "semantic_review_tier": "targeted"
+    "semantic_review_tier": "full"
   },
   {
     "id": "GM-0104",
@@ -291,7 +297,9 @@
     "overlay_refs": [
       "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
     ],
     "labels": [
@@ -332,7 +340,7 @@
     "contractRefs": [
       "core.lastking.wave.spawned"
     ],
-    "semantic_review_tier": "targeted"
+    "semantic_review_tier": "full"
   },
   {
     "id": "GM-0105",
@@ -363,7 +371,9 @@
     "overlay_refs": [
       "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
     ],
     "labels": [
@@ -415,7 +425,7 @@
       "core.lastking.wave.spawned"
     ],
     "evidence_refs": [],
-    "semantic_review_tier": "targeted"
+    "semantic_review_tier": "full"
   },
   {
     "id": "GM-0106",
@@ -445,7 +455,9 @@
     "overlay_refs": [
       "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
     ],
     "labels": [
@@ -501,7 +513,7 @@
       "core.lastking.castle.hp_changed"
     ],
     "evidence_refs": [],
-    "semantic_review_tier": "targeted"
+    "semantic_review_tier": "full"
   },
   {
     "id": "GM-0107",
@@ -532,7 +544,9 @@
     "overlay_refs": [
       "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
     ],
     "labels": [
@@ -589,7 +603,7 @@
       "core.lastking.castle.hp_changed"
     ],
     "evidence_refs": [],
-    "semantic_review_tier": "targeted"
+    "semantic_review_tier": "full"
   },
   {
     "id": "GM-0108",
@@ -620,7 +634,9 @@
     "overlay_refs": [
       "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
     ],
     "labels": [
@@ -661,7 +677,7 @@
       "core.lastking.day.started",
       "core.lastking.castle.hp_changed"
     ],
-    "semantic_review_tier": "targeted"
+    "semantic_review_tier": "full"
   },
   {
     "id": "GM-0109",
@@ -693,7 +709,9 @@
     "overlay_refs": [
       "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
     ],
     "labels": [
@@ -743,7 +761,7 @@
       "core.lastking.castle.hp_changed"
     ],
     "evidence_refs": [],
-    "semantic_review_tier": "targeted"
+    "semantic_review_tier": "full"
   },
   {
     "id": "GM-0110",
@@ -781,7 +799,9 @@
     "overlay_refs": [
       "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
     ],
     "labels": [
@@ -843,7 +863,7 @@
       "core.lastking.reward.offered",
       "core.lastking.save.autosaved"
     ],
-    "semantic_review_tier": "targeted"
+    "semantic_review_tier": "full"
   },
   {
     "id": "GM-0111",
@@ -872,6 +892,7 @@
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
     ],
     "labels": [
@@ -934,7 +955,7 @@
       "core.lastking.bootstrap.ready"
     ],
     "evidence_refs": [],
-    "semantic_review_tier": "targeted"
+    "semantic_review_tier": "full"
   },
   {
     "id": "GM-0112",
@@ -966,6 +987,7 @@
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
     ],
     "labels": [
@@ -1013,7 +1035,7 @@
       "core.lastking.resources.changed"
     ],
     "evidence_refs": [],
-    "semantic_review_tier": "targeted"
+    "semantic_review_tier": "full"
   },
   {
     "id": "GM-0113",
@@ -1046,6 +1068,7 @@
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
     ],
     "labels": [
@@ -1101,7 +1124,7 @@
       "core.lastking.ui_feedback.raised"
     ],
     "evidence_refs": [],
-    "semantic_review_tier": "targeted"
+    "semantic_review_tier": "full"
   },
   {
     "id": "GM-0114",
@@ -1134,6 +1157,7 @@
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
     ],
     "labels": [
@@ -1194,7 +1218,7 @@
       "core.lastking.tax.collected"
     ],
     "evidence_refs": [],
-    "semantic_review_tier": "targeted"
+    "semantic_review_tier": "full"
   },
   {
     "id": "GM-0115",
@@ -1227,6 +1251,7 @@
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
     ],
     "labels": [
@@ -1284,7 +1309,7 @@
       "core.lastking.ui_feedback.raised"
     ],
     "evidence_refs": [],
-    "semantic_review_tier": "targeted"
+    "semantic_review_tier": "full"
   },
   {
     "id": "GM-0116",
@@ -1317,6 +1342,7 @@
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
     ],
     "labels": [
@@ -1368,7 +1394,7 @@
     "contractRefs": [
       "core.lastking.ui_feedback.raised"
     ],
-    "semantic_review_tier": "targeted"
+    "semantic_review_tier": "full"
   },
   {
     "id": "GM-0117",
@@ -1401,6 +1427,7 @@
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
     ],
     "labels": [
@@ -1465,7 +1492,7 @@
       "core.lastking.tech.applied"
     ],
     "evidence_refs": [],
-    "semantic_review_tier": "targeted"
+    "semantic_review_tier": "full"
   },
   {
     "id": "GM-0118",
@@ -1498,6 +1525,7 @@
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
     ],
     "labels": [
@@ -1546,7 +1574,7 @@
     "contractRefs": [
       "core.lastking.reward.offered"
     ],
-    "semantic_review_tier": "targeted"
+    "semantic_review_tier": "full"
   },
   {
     "id": "GM-0119",
@@ -1579,6 +1607,7 @@
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
     ],
     "labels": [
@@ -1635,7 +1664,7 @@
       "core.lastking.castle.hp_changed"
     ],
     "evidence_refs": [],
-    "semantic_review_tier": "targeted"
+    "semantic_review_tier": "full"
   },
   {
     "id": "GM-0120",
@@ -1669,6 +1698,7 @@
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
     ],
     "labels": [
@@ -1715,7 +1745,7 @@
       "core.lastking.castle.hp_changed"
     ],
     "evidence_refs": [],
-    "semantic_review_tier": "targeted"
+    "semantic_review_tier": "full"
   },
   {
     "id": "GM-0121",
@@ -1742,6 +1772,7 @@
     "overlay_refs": [
       "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
@@ -1794,7 +1825,7 @@
     "contractRefs": [
       "core.lastking.windows_runtime.validated"
     ],
-    "semantic_review_tier": "targeted"
+    "semantic_review_tier": "full"
   },
   {
     "id": "GM-0122",
@@ -1824,6 +1855,7 @@
     "overlay_refs": [
       "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
@@ -1869,7 +1901,7 @@
       "core.lastking.camera.scrolled"
     ],
     "evidence_refs": [],
-    "semantic_review_tier": "targeted"
+    "semantic_review_tier": "full"
   },
   {
     "id": "GM-0123",
@@ -1899,6 +1931,7 @@
     "overlay_refs": [
       "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
@@ -1964,7 +1997,7 @@
       "core.lastking.time_scale.changed"
     ],
     "evidence_refs": [],
-    "semantic_review_tier": "targeted"
+    "semantic_review_tier": "full"
   },
   {
     "id": "GM-0124",
@@ -1994,6 +2027,7 @@
     "overlay_refs": [
       "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
@@ -2056,7 +2090,7 @@
       "core.lastking.ui_feedback.raised"
     ],
     "evidence_refs": [],
-    "semantic_review_tier": "targeted"
+    "semantic_review_tier": "full"
   },
   {
     "id": "GM-0125",
@@ -2084,6 +2118,7 @@
     "overlay_refs": [
       "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
@@ -2134,7 +2169,7 @@
     "contractRefs": [
       "core.lastking.save.autosaved"
     ],
-    "semantic_review_tier": "targeted"
+    "semantic_review_tier": "full"
   },
   {
     "id": "GM-0126",
@@ -2162,6 +2197,7 @@
     "overlay_refs": [
       "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
@@ -2222,7 +2258,7 @@
       "core.lastking.cloud_save.sync.completed"
     ],
     "evidence_refs": [],
-    "semantic_review_tier": "targeted"
+    "semantic_review_tier": "full"
   },
   {
     "id": "GM-0127",
@@ -2250,6 +2286,7 @@
     "overlay_refs": [
       "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
@@ -2304,7 +2341,7 @@
       "core.lastking.castle.hp_changed",
       "core.lastking.reward.offered"
     ],
-    "semantic_review_tier": "targeted"
+    "semantic_review_tier": "full"
   },
   {
     "id": "GM-0128",
@@ -2332,6 +2369,7 @@
     "overlay_refs": [
       "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
@@ -2387,7 +2425,7 @@
       "core.lastking.ui_feedback.raised"
     ],
     "evidence_refs": [],
-    "semantic_review_tier": "targeted"
+    "semantic_review_tier": "full"
   },
   {
     "id": "GM-0129",
@@ -2415,6 +2453,7 @@
     "overlay_refs": [
       "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
@@ -2461,7 +2500,7 @@
     "contractRefs": [
       "core.lastking.audio_settings.changed"
     ],
-    "semantic_review_tier": "targeted"
+    "semantic_review_tier": "full"
   },
   {
     "id": "GM-0130",
@@ -2497,6 +2536,7 @@
     "overlay_refs": [
       "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
       "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
@@ -2551,7 +2591,7 @@
     "contractRefs": [
       "core.lastking.perf.sampled"
     ],
-    "semantic_review_tier": "targeted"
+    "semantic_review_tier": "full"
   },
   {
     "id": "GM-0131",
@@ -2625,7 +2665,7 @@
       "core.lastking.config.loaded"
     ],
     "evidence_refs": [],
-    "semantic_review_tier": "targeted"
+    "semantic_review_tier": "full"
   },
   {
     "id": "GM-0132",
@@ -2699,7 +2739,7 @@
     "contractRefs": [
       "core.lastking.config.loaded"
     ],
-    "semantic_review_tier": "targeted"
+    "semantic_review_tier": "full"
   },
   {
     "id": "GM-0133",
@@ -2782,7 +2822,7 @@
       "core.lastking.config.loaded"
     ],
     "evidence_refs": [],
-    "semantic_review_tier": "targeted"
+    "semantic_review_tier": "full"
   },
   {
     "id": "GM-0134",
@@ -2847,7 +2887,7 @@
     "contractRefs": [
       "core.lastking.config.loaded"
     ],
-    "semantic_review_tier": "targeted"
+    "semantic_review_tier": "full"
   },
   {
     "id": "GM-0135",
@@ -2921,7 +2961,7 @@
     "contractRefs": [
       "core.lastking.config.loaded"
     ],
-    "semantic_review_tier": "targeted"
+    "semantic_review_tier": "full"
   },
   {
     "id": "GM-0136",
@@ -2990,7 +3030,7 @@
     "contractRefs": [
       "core.lastking.config.loaded"
     ],
-    "semantic_review_tier": "targeted"
+    "semantic_review_tier": "full"
   },
   {
     "id": "GM-0137",
@@ -3072,7 +3112,7 @@
     "contractRefs": [
       "core.lastking.config.loaded"
     ],
-    "semantic_review_tier": "targeted"
+    "semantic_review_tier": "full"
   },
   {
     "id": "GM-0138",
@@ -3159,7 +3199,7 @@
       "core.lastking.config.loaded"
     ],
     "evidence_refs": [],
-    "semantic_review_tier": "targeted"
+    "semantic_review_tier": "full"
   },
   {
     "id": "GM-0139",
@@ -3228,7 +3268,7 @@
     "contractRefs": [
       "core.lastking.config.loaded"
     ],
-    "semantic_review_tier": "targeted"
+    "semantic_review_tier": "full"
   },
   {
     "id": "GM-0140",
@@ -3310,6 +3350,6 @@
       "core.lastking.config.loaded"
     ],
     "evidence_refs": [],
-    "semantic_review_tier": "targeted"
+    "semantic_review_tier": "full"
   }
 ]
