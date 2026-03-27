@@ -9,13 +9,13 @@
 
 ## 目标
 
-将 LegacyProject 的 Jest + TypeScript 单元测试迁移到 godotgame 的 xUnit + C# 单元测试，建立类型安全的测试套件与 AI-first 覆盖率门禁。
+将 LegacyProject 的 Jest + TypeScript 单元测试迁移到 lastking 的 xUnit + C# 单元测试，建立类型安全的测试套件与 AI-first 覆盖率门禁。
 
 ---
 
 ## 技术栈对比
 
-| 功能 | LegacyProject (Node.js) | godotgame (.NET 8) |
+| 功能 | LegacyProject (Node.js) | lastking (.NET 8) |
 |-----|-------------------|-------------------|
 | 测试框架 | Jest 29 | xUnit 2.x |
 | 断言库 | Jest expect() | FluentAssertions |
@@ -136,7 +136,7 @@ describe('Player', () => {
 
 ## xUnit 测试结构
 
-### 等价 xUnit 测试 (godotgame)
+### 等价 xUnit 测试 (lastking)
 
 ```csharp
 // Game.Core.Tests/Domain/Entities/PlayerTests.cs
@@ -1534,7 +1534,7 @@ jobs:
         with:
           files: ./TestResults/**/coverage.cobertura.xml
           flags: unittests
-          name: codecov-godotgame
+          name: codecov-lastking
 ```
 
 ---
