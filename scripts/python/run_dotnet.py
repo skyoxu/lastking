@@ -8,7 +8,7 @@ Env thresholds (optional):
   COVERAGE_BRANCHES_MIN e.g., "85" (percent)
 
 Usage (Windows):
-  py -3 scripts/python/run_dotnet.py --solution Game.sln --configuration Debug
+  py -3 scripts/python/run_dotnet.py --solution auto --configuration Debug
 """
 import argparse
 import datetime as dt
@@ -20,6 +20,9 @@ import shutil
 import subprocess
 import sys
 import xml.etree.ElementTree as ET
+from pathlib import Path
+
+from solution_target import resolve_solution_arg
 
 
 def run_cmd(args, cwd=None, timeout=900_000):
@@ -85,25 +88,27 @@ def pick_latest_existing(paths):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('--solution', default='Game.sln')
+    ap.add_argument('--solution', default='')
     ap.add_argument('--configuration', default='Debug')
     ap.add_argument('--out-dir', default=None)
     args = ap.parse_args()
 
     root = os.getcwd()
+    resolved_solution = resolve_solution_arg(args.solution, root=Path(root))
     date = dt.date.today().strftime('%Y-%m-%d')
     out_dir = args.out_dir or os.path.join(root, 'logs', 'unit', date)
     ensure_dir(out_dir)
 
     summary = {
-        'solution': args.solution,
+        'solution': resolved_solution,
+        'solution_input': args.solution,
         'configuration': args.configuration,
         'out_dir': out_dir,
         'status': 'fail',
     }
 
     # Restore
-    rc, out = run_cmd(['dotnet', 'restore', args.solution], cwd=root)
+    rc, out = run_cmd(['dotnet', 'restore', resolved_solution], cwd=root)
     with io.open(os.path.join(out_dir, 'dotnet-restore.log'), 'w', encoding='utf-8') as f:
         f.write(out)
     summary['restore_rc'] = rc
@@ -114,7 +119,7 @@ def main():
         return 1
 
     # Test with coverage
-    rc, out = run_cmd(['dotnet', 'test', args.solution,
+    rc, out = run_cmd(['dotnet', 'test', resolved_solution,
                        f'-c', args.configuration,
                        '--collect:XPlat Code Coverage',
                        '--logger', 'trx;LogFileName=tests.trx'], cwd=root)

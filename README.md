@@ -24,8 +24,8 @@
 2. Set Godot binary path in shell:
    - PowerShell: `$env:GODOT_BIN = "C:\Godot\Godot_v4.5.1-stable_mono_win64.exe"`
 3. Restore and build:
-   - `dotnet restore Game.sln`
-   - `dotnet build Game.sln -c Debug`
+   - `dotnet restore lastking.sln`
+   - `dotnet build lastking.sln -c Debug`
 4. Optional local hard checks:
    - `py -3 scripts/python/dev_cli.py run-local-hard-checks --godot-bin "$env:GODOT_BIN"`
 
