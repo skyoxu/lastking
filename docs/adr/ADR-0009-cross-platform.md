@@ -921,7 +921,7 @@ export class PlatformAdapterFactory {
 }
 ```
 
-### React跨平台UI组件
+### 跨平台UI组件示例
 
 **平台感知UI组件**：
 
@@ -931,13 +931,13 @@ import LegacyUIFramework from 'LegacyUIFramework';
 import { PlatformAdapterFactory } from '../../shared/platform/platform-adapter.factory';
 
 interface PlatformButtonProps {
-  children: LegacyUIFramework.ReactNode;
+  children: LegacyUIFramework.UIElement;
   onClick: () => void;
   variant?: 'primary' | 'secondary';
   className?: string;
 }
 
-export const PlatformButton: LegacyUIFramework.FC<PlatformButtonProps> = ({
+export const PlatformButton: LegacyUIFramework.Component<PlatformButtonProps> = ({
   children,
   onClick,
   variant = 'primary',

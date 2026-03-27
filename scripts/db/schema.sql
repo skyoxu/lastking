@@ -1,4 +1,4 @@
--- Base schema migrated from vitegame (adapted)
+-- Base schema migrated from legacy baseline (adapted)
 
 PRAGMA foreign_keys = ON;
 PRAGMA journal_mode = WAL;

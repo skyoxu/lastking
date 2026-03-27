@@ -4,7 +4,7 @@ Sync and template-ize docs/workflows/acceptance-semantics-methodology.md from a 
 
 Goals:
 - Read/write using UTF-8 (avoid console encoding issues).
-- Remove sibling project semantics (e.g., "sanguo", "newguild") and domain-coupled examples.
+- Remove sibling project semantics and domain-coupled examples.
 - Keep paths and rule descriptions aligned with this template repo conventions.
 - Produce an audit report under logs/ci/<YYYY-MM-DD>/.
 
@@ -42,19 +42,19 @@ def _looks_corrupted(text: str) -> bool:
     return "????" in text or "???" in text
 
 
-def _templateize(text: str) -> tuple[str, list[str]]:
+def _templateize(text: str, legacy_names: list[str]) -> tuple[str, list[str]]:
     notes: list[str] = []
 
     # Normalize line endings for consistent diffs.
     text = text.replace("\r\n", "\n").replace("\r", "\n")
 
     # 1) Remove sibling repo naming.
-    # Keep scope tight: only replace obvious repo identifiers, not generic words.
-    before = text
-    text = re.sub(r"(?i)\\bnewguild\\b", "本模板仓库", text)
-    text = re.sub(r"(?i)\\bsanguo\\b", "本模板仓库", text)
-    if text != before:
-        notes.append("replaced_sibling_repo_names")
+    # Keep scope tight: only replace explicit identifiers provided by caller.
+    for legacy_name in legacy_names:
+        before = text
+        text = re.sub(rf"(?i)\b{re.escape(legacy_name)}\b", "本模板仓库", text)
+        if text != before:
+            notes.append(f"replaced_sibling_repo_name:{legacy_name}")
 
     # 2) Replace domain-coupled examples with template-neutral examples.
     replacements = {
@@ -77,14 +77,11 @@ def _templateize(text: str) -> tuple[str, list[str]]:
     return text, notes
 
 
-def _assert_decoupled(text: str) -> list[str]:
+def _assert_decoupled(text: str, legacy_names: list[str]) -> list[str]:
     # Hard fail on obvious repo coupling.
-    forbidden_patterns = [
-        r"(?i)\\bnewguild\\b",
-        r"(?i)\\bsanguo\\b",
-        r"\\bC:\\\\buildgame\\\\newguild\\b",
-        r"\\bC:\\\\buildgame\\\\sanguo\\b",
-    ]
+    forbidden_patterns = [rf"(?i)\b{re.escape(name)}\b" for name in legacy_names]
+    forbidden_patterns.append(r"(?i)\bC:\\buildgame\\[A-Za-z0-9._-]+\b")
+    forbidden_patterns.append(r"(?i)\bF:\\[A-Za-z0-9._-]+\\[A-Za-z0-9._\\-]+\b")
     hits: list[str] = []
     for pat in forbidden_patterns:
         if re.search(pat, text):
@@ -103,13 +100,19 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "--sibling",
-        default=r"C:\buildgame\newguild",
-        help=r"Sibling repo root (default: C:\buildgame\newguild)",
+        default=".",
+        help="Sibling repo root (default: current repo root)",
     )
     parser.add_argument(
         "--fallback-sibling",
-        default=r"C:\buildgame\sanguo",
-        help=r"Fallback sibling repo root if the primary doc is missing/corrupted (default: C:\buildgame\sanguo)",
+        default=".",
+        help="Fallback sibling repo root if primary doc is missing/corrupted (default: current repo root)",
+    )
+    parser.add_argument(
+        "--legacy-name",
+        action="append",
+        default=[],
+        help="Legacy sibling repo names to sanitize from synced text (repeatable).",
     )
     args = parser.parse_args(argv)
 
@@ -145,8 +148,8 @@ def main(argv: list[str] | None = None) -> int:
         source_text = t2
         chosen_source = str(src2)
 
-    out_text, notes = _templateize(source_text)
-    forbidden_hits = _assert_decoupled(out_text)
+    out_text, notes = _templateize(source_text, args.legacy_name)
+    forbidden_hits = _assert_decoupled(out_text, args.legacy_name)
 
     out_path = root / DOC_REL_PATH
     _write_utf8(out_path, out_text)

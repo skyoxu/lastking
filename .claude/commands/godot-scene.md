@@ -60,7 +60,7 @@
 - 目标目录: 可选，默认 `Game.Godot/Scenes/`
   - 建议按功能分子目录，例如 `Game.Godot/Scenes/UI/`、`Game.Godot/Scenes/Game/`
 
-约束（对齐当前 newguild 项目结构）:
+约束（对齐当前 lastking 项目结构）:
 
 - 场景文件统一放在 `Game.Godot/Scenes/**`
 - Godot C# 脚本放在 `Game.Godot/Scripts/**` 下按功能分层:
