@@ -2,6 +2,13 @@
 PRD-ID: PRD-lastking-T2
 Title: 测试索引 — Lastking T2
 Status: Locked
+Arch-Refs:
+  - docs/architecture/base/06-runtime-view-loops-state-machines-error-paths-v2.md
+  - docs/architecture/base/07-dev-build-and-gates-v2.md
+  - docs/architecture/base/08-crosscutting-and-feature-slices.base.md
+ADRs:
+  - ADR-0005
+  - ADR-0025
 ADR-Refs:
   - ADR-0005
   - ADR-0025

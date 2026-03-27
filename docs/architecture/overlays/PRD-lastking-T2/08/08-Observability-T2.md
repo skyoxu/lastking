@@ -2,6 +2,13 @@
 PRD-ID: PRD-lastking-T2
 Title: 可观测性索引 — Lastking T2
 Status: Locked
+Arch-Refs:
+  - docs/architecture/base/03-observability-sentry-logging-v2.md
+  - docs/architecture/base/07-dev-build-and-gates-v2.md
+  - docs/architecture/base/09-performance-and-capacity-v2.md
+ADRs:
+  - ADR-0003
+  - ADR-0015
 ADR-Refs:
   - ADR-0003
   - ADR-0015
