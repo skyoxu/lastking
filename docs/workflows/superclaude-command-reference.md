@@ -263,7 +263,7 @@ feat(guild): add GuildCreationService
 
 Task: #1.1
 ADRs: ADR-0002, ADR-0006
-Overlay: docs/architecture/overlays/PRD-guild/08/ACCEPTANCE_CHECKLIST.md
+Overlay: docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md
 
 Co-Authored-By: Claude <noreply@anthropic.com>
 ```
@@ -474,7 +474,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 | `body` | 详细说明 (3-5 条列表) | 实现功能列表、关键技术决策、破坏性变更 |
 | `Task` | Task Master 任务 ID | #1.1 |
 | `ADRs` | 相关 ADR 引用 | ADR-0002, ADR-0004 |
-| `Overlay` | 架构验收清单路径 | docs/architecture/overlays/PRD-guild/08/... |
+| `Overlay` | 架构验收清单路径 | docs/architecture/overlays/PRD-lastking-T2/08/... |
 
 **使用场景**:
 
@@ -500,7 +500,7 @@ feat(guild): implement member invitation system
 
 Task: #2.5
 ADRs: ADR-0002, ADR-0004
-Overlay: docs/architecture/overlays/PRD-guild/08/ACCEPTANCE_CHECKLIST.md
+Overlay: docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md
 
 Co-Authored-By: Claude <noreply@anthropic.com>
 ```
@@ -508,7 +508,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 ##### 场景 2: 手动指定参数
 
 ```bash
-/sc:commit --task 1.1 --adrs "ADR-0002,ADR-0004" --overlay "docs/architecture/overlays/PRD-guild/08/ACCEPTANCE_CHECKLIST.md"
+/sc:commit --task 1.1 --adrs "ADR-0002,ADR-0004" --overlay "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
 ```
 
 ##### 场景 3: 交互式填写
@@ -544,7 +544,7 @@ feat(guild): implement member invitation system
 
 Task: #2.5
 ADRs: ADR-0002, ADR-0004
-Overlay: docs/architecture/overlays/PRD-guild/08/ACCEPTANCE_CHECKLIST.md
+Overlay: docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md
 
 Co-Authored-By: Claude <noreply@anthropic.com>
 
@@ -759,7 +759,7 @@ reportgenerator -reports:"**/coverage.cobertura.xml" -targetdir:"logs/unit/cover
 cat .superclaude/commit-template.txt
 
 # 2. 手动指定参数
-/sc:commit --task 1.1 --adrs "ADR-0002,ADR-0004" --overlay "docs/architecture/overlays/PRD-guild/08/ACCEPTANCE_CHECKLIST.md"
+/sc:commit --task 1.1 --adrs "ADR-0002,ADR-0004" --overlay "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
 
 # 3. 使用交互式模式
 /sc:commit --interactive

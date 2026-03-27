@@ -156,7 +156,7 @@ Task Master 默认字段（概念示例）：
   "dependencies": ["1.0"],
   "adrRefs": ["ADR-0002"],
   "archRefs": ["CH01", "CH05"],
-  "overlay": "docs/architecture/overlays/PRD-guild/08/..."
+  "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/..."
 }
 ```
 
@@ -246,7 +246,7 @@ py -3 scripts/python/task_links_validate.py
 {
   "id": "1.1",
   "title": "实现公会创建核心逻辑",
-  "overlay": "docs/architecture/overlays/PRD-guild/08/ACCEPTANCE_CHECKLIST.md"
+  "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
 }
 ```
 
@@ -306,7 +306,7 @@ feat(guild): add GuildCreationService
 
 Task: T-1.1
 ADRs: ADR-0002, ADR-0004
-Overlay: docs/architecture/overlays/PRD-guild/08/ACCEPTANCE_CHECKLIST.md
+Overlay: docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md
 
 Co-Authored-By: Claude <noreply@anthropic.com>
 ```
@@ -652,7 +652,7 @@ py -3 scripts/python/link_tasks_to_overlays.py
 ```json
 {
   "id": "1.1",
-  "overlay": "docs/architecture/overlays/PRD-guild/08/ACCEPTANCE_CHECKLIST.md"
+  "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
 }
 ```
 
@@ -867,7 +867,7 @@ public class GuildContractsTests
   - `scripts/python/validate_contracts.py` 检查 Overlay 08 中的契约路径是否指向存在的 C# 契约，并已在 `windows-quality-gate.yml` 中以软门禁方式运行。
   - `scripts/python/check_guild_contracts.py` 检查 Guild 契约文件是否存在、命名空间是否为 `Game.Core.Contracts.Guild`，以及 `EventType` 是否为预期的 `core.guild.*` 值。
 - 同步更新约定：
-  - `08-Contracts-Guild-Manager-Events.md` 中记录了 Guild 主要事件契约，并明确要求：新增或调整 `Game.Core/Contracts/Guild/**` 下的 C# 契约时，必须同步更新 `GuildContractsTests.cs` 与 `check_guild_contracts.py`，并通过 `validate_contracts.py` 重新校验 Overlay ↔ Contracts 回链。
+  - `08-Contracts-T2.md` 中记录了 Lastking 核心事件契约，并明确要求：新增或调整 `Game.Core/Contracts/Lastking/**` 下的 C# 契约时，必须同步更新 `Game.Core.Tests/Contracts/Lastking/LastkingContractsTests.cs` 与 `check_domain_contracts.py`，并通过 `validate_contracts.py` 重新校验 Overlay ↔ Contracts 回链。
 
 ---
 
@@ -1144,7 +1144,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 /sc:commit
 
 # 方式 2: 手动指定模板变量
-/sc:commit --task 1.1 --adrs "ADR-0002,ADR-0004" --overlay "docs/architecture/overlays/PRD-guild/08/ACCEPTANCE_CHECKLIST.md"
+/sc:commit --task 1.1 --adrs "ADR-0002,ADR-0004" --overlay "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
 
 # 方式 3: 交互式填写（适用于复杂场景）
 superclaude commit --interactive
@@ -1171,7 +1171,7 @@ feat(guild): implement member invitation system
 
 Task: #2.5
 ADRs: ADR-0002, ADR-0004
-Overlay: docs/architecture/overlays/PRD-guild/08/ACCEPTANCE_CHECKLIST.md
+Overlay: docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md
 
 Co-Authored-By: Claude <noreply@anthropic.com>
 
@@ -1573,7 +1573,7 @@ description: 执行架构级验收检查（Subagents）
 
 # Subagents 自动执行以下流程：
 # 1. 读取 `.taskmaster/tasks/*.json` 找到任务 1.1
-# 2. 提取 overlay 字段：docs/architecture/overlays/PRD-guild/08/ACCEPTANCE_CHECKLIST.md
+# 2. 提取 overlay 字段：docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md
 # 3. 加载验收清单（50+ 条检查项）
 # 4. 执行架构级检查
 # 5. 生成详细报告（含文件行号）
@@ -2493,7 +2493,7 @@ superclaude review --staged
 
 ## 9. 参考资料
 
-- Task Master 文档：[README.md](../../.taskmaster/README.md)
+- Task Master 主输入：`.taskmaster/docs/prd.txt`
 - SuperClaude 使用指南：(根据实际安装路径补充)
 - ADR 目录：[docs/adr/](../adr/)
 - 测试框架指南：[docs/testing-framework.md](../testing-framework.md)
