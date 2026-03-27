@@ -44,34 +44,35 @@ def _write_utf8(path: Path, text: str) -> None:
     path.write_text(text, encoding="utf-8", newline="\n")
 
 
-def _templateize_markdown(text: str) -> tuple[str, list[str]]:
+def _templateize_markdown(text: str, legacy_names: list[str]) -> tuple[str, list[str]]:
     notes: list[str] = []
     text = text.replace("\r\n", "\n").replace("\r", "\n")
 
-    # Decouple obvious sibling repo identifiers.
-    before = text
-    text = re.sub(r"(?i)\\bnewguild\\b", "本模板仓库", text)
-    text = re.sub(r"(?i)\\bsanguo\\b", "本模板仓库", text)
-    if text != before:
-        notes.append("replaced_sibling_repo_names")
+    # Decouple sibling repo identifiers supplied by caller.
+    for legacy_name in legacy_names:
+        before = text
+        text = re.sub(rf"(?i)\b{re.escape(legacy_name)}\b", "本模板仓库", text)
+        if text != before:
+            notes.append(f"replaced_sibling_repo_name:{legacy_name}")
 
     # Strip absolute build paths if present.
     before = text
-    text = re.sub(r"(?i)C:\\\\buildgame\\\\(newguild|sanguo)\\\\", "", text)
+    text = re.sub(r"(?i)([A-Z]:\\|/)[^\\/\n]+[\\/]([^\\/\n]+)[\\/]", "", text)
     if text != before:
         notes.append("removed_absolute_build_paths")
 
     return text, notes
 
 
-def _forbidden_hits(text: str) -> list[str]:
-    forbidden = [
-        r"(?i)\\bnewguild\\b",
-        r"(?i)\\bsanguo\\b",
-        r"\\bC:\\\\buildgame\\\\newguild\\b",
-        r"\\bC:\\\\buildgame\\\\sanguo\\b",
-        "????",
-    ]
+def _forbidden_hits(text: str, legacy_names: list[str]) -> list[str]:
+    forbidden = [rf"(?i)\b{re.escape(name)}\b" for name in legacy_names]
+    forbidden.extend(
+        [
+            r"(?i)\bC:\\buildgame\\[A-Za-z0-9._-]+\b",
+            r"(?i)\bF:\\[A-Za-z0-9._-]+\\[A-Za-z0-9._\\-]+\b",
+            "????",
+        ]
+    )
     hits: list[str] = []
     for token in forbidden:
         if token.startswith("(?i)") or token.startswith("\\b") or token.startswith("C:\\\\"):
@@ -178,8 +179,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--root", default=".", help="Current repo root (default: .)")
     parser.add_argument(
         "--sibling",
-        default=r"C:\buildgame\sanguo",
-        help=r"Sibling repo root (default: C:\buildgame\sanguo)",
+        default=".",
+        help="Sibling repo root (default: current repo root)",
+    )
+    parser.add_argument(
+        "--legacy-name",
+        action="append",
+        default=[],
+        help="Legacy sibling repo names to sanitize from synced text (repeatable).",
     )
     args = parser.parse_args(argv)
 
@@ -199,8 +206,8 @@ def main(argv: list[str] | None = None) -> int:
             continue
 
         raw = _read_utf8(src)
-        out, notes = _templateize_markdown(raw)
-        hits = _forbidden_hits(out)
+        out, notes = _templateize_markdown(raw, args.legacy_name)
+        hits = _forbidden_hits(out, args.legacy_name)
         if hits:
             ok = False
         _write_utf8(dst, out)

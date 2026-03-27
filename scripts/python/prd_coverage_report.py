@@ -4,9 +4,9 @@
 Produce a soft PRD coverage report between:
 
 - .taskmaster/docs/prd-*.txt (PRD text files)
+- .taskmaster/tasks/tasks.json
 - .taskmaster/tasks/tasks_back.json
 - .taskmaster/tasks/tasks_gameplay.json
-- .taskmaster/tasks/tasks_newguild.json
 
 This script does NOT act as a CI gate. It generates a heuristic report
 showing, for each PRD file, roughly how many tasks appear to reference it
@@ -37,9 +37,9 @@ TASKS_DIR = Path(".taskmaster/tasks")
 class PrdCoverage:
     prd_file: str
     tokens: List[str]
+    master_tasks: int
     back_tasks: int
     gameplay_tasks: int
-    newguild_tasks: int
 
 
 def load_tasks(path: Path) -> List[dict]:
@@ -48,6 +48,10 @@ def load_tasks(path: Path) -> List[dict]:
     data = json.loads(path.read_text(encoding="utf-8"))
     if isinstance(data, list):
         return data
+    if isinstance(data, dict) and isinstance(data.get("master"), dict):
+        master_tasks = data["master"].get("tasks")
+        if isinstance(master_tasks, list):
+            return master_tasks
     if isinstance(data, dict) and "tasks" in data:
         return data["tasks"]
     return []
@@ -64,7 +68,7 @@ def extract_tokens_from_prd_name(name: str) -> List[str]:
     # split by '-' and ignore very short/common tokens
     raw_tokens = stem.replace("_", "-").split("-")
     tokens: List[str] = []
-    stop = {"and", "the", "for", "with", "godot", "csharp", "newguild", "vitegame"}
+    stop = {"and", "the", "for", "with", "godot", "csharp", "lastking"}
     for tok in raw_tokens:
         tok = tok.strip().lower()
         if not tok:
@@ -102,24 +106,24 @@ def count_tasks_referencing_tokens(tasks: List[dict], tokens: List[str]) -> int:
 def build_coverage() -> Dict[str, PrdCoverage]:
     prd_files = sorted(p for p in PRD_DIR.glob("prd-*.txt") if p.is_file())
 
+    tasks_master = load_tasks(TASKS_DIR / "tasks.json")
     tasks_back = load_tasks(TASKS_DIR / "tasks_back.json")
     tasks_gameplay = load_tasks(TASKS_DIR / "tasks_gameplay.json")
-    tasks_newguild = load_tasks(TASKS_DIR / "tasks_newguild.json")
 
     coverage: Dict[str, PrdCoverage] = {}
 
     for prd in prd_files:
         name = prd.name
         tokens = extract_tokens_from_prd_name(name)
+        master_count = count_tasks_referencing_tokens(tasks_master, tokens)
         back_count = count_tasks_referencing_tokens(tasks_back, tokens)
         gm_count = count_tasks_referencing_tokens(tasks_gameplay, tokens)
-        ng_count = count_tasks_referencing_tokens(tasks_newguild, tokens)
         coverage[name] = PrdCoverage(
             prd_file=name,
             tokens=tokens,
+            master_tasks=master_count,
             back_tasks=back_count,
             gameplay_tasks=gm_count,
-            newguild_tasks=ng_count,
         )
 
     return coverage
@@ -145,8 +149,8 @@ def main() -> int:
     print("\nPRD file coverage (task counts by source):")
     for name, cov in sorted(coverage.items()):
         print(
-            f"- {name}: back={cov.back_tasks}, gameplay={cov.gameplay_tasks}, "
-            f"tasks_newguild={cov.newguild_tasks}, tokens={cov.tokens}"
+            f"- {name}: master={cov.master_tasks}, back={cov.back_tasks}, "
+            f"gameplay={cov.gameplay_tasks}, tokens={cov.tokens}"
         )
 
     out_path = write_report(coverage, root)

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Scan docs for legacy tech stack terms that can mislead humans/LLMs (e.g., Electron/Vite/Phaser).
+Scan docs for legacy tech stack terms that can mislead humans/LLMs.
 
 Writes reports under:
   logs/ci/<YYYY-MM-DD>/doc-stack-scan/scan.json
@@ -28,15 +28,14 @@ DEFAULT_ROOT = "docs"
 ALLOWED_EXTS = {".md", ".txt", ".yml", ".yaml", ".json", ".xml", ".ini", ".cfg", ".index", ".adoc"}
 
 # Case-insensitive for ASCII terms; keep as regex fragments (no leading/trailing slashes).
+# Use neutral placeholders by default. Real project-specific legacy terms should be
+# provided via a custom profile or direct script edits in local/private workflows.
 DEFAULT_TERMS: List[Tuple[str, str]] = [
-    ("vitegame", r"vitegame"),
-    ("electron", r"electron"),
-    ("phaser", r"phaser"),
-    ("vite", r"\bvite\b"),
-    ("react", r"\breact\b"),
-    ("playwright", r"playwright"),
-    ("vitest", r"vitest"),
-    ("npm", r"\bnpm\b"),
+    ("legacy_project", r"\blegacyproject\b"),
+    ("legacy_runtime", r"\blegacyruntime\b"),
+    ("legacy_ui_framework", r"\blegacyuiframework\b"),
+    ("legacy_build_tool", r"\blegacybuildtool\b"),
+    ("legacy_e2e_runner", r"\blegacye2erunner\b"),
 ]
 
 

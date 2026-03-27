@@ -200,7 +200,7 @@ Test-Path .claude/settings.local.json
 
 ## 更新日志
 
-- 2025-12-11: 从 newguild 项目迁移配置
+- 2025-12-11: 从同源模板迁移配置
   - 添加 2 个项目特定 Subagents
   - 添加 /acceptance-check 命令
   - 合并权限配置（从 17 条扩展到 84 条）

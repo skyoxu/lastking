@@ -28,16 +28,15 @@ from typing import Dict, List, Tuple
 
 ALLOWED_EXTS = {".md", ".txt", ".yml", ".yaml", ".json", ".xml", ".ini", ".cfg", ".index", ".adoc"}
 
-# Keep patterns aligned with scripts/python/scan_doc_stack_terms.py
+# Keep patterns aligned with scripts/python/scan_doc_stack_terms.py.
+# Defaults are intentionally neutral placeholders; this avoids coupling the
+# repository to any specific historical stack names.
 REPLACEMENTS: List[Tuple[str, re.Pattern, str]] = [
-    ("vitegame", re.compile(r"vitegame", re.IGNORECASE), "LegacyProject"),
-    ("electron", re.compile(r"electron", re.IGNORECASE), "LegacyDesktopShell"),
-    ("phaser", re.compile(r"phaser", re.IGNORECASE), "Legacy2DEngine"),
-    ("vite", re.compile(r"\bvite\b", re.IGNORECASE), "LegacyBuildTool"),
-    ("react", re.compile(r"\breact\b", re.IGNORECASE), "LegacyUIFramework"),
-    ("playwright", re.compile(r"playwright", re.IGNORECASE), "LegacyE2ERunner"),
-    ("vitest", re.compile(r"vitest", re.IGNORECASE), "LegacyUnitTestRunner"),
-    ("npm", re.compile(r"\bnpm\b", re.IGNORECASE), "NodePkg"),
+    ("legacy_project", re.compile(r"\blegacyproject\b", re.IGNORECASE), "LegacyProject"),
+    ("legacy_runtime", re.compile(r"\blegacyruntime\b", re.IGNORECASE), "LegacyRuntime"),
+    ("legacy_ui_framework", re.compile(r"\blegacyuiframework\b", re.IGNORECASE), "LegacyUIFramework"),
+    ("legacy_build_tool", re.compile(r"\blegacybuildtool\b", re.IGNORECASE), "LegacyBuildTool"),
+    ("legacy_e2e_runner", re.compile(r"\blegacye2erunner\b", re.IGNORECASE), "LegacyE2ERunner"),
 ]
 
 
