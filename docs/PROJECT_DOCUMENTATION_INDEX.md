@@ -6,13 +6,16 @@ This file is the top-level navigation for project docs.
 
 1. `README.md`
 2. `docs/agents/00-index.md`
-3. `docs/PROJECT_DOCUMENTATION_INDEX.md`
-4. `docs/agents/13-rag-sources-and-session-ssot.md`
-5. `DELIVERY_PROFILE.md`
-6. `docs/testing-framework.md`
-7. Newest file in `execution-plans/`
-8. Newest file in `decision-logs/`
-9. If available: `logs/ci/<date>/sc-review-pipeline-task-<task>/latest.json`
+3. `docs/agents/01-session-recovery.md`
+4. `docs/PROJECT_DOCUMENTATION_INDEX.md`
+5. `docs/agents/13-rag-sources-and-session-ssot.md`
+6. `DELIVERY_PROFILE.md`
+7. `docs/testing-framework.md`
+8. `docs/agents/16-directory-responsibilities.md`
+9. `docs/workflows/prototype-lane.md`
+10. Newest file in `execution-plans/`
+11. Newest file in `decision-logs/`
+12. If available: `logs/ci/<date>/sc-review-pipeline-task-<task-id>/latest.json`
 
 ## Authoritative Sources
 

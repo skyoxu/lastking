@@ -4,15 +4,16 @@ Purpose: keep [AGENTS.md](../../AGENTS.md) short and move durable guidance here.
 
 ## Read Order After Context Reset
 
-1. [01-session-recovery.md](01-session-recovery.md)
-2. [13-rag-sources-and-session-ssot.md](13-rag-sources-and-session-ssot.md)
-3. [02-repo-map.md](02-repo-map.md)
-4. [14-startup-stack-and-template-structure.md](14-startup-stack-and-template-structure.md)
-5. [03-persistent-harness.md](03-persistent-harness.md)
-6. [../workflows/run-protocol.md](../workflows/run-protocol.md)
-7. [07-agent-to-agent-review.md](07-agent-to-agent-review.md)
-8. Newest files in `execution-plans/` and `decision-logs/`
-9. `logs/ci/<date>/sc-review-pipeline-task-<task>/latest.json` if a local run already exists
+1. [../../README.md](../../README.md)
+2. [01-session-recovery.md](01-session-recovery.md)
+3. [13-rag-sources-and-session-ssot.md](13-rag-sources-and-session-ssot.md)
+4. [02-repo-map.md](02-repo-map.md)
+5. [14-startup-stack-and-template-structure.md](14-startup-stack-and-template-structure.md)
+6. [03-persistent-harness.md](03-persistent-harness.md)
+7. [../workflows/run-protocol.md](../workflows/run-protocol.md)
+8. [07-agent-to-agent-review.md](07-agent-to-agent-review.md)
+9. Newest files in `execution-plans/` and `decision-logs/`
+10. `logs/ci/<date>/sc-review-pipeline-task-<task-id>/latest.json` if a local run already exists
 
 ## By Topic
 - Project overview, startup, stack, and legacy AGENTS background sections:

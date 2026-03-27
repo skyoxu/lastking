@@ -5,6 +5,7 @@ This file is the routing layer for `lastking`. Keep it short. Put durable detail
 ## Project Identity
 - Repository: `lastking`
 - Product: Windows-only single-player Godot 4.5.1 + C# game project
+- Primary PRD-ID: `PRD-lastking-T2`
 - Current default delivery posture: `playable-ea`
 - Current default security posture: `host-safe`
 - Upstream alignment baseline: `docs/workflows/business-repo-upgrade-guide.md`

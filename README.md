@@ -7,9 +7,12 @@
 - Delivery profile: `playable-ea`
 - Security profile: `host-safe`
 - Primary runtime: Windows desktop only
+- Primary PRD-ID: `PRD-lastking-T2`
 
 ## Quick Links
 
+- Agents index: `docs/agents/00-index.md`
+- Project docs index: `docs/PROJECT_DOCUMENTATION_INDEX.md`
 - Project health dashboard: `docs/workflows/project-health-dashboard.md`
 - Stable public entrypoints: `docs/workflows/stable-public-entrypoints.md`
 - Script entrypoints index: `docs/workflows/script-entrypoints-index.md`
