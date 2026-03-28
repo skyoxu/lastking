@@ -47,10 +47,14 @@ class RunSingleTaskLightLaneTests(unittest.TestCase):
         self.assertIn("--apply", align_apply_cmd)
         self.assertNotIn("--apply", align_read_only_cmd)
 
+        expected_with_delivery = {"extract", "coverage"}
         for step_name, cmd in steps_read_only[:4]:
-            self.assertIn("--delivery-profile", cmd, msg=step_name)
-            idx = cmd.index("--delivery-profile")
-            self.assertEqual("playable-ea", cmd[idx + 1], msg=step_name)
+            if step_name in expected_with_delivery:
+                self.assertIn("--delivery-profile", cmd, msg=step_name)
+                idx = cmd.index("--delivery-profile")
+                self.assertEqual("playable-ea", cmd[idx + 1], msg=step_name)
+            else:
+                self.assertNotIn("--delivery-profile", cmd, msg=step_name)
 
     def test_taskmaster_tasks_path_should_fallback_to_examples(self) -> None:
         with tempfile.TemporaryDirectory() as td:

@@ -95,8 +95,6 @@ def _steps(*, align_apply: bool, delivery_profile: str) -> list[tuple[str, list[
         "--task-ids",
         "{id}",
         "--strict-task-selection",
-        "--delivery-profile",
-        delivery_profile,
     ]
     if align_apply:
         align_cmd.append("--apply")
@@ -142,8 +140,6 @@ def _steps(*, align_apply: bool, delivery_profile: str) -> list[tuple[str, list[
                 "0",
                 "--max-unknown",
                 "3",
-                "--delivery-profile",
-                delivery_profile,
             ],
         ),
         (
@@ -292,6 +288,10 @@ def main() -> int:
         return 2
 
     out_dir = Path(args.out_dir) if str(args.out_dir).strip() else _default_out_dir(root)
+    if not out_dir.is_absolute():
+        out_dir = (root / out_dir).resolve()
+    else:
+        out_dir = out_dir.resolve()
     out_dir.mkdir(parents=True, exist_ok=True)
     summary_path = out_dir / "summary.json"
     steps = _steps(align_apply=(not bool(args.no_align_apply)), delivery_profile=str(args.delivery_profile))
