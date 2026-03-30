@@ -29,12 +29,19 @@ This file is the top-level navigation for project docs.
 
 ## Workflow Docs
 
+- Daily workflow (authoritative execution order): `workflow.md`
 - Upgrade guide: `docs/workflows/business-repo-upgrade-guide.md`
 - Template upgrade protocol: `docs/workflows/template-upgrade-protocol.md`
 - Project health dashboard: `docs/workflows/project-health-dashboard.md`
 - Local hard checks: `docs/workflows/local-hard-checks.md`
+- Stable entrypoint index: `docs/workflows/stable-public-entrypoints.md`
+- Script entrypoint index: `docs/workflows/script-entrypoints-index.md`
 
 ## Evidence and Logs
 
 - CI and local evidence: `logs/ci/<YYYY-MM-DD>/`
 - Review pipeline artifact entry: `logs/ci/<YYYY-MM-DD>/sc-review-pipeline-task-<task>/latest.json`
+- Local hard-check latest pointer: `logs/ci/<YYYY-MM-DD>/local-hard-checks-latest.json`
+- Project-health latest pointer: `logs/ci/project-health/latest.json`
+- Project-health dashboard page: `logs/ci/project-health/latest.html`
+- Project-health report catalog: `logs/ci/project-health/report-catalog.latest.json`

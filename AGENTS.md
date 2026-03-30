@@ -30,9 +30,11 @@ This file is the routing layer for `lastking`. Keep it short. Put durable detail
 7. `docs/testing-framework.md`
 8. `docs/agents/16-directory-responsibilities.md`
 9. `docs/workflows/prototype-lane.md`
-10. Newest file in `execution-plans/`
-11. Newest file in `decision-logs/`
-12. If a local review already ran: `logs/ci/<date>/sc-review-pipeline-task-<task-id>/latest.json`
+10. `workflow.md`
+11. `docs/workflows/project-health-dashboard.md`
+12. Newest file in `execution-plans/`
+13. Newest file in `decision-logs/`
+14. If a local review already ran: `logs/ci/<date>/sc-review-pipeline-task-<task-id>/latest.json`
 
 ## Authoritative Sources
 Use these sources first. Do not rebuild ad-hoc indexes unless the task explicitly requires it.
@@ -43,10 +45,13 @@ Use these sources first. Do not rebuild ad-hoc indexes unless the task explicitl
 - Overlays: `docs/architecture/overlays/<PRD-ID>/08/**`
 - Testing rules: `docs/testing-framework.md`
 - Delivery and harness rules: `DELIVERY_PROFILE.md`, `docs/workflows/run-protocol.md`, `docs/workflows/local-hard-checks.md`
+- Workflow and script routing: `workflow.md`, `docs/workflows/stable-public-entrypoints.md`, `docs/workflows/script-entrypoints-index.md`
+- Project health routing: `docs/workflows/project-health-dashboard.md`, `logs/ci/project-health/latest.html`, `logs/ci/project-health/report-catalog.latest.json`
 
 ## Core Execution Entry Points
 - Repo-scoped hard validation:
   - `py -3 scripts/python/dev_cli.py run-local-hard-checks --godot-bin <godot-bin>`
+  - `py -3 scripts/python/inspect_run.py --kind local-hard-checks`
 - Canonical task recovery:
   - `py -3 scripts/python/dev_cli.py resume-task --task-id <task-id>`
 - Task-scoped review pipeline:

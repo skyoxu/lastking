@@ -3,8 +3,8 @@
 
 from __future__ import annotations
 
-import json
 import html
+import json
 import re
 from datetime import datetime
 from pathlib import Path
@@ -21,57 +21,6 @@ TASK_FILES = ("tasks.json", "tasks_back.json", "tasks_gameplay.json")
 ALLOWED_BASE_08_FILES = {"08-crosscutting-and-feature-slices.base.md"}
 GODOT_PATTERN = re.compile(r"\busing\s+Godot\b|\bGodot\.", re.MULTILINE)
 PRD_PATTERN = re.compile(r"\bPRD-[A-Za-z0-9_-]+\b")
-
-KIND_LABELS = {
-    "detect-project-stage": "阶段检测",
-    "doctor-project": "仓库体检",
-    "check-directory-boundaries": "目录边界检查",
-}
-
-STATUS_LABELS = {
-    "ok": "正常",
-    "warn": "警告",
-    "fail": "失败",
-    "unknown": "未知",
-}
-
-KV_LABELS = {
-    "generated_at": "生成时间",
-    "history_json": "历史记录文件",
-    "latest_json": "最新记录文件",
-    "task.done": "任务计数-完成",
-    "task.in_progress": "任务计数-进行中",
-    "task.other": "任务计数-其他",
-    "check.ok": "检查项-正常",
-    "check.warn": "检查项-警告",
-    "check.fail": "检查项-失败",
-    "boundary.violations": "边界违规数",
-    "boundary.warnings": "边界警告数",
-    "rules_checked": "规则总数",
-    "status": "状态",
-    "url": "访问地址",
-    "host": "主机",
-    "port": "端口",
-    "pid": "进程ID",
-    "started_at": "启动时间",
-    "reused": "是否复用已有服务",
-    "latest_file": "latest 文件",
-    "run_id": "运行ID",
-    "task_id": "任务ID",
-    "summary_path": "summary 路径",
-    "delivery_profile": "交付档位",
-    "security_profile": "安全档位",
-    "failed_step": "失败步骤",
-    "steps.total": "步骤总数",
-    "steps.ok": "步骤正常",
-    "steps.warn": "步骤警告",
-    "steps.fail": "步骤失败",
-    "dashboard.html": "仪表盘页面",
-    "dashboard.json": "仪表盘JSON",
-    "stage.latest": "阶段检测latest",
-    "doctor.latest": "仓库体检latest",
-    "boundaries.latest": "边界检查latest",
-}
 
 
 def now_local() -> datetime:
@@ -222,235 +171,146 @@ def load_latest_records(root: Path) -> list[dict[str, Any]]:
     return records
 
 
-def _safe(value: Any) -> str:
-    return html.escape(str(value), quote=True)
+def _normalize_report_value(value: Any, *, limit: int = 240) -> str:
+    text = str(value or "").strip()
+    if not text:
+        return ""
+    return text[:limit]
 
 
-def _label_for_kind(kind: str) -> str:
-    cn = KIND_LABELS.get(kind, "未知模块")
-    return f"{cn} ({kind})"
+def _compact_extract_family_actions(items: Any, *, limit: int = 6) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    if not isinstance(items, list):
+        return out
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        out.append(
+            {
+                "family": _normalize_report_value(item.get("family"), limit=80),
+                "count": int(item.get("count") or 0),
+                "recommended_action": _normalize_report_value(item.get("recommended_action"), limit=120),
+                "downstream_policy_hint": _normalize_report_value(item.get("downstream_policy_hint"), limit=40),
+                "reason": _normalize_report_value(item.get("reason"), limit=200),
+                "task_ids": [int(task_id) for task_id in list(item.get("task_ids") or [])[:12] if str(task_id).strip().isdigit()],
+            }
+        )
+        if len(out) >= limit:
+            break
+    return out
 
 
-def _label_for_status(status: str) -> str:
-    key = str(status or "unknown").lower()
-    cn = STATUS_LABELS.get(key, STATUS_LABELS["unknown"])
-    return f"{cn} ({key})"
+def _compact_range_items(items: Any, *, limit: int = 6) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    if not isinstance(items, list):
+        return out
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        out.append(
+            {
+                "family": _normalize_report_value(item.get("family"), limit=80),
+                "task_id_start": int(item.get("task_id_start") or 0),
+                "task_id_end": int(item.get("task_id_end") or 0),
+                "count": int(item.get("count") or 0),
+                "reason": _normalize_report_value(item.get("reason"), limit=160),
+            }
+        )
+        if len(out) >= limit:
+            break
+    return out
 
 
-def _label_for_key(key: str) -> str:
-    cn = KV_LABELS.get(key)
-    return f"{cn} ({key})" if cn else key
-
-
-def _read_json_if_exists(path: Path) -> dict[str, Any]:
-    if not path.exists():
+def _extract_report_highlights(payload: dict[str, Any]) -> dict[str, Any]:
+    highlights: dict[str, Any] = {}
+    family_actions = _compact_extract_family_actions(payload.get("extract_family_recommended_actions"))
+    if family_actions:
+        highlights["extract_family_recommended_actions"] = family_actions
+    hotspots = _compact_range_items(payload.get("family_hotspots"))
+    if hotspots:
+        highlights["family_hotspots"] = hotspots
+    quarantine = _compact_range_items(payload.get("quarantine_ranges"))
+    if quarantine:
+        highlights["quarantine_ranges"] = quarantine
+    if not highlights:
         return {}
-    try:
-        payload = read_json(path)
-    except Exception:
-        return {}
-    return payload if isinstance(payload, dict) else {}
+    if "covered_count" in payload:
+        highlights["covered_count"] = int(payload.get("covered_count") or 0)
+    if "failed_count" in payload:
+        highlights["failed_count"] = int(payload.get("failed_count") or 0)
+    return highlights
 
 
-def _find_latest_local_hard_checks_latest(root: Path) -> tuple[Path | None, dict[str, Any]]:
-    candidates = sorted(
-        (root / "logs" / "ci").glob("*/local-hard-checks-latest.json"),
-        key=lambda item: item.stat().st_mtime,
-        reverse=True,
-    )
-    if not candidates:
-        return None, {}
-    chosen = candidates[0]
-    return chosen, _read_json_if_exists(chosen)
+def build_report_catalog(root: Path) -> dict[str, Any]:
+    """汇总 logs/ci 下可读取的 JSON 报告索引，供 latest.html 展示。"""
+    logs_root = root / "logs" / "ci"
+    if not logs_root.exists():
+        return {"total_json": 0, "invalid_json": 0, "entries": []}
 
+    entries: list[dict[str, Any]] = []
+    invalid = 0
+    for path in sorted(logs_root.rglob("*.json")):
+        rel = repo_rel(path, root=root)
+        try:
+            stat = path.stat()
+            modified_at = datetime.fromtimestamp(stat.st_mtime).astimezone().isoformat(timespec="seconds")
+        except OSError:
+            stat = None
+            modified_at = ""
 
-def _render_kv_pairs(pairs: list[tuple[str, Any]]) -> str:
-    rows = []
-    for key, value in pairs:
-        rows.append(
-            f"<li><span class=\"k\">{_safe(_label_for_key(key))}</span><code class=\"v\">{_safe(value)}</code></li>"
-        )
-    return "<ul class=\"kv\">" + "".join(rows) + "</ul>"
-
-
-def _render_record_details(item: dict[str, Any]) -> str:
-    kind = str(item.get("kind", "unknown"))
-    blocks: list[str] = []
-
-    blocks.append(
-        _render_kv_pairs(
-            [
-                ("generated_at", item.get("generated_at", "")),
-                ("history_json", item.get("history_json", "")),
-                ("latest_json", item.get("latest_json", "")),
-            ]
-        )
-    )
-
-    if kind == "detect-project-stage":
-        signals = item.get("signals", {}) if isinstance(item.get("signals"), dict) else {}
-        task_counts = signals.get("task_status_counts", {})
-        if isinstance(task_counts, dict):
-            blocks.append(
-                _render_kv_pairs(
-                    [
-                        ("task.done", task_counts.get("done", 0)),
-                        ("task.in_progress", task_counts.get("in_progress", 0)),
-                        ("task.other", task_counts.get("other", 0)),
-                    ]
+        kind = path.stem
+        status = ""
+        generated_at = ""
+        summary = ""
+        parse_error = ""
+        try:
+            payload = read_json(path)
+            if isinstance(payload, dict):
+                kind = _normalize_report_value(payload.get("kind") or payload.get("cmd") or kind, limit=120) or kind
+                status = _normalize_report_value(payload.get("status") or payload.get("result"), limit=40)
+                generated_at = _normalize_report_value(
+                    payload.get("generated_at") or payload.get("timestamp") or payload.get("ts"),
+                    limit=60,
                 )
-            )
-        signal_rows: list[tuple[str, Any]] = []
-        for key in (
-            "project_godot",
-            "readme",
-            "agents",
-            "real_task_triplet",
-            "example_task_triplet",
-            "overlay_indexes",
-            "contract_files",
-            "unit_test_files",
-        ):
-            if key in signals:
-                signal_rows.append((f"signal.{key}", signals.get(key)))
-        if signal_rows:
-            blocks.append(_render_kv_pairs(signal_rows))
-    elif kind == "doctor-project":
-        counts = item.get("counts", {}) if isinstance(item.get("counts"), dict) else {}
-        blocks.append(
-            _render_kv_pairs(
-                [
-                    ("check.ok", counts.get("ok", 0)),
-                    ("check.warn", counts.get("warn", 0)),
-                    ("check.fail", counts.get("fail", 0)),
-                ]
-            )
-        )
-        checks = item.get("checks", []) if isinstance(item.get("checks"), list) else []
-        selected = [entry for entry in checks if isinstance(entry, dict) and entry.get("status") != "ok"][:8]
-        if selected:
-            rows = []
-            for check in selected:
-                rows.append(
-                    f"<li><code>{_safe(check.get('id', 'unknown'))}</code> "
-                    f"<span class=\"pill { _safe(check.get('status', 'unknown')) }\">{_safe(check.get('status', 'unknown'))}</span> "
-                    f"<span>{_safe(check.get('summary', ''))}</span></li>"
-                )
-            blocks.append("<div class=\"sub\">异常检查项 (non-ok checks)</div><ul class=\"list\">" + "".join(rows) + "</ul>")
-    elif kind == "check-directory-boundaries":
-        violations = item.get("violations", []) if isinstance(item.get("violations"), list) else []
-        warnings = item.get("warnings", []) if isinstance(item.get("warnings"), list) else []
-        blocks.append(
-            _render_kv_pairs(
-                [
-                    ("boundary.violations", len(violations)),
-                    ("boundary.warnings", len(warnings)),
-                    ("rules_checked", len(item.get("rules_checked", [])) if isinstance(item.get("rules_checked"), list) else 0),
-                ]
-            )
-        )
-        preview_rows = []
-        for entry in (violations[:5] + warnings[:5]):
-            if not isinstance(entry, dict):
-                continue
-            preview_rows.append(
-                f"<li><code>{_safe(entry.get('rule_id', 'rule'))}</code> "
-                f"<span>{_safe(entry.get('path', ''))}</span></li>"
-            )
-        if preview_rows:
-            blocks.append("<div class=\"sub\">样例发现 (sample findings)</div><ul class=\"list\">" + "".join(preview_rows) + "</ul>")
+                summary = _normalize_report_value(payload.get("summary") or payload.get("message"), limit=200)
+                highlights = _extract_report_highlights(payload)
+            else:
+                parse_error = "json-not-object"
+                highlights = {}
+        except Exception:
+            invalid += 1
+            parse_error = "invalid-json"
+            highlights = {}
 
-    blocks.append(
-        "<details><summary>原始记录 (raw record)</summary>"
-        + f"<pre>{_safe(json.dumps(item, ensure_ascii=False, indent=2))}</pre>"
-        + "</details>"
-    )
-    return "".join(blocks)
-
-
-def _render_context_panels(root: Path) -> str:
-    panels: list[str] = []
-
-    server = _read_json_if_exists(latest_dir(root) / "server.json")
-    if server:
-        panels.append(
-            "\n".join(
-                [
-                    "<section class=\"panel\">",
-                    "<h3>本地服务状态 (Server)</h3>",
-                    _render_kv_pairs(
-                        [
-                            ("status", server.get("status", "")),
-                            ("url", server.get("url", "")),
-                            ("host", server.get("host", "")),
-                            ("port", server.get("port", "")),
-                            ("pid", server.get("pid", "")),
-                            ("started_at", server.get("started_at", "")),
-                            ("reused", server.get("reused", "")),
-                        ]
-                    ),
-                    "</section>",
-                ]
-            )
+        entries.append(
+            {
+                "path": rel,
+                "kind": kind,
+                "status": status,
+                "generated_at": generated_at,
+                "summary": summary,
+                "size_bytes": int(stat.st_size) if stat else 0,
+                "modified_at": modified_at,
+                "parse_error": parse_error,
+                "highlights": highlights,
+            }
         )
 
-    latest_path, latest_payload = _find_latest_local_hard_checks_latest(root)
-    if latest_payload:
-        summary_path = Path(str(latest_payload.get("summary_path", "")).strip())
-        summary = _read_json_if_exists(summary_path) if summary_path else {}
-        steps = summary.get("steps", []) if isinstance(summary.get("steps"), list) else []
-        ok_steps = sum(1 for step in steps if isinstance(step, dict) and str(step.get("status", "")).lower() == "ok")
-        fail_steps = sum(1 for step in steps if isinstance(step, dict) and str(step.get("status", "")).lower() == "fail")
-        warn_steps = sum(1 for step in steps if isinstance(step, dict) and str(step.get("status", "")).lower() == "warn")
-        panels.append(
-            "\n".join(
-                [
-                    "<section class=\"panel\">",
-                    "<h3>最近一次本地硬检查 (Latest Local Hard Checks)</h3>",
-                    _render_kv_pairs(
-                        [
-                            ("latest_file", repo_rel(latest_path, root=root) if latest_path else ""),
-                            ("status", latest_payload.get("status", "")),
-                            ("run_id", latest_payload.get("run_id", "")),
-                            ("task_id", latest_payload.get("task_id", "")),
-                            ("summary_path", latest_payload.get("summary_path", "")),
-                            ("delivery_profile", summary.get("delivery_profile", "")),
-                            ("security_profile", summary.get("security_profile", "")),
-                            ("failed_step", summary.get("failed_step", "")),
-                            ("steps.total", len(steps)),
-                            ("steps.ok", ok_steps),
-                            ("steps.warn", warn_steps),
-                            ("steps.fail", fail_steps),
-                        ]
-                    ),
-                    "</section>",
-                ]
-            )
-        )
-
-    panels.append(
-        "\n".join(
-            [
-                "<section class=\"panel\">",
-                "<h3>关键产物路径 (Artifacts)</h3>",
-                _render_kv_pairs(
-                    [
-                        ("dashboard.html", "logs/ci/project-health/latest.html"),
-                        ("dashboard.json", "logs/ci/project-health/latest.json"),
-                        ("stage.latest", "logs/ci/project-health/detect-project-stage.latest.json"),
-                        ("doctor.latest", "logs/ci/project-health/doctor-project.latest.json"),
-                        ("boundaries.latest", "logs/ci/project-health/check-directory-boundaries.latest.json"),
-                    ]
-                ),
-                "</section>",
-            ]
-        )
-    )
-
-    return "".join(panels)
+    entries.sort(key=lambda item: (item.get("modified_at", ""), item.get("path", "")), reverse=True)
+    return {
+        "total_json": len(entries),
+        "invalid_json": invalid,
+        "entries": entries,
+    }
 
 
-def dashboard_html(records: list[dict[str, Any]], *, generated_at: str, root: Path) -> str:
+def dashboard_html(
+    records: list[dict[str, Any]],
+    *,
+    generated_at: str,
+    report_catalog: dict[str, Any],
+    report_catalog_path: str,
+) -> str:
     overall = "ok"
     if any(item.get("status") == "fail" for item in records):
         overall = "fail"
@@ -459,37 +319,112 @@ def dashboard_html(records: list[dict[str, Any]], *, generated_at: str, root: Pa
 
     cards = []
     for item in records:
-        kind = str(item.get("kind", "unknown"))
-        status = str(item.get("status", "unknown"))
-        summary = str(item.get("summary", ""))
+        kind = html.escape(str(item.get("kind", "unknown")))
+        status = html.escape(str(item.get("status", "unknown")))
+        summary = html.escape(str(item.get("summary", "")))
         extra = []
         if item.get("stage"):
-            extra.append(f"<div class=\"meta\">stage: {item['stage']}</div>")
+            extra.append(f"<div class=\"meta\">阶段: {html.escape(str(item['stage']))}</div>")
         if item.get("history_json"):
-            extra.append(f"<div class=\"meta\">history: {item['history_json']}</div>")
-        details_html = _render_record_details(item)
+            extra.append(f"<div class=\"meta\">历史: {html.escape(str(item['history_json']))}</div>")
         cards.append(
             "\n".join(
                 [
                     f"<section class=\"card {status}\">",
-                    f"<h2>{_label_for_kind(kind)}</h2>",
-                    f"<div class=\"badge\">{_label_for_status(status)}</div>",
-                    f"<p>{_safe(summary)}</p>",
+                    f"<h2>{kind}</h2>",
+                    f"<div class=\"badge\">{status}</div>",
+                    f"<p>{summary}</p>",
                     *extra,
-                    f"<div class=\"meta\">最新记录 (latest json): {kind}.latest.json</div>",
-                    f"<div class=\"details\">{details_html}</div>",
+                    f"<div class=\"meta\">latest json: {kind}.latest.json</div>",
                     "</section>",
                 ]
             )
         )
 
-    context_panels = _render_context_panels(root)
+    highlight_sections = []
+    highlighted_entries = [
+        item for item in report_catalog.get("entries", []) if isinstance(item, dict) and isinstance(item.get("highlights"), dict) and item.get("highlights")
+    ][:4]
+    for item in highlighted_entries:
+        highlights = dict(item.get("highlights") or {})
+        lines = [
+            f"<section class=\"highlight-card\">",
+            f"<h3>{html.escape(str(item.get('kind', 'unknown')))}</h3>",
+            f"<div class=\"meta\">path: {html.escape(str(item.get('path', '')))}</div>",
+            f"<div class=\"meta\">status: {html.escape(str(item.get('status', 'unknown') or 'unknown'))}</div>",
+        ]
+        if "covered_count" in highlights or "failed_count" in highlights:
+            lines.append(
+                f"<div class=\"meta\">covered={int(highlights.get('covered_count') or 0)} failed={int(highlights.get('failed_count') or 0)}</div>"
+            )
+        family_actions = highlights.get("extract_family_recommended_actions") or []
+        if family_actions:
+            lines.append("<div class=\"subhead\">Extract failure families</div>")
+            for family_item in family_actions:
+                lines.append("<div class=\"highlight-item\">")
+                lines.append(
+                    f"<div><strong>{html.escape(str(family_item.get('family') or 'unknown'))}</strong> "
+                    f"(<span>{int(family_item.get('count') or 0)}</span>)</div>"
+                )
+                lines.append(
+                    f"<div class=\"meta\">hint: {html.escape(str(family_item.get('downstream_policy_hint') or 'manual'))} | "
+                    f"action: {html.escape(str(family_item.get('recommended_action') or 'inspect'))}</div>"
+                )
+                if family_item.get("task_ids"):
+                    lines.append(f"<div class=\"meta\">tasks: {html.escape(','.join(str(task_id) for task_id in family_item['task_ids']))}</div>")
+                if family_item.get("reason"):
+                    lines.append(f"<div class=\"meta\">reason: {html.escape(str(family_item['reason']))}</div>")
+                lines.append("</div>")
+        hotspots = highlights.get("family_hotspots") or []
+        if hotspots:
+            lines.append("<div class=\"subhead\">Family hotspots</div>")
+            for hotspot in hotspots:
+                lines.append(
+                    f"<div class=\"meta\">{html.escape(str(hotspot.get('family') or 'unknown'))}: "
+                    f"T{int(hotspot.get('task_id_start') or 0)}-T{int(hotspot.get('task_id_end') or 0)} "
+                    f"count={int(hotspot.get('count') or 0)}</div>"
+                )
+        quarantine = highlights.get("quarantine_ranges") or []
+        if quarantine:
+            lines.append("<div class=\"subhead\">Quarantine ranges</div>")
+            for item_range in quarantine:
+                lines.append(
+                    f"<div class=\"meta\">{html.escape(str(item_range.get('family') or 'unknown'))}: "
+                    f"T{int(item_range.get('task_id_start') or 0)}-T{int(item_range.get('task_id_end') or 0)} "
+                    f"{html.escape(str(item_range.get('reason') or ''))}</div>"
+                )
+        lines.append("</section>")
+        highlight_sections.append("\n".join(lines))
+
+    report_rows = []
+    for item in report_catalog.get("entries", []):
+        parse_error = str(item.get("parse_error") or "")
+        status_text = str(item.get("status") or "")
+        status_cls = "invalid" if parse_error else ("ok" if status_text in {"ok", "pass", "passed"} else ("warn" if status_text == "warn" else ("fail" if status_text == "fail" else "unknown")))
+        report_rows.append(
+            "\n".join(
+                [
+                    "<tr>",
+                    f"<td>{html.escape(str(item.get('modified_at', '')))}</td>",
+                    f"<td>{html.escape(str(item.get('kind', '')))}</td>",
+                    f"<td><span class=\"chip {status_cls}\">{html.escape(status_text or parse_error or 'n/a')}</span></td>",
+                    f"<td>{html.escape(str(item.get('generated_at', '')))}</td>",
+                    f"<td>{html.escape(str(item.get('path', '')))}</td>",
+                    f"<td>{html.escape(str(item.get('summary', '')))}</td>",
+                    "</tr>",
+                ]
+            )
+        )
+
+    report_total = int(report_catalog.get("total_json", 0))
+    report_invalid = int(report_catalog.get("invalid_json", 0))
+    report_catalog_path_escaped = html.escape(report_catalog_path)
 
     return f"""<!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>项目健康仪表盘 (Project Health Dashboard)</title>
+  <title>Project Health Dashboard</title>
   <style>
     body {{ font-family: Segoe UI, Arial, sans-serif; background: #f4f6f8; color: #1f2933; margin: 0; }}
     main {{ max-width: 1100px; margin: 0 auto; padding: 24px; }}
@@ -506,48 +441,74 @@ def dashboard_html(records: list[dict[str, Any]], *, generated_at: str, root: Pa
     .card h2 {{ margin: 0 0 10px; font-size: 18px; }}
     .badge {{ display: inline-block; margin-bottom: 10px; font-size: 12px; font-weight: 700; text-transform: uppercase; }}
     .meta {{ color: #52606d; font-size: 12px; margin-top: 8px; word-break: break-all; }}
-    .details {{ margin-top: 10px; }}
-    .kv {{ list-style: none; padding: 0; margin: 0 0 10px; }}
-    .kv li {{ display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 10px; margin: 4px 0; align-items: baseline; }}
-    .kv .k {{ color: #52606d; font-size: 12px; }}
-    .kv .v {{ display: inline-block; font-size: 12px; word-break: break-all; }}
-    .sub {{ font-size: 12px; color: #52606d; margin: 10px 0 4px; text-transform: uppercase; letter-spacing: 0.02em; }}
-    .list {{ margin: 0 0 10px 18px; padding: 0; font-size: 12px; }}
-    .list li {{ margin: 4px 0; }}
-    .pill {{ display: inline-block; padding: 1px 6px; border-radius: 999px; font-size: 11px; text-transform: uppercase; margin-right: 6px; }}
-    .pill.warn {{ background: #fef3c7; color: #92400e; }}
-    .pill.fail {{ background: #fee2e2; color: #991b1b; }}
-    details {{ margin-top: 8px; }}
-    summary {{ cursor: pointer; color: #334e68; }}
-    pre {{ margin: 8px 0 0; padding: 10px; background: #0f172a; color: #e2e8f0; border-radius: 8px; max-height: 260px; overflow: auto; font-size: 11px; }}
-    .panels {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 22px; }}
-    .panel {{ background: #ffffff; border: 1px solid #d2d6dc; border-radius: 12px; padding: 16px; box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06); }}
-    .panel h3 {{ margin: 0 0 10px; font-size: 16px; }}
     .hint {{ margin-top: 20px; color: #52606d; font-size: 13px; }}
-    .note {{ margin-top: 12px; background: #eef2ff; border-left: 4px solid #6366f1; padding: 12px; border-radius: 8px; font-size: 13px; line-height: 1.5; }}
+    .actions {{ display: flex; gap: 8px; margin-top: 8px; }}
+    .btn {{ border: 1px solid #cbd2d9; border-radius: 8px; background: #fff; padding: 6px 10px; font-size: 13px; cursor: pointer; }}
+    .btn:hover {{ background: #f8fafc; }}
+    .table-wrap {{ margin-top: 18px; overflow: auto; background: #fff; border: 1px solid #d2d6dc; border-radius: 12px; }}
+    .highlight-wrap {{ margin-top: 18px; display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }}
+    .highlight-card {{ background: #fff; border: 1px solid #d2d6dc; border-radius: 12px; padding: 16px; box-shadow: 0 6px 20px rgba(15, 23, 42, 0.06); }}
+    .highlight-card h3 {{ margin: 0 0 10px; font-size: 16px; }}
+    .highlight-item {{ border-top: 1px solid #e5e7eb; padding-top: 10px; margin-top: 10px; }}
+    .subhead {{ margin-top: 12px; font-size: 12px; font-weight: 700; text-transform: uppercase; color: #52606d; }}
+    table {{ width: 100%; border-collapse: collapse; font-size: 12px; }}
+    th, td {{ border-bottom: 1px solid #e5e7eb; text-align: left; padding: 8px; vertical-align: top; }}
+    th {{ background: #f8fafc; position: sticky; top: 0; z-index: 1; }}
+    .chip {{ display: inline-block; padding: 2px 6px; border-radius: 999px; font-weight: 700; }}
+    .chip.ok {{ background: #d1fae5; color: #065f46; }}
+    .chip.warn {{ background: #fef3c7; color: #92400e; }}
+    .chip.fail {{ background: #fee2e2; color: #991b1b; }}
+    .chip.invalid {{ background: #e5e7eb; color: #1f2933; }}
+    .chip.unknown {{ background: #e0e7ff; color: #3730a3; }}
   </style>
 </head>
 <body>
+  <!-- 仪表盘说明：本页面不自动刷新，避免阅读过程中跳页。 -->
+  <!-- 报告索引说明：下方表格来自 logs/ci/** 的 JSON 报告聚合。 -->
   <main>
     <div class="hero">
       <div>
-        <h1>项目健康仪表盘 (Project Health Dashboard)</h1>
-        <div>用于汇总本仓库的阶段检测、仓库体检、目录边界检查结果。</div>
+        <h1>项目健康总览</h1>
+        <div>该页面聚合项目健康检查结果 + logs/ci 下可整合的 JSON 报告索引。</div>
+        <div class="actions">
+          <button class="btn" onclick="window.location.reload()">手动刷新</button>
+        </div>
       </div>
-      <div class="status {overall}">{_label_for_status(overall)}</div>
+      <div class="status {overall}">{overall}</div>
     </div>
-    <div class="meta">生成时间 (generated_at): {generated_at}</div>
-    <div class="note">
-      阅读说明：上方三张卡片是三类核心检查；每张卡片内可展开“原始记录 (raw record)”查看完整 JSON。
-      下方面板展示本地服务状态、最近一次本地硬检查快照和关键产物路径，便于快速定位问题。
-    </div>
+    <div class="meta">generated_at: {generated_at}</div>
     <div class="grid">
       {''.join(cards)}
     </div>
-    <div class="panels">
-      {context_panels}
-    </div>
-    <div class="hint">Auto-refresh is disabled. 已关闭自动刷新；请在执行 project-health 或 local-hard-check 后手动刷新页面。</div>
+    <details open>
+      <summary>批量任务诊断摘录</summary>
+      <div class="hint">这里优先展示报告 JSON 里可直接消费的高价值字段，例如 extract family 建议动作、family hotspot、quarantine 范围。</div>
+      <div class="highlight-wrap">
+        {''.join(highlight_sections) if highlight_sections else '<div class="meta">当前没有可直接展示的批量诊断摘要。</div>'}
+      </div>
+    </details>
+    <div class="hint">JSON 报告总数: {report_total}；解析失败: {report_invalid}；索引文件: {report_catalog_path_escaped}</div>
+    <div class="hint">Auto-refresh is disabled. 页面不会自动刷新，请在执行扫描后手动刷新。</div>
+    <details>
+      <summary>展开查看全部 JSON 报告索引</summary>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>modified_at</th>
+              <th>kind</th>
+              <th>status</th>
+              <th>generated_at</th>
+              <th>path</th>
+              <th>summary</th>
+            </tr>
+          </thead>
+          <tbody>
+            {''.join(report_rows)}
+          </tbody>
+        </table>
+      </div>
+    </details>
   </main>
 </body>
 </html>
@@ -558,6 +519,7 @@ def refresh_dashboard(root: Path | str | None = None, *, now: datetime | None = 
     resolved_root = resolve_root(root)
     stamp = now or now_local()
     records = load_latest_records(resolved_root)
+    report_catalog = build_report_catalog(resolved_root)
     overall = "ok"
     if any(item.get("status") == "fail" for item in records):
         overall = "fail"
@@ -578,10 +540,25 @@ def refresh_dashboard(root: Path | str | None = None, *, now: datetime | None = 
             }
             for item in records
         ],
+        "report_catalog_summary": {
+            "total_json": int(report_catalog.get("total_json", 0)),
+            "invalid_json": int(report_catalog.get("invalid_json", 0)),
+            "catalog_json": "logs/ci/project-health/report-catalog.latest.json",
+        },
     }
     latest_root = latest_dir(resolved_root)
+    report_catalog_path = latest_root / "report-catalog.latest.json"
+    write_json(report_catalog_path, report_catalog)
     write_json(latest_root / "latest.json", payload)
-    write_text(latest_root / "latest.html", dashboard_html(records, generated_at=payload["generated_at"], root=resolved_root))
+    write_text(
+        latest_root / "latest.html",
+        dashboard_html(
+            records,
+            generated_at=payload["generated_at"],
+            report_catalog=report_catalog,
+            report_catalog_path=repo_rel(report_catalog_path, root=resolved_root),
+        ),
+    )
     return payload
 
 
