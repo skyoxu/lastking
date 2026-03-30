@@ -43,6 +43,9 @@ py -3 scripts/python/dev_cli.py run-local-hard-checks --godot-bin C:\Godot\Godot
 
 # No Godot runtime available: semantics, contracts, and dotnet only
 py -3 scripts/python/dev_cli.py run-local-hard-checks
+
+# Inspect the latest local-hard-checks summary/repair hints
+py -3 scripts/python/inspect_run.py --kind local-hard-checks
 `
 
 ## Main Parameters
@@ -103,6 +106,7 @@ un_id.txt: stable run id
 The same date directory also gets a repo-scoped pointer:
 
 - logs/ci/<YYYY-MM-DD>/local-hard-checks-latest.json
+- logs/ci/project-health/report-catalog.latest.json
 
 ### Repo Health Prelude
 

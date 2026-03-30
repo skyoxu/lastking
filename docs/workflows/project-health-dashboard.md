@@ -30,6 +30,7 @@ py -3 scripts/python/serve_project_health.py
 
 Every command refreshes the same stable latest records:
 
+- `logs/ci/project-health/report-catalog.latest.json`
 - `logs/ci/project-health/server.json`
 - `logs/ci/project-health/detect-project-stage.latest.json`
 - `logs/ci/project-health/doctor-project.latest.json`
@@ -42,18 +43,15 @@ Historical snapshots are written under `logs/ci/<YYYY-MM-DD>/project-health/`.
 ## Visual Page
 
 Open `logs/ci/project-health/latest.html` in a browser or VS Code preview.
-Auto-refresh is disabled by design. Manually reload the page after each scan.
-The page now includes:
-
-- Stage/Doctor/Boundary cards with expanded detail blocks and raw JSON preview.
-- Local hard-check snapshot summary (when `local-hard-checks-latest.json` exists).
-- Current local server status (`server.json`) and dashboard artifact quick paths.
-
+The dashboard now aggregates report-style JSON files under `logs/ci/**` and shows them in a collapsible table.
+The page does not auto-refresh. Use the manual refresh button after rerunning health commands.
 It is still a static local file: the content only changes when one of the commands writes a new latest record.
+When a batch workflow summary exposes high-value fields such as `extract_family_recommended_actions`, `family_hotspots`, or `quarantine_ranges`, the page also renders a compact diagnostics excerpt above the full JSON table.
+This lets operators see workflow 5.1 failure families and the recommended next action without opening the raw batch summary first.
 
 ## Template-Specific Interpretation
 
-In `lastking`, `triplet-missing` is only a transitional warning state for template/bootstrap flows. The target steady state is a real `.taskmaster/tasks/*.json` triplet.
+In this template repo, `triplet-missing` is a valid warning state when only `examples/taskmaster/` exists and the real `.taskmaster/tasks/*.json` has not been created yet.
 That warning should stay visible until a copied business repo creates its real task triplet.
 
 ## Recommended Use
