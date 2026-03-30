@@ -166,6 +166,7 @@ class ProjectHealthSupportTests(unittest.TestCase):
             self.assertIn("repair_obligations_or_task_context_before_downstream", latest_html)
             self.assertIn("stdout:sc_llm_obligations_status_fail", latest_html)
             self.assertIn("family_streak&gt;=5", latest_html)
+            self.assertIn("Auto-refresh is disabled", latest_html)
             self.assertNotIn('meta http-equiv="refresh"', latest_html.lower())
 
 

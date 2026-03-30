@@ -488,6 +488,7 @@ def dashboard_html(
       </div>
     </details>
     <div class="hint">JSON 报告总数: {report_total}；解析失败: {report_invalid}；索引文件: {report_catalog_path_escaped}</div>
+    <div class="hint">Auto-refresh is disabled. 页面不会自动刷新，请在执行扫描后手动刷新。</div>
     <details>
       <summary>展开查看全部 JSON 报告索引</summary>
       <div class="table-wrap">
