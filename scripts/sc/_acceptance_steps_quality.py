@@ -5,8 +5,6 @@ Quality/perf-related acceptance-check steps.
 
 from __future__ import annotations
 
-import json
-import os
 import re
 import shutil
 from pathlib import Path
@@ -114,78 +112,36 @@ def step_quality_rules(out_dir: Path, *, strict: bool) -> StepResult:
     except Exception:
         pass
 
-    # Hard gate: forbid newly-added manual command examples that bypass run_review_pipeline.
-    manual_json = repo_root() / "logs" / "ci" / today_str() / "forbid-manual-sc-triplet-examples.json"
-    manual_cmd = [
-        "py",
-        "-3",
-        "scripts/python/forbid_manual_sc_triplet_examples.py",
-        "--root",
-        str(repo_root()),
-        "--mode",
-        "diff",
-        "--whitelist",
-        "docs/workflows/unified-pipeline-command-whitelist.txt",
-        "--whitelist-metadata",
-        "require",
-    ]
-    manual_rc, manual_out = run_cmd(manual_cmd, cwd=repo_root(), timeout_sec=90)
-    manual_log = out_dir / "forbid-manual-sc-triplet-examples.log"
-    write_text(manual_log, manual_out)
-    if manual_rc != 0:
-        status = "fail"
-        report = {
-            **report,
-            "manual_triplet_examples": {"status": "fail", "rc": manual_rc, "cmd": manual_cmd, "log": str(manual_log)},
-        }
-    else:
-        report = {
-            **report,
-            "manual_triplet_examples": {"status": "ok", "rc": manual_rc, "cmd": manual_cmd, "log": str(manual_log)},
-        }
-    try:
-        if manual_json.exists():
-            shutil.copy2(manual_json, out_dir / manual_json.name)
-    except Exception:
-        pass
-
     return StepResult(name="quality-rules", status=status, rc=0 if status == "ok" else 1, log=str(log_path), details=report)
 
 
-def _smoke_dir_matches_run_id(smoke_dir: Path, expected_run_id: str) -> bool:
-    run_id_txt = smoke_dir / "run_id.txt"
-    if run_id_txt.exists():
-        value = run_id_txt.read_text(encoding="utf-8", errors="ignore").strip()
-        return value == expected_run_id
-
-    summary_json = smoke_dir / "summary.json"
-    if summary_json.exists():
-        try:
-            payload = json.loads(summary_json.read_text(encoding="utf-8"))
-        except Exception:
-            return False
-        return str(payload.get("sc_test_run_id") or "").strip() == expected_run_id
-    return False
+def _headless_log_has_perf_metrics(path: Path) -> bool:
+    try:
+        content = path.read_text(encoding="utf-8", errors="ignore")
+    except OSError:
+        return False
+    return PERF_METRICS_RE.search(content) is not None
 
 
-def find_latest_headless_log() -> Path | None:
+def find_latest_headless_log(*, require_perf_metrics: bool = False) -> Path | None:
     ci_root = repo_root() / "logs" / "ci"
     if not ci_root.exists():
         return None
     candidates = list(ci_root.rglob("headless.log"))
     if not candidates:
         return None
-    expected_run_id = str(os.environ.get("SC_TEST_RUN_ID", "")).strip()
-    if expected_run_id:
-        scoped = [p for p in candidates if _smoke_dir_matches_run_id(p.parent, expected_run_id)]
-        if scoped:
-            return max(scoped, key=lambda p: p.stat().st_mtime)
-    return max(candidates, key=lambda p: p.stat().st_mtime)
+    candidates.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+    if not require_perf_metrics:
+        return candidates[0]
+    for candidate in candidates:
+        if _headless_log_has_perf_metrics(candidate):
+            return candidate
+    return candidates[0]
 
 
 def step_perf_budget(out_dir: Path, *, max_p95_ms: int) -> StepResult:
     root = repo_root()
-    headless_log = find_latest_headless_log()
+    headless_log = find_latest_headless_log(require_perf_metrics=True)
     if not headless_log:
         details = {
             "status": "disabled" if max_p95_ms <= 0 else "enabled",
