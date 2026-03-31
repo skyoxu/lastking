@@ -9,6 +9,7 @@ import argparse
 import os
 from argparse import Namespace
 
+from _delivery_profile import profile_acceptance_defaults, resolve_delivery_profile
 from _security_profile import normalize_gate_mode, resolve_security_profile, security_gate_defaults
 
 
@@ -126,6 +127,45 @@ def parse_only_steps(value: str | None) -> set[str] | None:
 def normalize_subtasks_mode(value: str | None) -> str:
     mode = str(value or "skip").strip().lower()
     return mode if mode in ("skip", "warn", "require") else "skip"
+
+
+def apply_delivery_profile_defaults(args: Namespace) -> Namespace:
+    delivery_profile = resolve_delivery_profile(getattr(args, "delivery_profile", None))
+    defaults = profile_acceptance_defaults(delivery_profile)
+    args.delivery_profile = delivery_profile
+    only_steps = parse_only_steps(getattr(args, "only", None))
+
+    def _step_enabled(step: str) -> bool:
+        return only_steps is None or step in only_steps
+
+    bool_keys = {
+        "strict_adr_status": "adr",
+        "strict_test_quality": "quality",
+        "strict_quality_rules": "rules",
+        "require_task_test_refs": "links",
+        "require_executed_refs": "tests",
+        "require_headless_e2e": "tests",
+    }
+    for key, step in bool_keys.items():
+        if bool(getattr(args, key, False)):
+            continue
+        if not _step_enabled(step):
+            continue
+        if bool(defaults.get(key, False)):
+            setattr(args, key, True)
+
+    current_subtasks = normalize_subtasks_mode(getattr(args, "subtasks_coverage", None))
+    default_subtasks = normalize_subtasks_mode(str(defaults.get("subtasks_coverage", "skip")))
+    if current_subtasks == "skip" and default_subtasks != "skip" and _step_enabled("subtasks"):
+        args.subtasks_coverage = default_subtasks
+    else:
+        args.subtasks_coverage = current_subtasks
+
+    if getattr(args, "perf_p95_ms", None) is None and _step_enabled("perf"):
+        perf_default = defaults.get("perf_p95_ms")
+        if perf_default is not None:
+            args.perf_p95_ms = int(perf_default)
+    return args
 
 
 def resolve_security_modes(args: Namespace) -> tuple[str, dict[str, str]]:

@@ -118,3 +118,6 @@ node_modules/
 # tasks/ 
 # Local temporary workspace
 .tmp/
+
+# BMAD workspace (local-only, never track new files)
+_bmad/
