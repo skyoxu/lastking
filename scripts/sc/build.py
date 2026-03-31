@@ -4,7 +4,7 @@ sc-build: Repo-specific build shim (Godot+C# template).
 
 Usage (Windows):
   py -3 scripts/sc/build.py
-  py -3 scripts/sc/build.py Game.sln --type prod --clean --verbose
+  py -3 scripts/sc/build.py lastking.sln --type prod --clean --verbose
 
 TDD helper (gated, non-generative):
   py -3 scripts/sc/build.py tdd --stage green
@@ -17,7 +17,12 @@ import os
 import sys
 from pathlib import Path
 
-from _delivery_profile import default_security_profile_for_delivery, known_delivery_profiles, profile_build_defaults, resolve_delivery_profile
+from _delivery_profile import (
+    default_security_profile_for_delivery,
+    known_delivery_profiles,
+    profile_build_defaults,
+    resolve_delivery_profile,
+)
 from _repo_targets import resolve_build_target
 from _security_profile import resolve_security_profile
 from _util import ci_dir, repo_root, run_cmd, write_json, write_text
@@ -59,7 +64,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--delivery-profile",
         default=None,
         choices=DELIVERY_PROFILE_CHOICES,
-        help="Delivery profile (default: env DELIVERY_PROFILE or playable-ea).",
+        help="Delivery profile (default: env DELIVERY_PROFILE or fast-ship).",
     )
     ap.add_argument(
         "--security-profile",
@@ -99,7 +104,7 @@ def main() -> int:
         target = root / args.target
     else:
         resolved = resolve_build_target(root)
-        target = resolved if resolved is not None else (root / 'Game.sln')
+        target = resolved if resolved is not None else (root / f"{root.name}.sln")
     if not target.exists():
         print(f"[sc-build] ERROR: target not found: {target}")
         return 2
