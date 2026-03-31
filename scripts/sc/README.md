@@ -39,6 +39,33 @@
 - `tdd` 会快照 `Game.Core/Contracts/**/*.cs`；若检测到新增/修改契约文件会直接失败
 - 若确实需要新增契约：应先补齐 ADR/Overlay/Test-Refs，再继续 TDD
 
+### TDD 执行计划预检查（check_tdd_execution_plan）
+
+在生成红灯测试前，建议先跑一次计划预检查，避免任务上下文不完整导致后续脚本跑偏：
+
+```powershell
+py -3 scripts/sc/check_tdd_execution_plan.py --task-id <id> --tdd-stage red-first --verify unit --execution-plan-policy draft
+```
+
+建议顺序：
+1. `check_tdd_execution_plan.py`（先做可执行性与上下文预检）
+2. `llm_generate_tests_from_acceptance_refs.py --tdd-stage red-first`
+3. `build.py tdd --stage green`
+4. `build.py tdd --stage refactor`
+
+### semantic_review_tier 维护口径
+
+`semantic_review_tier` 必须维护在真实任务视图文件（不是 examples）：
+- `.taskmaster/tasks/tasks_back.json`
+- `.taskmaster/tasks/tasks_gameplay.json`
+
+推荐维护命令：
+
+```powershell
+py -3 scripts/python/backfill_semantic_review_tier.py --mode conservative --write
+py -3 scripts/python/validate_semantic_review_tier.py --mode conservative
+```
+
 ## Generate Tests From Acceptance Refs
 
 `scripts/sc/llm_generate_tests_from_acceptance_refs.py` generates missing test files from task acceptance `Refs:` entries and only allows repo-relative `.cs` / `.gd` test paths.
@@ -130,6 +157,21 @@ Rules:
   - `scripts/sc/_acceptance_orchestration.py`
   - `scripts/sc/_acceptance_evidence_steps.py`
   - 相关 GdUnit 集成用例的守卫逻辑
+
+## sc-review-pipeline 关键 sidecar（恢复优先）
+
+任务级流水线的主恢复依据（目录：`logs/ci/<YYYY-MM-DD>/sc-review-pipeline-task-<task>-<run-id>/`）：
+- `summary.json`
+- `execution-context.json`
+- `repair-guide.json`
+- `repair-guide.md`
+- `agent-review.json`
+- `agent-review.md`
+- `run-events.jsonl`
+- `harness-capabilities.json`
+
+日期级 latest 指针：
+- `logs/ci/<YYYY-MM-DD>/sc-review-pipeline-task-<task>/latest.json`
 
 ## Windows 用法示例
 

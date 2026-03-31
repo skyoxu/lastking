@@ -43,16 +43,13 @@ py -3 scripts/python/dev_cli.py run-local-hard-checks --godot-bin C:\Godot\Godot
 
 # No Godot runtime available: semantics, contracts, and dotnet only
 py -3 scripts/python/dev_cli.py run-local-hard-checks
-
-# Inspect the latest local-hard-checks summary/repair hints
-py -3 scripts/python/inspect_run.py --kind local-hard-checks
 `
 
 ## Main Parameters
 
 - --godot-bin <path>: enables the GdUnit4 hard set and strict smoke.
 - --solution <path>: forwarded to 
-un_dotnet.py; default is auto-resolved (prefer `<repo-name>.sln`, then `Game.sln`).
+un_dotnet.py; auto-resolved when omitted.
 - --configuration <Debug|Release>: forwarded to 
 un_dotnet.py; default Debug.
 - --delivery-profile <profile>: resolves the run-level delivery profile and default security profile.
@@ -106,7 +103,6 @@ un_id.txt: stable run id
 The same date directory also gets a repo-scoped pointer:
 
 - logs/ci/<YYYY-MM-DD>/local-hard-checks-latest.json
-- logs/ci/project-health/report-catalog.latest.json
 
 ### Repo Health Prelude
 
@@ -129,7 +125,7 @@ This run currently supports only the minimal recovery actions:
 erun
 - inspect-failed-step
 
-It does not produce approval-request.json, approval-response.json, marathon-state.json, or agent-review.json. Those sidecars remain part of the task-scoped 
+It does not produce pproval-request.json, pproval-response.json, marathon-state.json, or gent-review.json. Those sidecars remain part of the task-scoped 
 un_review_pipeline.py protocol.
 
 ## Stop-Loss Rules
@@ -147,3 +143,4 @@ un-quality-gates or the dedicated subcommands instead.
 - docs/workflows/gate-bundle.md
 - docs/workflows/run-protocol.md
 - DELIVERY_PROFILE.md
+
