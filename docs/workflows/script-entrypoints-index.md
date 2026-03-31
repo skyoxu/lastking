@@ -588,9 +588,6 @@ Generated from source scan on `2026-03-25`. This document inventories recurring 
   - Task-scoped parameters require a Taskmaster triplet; template fallback can read `examples/taskmaster/**`, but business repos should use real `.taskmaster/tasks/*.json`.
   - Model-backed steps require the repo's LLM runtime/CLI; deterministic-only or skip modes can reduce that requirement, but do not assume zero-model execution unless the script explicitly supports it.
   - Write/apply flows mutate repository files; review diffs before and after execution.
-- Behavior notes:
-  - For existing acceptance items with existing `Refs:`, the runtime restores original `Refs:` tokens before validation when model output rewrites them.
-  - If an existing acceptance item originally has no `Refs:`, adding new `Refs:` still hard-fails validation.
 
 #### `scripts/sc/llm_check_subtasks_coverage.py`
 
@@ -1620,3 +1617,4 @@ Helper modules below are referenced directly by at least two included entry scri
 - When adding or deleting a workflow-facing entrypoint, update this document in the same change set as the script.
 - If a business repo copies entrypoints from this template, copy the listed direct and transitive local deps in the same migration batch.
 - Do not re-add one-off migration or sibling-sync scripts unless they graduate into a recurring workflow and are documented elsewhere first.
+
