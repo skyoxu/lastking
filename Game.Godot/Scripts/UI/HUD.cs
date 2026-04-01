@@ -78,7 +78,7 @@ public partial class HUD : Control
             }
             catch { }
         }
-        else if (type == EventTypes.LastkingCastleHpChanged || type == "core.lastking.castle.hp_changed")
+        else if (type == EventTypes.LastkingCastleHpChanged)
         {
             try
             {
