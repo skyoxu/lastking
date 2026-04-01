@@ -526,7 +526,7 @@
     "taskmaster_exported": false,
     "title": "Set up castle HP and loss condition",
     "description": "Implement castle health system and loss condition when HP reaches 0.",
-    "status": "pending",
+    "status": "done",
     "priority": "P2",
     "layer": "ci",
     "adr_refs": [

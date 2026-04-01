@@ -121,20 +121,33 @@ def run_gdunit_hard(
     os.environ["AUDIT_LOG_ROOT"] = str(repo_root() / "logs" / "ci" / date)
     add_dirs: list[str] = []
     tests_project = repo_root() / "Tests.Godot"
-    for rel in ["tests/Scenes", "tests/UI", "tests/Adapters/Config", "tests/Security/Hard"]:
-        if (tests_project / rel).exists():
-            add_dirs.append(rel)
-        elif (repo_root() / rel).exists():
-            add_dirs.append(rel)
-    if str(task_id or "").strip():
-        rel = "tests/Tasks"
-        if (tests_project / rel).exists():
-            add_dirs.append(rel)
-        elif (repo_root() / rel).exists():
-            add_dirs.append(rel)
+    task_scope = str(task_id or "").strip()
+    if task_scope:
         for rel_ref in task_scoped_gdunit_refs(task_id=task_id, tests_project=tests_project):
             if rel_ref not in add_dirs:
                 add_dirs.append(rel_ref)
+        if not add_dirs:
+            log_path = out_dir / "gdunit-hard.log"
+            message = (
+                f"[sc-test] ERROR: no task-scoped gdunit refs found for task_id={task_scope}.\n"
+                "Refusing to fallback to broad test directories because that can hide missing refs and produce false green.\n"
+            )
+            write_text(log_path, message)
+            return {
+                "name": "gdunit-hard",
+                "cmd": ["internal:task_scoped_gdunit_refs"],
+                "rc": 2,
+                "log": str(log_path),
+                "report_dir": str(report_dir),
+                "status": "fail",
+                "reason": "missing_task_scoped_gdunit_refs",
+            }
+    else:
+        for rel in ["tests/Scenes", "tests/UI", "tests/Adapters/Config", "tests/Security/Hard"]:
+            if (tests_project / rel).exists():
+                add_dirs.append(rel)
+            elif (repo_root() / rel).exists():
+                add_dirs.append(rel)
     cmd = [
         "py",
         "-3",

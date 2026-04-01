@@ -90,6 +90,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--solution', default='')
     ap.add_argument('--configuration', default='Debug')
+    ap.add_argument('--filter', default=None, help='Optional dotnet test filter expression.')
     ap.add_argument('--out-dir', default=None)
     args = ap.parse_args()
 
@@ -103,6 +104,7 @@ def main():
         'solution': resolved_solution,
         'solution_input': args.solution,
         'configuration': args.configuration,
+        'filter': args.filter or '',
         'out_dir': out_dir,
         'status': 'fail',
     }
@@ -119,10 +121,13 @@ def main():
         return 1
 
     # Test with coverage
-    rc, out = run_cmd(['dotnet', 'test', resolved_solution,
-                       f'-c', args.configuration,
-                       '--collect:XPlat Code Coverage',
-                       '--logger', 'trx;LogFileName=tests.trx'], cwd=root)
+    test_cmd = ['dotnet', 'test', resolved_solution,
+                f'-c', args.configuration,
+                '--collect:XPlat Code Coverage',
+                '--logger', 'trx;LogFileName=tests.trx']
+    if args.filter:
+        test_cmd.extend(['--filter', args.filter])
+    rc, out = run_cmd(test_cmd, cwd=root)
     with io.open(os.path.join(out_dir, 'dotnet-test-output.txt'), 'w', encoding='utf-8') as f:
         f.write(out)
     summary['test_rc'] = rc

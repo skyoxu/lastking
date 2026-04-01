@@ -78,6 +78,23 @@ public partial class HUD : Control
             }
             catch { }
         }
+        else if (type == EventTypes.LastkingCastleHpChanged || type == "core.lastking.castle.hp_changed")
+        {
+            try
+            {
+                if (dataJson.Length > 2048)
+                {
+                    return;
+                }
+
+                using var doc = JsonDocument.Parse(dataJson, EventJsonOptions);
+                int v = 0;
+                if (doc.RootElement.TryGetProperty("current_hp", out var currentHpSnake)) v = currentHpSnake.GetInt32();
+                else if (doc.RootElement.TryGetProperty("CurrentHp", out var currentHpPascal)) v = currentHpPascal.GetInt32();
+                _health.Text = $"HP: {v}";
+            }
+            catch { }
+        }
     }
 
     public void SetScore(int v) => _score.Text = $"Score: {v}";
