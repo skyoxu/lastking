@@ -154,6 +154,7 @@ public sealed class ConfigManager
 
             var spawnCadence = ReadOptionalInt(root, "spawn.cadence_seconds", defaultValue: 10, minimum: 1, reasons);
             var bossCount = ReadOptionalInt(root, "boss.count", defaultValue: 2, minimum: 1, reasons);
+            var castleStartHp = ReadOptionalInt(root, "battle.castle_start_hp", defaultValue: 100, minimum: 1, reasons);
 
             if (reasons.Count > 0)
             {
@@ -170,7 +171,8 @@ public sealed class ConfigManager
                 EliteChannel: eliteChannel,
                 BossChannel: bossChannel,
                 SpawnCadenceSeconds: spawnCadence,
-                BossCount: bossCount);
+                BossCount: bossCount,
+                CastleStartHp: castleStartHp);
 
             reasonCodes = Array.Empty<string>();
             return true;

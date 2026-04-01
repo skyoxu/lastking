@@ -83,7 +83,7 @@ def is_given_when_then_style(name: str) -> bool:
 def is_allowed_test_method_name(name: str, *, style: str) -> bool:
     if style == "legacy":
         return is_pascal_case(name) or is_pascal_case_with_underscores(name)
-    if style == "strict":
+    if style in {"strict", "should_when"}:
         return is_should_style(name) or is_given_when_then_style(name)
     raise ValueError(f"Unknown style: {style}")
 
@@ -237,7 +237,12 @@ def scan_specific_files(*, files: List[Path], style: str, lookahead: int) -> dic
 def main():
     """Main entry point for the script."""
     ap = argparse.ArgumentParser(description="Validate test method naming conventions for Game.Core.Tests.")
-    ap.add_argument("--style", choices=["legacy", "strict"], default="legacy", help="Naming style to enforce.")
+    ap.add_argument(
+        "--style",
+        choices=["legacy", "strict", "should_when"],
+        default="legacy",
+        help="Naming style to enforce.",
+    )
     ap.add_argument(
         "--max-lookahead",
         type=int,

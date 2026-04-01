@@ -2,7 +2,7 @@ namespace Game.Core.Contracts.Lastking;
 
 /// <summary>
 /// Domain event: core.lastking.castle.hp_changed.
-/// Emitted after castle durability value changes.
+/// Emitted when castle durability is initialized for battle or later changes.
 /// </summary>
 /// <remarks>
 /// ADR refs: ADR-0004, ADR-0020, ADR-0018.

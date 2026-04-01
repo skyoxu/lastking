@@ -62,6 +62,30 @@ class ScTestStepsUnitFallbackTests(unittest.TestCase):
             self.assertEqual("fail", step["status"])
             self.assertIn("--filter", step["cmd"])
 
+    def test_run_gdunit_hard_should_fail_when_task_scope_has_no_gd_refs(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            out_dir = Path(td)
+            with (
+                mock.patch.object(sc_steps, "repo_root", return_value=REPO_ROOT),
+                mock.patch.object(sc_steps, "today_str", return_value="2026-03-31"),
+                mock.patch.object(sc_steps, "task_scoped_gdunit_refs", return_value=[]),
+                mock.patch.object(sc_steps, "run_cmd") as run_cmd_mock,
+            ):
+                step = sc_steps.run_gdunit_hard(
+                    out_dir,
+                    "C:/Godot/Godot.exe",
+                    600,
+                    run_id="r3",
+                    task_id="7",
+                )
+
+            self.assertEqual(2, int(step["rc"]))
+            self.assertEqual("fail", step["status"])
+            self.assertEqual("missing_task_scoped_gdunit_refs", step["reason"])
+            run_cmd_mock.assert_not_called()
+            log_text = (out_dir / "gdunit-hard.log").read_text(encoding="utf-8")
+            self.assertIn("Refusing to fallback to broad test directories", log_text)
+
 
 if __name__ == "__main__":
     unittest.main()

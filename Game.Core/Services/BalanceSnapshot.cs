@@ -11,7 +11,8 @@ public sealed record BalanceSnapshot(
     string EliteChannel,
     string BossChannel,
     int SpawnCadenceSeconds,
-    int BossCount
+    int BossCount,
+    int CastleStartHp
 )
 {
     public static BalanceSnapshot Default { get; } = new(
@@ -22,5 +23,6 @@ public sealed record BalanceSnapshot(
         EliteChannel: "elite",
         BossChannel: "boss",
         SpawnCadenceSeconds: 10,
-        BossCount: 2);
+        BossCount: 2,
+        CastleStartHp: 100);
 }

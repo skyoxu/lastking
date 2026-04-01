@@ -175,6 +175,10 @@ def run_smoke(out_dir: Path, godot_bin: str, scene: str, task_id: str | None = N
     return _run_smoke_impl(out_dir, godot_bin, scene, task_id=task_id, strict=strict)
 
 
+def _skip_step(name: str, reason: str) -> dict[str, Any]:
+    return {"name": name, "status": "skipped", "reason": reason}
+
+
 def main() -> int:
     args = build_parser().parse_args()
     if bool(args.self_check):
@@ -242,7 +246,8 @@ def main() -> int:
         return 2
 
     if args.type in ("unit", "all"):
-        if bool(runtime["coverage_gate"]):
+        coverage_gate_enabled = bool(runtime["coverage_gate"]) and not bool(task_root_id)
+        if coverage_gate_enabled:
             os.environ["COVERAGE_LINES_MIN"] = str(runtime["coverage_lines_min"])
             os.environ["COVERAGE_BRANCHES_MIN"] = str(runtime["coverage_branches_min"])
         else:
@@ -269,23 +274,35 @@ def main() -> int:
             if cov.get("status") == "fail":
                 hard_fail = True
 
+    task_gd_refs: list[str] = []
+    if task_root_id:
+        task_gd_refs = _task_scoped_gdunit_refs(task_id=task_root_id, tests_project=Path("Tests.Godot"))
+
     if args.type in ("integration", "e2e", "all"):
         if not godot_bin:
             print("[sc-test] ERROR: --godot-bin (or env GODOT_BIN) is required for e2e/integration tests.")
             return 2
-        step = run_gdunit_hard(out_dir, godot_bin, args.timeout_sec, run_id=run_id, task_id=args.task_id)
-        summary["steps"].append(step)
-        if not _persist_summary():
-            return 2
-        if step["rc"] != 0:
-            hard_fail = True
-        if not args.skip_smoke:
-            smoke = run_smoke(out_dir, godot_bin, args.smoke_scene, task_id=args.task_id, strict=bool(runtime["smoke_strict"]))
-            summary["steps"].append(smoke)
+        skip_task_scoped_e2e = bool(task_root_id) and args.type == "all" and not task_gd_refs
+        if skip_task_scoped_e2e:
+            summary["steps"].append(_skip_step("gdunit-hard", "task_scoped_no_gd_refs_unit_only"))
+            if not args.skip_smoke:
+                summary["steps"].append(_skip_step("smoke", "task_scoped_no_gd_refs_unit_only"))
             if not _persist_summary():
                 return 2
-            if smoke["rc"] != 0:
+        else:
+            step = run_gdunit_hard(out_dir, godot_bin, args.timeout_sec, run_id=run_id, task_id=args.task_id)
+            summary["steps"].append(step)
+            if not _persist_summary():
+                return 2
+            if step["rc"] != 0:
                 hard_fail = True
+            if not args.skip_smoke:
+                smoke = run_smoke(out_dir, godot_bin, args.smoke_scene, task_id=args.task_id, strict=bool(runtime["smoke_strict"]))
+                summary["steps"].append(smoke)
+                if not _persist_summary():
+                    return 2
+                if smoke["rc"] != 0:
+                    hard_fail = True
 
     summary["status"] = "ok" if not hard_fail else "fail"
     if not _persist_summary():

@@ -215,6 +215,103 @@ def run_sc_analyze_task_context(*, task_id: str, out_dir: Path) -> dict[str, Any
     return {"name": "sc-analyze", "cmd": cmd, "rc": rc, "log": str(log_path), "status": "ok" if rc == 0 else "fail"}
 
 
+def validate_red_stage_prerequisites(*, task_id: str, out_dir: Path) -> dict[str, Any]:
+    summary_name = f"summary-{task_id}.json"
+    candidates = sorted(
+        (repo_root() / "logs" / "ci").glob(f"*/sc-llm-acceptance-tests/{summary_name}"),
+        key=lambda path: path.stat().st_mtime,
+        reverse=True,
+    )
+    log_path = out_dir / "validate-red-stage-prerequisites.log"
+    if not candidates:
+        write_text(
+            log_path,
+            "\n".join(
+                [
+                    "FAIL: missing 6.4 red-stage evidence.",
+                    f"Expected a prior run of scripts/sc/llm_generate_tests_from_acceptance_refs.py for task_id={task_id}.",
+                    "Fix:",
+                    f"  py -3 scripts/sc/llm_generate_tests_from_acceptance_refs.py --task-id {task_id} --tdd-stage red-first --verify auto --godot-bin \"$env:GODOT_BIN\"",
+                ]
+            )
+            + "\n",
+        )
+        return {
+            "name": "validate_red_stage_prerequisites",
+            "cmd": ["internal:validate_red_stage_prerequisites"],
+            "rc": 1,
+            "log": str(log_path),
+            "status": "fail",
+            "reason": "missing_red_stage_summary",
+        }
+
+    summary_path = candidates[0]
+    try:
+        payload = json.loads(summary_path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        write_text(log_path, f"FAIL: unreadable summary file: {summary_path}\n{exc}\n")
+        return {
+            "name": "validate_red_stage_prerequisites",
+            "cmd": ["internal:validate_red_stage_prerequisites"],
+            "rc": 1,
+            "log": str(log_path),
+            "status": "fail",
+            "reason": "invalid_red_stage_summary",
+            "summary_path": str(summary_path),
+        }
+
+    errors: list[str] = []
+    if str(payload.get("task_id") or "").strip() != str(task_id):
+        errors.append(f"summary task_id mismatch: expected {task_id}, got {payload.get('task_id')!r}")
+    if str(payload.get("tdd_stage") or "").strip() != "red-first":
+        errors.append("summary is not from red-first stage")
+    results = payload.get("results")
+    if not isinstance(results, list) or not results:
+        errors.append("summary has no generated/ref-scanned results")
+    if isinstance(results, list) and any(str(item.get("status") or "").strip() == "fail" for item in results if isinstance(item, dict)):
+        errors.append("red-stage generation contains failed refs")
+    if int(payload.get("created") or 0) > 0:
+        red_verify = payload.get("red_verify")
+        if not isinstance(red_verify, dict) or str(red_verify.get("status") or "").strip() != "ok":
+            errors.append("red-first verification is missing or not ok")
+    test_step = payload.get("test_step")
+    if not isinstance(test_step, dict):
+        errors.append("summary is missing verify test_step")
+    if int(payload.get("sync_test_refs_rc") or 0) != 0:
+        errors.append("sync_test_refs_rc is non-zero")
+
+    if errors:
+        write_text(
+            log_path,
+            "\n".join(
+                [
+                    f"FAIL: 6.4 red-stage evidence is not acceptable: {summary_path}",
+                    *[f"ERROR: {item}" for item in errors],
+                ]
+            )
+            + "\n",
+        )
+        return {
+            "name": "validate_red_stage_prerequisites",
+            "cmd": ["internal:validate_red_stage_prerequisites"],
+            "rc": 1,
+            "log": str(log_path),
+            "status": "fail",
+            "summary_path": str(summary_path),
+            "errors": errors,
+        }
+
+    write_text(log_path, f"OK: red-stage evidence={summary_path}\n")
+    return {
+        "name": "validate_red_stage_prerequisites",
+        "cmd": ["internal:validate_red_stage_prerequisites"],
+        "rc": 0,
+        "log": str(log_path),
+        "status": "ok",
+        "summary_path": str(summary_path),
+    }
+
+
 def validate_task_context_required_fields(*, task_id: str, stage: str, out_dir: Path) -> dict[str, Any]:
     # Hard gate: TDD stages MUST use the full triplet semantics (master/back/gameplay) captured by sc-analyze.
     ctx_path = repo_root() / "logs" / "ci" / today_str() / "sc-analyze" / f"task_context.{task_id}.json"
@@ -548,6 +645,13 @@ def main() -> int:
         ctx_step = validate_task_context_required_fields(task_id=triplet.task_id, stage="green", out_dir=out_dir)
         summary["steps"].append(ctx_step)
         if ctx_step["rc"] != 0:
+            write_json(out_dir / "summary.json", summary)
+            print(f"SC_BUILD_TDD status=fail out={out_dir}")
+            assert_no_new_contract_files(before_contracts, allow_changes=bool(args.allow_contract_changes))
+            return 1
+        red_stage_step = validate_red_stage_prerequisites(task_id=triplet.task_id, out_dir=out_dir)
+        summary["steps"].append(red_stage_step)
+        if red_stage_step["rc"] != 0:
             write_json(out_dir / "summary.json", summary)
             print(f"SC_BUILD_TDD status=fail out={out_dir}")
             assert_no_new_contract_files(before_contracts, allow_changes=bool(args.allow_contract_changes))

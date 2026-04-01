@@ -70,7 +70,10 @@ class BuildTddOrchestrationTests(unittest.TestCase):
             filtered_mock.assert_not_called()
             summary = json.loads((out_dir / "summary.json").read_text(encoding="utf-8"))
             self.assertEqual("fail", summary["status"])
-            self.assertEqual(["sc-analyze", "validate_task_context_required_fields"], [item["name"] for item in summary["steps"]])
+            self.assertEqual(
+                ["task_preflight", "sc-analyze", "validate_task_context_required_fields"],
+                [item["name"] for item in summary["steps"]],
+            )
 
     def test_red_should_return_two_when_task_test_is_missing(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -91,7 +94,10 @@ class BuildTddOrchestrationTests(unittest.TestCase):
             filtered_mock.assert_not_called()
             summary = json.loads((out_dir / "summary.json").read_text(encoding="utf-8"))
             self.assertEqual("fail", summary["status"])
-            self.assertEqual(["sc-analyze", "validate_task_context_required_fields"], [item["name"] for item in summary["steps"]])
+            self.assertEqual(
+                ["task_preflight", "sc-analyze", "validate_task_context_required_fields"],
+                [item["name"] for item in summary["steps"]],
+            )
 
     def test_green_should_append_coverage_hotspots_when_run_dotnet_returns_two(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -99,6 +105,7 @@ class BuildTddOrchestrationTests(unittest.TestCase):
             argv = ["tdd.py", "--stage", "green", "--task-id", "14"]
             analyze_step = {"name": "sc-analyze", "rc": 0, "status": "ok", "log": str(out_dir / "sc-analyze.log")}
             ctx_step = {"name": "validate_task_context_required_fields", "rc": 0, "status": "ok", "log": str(out_dir / "ctx.log")}
+            red_stage_step = {"name": "validate_red_stage_prerequisites", "rc": 0, "status": "ok", "log": str(out_dir / "red.log")}
             green_step = {"name": "run_dotnet", "rc": 2, "log": str(out_dir / "run_dotnet.log"), "stdout": "coverage out", "status": "fail"}
             hotspots_step = {"name": "coverage_hotspots", "rc": 0, "log": str(out_dir / "coverage-hotspots.txt"), "status": "ok"}
             with mock.patch.object(sys, "argv", argv), \
@@ -106,6 +113,7 @@ class BuildTddOrchestrationTests(unittest.TestCase):
                 mock.patch.object(tdd_script, "resolve_triplet", return_value=_FakeTriplet()), \
                 mock.patch.object(tdd_script, "run_sc_analyze_task_context", return_value=analyze_step), \
                 mock.patch.object(tdd_script, "validate_task_context_required_fields", return_value=ctx_step), \
+                mock.patch.object(tdd_script, "validate_red_stage_prerequisites", return_value=red_stage_step), \
                 mock.patch.object(tdd_script, "run_green_gate", return_value=green_step), \
                 mock.patch.object(tdd_script, "write_coverage_hotspots", return_value=hotspots_step), \
                 mock.patch.object(tdd_script, "assert_no_new_contract_files", return_value=None):
@@ -115,7 +123,33 @@ class BuildTddOrchestrationTests(unittest.TestCase):
             summary = json.loads((out_dir / "summary.json").read_text(encoding="utf-8"))
             self.assertEqual("fail", summary["status"])
             self.assertEqual(
-                ["sc-analyze", "validate_task_context_required_fields", "run_dotnet", "coverage_hotspots"],
+                ["task_preflight", "sc-analyze", "validate_task_context_required_fields", "validate_red_stage_prerequisites", "run_dotnet", "coverage_hotspots"],
+                [item["name"] for item in summary["steps"]],
+            )
+
+    def test_green_should_stop_when_red_stage_prerequisite_is_missing(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            out_dir = Path(tmpdir) / "sc-build-tdd"
+            argv = ["tdd.py", "--stage", "green", "--task-id", "14"]
+            analyze_step = {"name": "sc-analyze", "rc": 0, "status": "ok", "log": str(out_dir / "sc-analyze.log")}
+            ctx_step = {"name": "validate_task_context_required_fields", "rc": 0, "status": "ok", "log": str(out_dir / "ctx.log")}
+            red_stage_step = {"name": "validate_red_stage_prerequisites", "rc": 1, "status": "fail", "log": str(out_dir / "red.log")}
+            with mock.patch.object(sys, "argv", argv), \
+                mock.patch.object(tdd_script, "ci_dir", return_value=out_dir), \
+                mock.patch.object(tdd_script, "resolve_triplet", return_value=_FakeTriplet()), \
+                mock.patch.object(tdd_script, "run_sc_analyze_task_context", return_value=analyze_step), \
+                mock.patch.object(tdd_script, "validate_task_context_required_fields", return_value=ctx_step), \
+                mock.patch.object(tdd_script, "validate_red_stage_prerequisites", return_value=red_stage_step), \
+                mock.patch.object(tdd_script, "run_green_gate") as green_mock, \
+                mock.patch.object(tdd_script, "assert_no_new_contract_files", return_value=None):
+                rc = tdd_script.main()
+
+            self.assertEqual(1, rc)
+            green_mock.assert_not_called()
+            summary = json.loads((out_dir / "summary.json").read_text(encoding="utf-8"))
+            self.assertEqual("fail", summary["status"])
+            self.assertEqual(
+                ["task_preflight", "sc-analyze", "validate_task_context_required_fields", "validate_red_stage_prerequisites"],
                 [item["name"] for item in summary["steps"]],
             )
 
@@ -142,7 +176,7 @@ class BuildTddOrchestrationTests(unittest.TestCase):
             summary = json.loads((out_dir / "summary.json").read_text(encoding="utf-8"))
             self.assertEqual("fail", summary["status"])
             self.assertEqual(
-                ["sc-analyze", "validate_task_context_required_fields", "validate_task_test_refs", "validate_acceptance_refs"],
+                ["task_preflight", "sc-analyze", "validate_task_context_required_fields", "validate_task_test_refs", "validate_acceptance_refs"],
                 [item["name"] for item in summary["steps"]],
             )
 

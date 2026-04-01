@@ -463,13 +463,13 @@
           1,
           6
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": "1",
             "title": "Define castle HP terminal-state contract",
             "description": "Define castle HP fields, damage application rules, and lose-condition trigger contract.",
-            "status": "pending",
+            "status": "done",
             "priority": "medium",
             "dependencies": [],
             "details": "Lock castle HP mutation boundaries and terminal-state transition conditions.",
@@ -480,7 +480,7 @@
             "id": "2",
             "title": "Implement castle damage and lose-condition flow",
             "description": "Implement HP mutation, terminal state dispatch, and no-duplicate-failure trigger logic.",
-            "status": "pending",
+            "status": "done",
             "priority": "medium",
             "dependencies": [
               "1"
@@ -493,7 +493,7 @@
             "id": "3",
             "title": "Add terminal-state replay and evidence checks",
             "description": "Add deterministic replay checks for castle-fall scenarios and evidence logging.",
-            "status": "pending",
+            "status": "done",
             "priority": "medium",
             "dependencies": [
               "2"
