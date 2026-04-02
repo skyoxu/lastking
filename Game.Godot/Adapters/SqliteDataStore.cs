@@ -315,9 +315,13 @@ public partial class SqliteDataStore : Node, ISqlDatabase
     {
         try
         {
-            var date = System.DateTime.UtcNow.ToString("yyyy-MM-dd");
+            var date = System.DateTime.Now.ToString("yyyy-MM-dd");
             var root = System.Environment.GetEnvironmentVariable("AUDIT_LOG_ROOT");
-            if (string.IsNullOrEmpty(root)) root = System.IO.Path.Combine("logs", "ci", date);
+            if (string.IsNullOrEmpty(root))
+            {
+                try { root = ProjectSettings.GlobalizePath($"res://logs/ci/{date}"); }
+                catch { root = System.IO.Path.Combine("logs", "ci", date); }
+            }
             System.IO.Directory.CreateDirectory(root);
             var path = System.IO.Path.Combine(root, "security-audit.jsonl");
             var caller = System.Environment.UserName;

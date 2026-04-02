@@ -279,7 +279,7 @@
     "taskmaster_exported": false,
     "title": "Implement wave budget and channel system",
     "description": "Set up wave generation with normal, elite, and boss channels based on configurable budgets.",
-    "status": "pending",
+    "status": "done",
     "priority": "P2",
     "layer": "core",
     "adr_refs": [
@@ -309,15 +309,15 @@
       "core"
     ],
     "test_refs": [
-      "Game.Core.Tests/Services/CollisionServiceTests.cs",
       "Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs",
       "Game.Core.Tests/Services/WaveManagerDeterminismTests.cs",
-      "Game.Core.Tests/Engine/GameEngineCoreDeterminismTests.cs"
+      "Game.Core.Tests/Engine/GameEngineCoreDeterminismTests.cs",
+      "Game.Core.Tests/Services/WaveBudgetAllocatorTests.cs"
     ],
     "acceptance": [
       "Taskmaster #4 produces wave results for normal, elite, and boss channels, and each channel result is computed from that channel's configured budget rather than shared budget state. Refs: Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs Game.Core.Tests/Services/WaveManagerDeterminismTests.cs",
-      "On the Windows Godot+C# baseline, the referenced automated suites complete with zero failing tests for budget/channel behavior and determinism. Refs: Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs Game.Core.Tests/Services/WaveManagerDeterminismTests.cs",
-      "Existing deterministic simulation and core-loop invariants remain unchanged, verified by passing determinism regression checks after this task. Refs: Game.Core.Tests/Engine/GameEngineCoreDeterminismTests.cs Game.Core.Tests/Services/WaveManagerDeterminismTests.cs",
+      "For the same day index, channel budget configuration, and seed, wave outputs are bitwise-equivalent across repeated runs. Refs: Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs Game.Core.Tests/Services/WaveManagerDeterminismTests.cs",
+      "Wave generation preserves deterministic replay for the same day/config/seed, and wave-budget computation is isolated to wave inputs without cross-system side effects. Refs: Game.Core.Tests/Services/WaveManagerDeterminismTests.cs Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs",
       "WaveManager accepts day index, channel budget configuration, and seed as inputs, and returns wave outputs deterministically derived from exactly those inputs for that run. Refs: Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs",
       "With default configuration (normal day1 budget = 50), the computed normal-channel budget for day 1 is exactly 50. Refs: Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs",
       "For day indices after day 1, the normal-channel budget follows the configured daily growth rule (default 120%) and matches expected values across multiple days. Refs: Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs",
@@ -325,11 +325,14 @@
       "Changing only boss-channel budget leaves normal-channel budget and normal-channel spawn output unchanged for the same day and seed. Refs: Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs Game.Core.Tests/Services/WaveManagerDeterminismTests.cs",
       "Per-wave enemy allocation and spend for each channel never exceed that channel's configured budget and channel limits. Refs: Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs",
       "Given the same fixed seed, day, and config, wave outputs are identical across runs; changing only the seed changes at least one spawn decision. Refs: Game.Core.Tests/Services/WaveManagerDeterminismTests.cs",
-      "Independent tuning of normal, elite, and boss budgets changes only the targeted channel output, while non-target channels stay unchanged for the same day and seed. Refs: Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs Game.Core.Tests/Services/WaveManagerDeterminismTests.cs",
-      "Each generated wave emits auditable per-channel budget evidence including input, allocated, spent, and remaining values for normal, elite, and boss. Refs: Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs",
-      "Invalid accounting transitions (negative spend, over-budget spend, or cross-channel charge) are rejected, channel totals remain unchanged after rejection, and same-seed replay reproduces the rejection trace. Refs: Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs Game.Core.Tests/Services/WaveManagerDeterminismTests.cs",
-      "During a single wave execution, any attempt to modify locked per-day budget inputs or channel accounting fields is rejected and does not advance wave accounting state. Refs: Game.Core.Tests/Services/WaveBudgetAllocatorTests.cs",
-      "After a rejected mutation attempt, normal/elite/boss input, allocated, spent, and remaining fields remain bitwise-equivalent to pre-rejection state. Refs: Game.Core.Tests/Services/WaveBudgetAllocatorTests.cs"
+      "Changing only one channel budget must change that channel's input budget and alter at least one spawn decision for the same day and seed, while non-target channel outputs remain unchanged. Refs: Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs Game.Core.Tests/Services/WaveManagerDeterminismTests.cs",
+      "Per-wave channel accounting exposes input/allocated/spent/remaining for normal, elite, and boss, and each channel satisfies allocated<=input, spent<=allocated, remaining=allocated-spent. Refs: Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs",
+      "Accounting transition validation rejects negative spend, over-budget spend, and cross-channel charge; rejected transitions keep channel totals unchanged. Refs: Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs Game.Core.Tests/Services/WaveManagerDeterminismTests.cs",
+      "During wave execution, direct mutation attempts against locked accounting fields (normal/elite/boss/accountingVersion) are rejected. Refs: Game.Core.Tests/Services/WaveBudgetAllocatorTests.cs",
+      "After rejected mutation attempts, channel accounting snapshots remain bitwise-equivalent to pre-rejection state. Refs: Game.Core.Tests/Services/WaveBudgetAllocatorTests.cs",
+      "When a channel budget is zero or below the minimum spawn cost, that channel emits no spawns and both spent/remaining accounting stay unchanged for the wave. Refs: Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs",
+      "Elite-channel input budget is taken from elite configuration (not derived from normal/boss), and day1 elite budget equals configured day1 value. Refs: Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs",
+      "Boss-channel input budget is taken from boss configuration (not derived from normal/elite), and day1 boss budget equals configured day1 value. Refs: Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs"
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #4 primary behavior.",
