@@ -13,6 +13,15 @@ public sealed class WaveBudgetAllocator
 
     public WaveAccountingState Current => state;
 
+    public static WaveBudgetAllocator CreateForRuntime(
+        ConfigManager configManager,
+        WaveAccountingState initialState)
+    {
+        ArgumentNullException.ThrowIfNull(configManager);
+        _ = configManager.Snapshot;
+        return new WaveBudgetAllocator(initialState);
+    }
+
     public bool TryApplyMutationDuringWaveExecution(WaveMutationAttempt attempt)
     {
         ArgumentNullException.ThrowIfNull(attempt);
