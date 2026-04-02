@@ -262,20 +262,20 @@
         "id": 4,
         "title": "Implement wave budget and channel system",
         "description": "Set up wave generation with normal, elite, and boss channels based on configurable budgets.",
-        "details": "Create WaveManager C# class. Calculate normal wave budget: start from config (day1=50) and apply daily growth (120%). Elite and boss channels are independent; define configurable budgets for them. Spawn enemies based on budget allocation. Use deterministic random number generation with fixed seed. Ensure channels can be tuned independently via config.",
-        "testStrategy": "Test wave budget calculations for multiple days. Verify elite and boss channels do not affect normal budget. Check config tuning modifies wave generation appropriately.",
+        "details": "Create WaveManager C# class. Calculate normal wave budget: start from config (day1=50) and apply daily growth (120%). Elite and boss channels are independent; define configurable budgets for them. Spawn enemies based on budget allocation. Use deterministic random number generation with fixed seed. Ensure channels can be tuned independently via config. Budget engine must preserve per-channel accounting invariants and reject invalid accounting transitions (negative spend, over-budget spend, cross-channel charge). During active wave execution, direct mutations of locked accounting fields (normal/elite/boss/accountingVersion) are rejected and rejected attempts leave state unchanged.",
+        "testStrategy": "Test wave budget calculations for multiple days. Verify elite and boss channels do not affect normal budget. Check config tuning modifies targeted channel generation appropriately. Verify accounting invariants (input/allocated/spent/remaining), invalid transition rejection, and locked-field mutation rejection with unchanged state.",
         "priority": "medium",
         "dependencies": [
           2,
           3
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": "1",
             "title": "Define wave-budget and channel rules",
             "description": "Specify budget growth formula, channel boundaries, and elite/boss budget isolation constraints.",
-            "status": "pending",
+            "status": "done",
             "priority": "medium",
             "dependencies": [],
             "details": "Lock per-day budget inputs, channel accounting fields, and elite/boss independent accounting policy.",
@@ -286,7 +286,7 @@
             "id": "2",
             "title": "Implement budget engine and channel accounting",
             "description": "Build deterministic budget allocator that computes per-wave/channel spend under locked rules.",
-            "status": "pending",
+            "status": "done",
             "priority": "medium",
             "dependencies": [
               "1"
@@ -299,7 +299,7 @@
             "id": "3",
             "title": "Add regression and audit evidence for budget flow",
             "description": "Add replay-safe checks and logs proving budget progression and channel accounting correctness.",
-            "status": "pending",
+            "status": "done",
             "priority": "medium",
             "dependencies": [
               "2"
