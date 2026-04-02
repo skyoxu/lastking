@@ -7,6 +7,26 @@ public sealed record ChannelRule(int Day1Budget, decimal DailyGrowth, int Channe
 
 public sealed record ChannelBudgetConfiguration(ChannelRule Normal, ChannelRule Elite, ChannelRule Boss)
 {
+    public static ChannelBudgetConfiguration FromConfigManager(
+        ConfigManager configManager,
+        ChannelRule? eliteRule = null,
+        ChannelRule? bossRule = null)
+    {
+        ArgumentNullException.ThrowIfNull(configManager);
+
+        var snapshot = configManager.Snapshot;
+        var normalRule = new ChannelRule(
+            Day1Budget: snapshot.Day1Budget,
+            DailyGrowth: snapshot.DailyGrowth,
+            ChannelLimit: 20,
+            CostPerEnemy: 10);
+
+        return new ChannelBudgetConfiguration(
+            Normal: normalRule,
+            Elite: eliteRule ?? new ChannelRule(120, 1.2m, 8, 20),
+            Boss: bossRule ?? new ChannelRule(300, 1.2m, 3, 100));
+    }
+
     public ChannelRule GetRule(string channelName)
     {
         return channelName switch

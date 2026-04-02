@@ -9,6 +9,21 @@ public sealed class WaveManager
     public const string EliteChannel = "elite";
     public const string BossChannel = "boss";
 
+    public WaveResult GenerateFromConfig(
+        int dayIndex,
+        ConfigManager configManager,
+        int seed,
+        ChannelRule? eliteRule = null,
+        ChannelRule? bossRule = null)
+    {
+        var channelBudgetConfiguration = ChannelBudgetConfiguration.FromConfigManager(
+            configManager,
+            eliteRule,
+            bossRule);
+
+        return Generate(dayIndex, channelBudgetConfiguration, seed);
+    }
+
     public WaveResult Generate(int dayIndex, ChannelBudgetConfiguration channelBudgetConfiguration, int seed)
     {
         if (dayIndex < 1)
