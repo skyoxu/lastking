@@ -1,0 +1,21 @@
+# task5-spawn-cadence-loop
+
+- Title: task5-spawn-cadence-loop
+- Status: active
+- Branch: task/T5
+- Git Head: 1f6e72b07ae91cbe0fdcff89ec13a0f837a8b8d9
+- Goal: Deliver Task 5 deterministic spawn cadence system with acceptance-aligned tests and green gates.
+- Scope: Task 5 only (spawn cadence orchestration, tests, task-view sync if required by acceptance anchors).
+- Current step: Chapter 6.3 TDD preflight decision.
+- Last completed step: n/a (new execution plan scaffold; no completed step recorded yet)
+- Stop-loss: Do not edit unrelated gameplay systems; keep changes limited to spawn/cadence implementation and directly linked tests.
+- Next action: Run check_tdd_execution_plan.py for task 5 and follow Red?Green?Refactor pipeline.
+- Recovery command: `py -3 scripts/sc/run_review_pipeline.py --task-id 5 --resume`
+- Open questions: none recorded yet
+- Exit criteria: Task 5 acceptance refs pass with run_review_pipeline and local-hard-checks green, then task/view status prepared for completion.
+- Related ADRs: none yet
+- Related decision logs: none yet
+- Related task id(s): `5`
+- Related run id: n/a (no pipeline run id linked yet)
+- Related latest.json: n/a (no task-scoped latest.json pointer resolved yet)
+- Related pipeline artifacts: n/a (no pipeline artifact directory resolved yet)
