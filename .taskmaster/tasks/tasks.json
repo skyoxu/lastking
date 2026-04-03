@@ -338,39 +338,39 @@
         "subtasks": [
           {
             "id": "1",
-            "title": "Define spawn cadence and composition contract",
-            "description": "Specify spawn cadence windows, per-channel pacing, and composition constraints for normal/elite/boss nights.",
+            "title": "Implement config-driven Night cadence window",
+            "description": "Drive Night spawn duration and cadence from configuration and enforce the first-80%-only regular spawn window.",
             "status": "pending",
             "priority": "medium",
             "dependencies": [],
-            "details": "Lock cadence fields and deterministic sequencing keys consumed by spawner runtime.",
-            "testStrategy": "Contract checks validate cadence and required composition fields.",
+            "details": "Use runtime config values for Night duration and cadence, then gate regular emissions to [0, 0.8D).",
+            "testStrategy": "Tests verify D=120 and D=150 config inputs both enforce 0.8D cutoff and cadence timing.",
             "subtasks": []
           },
           {
             "id": "2",
-            "title": "Implement deterministic spawner orchestration",
-            "description": "Implement spawn scheduler that follows cadence, channel assignments, and seeded ordering.",
+            "title": "Implement boss-count and state gating in WaveManager",
+            "description": "Ensure boss-night spawn count is bounded by configured boss count and cadence spawns are emitted only in Night state.",
             "status": "pending",
             "priority": "medium",
             "dependencies": [
               "1"
             ],
-            "details": "Use seeded deterministic ordering and enforce per-channel emission boundaries.",
-            "testStrategy": "Simulation tests verify stable spawn order with same seed.",
+            "details": "Boss emissions must stay within configured bounds; non-Night states must not emit cadence-driven spawns.",
+            "testStrategy": "Tests verify boss=2 from config, overflow attempts are blocked, and non-Night state emits none.",
             "subtasks": []
           },
           {
             "id": "3",
-            "title": "Add spawn regression and failure-path coverage",
-            "description": "Cover invalid cadence inputs, channel overflow, and fallback behaviors with deterministic assertions.",
+            "title": "Add boundary and failure-path spawn coverage",
+            "description": "Cover final-20% spawn stop behavior and no-spawn-point rejection paths with deterministic assertions.",
             "status": "pending",
             "priority": "medium",
             "dependencies": [
               "2"
             ],
-            "details": "Emit structured spawn diagnostics and fail on malformed composition states.",
-            "testStrategy": "Regression tests assert fallback behavior and deterministic traces.",
+            "details": "Verify no new regular spawns in [0.8D, D], and reject spawn emission when no spawn points are configured.",
+            "testStrategy": "Regression tests assert final-window stop, spawn-point allowlist, and empty-spawn-point refusal behavior.",
             "subtasks": []
           }
         ],

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Game.Core.Services;
 
-public sealed class WaveManager
+public sealed partial class WaveManager
 {
     public const string NormalChannel = "normal";
     public const string EliteChannel = "elite";
