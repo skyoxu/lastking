@@ -489,6 +489,11 @@ public class GameStateManager
 
     private void EvaluateRunTerminalConditionsFromTerminal(DayNightTerminal terminal)
     {
+        if (_currentState is null)
+        {
+            return;
+        }
+
         if (_castleHp <= 0)
         {
             EnterRunTerminal(RunTerminalOutcome.Loss, reason: "terminal-while-castle-depleted", forceDayNightTerminal: false);
