@@ -634,17 +634,17 @@
       "core"
     ],
     "test_refs": [
-      "Game.Core.Tests/State/GameStateMachineTests.cs",
-      "Game.Core.Tests/State/GameStateManagerTests.cs"
+      "Game.Core.Tests/State/GameStateManagerTests.cs",
+      "Game.Core.Tests/State/GameStateMachineTests.cs"
     ],
     "acceptance": [
       "Taskmaster #8 is complete only when progression enforces both terminal outcomes: reaching Day15 with castle HP > 0 ends the current run as win, and a qualifying loss condition can end the run earlier. Refs: Game.Core.Tests/State/GameStateManagerTests.cs Game.Core.Tests/State/GameStateMachineTests.cs",
       "Automated checks pass for the Day15 win trigger, pre-Day15 loss precedence when castle HP = 0, and end-state handling on the Windows Godot+C# baseline. Refs: Game.Core.Tests/State/GameStateManagerTests.cs",
       "Given the same progression inputs and tick order, including day/night transitions, the run resolves to the same win/loss outcome and does not regress expected core progression behavior. Refs: Game.Core.Tests/State/GameStateManagerTests.cs Game.Core.Tests/State/GameStateMachineTests.cs",
-      "At the first update where current day reaches Day15 and castle HP is greater than 0, the run enters win terminal state and presents a visible win UI (screen/panel) plus a win message in that run; absence of visible win presentation fails acceptance. Refs: Game.Core.Tests/State/GameStateManagerTests.cs",
+      "At the first update where current day reaches Day15 and castle HP is greater than 0, the run enters win terminal state and presents either a visible win UI (screen/panel) or a win message in that run; absence of both fails acceptance. Refs: Game.Core.Tests/State/GameStateManagerTests.cs",
       "If castle HP becomes 0 before Day15 is reached, the run enters loss terminal state and must not emit win for that run. Refs: Game.Core.Tests/State/GameStateManagerTests.cs Game.Core.Tests/State/GameStateMachineTests.cs",
       "Before any terminal state is reached, day/night progression continues, and each progression update evaluates Day15 and castle HP end-state conditions. Refs: Game.Core.Tests/State/GameStateManagerTests.cs Game.Core.Tests/State/GameStateMachineTests.cs",
-      "After win or loss is triggered, configured end-of-game handling (pause or reset) is applied, and normal progression cannot continue without explicit restart/reset. Refs: Game.Core.Tests/State/GameStateManagerTests.cs Game.Core.Tests/State/GameStateMachineTests.cs",
+      "After win or loss is triggered, configured end-of-game handling is applied: Pause keeps the current run terminal and blocks further normal progression updates, while Reset reinitializes runtime state but still requires an explicit new-run/restart action before normal progression resumes. Refs: Game.Core.Tests/State/GameStateManagerTests.cs Game.Core.Tests/State/GameStateMachineTests.cs",
       "When current day is below Day15 and castle HP is above 0, the run remains non-terminal and must not emit win. Refs: Game.Core.Tests/State/GameStateManagerTests.cs",
       "Win is triggered in the same progression step where current day first becomes Day15 while castle HP is greater than 0. Refs: Game.Core.Tests/State/GameStateManagerTests.cs",
       "If castle HP is 0 at or before the Day15 evaluation step, the run stays in loss and cannot transition to win unless a restart/reset begins a new run. Refs: Game.Core.Tests/State/GameStateManagerTests.cs Game.Core.Tests/State/GameStateMachineTests.cs",
@@ -652,7 +652,7 @@
       "A playthrough that reaches Day15 with castle HP still above 0 triggers win in that run and does not emit loss before restart/reset. Refs: Game.Core.Tests/State/GameStateManagerTests.cs",
       "A playthrough where castle HP reaches 0 before Day15 triggers loss and does not emit win in that run. Refs: Game.Core.Tests/State/GameStateManagerTests.cs",
       "Before terminal state, each progression update re-evaluates end-state conditions using that run's current day and current castle HP values. Refs: Game.Core.Tests/State/GameStateManagerTests.cs",
-      "Once win or loss is reached, the run remains terminal, and normal progression resumes only after an explicit restart/reset starts a new run. Refs: Game.Core.Tests/State/GameStateManagerTests.cs Game.Core.Tests/State/GameStateMachineTests.cs",
+      "Once win or loss is reached, the run remains terminal under the configured end-state policy: Pause preserves terminal lock for the current run, and Reset reinitializes runtime state without allowing normal progression to continue until an explicit new run/restart begins. Refs: Game.Core.Tests/State/GameStateManagerTests.cs Game.Core.Tests/State/GameStateMachineTests.cs",
       "Hard acceptance obligation: win-condition evaluation must be implemented in GameStateManager (check current day reaches 15 and castle HP > 0 to trigger win), and when this win is triggered the run must display a visible win screen or win message in that same run; missing either condition is a failure. Refs: Game.Core.Tests/State/GameStateManagerTests.cs"
     ],
     "test_strategy": [

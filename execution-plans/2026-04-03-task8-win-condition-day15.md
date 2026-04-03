@@ -1,0 +1,21 @@
+# task8-win-condition-day15
+
+- Title: task8-win-condition-day15
+- Status: active
+- Branch: task/T8
+- Git Head: 2e2414647d2999960e1f1aa61f119244248b7cbf
+- Goal: Deliver Task 8 win condition and progression end-state behavior (Day15 survival win, loss precedence, terminal handling).
+- Scope: GameStateManager-centric logic and tests for win/loss transition; acceptance/task refs alignment for Task 8 only.
+- Current step: Chapter 6.3 preflight decision for Task 8.
+- Last completed step: n/a (new execution plan scaffold; no completed step recorded yet)
+- Stop-loss: Only modify Task 8 related core logic/tests/task views; do not expand to unrelated progression systems.
+- Next action: Run check_tdd_execution_plan, then continue Chapter 6.4 red-first test generation.
+- Recovery command: `py -3 scripts/sc/run_review_pipeline.py --task-id 8 --resume`
+- Open questions: none recorded yet
+- Exit criteria: Green + refactor + review pipeline pass for Task 8, and local hard checks pass before commit.
+- Related ADRs: none yet
+- Related decision logs: none yet
+- Related task id(s): `8`
+- Related run id: `883a0d8675104fb49fa146b62d15c250`
+- Related latest.json: `logs/ci/2026-03-31/sc-review-pipeline-task-8/latest.json`
+- Related pipeline artifacts: `logs/ci/2026-03-31/sc-review-pipeline-task-8-883a0d8675104fb49fa146b62d15c250`

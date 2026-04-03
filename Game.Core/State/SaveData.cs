@@ -17,13 +17,15 @@ public record GameStateManagerOptions(
     string StorageKey = "guild-manager-game",
     int MaxSaves = 10,
     TimeSpan AutoSaveInterval = default,
-    bool EnableCompression = false
+    bool EnableCompression = false,
+    EndOfGameHandling EndOfGameHandling = EndOfGameHandling.Pause
 )
 {
     public static GameStateManagerOptions Default => new(
         StorageKey: "guild-manager-game",
         MaxSaves: 10,
         AutoSaveInterval: TimeSpan.FromSeconds(30),
-        EnableCompression: false
+        EnableCompression: false,
+        EndOfGameHandling: EndOfGameHandling.Pause
     );
 }

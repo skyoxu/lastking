@@ -12,17 +12,33 @@ using Xunit;
 
 namespace Game.Core.Tests.State;
 
-internal sealed class InMemoryDataStore : IDataStore
-{
-    private readonly Dictionary<string,string> _dict = new();
-    public Task SaveAsync(string key, string json) { _dict[key] = json; return Task.CompletedTask; }
-    public Task<string?> LoadAsync(string key) { _dict.TryGetValue(key, out var v); return Task.FromResult(v); }
-    public Task DeleteAsync(string key) { _dict.Remove(key); return Task.CompletedTask; }
-    public IReadOnlyDictionary<string,string> Snapshot => _dict;
-}
-
 public class GameStateManagerTests
 {
+    private sealed class InMemoryDataStore : IDataStore
+    {
+        private readonly Dictionary<string, string> _dict = new();
+
+        public Task SaveAsync(string key, string json)
+        {
+            _dict[key] = json;
+            return Task.CompletedTask;
+        }
+
+        public Task<string?> LoadAsync(string key)
+        {
+            _dict.TryGetValue(key, out var value);
+            return Task.FromResult(value);
+        }
+
+        public Task DeleteAsync(string key)
+        {
+            _dict.Remove(key);
+            return Task.CompletedTask;
+        }
+
+        public IReadOnlyDictionary<string, string> Snapshot => _dict;
+    }
+
     private static GameState MakeState(int level=1, int score=0)
         => new(
             Id: Guid.NewGuid().ToString(),
@@ -267,6 +283,261 @@ public class GameStateManagerTests
         terminals.Should().Be(1);
     }
 
+    // ACC:T8.1
+    // ACC:T8.4
+    [Fact]
+    public void ShouldEnterWinAndRaiseVisibleFeedback_WhenDay15ReachedWithCastleHpAboveZero()
+    {
+        var manager = CreateWinConditionManager(seed: 71, castleHp: 10, endOfGameHandling: EndOfGameHandling.Pause);
+        var events = new List<DomainEvent>();
+        var runTerminalEvents = 0;
+        manager.OnEvent(events.Add);
+        manager.OnRunTerminal += _ => runTerminalEvents += 1;
+
+        AdvanceToDay(manager, targetDay: 15);
+
+        manager.CurrentDayNightDay.Should().Be(15);
+        manager.IsRunTerminal.Should().BeTrue();
+        manager.CurrentRunTerminalOutcome.Should().Be(RunTerminalOutcome.Win);
+        manager.IsWinPresentationVisible.Should().BeTrue();
+        manager.CurrentDayNightPhase.Should().Be(DayNightPhase.Terminal);
+        runTerminalEvents.Should().Be(1);
+
+        var uiFeedbackEvent = events.Single(x => x.Type == EventTypes.LastkingUiFeedbackRaised);
+        using var uiFeedbackJson = JsonDocument.Parse(uiFeedbackEvent.DataJson);
+        uiFeedbackJson.RootElement.GetProperty("Code").GetString().Should().Be("run.win.day15");
+        uiFeedbackJson.RootElement.GetProperty("MessageKey").GetString().Should().Be("ui.run.win.day15");
+    }
+
+    // ACC:T8.2
+    // ACC:T8.5
+    [Fact]
+    public void ShouldPreferLossAndBlockWin_WhenCastleHpBecomesZeroBeforeDay15()
+    {
+        var manager = CreateWinConditionManager(seed: 72, castleHp: 12);
+        var events = new List<DomainEvent>();
+        manager.OnEvent(events.Add);
+
+        manager.UpdateDayNightRuntime(2);
+        manager.UpdateDayNightRuntime(2);
+        manager.ApplyCastleDamage(12);
+
+        manager.IsRunTerminal.Should().BeTrue();
+        manager.CurrentRunTerminalOutcome.Should().Be(RunTerminalOutcome.Loss);
+
+        for (var i = 0; i < 20; i++)
+        {
+            manager.UpdateDayNightRuntime(2);
+        }
+
+        manager.CurrentRunTerminalOutcome.Should().Be(RunTerminalOutcome.Loss);
+        events.Count(x => x.Type == EventTypes.LastkingUiFeedbackRaised).Should().Be(0);
+    }
+
+    // ACC:T8.3
+    // ACC:T8.6
+    [Fact]
+    public void ShouldResolveDeterministicallyForTerminalOutcome_WhenSeedAndInputsMatch()
+    {
+        var first = CreateWinConditionManager(seed: 73, castleHp: 20);
+        var second = CreateWinConditionManager(seed: 73, castleHp: 20);
+
+        for (var i = 0; i < 6; i++)
+        {
+            first.UpdateDayNightRuntime(2);
+            second.UpdateDayNightRuntime(2);
+        }
+
+        first.ApplyCastleDamage(4);
+        second.ApplyCastleDamage(4);
+        AdvanceToDay(first, targetDay: 15);
+        AdvanceToDay(second, targetDay: 15);
+
+        first.CurrentRunTerminalOutcome.Should().Be(second.CurrentRunTerminalOutcome);
+        first.CurrentDayNightDay.Should().Be(second.CurrentDayNightDay);
+        first.IsWinPresentationVisible.Should().Be(second.IsWinPresentationVisible);
+    }
+
+    // ACC:T8.7
+    // ACC:T8.15
+    [Fact]
+    public void ShouldRequireExplicitRestartBeforeProgressionResumes_WhenRunAlreadyTerminal()
+    {
+        var manager = CreateWinConditionManager(seed: 74, castleHp: 15, endOfGameHandling: EndOfGameHandling.Reset);
+        AdvanceToDay(manager, targetDay: 15);
+
+        manager.IsRunTerminal.Should().BeTrue();
+        manager.CurrentRunTerminalOutcome.Should().Be(RunTerminalOutcome.Win);
+        manager.LastRunTerminalState.Should().NotBeNull();
+        manager.LastRunTerminalState!.Day.Should().Be(15);
+        manager.LastRunTerminalState!.AppliedHandling.Should().Be(EndOfGameHandling.Reset);
+        manager.CurrentDayNightDay.Should().Be(1);
+        manager.CurrentDayNightPhase.Should().Be(DayNightPhase.Day);
+
+        manager.UpdateDayNightRuntime(2);
+        manager.CurrentDayNightDay.Should().Be(1);
+        manager.CurrentDayNightPhase.Should().Be(DayNightPhase.Day);
+
+        manager.RestartRun(startingCastleHp: 15).Should().BeTrue();
+        manager.IsRunTerminal.Should().BeFalse();
+        manager.CurrentRunTerminalOutcome.Should().Be(RunTerminalOutcome.None);
+        manager.CurrentDayNightDay.Should().Be(1);
+        manager.CurrentDayNightPhase.Should().Be(DayNightPhase.Day);
+
+        manager.UpdateDayNightRuntime(2);
+        manager.CurrentDayNightDay.Should().Be(2);
+    }
+
+    // ACC:T8.7
+    // ACC:T8.15
+    [Fact]
+    public void ShouldFreezeRuntimeAfterTerminal_WhenEndOfGameHandlingIsPause()
+    {
+        var manager = CreateWinConditionManager(seed: 741, castleHp: 5, endOfGameHandling: EndOfGameHandling.Pause);
+
+        manager.ApplyCastleDamage(5);
+        manager.IsRunTerminal.Should().BeTrue();
+        manager.CurrentRunTerminalOutcome.Should().Be(RunTerminalOutcome.Loss);
+        manager.LastRunTerminalState.Should().NotBeNull();
+        manager.LastRunTerminalState!.AppliedHandling.Should().Be(EndOfGameHandling.Pause);
+
+        var dayAtTerminal = manager.CurrentDayNightDay;
+        var phaseAtTerminal = manager.CurrentDayNightPhase;
+        var tickAtTerminal = manager.LastRunTerminalState!.Tick;
+
+        manager.UpdateDayNightRuntime(2);
+        manager.UpdateDayNightRuntime(60);
+        manager.UpdateDayNightRuntime(600);
+
+        manager.CurrentDayNightDay.Should().Be(dayAtTerminal);
+        manager.CurrentDayNightPhase.Should().Be(phaseAtTerminal);
+        manager.LastRunTerminalState!.Tick.Should().Be(tickAtTerminal);
+        manager.IsRunTerminal.Should().BeTrue();
+        manager.CurrentRunTerminalOutcome.Should().Be(RunTerminalOutcome.Loss);
+    }
+
+    // ACC:T8.8
+    // ACC:T8.9
+    [Fact]
+    public void ShouldStayNonTerminalBeforeDay15AndWinOnFirstDay15Step_WhenCastleIsIntact()
+    {
+        var manager = CreateWinConditionManager(seed: 75, castleHp: 18);
+
+        AdvanceToDay(manager, targetDay: 14);
+        manager.IsRunTerminal.Should().BeFalse();
+        manager.CurrentRunTerminalOutcome.Should().Be(RunTerminalOutcome.None);
+
+        manager.UpdateDayNightRuntime(2);
+        manager.CurrentDayNightDay.Should().Be(15);
+        manager.IsRunTerminal.Should().BeTrue();
+        manager.CurrentRunTerminalOutcome.Should().Be(RunTerminalOutcome.Win);
+    }
+
+    // ACC:T8.11
+    [Fact]
+    public void ShouldNotEmitDuplicateTerminalOrWinFeedback_WhenTickingAfterWin()
+    {
+        var manager = CreateWinConditionManager(seed: 76, castleHp: 18);
+        var terminalEvents = 0;
+        var uiFeedbackEvents = 0;
+        manager.OnRunTerminal += _ => terminalEvents += 1;
+        manager.OnEvent(x =>
+        {
+            if (x.Type == EventTypes.LastkingUiFeedbackRaised)
+            {
+                uiFeedbackEvents += 1;
+            }
+        });
+
+        AdvanceToDay(manager, targetDay: 15);
+        manager.UpdateDayNightRuntime(100);
+        manager.UpdateDayNightRuntime(100);
+
+        terminalEvents.Should().Be(1);
+        uiFeedbackEvents.Should().Be(1);
+    }
+
+    // ACC:T8.11
+    [Fact]
+    public void ShouldNotEmitDuplicateTerminalOrWinFeedback_WhenTickingAfterLoss()
+    {
+        var manager = CreateWinConditionManager(seed: 79, castleHp: 6);
+        var terminalEvents = 0;
+        var uiFeedbackEvents = 0;
+        manager.OnRunTerminal += _ => terminalEvents += 1;
+        manager.OnEvent(x =>
+        {
+            if (x.Type == EventTypes.LastkingUiFeedbackRaised)
+            {
+                uiFeedbackEvents += 1;
+            }
+        });
+
+        manager.ApplyCastleDamage(6);
+        manager.IsRunTerminal.Should().BeTrue();
+        manager.CurrentRunTerminalOutcome.Should().Be(RunTerminalOutcome.Loss);
+
+        manager.UpdateDayNightRuntime(100);
+        manager.UpdateDayNightRuntime(100);
+
+        terminalEvents.Should().Be(1);
+        uiFeedbackEvents.Should().Be(0);
+    }
+
+    // ACC:T8.12
+    // ACC:T8.16
+    [Fact]
+    public void ShouldFinishRunAsWinWithoutLoss_WhenPlaythroughKeepsCastleHpPositive()
+    {
+        var manager = CreateWinConditionManager(seed: 77, castleHp: 25);
+        var outcomes = new List<RunTerminalOutcome>();
+        manager.OnRunTerminal += state => outcomes.Add(state.Outcome);
+
+        AdvanceToDay(manager, targetDay: 15);
+
+        outcomes.Should().ContainSingle();
+        outcomes[0].Should().Be(RunTerminalOutcome.Win);
+        manager.LastRunTerminalState.Should().NotBeNull();
+        manager.LastRunTerminalState!.CastleHp.Should().BeGreaterThan(0);
+    }
+
+    // ACC:T8.13
+    // ACC:T8.14
+    [Fact]
+    public void ShouldReevaluateDayAndCastleHpOnEachUpdateAndLockLoss_WhenCastleHpDropsToZero()
+    {
+        var manager = CreateWinConditionManager(seed: 78, castleHp: 5);
+
+        manager.UpdateDayNightRuntime(2);
+        manager.UpdateDayNightRuntime(2);
+        manager.SetCastleHp(0);
+        manager.IsRunTerminal.Should().BeTrue();
+        manager.CurrentRunTerminalOutcome.Should().Be(RunTerminalOutcome.Loss);
+
+        manager.UpdateDayNightRuntime(100);
+        manager.CurrentRunTerminalOutcome.Should().Be(RunTerminalOutcome.Loss);
+        manager.IsWinPresentationVisible.Should().BeFalse();
+    }
+
+    // ACC:T8.10
+    [Fact]
+    public void ShouldKeepLossAtDay15BoundaryUntilRestart_WhenCastleHpIsZeroOnEvaluationStep()
+    {
+        var manager = CreateWinConditionManager(seed: 80, castleHp: 6);
+        AdvanceToDay(manager, targetDay: 14);
+        manager.CurrentDayNightDay.Should().Be(14);
+
+        manager.SetCastleHp(0);
+        manager.UpdateDayNightRuntime(2);
+        manager.IsRunTerminal.Should().BeTrue();
+        manager.CurrentRunTerminalOutcome.Should().Be(RunTerminalOutcome.Loss);
+        manager.IsWinPresentationVisible.Should().BeFalse();
+
+        manager.RestartRun(startingCastleHp: 6).Should().BeTrue();
+        AdvanceToDay(manager, targetDay: 15);
+        manager.CurrentRunTerminalOutcome.Should().Be(RunTerminalOutcome.Win);
+    }
+
     [Fact]
     public async Task ShouldSupportSaveLoadDeleteAndIndex_WhenCompressionEnabled()
     {
@@ -402,6 +673,30 @@ public class GameStateManagerTests
             store: new InMemoryDataStore(),
             dayNightSeed: seed,
             dayNightConfig: new DayNightCycleConfig(DayDurationSeconds: 240, NightDurationSeconds: 120, MaxDay: 15));
+    }
+
+    private static GameStateManager CreateWinConditionManager(int seed, int castleHp, EndOfGameHandling endOfGameHandling = EndOfGameHandling.Pause)
+    {
+        var manager = new GameStateManager(
+            store: new InMemoryDataStore(),
+            options: new GameStateManagerOptions(EndOfGameHandling: endOfGameHandling),
+            dayNightSeed: seed,
+            dayNightConfig: new DayNightCycleConfig(DayDurationSeconds: 1, NightDurationSeconds: 1, MaxDay: 15));
+
+        manager.SetState(MakeState(level: 1, score: 0) with { Health = castleHp }, MakeConfig());
+        return manager;
+    }
+
+    private static void AdvanceToDay(GameStateManager manager, int targetDay)
+    {
+        var guard = 0;
+        while (!manager.IsRunTerminal && manager.CurrentDayNightDay < targetDay && guard < 100)
+        {
+            manager.UpdateDayNightRuntime(2);
+            guard += 1;
+        }
+
+        guard.Should().BeLessThan(100);
     }
 }
 
