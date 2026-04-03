@@ -24,6 +24,8 @@ public class GameStateMachineTests
         calls.Should().BeGreaterThanOrEqualTo(3);
     }
 
+    // ACC:T8.7
+    // ACC:T8.15
     [Fact]
     public void ShouldRejectInvalidTransitions_WhenCurrentStateDoesNotAllowAction()
     {

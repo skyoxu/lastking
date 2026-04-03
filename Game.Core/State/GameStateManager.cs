@@ -15,6 +15,11 @@ public class GameStateManager
     private GameState? _currentState;
     private GameConfig? _currentConfig;
     private bool _autoSaveEnabled;
+    private bool _runTerminal;
+    private RunTerminalOutcome _runTerminalOutcome = RunTerminalOutcome.None;
+    private bool _winPresentationVisible;
+    private int _castleHp = 100;
+    private RunTerminalState? _lastRunTerminalState;
 
     private const string IndexSuffix = ":index";
 
@@ -34,12 +39,19 @@ public class GameStateManager
     public DayNightPhase CurrentDayNightPhase => _dayNightRuntime.CurrentPhase;
     public int CurrentDayNightDay => _dayNightRuntime.CurrentDay;
     public int DayNightCheckpointCount => _dayNightRuntime.CheckpointCount;
+    public bool IsRunTerminal => _runTerminal;
+    public RunTerminalOutcome CurrentRunTerminalOutcome => _runTerminalOutcome;
+    public int CurrentCastleHp => _castleHp;
+    public bool IsWinPresentationVisible => _winPresentationVisible;
+    public RunTerminalState? LastRunTerminalState => _lastRunTerminalState;
     public event Action<DayNightCheckpoint>? OnDayNightCheckpoint;
     public event Action<DayNightTerminal>? OnDayNightTerminal;
+    public event Action<RunTerminalState>? OnRunTerminal;
 
     public void SetState(GameState state, GameConfig? config = null)
     {
         _currentState = state with { };
+        _castleHp = Math.Max(0, state.Health);
         if (config is not null)
             _currentConfig = config with { };
 
@@ -57,17 +69,99 @@ public class GameStateManager
 
     public void UpdateDayNightRuntime(double deltaSeconds, bool isActiveUpdate = true)
     {
+        if (_runTerminal)
+        {
+            return;
+        }
+
         _dayNightRuntime.Update(deltaSeconds, isActiveUpdate);
+        EvaluateRunTerminalConditions();
     }
 
     public bool ForceDayNightTerminal()
     {
-        return _dayNightRuntime.ForceTerminal();
+        if (_runTerminal)
+        {
+            return false;
+        }
+
+        var forced = _dayNightRuntime.ForceTerminal();
+        if (forced)
+        {
+            var outcome = _castleHp <= 0 ? RunTerminalOutcome.Loss : RunTerminalOutcome.Win;
+            EnterRunTerminal(outcome, reason: "forced-terminal", forceDayNightTerminal: false);
+        }
+
+        return forced;
     }
 
     public bool RequestDayNightTransition(DayNightPhase requestedPhase)
     {
         return _dayNightRuntime.RequestTransition(requestedPhase);
+    }
+
+    public void SetCastleHp(int currentHp)
+    {
+        var normalized = Math.Max(0, currentHp);
+        var previous = _castleHp;
+        _castleHp = normalized;
+
+        if (_currentState is not null && _currentState.Health != normalized)
+        {
+            _currentState = _currentState with
+            {
+                Health = normalized,
+                Timestamp = DateTime.UtcNow,
+            };
+        }
+
+        if (previous != normalized)
+        {
+            Publish(DomainEvent.Create(
+                type: EventTypes.LastkingCastleHpChanged,
+                source: nameof(GameStateManager),
+                payload: new CastleHpChangedPayload(
+                    Day: _dayNightRuntime.CurrentDay,
+                    PreviousHp: previous,
+                    CurrentHp: normalized),
+                timestamp: DateTime.UtcNow,
+                id: $"castle-hp-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}"
+            ));
+        }
+
+        EvaluateRunTerminalConditions();
+    }
+
+    public void ApplyCastleDamage(int damage)
+    {
+        if (damage <= 0)
+        {
+            return;
+        }
+
+        SetCastleHp(_castleHp - damage);
+    }
+
+    public bool RestartRun(int? startingCastleHp = null)
+    {
+        _runTerminal = false;
+        _runTerminalOutcome = RunTerminalOutcome.None;
+        _winPresentationVisible = false;
+        _lastRunTerminalState = null;
+        _dayNightRuntime.Reset();
+
+        if (startingCastleHp is not null)
+        {
+            SetCastleHp(startingCastleHp.Value);
+            return true;
+        }
+
+        if (_currentState is not null)
+        {
+            SetCastleHp(_currentState.Health);
+        }
+
+        return true;
     }
 
     private const int MaxTitleLength = 100;
@@ -301,6 +395,9 @@ public class GameStateManager
     private sealed record AutoSaveIntervalPayload(double IntervalMilliseconds);
     private sealed record DayNightCheckpointPayload(int Day, string From, string To, long Tick, int RandomToken);
     private sealed record DayNightTerminalPayload(int Day, long Tick);
+    private sealed record CastleHpChangedPayload(int Day, int PreviousHp, int CurrentHp);
+    private sealed record RunTerminalPayload(string Outcome, int Day, int CastleHp, string EndHandling, string Reason);
+    private sealed record UiFeedbackPayload(string Code, string MessageKey, string Severity, string Details);
 
     private sealed class EmptyPayload
     {
@@ -362,6 +459,107 @@ public class GameStateManager
             timestamp: DateTime.UtcNow,
             id: $"day-night-terminal-{terminal.Tick}-{terminal.Day}"
         ));
+
+        if (_runTerminal)
+        {
+            return;
+        }
+
+        EvaluateRunTerminalConditionsFromTerminal(terminal);
+    }
+
+    private void EvaluateRunTerminalConditions()
+    {
+        if (_runTerminal || _currentState is null)
+        {
+            return;
+        }
+
+        if (_castleHp <= 0)
+        {
+            EnterRunTerminal(RunTerminalOutcome.Loss, reason: "castle-hp-depleted", forceDayNightTerminal: true);
+            return;
+        }
+
+        if (_dayNightRuntime.CurrentDay >= _dayNightRuntime.MaxDay)
+        {
+            EnterRunTerminal(RunTerminalOutcome.Win, reason: "day15-survived", forceDayNightTerminal: true);
+        }
+    }
+
+    private void EvaluateRunTerminalConditionsFromTerminal(DayNightTerminal terminal)
+    {
+        if (_castleHp <= 0)
+        {
+            EnterRunTerminal(RunTerminalOutcome.Loss, reason: "terminal-while-castle-depleted", forceDayNightTerminal: false);
+            return;
+        }
+
+        if (terminal.Day >= _dayNightRuntime.MaxDay)
+        {
+            EnterRunTerminal(RunTerminalOutcome.Win, reason: "terminal-max-day-reached", forceDayNightTerminal: false);
+        }
+    }
+
+    private void EnterRunTerminal(RunTerminalOutcome outcome, string reason, bool forceDayNightTerminal)
+    {
+        if (_runTerminal)
+        {
+            return;
+        }
+
+        _runTerminal = true;
+        _runTerminalOutcome = outcome;
+        _winPresentationVisible = outcome == RunTerminalOutcome.Win;
+
+        if (forceDayNightTerminal)
+        {
+            _dayNightRuntime.ForceTerminal();
+        }
+
+        var terminalState = new RunTerminalState(
+            Outcome: outcome,
+            Day: _dayNightRuntime.CurrentDay,
+            CastleHp: _castleHp,
+            AppliedHandling: _options.EndOfGameHandling,
+            WinPresentationVisible: _winPresentationVisible,
+            Tick: _dayNightRuntime.Tick);
+
+        _lastRunTerminalState = terminalState;
+        OnRunTerminal?.Invoke(terminalState);
+
+        Publish(DomainEvent.Create(
+            type: EventTypes.RunStateTransitioned,
+            source: nameof(GameStateManager),
+            payload: new RunTerminalPayload(
+                Outcome: outcome.ToString(),
+                Day: terminalState.Day,
+                CastleHp: terminalState.CastleHp,
+                EndHandling: terminalState.AppliedHandling.ToString(),
+                Reason: reason),
+            timestamp: DateTime.UtcNow,
+            id: $"run-terminal-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}"
+        ));
+
+        if (_options.EndOfGameHandling == EndOfGameHandling.Reset)
+        {
+            _dayNightRuntime.Reset();
+        }
+
+        if (outcome == RunTerminalOutcome.Win)
+        {
+            Publish(DomainEvent.Create(
+                type: EventTypes.LastkingUiFeedbackRaised,
+                source: nameof(GameStateManager),
+                payload: new UiFeedbackPayload(
+                    Code: "run.win.day15",
+                    MessageKey: "ui.run.win.day15",
+                    Severity: "info",
+                    Details: "day15-survived-castle-intact"),
+                timestamp: DateTime.UtcNow,
+                id: $"ui-feedback-win-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}"
+            ));
+        }
     }
 }
 

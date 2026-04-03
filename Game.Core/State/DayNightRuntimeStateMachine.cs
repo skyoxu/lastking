@@ -34,6 +34,7 @@ public sealed class DayNightRuntimeStateMachine
 
     public DayNightPhase CurrentPhase => _phase;
     public int CurrentDay => _day;
+    public int MaxDay => _config.MaxDay;
     public bool IsTerminal => _phase == DayNightPhase.Terminal;
     public double PhaseElapsedSeconds => _phaseElapsedSeconds;
     public long Tick => _tick;
@@ -53,6 +54,16 @@ public sealed class DayNightRuntimeStateMachine
         RaiseTerminal();
         _phaseElapsedSeconds = 0d;
         return true;
+    }
+
+    public void Reset()
+    {
+        _phase = DayNightPhase.Day;
+        _day = 1;
+        _phaseElapsedSeconds = 0d;
+        _tick = 0;
+        _checkpointCount = 0;
+        _terminalRaised = false;
     }
 
     public bool RequestTransition(DayNightPhase requestedPhase)
