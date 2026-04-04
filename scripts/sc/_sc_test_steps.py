@@ -16,6 +16,7 @@ def run_unit(
     *,
     run_id: str,
     task_id: str | None = None,
+    allow_full_unit_fallback: bool = False,
 ) -> dict[str, Any]:
     cmd = ["py", "-3", "scripts/python/run_dotnet.py", "--solution", solution, "--configuration", configuration]
     task_cs_refs = task_scoped_cs_refs(task_id=task_id)
@@ -23,13 +24,14 @@ def run_unit(
     if task_filter:
         cmd += ["--filter", task_filter]
     rc, out = run_cmd(cmd, cwd=repo_root(), timeout_sec=1_800)
-    if (
-        task_filter
+    zero_coverage_failure = (
+        bool(task_filter)
         and int(rc) == 2
         and "RUN_DOTNET status=coverage_failed" in str(out)
         and "line=0.0%" in str(out)
         and "branch=0.0" in str(out)
-    ):
+    )
+    if allow_full_unit_fallback and zero_coverage_failure:
         fallback_cmd = ["py", "-3", "scripts/python/run_dotnet.py", "--solution", solution, "--configuration", configuration]
         fallback_rc, fallback_out = run_cmd(fallback_cmd, cwd=repo_root(), timeout_sec=1_800)
         out = (
@@ -43,6 +45,12 @@ def run_unit(
         if int(fallback_rc) == 0:
             rc = 0
             cmd = fallback_cmd
+    elif zero_coverage_failure:
+        out = (
+            f"{str(out).rstrip()}\n\n"
+            "[sc-test] task-scoped coverage is 0.0%; full-suite fallback is disabled.\n"
+            "[sc-test] Re-run with --allow-full-unit-fallback only when you intentionally want a repo-wide retry.\n"
+        ).rstrip() + "\n"
     log_path = out_dir / "unit.log"
     write_text(log_path, out)
     unit_artifacts_dir = repo_root() / "logs" / "unit" / today_str()
@@ -115,34 +123,42 @@ def run_gdunit_hard(
     *,
     run_id: str,
     task_id: str | None = None,
+    require_task_scoped_refs: bool = False,
 ) -> dict[str, Any]:
     date = today_str()
     report_dir = Path("logs") / "e2e" / date / "sc-test" / "gdunit-hard"
     os.environ["AUDIT_LOG_ROOT"] = str(repo_root() / "logs" / "ci" / date)
     add_dirs: list[str] = []
     tests_project = repo_root() / "Tests.Godot"
-    task_scope = str(task_id or "").strip()
-    if task_scope:
-        for rel_ref in task_scoped_gdunit_refs(task_id=task_id, tests_project=tests_project):
-            if rel_ref not in add_dirs:
-                add_dirs.append(rel_ref)
-        if not add_dirs:
+    if str(task_id or "").strip():
+        task_refs = task_scoped_gdunit_refs(task_id=task_id, tests_project=tests_project)
+        if not task_refs and require_task_scoped_refs:
             log_path = out_dir / "gdunit-hard.log"
-            message = (
-                f"[sc-test] ERROR: no task-scoped gdunit refs found for task_id={task_scope}.\n"
-                "Refusing to fallback to broad test directories because that can hide missing refs and produce false green.\n"
+            write_text(
+                log_path,
+                "\n".join(
+                    [
+                        "SC_TEST_GDUNIT_HARD status=fail reason=missing_task_scoped_gd_refs",
+                        f"task_id: {str(task_id).strip()}",
+                        "error: no task-scoped .gd refs resolved from task view files",
+                    ]
+                )
+                + "\n",
             )
-            write_text(log_path, message)
             return {
                 "name": "gdunit-hard",
-                "cmd": ["internal:task_scoped_gdunit_refs"],
-                "rc": 2,
+                "cmd": [],
+                "rc": 1,
                 "log": str(log_path),
                 "report_dir": str(report_dir),
+                "error": "missing_task_scoped_gd_refs",
                 "status": "fail",
-                "reason": "missing_task_scoped_gdunit_refs",
             }
-    else:
+        if task_refs:
+            for rel_ref in task_refs:
+                if rel_ref not in add_dirs:
+                    add_dirs.append(rel_ref)
+    if not add_dirs:
         for rel in ["tests/Scenes", "tests/UI", "tests/Adapters/Config", "tests/Security/Hard"]:
             if (tests_project / rel).exists():
                 add_dirs.append(rel)

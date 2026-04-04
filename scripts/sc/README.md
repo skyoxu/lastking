@@ -23,7 +23,7 @@
 - `sc-git`：`logs/ci/<YYYY-MM-DD>/sc-git/`
 - `sc-acceptance-check`：`logs/ci/<YYYY-MM-DD>/sc-acceptance-check/`
 - `sc-llm-review`：`logs/ci/<YYYY-MM-DD>/sc-llm-review/`（可选，本地 LLM 口头审查）
-- `sc-review-pipeline` also writes `run-events.jsonl`, `harness-capabilities.json`, and supports on-demand `approval-request.json` / `approval-response.json` protocol files.
+- `sc-review-pipeline` also writes `run-events.jsonl`, `harness-capabilities.json`, task-scoped `latest.json`, stable `logs/ci/active-tasks/task-<id>.active.{json,md}`, and supports on-demand `approval-request.json` / `approval-response.json` protocol files.
 
 单元测试与覆盖率固定落盘到：`logs/unit/<YYYY-MM-DD>/`（由 `scripts/python/run_dotnet.py` 生成）。
 
@@ -39,38 +39,12 @@
 - `tdd` 会快照 `Game.Core/Contracts/**/*.cs`；若检测到新增/修改契约文件会直接失败
 - 若确实需要新增契约：应先补齐 ADR/Overlay/Test-Refs，再继续 TDD
 
-### TDD 执行计划预检查（check_tdd_execution_plan）
-
-在生成红灯测试前，建议先跑一次计划预检查，避免任务上下文不完整导致后续脚本跑偏：
-
-```powershell
-py -3 scripts/sc/check_tdd_execution_plan.py --task-id <id> --tdd-stage red-first --verify unit --execution-plan-policy draft
-```
-
-建议顺序：
-1. `check_tdd_execution_plan.py`（先做可执行性与上下文预检）
-2. `llm_generate_tests_from_acceptance_refs.py --tdd-stage red-first`
-3. `build.py tdd --stage green`
-4. `build.py tdd --stage refactor`
-
-### semantic_review_tier 维护口径
-
-`semantic_review_tier` 必须维护在真实任务视图文件（不是 examples）：
-- `.taskmaster/tasks/tasks_back.json`
-- `.taskmaster/tasks/tasks_gameplay.json`
-
-推荐维护命令：
-
-```powershell
-py -3 scripts/python/backfill_semantic_review_tier.py --mode conservative --write
-py -3 scripts/python/validate_semantic_review_tier.py --mode conservative
-```
-
 ## Generate Tests From Acceptance Refs
 
 `scripts/sc/llm_generate_tests_from_acceptance_refs.py` generates missing test files from task acceptance `Refs:` entries and only allows repo-relative `.cs` / `.gd` test paths.
 
 - Every generated file must include the matching `ACC:T<id>.<n>` anchors.
+- Before long or mixed-surface generation, run `scripts/sc/check_tdd_execution_plan.py` first. It scores complexity from missing refs, mixed `.cs` / `.gd` targets, `red-first`, `verify auto|all`, anchor count, and test-root spread; `--execution-plan-policy draft` can auto-create a minimal `execution-plan`.
 - C# anchors must appear within 5 lines above `[Fact]` / `[Theory]`; GDScript anchors must appear within 5 lines above `func test_...`.
 - `--tdd-stage red-first` is a strict red mode.
   - If the run creates any new `.cs` tests, it forces task-scoped unit verification.
@@ -90,11 +64,44 @@ py -3 scripts/python/validate_semantic_review_tier.py --mode conservative
 Examples:
 
 ```powershell
+# Pre-check whether this task should create or require an execution plan first
+py -3 scripts/sc/check_tdd_execution_plan.py --task-id 11 --tdd-stage red-first --verify auto --execution-plan-policy warn
+
+# Auto-draft an execution plan when the complexity threshold is hit
+py -3 scripts/sc/check_tdd_execution_plan.py --task-id 11 --tdd-stage red-first --verify auto --execution-plan-policy draft
+
 # Normal scaffold generation
 py -3 scripts/sc/llm_generate_tests_from_acceptance_refs.py --task-id 11 --verify unit
 
 # Strict red-first generation for new tests
 py -3 scripts/sc/llm_generate_tests_from_acceptance_refs.py --task-id 11 --tdd-stage red-first --verify auto --godot-bin "$env:GODOT_BIN"
+```
+
+## Semantic Review Tier Maintenance
+
+Use these Python helpers when you want task views to carry an explicit `semantic_review_tier` policy instead of relying only on runtime delivery-profile defaults.
+
+- `scripts/python/backfill_semantic_review_tier.py`
+  - Fills or normalizes `semantic_review_tier` in `tasks_back.json` / `tasks_gameplay.json`.
+  - Default `--mode conservative` only writes safe floors (`auto` / `full`) and avoids freezing profile-derived runtime defaults into task files.
+  - Template repo behavior: prefer real `.taskmaster/tasks/*.json`; fall back to `examples/taskmaster/*` when the real triplet is missing.
+- `scripts/python/validate_semantic_review_tier.py`
+  - Enforces the field name `semantic_review_tier`.
+  - Enforces legal values only.
+  - Enforces consistency with the current computed suggestion.
+  - Enforces no cross-view drift between `tasks_back` and `tasks_gameplay` for the same task.
+
+Examples:
+
+```powershell
+# Dry-run conservative suggestions
+py -3 scripts/python/backfill_semantic_review_tier.py
+
+# Write conservative backfill into task views
+py -3 scripts/python/backfill_semantic_review_tier.py --write
+
+# Validate current task-view tiers
+py -3 scripts/python/validate_semantic_review_tier.py
 ```
 
 ## Acceptance Check（等价于 Claude Code 的 /acceptance-check）
@@ -110,6 +117,7 @@ py -3 scripts/sc/llm_generate_tests_from_acceptance_refs.py --task-id 11 --tdd-s
 - 构建门禁（硬）：`dotnet build -warnaserror`（通过 `scripts/sc/build.py`）
 - 安全软检查（软）：Sentry secrets / 核心契约检查 / 编码扫描
 - 测试门禁（硬）：`scripts/sc/test.py --type all`（含 GdUnit4 + smoke）
+  - task-scoped unit coverage 若为 `0.0%`，默认直接失败，不再自动回退到全量 `dotnet test`；只有显式传 `--allow-full-unit-fallback` 才保留旧行为。
 - 性能门禁（可选硬门）：解析最新 `logs/ci/**/headless.log` 的 `[PERF] ... p95_ms=...` 并与阈值比较
   - 启用方式：`--perf-p95-ms <ms>` 或设置环境变量 `PERF_P95_THRESHOLD_MS=<ms>`
   - 快捷方式：`--require-perf`（legacy）：等价于启用性能硬门禁，阈值取 `PERF_P95_THRESHOLD_MS`，否则默认 20ms（口径见 ADR-0015）
@@ -117,7 +125,7 @@ py -3 scripts/sc/llm_generate_tests_from_acceptance_refs.py --task-id 11 --tdd-s
   - `--delivery-profile playable-ea`：最轻门禁，优先验证可玩性；默认派生 `security-profile=host-safe`；`agent_review.mode=skip`
   - `--delivery-profile fast-ship`：快速交付档位；默认派生 `security-profile=host-safe`；`agent_review.mode=warn`
   - `--delivery-profile standard`：标准收口档位；默认派生 `security-profile=strict`；`agent_review.mode=require`
-  - 解析顺序：CLI `--delivery-profile` > `DELIVERY_PROFILE` > `scripts/sc/config/delivery_profiles.json` 中的 `default_profile`（当前为 `playable-ea`）
+  - 解析顺序：CLI `--delivery-profile` > `DELIVERY_PROFILE` > `scripts/sc/config/delivery_profiles.json` 中的 `default_profile`（当前为 `fast-ship`）
   - `--security-profile` 仅用于显式覆写派生结果；解析顺序：CLI > `SECURITY_PROFILE` > 由 `delivery-profile` 派生
 
   - `run_review_pipeline.py` normalizes agent-review verdicts into marathon guidance: isolated `needs-fix` -> `resume`, cross-step `needs-fix` -> `refresh`, and cross-step `block` or high-severity integrity issues -> `fork`; these hints only update sidecars and do not rewrite `summary.json`.
@@ -158,21 +166,6 @@ Rules:
   - `scripts/sc/_acceptance_evidence_steps.py`
   - 相关 GdUnit 集成用例的守卫逻辑
 
-## sc-review-pipeline 关键 sidecar（恢复优先）
-
-任务级流水线的主恢复依据（目录：`logs/ci/<YYYY-MM-DD>/sc-review-pipeline-task-<task>-<run-id>/`）：
-- `summary.json`
-- `execution-context.json`
-- `repair-guide.json`
-- `repair-guide.md`
-- `agent-review.json`
-- `agent-review.md`
-- `run-events.jsonl`
-- `harness-capabilities.json`
-
-日期级 latest 指针：
-- `logs/ci/<YYYY-MM-DD>/sc-review-pipeline-task-<task>/latest.json`
-
 ## Windows 用法示例
 
 ```powershell
@@ -191,11 +184,18 @@ py -3 scripts/sc/run_review_pipeline.py --task-id 10 --godot-bin "$env:GODOT_BIN
 # Standard profile for release hardening
 py -3 scripts/sc/run_review_pipeline.py --task-id 10 --godot-bin "$env:GODOT_BIN" --delivery-profile standard
 
+# Final closure pass for remaining Needs Fix items:
+# force full deterministic checks + full reviewer set and disable fast-path shortcuts
+py -3 scripts/sc/llm_review_needs_fix_fast.py --task-id 10 --delivery-profile standard --final-pass
+
 # Optional: explicit security override when you intentionally break the default mapping
 py -3 scripts/sc/run_review_pipeline.py --task-id 10 --godot-bin "$env:GODOT_BIN" --delivery-profile fast-ship --security-profile strict
 
 # Optional: skip llm review (deterministic gates only)
 py -3 scripts/sc/run_review_pipeline.py --task-id 10 --godot-bin "$env:GODOT_BIN" --skip-llm-review
+
+# Optional: if task-scoped unit coverage is 0.0%, allow one explicit repo-wide dotnet retry
+py -3 scripts/sc/run_review_pipeline.py --task-id 10 --godot-bin "$env:GODOT_BIN" --delivery-profile fast-ship --allow-full-unit-fallback
 
 # Retry a failing step once inside the same invocation
 py -3 scripts/sc/run_review_pipeline.py --task-id 10 --godot-bin "$env:GODOT_BIN" --max-step-retries 1
@@ -205,6 +205,10 @@ py -3 scripts/sc/run_review_pipeline.py --task-id 10 --godot-bin "$env:GODOT_BIN
 
 # Tighten or relax the context-refresh heuristic thresholds
 py -3 scripts/sc/run_review_pipeline.py --task-id 10 --context-refresh-after-failures 2 --context-refresh-after-resumes 2 --context-refresh-after-diff-lines 200 --context-refresh-after-diff-categories 2
+
+# Inspect and summarize the latest task-scoped recovery state before deciding resume/fork
+# Or open logs/ci/active-tasks/task-<id>.active.md first for the shortest recovery summary
+py -3 scripts/python/dev_cli.py resume-task --task-id 10
 
 # Resume the latest task-scoped run after fixing the first blocking issue
 py -3 scripts/sc/run_review_pipeline.py --task-id 10 --resume
