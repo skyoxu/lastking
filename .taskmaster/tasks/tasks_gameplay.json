@@ -717,8 +717,8 @@
     ],
     "acceptance": [
       "Taskmaster #9 deliverable is strictly limited to a minimal HUD in the main play view that shows day, cycle time remaining, and castle HP, with no additional status metrics added. Refs: Tests.Godot/tests/UI/test_hud_scene.gd",
-      "All automated tests referenced by this task pass on the Windows Godot + C# baseline environment. Refs: Tests.Godot/tests/UI/test_hud_updates_on_events.gd",
-      "Adding HUD behavior does not alter deterministic simulation outputs or core-loop progression rules for identical inputs. Refs: Game.Core.Tests/State/GameStateMachineTests.cs Game.Core.Tests/State/GameStateManagerTests.cs",
+      "Task-scoped HUD acceptance for Taskmaster #9 is validated by behavior assertions bound to ACC:T9.x refs in the referenced UI and integration tests, not by generic repository-wide pass/fail gates alone. Refs: Tests.Godot/tests/UI/test_hud_scene.gd Tests.Godot/tests/UI/test_hud_updates_on_events.gd Tests.Godot/tests/Integration/test_hud_integration.gd",
+      "Adding HUD behavior for Taskmaster #9 must not alter deterministic core-loop outputs or progression rules for identical simulation inputs. Refs: Game.Core.Tests/State/GameStateMachineTests.cs Game.Core.Tests/State/GameStateManagerTests.cs",
       "At runtime, the main play view renders three distinct HUD values: current day, remaining time in the active Day/Night cycle, and castle HP. Refs: Tests.Godot/tests/UI/test_hud_scene.gd",
       "As simulation advances, the day HUD value follows the authoritative day counter and remains within 1-15. Refs: Tests.Godot/tests/UI/test_hud_updates_on_events.gd",
       "While a Day/Night cycle is active, the displayed remaining cycle time changes over time and is not static between sampled updates. Refs: Tests.Godot/tests/UI/test_hud_updates_on_events.gd",
@@ -732,10 +732,11 @@
       "During active play, each HUD field refreshes automatically from state changes and never requires scene reload, menu toggle, or manual refresh actions. Refs: Tests.Godot/tests/UI/test_hud_updates_on_events.gd",
       "In a run with day progression, at least one Day/Night transition, and at least one HP change, all three HUD values visibly track their source values in real time on the main play view. Refs: Tests.Godot/tests/Integration/test_hud_integration.gd Tests.Godot/tests/UI/test_hud_updates_on_events.gd",
       "Scope remains minimal: the HUD directly exposes only day, cycle time remaining, and castle HP for core-loop visibility. Refs: Tests.Godot/tests/UI/test_hud_scene.gd",
-      "Real-time HUD updates via C# scripts are treated as mandatory and must be verifiable through tests or audit evidence. Refs: Tests.Godot/tests/UI/test_hud_updates_on_events.gd",
-      "A single HUD data contract defines required fields (day, cycle time remaining, castle HP), required refresh cadence, and explicit fallback placeholders for invalid or unavailable data; contract tests fail if any required field, binding, or fallback definition is missing. Refs: Tests.Godot/tests/UI/test_hud_scene.gd",
-      "HUD binding and update flow is event-driven from core-loop transitions with explicit ownership boundaries, and Day/Night transition events plus HP change events must update mapped HUD outputs in the same session without scene reload or manual refresh. Refs: Tests.Godot/tests/UI/test_hud_updates_on_events.gd Tests.Godot/tests/Integration/test_hud_integration.gd",
-      "Regression tests cover HUD continuity across Day/Night transitions and HP damage/change events, validate invalid-data fallback behavior, and emit UI state diagnostics at transition and fallback activation points. Refs: Tests.Godot/tests/UI/test_hud_updates_on_events.gd"
+      "HUD refresh is implemented by a C# script attached to the main play HUD, and day/cycle-remaining/HP text values update in-session from gameplay state changes without manual refresh or scene reload. Refs: Tests.Godot/tests/UI/test_hud_updates_on_events.gd Tests.Godot/tests/Integration/test_hud_integration.gd",
+      "HUD data mapping remains minimal and explicit: exactly three fields (day, cycle time remaining, castle HP) are bound to exactly three runtime-visible HUD labels. Refs: Tests.Godot/tests/UI/test_hud_scene.gd",
+      "When authoritative gameplay state changes for day, cycle remaining, or castle HP, the mapped HUD field reflects that change in the same active session without scene reload or manual refresh. Refs: Tests.Godot/tests/UI/test_hud_updates_on_events.gd Tests.Godot/tests/Integration/test_hud_integration.gd",
+      "Regression tests cover HUD continuity across Day/Night transitions and castle HP change events, and verify that the three required HUD fields remain visible and behaviorally consistent in-session. Refs: Tests.Godot/tests/UI/test_hud_updates_on_events.gd Tests.Godot/tests/Integration/test_hud_integration.gd",
+      "Within a single active Day or Night phase, the HUD cycle-remaining value is monotonic non-increasing between sampled updates, never below 0, and never above that phase duration; on phase switch it resets into the new phase range. Refs: Tests.Godot/tests/UI/test_hud_updates_on_events.gd Tests.Godot/tests/Integration/test_hud_integration.gd"
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #9 primary behavior.",
