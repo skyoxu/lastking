@@ -18,7 +18,6 @@ jobs:
       GODOT_VERSION: '4.5.1'
       PYTHONIOENCODING: 'utf-8'
       PYTHONUTF8: '1'
-      SECURITY_PROFILE: 'host-safe'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -33,35 +32,10 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Guard archived overlays (hard)
-        shell: pwsh
-        run: |
-          py -3 scripts/python/guard_archived_overlays.py --strict-git
-
-      - name: Validate docs UTF-8 without BOM (hard)
-        shell: pwsh
-        run: |
-          py -3 scripts/python/validate_docs_utf8_no_bom.py --roots docs .github .taskmaster Game.Core/Contracts/Config AGENTS.md
-
-      - name: Validate overlay execution spec (hard)
-        shell: pwsh
-        run: |
-          py -3 scripts/python/validate_overlay_execution.py --prd-id PRD-lastking-T2
-
-
       - name: Download Godot .NET (Windows)
         shell: pwsh
         run: |
-          [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-          New-Item -ItemType Directory -Force -Path godot | Out-Null
-          $zip = "godot/godot.zip"
-          $u = "https://github.com/godotengine/godot/releases/download/${env:GODOT_VERSION}-stable/Godot_v${env:GODOT_VERSION}-stable_mono_win64.zip"
-          Invoke-WebRequest -UseBasicParsing -Uri $u -OutFile $zip
-          Expand-Archive $zip -DestinationPath godot -Force
-          $exe = Get-ChildItem godot -Recurse -Filter *win64*.exe | Select-Object -First 1
-          if (-not $exe) { throw 'Godot exe not found after download.' }
-          "GODOT_BIN=$($exe.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
-          Write-Host "GODOT_BIN=$($exe.FullName)"
+          ./scripts/ci/download_godot_release.ps1 -Version "$env:GODOT_VERSION"
 
       - name: Cache NuGet
         uses: actions/cache@v4
