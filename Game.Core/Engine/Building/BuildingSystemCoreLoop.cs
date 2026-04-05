@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Game.Core.Domain.Building;
+using Game.Core.Services;
 using Game.Core.Services.Building;
 using Game.Core.State.Building;
 
@@ -10,13 +11,16 @@ public sealed class BuildingSystemCoreLoop
 {
     private readonly BuildingPlacementService placementService;
     private readonly GatePathingRulesEngine gatePathingRulesEngine;
+    private readonly ConfigManager configManager;
 
     public BuildingSystemCoreLoop(
         BuildingPlacementService? placementService = null,
-        GatePathingRulesEngine? gatePathingRulesEngine = null)
+        GatePathingRulesEngine? gatePathingRulesEngine = null,
+        ConfigManager? configManager = null)
     {
         this.placementService = placementService ?? new BuildingPlacementService();
         this.gatePathingRulesEngine = gatePathingRulesEngine ?? new GatePathingRulesEngine();
+        this.configManager = configManager ?? new ConfigManager();
     }
 
     public BuildingCoreLoopResult Run(
@@ -24,6 +28,8 @@ public sealed class BuildingSystemCoreLoop
         int seed,
         IReadOnlyList<BuildingCoreLoopInput> inputs)
     {
+        _ = configManager.Snapshot;
+
         var state = CloneState(initialState);
         var accepted = new List<BuildingPlacementRecord>();
         var rejected = new List<BuildingCoreLoopRejection>();
