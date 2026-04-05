@@ -135,6 +135,37 @@ public class EnemyAiTargetSelectionTests
         decision.IsFallbackAttack.Should().BeFalse();
     }
 
+    // ACC:T10.6
+    [Fact]
+    public void ShouldStayResponsiveUnderBlockedPathAndRecover_WhenRouteBecomesReachableAgain()
+    {
+        var sut = new EnemyAiTargetSelector();
+        var blockedCandidates = new[]
+        {
+            EnemyAiTargetCandidate.Unreachable("unit-1", EnemyTargetClass.Unit, 1),
+            EnemyAiTargetCandidate.Blocker("wall-1", 2),
+        };
+
+        for (var tick = 0; tick < 200; tick++)
+        {
+            var blockedDecision = sut.SelectTarget(blockedCandidates);
+            blockedDecision.IsFallbackAttack.Should().BeTrue();
+            blockedDecision.TargetClass.Should().Be(EnemyTargetClass.BlockingStructure);
+            blockedDecision.TargetId.Should().Be("wall-1");
+        }
+
+        var recoveredCandidates = new[]
+        {
+            EnemyAiTargetCandidate.Reachable("unit-1", EnemyTargetClass.Unit, 1),
+            EnemyAiTargetCandidate.Blocker("wall-1", 2),
+        };
+        var recoveredDecision = sut.SelectTarget(recoveredCandidates);
+
+        recoveredDecision.IsFallbackAttack.Should().BeFalse();
+        recoveredDecision.TargetClass.Should().Be(EnemyTargetClass.Unit);
+        recoveredDecision.TargetId.Should().Be("unit-1");
+    }
+
     [Fact]
     public void ShouldStayIdle_WhenOnlyBlockersExistWithoutBlockedHigherPriorityTargets()
     {

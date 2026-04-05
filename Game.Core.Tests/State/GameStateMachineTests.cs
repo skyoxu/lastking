@@ -8,6 +8,8 @@ namespace Game.Core.Tests.State;
 
 public class GameStateMachineTests
 {
+    // ACC:T10.3
+    // ACC:T10.14
     [Fact]
     public void ShouldTransitionThroughCoreFlow_WhenInvokingStartPauseResumeEnd()
     {
