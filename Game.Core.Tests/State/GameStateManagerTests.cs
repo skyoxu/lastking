@@ -159,6 +159,7 @@ public class GameStateManagerTests
     // ACC:T3.8
     // ACC:T3.10
     // ACC:T3.14
+    // ACC:T10.10
     [Fact]
     public void ShouldKeepDayWithinRangeAndEmitTerminalOnce_WhenDay15Completes()
     {
@@ -188,6 +189,7 @@ public class GameStateManagerTests
     // ACC:T3.9
     // ACC:T3.18
     // ACC:T3.19
+    // ACC:T10.5
     [Fact]
     public void ShouldReplayDeterministicallyWithCheckpointParity_WhenSeedAndInputMatch()
     {
@@ -285,6 +287,7 @@ public class GameStateManagerTests
 
     // ACC:T8.1
     // ACC:T8.4
+    // ACC:T10.14
     [Fact]
     public void ShouldEnterWinAndRaiseVisibleFeedback_WhenDay15ReachedWithCastleHpAboveZero()
     {
@@ -311,6 +314,7 @@ public class GameStateManagerTests
 
     // ACC:T8.2
     // ACC:T8.5
+    // ACC:T10.14
     [Fact]
     public void ShouldPreferLossAndBlockWin_WhenCastleHpBecomesZeroBeforeDay15()
     {

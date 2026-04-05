@@ -46,6 +46,7 @@ public sealed class EnemyAiDecisionDeterminismTests
     }
 
     // ACC:T6.14
+    // ACC:T10.17
     [Fact]
     public void ShouldProduceIdenticalDecisionTrace_WhenTieAndBlockedPathFallbackAreRepeated()
     {
