@@ -196,10 +196,38 @@ jobs:
         run: |
           $env:Path = "$HOME\.dotnet;" + $env:Path
           $env:GODOT_DOTNET_CLI = (Get-Command dotnet).Path
-          dotnet restore Game.sln
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          dotnet build Game.sln -c Release -v minimal
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+          function Invoke-WithRetry {
+            param(
+              [Parameter(Mandatory = $true)] [scriptblock] $Action,
+              [Parameter(Mandatory = $true)] [string] $Name,
+              [int] $MaxAttempts = 3
+            )
+            for ($attempt = 1; $attempt -le $MaxAttempts; $attempt++) {
+              try {
+                Write-Host "[retry] $Name attempt=$attempt/$MaxAttempts"
+                & $Action
+                return
+              } catch {
+                if ($attempt -ge $MaxAttempts) {
+                  throw
+                }
+                $sleep = 10 * $attempt
+                Write-Warning "[retry] $Name failed attempt=$attempt; sleep=${sleep}s; err=$($_.Exception.Message)"
+                Start-Sleep -Seconds $sleep
+                try { dotnet nuget locals http-cache --clear | Out-Null } catch {}
+              }
+            }
+          }
+
+          Invoke-WithRetry -Name "dotnet restore Game.sln" -Action {
+            dotnet restore Game.sln --nologo
+            if ($LASTEXITCODE -ne 0) { throw "dotnet restore Game.sln failed with code $LASTEXITCODE" }
+          }
+          Invoke-WithRetry -Name "dotnet build Game.sln" -Action {
+            dotnet build Game.sln -c Release -v minimal --nologo
+            if ($LASTEXITCODE -ne 0) { throw "dotnet build Game.sln failed with code $LASTEXITCODE" }
+          }
 
           $prewarm = Start-Process -FilePath "$env:GODOT_BIN" -ArgumentList "--headless", "--path", ".", "--quit" -Wait -PassThru -NoNewWindow
           if ($prewarm.ExitCode -ne 0) {
