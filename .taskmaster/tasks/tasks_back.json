@@ -1059,7 +1059,8 @@
       "core"
     ],
     "test_refs": [
-      "Tests.Godot/tests/UI/test_hud_scene.gd",
+      "Tests.Godot/tests/Scenes/Building/test_wall_drag_line_gate_segments.gd",
+      "Tests.Godot/tests/Scenes/Building/test_wall_gate_invalid_input_no_side_effects.gd",
       "Game.Core.Tests/Services/BuildingSubtypePlacementTests.cs",
       "Game.Core.Tests/Services/BuildingPlacementValidationTests.cs",
       "Game.Core.Tests/Services/BuildingPlacementTransactionTests.cs",
@@ -1071,14 +1072,18 @@
       "Game.Core.Tests/Services/GatePathingRulesTests.cs",
       "Game.Core.Tests/Services/BuildingSelectionPolicyTests.cs",
       "Tests.Godot/tests/Scenes/Building/test_building_debug_overlays_alignment.gd",
-      "Tests.Godot/tests/Scenes/Building/test_wall_drag_line_gate_segments.gd",
-      "Tests.Godot/tests/Scenes/Building/test_wall_gate_invalid_input_no_side_effects.gd"
+      "Tests.Godot/tests/Scenes/Building/test_build_mode_preview_and_confirm.gd",
+      "Tests.Godot/tests/Scenes/Building/test_grid_placement_refusal_and_snap.gd",
+      "Tests.Godot/tests/Integration/test_building_gate_fallback_determinism.gd",
+      "Tests.Godot/tests/UI/test_hud_building_type_switch_preview.gd",
+      "Tests.Godot/tests/Scenes/Building/test_wall_drag_line_segments.gd",
+      "Tests.Godot/tests/Scenes/Building/test_gate_one_way_traversal.gd"
     ],
     "acceptance": [
       "Hard gate：场景测试必须在 wall 拖线建造中显式断言 gate 段创建结果（数量、位置、方向）。 Refs: Tests.Godot/tests/Scenes/Building/test_wall_drag_line_gate_segments.gd",
       "Hard gate：非法 gate 创建输入必须被拒绝，且不得产生 gate/wall 副作用，也不得改变资源状态。 Refs: Tests.Godot/tests/Scenes/Building/test_wall_gate_invalid_input_no_side_effects.gd",
       "Taskmaster #13 的后端必须实现 castle、residence、mine、barracks、MG tower、wall、mine trap 的建造，并由 footprint 规则决定放置接受/拒绝结果。 Refs: Game.Core.Tests/Services/BuildingSubtypePlacementTests.cs Game.Core.Tests/Services/BuildingPlacementValidationTests.cs",
-      "所有被引用的自动化测试必须在 Windows Godot+C# 基线上通过。 Refs: Game.Core.Tests/Services/BuildingPlacementValidationTests.cs Game.Core.Tests/Services/BuildingPlacementTransactionTests.cs",
+      "If any target cell is out-of-bounds, blocked, or occupied, placement must be rejected with no building creation and no resource mutation. Refs: Game.Core.Tests/Services/BuildingPlacementValidationTests.cs Game.Core.Tests/Services/BuildingPlacementTransactionTests.cs",
       "在相同 grid 状态、资源状态、seed 和输入序列下，放置结果、gate-pathing 结果与拒绝结果必须可重复且确定。 Refs: Game.Core.Tests/Services/BuildingPlacementDeterminismTests.cs Game.Core.Tests/Engine/BuildingSystemCoreLoopDeterminismTests.cs",
       "必须定义 castle、residence、mine、barracks、MG tower、wall、mine trap 的 canonical archetype；每个 archetype 必须提供 type、level、footprint size、HP、cost，并被放置与扣费校验实际使用。 Refs: Game.Core.Tests/Domain/BuildingArchetypeTests.cs",
       "放置校验必须严格执行任务明示 footprint 值：castle=4、barracks=2、MG tower=1、wall=1。 Refs: Game.Core.Tests/Domain/BuildingArchetypeTests.cs",

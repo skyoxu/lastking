@@ -1,0 +1,21 @@
+# Task 13 P2 deferred and recorded
+
+- Title: Task 13 P2 deferred and recorded
+- Date: 2026-04-05
+- Status: accepted
+- Supersedes: none
+- Superseded by: none
+- Branch: task/T13
+- Git Head: 4add5d404d2fb2d440aca2aef5f1598168e4e81f
+- Why now: Chapter 6.8 review for Task 13 has cleared P0/P1 and now reports only P2-strength/wording issues; user requested to record first before further edits.
+- Context: Latest needs-fix run is `logs/ci/2026-04-05/sc-needs-fix-fast-task-13/summary.json`; latest review run id is `ba4bedef66af4d27ad67776b757a5a62`. Deterministic gates and targeted tests are green, while remaining findings are non-blocking P2 items.
+- Decision: Freeze code changes for now, create this decision log as the authoritative checkpoint, and postpone P2 cleanup to the next dedicated 6.8 closure pass.
+- Consequences: Task 13 remains at `needs-fix` due to P2 only. No further implementation churn is introduced in this step, reducing risk of scope drift before explicit P2 cleanup.
+- Recovery impact: Recovery can resume from this log + linked artifacts without replaying earlier diagnosis. Next operator can directly execute P2-focused edits and rerun 6.8.
+- Validation: Verified latest reviewer outputs show no P0/P1 findings; remaining items are P2 only in `review-code-reviewer.md` and `review-semantic-equivalence-auditor.md`.
+- Related ADRs: none yet
+- Related execution plans: none yet
+- Related task id(s): `13`
+- Related run id: `ba4bedef66af4d27ad67776b757a5a62`
+- Related latest.json: `logs/ci/2026-04-05/sc-review-pipeline-task-13/latest.json`
+- Related pipeline artifacts: `logs/ci/2026-04-05/sc-review-pipeline-task-13-ba4bedef66af4d27ad67776b757a5a62`
