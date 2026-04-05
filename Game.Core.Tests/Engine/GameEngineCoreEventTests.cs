@@ -220,4 +220,27 @@ public class GameEngineCoreEventTests
         bus.Published.Should().ContainSingle();
         bus.Published[0].Type.Should().Be("game.ended");
     }
+
+    // ACC:T12.2
+    [Fact]
+    [Trait("acceptance", "ACC:T12.2")]
+    public void ShouldShareSameResourceEventContractAcrossCorePublishers_WhenResourceMutates()
+    {
+        var bus = new CapturingEventBus();
+        var manager = new ResourceManager(bus, runId: "run-12", dayNumber: 1);
+
+        manager.TryAdd(20, 0, 0, "contract-check").Succeeded.Should().BeTrue();
+
+        bus.Published.Should().ContainSingle();
+        bus.Published[0].Type.Should().Be(EventTypes.LastkingResourcesChanged);
+        bus.Published[0].DataElement.HasValue.Should().BeTrue();
+        var payload = bus.Published[0].DataElement!.Value;
+        payload.GetProperty("gold").GetInt32().Should().Be(820);
+        payload.GetProperty("iron").GetInt32().Should().Be(150);
+        payload.GetProperty("populationCap").GetInt32().Should().Be(50);
+        payload.GetProperty("reason").GetString().Should().Be("contract-check");
+        payload.GetProperty("delta").GetProperty("gold").GetInt32().Should().Be(20);
+        payload.GetProperty("delta").GetProperty("iron").GetInt32().Should().Be(0);
+        payload.GetProperty("delta").GetProperty("populationCap").GetInt32().Should().Be(0);
+    }
 }
