@@ -29,6 +29,23 @@ from _util import ci_dir, repo_root, run_cmd, split_csv, write_json, write_text
 
 OUT_RE = re.compile(r"\bout=([^\r\n]+)")
 DELIVERY_PROFILE_CHOICES = tuple(sorted(known_delivery_profiles()))
+FAST_SHIP_SMALL_DIFF_MAX_CHANGED_PATHS = 4
+REVIEWER_ANCHOR_PREFIXES = (
+    ".taskmaster/tasks/",
+    "docs/architecture/overlays/",
+    "docs/adr/",
+    "game.core/",
+    "game.godot/",
+    "game.core.tests/",
+    "tests.godot/",
+    "scripts/sc/templates/llm_review/",
+)
+REVIEWER_ANCHOR_EXACT = {
+    "workflow.md",
+    "workflow.example.md",
+    "scripts/sc/llm_review_needs_fix_fast.py",
+    "scripts/sc/run_review_pipeline.py",
+}
 
 
 def normalize_verdict(value: str | None) -> str:
@@ -60,6 +77,10 @@ def read_json(path: Path) -> dict[str, Any]:
         return json.loads(path.read_text(encoding="utf-8"))
     except Exception:
         return {}
+
+
+def format_agent_timeout_overrides(overrides: dict[str, int]) -> str:
+    return ",".join(f"{agent}={int(seconds)}" for agent, seconds in overrides.items() if int(seconds) > 0)
 
 
 def _iter_latest_pipeline_indices(task_id: str) -> list[Path]:
@@ -94,6 +115,50 @@ def parse_llm_verdicts(summary_path: Path) -> dict[str, str]:
         verdict = normalize_verdict(str(details.get("verdict") or ""))
         out[agent] = verdict
     return out
+
+
+def _llm_summary_unknown_only(*, llm_step: dict[str, Any]) -> bool:
+    summary_file = str(llm_step.get("summary_file") or "").strip()
+    if not summary_file:
+        rc = int(llm_step.get("rc") or 0)
+        status = str(llm_step.get("status") or "").strip().lower()
+        return status != "ok" or rc != 0
+    summary_path = Path(summary_file)
+    if not summary_path.exists():
+        rc = int(llm_step.get("rc") or 0)
+        status = str(llm_step.get("status") or "").strip().lower()
+        return status != "ok" or rc != 0
+    payload = read_json(summary_path)
+    results = payload.get("results") if isinstance(payload.get("results"), list) else []
+    if not results:
+        return True
+    saw_unknown = False
+    for row in results:
+        if not isinstance(row, dict):
+            continue
+        details = row.get("details") if isinstance(row.get("details"), dict) else {}
+        verdict = normalize_verdict(str(details.get("verdict") or ""))
+        if verdict == "Needs Fix":
+            return False
+        status = str(row.get("status") or "").strip().lower()
+        rc = int(row.get("rc") or 0)
+        if verdict == "Unknown" or status != "ok" or rc != 0:
+            saw_unknown = True
+    step_status = str(llm_step.get("status") or "").strip().lower()
+    step_rc = int(llm_step.get("rc") or 0)
+    return saw_unknown or step_status != "ok" or step_rc != 0
+
+
+def _changed_paths_hit_reviewer_anchors(changed_paths: list[str]) -> bool:
+    for raw in changed_paths:
+        path = str(raw or "").strip().replace("\\", "/").lower()
+        if not path:
+            continue
+        if path in REVIEWER_ANCHOR_EXACT:
+            return True
+        if any(path.startswith(prefix) for prefix in REVIEWER_ANCHOR_PREFIXES):
+            return True
+    return False
 
 
 def current_git_fingerprint() -> dict[str, Any]:
@@ -202,6 +267,38 @@ def infer_initial_run_agents(task_id: str, configured_agents: list[str]) -> tupl
     return list(configured_agents), "configured-defaults"
 
 
+def prefer_precise_llm_summary_agents(
+    *,
+    task_id: str,
+    delivery_profile: str,
+    diff_mode: str,
+    configured_agents: list[str],
+    current_agents: list[str],
+    current_source: str,
+) -> tuple[list[str], str]:
+    if str(delivery_profile or "").strip().lower() not in {"fast-ship", "playable-ea"}:
+        return list(current_agents), current_source
+    if str(diff_mode or "").strip().lower() != "summary":
+        return list(current_agents), current_source
+    if not current_agents:
+        return list(current_agents), current_source
+    _latest_payload, _latest_out_dir, summary_file, _execution_context_file = _resolve_latest_pipeline_files(task_id)
+    if summary_file is None or not summary_file.exists():
+        return list(current_agents), current_source
+    summary_payload = read_json(summary_file)
+    llm_step = find_pipeline_step_dict(summary_payload, "sc-llm-review")
+    llm_summary_path = Path(str(llm_step.get("summary_file") or "")).resolve() if str(llm_step.get("summary_file") or "").strip() else None
+    if llm_summary_path is None or not llm_summary_path.exists():
+        return list(current_agents), current_source
+    precise_agents = _extract_agents_from_llm_summary(read_json(llm_summary_path), configured_agents)
+    precise_subset = [agent for agent in precise_agents if agent in set(current_agents)]
+    if not precise_subset:
+        return list(current_agents), current_source
+    if len(precise_subset) >= len(current_agents):
+        return list(current_agents), current_source
+    return precise_subset, "previous-llm-summary-precise"
+
+
 def try_reuse_latest_deterministic_step(
     *,
     task_id: str,
@@ -297,6 +394,174 @@ def try_reuse_latest_deterministic_step(
     }
 
 
+def try_skip_when_latest_pipeline_already_clean(
+    *,
+    task_id: str,
+    delivery_profile: str,
+    security_profile: str,
+    out_dir: Path,
+    script_start: float,
+    budget_min: int,
+) -> dict[str, Any] | None:
+    latest_payload = resolve_latest_pipeline_payload(task_id)
+    latest_out_dir = Path(str(latest_payload.get("latest_out_dir") or "").strip()) if latest_payload else None
+    summary_file = Path(str(latest_payload.get("summary_path") or "").strip()) if latest_payload else None
+    execution_context_file = Path(str(latest_payload.get("execution_context_path") or "").strip()) if latest_payload else None
+    if not latest_out_dir or not latest_out_dir.exists() or not summary_file or not summary_file.exists() or not execution_context_file or not execution_context_file.exists():
+        return None
+    summary = read_json(summary_file)
+    execution_context = read_json(execution_context_file)
+    if not summary or not execution_context:
+        return None
+    if str(summary.get("status") or "").strip().lower() != "ok":
+        return None
+    if str(execution_context.get("delivery_profile") or "").strip().lower() != str(delivery_profile).strip().lower():
+        return None
+    if str(execution_context.get("security_profile") or "").strip().lower() != str(security_profile).strip().lower():
+        return None
+    if _step_status(summary, "sc-test") != "ok" or _step_status(summary, "sc-acceptance-check") != "ok" or _step_status(summary, "sc-llm-review") != "ok":
+        return None
+    llm_step = find_pipeline_step_dict(summary, "sc-llm-review")
+    llm_summary_path = Path(str(llm_step.get("summary_file") or "")).resolve() if str(llm_step.get("summary_file") or "").strip() else None
+    if llm_summary_path is None or not llm_summary_path.exists():
+        return None
+    verdicts = parse_llm_verdicts(llm_summary_path)
+    if not verdicts or any(verdict != "OK" for verdict in verdicts.values()):
+        return None
+
+    agent_review = read_json(latest_out_dir / "agent-review.json")
+    review_verdict = str(agent_review.get("review_verdict") or "").strip().lower()
+    if review_verdict in {"needs-fix", "block"}:
+        return None
+
+    current_git = current_git_fingerprint()
+    previous_git = execution_context.get("git") if isinstance(execution_context.get("git"), dict) else {}
+    previous_status = sorted([str(line).rstrip() for line in (previous_git.get("status_short") or []) if str(line).strip()])
+    exact_git_match = str(previous_git.get("head") or "").strip() == str(current_git.get("head") or "").strip() and previous_status == sorted(
+        [str(line).rstrip() for line in (current_git.get("status_short") or []) if str(line).strip()]
+    )
+    change_scope = (
+        {"deterministic_strategy": "reuse-latest", "changed_paths": [], "unsafe_paths": []}
+        if exact_git_match
+        else classify_change_scope_between_snapshots(previous_git=previous_git, current_git=current_git)
+    )
+    if not exact_git_match and str(change_scope.get("deterministic_strategy") or "").strip() != "reuse-latest":
+        return None
+
+    remaining_before = remain_sec(script_start, budget_min)
+    log_file = out_dir / "pipeline-clean-skip.log"
+    write_text(
+        log_file,
+        "\n".join(
+            [
+                "[needs-fix-fast] latest pipeline already clean; skipping rerun"
+                if exact_git_match
+                else "[needs-fix-fast] latest pipeline already clean after non-task doc delta; skipping rerun",
+                f"task_id={task_id}",
+                f"run_id={str(latest_payload.get('run_id') or '').strip()}",
+                f"summary_file={summary_file}",
+                f"execution_context_file={execution_context_file}",
+                f"change_scope_strategy={str(change_scope.get('deterministic_strategy') or '').strip()}",
+                f"changed_paths={json.dumps(change_scope.get('changed_paths') or [], ensure_ascii=False)}",
+                f"SC_NEEDS_FIX_FAST status=ok out={out_dir}",
+            ]
+        )
+        + "\n",
+    )
+    return {
+        "name": "pipeline-clean-skip",
+        "status": "reused",
+        "rc": 0,
+        "duration_sec": 0.0,
+        "remaining_before_sec": int(max(0, remaining_before)),
+        "remaining_after_sec": int(remain_sec(script_start, budget_min)),
+        "cmd": [],
+        "log_file": str(log_file),
+        "reported_out_dir": str(latest_out_dir),
+        "summary_file": str(summary_file),
+        "reused_run_id": str(latest_payload.get("run_id") or "").strip(),
+        "reuse_reason": "latest_pipeline_already_clean" if exact_git_match else "latest_pipeline_already_clean_docs_only_delta",
+        "change_scope": change_scope,
+    }
+
+
+def try_stop_when_latest_llm_unknown_without_anchor_fix(
+    *,
+    task_id: str,
+    delivery_profile: str,
+    security_profile: str,
+    out_dir: Path,
+    script_start: float,
+    budget_min: int,
+) -> dict[str, Any] | None:
+    latest_payload, latest_out_dir, summary_file, execution_context_file = _resolve_latest_pipeline_files(task_id)
+    if latest_out_dir is None or summary_file is None or execution_context_file is None:
+        return None
+    if not latest_out_dir.exists() or not summary_file.exists() or not execution_context_file.exists():
+        return None
+    summary = read_json(summary_file)
+    execution_context = read_json(execution_context_file)
+    if not summary or not execution_context:
+        return None
+    if str(execution_context.get("delivery_profile") or "").strip().lower() != str(delivery_profile).strip().lower():
+        return None
+    if str(execution_context.get("security_profile") or "").strip().lower() != str(security_profile).strip().lower():
+        return None
+    if _step_status(summary, "sc-test") != "ok" or _step_status(summary, "sc-acceptance-check") != "ok":
+        return None
+    llm_step = find_pipeline_step_dict(summary, "sc-llm-review")
+    if not llm_step:
+        return None
+    if not _llm_summary_unknown_only(llm_step=llm_step):
+        return None
+    current_git = current_git_fingerprint()
+    previous_git = execution_context.get("git") if isinstance(execution_context.get("git"), dict) else {}
+    previous_status = sorted([str(line).rstrip() for line in (previous_git.get("status_short") or []) if str(line).strip()])
+    exact_git_match = str(previous_git.get("head") or "").strip() == str(current_git.get("head") or "").strip() and previous_status == sorted(
+        [str(line).rstrip() for line in (current_git.get("status_short") or []) if str(line).strip()]
+    )
+    change_scope = (
+        {"deterministic_strategy": "reuse-latest", "changed_paths": [], "unsafe_paths": []}
+        if exact_git_match
+        else classify_change_scope_between_snapshots(previous_git=previous_git, current_git=current_git)
+    )
+    changed_paths = [str(item or "").strip() for item in list(change_scope.get("changed_paths") or []) if str(item or "").strip()]
+    if _changed_paths_hit_reviewer_anchors(changed_paths):
+        return None
+    remaining_before = remain_sec(script_start, budget_min)
+    log_file = out_dir / "llm-unknown-stop-loss.log"
+    write_text(
+        log_file,
+        "\n".join(
+            [
+                "[needs-fix-fast] latest pipeline only reported llm unknown/timeout and current edits do not hit reviewer anchors; stop before rerun",
+                f"task_id={task_id}",
+                f"run_id={str(latest_payload.get('run_id') or '').strip()}",
+                f"summary_file={summary_file}",
+                f"execution_context_file={execution_context_file}",
+                f"changed_paths={json.dumps(changed_paths, ensure_ascii=False)}",
+                "SC_NEEDS_FIX_FAST status=indeterminate",
+            ]
+        )
+        + "\n",
+    )
+    return {
+        "name": "pipeline-llm-unknown-stop-loss",
+        "status": "reused",
+        "rc": 0,
+        "duration_sec": 0.0,
+        "remaining_before_sec": int(max(0, remaining_before)),
+        "remaining_after_sec": int(remain_sec(script_start, budget_min)),
+        "cmd": [],
+        "log_file": str(log_file),
+        "reported_out_dir": str(latest_out_dir),
+        "summary_file": str(summary_file),
+        "reused_run_id": str(latest_payload.get("run_id") or "").strip(),
+        "reuse_reason": "latest_llm_unknown_without_anchor_fix",
+        "change_scope": change_scope,
+    }
+
+
 def resolve_deterministic_execution_plan(
     *,
     task_id: str,
@@ -343,6 +608,84 @@ def resolve_deterministic_execution_plan(
         ",".join(only_steps),
     ]
     return {"mode": "minimal-acceptance", "cmd": cmd, "change_scope": change_scope}
+
+
+def derive_needs_fix_fast_agent_timeout_overrides(
+    *,
+    task_id: str,
+    delivery_profile: str,
+    security_profile: str,
+    run_agents: list[str],
+    diff_mode: str,
+    llm_timeout_sec: int,
+    agent_timeout_sec: int,
+) -> tuple[dict[str, int], dict[str, Any]]:
+    if str(delivery_profile or "").strip().lower() != "fast-ship":
+        return {}, {}
+    if str(diff_mode or "").strip().lower() != "summary":
+        return {}, {}
+    if "code-reviewer" not in run_agents:
+        return {}, {}
+
+    latest_payload, _latest_out_dir, summary_file, execution_context_file = _resolve_latest_pipeline_files(task_id)
+    if not latest_payload or summary_file is None or execution_context_file is None:
+        return {}, {}
+    summary = read_json(summary_file)
+    execution_context = read_json(execution_context_file)
+    if not summary or not execution_context:
+        return {}, {}
+    if str(execution_context.get("delivery_profile") or "").strip().lower() != str(delivery_profile).strip().lower():
+        return {}, {}
+    if str(execution_context.get("security_profile") or "").strip().lower() != str(security_profile).strip().lower():
+        return {}, {}
+
+    current_git = current_git_fingerprint()
+    exact_git_match = _git_snapshot_matches(execution_context)
+    change_scope = (
+        {"deterministic_strategy": "reuse-latest", "changed_paths": [], "unsafe_paths": [], "doc_only_delta": True}
+        if exact_git_match
+        else classify_change_scope_between_snapshots(
+            previous_git=execution_context.get("git") if isinstance(execution_context.get("git"), dict) else {},
+            current_git=current_git,
+        )
+    )
+    changed_paths = list(change_scope.get("changed_paths") or [])
+    if not exact_git_match:
+        if not bool(change_scope.get("doc_only_delta")):
+            return {}, {}
+        if len(changed_paths) > FAST_SHIP_SMALL_DIFF_MAX_CHANGED_PATHS:
+            return {}, {}
+
+    llm_step = find_pipeline_step_dict(summary, "sc-llm-review")
+    llm_summary_path = Path(str(llm_step.get("summary_file") or "")).resolve() if llm_step else None
+    if llm_summary_path is None or not llm_summary_path.exists():
+        return {}, {}
+    llm_summary = read_json(llm_summary_path)
+    code_reviewer_row = next(
+        (
+            row
+            for row in llm_summary.get("results", [])
+            if isinstance(row, dict) and str(row.get("agent") or "").strip() == "code-reviewer"
+        ),
+        None,
+    )
+    if not isinstance(code_reviewer_row, dict):
+        return {}, {}
+    if int(code_reviewer_row.get("rc") or 0) != 124:
+        return {}, {}
+
+    escalated_timeout = min(int(llm_timeout_sec), max(int(agent_timeout_sec) * 2, int(agent_timeout_sec) + 120))
+    if escalated_timeout <= int(agent_timeout_sec):
+        return {}, {}
+
+    overrides = {"code-reviewer": escalated_timeout}
+    meta = {
+        "reason": "previous_code_reviewer_timeout_small_diff",
+        "source_run_id": str(latest_payload.get("run_id") or "").strip(),
+        "exact_git_match": bool(exact_git_match),
+        "change_scope": change_scope,
+    }
+    return overrides, meta
 
 
 def try_reuse_matching_minimal_acceptance_step(
@@ -578,6 +921,18 @@ def majority_verdict(votes: list[str]) -> str:
     return "Unknown"
 
 
+def _derive_final_status(*, final_verdicts: dict[str, str], rounds: list[dict[str, Any]]) -> tuple[str, str]:
+    final_needs_fix = sorted([agent for agent, verdict in final_verdicts.items() if verdict == "Needs Fix"])
+    final_unknown = sorted([agent for agent, verdict in final_verdicts.items() if verdict == "Unknown"])
+    if final_needs_fix:
+        return "needs-fix", "llm_review_needs_fix_remaining"
+    if final_unknown:
+        return "indeterminate", "llm_review_verdict_unknown"
+    if any(int(round_item.get("rc") or 0) != 0 for round_item in rounds):
+        return "indeterminate", "llm_review_round_failed"
+    return "ok", "llm_review_clean"
+
+
 def main() -> int:
     args = apply_delivery_profile_defaults(build_parser().parse_args())
     if args.max_rounds < 1:
@@ -595,6 +950,62 @@ def main() -> int:
 
     timeline: list[dict[str, Any]] = []
     py = args.python
+    if not bool(args.final_pass):
+        clean_skip_step = try_skip_when_latest_pipeline_already_clean(
+            task_id=str(args.task_id),
+            delivery_profile=str(args.delivery_profile),
+            security_profile=str(args.security_profile),
+            out_dir=out_dir,
+            script_start=script_start,
+            budget_min=args.time_budget_min,
+        )
+        if clean_skip_step is not None:
+            summary = {
+                "cmd": "sc-needs-fix-fast",
+                "task_id": str(args.task_id),
+                "status": "ok",
+                "reason": "latest_pipeline_already_clean",
+                "out_dir": str(out_dir),
+                "elapsed_sec": elapsed_sec(script_start),
+                "delivery_profile": str(args.delivery_profile),
+                "change_scope": clean_skip_step.get("change_scope") if isinstance(clean_skip_step.get("change_scope"), dict) else {},
+                "timeline": [clean_skip_step],
+                "rounds": [],
+                "votes": {agent: [] for agent in agents},
+                "final_verdicts": {agent: "OK" for agent in agents},
+                "final_needs_fix_agents": [],
+            }
+            write_json(out_dir / "summary.json", summary)
+            print(f"SC_NEEDS_FIX_FAST status=ok out={out_dir}")
+            return 0
+        stop_loss_step = try_stop_when_latest_llm_unknown_without_anchor_fix(
+            task_id=str(args.task_id),
+            delivery_profile=str(args.delivery_profile),
+            security_profile=str(args.security_profile),
+            out_dir=out_dir,
+            script_start=script_start,
+            budget_min=args.time_budget_min,
+        )
+        if stop_loss_step is not None:
+            summary = {
+                "cmd": "sc-needs-fix-fast",
+                "task_id": str(args.task_id),
+                "status": "indeterminate",
+                "reason": "no_anchor_fix_for_previous_llm_unknown",
+                "out_dir": str(out_dir),
+                "elapsed_sec": elapsed_sec(script_start),
+                "delivery_profile": str(args.delivery_profile),
+                "change_scope": stop_loss_step.get("change_scope") if isinstance(stop_loss_step.get("change_scope"), dict) else {},
+                "timeline": [stop_loss_step],
+                "rounds": [],
+                "votes": {agent: [] for agent in agents},
+                "final_verdicts": {agent: "Unknown" for agent in agents},
+                "final_needs_fix_agents": [],
+                "final_unknown_agents": list(agents),
+            }
+            write_json(out_dir / "summary.json", summary)
+            print(f"SC_NEEDS_FIX_FAST status=indeterminate out={out_dir}")
+            return 1
 
     deterministic_cmd = [
         py,
@@ -689,10 +1100,19 @@ def main() -> int:
 
     votes: dict[str, list[str]] = {agent: [] for agent in agents}
     rounds: list[dict[str, Any]] = []
+    round_agent_timeout_overrides_history: list[dict[str, Any]] = []
     if bool(args.final_pass):
         run_agents, initial_agent_source = list(agents), "final-pass"
     else:
         run_agents, initial_agent_source = infer_initial_run_agents(str(args.task_id), list(agents))
+        run_agents, initial_agent_source = prefer_precise_llm_summary_agents(
+            task_id=str(args.task_id),
+            delivery_profile=str(args.delivery_profile),
+            diff_mode=str(args.diff_mode),
+            configured_agents=list(agents),
+            current_agents=list(run_agents),
+            current_source=initial_agent_source,
+        )
     for round_no in range(1, args.max_rounds + 1):
         if not run_agents:
             break
@@ -735,6 +1155,15 @@ def main() -> int:
 
         llm_timeout = max(120, min(args.llm_timeout_sec, remaining))
         agent_timeout = max(60, min(args.agent_timeout_sec, llm_timeout))
+        round_agent_timeout_overrides, round_agent_timeout_meta = derive_needs_fix_fast_agent_timeout_overrides(
+            task_id=str(args.task_id),
+            delivery_profile=str(args.delivery_profile),
+            security_profile=str(args.security_profile),
+            run_agents=list(run_agents),
+            diff_mode=str(args.diff_mode),
+            llm_timeout_sec=llm_timeout,
+            agent_timeout_sec=agent_timeout,
+        )
         llm_cmd = [
             py,
             "-3",
@@ -760,6 +1189,8 @@ def main() -> int:
             "--llm-agent-timeout-sec",
             str(agent_timeout),
         ]
+        if round_agent_timeout_overrides:
+            llm_cmd += ["--llm-agent-timeouts", format_agent_timeout_overrides(round_agent_timeout_overrides)]
 
         print(f"[needs-fix-fast] step: run_review_pipeline llm round={round_no} agents={','.join(run_agents)}")
         llm_step = run_step(
@@ -781,6 +1212,16 @@ def main() -> int:
             "verdicts": {},
             "needs_fix_agents": [],
         }
+        if round_agent_timeout_overrides:
+            round_result["agent_timeout_overrides"] = round_agent_timeout_overrides
+            round_result["agent_timeout_override_reason"] = round_agent_timeout_meta
+            round_agent_timeout_overrides_history.append(
+                {
+                    "round": round_no,
+                    "overrides": round_agent_timeout_overrides,
+                    "reason": round_agent_timeout_meta,
+                }
+            )
 
         pipeline_summary_file = Path(llm_step["summary_file"]) if llm_step["summary_file"] else None
         llm_child_step: dict[str, Any] = {}
@@ -812,11 +1253,13 @@ def main() -> int:
 
     final_verdicts = {agent: majority_verdict(votes.get(agent, [])) for agent in agents}
     final_needs_fix = sorted([a for a, v in final_verdicts.items() if v == "Needs Fix"])
-    status = "ok" if not final_needs_fix else "needs-fix"
+    final_unknown = sorted([a for a, v in final_verdicts.items() if v == "Unknown"])
+    status, reason = _derive_final_status(final_verdicts=final_verdicts, rounds=rounds)
     summary = {
         "cmd": "sc-needs-fix-fast",
         "task_id": str(args.task_id),
         "status": status,
+        "reason": reason,
         "out_dir": str(out_dir),
         "elapsed_sec": elapsed_sec(script_start),
         "time_budget_min": int(args.time_budget_min),
@@ -836,11 +1279,13 @@ def main() -> int:
             "min_llm_budget_min": int(args.min_llm_budget_min),
         },
         "deterministic_plan": deterministic_plan,
+        "agent_timeout_override_history": round_agent_timeout_overrides_history,
         "timeline": timeline,
         "rounds": rounds,
         "votes": votes,
         "final_verdicts": final_verdicts,
         "final_needs_fix_agents": final_needs_fix,
+        "final_unknown_agents": final_unknown,
     }
     write_json(out_dir / "summary.json", summary)
 
@@ -848,7 +1293,7 @@ def main() -> int:
         print(f"SC_NEEDS_FIX_FAST status=ok out={out_dir}")
         return 0
 
-    print(f"SC_NEEDS_FIX_FAST status=needs-fix out={out_dir}")
+    print(f"SC_NEEDS_FIX_FAST status={status} out={out_dir}")
     return 1
 
 

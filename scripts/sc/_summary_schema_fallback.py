@@ -10,9 +10,10 @@ TASK_ID_RE = re.compile(r"^[0-9]+$")
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 SEMVER_RE = re.compile(r"^\d+\.\d+\.\d+$")
 
-PIPELINE_STEP_NAMES = {"sc-test", "sc-acceptance-check", "sc-llm-review"}
+PIPELINE_STEP_NAMES = {"sc-test", "sc-acceptance-check", "sc-llm-review", "sc-build-tdd-refactor-preflight"}
 PIPELINE_STEP_STATUS = {"ok", "fail", "skipped", "planned"}
 PIPELINE_SUMMARY_STATUS = {"ok", "fail"}
+PIPELINE_REUSE_MODE = {"none", "full-clean-reuse", "deterministic-only-reuse", "sc-test-reuse", "mixed-reuse"}
 
 SC_TEST_TYPES = {"unit", "integration", "e2e", "all"}
 SC_TEST_STEP_STATUS = {"ok", "fail", "skipped"}
@@ -70,6 +71,9 @@ def validate_pipeline_without_jsonschema(payload: dict[str, Any]) -> list[str]:
         "force_new_run_id",
         "status",
         "steps",
+        "elapsed_sec",
+        "reason",
+        "reuse_mode",
     }
     allowed = required
     for key in required:
@@ -101,6 +105,13 @@ def validate_pipeline_without_jsonschema(payload: dict[str, Any]) -> list[str]:
     status = payload.get("status")
     if not isinstance(status, str) or status not in PIPELINE_SUMMARY_STATUS:
         errors.append("$.status: must be one of ['ok', 'fail']")
+    if not _is_int_not_bool(payload.get("elapsed_sec")) or int(payload.get("elapsed_sec") or 0) < 0:
+        errors.append("$.elapsed_sec: must be integer >= 0")
+    if not _is_non_empty_string(payload.get("reason")):
+        errors.append("$.reason: must be non-empty string")
+    reuse_mode = payload.get("reuse_mode")
+    if not isinstance(reuse_mode, str) or reuse_mode not in PIPELINE_REUSE_MODE:
+        errors.append(f"$.reuse_mode: must be one of {sorted(PIPELINE_REUSE_MODE)}")
 
     steps = payload.get("steps")
     if not isinstance(steps, list):

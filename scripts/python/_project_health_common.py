@@ -178,6 +178,100 @@ def _normalize_report_value(value: Any, *, limit: int = 240) -> str:
     return text[:limit]
 
 
+def _normalize_llm_verdict(value: Any) -> str:
+    raw = str(value or "").strip().lower()
+    if raw in {"ok", "pass", "passed"}:
+        return "OK"
+    if raw in {"needs fix", "needs_fix", "need fix", "fail", "failed"}:
+        return "Needs Fix"
+    return "Unknown"
+
+
+def _resolve_report_path(raw: Any, *, root: Path) -> Path | None:
+    text = str(raw or "").strip()
+    if not text:
+        return None
+    candidate = Path(text)
+    if not candidate.is_absolute():
+        candidate = (root / candidate).resolve()
+    return candidate if candidate.exists() else None
+
+
+def _derive_clean_state_from_summary(summary_path: Path | None, *, root: Path) -> dict[str, Any]:
+    if summary_path is None or not summary_path.exists():
+        return {
+            "state": "",
+            "deterministic_ok": False,
+            "llm_status": "",
+            "needs_fix_agents": [],
+            "unknown_agents": [],
+            "timeout_agents": [],
+        }
+    try:
+        summary = read_json(summary_path)
+    except Exception:
+        return {
+            "state": "",
+            "deterministic_ok": False,
+            "llm_status": "",
+            "needs_fix_agents": [],
+            "unknown_agents": [],
+            "timeout_agents": [],
+        }
+    steps = summary.get("steps") if isinstance(summary.get("steps"), list) else []
+    step_map = {
+        str(item.get("name") or "").strip(): item
+        for item in steps
+        if isinstance(item, dict) and str(item.get("name") or "").strip()
+    }
+    test_status = str((step_map.get("sc-test") or {}).get("status") or "").strip().lower()
+    acceptance_status = str((step_map.get("sc-acceptance-check") or {}).get("status") or "").strip().lower()
+    llm_step = step_map.get("sc-llm-review") or {}
+    llm_status = str(llm_step.get("status") or "").strip().lower()
+    llm_summary_path = _resolve_report_path(llm_step.get("summary_file"), root=root)
+    needs_fix_agents: list[str] = []
+    unknown_agents: list[str] = []
+    timeout_agents: list[str] = []
+    if llm_summary_path is not None:
+        try:
+            llm_summary = read_json(llm_summary_path)
+        except Exception:
+            llm_summary = {}
+        results = llm_summary.get("results") if isinstance(llm_summary.get("results"), list) else []
+        for row in results:
+            if not isinstance(row, dict):
+                continue
+            agent = str(row.get("agent") or "").strip()
+            details = row.get("details") if isinstance(row.get("details"), dict) else {}
+            verdict = _normalize_llm_verdict(details.get("verdict"))
+            rc = int(row.get("rc") or 0)
+            status = str(row.get("status") or "").strip().lower()
+            if verdict == "Needs Fix" and agent:
+                needs_fix_agents.append(agent)
+            if (verdict == "Unknown" or status not in {"ok", "skipped"} or rc != 0) and agent:
+                unknown_agents.append(agent)
+            if rc == 124 and agent:
+                timeout_agents.append(agent)
+    deterministic_ok = test_status == "ok" and acceptance_status == "ok"
+    llm_clean = llm_status == "ok" and not needs_fix_agents and not unknown_agents
+    if deterministic_ok and llm_clean:
+        state = "clean"
+    elif deterministic_ok and (needs_fix_agents or unknown_agents or llm_status == "fail"):
+        state = "deterministic_ok_llm_not_clean"
+    elif deterministic_ok and llm_status == "skipped":
+        state = "deterministic_only"
+    else:
+        state = "not_clean"
+    return {
+        "state": state,
+        "deterministic_ok": deterministic_ok,
+        "llm_status": llm_status,
+        "needs_fix_agents": sorted(needs_fix_agents),
+        "unknown_agents": sorted(set(unknown_agents)),
+        "timeout_agents": sorted(set(timeout_agents)),
+    }
+
+
 def _compact_extract_family_actions(items: Any, *, limit: int = 6) -> list[dict[str, Any]]:
     out: list[dict[str, Any]] = []
     if not isinstance(items, list):
@@ -239,6 +333,72 @@ def _extract_report_highlights(payload: dict[str, Any]) -> dict[str, Any]:
     if "failed_count" in payload:
         highlights["failed_count"] = int(payload.get("failed_count") or 0)
     return highlights
+
+
+def load_active_task_records(root: Path, *, limit: int = 8) -> list[dict[str, Any]]:
+    active_dir = root / "logs" / "ci" / "active-tasks"
+    if not active_dir.exists():
+        return []
+    records: list[dict[str, Any]] = []
+    for path in sorted(active_dir.glob("task-*.active.json"), key=lambda item: item.stat().st_mtime, reverse=True):
+        try:
+            payload = read_json(path)
+        except Exception:
+            continue
+        if not isinstance(payload, dict):
+            continue
+        clean_state = payload.get("clean_state") if isinstance(payload.get("clean_state"), dict) else {}
+        if not str(clean_state.get("state") or "").strip():
+            paths = payload.get("paths") if isinstance(payload.get("paths"), dict) else {}
+            clean_state = _derive_clean_state_from_summary(
+                _resolve_report_path(paths.get("summary_json"), root=root),
+                root=root,
+            )
+        records.append(
+            {
+                "task_id": _normalize_report_value(payload.get("task_id"), limit=20),
+                "run_id": _normalize_report_value(payload.get("run_id"), limit=40),
+                "status": _normalize_report_value(payload.get("status"), limit=20),
+                "updated_at_utc": _normalize_report_value(payload.get("updated_at_utc"), limit=40),
+                "recommended_action": _normalize_report_value(payload.get("recommended_action"), limit=40),
+                "recommended_action_why": _normalize_report_value(payload.get("recommended_action_why"), limit=200),
+                "clean_state": {
+                    "state": _normalize_report_value(clean_state.get("state"), limit=40),
+                    "deterministic_ok": bool(clean_state.get("deterministic_ok")),
+                    "llm_status": _normalize_report_value(clean_state.get("llm_status"), limit=20),
+                    "needs_fix_agents": [_normalize_report_value(item, limit=40) for item in list(clean_state.get("needs_fix_agents") or [])[:6]],
+                    "unknown_agents": [_normalize_report_value(item, limit=40) for item in list(clean_state.get("unknown_agents") or [])[:6]],
+                    "timeout_agents": [_normalize_report_value(item, limit=40) for item in list(clean_state.get("timeout_agents") or [])[:6]],
+                },
+                "path": repo_rel(path, root=root),
+            }
+        )
+        if len(records) >= limit:
+            break
+    return records
+
+
+def build_active_task_summary(root: Path) -> dict[str, Any]:
+    records = load_active_task_records(root)
+    summary = {
+        "total": len(records),
+        "clean": 0,
+        "deterministic_ok_llm_not_clean": 0,
+        "deterministic_only": 0,
+        "not_clean": 0,
+        "top_records": records[:4],
+    }
+    for item in records:
+        state = str(((item.get("clean_state") or {}).get("state")) or "").strip().lower()
+        if state == "clean":
+            summary["clean"] += 1
+        elif state == "deterministic_ok_llm_not_clean":
+            summary["deterministic_ok_llm_not_clean"] += 1
+        elif state == "deterministic_only":
+            summary["deterministic_only"] += 1
+        else:
+            summary["not_clean"] += 1
+    return summary
 
 
 def build_report_catalog(root: Path) -> dict[str, Any]:
@@ -310,6 +470,7 @@ def dashboard_html(
     generated_at: str,
     report_catalog: dict[str, Any],
     report_catalog_path: str,
+    active_task_summary: dict[str, Any],
 ) -> str:
     overall = "ok"
     if any(item.get("status") == "fail" for item in records):
@@ -419,6 +580,26 @@ def dashboard_html(
     report_total = int(report_catalog.get("total_json", 0))
     report_invalid = int(report_catalog.get("invalid_json", 0))
     report_catalog_path_escaped = html.escape(report_catalog_path)
+    active_task_cards = []
+    for item in list(active_task_summary.get("top_records") or []):
+        clean_state = item.get("clean_state") if isinstance(item.get("clean_state"), dict) else {}
+        active_task_cards.append(
+            "\n".join(
+                [
+                    "<section class=\"highlight-card\">",
+                    f"<h3>Task {html.escape(str(item.get('task_id') or 'unknown'))}</h3>",
+                    f"<div class=\"meta\">clean_state: {html.escape(str(clean_state.get('state') or 'unknown'))}</div>",
+                    f"<div class=\"meta\">deterministic_ok: {html.escape(str(clean_state.get('deterministic_ok')))}</div>",
+                    f"<div class=\"meta\">llm_status: {html.escape(str(clean_state.get('llm_status') or 'unknown'))}</div>",
+                    f"<div class=\"meta\">recommended_action: {html.escape(str(item.get('recommended_action') or 'inspect'))}</div>",
+                    f"<div class=\"meta\">needs_fix_agents: {html.escape(','.join(str(x) for x in list(clean_state.get('needs_fix_agents') or [])) or 'none')}</div>",
+                    f"<div class=\"meta\">unknown_agents: {html.escape(','.join(str(x) for x in list(clean_state.get('unknown_agents') or [])) or 'none')}</div>",
+                    f"<div class=\"meta\">timeout_agents: {html.escape(','.join(str(x) for x in list(clean_state.get('timeout_agents') or [])) or 'none')}</div>",
+                    f"<div class=\"meta\">path: {html.escape(str(item.get('path') or ''))}</div>",
+                    "</section>",
+                ]
+            )
+        )
 
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -487,6 +668,14 @@ def dashboard_html(
         {''.join(highlight_sections) if highlight_sections else '<div class="meta">当前没有可直接展示的批量诊断摘要。</div>'}
       </div>
     </details>
+    <details open>
+      <summary>Active task clean state</summary>
+      <div class="hint">Top active task sidecars are summarized here so deterministic-green-but-LLM-not-clean tasks are visible without opening each run directory.</div>
+      <div class="hint">total={int(active_task_summary.get('total') or 0)} clean={int(active_task_summary.get('clean') or 0)} deterministic_ok_llm_not_clean={int(active_task_summary.get('deterministic_ok_llm_not_clean') or 0)} deterministic_only={int(active_task_summary.get('deterministic_only') or 0)} not_clean={int(active_task_summary.get('not_clean') or 0)}</div>
+      <div class="highlight-wrap">
+        {''.join(active_task_cards) if active_task_cards else '<div class="meta">No active task sidecars found.</div>'}
+      </div>
+    </details>
     <div class="hint">JSON 报告总数: {report_total}；解析失败: {report_invalid}；索引文件: {report_catalog_path_escaped}</div>
     <div class="hint">Auto-refresh is disabled. 页面不会自动刷新，请在执行扫描后手动刷新。</div>
     <details>
@@ -520,6 +709,7 @@ def refresh_dashboard(root: Path | str | None = None, *, now: datetime | None = 
     stamp = now or now_local()
     records = load_latest_records(resolved_root)
     report_catalog = build_report_catalog(resolved_root)
+    active_task_summary = build_active_task_summary(resolved_root)
     overall = "ok"
     if any(item.get("status") == "fail" for item in records):
         overall = "fail"
@@ -545,6 +735,7 @@ def refresh_dashboard(root: Path | str | None = None, *, now: datetime | None = 
             "invalid_json": int(report_catalog.get("invalid_json", 0)),
             "catalog_json": "logs/ci/project-health/report-catalog.latest.json",
         },
+        "active_task_summary": active_task_summary,
     }
     latest_root = latest_dir(resolved_root)
     report_catalog_path = latest_root / "report-catalog.latest.json"
@@ -557,6 +748,7 @@ def refresh_dashboard(root: Path | str | None = None, *, now: datetime | None = 
             generated_at=payload["generated_at"],
             report_catalog=report_catalog,
             report_catalog_path=repo_rel(report_catalog_path, root=resolved_root),
+            active_task_summary=active_task_summary,
         ),
     )
     return payload
