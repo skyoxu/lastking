@@ -188,6 +188,26 @@ def _recommendation_from_agent_review(agent_review: dict[str, Any]) -> tuple[str
     return recommended_action, (summary or "Agent review supplied the recovery recommendation."), signals
 
 
+def _recommendation_from_active_task(active_task: dict[str, Any]) -> tuple[str, str, list[str]] | None:
+    recommended_action = str(active_task.get("recommended_action") or "").strip().lower()
+    if not recommended_action or recommended_action in {"continue", "none"}:
+        return None
+    why = str(active_task.get("recommended_action_why") or "").strip()
+    clean_state = active_task.get("clean_state") if isinstance(active_task.get("clean_state"), dict) else {}
+    signals = [f"active_task.recommended_action={recommended_action}"]
+    state = str(clean_state.get("state") or "").strip()
+    if state:
+        signals.append(f"active_task.clean_state={state}")
+    llm_status = str(clean_state.get("llm_status") or "").strip()
+    if llm_status:
+        signals.append(f"active_task.llm_status={llm_status}")
+    for agent in clean_state.get("needs_fix_agents") or []:
+        signals.append(f"active_task.needs_fix_agent={agent}")
+    for agent in clean_state.get("unknown_agents") or []:
+        signals.append(f"active_task.unknown_agent={agent}")
+    return recommended_action, (why or "Active task sidecar supplied the recovery recommendation."), signals
+
+
 def _candidate_commands(task_id: str, latest: str) -> dict[str, str]:
     inspect_cmd = ["py", "-3", "scripts/python/inspect_run.py", "--kind", "pipeline"]
     if latest:
@@ -199,11 +219,13 @@ def _candidate_commands(task_id: str, latest: str) -> dict[str, str]:
         "resume": "",
         "fork": "",
         "rerun": "",
+        "needs_fix_fast": "",
     }
     if task_id:
         commands["resume"] = f"py -3 scripts/sc/run_review_pipeline.py --task-id {task_id} --resume"
         commands["fork"] = f"py -3 scripts/sc/run_review_pipeline.py --task-id {task_id} --fork"
         commands["rerun"] = f"py -3 scripts/sc/run_review_pipeline.py --task-id {task_id}"
+        commands["needs_fix_fast"] = f"py -3 scripts/sc/llm_review_needs_fix_fast.py --task-id {task_id} --delivery-profile fast-ship --rerun-failing-only --max-rounds 1"
     return commands
 
 
@@ -237,7 +259,12 @@ def build_resume_payload(
         recommended_action, recommendation_reason, blocking_signals = agent_review_signal
         recommendation_source = "agent-review"
     else:
-        recommended_action, recommendation_source, recommendation_reason, blocking_signals = _fallback_recommendation(inspection, resolved_task_id)
+        active_task_signal = _recommendation_from_active_task(active_task)
+        if active_task_signal is not None:
+            recommended_action, recommendation_reason, blocking_signals = active_task_signal
+            recommendation_source = "active-task"
+        else:
+            recommended_action, recommendation_source, recommendation_reason, blocking_signals = _fallback_recommendation(inspection, resolved_task_id)
     plans = _find_related_docs(repo_root, "execution-plans", task_id=resolved_task_id, run_id=resolved_run_id, latest_rel=latest_rel)
     logs = _find_related_docs(repo_root, "decision-logs", task_id=resolved_task_id, run_id=resolved_run_id, latest_rel=latest_rel)
     payload: dict[str, Any] = {
@@ -300,6 +327,7 @@ def _render_markdown(payload: dict[str, Any]) -> str:
         _line("Resume command", f"`{commands.get('resume')}`" if commands.get("resume") else "n/a"),
         _line("Fork command", f"`{commands.get('fork')}`" if commands.get("fork") else "n/a"),
         _line("Rerun command", f"`{commands.get('rerun')}`" if commands.get("rerun") else "n/a"),
+        _line("Needs Fix command", f"`{commands.get('needs_fix_fast')}`" if commands.get("needs_fix_fast") else "n/a"),
     ]
     agent_review = payload.get("agent_review") or {}
     active_task = payload.get("active_task") or {}

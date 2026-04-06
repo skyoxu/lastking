@@ -132,6 +132,31 @@ class ProjectHealthSupportTests(unittest.TestCase):
                 )
                 + "\n",
             )
+            _write(
+                root / "logs" / "ci" / "active-tasks" / "task-14.active.json",
+                json.dumps(
+                    {
+                        "cmd": "active-task-sidecar",
+                        "task_id": "14",
+                        "run_id": "run-a",
+                        "status": "ok",
+                        "updated_at_utc": "2026-04-06T09:18:04+00:00",
+                        "recommended_action": "needs-fix-fast",
+                        "recommended_action_why": "Deterministic steps are green but llm_review is not clean.",
+                        "clean_state": {
+                            "state": "deterministic_ok_llm_not_clean",
+                            "deterministic_ok": True,
+                            "llm_status": "fail",
+                            "needs_fix_agents": [],
+                            "unknown_agents": ["code-reviewer"],
+                            "timeout_agents": ["code-reviewer"],
+                        },
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                )
+                + "\n",
+            )
             project_health.write_project_health_record(
                 root=root,
                 kind="detect-project-stage",
@@ -158,11 +183,15 @@ class ProjectHealthSupportTests(unittest.TestCase):
 
             self.assertEqual(3, len(latest_index["records"]))
             self.assertIn("report_catalog_summary", latest_index)
+            self.assertIn("active_task_summary", latest_index)
             self.assertEqual(report_catalog["total_json"], latest_index["report_catalog_summary"]["total_json"])
             self.assertIn("triplet missing", latest_html)
             self.assertIn("doctor ok", latest_html)
             self.assertIn("boundary fail", latest_html)
             self.assertIn("批量任务诊断摘录", latest_html)
+            self.assertIn("Active task clean state", latest_html)
+            self.assertIn("deterministic_ok_llm_not_clean", latest_html)
+            self.assertIn("needs-fix-fast", latest_html)
             self.assertIn("repair_obligations_or_task_context_before_downstream", latest_html)
             self.assertIn("stdout:sc_llm_obligations_status_fail", latest_html)
             self.assertIn("family_streak&gt;=5", latest_html)

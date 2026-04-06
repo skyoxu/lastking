@@ -44,8 +44,10 @@ class PipelineSession:
     mark_wall_time_exceeded: Callable[[dict[str, Any]], dict[str, Any]]
     cap_step_timeout: Callable[[int, dict[str, Any]], int]
     run_agent_review_post_hook: Callable[..., tuple[int, dict[str, Any]]]
+    refresh_summary_meta: Callable[[dict[str, Any]], None]
 
     def persist(self) -> bool:
+        self.refresh_summary_meta(self.summary)
         self.marathon_state = self.apply_runtime_policy(self.marathon_state)
         if isinstance(self.marathon_state.get("agent_review"), dict):
             self.marathon_state = self.apply_agent_review_signal(self.marathon_state, self.marathon_state["agent_review"])

@@ -18,6 +18,46 @@ if str(SC_DIR) not in sys.path:
 import llm_review_needs_fix_fast as needs_fix_fast  # noqa: E402
 
 
+def _write_llm_pipeline_artifacts(
+    out_dir: Path,
+    step_name: str,
+    *,
+    results: list[dict[str, object]],
+    step_status: str = "ok",
+    step_rc: int = 0,
+) -> tuple[str, str]:
+    pipeline_dir = out_dir / step_name
+    llm_dir = pipeline_dir / "sc-llm-review-artifacts"
+    llm_dir.mkdir(parents=True, exist_ok=True)
+    llm_summary_path = llm_dir / "summary.json"
+    llm_summary_path.write_text(
+        json.dumps({"status": step_status, "results": results}, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    pipeline_summary_path = pipeline_dir / "summary.json"
+    pipeline_summary_path.write_text(
+        json.dumps(
+            {
+                "status": step_status,
+                "steps": [
+                    {
+                        "name": "sc-llm-review",
+                        "status": step_status,
+                        "rc": step_rc,
+                        "reported_out_dir": str(llm_dir),
+                        "summary_file": str(llm_summary_path),
+                    }
+                ],
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    return str(pipeline_dir), str(pipeline_summary_path)
+
+
 class NeedsFixFastDeliveryProfileTests(unittest.TestCase):
     def test_apply_delivery_profile_defaults_should_follow_fast_ship_defaults(self) -> None:
         args = needs_fix_fast.apply_delivery_profile_defaults(
@@ -371,6 +411,71 @@ class NeedsFixFastReviewerSelectionTests(unittest.TestCase):
             self.assertEqual(["semantic-equivalence-auditor"], agents)
             self.assertEqual("previous-llm-summary", source)
 
+    def test_prefer_precise_llm_summary_agents_should_shrink_agent_review_hits_for_fast_ship(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            out_dir = root / "logs" / "ci" / "2026-03-31" / "sc-review-pipeline-task-56-run-a"
+            llm_dir = root / "logs" / "ci" / "2026-03-31" / "sc-llm-review-task-56"
+            out_dir.mkdir(parents=True, exist_ok=True)
+            llm_dir.mkdir(parents=True, exist_ok=True)
+            latest_dir = root / "logs" / "ci" / "2026-03-31" / "sc-review-pipeline-task-56"
+            latest_dir.mkdir(parents=True, exist_ok=True)
+            (latest_dir / "latest.json").write_text(
+                json.dumps(
+                    {
+                        "task_id": "56",
+                        "run_id": "run-a",
+                        "status": "ok",
+                        "latest_out_dir": str(out_dir),
+                        "summary_path": str(out_dir / "summary.json"),
+                        "execution_context_path": str(out_dir / "execution-context.json"),
+                    }
+                ),
+                encoding="utf-8",
+            )
+            (out_dir / "summary.json").write_text(
+                json.dumps(
+                    {
+                        "task_id": "56",
+                        "status": "ok",
+                        "steps": [
+                            {
+                                "name": "sc-llm-review",
+                                "status": "fail",
+                                "summary_file": str(llm_dir / "summary.json"),
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            (out_dir / "execution-context.json").write_text(json.dumps({"security_profile": "host-safe"}), encoding="utf-8")
+            (llm_dir / "summary.json").write_text(
+                json.dumps(
+                    {
+                        "status": "warn",
+                        "results": [
+                            {"agent": "code-reviewer", "status": "fail", "rc": 124, "details": {"verdict": ""}},
+                            {"agent": "security-auditor", "status": "ok", "rc": 0, "details": {"verdict": "OK"}},
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with mock.patch.object(needs_fix_fast, "repo_root", return_value=root):
+                agents, source = needs_fix_fast.prefer_precise_llm_summary_agents(
+                    task_id="56",
+                    delivery_profile="fast-ship",
+                    diff_mode="summary",
+                    configured_agents=["code-reviewer", "security-auditor", "semantic-equivalence-auditor"],
+                    current_agents=["code-reviewer", "security-auditor"],
+                    current_source="previous-agent-review",
+                )
+
+            self.assertEqual(["code-reviewer"], agents)
+            self.assertEqual("previous-llm-summary-precise", source)
+
 
 class NeedsFixFastBudgetGuardTests(unittest.TestCase):
     def test_main_should_fail_fast_when_remaining_budget_is_below_profile_floor(self) -> None:
@@ -431,11 +536,23 @@ class NeedsFixFastMinimalAcceptanceTests(unittest.TestCase):
                 "56",
                 "--delivery-profile",
                 "fast-ship",
+                "--agents",
+                "code-reviewer",
             ]
             deterministic_cmds: list[list[str]] = []
 
             def _run_step(*, name: str, cmd: list[str], out_dir: Path, timeout_sec: int, script_start: float, budget_min: int) -> dict[str, object]:
                 deterministic_cmds.append(list(cmd))
+                reported_out_dir = str(out_dir / "acceptance-minimal")
+                summary_file = str(out_dir / "acceptance-minimal" / "summary.json")
+                if name == "pipeline-llm-round-1":
+                    reported_out_dir, summary_file = _write_llm_pipeline_artifacts(
+                        out_dir,
+                        name,
+                        results=[
+                            {"agent": "code-reviewer", "status": "ok", "rc": 0, "details": {"verdict": "OK"}},
+                        ],
+                    )
                 return {
                     "name": name,
                     "status": "ok",
@@ -445,8 +562,8 @@ class NeedsFixFastMinimalAcceptanceTests(unittest.TestCase):
                     "remaining_after_sec": 999,
                     "cmd": list(cmd),
                     "log_file": str(out_dir / f"{name}.log"),
-                    "reported_out_dir": str(out_dir / "acceptance-minimal"),
-                    "summary_file": str(out_dir / "acceptance-minimal" / "summary.json"),
+                    "reported_out_dir": reported_out_dir,
+                    "summary_file": summary_file,
                 }
 
             with (
@@ -478,7 +595,7 @@ class NeedsFixFastMinimalAcceptanceTests(unittest.TestCase):
                     },
                 ),
                 mock.patch.object(needs_fix_fast, "try_reuse_matching_minimal_acceptance_step", return_value=None),
-                mock.patch.object(needs_fix_fast, "infer_initial_run_agents", return_value=([], "configured-defaults")),
+                mock.patch.object(needs_fix_fast, "infer_initial_run_agents", return_value=(["code-reviewer"], "configured-defaults")),
                 mock.patch.object(needs_fix_fast, "run_step", side_effect=_run_step),
             ):
                 rc = needs_fix_fast.main()
@@ -512,6 +629,14 @@ class NeedsFixFastFinalPassTests(unittest.TestCase):
 
             def _run_step(*, name: str, cmd: list[str], out_dir: Path, timeout_sec: int, script_start: float, budget_min: int) -> dict[str, object]:
                 calls.append((name, list(cmd)))
+                reported_out_dir = str(out_dir / name)
+                summary_file = ""
+                if name == "pipeline-llm-round-1":
+                    reported_out_dir, summary_file = _write_llm_pipeline_artifacts(
+                        out_dir,
+                        name,
+                        results=[{"agent": "all", "status": "ok", "rc": 0, "details": {"verdict": "OK"}}],
+                    )
                 return {
                     "name": name,
                     "status": "ok",
@@ -521,8 +646,8 @@ class NeedsFixFastFinalPassTests(unittest.TestCase):
                     "remaining_after_sec": 999,
                     "cmd": list(cmd),
                     "log_file": str(out_dir / f"{name}.log"),
-                    "reported_out_dir": str(out_dir / name),
-                    "summary_file": "",
+                    "reported_out_dir": reported_out_dir,
+                    "summary_file": summary_file,
                 }
 
             with (
@@ -555,6 +680,422 @@ class NeedsFixFastFinalPassTests(unittest.TestCase):
             self.assertEqual("full-pipeline", summary["deterministic_plan"]["mode"])
             self.assertEqual(["all"], summary["args"]["agents"])
             self.assertEqual("final-pass", summary["args"]["initial_run_agents_source"])
+
+
+class NeedsFixFastTargetedTimeoutTests(unittest.TestCase):
+    def test_main_should_add_code_reviewer_only_timeout_override_for_fast_ship_small_diff(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            latest_out_dir = root / "logs" / "ci" / "2026-04-05" / "sc-review-pipeline-task-56-run-timeout"
+            latest_dir = root / "logs" / "ci" / "2026-04-05" / "sc-review-pipeline-task-56"
+            llm_dir = latest_out_dir / "sc-llm-review-artifacts"
+            latest_out_dir.mkdir(parents=True, exist_ok=True)
+            latest_dir.mkdir(parents=True, exist_ok=True)
+            llm_dir.mkdir(parents=True, exist_ok=True)
+            (latest_dir / "latest.json").write_text(
+                json.dumps(
+                    {
+                        "task_id": "56",
+                        "run_id": "run-timeout",
+                        "status": "ok",
+                        "latest_out_dir": str(latest_out_dir),
+                        "summary_path": str(latest_out_dir / "summary.json"),
+                        "execution_context_path": str(latest_out_dir / "execution-context.json"),
+                    }
+                ),
+                encoding="utf-8",
+            )
+            (latest_out_dir / "summary.json").write_text(
+                json.dumps(
+                    {
+                        "task_id": "56",
+                        "status": "ok",
+                        "steps": [
+                            {"name": "sc-test", "status": "ok", "rc": 0},
+                            {"name": "sc-acceptance-check", "status": "ok", "rc": 0},
+                            {
+                                "name": "sc-llm-review",
+                                "status": "fail",
+                                "rc": 1,
+                                "summary_file": str(llm_dir / "summary.json"),
+                            },
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            (latest_out_dir / "execution-context.json").write_text(
+                json.dumps(
+                    {
+                        "delivery_profile": "fast-ship",
+                        "security_profile": "host-safe",
+                        "git": {"head": "prev-head", "status_short": []},
+                    }
+                ),
+                encoding="utf-8",
+            )
+            (llm_dir / "summary.json").write_text(
+                json.dumps(
+                    {
+                        "status": "warn",
+                        "results": [
+                            {"agent": "code-reviewer", "status": "fail", "rc": 124, "details": {"verdict": ""}},
+                            {"agent": "security-auditor", "status": "ok", "rc": 0, "details": {"verdict": "OK"}},
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            out_dir = root / "logs" / "ci" / "2026-04-06" / "sc-needs-fix-fast-task-56"
+            argv = [
+                "llm_review_needs_fix_fast.py",
+                "--task-id",
+                "56",
+                "--delivery-profile",
+                "fast-ship",
+                "--max-rounds",
+                "1",
+                "--agents",
+                "code-reviewer",
+            ]
+            calls: list[tuple[str, list[str]]] = []
+
+            def _run_step(*, name: str, cmd: list[str], out_dir: Path, timeout_sec: int, script_start: float, budget_min: int) -> dict[str, object]:
+                calls.append((name, list(cmd)))
+                reported_out_dir = str(out_dir / name)
+                summary_file = ""
+                if name == "pipeline-llm-round-1":
+                    reported_out_dir, summary_file = _write_llm_pipeline_artifacts(
+                        out_dir,
+                        name,
+                        results=[
+                            {"agent": "code-reviewer", "status": "ok", "rc": 0, "details": {"verdict": "OK"}},
+                            {"agent": "security-auditor", "status": "ok", "rc": 0, "details": {"verdict": "OK"}},
+                        ],
+                    )
+                return {
+                    "name": name,
+                    "status": "ok",
+                    "rc": 0,
+                    "duration_sec": 1.0,
+                    "remaining_before_sec": 1000,
+                    "remaining_after_sec": 999,
+                    "cmd": list(cmd),
+                    "log_file": str(out_dir / f"{name}.log"),
+                    "reported_out_dir": reported_out_dir,
+                    "summary_file": summary_file,
+                }
+
+            with (
+                mock.patch.object(sys, "argv", argv),
+                mock.patch.object(needs_fix_fast, "repo_root", return_value=root),
+                mock.patch.object(needs_fix_fast, "ci_dir", return_value=out_dir),
+                mock.patch.object(needs_fix_fast, "current_git_fingerprint", return_value={"head": "new-head", "status_short": []}),
+                mock.patch.object(
+                    needs_fix_fast,
+                    "classify_change_scope_between_snapshots",
+                    return_value={
+                        "deterministic_strategy": "reuse-latest",
+                        "doc_only_delta": True,
+                        "changed_paths": ["docs/architecture/overlays/PRD-lastking-T2/08/feature-slice.md"],
+                        "unsafe_paths": [],
+                    },
+                ),
+                mock.patch.object(
+                    needs_fix_fast,
+                    "try_reuse_latest_deterministic_step",
+                    return_value={
+                        "name": "pipeline-deterministic",
+                        "status": "reused",
+                        "rc": 0,
+                        "duration_sec": 0.0,
+                        "remaining_before_sec": 300,
+                        "remaining_after_sec": 300,
+                        "cmd": ["py", "-3", "scripts/sc/run_review_pipeline.py"],
+                        "log_file": str(out_dir / "pipeline-deterministic.log"),
+                        "reported_out_dir": str(latest_out_dir),
+                        "summary_file": str(latest_out_dir / "summary.json"),
+                        "reused_run_id": "run-timeout",
+                        "reuse_reason": "latest_successful_deterministic_pipeline",
+                    },
+                ),
+                mock.patch.object(needs_fix_fast, "infer_initial_run_agents", return_value=(["code-reviewer"], "previous-llm-summary")),
+                mock.patch.object(needs_fix_fast, "run_step", side_effect=_run_step),
+            ):
+                rc = needs_fix_fast.main()
+
+            self.assertEqual(0, rc)
+            self.assertEqual("pipeline-llm-round-1", calls[0][0])
+            llm_cmd = calls[0][1]
+            self.assertIn("--llm-agent-timeouts", llm_cmd)
+            self.assertEqual("code-reviewer=480", llm_cmd[llm_cmd.index("--llm-agent-timeouts") + 1])
+            self.assertNotIn("security-auditor=480", llm_cmd)
+
+            summary = json.loads((out_dir / "summary.json").read_text(encoding="utf-8"))
+            self.assertEqual([{"round": 1, "overrides": {"code-reviewer": 480}, "reason": mock.ANY}], summary["agent_timeout_override_history"])
+            self.assertEqual({"code-reviewer": 480}, summary["rounds"][0]["agent_timeout_overrides"])
+            self.assertEqual("previous_code_reviewer_timeout_small_diff", summary["rounds"][0]["agent_timeout_override_reason"]["reason"])
+
+    def test_main_should_mark_timeout_only_round_as_indeterminate(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            out_dir = root / "logs" / "ci" / "2026-04-06" / "sc-needs-fix-fast-task-56"
+            argv = [
+                "llm_review_needs_fix_fast.py",
+                "--task-id",
+                "56",
+                "--delivery-profile",
+                "fast-ship",
+                "--max-rounds",
+                "1",
+                "--agents",
+                "code-reviewer",
+            ]
+            calls: list[tuple[str, list[str]]] = []
+
+            def _run_step(*, name: str, cmd: list[str], out_dir: Path, timeout_sec: int, script_start: float, budget_min: int) -> dict[str, object]:
+                calls.append((name, list(cmd)))
+                if name == "pipeline-llm-round-1":
+                    return {
+                        "name": name,
+                        "status": "fail",
+                        "rc": 124,
+                        "duration_sec": 10.0,
+                        "remaining_before_sec": 1000,
+                        "remaining_after_sec": 990,
+                        "cmd": list(cmd),
+                        "log_file": str(out_dir / f"{name}.log"),
+                        "reported_out_dir": "",
+                        "summary_file": "",
+                    }
+                return {
+                    "name": name,
+                    "status": "reused",
+                    "rc": 0,
+                    "duration_sec": 0.0,
+                    "remaining_before_sec": 1000,
+                    "remaining_after_sec": 1000,
+                    "cmd": list(cmd),
+                    "log_file": str(out_dir / f"{name}.log"),
+                    "reported_out_dir": str(out_dir / "deterministic"),
+                    "summary_file": str(out_dir / "deterministic" / "summary.json"),
+                    "reused_run_id": "run-a",
+                }
+
+            with (
+                mock.patch.object(sys, "argv", argv),
+                mock.patch.object(needs_fix_fast, "repo_root", return_value=root),
+                mock.patch.object(needs_fix_fast, "ci_dir", return_value=out_dir),
+                mock.patch.object(needs_fix_fast, "try_skip_when_latest_pipeline_already_clean", return_value=None),
+                mock.patch.object(needs_fix_fast, "try_reuse_latest_deterministic_step", return_value=None),
+                mock.patch.object(
+                    needs_fix_fast,
+                    "resolve_deterministic_execution_plan",
+                    return_value={"mode": "full-pipeline", "cmd": ["py", "-3", "scripts/sc/run_review_pipeline.py"], "change_scope": {}},
+                ),
+                mock.patch.object(needs_fix_fast, "infer_initial_run_agents", return_value=(["code-reviewer"], "configured-defaults")),
+                mock.patch.object(needs_fix_fast, "run_step", side_effect=_run_step),
+            ):
+                rc = needs_fix_fast.main()
+
+            self.assertEqual(1, rc)
+            summary = json.loads((out_dir / "summary.json").read_text(encoding="utf-8"))
+            self.assertEqual("indeterminate", summary["status"])
+            self.assertEqual("llm_review_verdict_unknown", summary["reason"])
+            self.assertEqual(["code-reviewer"], summary["final_unknown_agents"])
+
+
+class NeedsFixFastAlreadyCleanTests(unittest.TestCase):
+    def test_main_should_noop_when_latest_pipeline_is_already_clean_and_only_docs_changed(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            latest_out_dir = root / "logs" / "ci" / "2026-04-05" / "sc-review-pipeline-task-56-run-ok"
+            latest_dir = root / "logs" / "ci" / "2026-04-05" / "sc-review-pipeline-task-56"
+            llm_dir = latest_out_dir / "sc-llm-review-artifacts"
+            latest_out_dir.mkdir(parents=True, exist_ok=True)
+            latest_dir.mkdir(parents=True, exist_ok=True)
+            llm_dir.mkdir(parents=True, exist_ok=True)
+            (latest_dir / "latest.json").write_text(
+                json.dumps(
+                    {
+                        "task_id": "56",
+                        "run_id": "run-ok",
+                        "status": "ok",
+                        "latest_out_dir": str(latest_out_dir),
+                        "summary_path": str(latest_out_dir / "summary.json"),
+                        "execution_context_path": str(latest_out_dir / "execution-context.json"),
+                    }
+                ),
+                encoding="utf-8",
+            )
+            (latest_out_dir / "summary.json").write_text(
+                json.dumps(
+                    {
+                        "task_id": "56",
+                        "status": "ok",
+                        "steps": [
+                            {"name": "sc-test", "status": "ok", "rc": 0},
+                            {"name": "sc-acceptance-check", "status": "ok", "rc": 0},
+                            {
+                                "name": "sc-llm-review",
+                                "status": "ok",
+                                "rc": 0,
+                                "reported_out_dir": str(llm_dir),
+                                "summary_file": str(llm_dir / "summary.json"),
+                            },
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            (llm_dir / "summary.json").write_text(
+                json.dumps(
+                    {
+                        "status": "ok",
+                        "results": [
+                            {"agent": "code-reviewer", "status": "ok", "rc": 0, "details": {"verdict": "OK"}},
+                            {"agent": "security-auditor", "status": "ok", "rc": 0, "details": {"verdict": "OK"}},
+                            {"agent": "semantic-equivalence-auditor", "status": "ok", "rc": 0, "details": {"verdict": "OK"}},
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            (latest_out_dir / "execution-context.json").write_text(
+                json.dumps(
+                    {
+                        "delivery_profile": "fast-ship",
+                        "security_profile": "host-safe",
+                        "git": {"head": "prev-head", "status_short": []},
+                    }
+                ),
+                encoding="utf-8",
+            )
+            (latest_out_dir / "agent-review.json").write_text(
+                json.dumps({"review_verdict": "pass", "findings": []}),
+                encoding="utf-8",
+            )
+
+            out_dir = root / "logs" / "ci" / "2026-04-06" / "sc-needs-fix-fast-task-56"
+            argv = [
+                "llm_review_needs_fix_fast.py",
+                "--task-id",
+                "56",
+                "--delivery-profile",
+                "fast-ship",
+            ]
+            with (
+                mock.patch.object(sys, "argv", argv),
+                mock.patch.object(needs_fix_fast, "repo_root", return_value=root),
+                mock.patch.object(needs_fix_fast, "ci_dir", return_value=out_dir),
+                mock.patch.object(
+                    needs_fix_fast,
+                    "current_git_fingerprint",
+                    return_value={"head": "current-head", "status_short": []},
+                ),
+                mock.patch.object(
+                    needs_fix_fast,
+                    "classify_change_scope_between_snapshots",
+                    return_value={
+                        "deterministic_strategy": "reuse-latest",
+                        "changed_paths": ["decision-logs/task-56.md"],
+                        "unsafe_paths": [],
+                    },
+                ),
+                mock.patch.object(needs_fix_fast, "run_step") as run_step_mock,
+            ):
+                rc = needs_fix_fast.main()
+
+            self.assertEqual(0, rc)
+            run_step_mock.assert_not_called()
+            summary = json.loads((out_dir / "summary.json").read_text(encoding="utf-8"))
+            self.assertEqual("ok", summary["status"])
+            self.assertEqual("latest_pipeline_already_clean", summary["reason"])
+            self.assertEqual("reuse-latest", summary["change_scope"]["deterministic_strategy"])
+            self.assertEqual("pipeline-clean-skip", summary["timeline"][0]["name"])
+
+
+class NeedsFixFastUnknownStopLossTests(unittest.TestCase):
+    def test_main_should_stop_when_previous_llm_was_unknown_and_current_changes_do_not_hit_reviewer_anchors(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            latest_out_dir = root / "logs" / "ci" / "2026-04-05" / "sc-review-pipeline-task-56-run-timeout"
+            latest_dir = root / "logs" / "ci" / "2026-04-05" / "sc-review-pipeline-task-56"
+            latest_out_dir.mkdir(parents=True, exist_ok=True)
+            latest_dir.mkdir(parents=True, exist_ok=True)
+            (latest_dir / "latest.json").write_text(
+                json.dumps(
+                    {
+                        "task_id": "56",
+                        "run_id": "run-timeout",
+                        "status": "fail",
+                        "latest_out_dir": str(latest_out_dir),
+                        "summary_path": str(latest_out_dir / "summary.json"),
+                        "execution_context_path": str(latest_out_dir / "execution-context.json"),
+                    }
+                ),
+                encoding="utf-8",
+            )
+            (latest_out_dir / "summary.json").write_text(
+                json.dumps(
+                    {
+                        "task_id": "56",
+                        "status": "fail",
+                        "steps": [
+                            {"name": "sc-test", "status": "ok", "rc": 0},
+                            {"name": "sc-acceptance-check", "status": "ok", "rc": 0},
+                            {"name": "sc-llm-review", "status": "fail", "rc": 124, "summary_file": ""},
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            (latest_out_dir / "execution-context.json").write_text(
+                json.dumps(
+                    {
+                        "delivery_profile": "fast-ship",
+                        "security_profile": "host-safe",
+                        "git": {"head": "same-head", "status_short": []},
+                    }
+                ),
+                encoding="utf-8",
+            )
+            out_dir = root / "logs" / "ci" / "2026-04-06" / "sc-needs-fix-fast-task-56"
+            argv = [
+                "llm_review_needs_fix_fast.py",
+                "--task-id",
+                "56",
+                "--delivery-profile",
+                "fast-ship",
+                "--agents",
+                "code-reviewer",
+            ]
+            with (
+                mock.patch.object(sys, "argv", argv),
+                mock.patch.object(needs_fix_fast, "repo_root", return_value=root),
+                mock.patch.object(needs_fix_fast, "ci_dir", return_value=out_dir),
+                mock.patch.object(needs_fix_fast, "current_git_fingerprint", return_value={"head": "same-head", "status_short": []}),
+                mock.patch.object(
+                    needs_fix_fast,
+                    "classify_change_scope_between_snapshots",
+                    return_value={
+                        "deterministic_strategy": "reuse-latest",
+                        "changed_paths": ["docs/workflows/project-health-dashboard.md"],
+                        "unsafe_paths": [],
+                    },
+                ),
+                mock.patch.object(needs_fix_fast, "run_step") as run_step_mock,
+            ):
+                rc = needs_fix_fast.main()
+
+            self.assertEqual(1, rc)
+            run_step_mock.assert_not_called()
+            summary = json.loads((out_dir / "summary.json").read_text(encoding="utf-8"))
+            self.assertEqual("indeterminate", summary["status"])
+            self.assertEqual("no_anchor_fix_for_previous_llm_unknown", summary["reason"])
+            self.assertEqual(["code-reviewer"], summary["final_unknown_agents"])
+            self.assertEqual("pipeline-llm-unknown-stop-loss", summary["timeline"][0]["name"])
 
 
 if __name__ == "__main__":

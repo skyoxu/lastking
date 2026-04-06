@@ -49,6 +49,8 @@ It keeps the same compatibility note in page output: `Auto-refresh is disabled`.
 It is still a static local file: the content only changes when one of the commands writes a new latest record.
 When a batch workflow summary exposes high-value fields such as `extract_family_recommended_actions`, `family_hotspots`, or `quarantine_ranges`, the page also renders a compact diagnostics excerpt above the full JSON table.
 This lets operators see workflow 5.1 failure families and the recommended next action without opening the raw batch summary first.
+The page now also summarizes the newest `logs/ci/active-tasks/task-*.active.json` sidecars, including `clean_state`, `recommended_action`, and whether a task is in the `deterministic_ok_llm_not_clean` state.
+Use this section to spot tasks that should go straight to `needs-fix-fast` instead of paying for a fresh full `6.7`.
 
 ## Template-Specific Interpretation
 
