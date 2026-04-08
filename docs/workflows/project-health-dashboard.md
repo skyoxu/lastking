@@ -51,7 +51,7 @@ When a batch workflow summary exposes high-value fields such as `extract_family_
 This lets operators see workflow 5.1 failure families and the recommended next action without opening the raw batch summary first.
 The page now also summarizes the newest `logs/ci/active-tasks/task-*.active.json` sidecars, including `clean_state`, `recommended_action`, and whether a task is in the `deterministic_ok_llm_not_clean` state.
 Use this section to spot tasks that should go straight to `needs-fix-fast` instead of paying for a fresh full `6.7`.
-The active-task cards now also surface `latest_reason`, `latest_run_type`, `latest_reuse_mode`, `latest_diagnostics_keys`, `chapter6_*` hints, `rerun_forbidden`, `rerun_override_flag`, `artifact_integrity`, and a compact deterministic-bundle summary so you can decide between reopening `6.7`, narrowing to `6.8`, or stopping on rerun guards directly from the dashboard.
+The active-task cards now also surface `latest_reason`, `latest_run_type`, `latest_reuse_mode`, `latest_diagnostics_keys`, `chapter6_*` hints, `rerun_forbidden`, `rerun_override_flag`, `artifact_integrity`, `latest_json`, `reported_latest_json`, `latest_json_mismatch`, `latest_json_repaired`, and a compact deterministic-bundle summary so you can decide between reopening `6.7`, narrowing to `6.8`, or stopping on rerun guards directly from the dashboard.
 To reduce historical noise, the dashboard ignores non-canonical `active-task` pointers and stale clean sidecars whose `recommended_action=continue` has aged out past the local freshness window.
 The clean-sidecar freshness window is controlled by `PROJECT_HEALTH_ACTIVE_TASK_CLEAN_MAX_AGE_DAYS` and defaults to `3`.
 The active-task collection window is controlled by `PROJECT_HEALTH_ACTIVE_TASK_LIMIT` and defaults to `16`.
@@ -66,7 +66,7 @@ The active-task aggregate counters also track Chapter 6 KPI-style fields such as
 - `next_action_inspect`
 - `next_action_resume`
 - `next_action_continue`
-The active-task summary row now also counts `llm_retry_stop_loss_blocked`, `sc_test_retry_stop_loss_blocked`, `artifact_integrity_blocked`, and `recent_failure_summary_blocked`, so repeated timeout-driven waste, known unit-root-cause retries, stale/incomplete recovery bundles, and repeated same-family failure stop-loss signals are visible without opening raw artifacts.
+The active-task summary row now also counts `llm_retry_stop_loss_blocked`, `sc_test_retry_stop_loss_blocked`, `artifact_integrity_blocked`, `recent_failure_summary_blocked`, `latest_json_mismatch`, and `latest_json_repaired`, so repeated timeout-driven waste, known unit-root-cause retries, stale/incomplete recovery bundles, repeated same-family failure stop-loss signals, and repaired latest-pointer drift are visible without opening raw artifacts.
 Each active-task card now prints `recommended_action_why`, `chapter6_stop_loss_note`, plus explicit diagnostic rows for `llm_retry_stop_loss`, `sc_test_retry_stop_loss`, `recent_failure_summary`, and `artifact_integrity` when those stop-loss or recovery-integrity signals are present.
 When the latest pointer is only a planned-only terminal bundle, the card also emits `planned_only_terminal_bundle: true` so operators can distinguish stale planning artifacts from real completed producer runs at a glance.
 

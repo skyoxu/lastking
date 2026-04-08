@@ -233,9 +233,17 @@ class RunReviewPipelineDeliveryProfileTests(unittest.TestCase):
         latest = json.loads((REPO_ROOT / 'logs' / 'ci' / out_dir.parent.name / 'sc-review-pipeline-task-1' / 'latest.json').read_text(encoding='utf-8'))
 
         self.assertEqual('ok', summary['status'])
+        self.assertEqual('full', summary['run_type'])
+        self.assertEqual('pipeline_clean', summary['reason'])
         self.assertEqual('pass', agent_review['review_verdict'])
+        self.assertEqual('full', latest['run_type'])
+        self.assertEqual('pipeline_clean', latest['reason'])
         self.assertEqual(str(out_dir / 'agent-review.json'), latest['agent_review_json_path'])
         self.assertEqual(str(out_dir / 'agent-review.md'), latest['agent_review_md_path'])
+        active = json.loads((REPO_ROOT / 'logs' / 'ci' / 'active-tasks' / 'task-1.active.json').read_text(encoding='utf-8'))
+        self.assertEqual('full', active['latest_summary_signals']['run_type'])
+        self.assertEqual('pipeline_clean', active['latest_summary_signals']['reason'])
+        self.assertEqual('', active['latest_summary_signals']['artifact_integrity_kind'])
 
     def test_skip_agent_review_should_not_generate_sidecar_outputs(self) -> None:
         with self._refactor_summary_fixture():
@@ -322,7 +330,7 @@ class RunReviewPipelineDeliveryProfileTests(unittest.TestCase):
     def test_delivery_profile_should_set_default_max_step_retries_in_marathon_state(self) -> None:
         with self._refactor_summary_fixture():
             playable = subprocess.run(
-                [sys.executable, str(SCRIPT), '--task-id', '1', '--delivery-profile', 'playable-ea', '--reselect-profile', '--dry-run', '--skip-agent-review'],
+                [sys.executable, str(SCRIPT), '--task-id', '1', '--delivery-profile', 'playable-ea', '--reselect-profile', '--dry-run', '--skip-agent-review', '--allow-large-change-scope-rerun'],
                 cwd=str(REPO_ROOT),
                 env=_stable_subprocess_env(),
                 stdout=subprocess.PIPE,
@@ -331,13 +339,16 @@ class RunReviewPipelineDeliveryProfileTests(unittest.TestCase):
                 encoding='utf-8',
                 errors='ignore',
             )
-            self.assertEqual(0, playable.returncode, playable.stdout)
+            self.assertEqual(1, playable.returncode, playable.stdout)
             playable_out = _extract_out_dir(playable.stdout or '')
+            playable_summary = json.loads((playable_out / 'summary.json').read_text(encoding='utf-8'))
             playable_state = json.loads((playable_out / 'marathon-state.json').read_text(encoding='utf-8'))
+            self.assertEqual('planned-only', playable_summary['run_type'])
+            self.assertEqual('planned_only_incomplete', playable_summary['reason'])
             self.assertEqual(1, playable_state['max_step_retries'])
 
             standard = subprocess.run(
-                [sys.executable, str(SCRIPT), '--task-id', '1', '--delivery-profile', 'standard', '--reselect-profile', '--dry-run', '--skip-agent-review'],
+                [sys.executable, str(SCRIPT), '--task-id', '1', '--delivery-profile', 'standard', '--reselect-profile', '--dry-run', '--skip-agent-review', '--allow-large-change-scope-rerun'],
                 cwd=str(REPO_ROOT),
                 env=_stable_subprocess_env(),
                 stdout=subprocess.PIPE,
@@ -346,9 +357,12 @@ class RunReviewPipelineDeliveryProfileTests(unittest.TestCase):
                 encoding='utf-8',
                 errors='ignore',
             )
-            self.assertEqual(0, standard.returncode, standard.stdout)
+            self.assertEqual(1, standard.returncode, standard.stdout)
             standard_out = _extract_out_dir(standard.stdout or '')
+            standard_summary = json.loads((standard_out / 'summary.json').read_text(encoding='utf-8'))
             standard_state = json.loads((standard_out / 'marathon-state.json').read_text(encoding='utf-8'))
+            self.assertEqual('planned-only', standard_summary['run_type'])
+            self.assertEqual('planned_only_incomplete', standard_summary['reason'])
             self.assertEqual(0, standard_state['max_step_retries'])
 
     def test_dry_run_fast_ship_should_apply_task_level_minimal_review_tier(self) -> None:
@@ -492,11 +506,15 @@ class RunReviewPipelineDeliveryProfileTests(unittest.TestCase):
                 mock.patch.object(run_review_pipeline_module, "_pipeline_run_dir", return_value=out_dir),
                 mock.patch.object(run_review_pipeline_module, "_pipeline_latest_index_path", return_value=latest_path),
                 mock.patch.object(run_review_pipeline_module, "resolve_triplet", return_value=self._triplet()),
+                mock.patch.object(run_review_pipeline_module, "_derive_change_scope_ceiling_guard", return_value=None),
             ):
                 rc = run_review_pipeline_module.main()
 
-            self.assertEqual(0, rc)
+            self.assertEqual(1, rc)
+            summary = json.loads((out_dir / "summary.json").read_text(encoding="utf-8"))
             self.assertTrue((out_dir / "summary.json").exists())
+            self.assertEqual("planned-only", summary["run_type"])
+            self.assertEqual("planned_only_incomplete", summary["reason"])
             self.assertFalse(latest_path.exists())
             self.assertFalse(active_task_path.exists())
 
@@ -547,10 +565,14 @@ class RunReviewPipelineDeliveryProfileTests(unittest.TestCase):
                 mock.patch.object(run_review_pipeline_module, "_pipeline_run_dir", return_value=out_dir),
                 mock.patch.object(run_review_pipeline_module, "_pipeline_latest_index_path", return_value=latest_path),
                 mock.patch.object(run_review_pipeline_module, "resolve_triplet", return_value=self._triplet()),
+                mock.patch.object(run_review_pipeline_module, "_derive_change_scope_ceiling_guard", return_value=None),
             ):
                 rc = run_review_pipeline_module.main()
 
-            self.assertEqual(0, rc)
+            self.assertEqual(1, rc)
+            summary = json.loads((out_dir / "summary.json").read_text(encoding="utf-8"))
+            self.assertEqual("planned-only", summary["run_type"])
+            self.assertEqual("planned_only_incomplete", summary["reason"])
             self.assertEqual(before, latest_path.read_text(encoding="utf-8"))
 
     def test_derive_llm_agent_timeout_overrides_should_only_escalate_previously_timed_out_agents(self) -> None:

@@ -11,6 +11,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from _chapter6_recovery_common import chapter6_stop_loss_note as _chapter6_stop_loss_note
 
 PROJECT_HEALTH_KINDS = (
     "detect-project-stage",
@@ -221,44 +222,6 @@ def _resolve_report_path(raw: Any, *, root: Path) -> Path | None:
     return candidate if candidate.exists() else None
 
 
-def _chapter6_stop_loss_note(chapter6_hints: dict[str, Any], latest_summary_signals: dict[str, Any]) -> str:
-    blocked_by = str(chapter6_hints.get("blocked_by") or "").strip().lower()
-    reason = str(latest_summary_signals.get("reason") or "").strip()
-    if not blocked_by and reason.startswith("rerun_blocked:deterministic_green_llm_not_clean"):
-        blocked_by = "rerun_guard"
-    elif not blocked_by and reason.startswith("rerun_blocked:repeat_deterministic_failure"):
-        blocked_by = "rerun_guard"
-    elif not blocked_by and (
-        reason.startswith("rerun_blocked:dirty_worktree_unsafe_paths_ceiling")
-        or reason.startswith("rerun_blocked:dirty_worktree_changed_paths_ceiling")
-        or reason.startswith("rerun_blocked:profile_drift_change_scope_ceiling")
-    ):
-        blocked_by = "rerun_guard"
-    if blocked_by == "rerun_guard":
-        if reason.startswith("rerun_blocked:deterministic_green_llm_not_clean"):
-            return "Deterministic evidence is already green; do not pay for another full 6.7. Continue with 6.8 or needs-fix-fast."
-        if reason.startswith("rerun_blocked:repeat_deterministic_failure"):
-            return "Recent deterministic failures already repeated with the same fingerprint; inspect and fix the root cause before rerunning 6.7."
-        if (
-            reason.startswith("rerun_blocked:dirty_worktree_unsafe_paths_ceiling")
-            or reason.startswith("rerun_blocked:dirty_worktree_changed_paths_ceiling")
-            or reason.startswith("rerun_blocked:profile_drift_change_scope_ceiling")
-        ):
-            return "Current changes exceed the standard Chapter 6 safe scope; shrink the dirty worktree or inspect/reset the drift before paying for another full 6.7."
-        return "A rerun guard is active; check the latest diagnostics before paying for another full rerun."
-    if blocked_by == "llm_retry_stop_loss":
-        return "This run already stopped after the first costly llm timeout; continue with the narrow llm-only closure path instead of reopening deterministic steps."
-    if blocked_by == "sc_test_retry_stop_loss":
-        return "The pipeline already proved the unit root cause and stopped the same-run retry; fix the unit issue first, then start a fresh run."
-    if blocked_by == "waste_signals":
-        return "Unit failure was already known before more expensive engine-lane work continued; fix the unit/root cause before paying that cost again."
-    if blocked_by == "recent_failure_summary":
-        return "Recent runs already repeat the same failure family; inspect the repeated fingerprint and fix the root cause before rerunning 6.7."
-    if blocked_by == "artifact_integrity":
-        if reason == "planned_only_incomplete":
-            return "The latest bundle is a planned-only terminal run, not a real completed producer run; inspect it only for evidence and start a fresh real run before reopening Chapter 6."
-        return "The latest recovery bundle is incomplete or stale; inspect the evidence only, then start a fresh real run instead of resuming from this pointer."
-    return ""
 
 
 def _derive_clean_state_from_summary(summary_path: Path | None, *, root: Path) -> dict[str, Any]:
@@ -646,6 +609,10 @@ def load_active_task_records(root: Path, *, limit: int = 16) -> list[dict[str, A
                     "rerun_forbidden": rerun_forbidden,
                     "rerun_override_flag": rerun_override_flag,
                 },
+                "latest_json": _normalize_report_value(paths.get("latest_json"), limit=200),
+                "reported_latest_json": _normalize_report_value(payload.get("reported_latest_json"), limit=200),
+                "latest_json_mismatch": bool(payload.get("latest_json_mismatch")),
+                "latest_json_repaired": bool(payload.get("latest_json_repaired")),
                 "deterministic_bundle": deterministic_bundle,
                 "path": repo_rel(path, root=root),
             }
@@ -673,6 +640,8 @@ def build_active_task_summary(root: Path) -> dict[str, Any]:
         "artifact_integrity_blocked": 0,
         "recent_failure_summary_blocked": 0,
         "artifact_integrity_planned_only_incomplete": 0,
+        "latest_json_mismatch": 0,
+        "latest_json_repaired": 0,
         "reuse_decision_present": 0,
         "rerun_forbidden": 0,
         "deterministic_bundle_available": 0,
@@ -719,6 +688,10 @@ def build_active_task_summary(root: Path) -> dict[str, Any]:
         ).strip().lower()
         if artifact_integrity_kind == "planned_only_incomplete":
             summary["artifact_integrity_planned_only_incomplete"] += 1
+        if bool(item.get("latest_json_mismatch")):
+            summary["latest_json_mismatch"] += 1
+        if bool(item.get("latest_json_repaired")):
+            summary["latest_json_repaired"] += 1
         reuse_decision = diagnostics.get("reuse_decision") if isinstance(diagnostics.get("reuse_decision"), dict) else {}
         if reuse_decision:
             summary["reuse_decision_present"] += 1
@@ -1027,6 +1000,10 @@ def dashboard_html(
                     f"<div class=\"meta\">chapter6_can_go_to_6_8: {html.escape(str(bool(chapter6_hints.get('can_go_to_6_8'))).lower())}</div>",
                     f"<div class=\"meta\">chapter6_blocked_by: {html.escape(str(chapter6_hints.get('blocked_by') or 'n/a'))}</div>",
                     f"<div class=\"meta\">chapter6_rerun_override: {html.escape(str(chapter6_hints.get('rerun_override_flag') or 'n/a'))}</div>",
+                    f"<div class=\"meta\">latest_json: {html.escape(str(item.get('latest_json') or 'n/a'))}</div>",
+                    f"<div class=\"meta\">reported_latest_json: {html.escape(str(item.get('reported_latest_json') or 'n/a'))}</div>",
+                    f"<div class=\"meta\">latest_json_mismatch: {html.escape(str(bool(item.get('latest_json_mismatch'))).lower())}</div>",
+                    f"<div class=\"meta\">latest_json_repaired: {html.escape(str(bool(item.get('latest_json_repaired'))).lower())}</div>",
                     f"<div class=\"meta\">needs_fix_agents: {html.escape(','.join(str(x) for x in list(clean_state.get('needs_fix_agents') or [])) or 'none')}</div>",
                     f"<div class=\"meta\">unknown_agents: {html.escape(','.join(str(x) for x in list(clean_state.get('unknown_agents') or [])) or 'none')}</div>",
                     f"<div class=\"meta\">timeout_agents: {html.escape(','.join(str(x) for x in list(clean_state.get('timeout_agents') or [])) or 'none')}</div>",
@@ -1107,7 +1084,7 @@ def dashboard_html(
     <details open>
       <summary>Active task clean state</summary>
       <div class="hint">Top active task sidecars are summarized here so deterministic-green-but-LLM-not-clean tasks are visible without opening each run directory.</div>
-      <div class="hint">total={int(active_task_summary.get('total') or 0)} clean={int(active_task_summary.get('clean') or 0)} deterministic_ok_llm_not_clean={int(active_task_summary.get('deterministic_ok_llm_not_clean') or 0)} deterministic_only={int(active_task_summary.get('deterministic_only') or 0)} not_clean={int(active_task_summary.get('not_clean') or 0)} profile_drift={int(active_task_summary.get('profile_drift') or 0)} unit_failed_but_engine_lane_ran={int(active_task_summary.get('unit_failed_but_engine_lane_ran') or 0)} rerun_guard_blocked={int(active_task_summary.get('rerun_guard_blocked') or 0)} rerun_forbidden={int(active_task_summary.get('rerun_forbidden') or 0)} llm_retry_stop_loss_blocked={int(active_task_summary.get('llm_retry_stop_loss_blocked') or 0)} sc_test_retry_stop_loss_blocked={int(active_task_summary.get('sc_test_retry_stop_loss_blocked') or 0)} artifact_integrity_blocked={int(active_task_summary.get('artifact_integrity_blocked') or 0)} recent_failure_summary_blocked={int(active_task_summary.get('recent_failure_summary_blocked') or 0)} artifact_integrity_planned_only_incomplete={int(active_task_summary.get('artifact_integrity_planned_only_incomplete') or 0)} reuse_decision_present={int(active_task_summary.get('reuse_decision_present') or 0)} deterministic_bundle_available={int(active_task_summary.get('deterministic_bundle_available') or 0)} run_type_planned_only={int(active_task_summary.get('run_type_planned_only') or 0)} run_type_deterministic_only={int(active_task_summary.get('run_type_deterministic_only') or 0)} run_type_full={int(active_task_summary.get('run_type_full') or 0)} run_type_llm_only={int(active_task_summary.get('run_type_llm_only') or 0)} run_type_preflight_only={int(active_task_summary.get('run_type_preflight_only') or 0)} next_action_needs_fix_fast={int(active_task_summary.get('next_action_needs_fix_fast') or 0)} next_action_inspect={int(active_task_summary.get('next_action_inspect') or 0)} next_action_resume={int(active_task_summary.get('next_action_resume') or 0)} next_action_continue={int(active_task_summary.get('next_action_continue') or 0)} chapter6_can_skip_6_7={int(active_task_summary.get('chapter6_can_skip_6_7') or 0)} chapter6_can_go_to_6_8={int(active_task_summary.get('chapter6_can_go_to_6_8') or 0)}</div>
+      <div class="hint">total={int(active_task_summary.get('total') or 0)} clean={int(active_task_summary.get('clean') or 0)} deterministic_ok_llm_not_clean={int(active_task_summary.get('deterministic_ok_llm_not_clean') or 0)} deterministic_only={int(active_task_summary.get('deterministic_only') or 0)} not_clean={int(active_task_summary.get('not_clean') or 0)} profile_drift={int(active_task_summary.get('profile_drift') or 0)} unit_failed_but_engine_lane_ran={int(active_task_summary.get('unit_failed_but_engine_lane_ran') or 0)} rerun_guard_blocked={int(active_task_summary.get('rerun_guard_blocked') or 0)} rerun_forbidden={int(active_task_summary.get('rerun_forbidden') or 0)} llm_retry_stop_loss_blocked={int(active_task_summary.get('llm_retry_stop_loss_blocked') or 0)} sc_test_retry_stop_loss_blocked={int(active_task_summary.get('sc_test_retry_stop_loss_blocked') or 0)} artifact_integrity_blocked={int(active_task_summary.get('artifact_integrity_blocked') or 0)} recent_failure_summary_blocked={int(active_task_summary.get('recent_failure_summary_blocked') or 0)} artifact_integrity_planned_only_incomplete={int(active_task_summary.get('artifact_integrity_planned_only_incomplete') or 0)} latest_json_mismatch={int(active_task_summary.get('latest_json_mismatch') or 0)} latest_json_repaired={int(active_task_summary.get('latest_json_repaired') or 0)} reuse_decision_present={int(active_task_summary.get('reuse_decision_present') or 0)} deterministic_bundle_available={int(active_task_summary.get('deterministic_bundle_available') or 0)} run_type_planned_only={int(active_task_summary.get('run_type_planned_only') or 0)} run_type_deterministic_only={int(active_task_summary.get('run_type_deterministic_only') or 0)} run_type_full={int(active_task_summary.get('run_type_full') or 0)} run_type_llm_only={int(active_task_summary.get('run_type_llm_only') or 0)} run_type_preflight_only={int(active_task_summary.get('run_type_preflight_only') or 0)} next_action_needs_fix_fast={int(active_task_summary.get('next_action_needs_fix_fast') or 0)} next_action_inspect={int(active_task_summary.get('next_action_inspect') or 0)} next_action_resume={int(active_task_summary.get('next_action_resume') or 0)} next_action_continue={int(active_task_summary.get('next_action_continue') or 0)} chapter6_can_skip_6_7={int(active_task_summary.get('chapter6_can_skip_6_7') or 0)} chapter6_can_go_to_6_8={int(active_task_summary.get('chapter6_can_go_to_6_8') or 0)}</div>
       <div class="highlight-wrap">
         {''.join(active_task_cards) if active_task_cards else '<div class="meta">No active task sidecars found.</div>'}
       </div>

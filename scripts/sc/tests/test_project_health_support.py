@@ -189,6 +189,9 @@ class ProjectHealthSupportTests(unittest.TestCase):
                             "latest_json": "logs/ci/2026-04-06/sc-review-pipeline-task-14/latest.json",
                             "summary_json": "logs/ci/2026-04-06/sc-review-pipeline-task-14-run-a/summary.json",
                         },
+                        "reported_latest_json": "logs/ci/2026-04-07/sc-review-pipeline-task-14/latest.json",
+                        "latest_json_mismatch": False,
+                        "latest_json_repaired": True,
                         "diagnostics": {
                             "profile_drift": {
                                 "previous_delivery_profile": "standard",
@@ -398,6 +401,8 @@ class ProjectHealthSupportTests(unittest.TestCase):
             self.assertEqual(1, latest_index["active_task_summary"]["artifact_integrity_blocked"])
             self.assertEqual(1, latest_index["active_task_summary"]["recent_failure_summary_blocked"])
             self.assertEqual(1, latest_index["active_task_summary"]["artifact_integrity_planned_only_incomplete"])
+            self.assertEqual(0, latest_index["active_task_summary"]["latest_json_mismatch"])
+            self.assertEqual(1, latest_index["active_task_summary"]["latest_json_repaired"])
             self.assertEqual(1, latest_index["active_task_summary"]["rerun_guard_blocked"])
             self.assertEqual(1, latest_index["active_task_summary"]["rerun_forbidden"])
             self.assertEqual(1, latest_index["active_task_summary"]["deterministic_bundle_available"])
@@ -422,6 +427,8 @@ class ProjectHealthSupportTests(unittest.TestCase):
             self.assertIn("sc_test_retry_stop_loss", latest_html)
             self.assertIn("artifact_integrity", latest_html)
             self.assertIn("artifact_integrity_planned_only_incomplete", latest_html)
+            self.assertIn("latest_json_mismatch", latest_html)
+            self.assertIn("latest_json_repaired", latest_html)
             self.assertIn("llm_retry_stop_loss: blocked=true step_name=sc-llm-review kind=deterministic_green_llm_not_clean", latest_html)
             self.assertIn("sc_test_retry_stop_loss: blocked=true step_name=sc-test kind=same_run_retry_waste", latest_html)
             self.assertIn("recent_failure_summary: family=step-failed:sc-test same_family_count=3 stop_full_rerun_recommended=True", latest_html)
@@ -436,6 +443,8 @@ class ProjectHealthSupportTests(unittest.TestCase):
             self.assertIn("chapter6_can_go_to_6_8", latest_html)
             self.assertIn("chapter6_rerun_forbidden", latest_html)
             self.assertIn("chapter6_rerun_override", latest_html)
+            self.assertIn("latest_json_repaired: true", latest_html)
+            self.assertIn("reported_latest_json: logs/ci/2026-04-07/sc-review-pipeline-task-14/latest.json", latest_html)
             self.assertIn(
                 "chapter6_stop_loss_note: Deterministic evidence is already green; do not pay for another full 6.7. Continue with 6.8 or needs-fix-fast.",
                 latest_html,
