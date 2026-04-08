@@ -12,9 +12,13 @@ from typing import Any
 REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT / "scripts" / "python") not in sys.path:
     sys.path.insert(0, str(REPO_ROOT / "scripts" / "python"))
+if str(REPO_ROOT / "scripts" / "sc") not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT / "scripts" / "sc"))
 
 from inspect_run import inspect_run_artifacts  # noqa: E402
 from validate_recovery_docs import extract_repo_paths, is_readme, is_template, parse_fields  # noqa: E402
+from _active_task_sidecar import write_active_task_sidecar  # noqa: E402
+from _chapter6_recovery_common import chapter6_stop_loss_note as _chapter6_stop_loss_note  # noqa: E402
 
 
 def _repo_rel(root: Path, path: Path | None) -> str:
@@ -111,6 +115,19 @@ def _active_task_json_path(root: Path, task_id: str) -> Path:
     return root / "logs" / "ci" / "active-tasks" / f"task-{task_id}.active.json"
 
 
+def _resolve_latest_out_dir(root: Path, latest_payload: dict[str, Any]) -> Path | None:
+    for key in ("latest_out_dir", "summary_path", "execution_context_path", "repair_guide_json_path", "repair_guide_md_path"):
+        raw = str(latest_payload.get(key) or "").strip()
+        if not raw:
+            continue
+        candidate = _resolve_path(root, raw)
+        if key != "latest_out_dir":
+            candidate = candidate.parent
+        if candidate.exists():
+            return candidate
+    return None
+
+
 def _load_active_task(root: Path, task_id: str) -> dict[str, Any]:
     if not task_id:
         return {}
@@ -159,6 +176,46 @@ def _repair_active_task_latest_pointer(root: Path, *, task_id: str, resolved_lat
     reported_latest = str(paths.get("latest_json") or "").strip()
     if not reported_latest or reported_latest == resolved_latest:
         return {"repaired": False, "reported_latest_json": reported_latest, "latest_json": resolved_latest}
+    latest_path = _resolve_path(root, resolved_latest)
+    rebuilt = False
+    if latest_path.exists():
+        try:
+            latest_payload = _read_json(latest_path)
+        except Exception:
+            latest_payload = {}
+        rebuilt_out_dir = _resolve_latest_out_dir(root, latest_payload)
+        rebuilt_run_id = str(latest_payload.get("run_id") or "").strip()
+        rebuilt_status = str(latest_payload.get("status") or "").strip() or "ok"
+        if rebuilt_out_dir is not None and rebuilt_run_id:
+            try:
+                write_active_task_sidecar(
+                    task_id=task_id,
+                    run_id=rebuilt_run_id,
+                    status=rebuilt_status,
+                    out_dir=rebuilt_out_dir,
+                    latest_json_path=latest_path,
+                    root=root,
+                )
+                rebuilt = True
+            except Exception:
+                rebuilt = False
+    if rebuilt:
+        try:
+            rebuilt_payload = _read_json(json_path)
+        except Exception:
+            rebuilt_payload = {}
+        if isinstance(rebuilt_payload, dict):
+            rebuilt_payload["reported_latest_json"] = reported_latest
+            rebuilt_payload["latest_json_mismatch"] = False
+            rebuilt_payload["latest_json_repaired"] = True
+            json_path.write_text(json.dumps(rebuilt_payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
+        return {
+            "repaired": True,
+            "reported_latest_json": reported_latest,
+            "latest_json": resolved_latest,
+            "path": _repo_rel(root, json_path),
+            "rebuild_mode": "sidecar",
+        }
     paths["latest_json"] = resolved_latest
     payload["paths"] = paths
     json_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
@@ -231,40 +288,6 @@ def _fallback_recommendation(inspection: dict[str, Any], task_id: str) -> tuple[
     )
 
 
-def _chapter6_stop_loss_note(chapter6_hints: dict[str, Any], latest_summary_signals: dict[str, Any]) -> str:
-    blocked_by = str(chapter6_hints.get("blocked_by") or "").strip().lower()
-    reason = str(latest_summary_signals.get("reason") or "").strip()
-    if not blocked_by and reason.startswith("rerun_blocked:deterministic_green_llm_not_clean"):
-        blocked_by = "rerun_guard"
-    elif not blocked_by and reason.startswith("rerun_blocked:repeat_deterministic_failure"):
-        blocked_by = "rerun_guard"
-    elif not blocked_by and (
-        reason.startswith("rerun_blocked:dirty_worktree_unsafe_paths_ceiling")
-        or reason.startswith("rerun_blocked:dirty_worktree_changed_paths_ceiling")
-        or reason.startswith("rerun_blocked:profile_drift_change_scope_ceiling")
-    ):
-        blocked_by = "rerun_guard"
-    if blocked_by == "rerun_guard":
-        if reason.startswith("rerun_blocked:deterministic_green_llm_not_clean"):
-            return "Deterministic evidence is already green; do not pay for another full 6.7. Continue with 6.8 or needs-fix-fast."
-        if reason.startswith("rerun_blocked:repeat_deterministic_failure"):
-            return "Recent deterministic failures already repeated with the same fingerprint; inspect and fix the root cause before rerunning 6.7."
-        if reason.startswith("rerun_blocked:dirty_worktree_unsafe_paths_ceiling") or reason.startswith("rerun_blocked:dirty_worktree_changed_paths_ceiling") or reason.startswith("rerun_blocked:profile_drift_change_scope_ceiling"):
-            return "Current changes exceed the standard Chapter 6 safe scope; shrink the dirty worktree or inspect/reset the drift before paying for another full 6.7."
-        return "A rerun guard is active; check the latest diagnostics before paying for another full rerun."
-    if blocked_by == "llm_retry_stop_loss":
-        return "This run already stopped after the first costly llm timeout; continue with the narrow llm-only closure path instead of reopening deterministic steps."
-    if blocked_by == "sc_test_retry_stop_loss":
-        return "The pipeline already proved the unit root cause and stopped the same-run retry; fix the unit issue first, then start a fresh run."
-    if blocked_by == "waste_signals":
-        return "Unit failure was already known before more expensive engine-lane work continued; fix the unit/root cause before paying that cost again."
-    if blocked_by == "recent_failure_summary":
-        return "Recent runs already repeat the same failure family; inspect the repeated fingerprint and fix the root cause before rerunning 6.7."
-    if blocked_by == "artifact_integrity":
-        if reason == "planned_only_incomplete":
-            return "The latest bundle is a planned-only terminal run, not a real completed producer run; inspect it only for evidence and start a fresh real run before reopening Chapter 6."
-        return "The latest recovery bundle is incomplete or stale; inspect the evidence only, then start a fresh real run instead of resuming from this pointer."
-    return ""
 
 
 def _recommendation_from_agent_review(agent_review: dict[str, Any]) -> tuple[str, str, list[str]] | None:

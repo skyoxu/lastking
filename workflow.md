@@ -20,9 +20,9 @@
 按以下顺序恢复：
 
 1. 先读 `AGENTS.md` 和 `docs/agents/00-index.md`
-2. 如果存在，先读 `logs/ci/active-tasks/task-<id>.active.md`
-3. 执行 `py -3 scripts/python/dev_cli.py resume-task --task-id <id>`
-4. 只有当 recovery summary 仍然不够时，再执行 `py -3 scripts/python/inspect_run.py --kind pipeline --task-id <id>`
+2. 先执行 `py -3 scripts/python/dev_cli.py resume-task --task-id <id>`
+3. 如果 recovery summary 仍然不够，再读 `logs/ci/active-tasks/task-<id>.active.md`
+4. 只有当 `resume-task` 与 `active-task` 仍不足以判断时，再执行 `py -3 scripts/python/inspect_run.py --kind pipeline --task-id <id>`
 
 补充说明：
 - `resume-task` 现在会汇总 `Latest reason`、`Latest run type`、`Latest reuse mode`、`Latest artifact integrity`、`Chapter6 next action`、`Chapter6 can skip 6.7`、`Chapter6 can go to 6.8`、`Chapter6 blocked by`。
@@ -32,7 +32,7 @@
 - `inspect_run.py --kind pipeline --task-id <id>` 在解析自动恢复指针时，会跳过只来自 dry-run 的更新候选，回退到最近一轮真实可恢复 run。
 
 - Recovery order now requires reading `Latest reason`, `Latest run type`, `Latest reuse mode`, and `Latest artifact integrity` before trusting the newest `latest.json` pointer.
-- `logs/ci/active-tasks/task-<id>.active.md` also exposes `Latest run type`, `Latest artifact integrity`, and `Diagnostics artifact_integrity`; read them together with `Latest reason` during recovery.
+- `logs/ci/active-tasks/task-<id>.active.md` 现在是 `resume-task` 之后的短指针补充视图；只有当 recovery summary 还需要更快的人读入口时再看它，并继续结合 `Latest reason`、`Latest run type`、`Latest artifact integrity` 与 `Diagnostics artifact_integrity` 一起判断。
 - If recovery shows `Latest run type = planned-only`, `Latest reason = planned_only_incomplete`, or `Chapter6 blocked by = artifact_integrity`, treat the bundle as evidence only; do not reopen `6.7` or `6.8` from it.
 
 ### 1.2 先选 Delivery Profile

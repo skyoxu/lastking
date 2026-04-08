@@ -11,15 +11,15 @@ Purpose: keep [AGENTS.md](../../AGENTS.md) short and move durable guidance here.
 5. [03-persistent-harness.md](03-persistent-harness.md)
 6. [../workflows/run-protocol.md](../workflows/run-protocol.md)
 7. [07-agent-to-agent-review.md](07-agent-to-agent-review.md)
-8. If a task-scoped run already exists, `logs/ci/active-tasks/task-<id>.active.md`
-9. Then run `py -3 scripts/python/dev_cli.py resume-task --task-id <id>` for the full recovery summary
+8. First run `py -3 scripts/python/dev_cli.py resume-task --task-id <id>` for the canonical recovery summary
+9. If a task-scoped run already exists and the summary still needs a shorter human pointer, read `logs/ci/active-tasks/task-<id>.active.md`
 10. Newest files in `execution-plans/` and `decision-logs/`
 11. `logs/ci/<date>/sc-review-pipeline-task-<task>/latest.json` only when the recovery summary still needs deeper inspection
 
 Recovery shortcut:
 - `resume-task` and `inspect_run.py --kind pipeline` now expose `latest_summary_signals` and `chapter6_hints`; use those fields before deciding whether to reopen `6.7` or narrow to `6.8`.
 - Recovery decisions now require reading `reason`, `run_type`, `reuse_mode`, and `artifact_integrity` together before trusting the newest pointer.
-- `active-task` now also classifies `Chapter6 blocked by` for `rerun_guard`, `llm_retry_stop_loss`, `sc_test_retry_stop_loss`, `waste_signals`, and `artifact_integrity`, so the shortest recovery pointer is often enough to avoid an unnecessary full rerun.
+- `active-task` now also classifies `Chapter6 blocked by` for `rerun_guard`, `llm_retry_stop_loss`, `sc_test_retry_stop_loss`, `waste_signals`, and `artifact_integrity`, but it should be read after `resume-task`, not before the canonical recovery summary.
 - If recovery shows `run_type = planned-only`, `reason = planned_only_incomplete`, or `Chapter6 blocked by = artifact_integrity`, treat that bundle as evidence only; do not reopen `6.7` or `6.8` from it.
 - `run_review_pipeline.py --dry-run` no longer publishes `latest.json` or `active-task` sidecars, and `inspect_run.py` automatically skips dry-run-only latest candidates when resolving the next real recovery pointer.
 - `active-task` now follows the real bundle pointed to by `latest.json`; when `out_dir` and `latest.json` disagree, trust `latest.json` first.

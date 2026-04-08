@@ -31,6 +31,159 @@ resume_task = _load_module("resume_task_module", "scripts/python/resume_task.py"
 
 
 class ResumeTaskTests(unittest.TestCase):
+    def test_repair_active_task_latest_pointer_should_rebuild_sidecar_from_canonical_latest(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            repo_root = Path(tmp_dir)
+            latest_run_id = "1601f1321a2a45d5ac11fff0b718aa14"
+            latest_out_dir = repo_root / "logs" / "ci" / "2026-04-06" / f"sc-review-pipeline-task-14-{latest_run_id}"
+            latest_out_dir.mkdir(parents=True, exist_ok=True)
+            (latest_out_dir / "summary.json").write_text(
+                json.dumps(
+                    {
+                        "cmd": "sc-review-pipeline",
+                        "task_id": "14",
+                        "run_id": latest_run_id,
+                        "status": "ok",
+                        "reason": "pipeline_clean",
+                        "run_type": "full",
+                        "reuse_mode": "none",
+                        "steps": [
+                            {"name": "sc-test", "status": "ok"},
+                            {"name": "sc-acceptance-check", "status": "ok"},
+                            {"name": "sc-llm-review", "status": "ok"},
+                        ],
+                        "started_at_utc": "2026-04-06T00:00:00+00:00",
+                        "finished_at_utc": "2026-04-06T00:02:00+00:00",
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (latest_out_dir / "execution-context.json").write_text(
+                json.dumps(
+                    {
+                        "cmd": "sc-review-pipeline",
+                        "task_id": "14",
+                        "run_id": latest_run_id,
+                        "status": "ok",
+                        "delivery_profile": "fast-ship",
+                        "security_profile": "host-safe",
+                        "diagnostics": {},
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (latest_out_dir / "repair-guide.json").write_text(
+                json.dumps(
+                    {
+                        "status": "not-needed",
+                        "task_id": "14",
+                        "summary_status": "ok",
+                        "failed_step": "",
+                        "recommendations": [],
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (latest_out_dir / "repair-guide.md").write_text("# repair\n", encoding="utf-8")
+            (latest_out_dir / "run-events.jsonl").write_text(
+                json.dumps(
+                    {
+                        "schema_version": "1.0.0",
+                        "ts": "2026-04-06T00:02:00Z",
+                        "event": "run_completed",
+                        "task_id": "14",
+                        "run_id": latest_run_id,
+                        "delivery_profile": "fast-ship",
+                        "security_profile": "host-safe",
+                        "step_name": None,
+                        "status": "ok",
+                        "details": {},
+                    },
+                    ensure_ascii=False,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            latest_path = repo_root / "logs" / "ci" / "2026-04-06" / "sc-review-pipeline-task-14" / "latest.json"
+            latest_path.parent.mkdir(parents=True, exist_ok=True)
+            latest_path.write_text(
+                json.dumps(
+                    {
+                        "task_id": "14",
+                        "run_id": latest_run_id,
+                        "status": "ok",
+                        "latest_out_dir": str(latest_out_dir),
+                        "summary_path": str(latest_out_dir / "summary.json"),
+                        "execution_context_path": str(latest_out_dir / "execution-context.json"),
+                        "repair_guide_json_path": str(latest_out_dir / "repair-guide.json"),
+                        "repair_guide_md_path": str(latest_out_dir / "repair-guide.md"),
+                        "run_events_path": str(latest_out_dir / "run-events.jsonl"),
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            active_task_json = repo_root / "logs" / "ci" / "active-tasks" / "task-14.active.json"
+            active_task_json.parent.mkdir(parents=True, exist_ok=True)
+            active_task_json.write_text(
+                json.dumps(
+                    {
+                        "task_id": "14",
+                        "run_id": "stale-run",
+                        "status": "ok",
+                        "recommended_action": "continue",
+                        "recommended_action_why": "Pipeline is green; continue the task or start the next task.",
+                        "paths": {
+                            "latest_json": "logs/ci/2026-04-07/sc-review-pipeline-task-14/latest.json",
+                            "out_dir": "logs/ci/2026-04-07/sc-review-pipeline-task-14-stale-run",
+                            "summary_json": "logs/ci/2026-04-07/sc-review-pipeline-task-14-stale-run/summary.json",
+                        },
+                        "latest_summary_signals": {
+                            "reason": "in_progress",
+                            "reuse_mode": "none",
+                            "diagnostics_keys": ["profile_floor"],
+                        },
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            active_task_md = active_task_json.with_suffix(".md")
+            active_task_md.write_text("- Latest pointer: `logs/ci/2026-04-07/sc-review-pipeline-task-14/latest.json`\n", encoding="utf-8")
+
+            repair = resume_task._repair_active_task_latest_pointer(
+                repo_root,
+                task_id="14",
+                resolved_latest="logs/ci/2026-04-06/sc-review-pipeline-task-14/latest.json",
+            )
+
+            self.assertTrue(repair["repaired"])
+            repaired_payload = json.loads(active_task_json.read_text(encoding="utf-8"))
+            self.assertEqual(latest_run_id, repaired_payload["run_id"])
+            self.assertTrue(repaired_payload["latest_json_repaired"])
+            self.assertFalse(repaired_payload["latest_json_mismatch"])
+            self.assertEqual(
+                "logs/ci/2026-04-07/sc-review-pipeline-task-14/latest.json",
+                repaired_payload["reported_latest_json"],
+            )
+            self.assertEqual("logs/ci/2026-04-06/sc-review-pipeline-task-14/latest.json", repaired_payload["paths"]["latest_json"])
+            self.assertEqual("pipeline_clean", repaired_payload["latest_summary_signals"]["reason"])
+            self.assertEqual("continue", repaired_payload["recommended_action"])
+            self.assertIn("logs/ci/2026-04-06/sc-review-pipeline-task-14/latest.json", active_task_md.read_text(encoding="utf-8"))
+
     def test_build_resume_payload_should_prefer_inspection_latest_summary_signals(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             repo_root = Path(tmp_dir)
