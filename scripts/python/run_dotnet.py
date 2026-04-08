@@ -22,7 +22,7 @@ import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-from solution_target import resolve_solution_arg
+from solution_target import resolve_test_solution_arg
 
 
 def run_cmd(args, cwd=None, timeout=900_000):
@@ -95,7 +95,7 @@ def main():
     args = ap.parse_args()
 
     root = os.getcwd()
-    resolved_solution = resolve_solution_arg(args.solution, root=Path(root))
+    resolved_solution = resolve_test_solution_arg(args.solution, root=Path(root))
     date = dt.date.today().strftime('%Y-%m-%d')
     out_dir = args.out_dir or os.path.join(root, 'logs', 'unit', date)
     ensure_dir(out_dir)

@@ -277,6 +277,12 @@ def _signal_driven_recommendation(
                 "Rerun guard blocked another full rerun after repeated deterministic failures; inspect the repeated sc-test fingerprint and fix the root cause first.",
                 "rerun_guard",
             )
+        if kind in {"dirty_worktree_unsafe_paths_ceiling", "dirty_worktree_changed_paths_ceiling", "profile_drift_change_scope_ceiling"}:
+            return (
+                "inspect",
+                "Rerun guard blocked another full rerun because the current changes exceed the standard Chapter 6 safe scope; shrink the dirty worktree or inspect/reset the drift first.",
+                "rerun_guard",
+            )
 
     llm_retry_stop_loss = diagnostics.get("llm_retry_stop_loss") if isinstance(diagnostics.get("llm_retry_stop_loss"), dict) else {}
     if bool(llm_retry_stop_loss.get("blocked")):
@@ -359,6 +365,37 @@ def _chapter6_rerun_policy(*, blocked_by: str, diagnostics: dict[str, Any]) -> t
     if blocked in {"llm_retry_stop_loss", "sc_test_retry_stop_loss", "waste_signals", "recent_failure_summary"}:
         return True, ""
     return False, ""
+
+
+def _chapter6_stop_loss_note(chapter6_hints: dict[str, Any], latest_summary_signals: dict[str, Any]) -> str:
+    blocked_by = str(chapter6_hints.get("blocked_by") or "").strip().lower()
+    reason = str(latest_summary_signals.get("reason") or "").strip()
+    artifact_integrity_kind = str(latest_summary_signals.get("artifact_integrity_kind") or "").strip().lower()
+    if blocked_by == "rerun_guard":
+        if reason.startswith("rerun_blocked:deterministic_green_llm_not_clean"):
+            return "Deterministic evidence is already green; do not pay for another full 6.7. Continue with 6.8 or needs-fix-fast."
+        if reason.startswith("rerun_blocked:repeat_deterministic_failure"):
+            return "Recent deterministic failures already repeated with the same fingerprint; inspect and fix the root cause before rerunning 6.7."
+        if (
+            reason.startswith("rerun_blocked:dirty_worktree_unsafe_paths_ceiling")
+            or reason.startswith("rerun_blocked:dirty_worktree_changed_paths_ceiling")
+            or reason.startswith("rerun_blocked:profile_drift_change_scope_ceiling")
+        ):
+            return "Current changes exceed the standard Chapter 6 safe scope; shrink the dirty worktree or inspect/reset the drift before paying for another full 6.7."
+        return "A rerun guard is active; check the latest diagnostics before paying for another full rerun."
+    if blocked_by == "llm_retry_stop_loss":
+        return "This run already stopped after the first costly llm timeout; continue with the narrow llm-only closure path instead of reopening deterministic steps."
+    if blocked_by == "sc_test_retry_stop_loss":
+        return "The pipeline already proved the unit root cause and stopped the same-run retry; fix the unit issue first, then start a fresh run."
+    if blocked_by == "waste_signals":
+        return "Unit failure was already known before more expensive engine-lane work continued; fix the unit/root cause before paying that cost again."
+    if blocked_by == "recent_failure_summary":
+        return "Recent runs already repeat the same failure family; inspect the repeated fingerprint and fix the root cause before rerunning 6.7."
+    if blocked_by == "artifact_integrity":
+        if reason == "planned_only_incomplete" or artifact_integrity_kind == "planned_only_incomplete":
+            return "The latest bundle is a planned-only terminal run, not a real completed producer run; inspect it only for evidence and start a fresh real run before reopening Chapter 6."
+        return "The latest recovery bundle is incomplete or stale; inspect the evidence only, then start a fresh real run instead of resuming from this pointer."
+    return ""
 
 
 def _derive_latest_summary_signals(
@@ -557,6 +594,7 @@ def render_active_task_markdown(payload: dict[str, Any]) -> str:
     llm_retry_stop_loss = diagnostics.get("llm_retry_stop_loss") if isinstance(diagnostics.get("llm_retry_stop_loss"), dict) else {}
     latest_summary_signals = payload.get("latest_summary_signals") if isinstance(payload.get("latest_summary_signals"), dict) else {}
     chapter6_hints = payload.get("chapter6_hints") if isinstance(payload.get("chapter6_hints"), dict) else {}
+    chapter6_stop_loss_note = _chapter6_stop_loss_note(chapter6_hints, latest_summary_signals)
     lines = [
         "# Active Task Summary",
         "",
@@ -585,6 +623,7 @@ def render_active_task_markdown(payload: dict[str, Any]) -> str:
         f"- Chapter6 blocked by: {chapter6_hints.get('blocked_by') or 'n/a'}",
         f"- Chapter6 rerun forbidden: {bool(chapter6_hints.get('rerun_forbidden'))}",
         f"- Chapter6 rerun override: {chapter6_hints.get('rerun_override_flag') or 'n/a'}",
+        f"- Chapter6 stop-loss note: {chapter6_stop_loss_note or 'n/a'}",
         f"- Resume summary command: `{commands.get('resume_summary')}`" if commands.get("resume_summary") else "- Resume summary command: n/a",
         f"- Resume command: `{commands.get('resume')}`" if commands.get("resume") else "- Resume command: n/a",
         f"- Fork command: `{commands.get('fork')}`" if commands.get("fork") else "- Fork command: n/a",
@@ -611,6 +650,11 @@ def render_active_task_markdown(payload: dict[str, Any]) -> str:
     if llm_retry_stop_loss:
         lines.append(
             f"- Diagnostics llm_retry_stop_loss: blocked={bool(llm_retry_stop_loss.get('blocked'))} kind={llm_retry_stop_loss.get('kind') or 'n/a'} step_name={llm_retry_stop_loss.get('step_name') or 'n/a'}"
+        )
+    sc_test_retry_stop_loss = diagnostics.get("sc_test_retry_stop_loss") if isinstance(diagnostics.get("sc_test_retry_stop_loss"), dict) else {}
+    if sc_test_retry_stop_loss:
+        lines.append(
+            f"- Diagnostics sc_test_retry_stop_loss: blocked={bool(sc_test_retry_stop_loss.get('blocked'))} kind={sc_test_retry_stop_loss.get('kind') or 'n/a'} step_name={sc_test_retry_stop_loss.get('step_name') or 'n/a'}"
         )
     artifact_integrity = diagnostics.get("artifact_integrity") if isinstance(diagnostics.get("artifact_integrity"), dict) else {}
     if artifact_integrity:

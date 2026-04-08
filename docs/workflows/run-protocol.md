@@ -186,8 +186,10 @@ Before deciding to reopen `6.7`, read `latest.json.reason`, `latest.json.run_typ
 - `sc_test_retry_stop_loss`
 - `waste_signals`
 - `artifact_integrity`
+- `recent_failure_summary`
 
 If recovery already shows `run_type = planned-only`, `reason = planned_only_incomplete`, or `chapter6_hints.blocked_by = artifact_integrity`, treat that bundle as evidence only and fall back to the previous real producer run before reopening `6.7` or `6.8`.
+If recovery readers also expose `recommended_action_why`, treat it as the shortest explanation of whether the next move is `inspect`, `resume`, or `needs-fix-fast`; `needs-fix-fast` means targeted closure should happen before any full rerun.
 
 ## Local Inspect Entry
 
@@ -199,6 +201,7 @@ Use `scripts/python/inspect_run.py` as the stable local replay/inspect entrypoin
 - Persist one stable inspection payload: `py -3 scripts/python/inspect_run.py --task-id <task-id> --out-json logs/ci/<date>/inspect-task-<task-id>.json`
 
 The command returns `0` only when the inspected run is fully usable for recovery. Any broken pointer, schema drift, or failed step returns non-zero and emits one stable JSON payload.
+When `inspect_run.py --task-id <task-id>` resolves the latest task-scoped bundle automatically, it now skips both dry-run-only pointers and newer `planned-only` terminal bundles, then falls back to the newest real producer run.
 For task-scoped review runs, that payload now also exposes:
 
 - `latest_summary_signals.reason`
@@ -208,6 +211,9 @@ For task-scoped review runs, that payload now also exposes:
 - `latest_summary_signals.diagnostics_keys`
 - `chapter6_hints.next_action`
 - `chapter6_hints.blocked_by`
+- `recent_failure_summary.latest_failure_family`
+- `recent_failure_summary.same_family_count`
+- `recent_failure_summary.stop_full_rerun_recommended`
 
 ## Failure Taxonomy
 
@@ -228,7 +234,7 @@ For task-scoped review runs, that payload now also exposes:
 - `summary.json` stays producer-owned and must not be rewritten by reviewer sidecars.
 - Recovery metadata belongs in sidecars, not in git-tracked heartbeat files.
 - `latest.json` is the task-scoped entry point; consumers should not guess the newest run by directory scanning first.
-- Stop-loss semantics used by recovery (`rerun_guard`, `llm_retry_stop_loss`, `sc_test_retry_stop_loss`, `waste_signals`, `artifact_integrity`, planned-only terminal bundle handling) must be migrated together across producer, consumer, schema fallback, and docs; do not update only one layer.
+- Stop-loss semantics used by recovery (`rerun_guard`, `llm_retry_stop_loss`, `sc_test_retry_stop_loss`, `waste_signals`, `recent_failure_summary`, `artifact_integrity`, planned-only terminal bundle handling) must be migrated together across producer, consumer, schema fallback, and docs; do not update only one layer.
 - Schemas under `scripts/sc/schemas/` are executable SSoT; docs explain them but do not duplicate them.
 
 ## Protocol Budget

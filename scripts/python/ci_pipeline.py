@@ -21,7 +21,7 @@ import re
 import subprocess
 import sys
 
-from solution_target import resolve_solution_arg
+from solution_target import resolve_test_solution_arg
 
 
 def run_cmd(args, cwd=None, timeout=900_000):
@@ -117,7 +117,7 @@ def main():
         return 1
 
     root = os.getcwd()
-    resolved_solution = resolve_solution_arg(args.solution)
+    resolved_solution = resolve_test_solution_arg(args.solution)
     date = dt.date.today().strftime('%Y-%m-%d')
     ci_dir = os.path.join('logs', 'ci', date)
     os.makedirs(ci_dir, exist_ok=True)

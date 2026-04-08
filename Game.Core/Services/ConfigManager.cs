@@ -155,6 +155,11 @@ public sealed class ConfigManager
             var spawnCadence = ReadOptionalInt(root, "spawn.cadence_seconds", defaultValue: 10, minimum: 1, reasons);
             var bossCount = ReadOptionalInt(root, "boss.count", defaultValue: 2, minimum: 1, reasons);
             var castleStartHp = ReadOptionalInt(root, "battle.castle_start_hp", defaultValue: 100, minimum: 1, reasons);
+            var economyRules = EconomyRulesReader.ReadEconomyRules(
+                root,
+                reasons,
+                InvalidTypeReason,
+                OutOfRangeReason);
 
             if (reasons.Count > 0)
             {
@@ -172,7 +177,8 @@ public sealed class ConfigManager
                 BossChannel: bossChannel,
                 SpawnCadenceSeconds: spawnCadence,
                 BossCount: bossCount,
-                CastleStartHp: castleStartHp);
+                CastleStartHp: castleStartHp)
+                .WithEconomyRules(economyRules);
 
             reasonCodes = Array.Empty<string>();
             return true;

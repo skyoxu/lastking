@@ -22,7 +22,7 @@ from quality_gates_builders import (
     build_gdunit_hard_cmd,
     build_smoke_headless_cmd,
 )
-from solution_target import resolve_solution_arg
+from solution_target import resolve_test_solution_arg
 
 
 def _run(cmd: list[str]) -> int:
@@ -90,7 +90,7 @@ def main(argv: list[str] | None = None) -> int:
 
     # Keep argument compatibility while normalizing default behavior.
     # This value is currently not consumed by the gate-bundle branch.
-    _resolved_solution = resolve_solution_arg(args.solution)
+    _resolved_solution = resolve_test_solution_arg(args.solution)
 
     if (args.gdunit_hard or args.smoke) and not args.godot_bin:
         print("[quality_gates] error: --godot-bin is required when --gdunit-hard or --smoke is enabled", file=sys.stderr)

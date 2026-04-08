@@ -16,6 +16,7 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
+from _repo_targets import resolve_solution_file
 from _step_result import StepResult
 from _util import repo_root, today_str, write_json, write_text
 
@@ -115,6 +116,8 @@ def step_task1_env_evidence(out_dir: Path, *, godot_bin: str | None) -> StepResu
         "checks": {},
         "errors": [],
     }
+    solution_file = resolve_solution_file(root)
+    solution_arg = f".\\{solution_file.name}" if solution_file is not None else ".\\Game.sln"
 
     if not godot_bin:
         details["errors"].append("GODOT_BIN is missing")
@@ -171,12 +174,12 @@ def step_task1_env_evidence(out_dir: Path, *, godot_bin: str | None) -> StepResu
     dotnet_sdk_versions = _parse_dotnet_sdk_versions(out_dotnet_sdks)
     details["commands"]["dotnet_list_sdks_command"] = {"rc": rc_dotnet_sdks}
 
-    # dotnet restore .\NewRouge.sln
+    # dotnet restore .\<resolved-solution>.sln
     # Run once to warm caches, then persist the second (steady-state) output.
-    _run_command(["dotnet", "restore", ".\\NewRouge.sln"], cwd=root, timeout_sec=240)
-    rc_restore, out_restore = _run_command(["dotnet", "restore", ".\\NewRouge.sln"], cwd=root, timeout_sec=240)
+    _run_command(["dotnet", "restore", solution_arg], cwd=root, timeout_sec=240)
+    rc_restore, out_restore = _run_command(["dotnet", "restore", solution_arg], cwd=root, timeout_sec=240)
     _write_utf8_file(evidence_dir / "dotnet-restore.txt", out_restore)
-    details["commands"]["dotnet_restore_command"] = {"rc": rc_restore}
+    details["commands"]["dotnet_restore_command"] = {"rc": rc_restore, "solution": solution_arg}
 
     # lockfile evidence
     lock_exists = (root / "packages.lock.json").exists()
@@ -242,7 +245,7 @@ def step_task1_env_evidence(out_dir: Path, *, godot_bin: str | None) -> StepResu
             },
         },
         "dotnet_restore": {
-            "command": "dotnet restore .\\NewRouge.sln",
+            "command": f"dotnet restore {solution_arg}",
             "exit_code": rc_restore,
             "evidence_file": f"logs/ci/{date}/env-evidence/dotnet-restore.txt",
         },

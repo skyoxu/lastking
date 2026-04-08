@@ -125,6 +125,65 @@ def _load_active_task(root: Path, task_id: str) -> dict[str, Any]:
     return payload
 
 
+def _normalized_active_task_snapshot(active_task: dict[str, Any], *, inspection_latest: str) -> dict[str, Any]:
+    paths = active_task.get("paths") if isinstance(active_task.get("paths"), dict) else {}
+    reported_latest = str(paths.get("latest_json") or "").strip()
+    resolved_latest = str(inspection_latest or "").strip() or reported_latest
+    payload = {
+        "path": str(active_task.get("_path") or ""),
+        "status": str(active_task.get("status") or "").strip(),
+        "recommended_action": str(active_task.get("recommended_action") or "").strip(),
+        "recommended_action_why": str(active_task.get("recommended_action_why") or "").strip(),
+        "latest_json": resolved_latest,
+    }
+    if reported_latest and reported_latest != resolved_latest:
+        payload["reported_latest_json"] = reported_latest
+        payload["latest_json_mismatch"] = True
+    else:
+        payload["reported_latest_json"] = reported_latest
+        payload["latest_json_mismatch"] = False
+    return payload
+
+
+def _repair_active_task_latest_pointer(root: Path, *, task_id: str, resolved_latest: str) -> dict[str, Any]:
+    if not task_id or not resolved_latest:
+        return {"repaired": False}
+    json_path = _active_task_json_path(root, task_id)
+    if not json_path.exists():
+        return {"repaired": False}
+    try:
+        payload = _read_json(json_path)
+    except Exception:
+        return {"repaired": False}
+    paths = payload.get("paths") if isinstance(payload.get("paths"), dict) else {}
+    reported_latest = str(paths.get("latest_json") or "").strip()
+    if not reported_latest or reported_latest == resolved_latest:
+        return {"repaired": False, "reported_latest_json": reported_latest, "latest_json": resolved_latest}
+    paths["latest_json"] = resolved_latest
+    payload["paths"] = paths
+    json_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
+
+    md_path = json_path.with_suffix(".md")
+    if md_path.exists():
+        lines = md_path.read_text(encoding="utf-8").splitlines()
+        updated_lines: list[str] = []
+        replaced = False
+        for line in lines:
+            if line.startswith("- Latest pointer:"):
+                updated_lines.append(f"- Latest pointer: `{resolved_latest}`")
+                replaced = True
+            else:
+                updated_lines.append(line)
+        if replaced:
+            md_path.write_text("\n".join(updated_lines) + "\n", encoding="utf-8", newline="\n")
+    return {
+        "repaired": True,
+        "reported_latest_json": reported_latest,
+        "latest_json": resolved_latest,
+        "path": _repo_rel(root, json_path),
+    }
+
+
 def _fallback_recommendation(inspection: dict[str, Any], task_id: str) -> tuple[str, str, str, list[str]]:
     failure = inspection.get("failure") or {}
     failure_code = str(failure.get("code") or "").strip().lower()
@@ -142,7 +201,7 @@ def _fallback_recommendation(inspection: dict[str, Any], task_id: str) -> tuple[
             "Inspection reported status=ok, so no follow-up action is required before continuing local work.",
             signals,
         )
-    if failure_code in {"schema-invalid", "stale-latest", "artifact-missing"}:
+    if failure_code in {"schema-invalid", "stale-latest", "artifact-missing", "artifact-incomplete"}:
         return (
             "rerun",
             "inspection",
@@ -170,6 +229,42 @@ def _fallback_recommendation(inspection: dict[str, Any], task_id: str) -> tuple[
         str(failure.get("message") or "Inspect the latest artifacts before choosing resume or fork.").strip(),
         signals,
     )
+
+
+def _chapter6_stop_loss_note(chapter6_hints: dict[str, Any], latest_summary_signals: dict[str, Any]) -> str:
+    blocked_by = str(chapter6_hints.get("blocked_by") or "").strip().lower()
+    reason = str(latest_summary_signals.get("reason") or "").strip()
+    if not blocked_by and reason.startswith("rerun_blocked:deterministic_green_llm_not_clean"):
+        blocked_by = "rerun_guard"
+    elif not blocked_by and reason.startswith("rerun_blocked:repeat_deterministic_failure"):
+        blocked_by = "rerun_guard"
+    elif not blocked_by and (
+        reason.startswith("rerun_blocked:dirty_worktree_unsafe_paths_ceiling")
+        or reason.startswith("rerun_blocked:dirty_worktree_changed_paths_ceiling")
+        or reason.startswith("rerun_blocked:profile_drift_change_scope_ceiling")
+    ):
+        blocked_by = "rerun_guard"
+    if blocked_by == "rerun_guard":
+        if reason.startswith("rerun_blocked:deterministic_green_llm_not_clean"):
+            return "Deterministic evidence is already green; do not pay for another full 6.7. Continue with 6.8 or needs-fix-fast."
+        if reason.startswith("rerun_blocked:repeat_deterministic_failure"):
+            return "Recent deterministic failures already repeated with the same fingerprint; inspect and fix the root cause before rerunning 6.7."
+        if reason.startswith("rerun_blocked:dirty_worktree_unsafe_paths_ceiling") or reason.startswith("rerun_blocked:dirty_worktree_changed_paths_ceiling") or reason.startswith("rerun_blocked:profile_drift_change_scope_ceiling"):
+            return "Current changes exceed the standard Chapter 6 safe scope; shrink the dirty worktree or inspect/reset the drift before paying for another full 6.7."
+        return "A rerun guard is active; check the latest diagnostics before paying for another full rerun."
+    if blocked_by == "llm_retry_stop_loss":
+        return "This run already stopped after the first costly llm timeout; continue with the narrow llm-only closure path instead of reopening deterministic steps."
+    if blocked_by == "sc_test_retry_stop_loss":
+        return "The pipeline already proved the unit root cause and stopped the same-run retry; fix the unit issue first, then start a fresh run."
+    if blocked_by == "waste_signals":
+        return "Unit failure was already known before more expensive engine-lane work continued; fix the unit/root cause before paying that cost again."
+    if blocked_by == "recent_failure_summary":
+        return "Recent runs already repeat the same failure family; inspect the repeated fingerprint and fix the root cause before rerunning 6.7."
+    if blocked_by == "artifact_integrity":
+        if reason == "planned_only_incomplete":
+            return "The latest bundle is a planned-only terminal run, not a real completed producer run; inspect it only for evidence and start a fresh real run before reopening Chapter 6."
+        return "The latest recovery bundle is incomplete or stale; inspect the evidence only, then start a fresh real run instead of resuming from this pointer."
+    return ""
 
 
 def _recommendation_from_agent_review(agent_review: dict[str, Any]) -> tuple[str, str, list[str]] | None:
@@ -237,10 +332,6 @@ def build_resume_payload(
     run_id: str,
 ) -> tuple[int, dict[str, Any]]:
     active_task = _load_active_task(repo_root, task_id)
-    if not latest:
-        latest = str(((active_task.get("paths") or {}).get("latest_json")) or "").strip()
-    if not run_id:
-        run_id = str(active_task.get("run_id") or "").strip()
     inspection_rc, inspection = inspect_run_artifacts(
         repo_root=repo_root,
         latest=latest,
@@ -254,6 +345,42 @@ def build_resume_payload(
     out_dir_rel = str(((inspection.get("paths") or {}).get("out_dir")) or "").strip()
     active_task = _load_active_task(repo_root, resolved_task_id)
     agent_review = _load_optional_agent_review(repo_root, out_dir_rel)
+    inspection_latest_summary = inspection.get("latest_summary_signals") if isinstance(inspection.get("latest_summary_signals"), dict) else {}
+    recent_failure_summary = inspection.get("recent_failure_summary") if isinstance(inspection.get("recent_failure_summary"), dict) else {}
+    latest_reason = str(inspection_latest_summary.get("reason") or "").strip()
+    latest_run_type = str(inspection_latest_summary.get("run_type") or "").strip()
+    latest_reuse_mode = str(inspection_latest_summary.get("reuse_mode") or "").strip()
+    latest_diagnostics_keys = [
+        str(item).strip()
+        for item in list(inspection_latest_summary.get("diagnostics_keys") or [])
+        if str(item).strip()
+    ]
+    latest_artifact_integrity_kind = str(inspection_latest_summary.get("artifact_integrity_kind") or "").strip()
+    if latest_rel and (
+        not latest_reason
+        or not latest_run_type
+        or not latest_reuse_mode
+        or not latest_diagnostics_keys
+        or not latest_artifact_integrity_kind
+    ):
+        latest_path = _resolve_path(repo_root, latest_rel)
+        if latest_path.exists():
+            try:
+                latest_payload = _read_json(latest_path)
+            except Exception:
+                latest_payload = {}
+            latest_reason = latest_reason or str(latest_payload.get("reason") or "").strip()
+            latest_run_type = latest_run_type or str(latest_payload.get("run_type") or "").strip()
+            latest_reuse_mode = latest_reuse_mode or str(latest_payload.get("reuse_mode") or "").strip()
+            latest_diagnostics = latest_payload.get("diagnostics") if isinstance(latest_payload.get("diagnostics"), dict) else {}
+            if not latest_diagnostics_keys:
+                latest_diagnostics_keys = [str(key).strip() for key in latest_diagnostics.keys() if str(key).strip()]
+            if not latest_artifact_integrity_kind:
+                latest_artifact_integrity = latest_diagnostics.get("artifact_integrity") if isinstance(latest_diagnostics.get("artifact_integrity"), dict) else {}
+                latest_artifact_integrity_kind = str(latest_artifact_integrity.get("kind") or "").strip()
+    diagnostics = inspection.get("diagnostics") if isinstance(inspection.get("diagnostics"), dict) else {}
+    artifact_integrity = diagnostics.get("artifact_integrity") if isinstance(diagnostics.get("artifact_integrity"), dict) else {}
+    latest_artifact_integrity_kind = str(artifact_integrity.get("kind") or "").strip() or latest_artifact_integrity_kind
     agent_review_signal = _recommendation_from_agent_review(agent_review)
     if agent_review_signal is not None:
         recommended_action, recommendation_reason, blocking_signals = agent_review_signal
@@ -265,8 +392,18 @@ def build_resume_payload(
             recommendation_source = "active-task"
         else:
             recommended_action, recommendation_source, recommendation_reason, blocking_signals = _fallback_recommendation(inspection, resolved_task_id)
+    if bool(recent_failure_summary.get("stop_full_rerun_recommended")):
+        family = str(recent_failure_summary.get("latest_failure_family") or "").strip()
+        same_family_count = int(recent_failure_summary.get("same_family_count") or 0)
+        blocking_signals = list(blocking_signals) + [
+            f"recent_failure.same_family_count={same_family_count}",
+            f"recent_failure.stop_full_rerun_recommended={str(bool(recent_failure_summary.get('stop_full_rerun_recommended'))).lower()}",
+        ]
+        if family:
+            blocking_signals.append(f"recent_failure.family={family}")
     plans = _find_related_docs(repo_root, "execution-plans", task_id=resolved_task_id, run_id=resolved_run_id, latest_rel=latest_rel)
     logs = _find_related_docs(repo_root, "decision-logs", task_id=resolved_task_id, run_id=resolved_run_id, latest_rel=latest_rel)
+    active_task_snapshot = _normalized_active_task_snapshot(active_task, inspection_latest=latest_rel)
     payload: dict[str, Any] = {
         "task_id": resolved_task_id,
         "run_id": resolved_run_id,
@@ -279,6 +416,15 @@ def build_resume_payload(
         "candidate_commands": _candidate_commands(resolved_task_id, latest or latest_rel),
         "inspection_exit_code": inspection_rc,
         "inspection": inspection,
+        "recent_failure_summary": recent_failure_summary,
+        "latest_summary_signals": {
+            "reason": latest_reason,
+            "run_type": latest_run_type,
+            "reuse_mode": latest_reuse_mode,
+            "artifact_integrity_kind": latest_artifact_integrity_kind,
+            "diagnostics_keys": latest_diagnostics_keys,
+        },
+        "chapter6_hints": dict(inspection.get("chapter6_hints") or {}) if isinstance(inspection.get("chapter6_hints"), dict) else {},
         "related_execution_plans": plans,
         "latest_execution_plan": plans[0] if plans else "",
         "related_decision_logs": logs,
@@ -289,13 +435,7 @@ def build_resume_payload(
             "recommended_action": str(((agent_review.get("explain") or {}).get("recommended_action") or agent_review.get("recommended_action") or "")).strip(),
             "summary": str(((agent_review.get("explain") or {}).get("summary") or "")).strip(),
         },
-        "active_task": {
-            "path": str(active_task.get("_path") or ""),
-            "status": str(active_task.get("status") or "").strip(),
-            "recommended_action": str(active_task.get("recommended_action") or "").strip(),
-            "recommended_action_why": str(active_task.get("recommended_action_why") or "").strip(),
-            "latest_json": str(((active_task.get("paths") or {}).get("latest_json")) or "").strip(),
-        },
+        "active_task": active_task_snapshot,
     }
     return inspection_rc, payload
 
@@ -305,6 +445,10 @@ def _render_markdown(payload: dict[str, Any]) -> str:
     failure = inspection.get("failure") or {}
     paths = inspection.get("paths") or {}
     commands = payload.get("candidate_commands") or {}
+    latest_summary_signals = payload.get("latest_summary_signals") if isinstance(payload.get("latest_summary_signals"), dict) else {}
+    chapter6_hints = payload.get("chapter6_hints") if isinstance(payload.get("chapter6_hints"), dict) else {}
+    recent_failure_summary = payload.get("recent_failure_summary") if isinstance(payload.get("recent_failure_summary"), dict) else {}
+    stop_loss_note = _chapter6_stop_loss_note(chapter6_hints, latest_summary_signals)
     def _line(key: str, value: str) -> str:
         return f"- {key}: {value}"
     lines = [
@@ -320,6 +464,35 @@ def _render_markdown(payload: dict[str, Any]) -> str:
         _line("Inspection status", str(inspection.get("status") or "unknown")),
         _line("Failure code", str(failure.get("code") or "unknown")),
         _line("Latest pointer", f"`{paths.get('latest')}`" if paths.get("latest") else "n/a"),
+        _line("Latest reason", str(latest_summary_signals.get("reason") or "n/a")),
+        _line("Latest run type", str(latest_summary_signals.get("run_type") or "n/a")),
+        _line("Latest reuse mode", str(latest_summary_signals.get("reuse_mode") or "n/a")),
+        _line("Latest artifact integrity", str(latest_summary_signals.get("artifact_integrity_kind") or "none")),
+        _line(
+            "Latest diagnostics keys",
+            ", ".join(f"`{item}`" for item in list(latest_summary_signals.get("diagnostics_keys") or []))
+            if list(latest_summary_signals.get("diagnostics_keys") or [])
+            else "none",
+        ),
+        _line("Chapter6 next action", str(chapter6_hints.get("next_action") or "n/a")),
+        _line("Chapter6 can skip 6.7", "yes" if bool(chapter6_hints.get("can_skip_6_7")) else "no"),
+        _line("Chapter6 can go to 6.8", "yes" if bool(chapter6_hints.get("can_go_to_6_8")) else "no"),
+        _line("Chapter6 blocked by", str(chapter6_hints.get("blocked_by") or "n/a")),
+        _line("Chapter6 rerun forbidden", "yes" if bool(chapter6_hints.get("rerun_forbidden")) else "no"),
+        _line("Chapter6 rerun override", str(chapter6_hints.get("rerun_override_flag") or "n/a")),
+        _line("Chapter6 stop-loss note", stop_loss_note or "n/a"),
+        _line(
+            "Recent failure family",
+            str(recent_failure_summary.get("latest_failure_family") or "n/a"),
+        ),
+        _line(
+            "Recent same-family count",
+            str(int(recent_failure_summary.get("same_family_count") or 0)) if recent_failure_summary else "0",
+        ),
+        _line(
+            "Recent stop-full-rerun",
+            "yes" if bool(recent_failure_summary.get("stop_full_rerun_recommended")) else "no",
+        ),
         _line("Pipeline out dir", f"`{paths.get('out_dir')}`" if paths.get("out_dir") else "n/a"),
         _line("Latest execution plan", f"`{payload.get('latest_execution_plan')}`" if payload.get("latest_execution_plan") else "none"),
         _line("Latest decision log", f"`{payload.get('latest_decision_log')}`" if payload.get("latest_decision_log") else "none"),
@@ -345,8 +518,23 @@ def _render_markdown(payload: dict[str, Any]) -> str:
                 _line("Active task summary", f"`{active_task.get('path')}`"),
                 _line("Active task status", str(active_task.get("status") or "unknown")),
                 _line("Active task recommendation", str(active_task.get("recommended_action") or "n/a")),
+                _line("Active task latest pointer", f"`{active_task.get('latest_json')}`" if active_task.get("latest_json") else "n/a"),
             ]
         )
+        if bool(active_task.get("latest_json_repaired")) and active_task.get("reported_latest_json"):
+            lines.append(
+                _line(
+                    "Active task latest pointer repaired from",
+                    f"`{active_task.get('reported_latest_json')}`",
+                )
+            )
+        if bool(active_task.get("latest_json_mismatch")) and active_task.get("reported_latest_json"):
+            lines.append(
+                _line(
+                    "Active task reported latest pointer",
+                    f"`{active_task.get('reported_latest_json')}`",
+                )
+            )
     related_plans = payload.get("related_execution_plans") or []
     related_logs = payload.get("related_decision_logs") or []
     blocking_signals = payload.get("blocking_signals") or []
@@ -386,6 +574,18 @@ def main(argv: list[str] | None = None) -> int:
     except Exception as exc:
         print(f"ERROR: failed to build task resume summary: {exc}", file=sys.stderr)
         return 2
+    active_task = payload.get("active_task") if isinstance(payload.get("active_task"), dict) else {}
+    repair = _repair_active_task_latest_pointer(
+        root,
+        task_id=str(payload.get("task_id") or task_id or "").strip(),
+        resolved_latest=str((((payload.get("inspection") or {}).get("paths") or {}).get("latest")) or "").strip(),
+    )
+    if bool(repair.get("repaired")):
+        active_task["latest_json"] = str(repair.get("latest_json") or active_task.get("latest_json") or "").strip()
+        active_task["reported_latest_json"] = str(repair.get("reported_latest_json") or active_task.get("reported_latest_json") or "").strip()
+        active_task["latest_json_mismatch"] = False
+        active_task["latest_json_repaired"] = True
+        payload["active_task"] = active_task
 
     out_json, out_md = _default_output_paths(root, str(payload.get("task_id") or task_id or "unknown"))
     if str(args.out_json or "").strip():

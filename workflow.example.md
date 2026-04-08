@@ -108,6 +108,7 @@ py -3 scripts/python/dev_cli.py resume-task --task-id <id>
 ```
 
 - `resume-task` 会直接带出 `Latest reason`、`Latest reuse mode`、`Chapter6 next action`、`Chapter6 can skip 6.7`、`Chapter6 can go to 6.8`、`Chapter6 blocked by`。
+- `resume-task` also surfaces `recommended_action_why`; if it already says `recommended_action = needs-fix-fast`, prefer targeted closure instead of a full rerun.
 - 恢复判断先看 `reason / run_type / reuse_mode / artifact_integrity`，不要只按最新 `latest.json` 时间戳决定是否重跑。
 
 如果 recovery summary 仍然不够，再执行二级恢复入口：

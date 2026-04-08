@@ -24,6 +24,7 @@ from _delivery_profile import (
     resolve_delivery_profile,
 )
 from _change_scope import classify_change_scope_between_snapshots
+from _risk_profile_floor import derive_delivery_profile_floor, requires_security_auditor_for_change_scope
 from _util import ci_dir, repo_root, run_cmd, split_csv, write_json, write_text
 
 
@@ -46,6 +47,25 @@ REVIEWER_ANCHOR_EXACT = {
     "scripts/sc/llm_review_needs_fix_fast.py",
     "scripts/sc/run_review_pipeline.py",
 }
+SEMANTIC_TARGET_PREFIXES = (
+    ".taskmaster/",
+    "examples/taskmaster/",
+    "docs/architecture/",
+    "docs/adr/",
+    "docs/prd/",
+    "execution-plans/",
+    "decision-logs/",
+)
+CODE_TARGET_PREFIXES = (
+    "game.core/",
+    "game.godot/",
+    "game.core.tests/",
+    "tests.godot/",
+    "scripts/sc/",
+    "scripts/python/",
+)
+CODE_TARGET_SUFFIXES = (".cs", ".gd", ".tscn", ".tres", ".csproj", ".sln")
+SECURITY_TARGET_TOKENS = ("security", "audit", "whitelist", "tamper")
 
 
 def normalize_verdict(value: str | None) -> str:
@@ -208,6 +228,39 @@ def _resolve_latest_pipeline_files(task_id: str) -> tuple[dict[str, Any], Path |
 
 def _ordered_agent_subset(configured_agents: list[str], candidate_agents: set[str]) -> list[str]:
     return [agent for agent in configured_agents if agent in candidate_agents]
+
+
+def prefer_targeted_agents_by_change_scope(
+    *,
+    configured_agents: list[str],
+    current_agents: list[str],
+    current_source: str,
+    change_scope: dict[str, Any] | None,
+) -> tuple[list[str], str]:
+    if str(current_source or "").strip() != "configured-defaults":
+        return list(current_agents), current_source
+    scope = change_scope if isinstance(change_scope, dict) else {}
+    changed_paths = [str(item or "").strip().replace("\\", "/").lower() for item in list(scope.get("changed_paths") or []) if str(item or "").strip()]
+    if not changed_paths:
+        return list(current_agents), current_source
+
+    candidate_agents: set[str] = set()
+    if any(any(path.startswith(prefix) for prefix in SEMANTIC_TARGET_PREFIXES) for path in changed_paths):
+        candidate_agents.add("semantic-equivalence-auditor")
+    if any(
+        any(path.startswith(prefix) for prefix in CODE_TARGET_PREFIXES)
+        or path == "project.godot"
+        or path.endswith(CODE_TARGET_SUFFIXES)
+        for path in changed_paths
+    ):
+        candidate_agents.add("code-reviewer")
+    if any(any(token in path for token in SECURITY_TARGET_TOKENS) for path in changed_paths) or requires_security_auditor_for_change_scope(scope):
+        candidate_agents.add("security-auditor")
+
+    targeted_agents = _ordered_agent_subset(configured_agents, candidate_agents)
+    if not targeted_agents:
+        return list(current_agents), current_source
+    return targeted_agents, "change-scope-targeted"
 
 
 def _extract_agents_from_agent_review(agent_review_payload: dict[str, Any], configured_agents: list[str]) -> list[str]:
@@ -688,6 +741,89 @@ def derive_needs_fix_fast_agent_timeout_overrides(
     return overrides, meta
 
 
+def _iter_previous_needs_fix_fast_summaries(task_id: str) -> list[Path]:
+    logs_root = repo_root() / "logs" / "ci"
+    if not logs_root.exists():
+        return []
+    return sorted(
+        [item for item in logs_root.rglob(f"sc-needs-fix-fast-task-{task_id}/summary.json") if item.is_file()],
+        key=lambda item: item.stat().st_mtime,
+        reverse=True,
+    )
+
+
+def derive_llm_round_budget_prediction(
+    *,
+    task_id: str,
+    delivery_profile: str,
+    security_profile: str,
+    run_agents: list[str],
+    diff_mode: str,
+    llm_timeout_sec: int,
+    agent_timeout_sec: int,
+    agent_timeout_overrides: dict[str, int],
+) -> tuple[int, dict[str, Any]]:
+    override_ceiling = max([int(agent_timeout_sec)] + [int(value) for value in agent_timeout_overrides.values() if int(value) > 0])
+    predicted_budget_sec = max(int(llm_timeout_sec) + 60, override_ceiling + 120)
+    if len(run_agents) > 1:
+        predicted_budget_sec += 45 * (len(run_agents) - 1)
+
+    matched_timeout_rounds = 0
+    recent_observed_timeout_sec = 0
+    recent_sources: list[str] = []
+    normalized_agents = {str(agent).strip() for agent in run_agents if str(agent).strip()}
+    for summary_path in _iter_previous_needs_fix_fast_summaries(task_id):
+        payload = read_json(summary_path)
+        args_payload = payload.get("args") if isinstance(payload.get("args"), dict) else {}
+        if str(args_payload.get("delivery_profile") or "").strip().lower() != str(delivery_profile).strip().lower():
+            continue
+        if str(args_payload.get("security_profile") or "").strip().lower() != str(security_profile).strip().lower():
+            continue
+        if str(args_payload.get("diff_mode") or "").strip().lower() != str(diff_mode).strip().lower():
+            continue
+        rounds = payload.get("rounds") if isinstance(payload.get("rounds"), list) else []
+        timeline = payload.get("timeline") if isinstance(payload.get("timeline"), list) else []
+        for round_item in rounds:
+            if not isinstance(round_item, dict):
+                continue
+            if str(round_item.get("failure_kind") or "").strip() != "timeout-no-summary":
+                continue
+            timeout_agents = {str(agent).strip() for agent in list(round_item.get("timeout_agents") or []) if str(agent).strip()}
+            if normalized_agents and timeout_agents and not timeout_agents.intersection(normalized_agents):
+                continue
+            round_no = int(round_item.get("round") or 0)
+            timeline_step = next(
+                (
+                    row
+                    for row in timeline
+                    if isinstance(row, dict) and str(row.get("name") or "").strip() == f"pipeline-llm-round-{round_no}"
+                ),
+                {},
+            )
+            observed_timeout_sec = int(float(timeline_step.get("duration_sec") or 0))
+            if observed_timeout_sec <= 0:
+                observed_timeout_sec = int(args_payload.get("llm_timeout_sec") or llm_timeout_sec)
+            recent_observed_timeout_sec = max(recent_observed_timeout_sec, observed_timeout_sec)
+            matched_timeout_rounds += 1
+            recent_sources.append(str(summary_path))
+            if matched_timeout_rounds >= 3:
+                break
+        if matched_timeout_rounds >= 3:
+            break
+
+    if recent_observed_timeout_sec > 0:
+        predicted_budget_sec = max(predicted_budget_sec, recent_observed_timeout_sec + 60)
+
+    meta = {
+        "predicted_budget_sec": int(predicted_budget_sec),
+        "matched_timeout_rounds": int(matched_timeout_rounds),
+        "recent_observed_timeout_sec": int(recent_observed_timeout_sec),
+        "agent_timeout_override_applied": bool(agent_timeout_overrides),
+        "recent_timeout_sources": recent_sources,
+    }
+    return int(predicted_budget_sec), meta
+
+
 def try_reuse_matching_minimal_acceptance_step(
     *,
     task_id: str,
@@ -783,6 +919,34 @@ def remain_sec(start_monotonic: float, budget_min: int) -> int:
     return int(max(0.0, budget_min * 60 - elapsed_sec(start_monotonic)))
 
 
+def cap_targeted_single_agent_timeouts(
+    *,
+    run_agents: list[str],
+    current_source: str,
+    llm_timeout_sec: int,
+    agent_timeout_sec: int,
+    explicit_llm_timeout: bool,
+    explicit_agent_timeout: bool,
+    final_pass: bool,
+) -> tuple[int, int]:
+    targeted_sources = {
+        "agent-review-targeted",
+        "previous-llm-summary-precise",
+        "change-scope-targeted",
+    }
+    if final_pass or len(list(run_agents)) != 1 or str(current_source or "").strip() not in targeted_sources:
+        return int(llm_timeout_sec), int(agent_timeout_sec)
+
+    next_llm_timeout = int(llm_timeout_sec)
+    next_agent_timeout = int(agent_timeout_sec)
+    if not explicit_llm_timeout:
+        next_llm_timeout = min(next_llm_timeout, 480)
+    if not explicit_agent_timeout:
+        next_agent_timeout = min(next_agent_timeout, 180)
+    next_agent_timeout = min(next_agent_timeout, next_llm_timeout)
+    return max(120, next_llm_timeout), max(60, next_agent_timeout)
+
+
 def apply_delivery_profile_defaults(args: argparse.Namespace) -> argparse.Namespace:
     delivery_profile = resolve_delivery_profile(getattr(args, "delivery_profile", None))
     defaults = profile_needs_fix_fast_defaults(delivery_profile)
@@ -812,6 +976,73 @@ def apply_delivery_profile_defaults(args: argparse.Namespace) -> argparse.Namesp
         args.diff_mode = "full"
         args.skip_sc_test = False
     return args
+
+
+def _apply_risky_change_profile_floor(
+    args: argparse.Namespace,
+    *,
+    explicit_flags: dict[str, bool],
+    change_scope: dict[str, Any] | None,
+) -> dict[str, Any]:
+    decision = derive_delivery_profile_floor(
+        delivery_profile=str(args.delivery_profile),
+        security_profile=str(args.security_profile),
+        change_scope=change_scope,
+        explicit_security_profile=bool(explicit_flags.get("security_profile")),
+    )
+    if not bool(decision.get("applied")):
+        return decision
+
+    args.delivery_profile = str(decision.get("delivery_profile") or args.delivery_profile)
+    if not bool(explicit_flags.get("security_profile")):
+        args.security_profile = str(
+            decision.get("security_profile")
+            or args.security_profile
+            or default_security_profile_for_delivery(str(args.delivery_profile))
+        )
+
+    defaults = profile_needs_fix_fast_defaults(str(args.delivery_profile))
+    if not bool(explicit_flags.get("agents")):
+        args.agents = str(defaults.get("agents") or args.agents)
+    if not bool(explicit_flags.get("diff_mode")):
+        args.diff_mode = str(defaults.get("diff_mode") or args.diff_mode)
+    if not bool(explicit_flags.get("max_rounds")):
+        args.max_rounds = int(defaults.get("max_rounds", args.max_rounds) or args.max_rounds)
+    if not bool(explicit_flags.get("rerun_failing_only")):
+        args.rerun_failing_only = bool(defaults.get("rerun_failing_only", args.rerun_failing_only))
+    if not bool(explicit_flags.get("time_budget_min")):
+        args.time_budget_min = int(defaults.get("time_budget_min", args.time_budget_min) or args.time_budget_min)
+    if not bool(explicit_flags.get("llm_timeout_sec")):
+        args.llm_timeout_sec = int(defaults.get("llm_timeout_sec", args.llm_timeout_sec) or args.llm_timeout_sec)
+    if not bool(explicit_flags.get("agent_timeout_sec")):
+        args.agent_timeout_sec = int(defaults.get("agent_timeout_sec", args.agent_timeout_sec) or args.agent_timeout_sec)
+    if not bool(explicit_flags.get("step_timeout_sec")):
+        args.step_timeout_sec = int(defaults.get("step_timeout_sec", args.step_timeout_sec) or args.step_timeout_sec)
+    if not bool(explicit_flags.get("min_llm_budget_min")):
+        args.min_llm_budget_min = int(defaults.get("min_llm_budget_min", args.min_llm_budget_min) or args.min_llm_budget_min)
+    return decision
+
+
+def _build_deterministic_cmd(*, py: str, args: argparse.Namespace) -> list[str]:
+    cmd = [
+        py,
+        "-3",
+        "scripts/sc/run_review_pipeline.py",
+        "--task-id",
+        str(args.task_id),
+        "--delivery-profile",
+        str(args.delivery_profile),
+        "--security-profile",
+        str(args.security_profile),
+        "--skip-llm-review",
+        "--llm-base",
+        str(args.base),
+        "--llm-diff-mode",
+        str(args.diff_mode),
+    ]
+    if args.skip_sc_test:
+        cmd.append("--skip-test")
+    return cmd
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -921,6 +1152,17 @@ def majority_verdict(votes: list[str]) -> str:
     return "Unknown"
 
 
+def _round_needs_fix_signature(round_result: dict[str, Any]) -> list[dict[str, str]]:
+    verdicts = round_result.get("verdicts") if isinstance(round_result.get("verdicts"), dict) else {}
+    signature: list[dict[str, str]] = []
+    for agent in sorted(verdicts.keys()):
+        verdict = normalize_verdict(verdicts.get(agent))
+        if verdict != "Needs Fix":
+            continue
+        signature.append({"agent": agent, "verdict": verdict})
+    return signature
+
+
 def _derive_final_status(*, final_verdicts: dict[str, str], rounds: list[dict[str, Any]]) -> tuple[str, str]:
     final_needs_fix = sorted([agent for agent, verdict in final_verdicts.items() if verdict == "Needs Fix"])
     final_unknown = sorted([agent for agent, verdict in final_verdicts.items() if verdict == "Unknown"])
@@ -934,7 +1176,20 @@ def _derive_final_status(*, final_verdicts: dict[str, str], rounds: list[dict[st
 
 
 def main() -> int:
-    args = apply_delivery_profile_defaults(build_parser().parse_args())
+    parsed_args = build_parser().parse_args()
+    explicit_flags = {
+        "security_profile": bool(str(getattr(parsed_args, "security_profile", "") or "").strip()),
+        "agents": bool(str(getattr(parsed_args, "agents", "") or "").strip()),
+        "diff_mode": bool(str(getattr(parsed_args, "diff_mode", "") or "").strip()),
+        "max_rounds": getattr(parsed_args, "max_rounds", None) is not None,
+        "rerun_failing_only": getattr(parsed_args, "rerun_failing_only", None) is not None,
+        "time_budget_min": getattr(parsed_args, "time_budget_min", None) is not None,
+        "llm_timeout_sec": getattr(parsed_args, "llm_timeout_sec", None) is not None,
+        "agent_timeout_sec": getattr(parsed_args, "agent_timeout_sec", None) is not None,
+        "step_timeout_sec": getattr(parsed_args, "step_timeout_sec", None) is not None,
+        "min_llm_budget_min": getattr(parsed_args, "min_llm_budget_min", None) is not None,
+    }
+    args = apply_delivery_profile_defaults(parsed_args)
     if args.max_rounds < 1:
         print("[needs-fix-fast] ERROR: --max-rounds must be >= 1")
         return 2
@@ -1007,24 +1262,13 @@ def main() -> int:
             print(f"SC_NEEDS_FIX_FAST status=indeterminate out={out_dir}")
             return 1
 
-    deterministic_cmd = [
-        py,
-        "-3",
-        "scripts/sc/run_review_pipeline.py",
-        "--task-id",
-        str(args.task_id),
-        "--delivery-profile",
-        str(args.delivery_profile),
-        "--security-profile",
-        str(args.security_profile),
-        "--skip-llm-review",
-        "--llm-base",
-        str(args.base),
-        "--llm-diff-mode",
-        str(args.diff_mode),
-    ]
-    if args.skip_sc_test:
-        deterministic_cmd.append("--skip-test")
+    deterministic_cmd = _build_deterministic_cmd(py=py, args=args)
+    profile_floor_decision = {
+        "applied": False,
+        "delivery_profile": str(args.delivery_profile),
+        "security_profile": str(args.security_profile),
+        "reason": "",
+    }
     if bool(args.final_pass):
         deterministic_plan = {"mode": "full-pipeline", "change_scope": {"reason": "final-pass"}, "final_pass": True}
         deterministic_step = None
@@ -1035,6 +1279,19 @@ def main() -> int:
             security_profile=str(args.security_profile),
             planned_cmd=deterministic_cmd,
         )
+        profile_floor_decision = _apply_risky_change_profile_floor(
+            args,
+            explicit_flags=explicit_flags,
+            change_scope=deterministic_plan.get("change_scope") if isinstance(deterministic_plan.get("change_scope"), dict) else {},
+        )
+        if bool(profile_floor_decision.get("applied")):
+            deterministic_cmd = _build_deterministic_cmd(py=py, args=args)
+            deterministic_plan = resolve_deterministic_execution_plan(
+                task_id=str(args.task_id),
+                delivery_profile=str(args.delivery_profile),
+                security_profile=str(args.security_profile),
+                planned_cmd=deterministic_cmd,
+            )
         deterministic_step = try_reuse_latest_deterministic_step(
             task_id=str(args.task_id),
             delivery_profile=str(args.delivery_profile),
@@ -1101,6 +1358,8 @@ def main() -> int:
     votes: dict[str, list[str]] = {agent: [] for agent in agents}
     rounds: list[dict[str, Any]] = []
     round_agent_timeout_overrides_history: list[dict[str, Any]] = []
+    llm_budget_prediction_history: list[dict[str, Any]] = []
+    stop_loss: dict[str, Any] = {"triggered": False}
     if bool(args.final_pass):
         run_agents, initial_agent_source = list(agents), "final-pass"
     else:
@@ -1113,6 +1372,13 @@ def main() -> int:
             current_agents=list(run_agents),
             current_source=initial_agent_source,
         )
+        run_agents, initial_agent_source = prefer_targeted_agents_by_change_scope(
+            configured_agents=list(agents),
+            current_agents=list(run_agents),
+            current_source=initial_agent_source,
+            change_scope=deterministic_plan.get("change_scope") if isinstance(deterministic_plan.get("change_scope"), dict) else {},
+        )
+    participating_agents: set[str] = set(run_agents)
     for round_no in range(1, args.max_rounds + 1):
         if not run_agents:
             break
@@ -1155,6 +1421,15 @@ def main() -> int:
 
         llm_timeout = max(120, min(args.llm_timeout_sec, remaining))
         agent_timeout = max(60, min(args.agent_timeout_sec, llm_timeout))
+        llm_timeout, agent_timeout = cap_targeted_single_agent_timeouts(
+            run_agents=list(run_agents),
+            current_source=initial_agent_source,
+            llm_timeout_sec=llm_timeout,
+            agent_timeout_sec=agent_timeout,
+            explicit_llm_timeout=bool(explicit_flags.get("llm_timeout_sec")),
+            explicit_agent_timeout=bool(explicit_flags.get("agent_timeout_sec")),
+            final_pass=bool(args.final_pass),
+        )
         round_agent_timeout_overrides, round_agent_timeout_meta = derive_needs_fix_fast_agent_timeout_overrides(
             task_id=str(args.task_id),
             delivery_profile=str(args.delivery_profile),
@@ -1164,6 +1439,57 @@ def main() -> int:
             llm_timeout_sec=llm_timeout,
             agent_timeout_sec=agent_timeout,
         )
+        predicted_llm_budget_sec, llm_budget_prediction = derive_llm_round_budget_prediction(
+            task_id=str(args.task_id),
+            delivery_profile=str(args.delivery_profile),
+            security_profile=str(args.security_profile),
+            run_agents=list(run_agents),
+            diff_mode=str(args.diff_mode),
+            llm_timeout_sec=llm_timeout,
+            agent_timeout_sec=agent_timeout,
+            agent_timeout_overrides=round_agent_timeout_overrides,
+        )
+        llm_budget_prediction = {
+            **llm_budget_prediction,
+            "round": round_no,
+            "remaining_before_sec": int(remaining),
+            "agents": list(run_agents),
+        }
+        llm_budget_prediction_history.append(llm_budget_prediction)
+        if remaining < int(predicted_llm_budget_sec):
+            timeline.append(
+                {
+                    "name": f"pipeline-llm-round-{round_no}",
+                    "status": "fail",
+                    "rc": 124,
+                    "duration_sec": 0,
+                    "remaining_before_sec": int(remaining),
+                    "remaining_after_sec": int(remaining),
+                    "cmd": [],
+                    "log_file": "",
+                    "reported_out_dir": "",
+                    "summary_file": "",
+                    "error": "predicted_insufficient_llm_budget",
+                    "predicted_budget_sec": int(predicted_llm_budget_sec),
+                    "budget_prediction": llm_budget_prediction,
+                }
+            )
+            if not rounds:
+                summary = {
+                    "cmd": "sc-needs-fix-fast",
+                    "task_id": str(args.task_id),
+                    "status": "fail",
+                    "reason": "insufficient_llm_budget_before_llm",
+                    "out_dir": str(out_dir),
+                    "timeline": timeline,
+                    "elapsed_sec": elapsed_sec(script_start),
+                    "delivery_profile": str(args.delivery_profile),
+                    "llm_budget_prediction_history": llm_budget_prediction_history,
+                }
+                write_json(out_dir / "summary.json", summary)
+                print(f"SC_NEEDS_FIX_FAST status=fail out={out_dir}")
+                return 1
+            break
         llm_cmd = [
             py,
             "-3",
@@ -1240,21 +1566,53 @@ def main() -> int:
             verdict = normalize_verdict(verdicts.get(agent))
             votes.setdefault(agent, []).append(verdict)
             round_result["verdicts"][agent] = verdict
+        timeout_agents = sorted(
+            [
+                agent
+                for agent in run_agents
+                if int(llm_step.get("rc") or 0) == 124 and round_result["verdicts"].get(agent) == "Unknown"
+            ]
+        )
+        if timeout_agents:
+            round_result["timeout_agents"] = timeout_agents
+            if not round_result["summary_file"]:
+                round_result["failure_kind"] = "timeout-no-summary"
+        elif int(llm_step.get("rc") or 0) == 124:
+            round_result["failure_kind"] = "timeout"
 
         needs_fix_agents = [a for a, v in round_result["verdicts"].items() if v == "Needs Fix"]
         round_result["needs_fix_agents"] = needs_fix_agents
+        round_result["needs_fix_signature"] = _round_needs_fix_signature(round_result)
         rounds.append(round_result)
+
+        if len(rounds) >= 2:
+            previous_signature = rounds[-2].get("needs_fix_signature") if isinstance(rounds[-2].get("needs_fix_signature"), list) else []
+            current_signature = rounds[-1].get("needs_fix_signature") if isinstance(rounds[-1].get("needs_fix_signature"), list) else []
+            if previous_signature and current_signature and previous_signature == current_signature:
+                stop_loss = {
+                    "triggered": True,
+                    "kind": "repeated-needs-fix-signature",
+                    "round": round_no,
+                    "signature": current_signature,
+                }
+                break
 
         if not needs_fix_agents:
             break
         if round_no >= args.max_rounds:
             break
         run_agents = needs_fix_agents if args.rerun_failing_only else list(agents)
+        participating_agents.update(run_agents)
 
-    final_verdicts = {agent: majority_verdict(votes.get(agent, [])) for agent in agents}
+    final_verdicts = {
+        agent: (majority_verdict(votes.get(agent, [])) if votes.get(agent) else ("OK" if agent not in participating_agents else "Unknown"))
+        for agent in agents
+    }
     final_needs_fix = sorted([a for a, v in final_verdicts.items() if v == "Needs Fix"])
     final_unknown = sorted([a for a, v in final_verdicts.items() if v == "Unknown"])
     status, reason = _derive_final_status(final_verdicts=final_verdicts, rounds=rounds)
+    if bool(stop_loss.get("triggered")) and status == "needs-fix":
+        reason = "repeated_needs_fix_no_progress"
     summary = {
         "cmd": "sc-needs-fix-fast",
         "task_id": str(args.task_id),
@@ -1268,6 +1626,7 @@ def main() -> int:
             "agents": agents,
             "initial_run_agents": list(run_agents if not rounds else rounds[0].get("agents") or []),
             "initial_run_agents_source": initial_agent_source,
+            "participating_agents": sorted(participating_agents),
             "max_rounds": int(args.max_rounds),
             "rerun_failing_only": bool(args.rerun_failing_only),
             "security_profile": str(args.security_profile),
@@ -1278,10 +1637,13 @@ def main() -> int:
             "skip_sc_test": bool(args.skip_sc_test),
             "min_llm_budget_min": int(args.min_llm_budget_min),
         },
+        "profile_floor": profile_floor_decision,
         "deterministic_plan": deterministic_plan,
         "agent_timeout_override_history": round_agent_timeout_overrides_history,
+        "llm_budget_prediction_history": llm_budget_prediction_history,
         "timeline": timeline,
         "rounds": rounds,
+        "stop_loss": stop_loss,
         "votes": votes,
         "final_verdicts": final_verdicts,
         "final_needs_fix_agents": final_needs_fix,

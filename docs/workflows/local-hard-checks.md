@@ -127,7 +127,7 @@ Use local hard checks as a repo-scoped health run, not as a task-scoped Chapter 
 - Inspect the latest repo-scoped run with `py -3 scripts/python/inspect_run.py --kind local-hard-checks` before rerunning it.
 - Read `summary.json`, `execution-context.json`, `repair-guide.md`, and `run-events.jsonl` together; they tell you which step failed and whether the next action is rerun or inspect.
 - If the repo-scoped run failed in `project-health`, `run_gate_bundle`, or `run_dotnet`, fix that root cause first instead of paying for another full hard pass.
-- If you actually need task recovery semantics such as `reason`, `run_type`, `reuse_mode`, `artifact_integrity`, `planned-only`, `planned_only_incomplete`, `llm_retry_stop_loss`, `sc_test_retry_stop_loss`, or `recommended_action = needs-fix-fast`, switch to the task-scoped recovery chain: `resume-task`, `inspect_run.py --kind pipeline`, `active-task`, and `run_review_pipeline.py`.
+- If you actually need task recovery semantics such as `reason`, `run_type`, `reuse_mode`, `artifact_integrity`, `planned-only`, `planned_only_incomplete`, `llm_retry_stop_loss`, `sc_test_retry_stop_loss`, `recommended_action_why`, or `recommended_action = needs-fix-fast`, switch to the task-scoped recovery chain: `resume-task`, `inspect_run.py --kind pipeline`, `active-task`, and `run_review_pipeline.py`.
 - Do not treat `local-hard-checks-latest.json` as evidence that a task can reopen Chapter 6. Task-scoped rerun decisions must come from the pipeline sidecars, not from repo-scoped hard-check artifacts.
 
 ## Stop-Loss Rules

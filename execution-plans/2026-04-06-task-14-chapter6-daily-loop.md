@@ -1,0 +1,21 @@
+# Task 14 Chapter6 Daily Loop
+
+- Title: Task 14 Chapter6 Daily Loop
+- Status: active
+- Branch: task/T14
+- Git Head: ce5e0a4bb91a7d109473eabaf8e9fef279e3080f
+- Goal: Complete workflow.md Chapter 6 for Task 14 with deterministic gates green.
+- Scope: T14 runtime + tests + acceptance/review evidence; no unrelated gameplay refactors.
+- Current step: 6.9 completed, ready for commit/PR handoff.
+- Last completed step: 6.10 incremental preflight checks passed (acceptance preflight + local hard-checks preflight).
+- Stop-loss: If deterministic gate fails repeatedly, fix root cause before any rerun.
+- Next action: Prepare commit message and PR body with latest evidence paths.
+- Recovery command: `py -3 scripts/sc/run_review_pipeline.py --task-id 14 --resume`
+- Open questions: none
+- Exit criteria: review pipeline ok, needs-fix-fast clean, local hard checks ok.
+- Related ADRs: none additionally introduced in this loop.
+- Related decision logs: `decision-logs/2026-04-06-task-14-chapter6-tradeoffs.md`
+- Related task id(s): `14`
+- Related run id: `1601f1321a2a45d5ac11fff0b718aa14` (review), `44192dd40a5a4d2c916d512ab400db57` (local-hard-checks)
+- Related latest.json: `logs/ci/2026-04-06/local-hard-checks-latest.json`
+- Related pipeline artifacts: `logs/ci/2026-04-06/sc-review-pipeline-task-14-1601f1321a2a45d5ac11fff0b718aa14/summary.json`

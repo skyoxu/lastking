@@ -26,6 +26,7 @@
 
 补充说明：
 - `resume-task` 现在会汇总 `Latest reason`、`Latest run type`、`Latest reuse mode`、`Latest artifact integrity`、`Chapter6 next action`、`Chapter6 can skip 6.7`、`Chapter6 can go to 6.8`、`Chapter6 blocked by`。
+- `resume-task` also surfaces `recommended_action_why`; if it already says `recommended_action = needs-fix-fast`, prefer targeted closure before any full rerun.
 - `inspect_run.py --kind pipeline` 也会导出同一组 `latest_summary_signals` / `chapter6_hints`，用于判断是继续 `6.7`、转 `6.8`，还是先修 deterministic 根因。
 - `run_review_pipeline.py --dry-run` 仍会在本次 `out_dir` 写 `summary/execution-context/repair-guide`，但不再发布 `latest.json` 或 `active-task` sidecars；不要把 dry-run 当作恢复指针。
 - `inspect_run.py --kind pipeline --task-id <id>` 在解析自动恢复指针时，会跳过只来自 dry-run 的更新候选，回退到最近一轮真实可恢复 run。

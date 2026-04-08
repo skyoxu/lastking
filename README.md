@@ -46,6 +46,7 @@ Before paying for another full `6.7`, read these signals first:
 - `Latest artifact integrity`
 - `Chapter6 blocked by`
 - `Chapter6 stop-loss note`
+- `recommended_action_why`
 
 Recovery stop-loss rules:
 
@@ -55,6 +56,7 @@ Recovery stop-loss rules:
 - `llm_retry_stop_loss`: prefer narrow LLM-only closure, not another full rerun
 - `sc_test_retry_stop_loss`: same-run unit retry already proved wasteful; fix unit root cause first
 - `waste_signals`: engine-lane cost was already wasted after a known unit/root-cause failure
+- `recommended_action = needs-fix-fast`: deterministic evidence is already good enough for targeted closure; do not reopen a full rerun first
 
 ## Core Repositories and Files
 

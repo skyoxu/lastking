@@ -11,8 +11,10 @@ All output messages are in English to keep logs uniform.
 from __future__ import annotations
 
 import argparse
+import datetime as dt
 import subprocess
 import sys
+from pathlib import Path
 
 from dev_cli_builders import (
     DEFAULT_GATE_BUNDLE_TASK_FILES,
@@ -34,7 +36,7 @@ from dev_cli_builders import (
     build_smoke_strict_cmd,
 )
 from local_hard_checks_harness import run_local_hard_checks
-from solution_target import resolve_solution_arg
+from solution_resolver import resolve_solution_path, resolve_test_solution_path
 
 
 def run(cmd: list[str]) -> int:
@@ -48,7 +50,6 @@ def run(cmd: list[str]) -> int:
 def cmd_run_ci_basic(args: argparse.Namespace) -> int:
     """Run hard gate bundle, with optional legacy preflight appended."""
 
-    resolved_solution = resolve_solution_arg(args.solution)
     task_files = list(args.task_file or DEFAULT_GATE_BUNDLE_TASK_FILES)
     gate_cmd = build_gate_bundle_hard_cmd(
         delivery_profile=args.delivery_profile,
@@ -65,9 +66,10 @@ def cmd_run_ci_basic(args: argparse.Namespace) -> int:
         print("[dev_cli] error: --godot-bin is required when --legacy-preflight is enabled", file=sys.stderr)
         return 2
 
+    solution = resolve_test_solution_path(args.solution)
     return run(
         build_legacy_ci_pipeline_cmd(
-            solution=resolved_solution,
+            solution=solution,
             configuration=args.configuration,
             godot_bin=args.godot_bin,
         )
@@ -77,10 +79,10 @@ def cmd_run_ci_basic(args: argparse.Namespace) -> int:
 def cmd_run_quality_gates(args: argparse.Namespace) -> int:
     """Run quality_gates.py all with optional hard GdUnit and smoke."""
 
-    resolved_solution = resolve_solution_arg(args.solution)
+    solution = resolve_test_solution_path(args.solution)
     return run(
         build_quality_gates_cmd(
-            solution=resolved_solution,
+            solution=solution,
             configuration=args.configuration,
             build_solutions=bool(args.build_solutions),
             godot_bin=args.godot_bin,
@@ -112,12 +114,62 @@ def cmd_run_preflight(args: argparse.Namespace) -> int:
     return run(build_preflight_cmd(test_project=args.test_project, configuration=args.configuration))
 
 
+def _acceptance_preflight_out_dir(task_id: str, stage: str, out_dir: str) -> Path:
+    """Resolve the output directory for acceptance preflight artifacts."""
+
+    if str(out_dir or "").strip():
+        return Path(out_dir)
+    task_label = f"task-{task_id}" if str(task_id or "").strip() else "task-current"
+    return Path("logs") / "ci" / dt.date.today().isoformat() / f"acceptance-preflight-{task_label}-{stage}"
+
+
+def _build_acceptance_preflight_cmd(script_name: str, *, task_id: str, stage: str, out_path: Path) -> list[str]:
+    """Build one acceptance preflight command."""
+
+    cmd = [
+        "py",
+        "-3",
+        f"scripts/python/{script_name}",
+        "--stage",
+        stage,
+        "--out",
+        str(out_path).replace("\\", "/"),
+    ]
+    if str(task_id or "").strip():
+        cmd.extend(["--task-id", str(task_id)])
+    return cmd
+
+
+def cmd_run_acceptance_preflight(args: argparse.Namespace) -> int:
+    """Run the lightweight acceptance refs + anchors preflight."""
+
+    out_dir = _acceptance_preflight_out_dir(task_id=args.task_id, stage=args.stage, out_dir=args.out_dir)
+    refs_cmd = _build_acceptance_preflight_cmd(
+        "validate_acceptance_refs.py",
+        task_id=args.task_id,
+        stage=args.stage,
+        out_path=out_dir / "acceptance-refs.json",
+    )
+    refs_rc = run(refs_cmd)
+    if refs_rc != 0:
+        return refs_rc
+
+    anchors_cmd = _build_acceptance_preflight_cmd(
+        "validate_acceptance_anchors.py",
+        task_id=args.task_id,
+        stage=args.stage,
+        out_path=out_dir / "acceptance-anchors.json",
+    )
+    return run(anchors_cmd)
+
+
 def cmd_run_local_hard_checks(args: argparse.Namespace) -> int:
     """Run local hard checks via the protocolized harness wrapper."""
 
     task_files = list(args.task_file or DEFAULT_GATE_BUNDLE_TASK_FILES)
+    solution = resolve_test_solution_path(args.solution)
     return run_local_hard_checks(
-        solution=args.solution,
+        solution=solution,
         configuration=args.configuration,
         godot_bin=args.godot_bin,
         delivery_profile=args.delivery_profile,
@@ -127,6 +179,25 @@ def cmd_run_local_hard_checks(args: argparse.Namespace) -> int:
         timeout_sec=args.timeout_sec,
         run_fn=run,
     )
+
+
+def cmd_run_local_hard_checks_preflight(args: argparse.Namespace) -> int:
+    """Run the lightweight 6.9 preflight: gate bundle + dotnet only."""
+
+    task_files = list(args.task_file or DEFAULT_GATE_BUNDLE_TASK_FILES)
+    gate_rc = run(
+        build_gate_bundle_hard_cmd(
+            delivery_profile=args.delivery_profile,
+            task_files=task_files,
+            out_dir=args.out_dir,
+            run_id=args.run_id,
+        )
+    )
+    if gate_rc != 0:
+        return gate_rc
+
+    solution = resolve_test_solution_path(args.solution)
+    return run(build_run_dotnet_cmd(solution=solution, configuration=args.configuration))
 
 
 def cmd_run_smoke_strict(args: argparse.Namespace) -> int:
@@ -194,7 +265,7 @@ def build_parser() -> argparse.ArgumentParser:
         "run-ci-basic",
         help="run hard gate bundle first; optionally append legacy ci_pipeline preflight",
     )
-    p_ci.add_argument("--solution", default="")
+    p_ci.add_argument("--solution", default="auto")
     p_ci.add_argument("--configuration", default="Debug")
     p_ci.add_argument("--godot-bin", default="")
     p_ci.add_argument("--delivery-profile", default="")
@@ -206,7 +277,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     # run-quality-gates
     p_qg = sub.add_parser("run-quality-gates", help="run quality_gates.py all with optional GdUnit hard and smoke")
-    p_qg.add_argument("--solution", default="")
+    p_qg.add_argument("--solution", default="auto")
     p_qg.add_argument("--configuration", default="Debug")
     p_qg.add_argument("--build-solutions", action="store_true")
     p_qg.add_argument("--godot-bin", default="")
@@ -223,7 +294,7 @@ def build_parser() -> argparse.ArgumentParser:
         "run-local-hard-checks",
         help="run gate bundle hard + run_dotnet, and append gdunit/smoke when --godot-bin is provided",
     )
-    p_lh.add_argument("--solution", default="")
+    p_lh.add_argument("--solution", default="auto")
     p_lh.add_argument("--configuration", default="Debug")
     p_lh.add_argument("--godot-bin", default="")
     p_lh.add_argument("--delivery-profile", default="")
@@ -232,6 +303,19 @@ def build_parser() -> argparse.ArgumentParser:
     p_lh.add_argument("--run-id", default="")
     p_lh.add_argument("--timeout-sec", type=int, default=5)
     p_lh.set_defaults(func=cmd_run_local_hard_checks)
+
+    # run-local-hard-checks-preflight
+    p_lhp = sub.add_parser(
+        "run-local-hard-checks-preflight",
+        help="run only gate bundle hard + run_dotnet before the full local-hard-checks harness",
+    )
+    p_lhp.add_argument("--solution", default="auto")
+    p_lhp.add_argument("--configuration", default="Debug")
+    p_lhp.add_argument("--delivery-profile", default="")
+    p_lhp.add_argument("--task-file", action="append", default=[])
+    p_lhp.add_argument("--out-dir", default="")
+    p_lhp.add_argument("--run-id", default="")
+    p_lhp.set_defaults(func=cmd_run_local_hard_checks_preflight)
 
     # run-gdunit-hard
     p_gh = sub.add_parser("run-gdunit-hard", help="run hard GdUnit set (Adapters/Config + Security)")
@@ -248,6 +332,16 @@ def build_parser() -> argparse.ArgumentParser:
     p_pf.add_argument("--test-project", default="Game.Core.Tests/Game.Core.Tests.csproj")
     p_pf.add_argument("--configuration", default="Debug")
     p_pf.set_defaults(func=cmd_run_preflight)
+
+    # run-acceptance-preflight
+    p_ap = sub.add_parser(
+        "run-acceptance-preflight",
+        help="run validate_acceptance_refs + validate_acceptance_anchors as one lightweight task preflight",
+    )
+    p_ap.add_argument("--task-id", default="")
+    p_ap.add_argument("--stage", default="refactor", choices=["red", "green", "refactor"])
+    p_ap.add_argument("--out-dir", default="")
+    p_ap.set_defaults(func=cmd_run_acceptance_preflight)
 
     # run-smoke-strict
     p_sm = sub.add_parser("run-smoke-strict", help="run strict headless smoke against Main scene")

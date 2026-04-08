@@ -1,0 +1,21 @@
+# Task 14 Chapter6 Tradeoffs
+
+- Title: Task 14 Chapter6 Tradeoffs
+- Date: 2026-04-06
+- Status: accepted
+- Supersedes: none
+- Superseded by: none
+- Branch: task/T14
+- Git Head: ce5e0a4bb91a7d109473eabaf8e9fef279e3080f
+- Why now: T14 had repeated long-running loops; needed stable, low-waste Chapter 6 closure.
+- Context: New workflow.md synced from sibling repo and localized to lastking before continuing T14.
+- Decision: Keep 6.7 on playable-ea with targeted LLM timeout; run 6.8 only when needed; enforce 6.9 repo hard checks before commit.
+- Consequences: Deterministic + semantic checks remain strict while avoiding unnecessary reruns.
+- Recovery impact: Resume path stays available via run_review_pipeline with task-scoped artifacts.
+- Validation: review pipeline status=ok, needs-fix-fast final_needs_fix_agents=[], local-hard-checks status=ok.
+- Related ADRs: none additionally introduced in this loop.
+- Related execution plans: `execution-plans/2026-04-06-task-14-chapter6-daily-loop.md`
+- Related task id(s): `14`
+- Related run id: `1601f1321a2a45d5ac11fff0b718aa14`, `44192dd40a5a4d2c916d512ab400db57`
+- Related latest.json: `logs/ci/2026-04-06/local-hard-checks-latest.json`
+- Related pipeline artifacts: `logs/ci/2026-04-06/sc-needs-fix-fast-task-14/summary.json`

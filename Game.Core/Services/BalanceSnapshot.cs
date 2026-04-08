@@ -3,7 +3,7 @@ namespace Game.Core.Services;
 /// <summary>
 /// Strongly typed gameplay balance snapshot consumed by runtime systems.
 /// </summary>
-public sealed record BalanceSnapshot(
+public sealed partial record BalanceSnapshot(
     int DaySeconds,
     int NightSeconds,
     int Day1Budget,

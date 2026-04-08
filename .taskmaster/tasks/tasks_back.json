@@ -1154,7 +1154,6 @@
       "core"
     ],
     "test_refs": [
-      "Game.Core.Tests/State/GameStateMachineTests.cs",
       "Tests.Godot/tests/Integration/test_residence_economy_flow.gd",
       "Tests.Godot/tests/Scenes/Economy/test_residence_tax_timer_cadence.gd",
       "Game.Core.Tests/Domain/ResidenceBuildingTests.cs",
@@ -1165,7 +1164,10 @@
       "Tests.Godot/tests/Scenes/Economy/test_residence_timer_node_tax_binding.gd",
       "Game.Core.Tests/Services/ResidenceTaxPolicyTests.cs",
       "Game.Core.Tests/Services/ResidenceTaxDeterminismTests.cs",
-      "Game.Core.Tests/Services/ResidenceTaxTraceTests.cs"
+      "Game.Core.Tests/Services/ResidenceTaxTraceTests.cs",
+      "Tests.Godot/tests/Integration/test_residence_tax_policy_flow.gd",
+      "Tests.Godot/tests/Integration/test_residence_tax_tick_determinism.gd",
+      "Tests.Godot/tests/Integration/test_residence_tax_trace_replay.gd"
     ],
     "acceptance": [
       "仅当 Residence 成功建造后同时满足两项才通过：人口上限按配置提升，且 15 秒税收节拍启动；任一缺失即不通过。 Refs: Tests.Godot/tests/Integration/test_residence_economy_flow.gd",
