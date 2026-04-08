@@ -49,6 +49,30 @@ class SolutionTargetTests(unittest.TestCase):
             resolved = solution_target.resolve_solution_arg("auto", root=root)
             self.assertEqual("Game.sln", resolved)
 
+    def test_test_auto_should_prefer_solution_with_test_projects(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="repo-") as tmpdir:
+            root = Path(tmpdir) / "lastking"
+            root.mkdir(parents=True, exist_ok=True)
+            (root / "lastking.sln").write_text(
+                'Project("{x}") = "lastking", "lastking.csproj", "{1}"\nEndProject\n',
+                encoding="utf-8",
+            )
+            (root / "Game.sln").write_text(
+                'Project("{x}") = "Game.Core.Tests", "Game.Core.Tests\\\\Game.Core.Tests.csproj", "{2}"\nEndProject\n',
+                encoding="utf-8",
+            )
+            resolved = solution_target.resolve_test_solution_arg("auto", root=root)
+            self.assertEqual("Game.sln", resolved)
+
+    def test_test_auto_should_fallback_to_normal_resolution_without_test_projects(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="repo-") as tmpdir:
+            root = Path(tmpdir) / "lastking"
+            root.mkdir(parents=True, exist_ok=True)
+            (root / "lastking.sln").write_text("", encoding="utf-8")
+            (root / "Game.sln").write_text("", encoding="utf-8")
+            resolved = solution_target.resolve_test_solution_arg("auto", root=root)
+            self.assertEqual("lastking.sln", resolved)
+
     def test_auto_should_use_first_solution_when_no_preferred_name(self) -> None:
         with tempfile.TemporaryDirectory(prefix="sample-") as tmpdir:
             root = Path(tmpdir)

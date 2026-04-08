@@ -27,7 +27,7 @@ from local_hard_checks_support import (
     write_latest_index,
     write_step_log,
 )
-from solution_target import resolve_solution_arg
+from solution_target import resolve_test_solution_arg
 
 try:
     from _delivery_profile import default_security_profile_for_delivery, resolve_delivery_profile
@@ -66,7 +66,7 @@ def run_local_hard_checks(
     timeout_sec: int = 5,
     run_fn: Callable[[list[str]], int] | None = None,
 ) -> int:
-    resolved_solution = resolve_solution_arg(solution)
+    resolved_solution = resolve_test_solution_arg(solution)
     resolved_delivery_profile = resolve_delivery_profile(delivery_profile or None)
     security_profile = default_security_profile_for_delivery(resolved_delivery_profile)
     requested_run_id = str(run_id or "").strip() or uuid.uuid4().hex

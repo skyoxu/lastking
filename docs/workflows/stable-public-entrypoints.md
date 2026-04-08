@@ -75,7 +75,7 @@ Why this is stable:
 - it consumes active-task sidecars, inspect output, and recovery docs
 - it is the first place to read `reason`, `run_type`, `reuse_mode`, `artifact_integrity`, and `diagnostics` before deciding between `6.7` and `6.8`
 - it now surfaces `Chapter6 next action`, `Chapter6 can skip 6.7`, `Chapter6 can go to 6.8`, and `Chapter6 blocked by`
-- `Chapter6 blocked by` now explicitly distinguishes `rerun_guard`, `llm_retry_stop_loss`, `sc_test_retry_stop_loss`, and `waste_signals`, so recovery can choose between full-stop, narrow llm-only follow-up, known-unit-root-cause stop, or root-cause-first repair
+- `Chapter6 blocked by` now explicitly distinguishes `rerun_guard`, `llm_retry_stop_loss`, `sc_test_retry_stop_loss`, `waste_signals`, `recent_failure_summary`, and `artifact_integrity`, so recovery can choose between full-stop, narrow llm-only follow-up, known-unit-root-cause stop, repeated-failure-family stop-loss, stale-bundle fallback, or root-cause-first repair
 - it now also emits a `Chapter6 stop-loss note`, so the recovery summary explains why a fresh full `6.7` would be wasteful
 - it also surfaces `recommended_action_why`, and `recommended_action = needs-fix-fast` is the cue to prefer targeted closure over another full rerun
 
@@ -92,9 +92,10 @@ Prerequisites:
 Why this is stable:
 - it is the canonical sidecar inspection entrypoint
 - it now exposes `latest_summary_signals` and `chapter6_hints` in one place for rerun/stop-loss decisions
-- `chapter6_hints.blocked_by` now covers `rerun_guard`, `llm_retry_stop_loss`, `sc_test_retry_stop_loss`, and `waste_signals`
-- inspection is also where you confirm `planned_only_incomplete` / `artifact_integrity` before deciding whether a bundle is resumable or evidence-only
+- `chapter6_hints.blocked_by` now covers `rerun_guard`, `llm_retry_stop_loss`, `sc_test_retry_stop_loss`, `waste_signals`, `recent_failure_summary`, and `artifact_integrity`
+- inspection is also where you confirm `planned_only_incomplete` / `artifact_integrity`, repeated same-family failures via `recent_failure_summary`, and whether the next move should be inspect-first instead of reopening `6.7`
 - when automatic latest resolution sees a newer dry-run-only pipeline pointer, it now skips that candidate and falls back to the newest real recoverable run
+- when automatic latest resolution sees a newer planned-only terminal bundle, it also skips that evidence-only candidate and falls back to the newest real producer run
 
 ## Task Delivery Loop
 

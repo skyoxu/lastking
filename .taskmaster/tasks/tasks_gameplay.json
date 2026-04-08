@@ -1152,20 +1152,19 @@
       "core"
     ],
     "test_refs": [
-      "Game.Core.Tests/State/GameStateMachineTests.cs",
       "Tests.Godot/tests/Integration/test_residence_economy_flow.gd",
       "Tests.Godot/tests/Scenes/Economy/test_residence_tax_timer_cadence.gd",
-      "Game.Core.Tests/Services/ResidenceTaxCadenceTests.cs",
       "Game.Core.Tests/Domain/ResidenceBuildingTests.cs",
       "Game.Core.Tests/Services/ResidenceTaxConfigTests.cs",
+      "Game.Core.Tests/Services/ResidenceTaxCadenceTests.cs",
       "Tests.Godot/tests/Scenes/Economy/test_residence_placement_no_effect_on_cancel.gd",
       "Tests.Godot/tests/Scenes/Economy/test_residence_multi_tax_sum.gd",
       "Tests.Godot/tests/Scenes/Economy/test_residence_timer_node_tax_binding.gd",
       "Game.Core.Tests/Services/ResidenceTaxPolicyTests.cs",
-      "Tests.Godot/tests/Integration/test_residence_tax_policy_flow.gd",
       "Game.Core.Tests/Services/ResidenceTaxDeterminismTests.cs",
-      "Tests.Godot/tests/Integration/test_residence_tax_tick_determinism.gd",
       "Game.Core.Tests/Services/ResidenceTaxTraceTests.cs",
+      "Tests.Godot/tests/Integration/test_residence_tax_policy_flow.gd",
+      "Tests.Godot/tests/Integration/test_residence_tax_tick_determinism.gd",
       "Tests.Godot/tests/Integration/test_residence_tax_trace_replay.gd"
     ],
     "acceptance": [

@@ -13,7 +13,10 @@
     "force_new_run_id",
     "status",
     "steps",
+    "started_at_utc",
+    "finished_at_utc",
     "elapsed_sec",
+    "run_type",
     "reason",
     "reuse_mode"
   ],
@@ -46,9 +49,26 @@
         "fail"
       ]
     },
+    "started_at_utc": {
+      "type": "string",
+      "minLength": 1
+    },
+    "finished_at_utc": {
+      "type": "string"
+    },
     "elapsed_sec": {
       "type": "integer",
       "minimum": 0
+    },
+    "run_type": {
+      "type": "string",
+      "enum": [
+        "planned-only",
+        "preflight-only",
+        "llm-only",
+        "deterministic-only",
+        "full"
+      ]
     },
     "reason": {
       "type": "string",
@@ -63,6 +83,9 @@
         "sc-test-reuse",
         "mixed-reuse"
       ]
+    },
+    "diagnostics": {
+      "type": "object"
     },
     "steps": {
       "type": "array",

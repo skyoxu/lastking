@@ -214,7 +214,7 @@ def _latest_candidate_priority(*, root: Path, latest_path: Path) -> int:
     detected_kind = _detect_kind(latest_path=latest_path, latest_payload=latest_payload, requested_kind="")
     artifact_root, out_dir = _resolve_artifact_root(root, latest_path, latest_payload, detected_kind)
     sidecar_paths = _sidecar_paths(artifact_root, detected_kind, latest_payload, out_dir)
-    summary_payload = _load_json_soft(sidecar_paths.get("summary"))
+    summary_payload = _normalize_legacy_pipeline_summary(_load_json_soft(sidecar_paths.get("summary")))
     if detected_kind == "pipeline" and _looks_like_dry_run_pipeline_summary(summary_payload):
         return 0
     return 1

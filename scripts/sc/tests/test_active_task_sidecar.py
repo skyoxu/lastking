@@ -521,6 +521,65 @@ class ActiveTaskSidecarTests(unittest.TestCase):
             self.assertEqual("--allow-repeat-deterministic-failures", payload["chapter6_hints"]["rerun_override_flag"])
             self.assertIn("repeated deterministic", payload["recommended_action_why"].lower())
 
+    def test_build_active_task_payload_should_prefer_inspect_when_dirty_worktree_rerun_guard_is_blocking(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            out_dir, latest_path = self._build_bundle(
+                root=root,
+                summary_payload={
+                    "cmd": "sc-review-pipeline",
+                    "task_id": "14",
+                    "run_id": "dirty1111dirty1111dirty1111dirty11",
+                    "status": "fail",
+                    "reason": "rerun_blocked:dirty_worktree_unsafe_paths_ceiling",
+                    "reuse_mode": "none",
+                    "steps": [],
+                },
+                execution_context_payload={
+                    "schema_version": "1.0.0",
+                    "cmd": "sc-review-pipeline",
+                    "date": "2026-04-07",
+                    "task_id": "14",
+                    "requested_run_id": "dirty1111dirty1111dirty1111dirty11",
+                    "run_id": "dirty1111dirty1111dirty1111dirty11",
+                    "status": "fail",
+                    "delivery_profile": "fast-ship",
+                    "security_profile": "host-safe",
+                    "failed_step": "",
+                    "paths": {},
+                    "git": {},
+                    "recovery": {},
+                    "marathon": {},
+                    "agent_review": {},
+                    "llm_review": {},
+                    "approval": {},
+                    "diagnostics": {
+                        "rerun_guard": {
+                            "kind": "dirty_worktree_unsafe_paths_ceiling",
+                            "blocked": True,
+                            "recommended_path": "inspect",
+                            "allow_override_flag": "--allow-large-change-scope-rerun",
+                        }
+                    },
+                },
+            )
+
+            payload = active_task_sidecar.build_active_task_payload(
+                task_id="14",
+                run_id="dirty1111dirty1111dirty1111dirty11",
+                status="fail",
+                out_dir=out_dir,
+                latest_json_path=latest_path,
+                root=root,
+            )
+
+            self.assertEqual("inspect", payload["recommended_action"])
+            self.assertEqual("rerun_guard", payload["chapter6_hints"]["blocked_by"])
+            self.assertFalse(payload["chapter6_hints"]["can_go_to_6_8"])
+            self.assertTrue(payload["chapter6_hints"]["rerun_forbidden"])
+            self.assertEqual("--allow-large-change-scope-rerun", payload["chapter6_hints"]["rerun_override_flag"])
+            self.assertIn("safe scope", payload["recommended_action_why"].lower())
+
     def test_build_active_task_payload_should_route_first_llm_timeout_stop_loss_to_needs_fix_fast(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
@@ -591,6 +650,10 @@ class ActiveTaskSidecarTests(unittest.TestCase):
             self.assertIn("llm timeout", payload["recommended_action_why"].lower())
             self.assertIn("- Latest run type: full", markdown)
             self.assertIn("- Latest artifact integrity: none", markdown)
+            self.assertIn(
+                "- Chapter6 stop-loss note: This run already stopped after the first costly llm timeout; continue with the narrow llm-only closure path instead of reopening deterministic steps.",
+                markdown,
+            )
             self.assertIn("llm_retry_stop_loss", markdown)
 
     def test_render_active_task_markdown_should_surface_planned_only_artifact_integrity(self) -> None:
@@ -697,11 +760,13 @@ class ActiveTaskSidecarTests(unittest.TestCase):
                 latest_json_path=latest_path,
                 root=root,
             )
+            markdown = active_task_sidecar.render_active_task_markdown(payload)
 
             self.assertEqual("rerun", payload["recommended_action"])
             self.assertEqual("sc_test_retry_stop_loss", payload["chapter6_hints"]["blocked_by"])
             self.assertTrue(payload["chapter6_hints"]["rerun_forbidden"])
             self.assertIn("known unit failure", payload["recommended_action_why"].lower())
+            self.assertIn("- Diagnostics sc_test_retry_stop_loss:", markdown)
 
     def test_build_active_task_payload_should_surface_recent_failure_summary(self) -> None:
         with tempfile.TemporaryDirectory() as td:
@@ -776,6 +841,11 @@ class ActiveTaskSidecarTests(unittest.TestCase):
             self.assertEqual("inspect", payload["recommended_action"])
             self.assertEqual("recent_failure_summary", payload["chapter6_hints"]["blocked_by"])
             self.assertTrue(payload["chapter6_hints"]["rerun_forbidden"])
+            markdown = active_task_sidecar.render_active_task_markdown(payload)
+            self.assertIn(
+                "- Chapter6 stop-loss note: Recent runs already repeat the same failure family; inspect the repeated fingerprint and fix the root cause before rerunning 6.7.",
+                markdown,
+            )
 
     def test_build_active_task_payload_should_not_continue_when_repair_guide_needs_fix(self) -> None:
         with tempfile.TemporaryDirectory() as td:

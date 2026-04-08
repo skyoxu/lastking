@@ -17,13 +17,16 @@ import json
 import os
 import re
 import sys
+import time
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 
 def _bootstrap_imports() -> None:
-    # scripts/sc/build/tdd.py -> scripts/sc/build -> scripts/sc
+    # scripts/sc/build/tdd.py -> scripts/sc/build -> scripts/sc and scripts/python
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "python"))
 
 
 _bootstrap_imports()
@@ -35,6 +38,7 @@ from _delivery_profile import (  # noqa: E402
     resolve_delivery_profile,
 )
 from _security_profile import resolve_security_profile  # noqa: E402
+from solution_target import resolve_test_solution_arg  # noqa: E402
 from _taskmaster import resolve_triplet  # noqa: E402
 from _util import ci_dir, repo_root, run_cmd, today_str, write_json, write_text  # noqa: E402
 from _tdd_shared import (  # noqa: E402
@@ -45,6 +49,16 @@ from _tdd_shared import (  # noqa: E402
 )
 
 DELIVERY_PROFILE_CHOICES = tuple(sorted(known_delivery_profiles()))
+
+
+def _utc_now_iso() -> str:
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
+
+def _finalize_summary(summary: dict[str, Any], *, start_monotonic: float) -> dict[str, Any]:
+    summary["finished_at"] = _utc_now_iso()
+    summary["elapsed_sec"] = round(max(0.0, time.monotonic() - start_monotonic), 3)
+    return summary
 
 
 def resolve_tdd_runtime(*, delivery_profile: str | None, security_profile: str | None, no_coverage_gate: bool) -> dict[str, Any]:
@@ -66,7 +80,11 @@ def build_parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(description="sc-build tdd gatekeeper")
     ap.add_argument("--stage", choices=["red", "green", "refactor"], default="green")
     ap.add_argument("--task-id", default=None, help="task id; defaults to first status=in-progress in tasks.json")
-    ap.add_argument("--solution", default="Game.sln")
+    ap.add_argument(
+        "--solution",
+        default="auto",
+        help="test solution target; default auto prefers a solution that contains test projects",
+    )
     ap.add_argument("--configuration", default="Debug")
     ap.add_argument(
         "--delivery-profile",
@@ -215,100 +233,129 @@ def run_sc_analyze_task_context(*, task_id: str, out_dir: Path) -> dict[str, Any
     return {"name": "sc-analyze", "cmd": cmd, "rc": rc, "log": str(log_path), "status": "ok" if rc == 0 else "fail"}
 
 
-def validate_red_stage_prerequisites(*, task_id: str, out_dir: Path) -> dict[str, Any]:
-    summary_name = f"summary-{task_id}.json"
+def _read_json(path: Path) -> dict[str, Any]:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def _normalize_task_id(value: Any) -> str:
+    return str(value or "").split(".", 1)[0].strip()
+
+
+def _find_latest_red_first_summary(task_id: str) -> tuple[Path | None, dict[str, Any]]:
+    logs_root = repo_root() / "logs" / "ci"
+    if not logs_root.exists():
+        return None, {}
     candidates = sorted(
-        (repo_root() / "logs" / "ci").glob(f"*/sc-llm-acceptance-tests/{summary_name}"),
-        key=lambda path: path.stat().st_mtime,
+        [item for item in logs_root.glob(f"*/sc-llm-acceptance-tests/summary-{task_id}.json") if item.is_file()],
+        key=lambda item: item.stat().st_mtime,
         reverse=True,
     )
-    log_path = out_dir / "validate-red-stage-prerequisites.log"
-    if not candidates:
-        write_text(
-            log_path,
-            "\n".join(
-                [
-                    "FAIL: missing 6.4 red-stage evidence.",
-                    f"Expected a prior run of scripts/sc/llm_generate_tests_from_acceptance_refs.py for task_id={task_id}.",
-                    "Fix:",
-                    f"  py -3 scripts/sc/llm_generate_tests_from_acceptance_refs.py --task-id {task_id} --tdd-stage red-first --verify auto --godot-bin \"$env:GODOT_BIN\"",
-                ]
-            )
-            + "\n",
-        )
-        return {
-            "name": "validate_red_stage_prerequisites",
-            "cmd": ["internal:validate_red_stage_prerequisites"],
-            "rc": 1,
-            "log": str(log_path),
-            "status": "fail",
-            "reason": "missing_red_stage_summary",
-        }
+    for candidate in candidates:
+        payload = _read_json(candidate)
+        if _normalize_task_id(payload.get("task_id")) != task_id:
+            continue
+        return candidate, payload
+    return None, {}
 
-    summary_path = candidates[0]
-    try:
-        payload = json.loads(summary_path.read_text(encoding="utf-8"))
-    except Exception as exc:
-        write_text(log_path, f"FAIL: unreadable summary file: {summary_path}\n{exc}\n")
-        return {
-            "name": "validate_red_stage_prerequisites",
-            "cmd": ["internal:validate_red_stage_prerequisites"],
-            "rc": 1,
-            "log": str(log_path),
-            "status": "fail",
-            "reason": "invalid_red_stage_summary",
-            "summary_path": str(summary_path),
-        }
 
+def _find_latest_green_summary(task_id: str) -> tuple[Path | None, dict[str, Any]]:
+    logs_root = repo_root() / "logs" / "ci"
+    if not logs_root.exists():
+        return None, {}
+    candidates = sorted(
+        [item for item in logs_root.glob("*/sc-build-tdd/summary.json") if item.is_file()],
+        key=lambda item: item.stat().st_mtime,
+        reverse=True,
+    )
+    for candidate in candidates:
+        payload = _read_json(candidate)
+        if str(payload.get("stage") or "").strip().lower() != "green":
+            continue
+        task_info = payload.get("task")
+        summary_task_id = _normalize_task_id(task_info.get("task_id")) if isinstance(task_info, dict) else ""
+        if summary_task_id != task_id:
+            continue
+        return candidate, payload
+    return None, {}
+
+
+def validate_green_red_prerequisite(*, task_id: str, out_dir: Path) -> dict[str, Any]:
+    summary_path, payload = _find_latest_red_first_summary(task_id)
     errors: list[str] = []
-    if str(payload.get("task_id") or "").strip() != str(task_id):
-        errors.append(f"summary task_id mismatch: expected {task_id}, got {payload.get('task_id')!r}")
-    if str(payload.get("tdd_stage") or "").strip() != "red-first":
-        errors.append("summary is not from red-first stage")
-    results = payload.get("results")
-    if not isinstance(results, list) or not results:
-        errors.append("summary has no generated/ref-scanned results")
-    if isinstance(results, list) and any(str(item.get("status") or "").strip() == "fail" for item in results if isinstance(item, dict)):
-        errors.append("red-stage generation contains failed refs")
-    if int(payload.get("created") or 0) > 0:
-        red_verify = payload.get("red_verify")
-        if not isinstance(red_verify, dict) or str(red_verify.get("status") or "").strip() != "ok":
-            errors.append("red-first verification is missing or not ok")
-    test_step = payload.get("test_step")
-    if not isinstance(test_step, dict):
-        errors.append("summary is missing verify test_step")
-    if int(payload.get("sync_test_refs_rc") or 0) != 0:
-        errors.append("sync_test_refs_rc is non-zero")
+    failed_refs: list[str] = []
+    if summary_path is None:
+        errors.append("missing red-first summary: run workflow chapter 6.4 first")
+    else:
+        if str(payload.get("tdd_stage") or "").strip().lower() != "red-first":
+            errors.append("latest acceptance test summary is not red-first")
+        results = payload.get("results")
+        if isinstance(results, list):
+            for item in results:
+                if not isinstance(item, dict):
+                    continue
+                if str(item.get("status") or "").strip().lower() == "fail":
+                    failed_refs.append(str(item.get("ref") or "").strip())
+        if failed_refs:
+            errors.append(f"red-first summary contains failed refs: {len(failed_refs)}")
+        created = int(payload.get("created") or 0)
+        if created > 0:
+            red_verify = payload.get("red_verify")
+            red_status = str(red_verify.get("status") or "").strip().lower() if isinstance(red_verify, dict) else ""
+            if red_status != "ok":
+                errors.append("red-first created new tests but red_verify.status is not ok")
 
-    if errors:
-        write_text(
-            log_path,
-            "\n".join(
-                [
-                    f"FAIL: 6.4 red-stage evidence is not acceptable: {summary_path}",
-                    *[f"ERROR: {item}" for item in errors],
-                ]
-            )
-            + "\n",
-        )
-        return {
-            "name": "validate_red_stage_prerequisites",
-            "cmd": ["internal:validate_red_stage_prerequisites"],
-            "rc": 1,
-            "log": str(log_path),
-            "status": "fail",
-            "summary_path": str(summary_path),
-            "errors": errors,
-        }
-
-    write_text(log_path, f"OK: red-stage evidence={summary_path}\n")
+    log_path = out_dir / "validate_green_red_prerequisite.log"
+    lines = [
+        f"task_id={task_id}",
+        f"summary_path={summary_path if summary_path is not None else ''}",
+        f"errors={len(errors)}",
+    ]
+    for ref in failed_refs[:30]:
+        lines.append(f"FAILED_REF: {ref}")
+    for err in errors:
+        lines.append(f"ERROR: {err}")
+    write_text(log_path, "\n".join(lines) + "\n")
     return {
-        "name": "validate_red_stage_prerequisites",
-        "cmd": ["internal:validate_red_stage_prerequisites"],
-        "rc": 0,
+        "name": "validate_green_red_prerequisite",
+        "cmd": ["internal:validate_green_red_prerequisite"],
+        "rc": 0 if not errors else 1,
         "log": str(log_path),
-        "status": "ok",
-        "summary_path": str(summary_path),
+        "status": "ok" if not errors else "fail",
+        "summary_path": str(summary_path) if summary_path is not None else "",
+        "errors": errors,
+    }
+
+
+def validate_refactor_green_prerequisite(*, task_id: str, out_dir: Path) -> dict[str, Any]:
+    summary_path, payload = _find_latest_green_summary(task_id)
+    errors: list[str] = []
+    if summary_path is None:
+        errors.append("missing green summary: run workflow chapter 6.5 first")
+    else:
+        if str(payload.get("status") or "").strip().lower() != "ok":
+            errors.append(f"latest green summary status is not ok: {payload.get('status')}")
+
+    log_path = out_dir / "validate_refactor_green_prerequisite.log"
+    lines = [
+        f"task_id={task_id}",
+        f"summary_path={summary_path if summary_path is not None else ''}",
+        f"errors={len(errors)}",
+    ]
+    for err in errors:
+        lines.append(f"ERROR: {err}")
+    write_text(log_path, "\n".join(lines) + "\n")
+    return {
+        "name": "validate_refactor_green_prerequisite",
+        "cmd": ["internal:validate_refactor_green_prerequisite"],
+        "rc": 0 if not errors else 1,
+        "log": str(log_path),
+        "status": "ok" if not errors else "fail",
+        "summary_path": str(summary_path) if summary_path is not None else "",
+        "errors": errors,
     }
 
 
@@ -401,14 +448,20 @@ def run_green_gate(
     coverage_branches_min: int,
     green_scope: str,
 ) -> dict[str, Any]:
+    prev_lines_min = os.environ.get("COVERAGE_LINES_MIN")
+    prev_branches_min = os.environ.get("COVERAGE_BRANCHES_MIN")
+    prev_gate_mode = os.environ.get("COVERAGE_GATE_MODE")
+
     coverage_gate_enabled = (green_scope == "all") and bool(coverage_gate)
     if coverage_gate_enabled:
         os.environ["COVERAGE_LINES_MIN"] = str(max(0, int(coverage_lines_min)))
         os.environ["COVERAGE_BRANCHES_MIN"] = str(max(0, int(coverage_branches_min)))
+        os.environ["COVERAGE_GATE_MODE"] = "hard"
     else:
         # Task-scoped green should validate correctness quickly without global denominator drift.
         os.environ.pop("COVERAGE_LINES_MIN", None)
         os.environ.pop("COVERAGE_BRANCHES_MIN", None)
+        os.environ["COVERAGE_GATE_MODE"] = "soft"
 
     cmd = ["py", "-3", "scripts/python/run_dotnet.py", "--solution", solution, "--configuration", configuration]
     filter_expr = ""
@@ -424,7 +477,21 @@ def run_green_gate(
     inner_timeout_ms = max(60_000, inner_timeout_ms)
     outer_timeout_sec = max(1_800, int(inner_timeout_ms / 1000) + 120)
 
-    rc, out = run_cmd(cmd, cwd=repo_root(), timeout_sec=outer_timeout_sec)
+    try:
+        rc, out = run_cmd(cmd, cwd=repo_root(), timeout_sec=outer_timeout_sec)
+    finally:
+        if prev_lines_min is None:
+            os.environ.pop("COVERAGE_LINES_MIN", None)
+        else:
+            os.environ["COVERAGE_LINES_MIN"] = prev_lines_min
+        if prev_branches_min is None:
+            os.environ.pop("COVERAGE_BRANCHES_MIN", None)
+        else:
+            os.environ["COVERAGE_BRANCHES_MIN"] = prev_branches_min
+        if prev_gate_mode is None:
+            os.environ.pop("COVERAGE_GATE_MODE", None)
+        else:
+            os.environ["COVERAGE_GATE_MODE"] = prev_gate_mode
     log_path = out_dir / "run_dotnet.log"
     write_text(log_path, out)
     return {
@@ -557,6 +624,7 @@ def run_refactor_checks(out_dir: Path, *, task_id: str) -> list[dict[str, Any]]:
 
 
 def main() -> int:
+    start_monotonic = time.monotonic()
     args = build_parser().parse_args()
     runtime = resolve_tdd_runtime(
         delivery_profile=args.delivery_profile,
@@ -576,8 +644,11 @@ def main() -> int:
         "security_profile": str(runtime["security_profile"]),
         "allow_contract_changes": bool(args.allow_contract_changes),
         "status": "fail",
+        "started_at": _utc_now_iso(),
         "steps": [],
     }
+    resolved_solution = resolve_test_solution_arg(args.solution, root=repo_root())
+    summary["solution"] = resolved_solution
 
     triplet = resolve_triplet(task_id=args.task_id)
     summary["task"] = {
@@ -594,7 +665,7 @@ def main() -> int:
         preflight_step = run_task_preflight(triplet=triplet, out_dir=out_dir)
         summary["steps"].append(preflight_step)
         if preflight_step["rc"] != 0:
-            write_json(out_dir / "summary.json", summary)
+            write_json(out_dir / "summary.json", _finalize_summary(summary, start_monotonic=start_monotonic))
             print(f"SC_BUILD_TDD status=fail out={out_dir}")
             assert_no_new_contract_files(before_contracts, allow_changes=bool(args.allow_contract_changes))
             return 1
@@ -602,7 +673,7 @@ def main() -> int:
         ctx_step = validate_task_context_required_fields(task_id=triplet.task_id, stage="red", out_dir=out_dir)
         summary["steps"].append(ctx_step)
         if ctx_step["rc"] != 0:
-            write_json(out_dir / "summary.json", summary)
+            write_json(out_dir / "summary.json", _finalize_summary(summary, start_monotonic=start_monotonic))
             print(f"SC_BUILD_TDD status=fail out={out_dir}")
             assert_no_new_contract_files(before_contracts, allow_changes=bool(args.allow_contract_changes))
             return 1
@@ -614,13 +685,13 @@ def main() -> int:
             out_dir=out_dir,
         )
         if not test_path:
-            write_json(out_dir / "summary.json", summary)
+            write_json(out_dir / "summary.json", _finalize_summary(summary, start_monotonic=start_monotonic))
             print("[sc-build-tdd] ERROR: no task-scoped test found. Use --generate-red-test to create one.")
             return 2
 
         step = run_dotnet_test_filtered(
             triplet.task_id,
-            solution=args.solution,
+            solution=resolved_solution,
             configuration=args.configuration,
             out_dir=out_dir,
         )
@@ -628,16 +699,24 @@ def main() -> int:
 
         # In red stage, we EXPECT a failure.
         summary["status"] = "ok" if step["rc"] != 0 else "unexpected_green"
-        write_json(out_dir / "summary.json", summary)
+        write_json(out_dir / "summary.json", _finalize_summary(summary, start_monotonic=start_monotonic))
         print(f"SC_BUILD_TDD status={summary['status']} out={out_dir}")
         assert_no_new_contract_files(before_contracts, allow_changes=bool(args.allow_contract_changes))
         return 0 if summary["status"] == "ok" else 1
 
     if args.stage == "green":
+        prereq_step = validate_green_red_prerequisite(task_id=triplet.task_id, out_dir=out_dir)
+        summary["steps"].append(prereq_step)
+        if prereq_step["rc"] != 0:
+            write_json(out_dir / "summary.json", _finalize_summary(summary, start_monotonic=start_monotonic))
+            print(f"SC_BUILD_TDD status=fail out={out_dir}")
+            assert_no_new_contract_files(before_contracts, allow_changes=bool(args.allow_contract_changes))
+            return 1
+
         preflight_step = run_task_preflight(triplet=triplet, out_dir=out_dir)
         summary["steps"].append(preflight_step)
         if preflight_step["rc"] != 0:
-            write_json(out_dir / "summary.json", summary)
+            write_json(out_dir / "summary.json", _finalize_summary(summary, start_monotonic=start_monotonic))
             print(f"SC_BUILD_TDD status=fail out={out_dir}")
             assert_no_new_contract_files(before_contracts, allow_changes=bool(args.allow_contract_changes))
             return 1
@@ -645,22 +724,14 @@ def main() -> int:
         ctx_step = validate_task_context_required_fields(task_id=triplet.task_id, stage="green", out_dir=out_dir)
         summary["steps"].append(ctx_step)
         if ctx_step["rc"] != 0:
-            write_json(out_dir / "summary.json", summary)
+            write_json(out_dir / "summary.json", _finalize_summary(summary, start_monotonic=start_monotonic))
             print(f"SC_BUILD_TDD status=fail out={out_dir}")
             assert_no_new_contract_files(before_contracts, allow_changes=bool(args.allow_contract_changes))
             return 1
-        red_stage_step = validate_red_stage_prerequisites(task_id=triplet.task_id, out_dir=out_dir)
-        summary["steps"].append(red_stage_step)
-        if red_stage_step["rc"] != 0:
-            write_json(out_dir / "summary.json", summary)
-            print(f"SC_BUILD_TDD status=fail out={out_dir}")
-            assert_no_new_contract_files(before_contracts, allow_changes=bool(args.allow_contract_changes))
-            return 1
-
         step = run_green_gate(
             task_id=triplet.task_id,
             triplet=triplet,
-            solution=args.solution,
+            solution=resolved_solution,
             configuration=args.configuration,
             out_dir=out_dir,
             coverage_gate=bool(runtime["coverage_gate"]),
@@ -672,16 +743,24 @@ def main() -> int:
         if step["rc"] == 2:
             summary["steps"].append(write_coverage_hotspots(ci_out_dir=out_dir, run_dotnet_output=step.get("stdout") or ""))
         summary["status"] = "ok" if step["rc"] == 0 else "fail"
-        write_json(out_dir / "summary.json", summary)
+        write_json(out_dir / "summary.json", _finalize_summary(summary, start_monotonic=start_monotonic))
         print(f"SC_BUILD_TDD status={summary['status']} out={out_dir}")
         assert_no_new_contract_files(before_contracts, allow_changes=bool(args.allow_contract_changes))
         return 0 if step["rc"] == 0 else 1
 
     if args.stage == "refactor":
+        prereq_step = validate_refactor_green_prerequisite(task_id=triplet.task_id, out_dir=out_dir)
+        summary["steps"].append(prereq_step)
+        if prereq_step["rc"] != 0:
+            write_json(out_dir / "summary.json", _finalize_summary(summary, start_monotonic=start_monotonic))
+            print(f"SC_BUILD_TDD status=fail out={out_dir}")
+            assert_no_new_contract_files(before_contracts, allow_changes=bool(args.allow_contract_changes))
+            return 1
+
         preflight_step = run_task_preflight(triplet=triplet, out_dir=out_dir)
         summary["steps"].append(preflight_step)
         if preflight_step["rc"] != 0:
-            write_json(out_dir / "summary.json", summary)
+            write_json(out_dir / "summary.json", _finalize_summary(summary, start_monotonic=start_monotonic))
             print(f"SC_BUILD_TDD status=fail out={out_dir}")
             assert_no_new_contract_files(before_contracts, allow_changes=bool(args.allow_contract_changes))
             return 1
@@ -689,7 +768,7 @@ def main() -> int:
         ctx_step = validate_task_context_required_fields(task_id=triplet.task_id, stage="refactor", out_dir=out_dir)
         summary["steps"].append(ctx_step)
         if ctx_step["rc"] != 0:
-            write_json(out_dir / "summary.json", summary)
+            write_json(out_dir / "summary.json", _finalize_summary(summary, start_monotonic=start_monotonic))
             print(f"SC_BUILD_TDD status=fail out={out_dir}")
             assert_no_new_contract_files(before_contracts, allow_changes=bool(args.allow_contract_changes))
             return 1
@@ -697,7 +776,7 @@ def main() -> int:
         steps = run_refactor_checks(out_dir, task_id=triplet.task_id)
         summary["steps"].extend(steps)
         summary["status"] = "ok" if all(s["rc"] == 0 for s in steps) else "fail"
-        write_json(out_dir / "summary.json", summary)
+        write_json(out_dir / "summary.json", _finalize_summary(summary, start_monotonic=start_monotonic))
 
         if summary["status"] != "ok":
             failed = [s for s in steps if s.get("rc") != 0]
@@ -731,7 +810,7 @@ def main() -> int:
         assert_no_new_contract_files(before_contracts, allow_changes=bool(args.allow_contract_changes))
         return 0 if summary["status"] == "ok" else 1
 
-    write_json(out_dir / "summary.json", summary)
+    write_json(out_dir / "summary.json", _finalize_summary(summary, start_monotonic=start_monotonic))
     return 1
 
 

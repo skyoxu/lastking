@@ -14,6 +14,8 @@ public sealed class ResourceManager
     private readonly int _dayNumber;
     private readonly string _eventSource;
 
+    public static ResourceManager? Current { get; private set; }
+
     public ResourceManager() : this(eventBus: null, runId: "default-run", dayNumber: 1, eventSource: nameof(ResourceManager))
     {
     }
@@ -36,6 +38,7 @@ public sealed class ResourceManager
         Gold = InitialGold;
         Iron = InitialIron;
         PopulationCap = InitialPopulationCap;
+        Current = this;
     }
 
     public int Gold { get; private set; }

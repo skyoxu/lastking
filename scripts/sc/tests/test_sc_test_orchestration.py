@@ -291,6 +291,37 @@ class ScTestOrchestrationTests(unittest.TestCase):
             summary = json.loads((out_dir / "summary.json").read_text(encoding="utf-8"))
             self.assertEqual("fail", summary["status"])
 
+    def test_main_should_skip_engine_lane_when_unit_failed_in_all_mode(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            out_dir = Path(tmpdir) / "sc-test"
+            argv = ["test.py", "--type", "all", "--run-id", "8" * 32, "--task-id", "21", "--godot-bin", "C:/Godot/Godot.exe"]
+            unit_step = {
+                "name": "unit",
+                "cmd": ["py", "-3", "scripts/python/run_dotnet.py"],
+                "rc": 1,
+                "log": str(out_dir / "unit.log"),
+                "artifacts_dir": str(out_dir / "unit-artifacts"),
+                "status": "fail",
+            }
+            with mock.patch.object(sys, "argv", argv), \
+                mock.patch.object(sc_test, "ci_dir", return_value=out_dir), \
+                mock.patch.object(sc_test, "run_unit", return_value=unit_step), \
+                mock.patch.object(sc_test, "_task_scoped_gdunit_refs", return_value=["Tests.Godot/tests/Integration/test_task_21_flow.gd"]), \
+                mock.patch.object(sc_test, "run_gdunit_hard") as gdunit_mock, \
+                mock.patch.object(sc_test, "run_smoke") as smoke_mock:
+                rc = sc_test.main()
+
+            self.assertEqual(1, rc)
+            gdunit_mock.assert_not_called()
+            smoke_mock.assert_not_called()
+            summary = json.loads((out_dir / "summary.json").read_text(encoding="utf-8"))
+            self.assertEqual("fail", summary["status"])
+            self.assertEqual(["unit", "gdunit-hard", "smoke"], [item["name"] for item in summary["steps"]])
+            self.assertEqual("skipped", summary["steps"][1]["status"])
+            self.assertEqual("unit_failed_prevents_engine_lane", summary["steps"][1]["reason"])
+            self.assertEqual("skipped", summary["steps"][2]["status"])
+            self.assertEqual("unit_failed_prevents_engine_lane", summary["steps"][2]["reason"])
+
 
 if __name__ == "__main__":
     unittest.main()

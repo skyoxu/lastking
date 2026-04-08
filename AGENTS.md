@@ -54,12 +54,19 @@ Use these sources first. Do not rebuild ad-hoc indexes unless the task explicitl
   - `py -3 scripts/python/inspect_run.py --kind local-hard-checks`
 - Canonical task recovery:
   - `py -3 scripts/python/dev_cli.py resume-task --task-id <task-id>`
+  - Read `Latest reason`, `Latest reuse mode`, `Chapter6 blocked by`, and `Chapter6 stop-loss note` before reopening a full `6.7`
 - Task-scoped review pipeline:
   - `py -3 scripts/sc/run_review_pipeline.py --task-id <task-id> --godot-bin <godot-bin>`
 - Recovery doc validation:
   - `py -3 scripts/python/validate_recovery_docs.py --dir all`
 - Gate bundle only:
   - `py -3 scripts/python/run_gate_bundle.py --mode hard --task-files .taskmaster/tasks/tasks_back.json .taskmaster/tasks/tasks_gameplay.json`
+
+## Recovery Stop-Loss Signals
+- `rerun_guard`: deterministic path already says stop; do not blindly rerun `6.7`
+- `llm_retry_stop_loss`: deterministic was green and the first long LLM wait already timed out; prefer narrow LLM closure
+- `sc_test_retry_stop_loss`: same-run unit retry already proved wasteful; fix the unit root cause first
+- `waste_signals`: engine-lane cost already ran after a known unit/root-cause failure
 
 ## Architecture And Contract Rules
 - Contracts SSoT lives in `Game.Core/Contracts/**`.

@@ -839,6 +839,54 @@ class InspectRunTests(unittest.TestCase):
             self.assertEqual(older_latest_copy.relative_to(root).as_posix(), payload["paths"]["latest"])
             self.assertEqual(older_out.relative_to(root).as_posix(), payload["paths"]["out_dir"])
 
+    def test_inspect_run_should_prefer_recent_real_latest_over_newer_planned_only_latest(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            older_latest, older_out = _write_pipeline_bundle(
+                root,
+                task_id="14",
+                run_id="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                status="ok",
+            )
+            older_latest_copy = root / "logs" / "ci" / "2026-04-06" / "sc-review-pipeline-task-14" / "latest.json"
+            older_latest_copy.parent.mkdir(parents=True, exist_ok=True)
+            older_latest_copy.write_text(older_latest.read_text(encoding="utf-8"), encoding="utf-8")
+
+            newer_latest, newer_out = _write_pipeline_bundle(
+                root,
+                task_id="14",
+                run_id="dddddddddddddddddddddddddddddddd",
+                status="ok",
+            )
+            planned_summary = _read_json(newer_out / "summary.json")
+            planned_summary["steps"] = [
+                {"name": "sc-test", "cmd": ["py", "-3", "scripts/sc/test.py"], "rc": 0, "status": "planned"},
+                {"name": "sc-acceptance-check", "cmd": ["py", "-3", "scripts/sc/acceptance_check.py"], "rc": 0, "status": "planned"},
+                {"name": "sc-llm-review", "cmd": ["py", "-3", "scripts/sc/llm_review.py"], "rc": 0, "status": "planned"},
+            ]
+            planned_summary["finished_at_utc"] = "2026-03-22T10:01:00+00:00"
+            planned_summary.pop("run_type", None)
+            planned_summary.pop("reason", None)
+            (newer_out / "summary.json").write_text(
+                json.dumps(planned_summary, ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8",
+            )
+            newer_latest_payload = _read_json(newer_latest)
+            newer_latest_payload["run_type"] = "planned-only"
+            newer_latest_payload["reason"] = "planned_only_incomplete"
+            newer_latest.write_text(
+                json.dumps(newer_latest_payload, ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8",
+            )
+            newer_latest.touch()
+
+            rc, payload = inspect_run.inspect_run_artifacts(repo_root=root, kind="pipeline", task_id="14")
+
+            self.assertEqual(0, rc)
+            self.assertEqual("ok", payload["failure"]["code"])
+            self.assertEqual(older_latest_copy.relative_to(root).as_posix(), payload["paths"]["latest"])
+            self.assertEqual(older_out.relative_to(root).as_posix(), payload["paths"]["out_dir"])
+
     def test_inspect_run_should_fail_planned_only_terminal_bundle_even_when_latest_status_is_ok(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

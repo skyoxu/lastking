@@ -219,6 +219,7 @@
 - 如果当前同一轮 `sc-test` 已经从 child summary 证明是 `unit` 失败，`run_review_pipeline.py` 会直接停掉同 run 的第二次同参重试；证据写入 `diagnostics.sc_test_retry_stop_loss`，避免把“已知 unit 根因”再付一轮 engine lane 成本。
 - 新开 run 默认继承最近同任务的 `delivery/security profile` 组合；如果确实要改 profile，必须显式传 `--reselect-profile`，否则以 profile drift 失败。
 - `resume-task` / `inspect_run.py --kind pipeline` / active-task sidecar 现在会统一透出 `latest_summary_signals` 与 `chapter6_hints`，减少“还没看清工件就直接重跑”的浪费。
+- Read `recommended_action_why` whenever it is available; if the action is already `needs-fix-fast`, prefer targeted closure instead of reopening a full `6.7`.
 - LLM reviewer 超时扩时不再只看“上一轮是否 timeout”，还会记住最近同任务 / 同 profile 的 agent 级有效超时，继续 timeout 时只定向抬高对应 reviewer。
 
 - 读取 `summary.json` / `latest.json` 时，必须同时看 `run_type` 和 `artifact_integrity`；只看 `reason` 和 `reuse_mode` 会漏掉 planned-only terminal bundle。

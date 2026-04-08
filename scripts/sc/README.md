@@ -42,6 +42,7 @@
 - 若出现 `llm_retry_stop_loss`，优先走窄路径收敛 LLM 结果，不要再付一整轮 deterministic 成本。
 - 若出现 `sc_test_retry_stop_loss`，说明同 run 的 unit 根因已被证明，先修根因，不要重复同参重跑。
 - 若 `recommended_action = needs-fix-fast`，优先做定向 closure，不要再盲目开整轮 `6.7`。
+- If `active-task`, `resume-task`, or project-health already exposes `recommended_action_why`, use it to choose between `inspect`, `resume`, and `needs-fix-fast` before paying for another rerun.
 
 ## TDD 门禁编排（重要说明）
 

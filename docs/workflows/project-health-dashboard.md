@@ -66,8 +66,8 @@ The active-task aggregate counters also track Chapter 6 KPI-style fields such as
 - `next_action_inspect`
 - `next_action_resume`
 - `next_action_continue`
-The active-task summary row now also counts `llm_retry_stop_loss_blocked`, `sc_test_retry_stop_loss_blocked`, and `artifact_integrity_blocked`, so repeated timeout-driven waste, known unit-root-cause retries, and stale/incomplete recovery bundles are visible without opening raw artifacts.
-Each active-task card now prints `recommended_action_why` plus explicit diagnostic rows for `llm_retry_stop_loss`, `sc_test_retry_stop_loss`, and `artifact_integrity` when those stop-loss or recovery-integrity signals are present.
+The active-task summary row now also counts `llm_retry_stop_loss_blocked`, `sc_test_retry_stop_loss_blocked`, `artifact_integrity_blocked`, and `recent_failure_summary_blocked`, so repeated timeout-driven waste, known unit-root-cause retries, stale/incomplete recovery bundles, and repeated same-family failure stop-loss signals are visible without opening raw artifacts.
+Each active-task card now prints `recommended_action_why`, `chapter6_stop_loss_note`, plus explicit diagnostic rows for `llm_retry_stop_loss`, `sc_test_retry_stop_loss`, `recent_failure_summary`, and `artifact_integrity` when those stop-loss or recovery-integrity signals are present.
 When the latest pointer is only a planned-only terminal bundle, the card also emits `planned_only_terminal_bundle: true` so operators can distinguish stale planning artifacts from real completed producer runs at a glance.
 
 ## Recovery Reading Hints

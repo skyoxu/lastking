@@ -23,6 +23,7 @@ Recovery shortcut:
 - If recovery shows `run_type = planned-only`, `reason = planned_only_incomplete`, or `Chapter6 blocked by = artifact_integrity`, treat that bundle as evidence only; do not reopen `6.7` or `6.8` from it.
 - `run_review_pipeline.py --dry-run` no longer publishes `latest.json` or `active-task` sidecars, and `inspect_run.py` automatically skips dry-run-only latest candidates when resolving the next real recovery pointer.
 - `active-task` now follows the real bundle pointed to by `latest.json`; when `out_dir` and `latest.json` disagree, trust `latest.json` first.
+- If recovery also exposes `recommended_action_why`, read it before choosing between reopen, narrow closure, or stop-loss; `recommended_action = needs-fix-fast` means targeted closure is cheaper than another full rerun.
 
 ## Chapter 6 Fast-Ship Card
 
