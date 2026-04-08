@@ -12,6 +12,7 @@
 ## Quick Links
 
 - Agents index: `docs/agents/00-index.md`
+- Session recovery: `docs/agents/01-session-recovery.md`
 - Project docs index: `docs/PROJECT_DOCUMENTATION_INDEX.md`
 - Project health dashboard: `docs/workflows/project-health-dashboard.md`
 - Stable public entrypoints: `docs/workflows/stable-public-entrypoints.md`
@@ -28,6 +29,32 @@
    - `dotnet build lastking.sln -c Debug`
 4. Optional local hard checks:
    - `py -3 scripts/python/dev_cli.py run-local-hard-checks --godot-bin "$env:GODOT_BIN"`
+
+## Recovery First
+
+When resuming a task after a reset or another session, do not guess from scattered logs first.
+
+1. Read `docs/agents/01-session-recovery.md`
+2. Run `py -3 scripts/python/dev_cli.py resume-task --task-id <task-id>`
+3. Only if that is still insufficient, run `py -3 scripts/python/inspect_run.py --kind pipeline --task-id <task-id>`
+
+Before paying for another full `6.7`, read these signals first:
+
+- `Latest reason`
+- `Latest run type`
+- `Latest reuse mode`
+- `Latest artifact integrity`
+- `Chapter6 blocked by`
+- `Chapter6 stop-loss note`
+
+Recovery stop-loss rules:
+
+- `run_type = planned-only` or `reason = planned_only_incomplete`: treat the bundle as evidence only; do not reopen `6.7` or `6.8` from it
+- `Chapter6 blocked by = artifact_integrity`: fall back to the previous real producer bundle before any rerun choice
+- `rerun_guard`: deterministic cost should not be paid again blindly
+- `llm_retry_stop_loss`: prefer narrow LLM-only closure, not another full rerun
+- `sc_test_retry_stop_loss`: same-run unit retry already proved wasteful; fix unit root cause first
+- `waste_signals`: engine-lane cost was already wasted after a known unit/root-cause failure
 
 ## Core Repositories and Files
 
@@ -51,6 +78,7 @@
   - `py -3 scripts/python/dev_cli.py run-local-hard-checks --godot-bin "$env:GODOT_BIN"`
 - Task recovery (canonical):
   - `py -3 scripts/python/dev_cli.py resume-task --task-id <task-id>`
+  - `py -3 scripts/python/inspect_run.py --kind pipeline --task-id <task-id>`
 - Gate bundle only:
   - `py -3 scripts/python/run_gate_bundle.py --mode hard --task-files .taskmaster/tasks/tasks_back.json .taskmaster/tasks/tasks_gameplay.json`
 - Task review pipeline:
