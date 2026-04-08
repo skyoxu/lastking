@@ -65,7 +65,7 @@ public sealed class ResidenceTaxTraceTests
             initialGold: 100,
             residenceCount: 2,
             taxPerResidence: 5,
-            tickSequenceSeconds: new[] { 15, 45, 75, 105 },
+            tickSequenceSeconds: new[] { 15, 45, 61, 105 },
             policy: ResidenceTaxRuntimePolicy.NegativeGoldPolicyAllowDebt);
 
         secondRun.Entries.Should().NotEqual(firstRun.Entries);
