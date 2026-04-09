@@ -1,34 +1,34 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
 using FluentAssertions;
+using Game.Core.Services;
 using Xunit;
 
 namespace Game.Core.Tests.Services;
 
 public sealed class ResidenceTaxCadenceTests
 {
-    private static readonly string RepoRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
-
     // ACC:T14.19
     [Fact]
     [Trait("acceptance", "ACC:T14.19")]
-    public void ShouldLockTaxCadenceAtFifteenSeconds_WhenResidenceTaxContractIsScanned()
+    public void ShouldLockTaxCadenceAtFifteenSeconds_WhenDeterministicTickInputIsApplied()
     {
-        var candidateFiles = GetResidenceTaxSourceFiles();
+        ResidenceTaxRuntimePolicy.ResidenceTaxCadenceSeconds.Should().Be(15);
 
-        candidateFiles.Should().NotBeEmpty(
-            "contract lock requires a concrete residence tax runtime source before cadence can be validated.");
+        var appliedTickSeconds = Enumerable.Range(1, 60)
+            .Select(second => ResidenceTaxRuntimePolicy.SettleTaxTick(
+                tickSequence: second,
+                currentGold: 100,
+                residenceCount: 1,
+                taxPerResidence: 8,
+                negativeGoldPolicy: ResidenceTaxRuntimePolicy.NegativeGoldPolicyAllowDebt))
+            .Where(trace => trace.Reason == "tax_applied")
+            .Select(trace => trace.TickSequence)
+            .ToArray();
 
-        var cadenceSecondValues = ExtractCadenceSecondValues(candidateFiles);
-
-        cadenceSecondValues.Should().NotBeEmpty(
-            "residence tax runtime contract must declare cadence explicitly to prevent silent drift.");
-        cadenceSecondValues.Should().OnlyContain(value => Math.Abs(value - 15.0) < 0.0001,
-            "residence tax cadence must be fixed at 15 seconds.");
+        appliedTickSeconds.Should().Equal(new[] { 15, 30, 45, 60 },
+            "cadence drift must fail under identical tick input rather than by weak source scanning.");
     }
 
     // ACC:T14.21
@@ -273,49 +273,6 @@ public sealed class ResidenceTaxCadenceTests
             TaxEventSeconds: taxEventSeconds,
             GoldAfterEachTaxTick: goldAfterEachTaxTick,
             DebtStateAfterEachTaxTick: debtStateAfterEachTaxTick);
-    }
-
-    private static IReadOnlyList<string> GetResidenceTaxSourceFiles()
-    {
-        var coreRoot = Path.Combine(RepoRoot, "Game.Core");
-        if (!Directory.Exists(coreRoot))
-        {
-            return Array.Empty<string>();
-        }
-
-        return Directory
-            .GetFiles(coreRoot, "*.cs", SearchOption.AllDirectories)
-            .Where(path => !path.Contains("\\bin\\", StringComparison.OrdinalIgnoreCase))
-            .Where(path => !path.Contains("\\obj\\", StringComparison.OrdinalIgnoreCase))
-            .Where(path => File.ReadAllText(path, Encoding.UTF8).Contains("Residence", StringComparison.OrdinalIgnoreCase))
-            .Where(path => File.ReadAllText(path, Encoding.UTF8).Contains("Tax", StringComparison.OrdinalIgnoreCase))
-            .ToArray();
-    }
-
-    private static IReadOnlyList<double> ExtractCadenceSecondValues(IEnumerable<string> candidateFiles)
-    {
-        var cadenceValues = new List<double>();
-        var numericPattern = new Regex(@"(?i)(cadence|waittime|fromseconds)\D{0,24}(\d+(?:\.\d+)?)", RegexOptions.CultureInvariant);
-
-        foreach (var file in candidateFiles)
-        {
-            var source = File.ReadAllText(file, Encoding.UTF8);
-            var matches = numericPattern.Matches(source);
-            foreach (Match match in matches)
-            {
-                if (match.Groups.Count < 3)
-                {
-                    continue;
-                }
-
-                if (double.TryParse(match.Groups[2].Value, out var value))
-                {
-                    cadenceValues.Add(value);
-                }
-            }
-        }
-
-        return cadenceValues;
     }
 
     private readonly record struct PlacementEvent(int AtSecond, bool Succeeded);

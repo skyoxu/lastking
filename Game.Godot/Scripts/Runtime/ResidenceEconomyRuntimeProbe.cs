@@ -1,9 +1,13 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using Game.Core.Contracts;
+using Game.Core.Contracts.Lastking;
 using Game.Core.Domain.Building;
 using Game.Core.Services.Building;
 using Game.Core.State.Building;
 using Game.Core.Services;
+using Game.Godot.Autoloads;
 using Godot;
 
 namespace Game.Godot.Scripts.Runtime;
@@ -17,6 +21,7 @@ public partial class ResidenceEconomyRuntimeProbe : Node
     private int _residenceBuiltCount;
     private int _tickSequenceSeconds;
     private double _fractionalSeconds;
+    private bool _lastPlacementAcceptedForTest;
     private BuildingPlacementState _placementState = new(width: 32, height: 32, resources: 1000);
     private readonly List<int> _residenceLevels = new();
 
@@ -39,13 +44,18 @@ public partial class ResidenceEconomyRuntimeProbe : Node
 
     public int PopulationCap => _resourceManager.PopulationCap;
 
-    public bool IsTaxScheduleRunning => _residenceBuilt;
+    public bool IsTaxScheduleRunning => _taxTimer is not null && !_taxTimer.IsStopped();
 
     public Timer? TaxTimer => _taxTimer;
+
+    public int[] TaxEventSeconds => _taxEventSeconds.ToArray();
+
+    public bool LastPlacementAcceptedForTest => _lastPlacementAcceptedForTest;
 
     public override void _Ready()
     {
         EnsureTimer();
+        EnsureTaxScheduleRunning();
     }
 
     public void EnsureReadyForTest()
@@ -57,12 +67,14 @@ public partial class ResidenceEconomyRuntimeProbe : Node
     {
         var snapshotJson = $"{{\"gold\":{gold},\"iron\":{iron},\"populationCap\":{populationCap}}}";
         _ = _resourceManager.TryImportSnapshot(snapshotJson);
+        StopTaxSchedule();
         _residenceBuilt = false;
         _residenceBuiltCount = 0;
         _tickSequenceSeconds = 0;
         _fractionalSeconds = 0.0;
         _taxEventSeconds.Clear();
         _residenceLevels.Clear();
+        _lastPlacementAcceptedForTest = false;
         _placementState = new BuildingPlacementState(width: 32, height: 32, resources: 1000);
     }
 
@@ -90,6 +102,7 @@ public partial class ResidenceEconomyRuntimeProbe : Node
         _residenceBuilt = true;
         _residenceBuiltCount += 1;
         _residenceLevels.Add(level);
+        EnsureTaxScheduleRunning();
         return true;
     }
 
@@ -106,6 +119,14 @@ public partial class ResidenceEconomyRuntimeProbe : Node
     public void PlaceResidenceWithLevelForTest(int level)
     {
         _ = TryPlaceResidenceAt(2 + _residenceBuiltCount, 2 + _residenceBuiltCount, false, level);
+    }
+
+    public void ApplyBlockedPlacementForTest()
+    {
+        _lastPlacementAcceptedForTest = TryPlaceResidenceAt(
+            10 + _residenceBuiltCount,
+            10 + _residenceBuiltCount,
+            blockTargetCell: true);
     }
 
     public void AdvanceSeconds(int seconds)
@@ -163,6 +184,29 @@ public partial class ResidenceEconomyRuntimeProbe : Node
         AddChild(_taxTimer);
     }
 
+    private void EnsureTaxScheduleRunning()
+    {
+        if (!_residenceBuilt || _taxTimer is null || !_taxTimer.IsInsideTree())
+        {
+            return;
+        }
+
+        if (_taxTimer.IsStopped())
+        {
+            _taxTimer.Start();
+        }
+    }
+
+    private void StopTaxSchedule()
+    {
+        if (_taxTimer is null || _taxTimer.IsStopped())
+        {
+            return;
+        }
+
+        _taxTimer.Stop();
+    }
+
     private void OnTaxTimerTimeout()
     {
         if (!_residenceBuilt)
@@ -190,6 +234,7 @@ public partial class ResidenceEconomyRuntimeProbe : Node
 
         _ = _resourceManager.TryAdd(trace.GoldDelta, 0, 0, "residence_tax_tick");
         _taxEventSeconds.Add(_tickSequenceSeconds);
+        PublishTaxCollected(trace);
     }
 
     private int ResolveTotalTaxPerTick()
@@ -210,5 +255,50 @@ public partial class ResidenceEconomyRuntimeProbe : Node
         }
 
         return TaxPerTick;
+    }
+
+    private void PublishTaxCollected(ResidenceTaxTraceEntry trace)
+    {
+        var eventBus = ResolveEventBus();
+        if (eventBus is null)
+        {
+            return;
+        }
+
+        var collectedAt = DateTimeOffset.UtcNow;
+        var payload = new TaxCollected(
+            RunId: "default-run",
+            DayNumber: 1,
+            ResidenceId: ResolveResidenceId(),
+            GoldDelta: trace.GoldDelta,
+            TotalGold: _resourceManager.Gold,
+            CollectedAt: collectedAt);
+
+        _ = eventBus.PublishAsync(DomainEvent.Create(
+            type: TaxCollected.EventType,
+            source: nameof(ResidenceEconomyRuntimeProbe),
+            payload: payload,
+            timestamp: collectedAt.UtcDateTime,
+            id: Guid.NewGuid().ToString("N")));
+    }
+
+    private IEventBus? ResolveEventBus()
+    {
+        if (IsInsideTree() && GetNodeOrNull<Node>("/root/EventBus") is IEventBus rootEventBus)
+        {
+            return rootEventBus;
+        }
+
+        return CompositionRoot.Instance?.EventBus;
+    }
+
+    private string ResolveResidenceId()
+    {
+        if (_residenceBuiltCount <= 1)
+        {
+            return "residence-01";
+        }
+
+        return $"residence-group-{_residenceBuiltCount}";
     }
 }

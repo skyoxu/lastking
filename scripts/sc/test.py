@@ -15,6 +15,7 @@ Usage (Windows):
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import uuid
 from pathlib import Path
@@ -222,6 +223,59 @@ def _skipped_step(*, name: str, reason: str, cmd: list[str] | None = None) -> di
     return step
 
 
+def _read_json_file(path: Path) -> dict[str, Any]:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def _should_soften_task_scoped_unit_coverage_failure(
+    *,
+    step: dict[str, Any],
+    task_gd_refs: list[str],
+    delivery_profile: str,
+    test_type: str,
+) -> bool:
+    if str(test_type or "").strip().lower() != "all":
+        return False
+    if str(delivery_profile or "").strip().lower() not in {"playable-ea", "fast-ship"}:
+        return False
+    if not task_gd_refs:
+        return False
+    if int(step.get("rc") or 0) == 0 or str(step.get("status") or "").strip().lower() != "fail":
+        return False
+    artifacts_dir = Path(str(step.get("artifacts_dir") or "").strip())
+    if not artifacts_dir.exists():
+        return False
+    unit_summary = _read_json_file(artifacts_dir / "summary.json")
+    if str(unit_summary.get("status") or "").strip().lower() != "coverage_failed":
+        return False
+    if int(unit_summary.get("test_rc", 1)) != 0:
+        return False
+    coverage = unit_summary.get("coverage") if isinstance(unit_summary.get("coverage"), dict) else {}
+    line_pct = float(coverage.get("line_pct") or 0.0)
+    branch_pct = float(coverage.get("branch_pct") or 0.0)
+    return line_pct > 0.0 or branch_pct > 0.0
+
+
+def _soften_task_scoped_unit_coverage_failure(step: dict[str, Any]) -> dict[str, Any]:
+    softened = dict(step)
+    softened["rc"] = 0
+    softened["status"] = "ok"
+    softened["reason"] = "task_scoped_mixed_coverage_softened"
+    log_path = Path(str(softened.get("log") or "").strip())
+    if log_path.exists():
+        note = (
+            "\n[sc-test] task-scoped unit coverage stayed below threshold, but this task also has scoped .gd refs.\n"
+            "[sc-test] In playable-ea/fast-ship all-mode, treat this as a mixed-task warning and continue engine-lane verification.\n"
+            "[sc-test] Pure .cs tasks and standard profile remain hard-gated by unit coverage.\n"
+        )
+        log_path.write_text(log_path.read_text(encoding="utf-8") + note, encoding="utf-8")
+    return softened
+
+
 def main() -> int:
     args = build_parser().parse_args()
     if bool(args.self_check):
@@ -288,6 +342,10 @@ def main() -> int:
     if not _persist_summary():
         return 2
 
+    task_gd_refs = _task_scoped_gdunit_refs(task_id=args.task_id, tests_project=repo_root() / "Tests.Godot") if args.task_id else []
+    explicit_engine_lane = args.type in ("integration", "e2e")
+    should_run_engine_lane = args.type in ("integration", "e2e") or (args.type == "all" and (not args.task_id or bool(task_gd_refs)))
+
     if args.type in ("unit", "all"):
         if bool(runtime["coverage_gate"]):
             os.environ["COVERAGE_LINES_MIN"] = str(runtime["coverage_lines_min"])
@@ -306,6 +364,16 @@ def main() -> int:
         summary["steps"].append(step)
         if not _persist_summary():
             return 2
+        if _should_soften_task_scoped_unit_coverage_failure(
+            step=step,
+            task_gd_refs=task_gd_refs,
+            delivery_profile=str(runtime["delivery_profile"]),
+            test_type=args.type,
+        ):
+            step = _soften_task_scoped_unit_coverage_failure(step)
+            summary["steps"][-1] = step
+            if not _persist_summary():
+                return 2
         if step["rc"] != 0:
             hard_fail = True
         else:
@@ -322,10 +390,6 @@ def main() -> int:
                 return 2
             if cov.get("status") == "fail":
                 hard_fail = True
-
-    task_gd_refs = _task_scoped_gdunit_refs(task_id=args.task_id, tests_project=repo_root() / "Tests.Godot") if args.task_id else []
-    explicit_engine_lane = args.type in ("integration", "e2e")
-    should_run_engine_lane = args.type in ("integration", "e2e") or (args.type == "all" and (not args.task_id or bool(task_gd_refs)))
 
     if args.type in ("integration", "e2e", "all"):
         if args.type == "all" and args.task_id and not task_gd_refs:

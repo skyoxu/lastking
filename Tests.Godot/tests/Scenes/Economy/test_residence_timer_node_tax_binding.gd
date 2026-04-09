@@ -4,12 +4,15 @@ const ResidenceEconomyRuntimeProbe = preload("res://Game.Godot/Scripts/Runtime/R
 
 func _new_runtime(tax_per_tick: int = 7) -> Dictionary:
 	var root_node = Node.new()
+	get_tree().get_root().add_child(auto_free(root_node))
 	var runtime = ResidenceEconomyRuntimeProbe.new()
 	runtime.set("TaxPerTick", tax_per_tick)
 	root_node.add_child(runtime)
+	await get_tree().process_frame
 	runtime.call("EnsureReadyForTest")
 	runtime.call("SetBaselineForTest", 100, 150, 5)
 	runtime.call("ApplyPlacementResult", true)
+	await get_tree().process_frame
 	return {
 		"root_node": root_node,
 		"runtime": runtime,
@@ -22,7 +25,7 @@ func _free_runtime(data: Dictionary) -> void:
 
 # acceptance: ACC:T14.15
 func test_residence_tax_timer_node_binding_requires_15_second_cadence_and_connected_timeout() -> void:
-	var data = _new_runtime(6)
+	var data = await _new_runtime(6)
 	var runtime = data["runtime"]
 	var timer = runtime.get("TaxTimer") as Timer
 
@@ -35,7 +38,7 @@ func test_residence_tax_timer_node_binding_requires_15_second_cadence_and_connec
 	_free_runtime(data)
 
 func test_residence_tax_timer_timeout_writes_tax_into_resource_manager() -> void:
-	var data = _new_runtime(9)
+	var data = await _new_runtime(9)
 	var runtime = data["runtime"]
 
 	runtime.call("TriggerTimeoutForTest")
@@ -45,7 +48,7 @@ func test_residence_tax_timer_timeout_writes_tax_into_resource_manager() -> void
 	_free_runtime(data)
 
 func test_residence_tax_timer_does_not_write_before_timeout_signal() -> void:
-	var data = _new_runtime(5)
+	var data = await _new_runtime(5)
 	var runtime = data["runtime"]
 
 	assert_int(int(runtime.get("Gold"))).is_equal(100)

@@ -1294,6 +1294,7 @@ Notes:
 - Behavior notes: bundles ending as `run_type = planned-only` / `reason = planned_only_incomplete` are evidence-only and must not be reused as producer-run recovery baselines.
 - Behavior notes: `--llm-base` defaults to `origin/main`.
 - Behavior notes: `--allow-full-unit-fallback` only affects the internal `sc-test` call when task-scoped unit coverage fails at `0.0%`; default delivery profiles keep this off to avoid accidental repo-wide retries.
+- Behavior notes: for mixed tasks with both scoped `.cs` and `.gd` refs, `playable-ea` / `fast-ship` soften non-zero task-scoped unit coverage failures to a warning and continue engine-lane verification; `standard` and pure `.cs` tasks keep the unit coverage gate hard.
 - Parameter prerequisites:
   - Windows PowerShell + `py -3` from repo root.
   - Task-scoped parameters require a Taskmaster triplet; template fallback can read `examples/taskmaster/**`, but business repos should use real `.taskmaster/tasks/*.json`.
