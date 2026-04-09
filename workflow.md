@@ -680,6 +680,7 @@ py -3 scripts/sc/run_review_pipeline.py --task-id <id> --godot-bin "$env:GODOT_B
 - 如果变化属于 task semantics，例如 taskmaster / overlay / ADR / PRD 文本，6.7 只复用 `sc-test`；后续 `acceptance_check` 仍会重跑，避免“假绿”。
 - 如果你明确要保留旧行为，可以显式传：`py -3 scripts/sc/run_review_pipeline.py --task-id <id> --godot-bin "$env:GODOT_BIN" --delivery-profile <profile> --allow-full-unit-fallback`。
 - 这个开关只建议用于定位“task-scoped unit coverage = 0.0%”是否由 filter 过窄引起；默认不要开，否则会把任务级失败放大成全仓 `dotnet test`，拖慢单轮时长。
+- 对同时声明 `.cs` 与 `.gd` refs 的 mixed task，若 `sc-test --type all` 的 task-scoped unit 仅因 coverage threshold 失败、`dotnet test` 实际已通过、且 coverage 非 `0.0%`，`playable-ea` / `fast-ship` 会把它降为 warning 并继续 engine lane；`standard` 与纯 `.cs` 任务仍保持硬失败。
 
 - 如果你只是想先验证 run wiring、profile 解析、latest pointer 和 planned steps 是否正常，而不想真正执行测试与 acceptance，可先做一轮最便宜的探针：
 

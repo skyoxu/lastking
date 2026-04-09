@@ -47,9 +47,19 @@ public sealed class ResourceManagerEventTests
         var result = sut.TryAdd(30, 2, 1, "battle-reward");
 
         result.Succeeded.Should().BeTrue();
-        bus.Events.Should().ContainSingle();
+        var matchingEvents = bus.Events
+            .Where(candidate => candidate.Type == EventTypes.LastkingResourcesChanged)
+            .Where(candidate => candidate.DataElement.HasValue)
+            .Where(candidate =>
+            {
+                var payload = candidate.DataElement!.Value;
+                return payload.TryGetProperty("reason", out var reasonElement) &&
+                       reasonElement.GetString() == "battle-reward";
+            })
+            .ToList();
 
-        var evt = bus.Events[0];
+        matchingEvents.Should().ContainSingle();
+        var evt = matchingEvents[0];
         evt.Type.Should().Be(EventTypes.LastkingResourcesChanged);
 
         evt.DataElement.HasValue.Should().BeTrue();

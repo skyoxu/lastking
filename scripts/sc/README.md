@@ -134,7 +134,8 @@ py -3 scripts/python/validate_semantic_review_tier.py
 - 构建门禁（硬）：`dotnet build -warnaserror`（通过 `scripts/sc/build.py`）
 - 安全软检查（软）：Sentry secrets / 核心契约检查 / 编码扫描
 - 测试门禁（硬）：`scripts/sc/test.py --type all`（含 GdUnit4 + smoke）
-  - task-scoped unit coverage 若为 `0.0%`，默认直接失败，不再自动回退到全量 `dotnet test`；只有显式传 `--allow-full-unit-fallback` 才保留旧行为。
+- task-scoped unit coverage 若为 `0.0%`，默认直接失败，不再自动回退到全量 `dotnet test`；只有显式传 `--allow-full-unit-fallback` 才保留旧行为。
+- mixed task（同时存在 task-scoped `.cs` / `.gd` refs）在 `playable-ea` / `fast-ship` 下，如果 unit 仅因 coverage threshold 失败但 `dotnet test` 已通过且 coverage 非 `0.0%`，会降为 warning 并继续 engine lane；`standard` 与纯 `.cs` 任务不放宽。
 - 性能门禁（可选硬门）：解析最新 `logs/ci/**/headless.log` 的 `[PERF] ... p95_ms=...` 并与阈值比较
   - 启用方式：`--perf-p95-ms <ms>` 或设置环境变量 `PERF_P95_THRESHOLD_MS=<ms>`
   - 快捷方式：`--require-perf`（legacy）：等价于启用性能硬门禁，阈值取 `PERF_P95_THRESHOLD_MS`，否则默认 20ms（口径见 ADR-0015）

@@ -1,73 +1,61 @@
 extends "res://addons/gdUnit4/src/GdUnitTestSuite.gd"
 
-class ResidencePlacementEconomyDouble:
-	extends RefCounted
+const ResidenceEconomyRuntimeProbe = preload("res://Game.Godot/Scripts/Runtime/ResidenceEconomyRuntimeProbe.cs")
 
-	var gold: int
-	var population_cap: int
-	var tax_tick_count: int = 0
-	var _tax_schedule_running: bool = false
+func _new_runtime() -> Dictionary:
+	var root_node = Node.new()
+	get_tree().get_root().add_child(auto_free(root_node))
+	var runtime = ResidenceEconomyRuntimeProbe.new()
+	root_node.add_child(runtime)
+	await get_tree().process_frame
+	runtime.call("EnsureReadyForTest")
+	runtime.call("SetBaselineForTest", 120, 150, 5)
+	return {
+		"root_node": root_node,
+		"runtime": runtime,
+	}
 
-	func _init(initial_gold: int = 120, initial_population_cap: int = 5) -> void:
-		gold = initial_gold
-		population_cap = initial_population_cap
-
-	func try_place_residence(outcome: String) -> Dictionary:
-		if outcome == "success":
-			gold -= 20
-			population_cap += 3
-			_tax_schedule_running = true
-			return {"accepted": true, "reason": "success"}
-
-		if outcome == "cancelled":
-			return {"accepted": false, "reason": "cancelled"}
-
-		if outcome == "invalid":
-			return {"accepted": false, "reason": "invalid"}
-
-		return {"accepted": false, "reason": "unknown"}
-
-	func is_tax_schedule_running() -> bool:
-		return _tax_schedule_running
-
-	func advance(seconds: float) -> void:
-		if seconds <= 0.0:
-			return
-		if not _tax_schedule_running:
-			return
-		tax_tick_count += int(floor(seconds / 15.0))
-
-
-func _new_runtime() -> ResidencePlacementEconomyDouble:
-	return ResidencePlacementEconomyDouble.new()
+func _free_runtime(data: Dictionary) -> void:
+	var root_node = data["root_node"] as Node
+	if root_node != null:
+		root_node.queue_free()
 
 
 # acceptance: ACC:T14.10
 func test_cancelled_residence_placement_keeps_gold_and_population_cap_unchanged_and_does_not_start_tax_schedule() -> void:
-	var runtime = _new_runtime()
-	var gold_before = runtime.gold
-	var population_cap_before = runtime.population_cap
+	var data = await _new_runtime()
+	var runtime = data["runtime"]
+	var gold_before = int(runtime.get("Gold"))
+	var population_cap_before = int(runtime.get("PopulationCap"))
+	var timer = runtime.get("TaxTimer") as Timer
 
-	var result = runtime.try_place_residence("cancelled")
-	runtime.advance(30.0)
+	runtime.call("ApplyPlacementResult", false)
+	runtime.call("AdvanceSeconds", 30)
 
-	assert_bool(result.get("accepted", true)).is_false()
-	assert_int(runtime.gold).is_equal(gold_before)
-	assert_int(runtime.population_cap).is_equal(population_cap_before)
-	assert_bool(runtime.is_tax_schedule_running()).is_false()
-	assert_int(runtime.tax_tick_count).is_equal(0)
+	assert_int(int(runtime.get("Gold"))).is_equal(gold_before)
+	assert_int(int(runtime.get("PopulationCap"))).is_equal(population_cap_before)
+	assert_bool(bool(runtime.get("IsTaxScheduleRunning"))).is_false()
+	assert_that(timer is Timer).is_true()
+	assert_bool(timer.is_stopped()).is_true()
+
+	_free_runtime(data)
 
 
 func test_invalid_residence_placement_keeps_state_unchanged_and_prevents_tax_ticks() -> void:
-	var runtime = _new_runtime()
-	var gold_before = runtime.gold
-	var population_cap_before = runtime.population_cap
+	var data = await _new_runtime()
+	var runtime = data["runtime"]
+	var gold_before = int(runtime.get("Gold"))
+	var population_cap_before = int(runtime.get("PopulationCap"))
+	var timer = runtime.get("TaxTimer") as Timer
 
-	var result = runtime.try_place_residence("invalid")
-	runtime.advance(45.0)
+	runtime.call("ApplyBlockedPlacementForTest")
+	runtime.call("AdvanceSeconds", 45)
 
-	assert_bool(result.get("accepted", true)).is_false()
-	assert_int(runtime.gold).is_equal(gold_before)
-	assert_int(runtime.population_cap).is_equal(population_cap_before)
-	assert_bool(runtime.is_tax_schedule_running()).is_false()
-	assert_int(runtime.tax_tick_count).is_equal(0)
+	assert_bool(bool(runtime.get("LastPlacementAcceptedForTest"))).is_false()
+	assert_int(int(runtime.get("Gold"))).is_equal(gold_before)
+	assert_int(int(runtime.get("PopulationCap"))).is_equal(population_cap_before)
+	assert_bool(bool(runtime.get("IsTaxScheduleRunning"))).is_false()
+	assert_that(timer is Timer).is_true()
+	assert_bool(timer.is_stopped()).is_true()
+
+	_free_runtime(data)
