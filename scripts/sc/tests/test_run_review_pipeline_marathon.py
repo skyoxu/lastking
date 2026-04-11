@@ -43,6 +43,20 @@ class RunReviewPipelineMarathonTests(unittest.TestCase):
         )
         self._review_preflight_patcher.start()
         self.addCleanup(self._review_preflight_patcher.stop)
+        self._cli_preflight_patcher = mock.patch.object(
+            run_review_pipeline_module,
+            "_run_cli_capability_preflight",
+            return_value=None,
+        )
+        self._cli_preflight_patcher.start()
+        self.addCleanup(self._cli_preflight_patcher.stop)
+        self._chapter6_route_guard_patcher = mock.patch.object(
+            run_review_pipeline_module,
+            "_derive_chapter6_route_guard",
+            return_value=None,
+        )
+        self._chapter6_route_guard_patcher.start()
+        self.addCleanup(self._chapter6_route_guard_patcher.stop)
 
     def test_find_reusable_sc_test_step_should_pick_matching_failed_pipeline_run(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -611,7 +625,7 @@ class RunReviewPipelineMarathonTests(unittest.TestCase):
                 mock.patch.object(run_review_pipeline_module, "write_agent_review", return_value=(payload, [], [])):
                 rc = run_review_pipeline_module.main()
 
-            self.assertEqual(1, rc)
+            self.assertEqual(0, rc)
             request = json.loads((out_dir / "approval-request.json").read_text(encoding="utf-8"))
             latest = json.loads(latest_path.read_text(encoding="utf-8"))
             execution_context = json.loads((out_dir / "execution-context.json").read_text(encoding="utf-8"))
@@ -623,7 +637,8 @@ class RunReviewPipelineMarathonTests(unittest.TestCase):
             self.assertEqual(str(out_dir / "approval-request.json"), latest["approval_request_path"])
             self.assertEqual("pending", execution_context["approval"]["status"])
             self.assertEqual("fork", execution_context["approval"]["required_action"])
-            self.assertEqual("fail", summary["status"])
+            self.assertEqual("continue", execution_context["approval"]["recommended_action"])
+            self.assertEqual("ok", summary["status"])
 
     def test_existing_approval_response_should_be_indexed_as_soft_signal(self) -> None:
         run_id = uuid.uuid4().hex
@@ -1440,6 +1455,26 @@ class RunReviewPipelineMarathonTests(unittest.TestCase):
             self.assertEqual(1, initial_counts["sc-test"])
             self.assertEqual(1, initial_counts["sc-acceptance-check"])
             self.assertNotIn("sc-llm-review", initial_counts)
+            request_payload = json.loads((out_dir / "approval-request.json").read_text(encoding="utf-8"))
+            (out_dir / "approval-response.json").write_text(
+                json.dumps(
+                    {
+                        "request_id": request_payload.get("request_id"),
+                        "task_id": "1",
+                        "run_id": run_id,
+                        "action": "fork",
+                        "decision": "denied",
+                        "reason": "continue same run",
+                        "recommended_action": "resume",
+                        "allowed_actions": ["resume", "inspect"],
+                        "blocked_actions": ["fork"],
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
 
             resumed_counts: dict[str, int] = {}
 
