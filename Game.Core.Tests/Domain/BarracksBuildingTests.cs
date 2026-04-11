@@ -1,3 +1,5 @@
+using FluentAssertions;
+using Game.Core.Domain.Building;
 using Xunit;
 
 namespace Game.Core.Tests.Domain;
@@ -8,6 +10,10 @@ public class BarracksBuildingTests
     [Fact]
     public void ShouldRepresentBarracksAsBuildingSubclass_WhenDomainContractsAreChecked()
     {
-        Assert.True(true);
+        typeof(BarracksBuilding).IsSubclassOf(typeof(Building)).Should().BeTrue();
+        var barracks = new BarracksBuilding();
+        barracks.Type.Should().Be(BuildingTypeIds.Barracks);
+        barracks.FootprintSize.Should().Be(2);
+        barracks.Hp.Should().BeGreaterThan(0);
     }
 }

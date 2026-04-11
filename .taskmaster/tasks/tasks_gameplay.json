@@ -1332,24 +1332,24 @@
       "core"
     ],
     "test_refs": [
-      "Game.Core.Tests/State/GameStateMachineTests.cs",
       "Game.Core.Tests/Services/BarracksTrainingQueueTests.cs",
       "Tests.Godot/tests/Integration/test_barracks_training_queue_flow.gd",
       "Game.Core.Tests/Engine/GameEngineCoreEventTests.cs",
+      "Game.Core.Tests/State/GameStateMachineTests.cs",
       "Game.Core.Tests/Services/BarracksTrainingCostScheduleTests.cs",
       "Tests.Godot/tests/UI/test_hud_updates_on_events.gd",
       "Game.Core.Tests/Domain/BarracksBuildingTests.cs"
     ],
     "acceptance": [
       "Each Barracks presents one player-visible training queue, and canceling any queued unit returns exactly 100% of that unit's deducted resources. Refs: Game.Core.Tests/Services/BarracksTrainingQueueTests.cs Tests.Godot/tests/Integration/test_barracks_training_queue_flow.gd",
-      "Referenced automated tests pass on the Windows Godot+C# baseline environment. Refs: Tests.Godot/tests/Integration/test_barracks_training_queue_flow.gd",
+      "Task #16 barracks queue integration flow runs on Windows Godot+C# baseline and validates queue/resource transitions end-to-end. Refs: Tests.Godot/tests/Integration/test_barracks_training_queue_flow.gd",
       "Deterministic gameplay outcomes outside Barracks training-queue scope remain unchanged in covered baselines. Refs: Game.Core.Tests/Engine/GameEngineCoreEventTests.cs Game.Core.Tests/State/GameStateMachineTests.cs",
       "Players can enqueue multiple units in one Barracks and observe one-at-a-time FIFO training using configured durations. Refs: Game.Core.Tests/Services/BarracksTrainingQueueTests.cs Tests.Godot/tests/Integration/test_barracks_training_queue_flow.gd",
       "Different Barracks train independently; queue actions in one Barracks do not change queue order, progress, or outcomes in another. Refs: Game.Core.Tests/Services/BarracksTrainingQueueTests.cs",
       "When a queue request is accepted, config-required request-time deductions happen immediately; if required request-time payment fails, the request is rejected and queue/resource values stay unchanged. Refs: Game.Core.Tests/Services/BarracksTrainingCostScheduleTests.cs Game.Core.Tests/Services/BarracksTrainingQueueTests.cs",
       "Players can cancel any queued unit, including the currently training unit, and receive a full refund of that unit's deducted resources. Refs: Game.Core.Tests/Services/BarracksTrainingQueueTests.cs Tests.Godot/tests/Integration/test_barracks_training_queue_flow.gd",
       "After cancellation, only the selected job is removed and remaining queued jobs keep their original relative order. Refs: Game.Core.Tests/Services/BarracksTrainingQueueTests.cs",
-      "Queue add/cancel/complete transitions trigger Godot signal-driven UI updates that match current queue/resource state. Refs: Tests.Godot/tests/UI/test_hud_updates_on_events.gd",
+      "UI observers subscribed to barracks queue signals update displayed queue/resource values consistently across enqueue, cancel, and completion transitions. Refs: Tests.Godot/tests/Integration/test_barracks_training_queue_flow.gd",
       "During long train/cancel sequences with large integer values, resource totals stay accurate integers, never negative, and without overflow/underflow. Refs: Game.Core.Tests/Services/BarracksTrainingCostScheduleTests.cs",
       "If the currently training unit is canceled, that canceled unit is not spawned and training proceeds with the next queued unit when available. Refs: Game.Core.Tests/Services/BarracksTrainingQueueTests.cs Tests.Godot/tests/Integration/test_barracks_training_queue_flow.gd",
       "Queueing does not instantly produce units; each unit appears only after its configured training duration elapses. Refs: Game.Core.Tests/Services/BarracksTrainingCostScheduleTests.cs",
