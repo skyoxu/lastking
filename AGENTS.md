@@ -1,26 +1,29 @@
 # Repository Guide
 
-This file is the routing layer for `lastking`. Keep it short. Put durable detail in `docs/agents/**`, `docs/workflows/**`, `docs/adr/**`, and `docs/architecture/**`.
+本文件是 `lastking` 的路由层，不承载大段细节。稳定规则放到 `docs/agents/**`、`docs/workflows/**`、`docs/adr/**`、`docs/architecture/**`。
 
-## Project Identity
+## 项目标识
+
 - Repository: `lastking`
-- Product: Windows-only single-player Godot 4.5.1 + C# game project
-- Primary PRD-ID: `PRD-lastking-T2`
-- Current default delivery posture: `playable-ea`
-- Current default security posture: `host-safe`
-- Upstream alignment baseline: `docs/workflows/business-repo-upgrade-guide.md`
+- Product: Windows-only Godot 4.5.1 + C# 单机项目
+- 默认交付姿态: `fast-ship`
+- 默认安全姿态: `host-safe`
+- 升级对齐基线: `docs/workflows/business-repo-upgrade-guide.md`
 
-## Non-Negotiables
-- Communicate with users in Chinese.
-- Default environment is Windows. All commands and paths must be Windows-compatible.
-- Read and write documents with Python and UTF-8.
-- Do not use emoji.
-- Keep code, scripts, tests, comments, and printed messages in English.
-- Put logs, evidence, and audit output under `logs/**`.
-- Use small, explicit plans and update progress during non-trivial work.
-- Do not keep dead compatibility layers. Remove obsolete paths instead of preserving them.
+## 不可协商规则
 
-## Start Order After Context Reset
+- 与用户沟通统一使用中文。
+- 默认环境是 Windows，命令必须可在 Windows 执行。
+- 文档读写统一 UTF-8。
+- 不使用 Emoji。
+- 代码、脚本、测试、注释、打印文本统一英文。
+- 日志、审计和证据统一放在 `logs/**`。
+- 非 trivial 任务必须显式分步并持续更新进度。
+- 不保留无用兼容层，过期路径应清理。
+- 若存在未修复 `Needs Fix`，必须先记录到 `decision-logs/**`，并在 `execution-plans/**` 写明后续修复入口与证据路径。
+
+## Context Reset 后的启动顺序
+
 1. `README.md`
 2. `docs/agents/00-index.md`
 3. `docs/agents/01-session-recovery.md`
@@ -30,67 +33,84 @@ This file is the routing layer for `lastking`. Keep it short. Put durable detail
 7. `docs/testing-framework.md`
 8. `docs/agents/16-directory-responsibilities.md`
 9. `docs/workflows/prototype-lane.md`
-10. `workflow.md`
-11. `docs/workflows/project-health-dashboard.md`
-12. Newest file in `execution-plans/`
-13. Newest file in `decision-logs/`
-14. If a local review already ran: `logs/ci/<date>/sc-review-pipeline-task-<task-id>/latest.json`
+10. `execution-plans/` 最新文件
+11. `decision-logs/` 最新文件
+12. 若已有审查流水线结果，读取 `logs/ci/<date>/sc-review-pipeline-task-<task-id>/latest.json`
 
-## Authoritative Sources
-Use these sources first. Do not rebuild ad-hoc indexes unless the task explicitly requires it.
-- Taskmaster triplet: `.taskmaster/tasks/tasks.json`, `.taskmaster/tasks/tasks_back.json`, `.taskmaster/tasks/tasks_gameplay.json`
-- PRD material: `.taskmaster/docs/prd.txt`, `docs/prd/**`
-- ADRs: `docs/adr/ADR-*.md`, `docs/architecture/ADR_INDEX_GODOT.md`
-- Base architecture: `docs/architecture/base/**`
-- Overlays: `docs/architecture/overlays/<PRD-ID>/08/**`
-- Testing rules: `docs/testing-framework.md`
-- Delivery and harness rules: `DELIVERY_PROFILE.md`, `docs/workflows/run-protocol.md`, `docs/workflows/local-hard-checks.md`
-- Workflow and script routing: `workflow.md`, `docs/workflows/stable-public-entrypoints.md`, `docs/workflows/script-entrypoints-index.md`
-- Project health routing: `docs/workflows/project-health-dashboard.md`, `logs/ci/project-health/latest.html`, `logs/ci/project-health/report-catalog.latest.json`
+## 权威来源
 
-## Core Execution Entry Points
-- Repo-scoped hard validation:
+优先使用以下来源，不要随意重建索引。
+
+- Taskmaster 三联:
+  - `.taskmaster/tasks/tasks.json`
+  - `.taskmaster/tasks/tasks_back.json`
+  - `.taskmaster/tasks/tasks_gameplay.json`
+- PRD:
+  - `.taskmaster/docs/prd.txt`
+  - `docs/prd/**`
+- ADR:
+  - `docs/adr/ADR-*.md`
+  - `docs/architecture/ADR_INDEX_GODOT.md`
+- Base 架构:
+  - `docs/architecture/base/**`
+- Overlay:
+  - `docs/architecture/overlays/<PRD-ID>/08/**`
+- 测试规则:
+  - `docs/testing-framework.md`
+- 交付与执行协议:
+  - `DELIVERY_PROFILE.md`
+  - `docs/workflows/run-protocol.md`
+  - `docs/workflows/local-hard-checks.md`
+
+## 核心入口
+
+- 本地硬检查:
   - `py -3 scripts/python/dev_cli.py run-local-hard-checks --godot-bin <godot-bin>`
-  - `py -3 scripts/python/inspect_run.py --kind local-hard-checks`
-- Canonical task recovery:
+- 任务恢复（规范入口）:
   - `py -3 scripts/python/dev_cli.py resume-task --task-id <task-id>`
-  - Read `Latest reason`, `Latest reuse mode`, `Chapter6 blocked by`, and `Chapter6 stop-loss note` before reopening a full `6.7`
-- Task-scoped review pipeline:
+- 第六章重跑路由（先读工件再决定 6.7/6.8/止损）:
+  - `py -3 scripts/python/dev_cli.py chapter6-route --task-id <task-id> --recommendation-only`
+- 任务级统一评审流水线:
   - `py -3 scripts/sc/run_review_pipeline.py --task-id <task-id> --godot-bin <godot-bin>`
-- Recovery doc validation:
+- 恢复文档校验:
   - `py -3 scripts/python/validate_recovery_docs.py --dir all`
-- Gate bundle only:
+- 门禁聚合:
   - `py -3 scripts/python/run_gate_bundle.py --mode hard --task-files .taskmaster/tasks/tasks_back.json .taskmaster/tasks/tasks_gameplay.json`
 
 ## Recovery Stop-Loss Signals
-- `rerun_guard`: deterministic path already says stop; do not blindly rerun `6.7`
-- `llm_retry_stop_loss`: deterministic was green and the first long LLM wait already timed out; prefer narrow LLM closure
-- `sc_test_retry_stop_loss`: same-run unit retry already proved wasteful; fix the unit root cause first
-- `waste_signals`: engine-lane cost already ran after a known unit/root-cause failure
 
-## Architecture And Contract Rules
-- Contracts SSoT lives in `Game.Core/Contracts/**`.
-- Contract code must stay BCL-only. Do not reference `Godot.*` in contracts.
-- Core business logic belongs in `Game.Core/**`.
-- Godot integration belongs in `Game.Godot/**` and adapter layers.
-- Concrete feature slices belong only in `docs/architecture/overlays/<PRD-ID>/08/**`.
-- If thresholds, contracts, security posture, or release policy change, add or supersede an ADR.
+- `rerun_guard`: 确定性路径已经给出停止信号，不要盲目重开 `6.7`。
+- `llm_retry_stop_loss`: 确定性已绿，且首轮长时 LLM 已超时；优先走窄化收敛而非全量重跑。
+- `sc_test_retry_stop_loss`: 同一运行内重复单测重试已证明无效；先修单测根因再继续。
+- `waste_signals`: 在已知单测/根因失败后仍发生引擎链路消耗；应先止损再执行后续步骤。
 
-## Testing Rules
-- Domain logic: xUnit in `Game.Core.Tests/**`.
-- Engine and scene glue: GdUnit4 in `Tests.Godot/**`.
-- Do not disable tests to get green. Fix them.
-- Acceptance items must map to `Refs:` and those refs must stay aligned with task views and overlays.
+## 架构与契约规则
 
-## Task-View Rules
-- Real task data is under `.taskmaster/tasks/**`; examples under `examples/taskmaster/**` are fallback/template-only.
-- Cross-file mapping is fixed:
+- 契约 SSoT 在 `Game.Core/Contracts/**`。
+- 契约代码必须 BCL-only，不得引用 `Godot.*`。
+- 领域逻辑在 `Game.Core/**`。
+- Godot 适配在 `Game.Godot/**` 与 adapter 层。
+- 功能纵切仅放在 `docs/architecture/overlays/<PRD-ID>/08/**`。
+- 若阈值、契约、安全口径、发布策略改变，必须新增或 supersede ADR。
+
+## 测试规则
+
+- 领域逻辑: xUnit（`Game.Core.Tests/**`）。
+- 场景与引擎胶水: GdUnit4（`Tests.Godot/**`）。
+- 禁止通过关闭测试拿绿灯。
+- acceptance 条目必须有 `Refs:`，并与 tasks 视图与 overlay 回链一致。
+
+## 任务视图规则
+
+- 真实任务文件在 `.taskmaster/tasks/**`。
+- 跨文件映射固定:
   - `tasks.json.master.tasks[].id`
   - `tasks_back.json[].taskmaster_id`
   - `tasks_gameplay.json[].taskmaster_id`
-- `semantic_review_tier` belongs in the real view files, not only in examples.
+- `semantic_review_tier` 必须写入真实视图文件，不仅是示例文件。
 
-## Documentation Rules
-- Keep repo identity as `lastking`; remove stale upstream project names, PRD examples, and template-only examples when touching docs.
-- Do not duplicate Base/ADR thresholds into overlays.
-- Use paths and references, not pasted copies of contract fields.
+## 文档规则
+
+- 保持仓库标识为 `lastking`，清理过期模板名与无效示例。
+- 不在 overlay 复制 Base/ADR 的阈值正文。
+- 契约字段用路径引用，不做文档内重复粘贴。
