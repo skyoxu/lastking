@@ -92,7 +92,6 @@ func test_hud_acceptance_anchor_binding_for_t9_refs() -> void:
 # ACC:T9.14
 # ACC:T9.17
 # ACC:T9.20
-# ACC:T16.9
 # ACC:T7.12
 func test_hud_tracks_latest_castle_hp_across_runtime_published_events_and_ignores_non_castle_events() -> void:
     var hud = await _hud()

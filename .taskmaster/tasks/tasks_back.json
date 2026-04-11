@@ -1334,24 +1334,24 @@
       "core"
     ],
     "test_refs": [
-      "Game.Core.Tests/State/GameStateMachineTests.cs",
       "Game.Core.Tests/Services/BarracksTrainingQueueTests.cs",
       "Tests.Godot/tests/Integration/test_barracks_training_queue_flow.gd",
       "Game.Core.Tests/Engine/GameEngineCoreEventTests.cs",
+      "Game.Core.Tests/State/GameStateMachineTests.cs",
       "Game.Core.Tests/Services/BarracksTrainingCostScheduleTests.cs",
       "Tests.Godot/tests/UI/test_hud_updates_on_events.gd",
       "Game.Core.Tests/Domain/BarracksBuildingTests.cs"
     ],
     "acceptance": [
       "Each Barracks instance has exactly one training queue, and canceling any valid queued job refunds exactly 100% of the resources deducted for that job. Refs: Game.Core.Tests/Services/BarracksTrainingQueueTests.cs",
-      "All automated tests referenced for Task #16 pass on the Windows Godot+C# baseline environment. Refs: Tests.Godot/tests/Integration/test_barracks_training_queue_flow.gd",
+      "Task #16 barracks queue integration flow runs on Windows Godot+C# baseline and validates queue/resource transitions end-to-end. Refs: Tests.Godot/tests/Integration/test_barracks_training_queue_flow.gd",
       "For deterministic simulation baselines outside Barracks training-queue scope, observable outcomes remain unchanged after this task. Refs: Game.Core.Tests/Engine/GameEngineCoreEventTests.cs Game.Core.Tests/State/GameStateMachineTests.cs",
       "Enqueue, cancel, and progress operations in one Barracks do not alter queue state in any other Barracks instance. Refs: Game.Core.Tests/Services/BarracksTrainingQueueTests.cs",
       "When a training request is accepted, any config-required request-time deduction is applied immediately; if required request-time payment cannot be made, the request is rejected and both queue and resources remain unchanged. Refs: Game.Core.Tests/Services/BarracksTrainingCostScheduleTests.cs Game.Core.Tests/Services/BarracksTrainingQueueTests.cs",
       "Training resolves strictly FIFO with config-driven durations; each completed head job is removed once and emits exactly one trained-unit result. Refs: Game.Core.Tests/Services/BarracksTrainingQueueTests.cs Game.Core.Tests/Services/BarracksTrainingCostScheduleTests.cs",
       "Canceling with a valid index removes only the targeted job, refunds exactly 100% of that job's deducted resources, and preserves the relative order of remaining jobs. Refs: Game.Core.Tests/Services/BarracksTrainingQueueTests.cs",
       "Canceling with an invalid index is rejected, and queue contents plus resource totals remain unchanged. Refs: Game.Core.Tests/Services/BarracksTrainingQueueTests.cs",
-      "Godot signals are emitted on enqueue, cancel, and completion so UI updates reflect the emitted queue and resource state changes. Refs: Tests.Godot/tests/UI/test_hud_updates_on_events.gd",
+      "UI observers subscribed to barracks queue signals update displayed queue/resource values consistently across enqueue, cancel, and completion transitions. Refs: Tests.Godot/tests/Integration/test_barracks_training_queue_flow.gd",
       "Across normal and stress-like training/cancel sequences, arithmetic remains integer-safe: no overflow, no underflow, and no negative resource totals. Refs: Game.Core.Tests/Services/BarracksTrainingCostScheduleTests.cs",
       "Canceling the active head job is supported: the job is removed, fully refunded, emits no unit result, and remaining jobs continue in order. Refs: Game.Core.Tests/Services/BarracksTrainingQueueTests.cs Tests.Godot/tests/Integration/test_barracks_training_queue_flow.gd",
       "A training job cannot complete before its configured duration has elapsed. Refs: Game.Core.Tests/Services/BarracksTrainingCostScheduleTests.cs",
