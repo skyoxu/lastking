@@ -4,7 +4,7 @@
 
 ## Project Posture
 
-- Delivery profile: `playable-ea`
+- Delivery profile: `fast-ship`
 - Security profile: `host-safe`
 - Primary runtime: Windows desktop only
 - Primary PRD-ID: `PRD-lastking-T2`
@@ -25,8 +25,8 @@
 2. Set Godot binary path in shell:
    - PowerShell: `$env:GODOT_BIN = "C:\Godot\Godot_v4.5.1-stable_mono_win64.exe"`
 3. Restore and build:
-   - `dotnet restore lastking.sln`
-   - `dotnet build lastking.sln -c Debug`
+   - `dotnet restore Game.sln`
+   - `dotnet build Game.sln -c Debug`
 4. Optional local hard checks:
    - `py -3 scripts/python/dev_cli.py run-local-hard-checks --godot-bin "$env:GODOT_BIN"`
 
@@ -36,7 +36,8 @@ When resuming a task after a reset or another session, do not guess from scatter
 
 1. Read `docs/agents/01-session-recovery.md`
 2. Run `py -3 scripts/python/dev_cli.py resume-task --task-id <task-id>`
-3. Only if that is still insufficient, run `py -3 scripts/python/inspect_run.py --kind pipeline --task-id <task-id>`
+3. Only if that is still insufficient, run `py -3 scripts/python/dev_cli.py inspect-run --kind pipeline --task-id <task-id>`
+4. Before paying for another full `6.7` or `6.8`, run `py -3 scripts/python/dev_cli.py chapter6-route --task-id <task-id> --recommendation-only`
 
 Before paying for another full `6.7`, read these signals first:
 
@@ -47,6 +48,7 @@ Before paying for another full `6.7`, read these signals first:
 - `Chapter6 blocked by`
 - `Chapter6 stop-loss note`
 - `recommended_action_why`
+- `chapter6_route_lane` / `repo_noise_reason` from project-health or active-task when available
 
 Recovery stop-loss rules:
 
@@ -80,7 +82,8 @@ Recovery stop-loss rules:
   - `py -3 scripts/python/dev_cli.py run-local-hard-checks --godot-bin "$env:GODOT_BIN"`
 - Task recovery (canonical):
   - `py -3 scripts/python/dev_cli.py resume-task --task-id <task-id>`
-  - `py -3 scripts/python/inspect_run.py --kind pipeline --task-id <task-id>`
+  - `py -3 scripts/python/dev_cli.py inspect-run --kind pipeline --task-id <task-id>`
+  - `py -3 scripts/python/dev_cli.py chapter6-route --task-id <task-id> --recommendation-only`
 - Gate bundle only:
   - `py -3 scripts/python/run_gate_bundle.py --mode hard --task-files .taskmaster/tasks/tasks_back.json .taskmaster/tasks/tasks_gameplay.json`
 - Task review pipeline:
