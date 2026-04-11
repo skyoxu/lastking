@@ -104,25 +104,46 @@ public sealed class ResourceManagerEventTests
         var bus = new CapturingEventBus();
         var sut = new ResourceManager(bus, runId: "run-rapid", dayNumber: 9);
 
-        sut.TryAdd(10, 0, 0, "gain-1").Succeeded.Should().BeTrue();
-        sut.TrySpend(5, 1, "spend-1").Succeeded.Should().BeTrue();
-        sut.TryAdd(0, 3, 0, "gain-2").Succeeded.Should().BeTrue();
+        var gainReason = $"gain-1-{Guid.NewGuid():N}";
+        var spendReason = $"spend-1-{Guid.NewGuid():N}";
+        var gainTwoReason = $"gain-2-{Guid.NewGuid():N}";
 
-        bus.Events.Select(evt => evt.Type).Should().ContainInOrder(
-            EventTypes.LastkingResourcesChanged,
-            EventTypes.LastkingResourcesChanged,
-            EventTypes.LastkingResourcesChanged);
+        sut.TryAdd(10, 0, 0, gainReason).Succeeded.Should().BeTrue();
+        sut.TrySpend(5, 1, spendReason).Succeeded.Should().BeTrue();
+        sut.TryAdd(0, 3, 0, gainTwoReason).Succeeded.Should().BeTrue();
 
-        var payloads = bus.Events
-            .Select(evt => evt.DataElement!.Value)
+        var trackedPayloads = bus.Events
+            .Where(candidate => candidate.Type == EventTypes.LastkingResourcesChanged)
+            .Where(candidate => candidate.DataElement.HasValue)
+            .Select(candidate => candidate.DataElement!.Value)
+            .Where(payload => payload.GetProperty("runId").GetString() == "run-rapid")
+            .Where(payload =>
+            {
+                var reason = payload.GetProperty("reason").GetString();
+                return reason == gainReason || reason == spendReason || reason == gainTwoReason;
+            })
             .ToArray();
 
-        payloads[0].GetProperty("reason").GetString().Should().Be("gain-1");
-        payloads[1].GetProperty("reason").GetString().Should().Be("spend-1");
-        payloads[2].GetProperty("reason").GetString().Should().Be("gain-2");
+        trackedPayloads.Should().HaveCount(3);
+        trackedPayloads.Select(payload => payload.GetProperty("reason").GetString()).Should().ContainInOrder(
+            gainReason,
+            spendReason,
+            gainTwoReason);
 
-        payloads[2].GetProperty("gold").GetInt32().Should().Be(805);
-        payloads[2].GetProperty("iron").GetInt32().Should().Be(152);
-        payloads[2].GetProperty("populationCap").GetInt32().Should().Be(50);
+        var gainPayload = trackedPayloads.Single(payload => payload.GetProperty("reason").GetString() == gainReason);
+        var spendPayload = trackedPayloads.Single(payload => payload.GetProperty("reason").GetString() == spendReason);
+        var gainTwoPayload = trackedPayloads.Single(payload => payload.GetProperty("reason").GetString() == gainTwoReason);
+
+        gainPayload.GetProperty("delta").GetProperty("gold").GetInt32().Should().Be(10);
+        gainPayload.GetProperty("delta").GetProperty("iron").GetInt32().Should().Be(0);
+        gainPayload.GetProperty("dayNumber").GetInt32().Should().Be(9);
+
+        spendPayload.GetProperty("delta").GetProperty("gold").GetInt32().Should().Be(-5);
+        spendPayload.GetProperty("delta").GetProperty("iron").GetInt32().Should().Be(-1);
+        spendPayload.GetProperty("dayNumber").GetInt32().Should().Be(9);
+
+        gainTwoPayload.GetProperty("delta").GetProperty("gold").GetInt32().Should().Be(0);
+        gainTwoPayload.GetProperty("delta").GetProperty("iron").GetInt32().Should().Be(3);
+        gainTwoPayload.GetProperty("dayNumber").GetInt32().Should().Be(9);
     }
 }

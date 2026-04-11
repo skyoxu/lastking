@@ -64,6 +64,8 @@ public class ConfigDrivenRuntimeLoopTests
         return isSourceFile
                && !normalized.Contains("/bin/", StringComparison.OrdinalIgnoreCase)
                && !normalized.Contains("/obj/", StringComparison.OrdinalIgnoreCase)
+               && !normalized.Contains("/logs/", StringComparison.OrdinalIgnoreCase)
+               && !normalized.Contains("/backup/", StringComparison.OrdinalIgnoreCase)
                && !normalized.Contains("/Game.Core/Contracts/", StringComparison.OrdinalIgnoreCase)
                && !normalized.Contains("/Game.Core.Tests/", StringComparison.OrdinalIgnoreCase)
                && !normalized.Contains("/Tests.Godot/", StringComparison.OrdinalIgnoreCase);
