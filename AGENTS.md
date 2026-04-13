@@ -33,9 +33,11 @@
 7. `docs/testing-framework.md`
 8. `docs/agents/16-directory-responsibilities.md`
 9. `docs/workflows/prototype-lane.md`
-10. `execution-plans/` 最新文件
-11. `decision-logs/` 最新文件
-12. 若已有审查流水线结果，读取 `logs/ci/<date>/sc-review-pipeline-task-<task-id>/latest.json`
+10. `docs/workflows/prototype-lane-playbook.md`
+11. `docs/workflows/prototype-tdd.md`
+12. `execution-plans/` 最新文件
+13. `decision-logs/` 最新文件
+14. 若已有审查流水线结果，读取 `logs/ci/<date>/sc-review-pipeline-task-<task-id>/latest.json`
 
 ## 权威来源
 
@@ -72,6 +74,8 @@
   - `py -3 scripts/python/dev_cli.py chapter6-route --task-id <task-id> --recommendation-only`
 - 任务级统一评审流水线:
   - `py -3 scripts/sc/run_review_pipeline.py --task-id <task-id> --godot-bin <godot-bin>`
+- Prototype lane TDD（原型阶段正式入口）:
+  - `py -3 scripts/python/dev_cli.py run-prototype-tdd --slug <slug> --stage <red|green|refactor> --expect <auto|fail|pass>`
 - 恢复文档校验:
   - `py -3 scripts/python/validate_recovery_docs.py --dir all`
 - 门禁聚合:
