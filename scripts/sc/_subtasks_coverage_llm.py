@@ -4,50 +4,27 @@ from __future__ import annotations
 
 import json
 import re
-import shutil
-import subprocess
 from pathlib import Path
 from typing import Any, Callable
+
+from _llm_backend import run_llm_exec
 
 
 def run_codex_exec(
     *,
+    backend: str = "codex-cli",
     prompt: str,
     out_last_message: Path,
     timeout_sec: int,
     repo_root_path: Path,
 ) -> tuple[int, str, list[str]]:
-    exe = shutil.which("codex")
-    if not exe:
-        return 127, "codex executable not found in PATH\n", ["codex"]
-    cmd = [
-        exe,
-        "exec",
-        "-s",
-        "read-only",
-        "-C",
-        str(repo_root_path),
-        "--output-last-message",
-        str(out_last_message),
-        "-",
-    ]
-    try:
-        proc = subprocess.run(
-            cmd,
-            input=prompt,
-            text=True,
-            encoding="utf-8",
-            errors="ignore",
-            cwd=str(repo_root_path),
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            timeout=timeout_sec,
-        )
-    except subprocess.TimeoutExpired:
-        return 124, "codex exec timeout\n", cmd
-    except Exception as exc:
-        return 1, f"codex exec failed to start: {exc}\n", cmd
-    return proc.returncode or 0, proc.stdout or "", cmd
+    return run_llm_exec(
+        backend=backend,
+        root=repo_root_path,
+        prompt=prompt,
+        output_last_message=out_last_message,
+        timeout_sec=timeout_sec,
+    )
 
 
 def extract_json_object(text: str) -> dict[str, Any]:
@@ -70,6 +47,21 @@ def extract_json_object(text: str) -> dict[str, Any]:
 def normalize_model_status(value: Any) -> str:
     status = str(value or "").strip().lower()
     return "ok" if status == "ok" else "fail"
+
+
+def truncate_keep_ends(text: str, *, max_chars: int) -> str:
+    payload = str(text or "")
+    limit = max(80, int(max_chars))
+    if len(payload) <= limit:
+        return payload
+    marker = "\n...[TRUNCATED_FOR_BUDGET]...\n"
+    if len(marker) >= limit:
+        return payload[:limit]
+    tail_keep = min(max(80, limit // 3), max(1, limit - len(marker) - 40))
+    head_keep = max(40, limit - len(marker) - tail_keep)
+    if head_keep + len(marker) + tail_keep > limit:
+        tail_keep = max(1, limit - len(marker) - head_keep)
+    return payload[:head_keep] + marker + payload[-tail_keep:]
 
 
 def format_acceptance(
