@@ -70,3 +70,10 @@ Promotion should add or update:
 2. Run only the minimum checks needed to keep the repo safe.
 3. Decide `discard`, `archive`, or `promote` quickly.
 4. If promoted, rewrite or relocate the result into the formal task pipeline instead of treating the prototype artifact as done.
+
+## Companion Docs and Formal Entrypoint
+
+- Playbook: `docs/workflows/prototype-lane-playbook.md`
+- Prototype TDD details: `docs/workflows/prototype-tdd.md`
+- Formal prototype-lane TDD command:
+  - `py -3 scripts/python/dev_cli.py run-prototype-tdd --slug <slug> --stage <red|green|refactor> --expect <auto|fail|pass>`
