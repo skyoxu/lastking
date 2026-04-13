@@ -31,6 +31,7 @@ from dev_cli_builders import (
     build_project_health_scan_cmd,
     build_resume_task_cmd,
     build_run_single_task_chapter6_cmd,
+    build_run_prototype_tdd_cmd,
     build_quality_gates_cmd,
     build_run_dotnet_cmd,
     build_run_gdunit_full_cmd,
@@ -243,6 +244,12 @@ def cmd_run_single_task_chapter6(args: argparse.Namespace) -> int:
     """Run the Chapter 6 single-task orchestrator."""
 
     return run(build_run_single_task_chapter6_cmd(args))
+
+
+def cmd_run_prototype_tdd(args: argparse.Namespace) -> int:
+    """Run a lightweight prototype-lane TDD loop."""
+
+    return run(build_run_prototype_tdd_cmd(args))
 
 
 def cmd_detect_project_stage(args: argparse.Namespace) -> int:
@@ -458,6 +465,35 @@ def build_parser() -> argparse.ArgumentParser:
     p_ch6.add_argument("--out-dir", default="")
     p_ch6.add_argument("--self-check", action="store_true")
     p_ch6.set_defaults(func=cmd_run_single_task_chapter6)
+
+    # run-prototype-tdd
+    p_proto = sub.add_parser(
+        "run-prototype-tdd",
+        help="run a lightweight prototype-lane TDD loop without entering the formal task pipeline",
+    )
+    p_proto.add_argument("--slug", required=True)
+    p_proto.add_argument("--stage", default="red", choices=["red", "green", "refactor"])
+    p_proto.add_argument("--expect", default="auto", choices=["auto", "fail", "pass"])
+    p_proto.add_argument("--prototype-dir", default="docs/prototypes")
+    p_proto.add_argument("--record-path", default="")
+    p_proto.add_argument("--skip-record", action="store_true")
+    p_proto.add_argument("--owner", default="operator")
+    p_proto.add_argument("--related-task-id", action="append", default=[])
+    p_proto.add_argument("--hypothesis", default="TODO: describe the prototype hypothesis.")
+    p_proto.add_argument("--scope-in", action="append", default=[])
+    p_proto.add_argument("--scope-out", action="append", default=[])
+    p_proto.add_argument("--success-criteria", action="append", default=[])
+    p_proto.add_argument("--evidence", action="append", default=[])
+    p_proto.add_argument("--next-step", default="Decide discard | archive | promote after the prototype result is clear.")
+    p_proto.add_argument("--create-record-only", action="store_true")
+    p_proto.add_argument("--dotnet-target", action="append", default=[])
+    p_proto.add_argument("--filter", default="")
+    p_proto.add_argument("--configuration", default="Debug")
+    p_proto.add_argument("--godot-bin", default="")
+    p_proto.add_argument("--gdunit-path", action="append", default=[])
+    p_proto.add_argument("--timeout-sec", type=int, default=300)
+    p_proto.add_argument("--out-dir", default="")
+    p_proto.set_defaults(func=cmd_run_prototype_tdd)
 
     # detect-project-stage
     p_stage = sub.add_parser("detect-project-stage", help="detect repo stage and refresh project-health artifacts")
