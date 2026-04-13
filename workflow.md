@@ -440,7 +440,7 @@ py -3 scripts/python/run_single_task_light_lane.py --task-ids <id> --delivery-pr
 只有当多个任务都表现出 obligations extraction 不稳定时才使用。
 
 ```powershell
-py -3 scripts/python/run_obligations_jitter_batch5x3.py --task-ids 1,2,3 --batch-size 3 --rounds 3 --timeout-sec 420 --garbled-gate on --auto-escalate on --escalate-max-runs 3 --max-schema-errors 5 --reuse-last-ok --explain-reuse-miss
+py -3 scripts/python/run_obligations_jitter_batch5x3.py --task-count 3 --batch-size 3 --rounds 3 --start-group 1 --end-group 1 --timeout-sec 420 --out-raw logs/ci/<date>/sc-llm-obligations-jitter-batch5x3-raw.json
 ```
 
 ```powershell
