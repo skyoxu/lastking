@@ -1689,8 +1689,8 @@
       "core"
     ],
     "test_refs": [
-      "Game.Core.Tests/State/GameStateMachineTests.cs",
       "Game.Core.Tests/Services/CombatServiceTests.cs",
+      "Game.Core.Tests/State/GameStateMachineTests.cs",
       "Tests.Godot/tests/Scenes/Combat/test_combat_scene_targeting_range.gd",
       "Tests.Godot/tests/Integration/test_combat_units_towers_walls_flow.gd",
       "Game.Core.Tests/Services/CombatSystemTests.cs"
@@ -1698,7 +1698,7 @@
     "acceptance": [
       "Combat executes for both units and MG towers, and tests verify player-owned attacks never reduce HP of player-owned units or buildings. Refs: Game.Core.Tests/Services/CombatServiceTests.cs",
       "All referenced automated combat tests run on the Windows Godot+C# baseline and finish with pass status and zero skipped assertions. Refs: Game.Core.Tests/Services/CombatServiceTests.cs",
-      "After combat integration, deterministic simulation checks continue to pass and core-loop determinism shows no regression versus existing deterministic tests. Refs: Game.Core.Tests/State/GameStateMachineTests.cs Game.Core.Tests/Services/CombatServiceTests.cs",
+      "After combat integration, deterministic simulation checks continue to pass and core-loop determinism shows no regression versus existing deterministic tests. Refs: Game.Core.Tests/Services/CombatSystemTests.cs Game.Core.Tests/Services/CombatServiceTests.cs",
       "If attacker and target share team/owner, attack resolution returns refusal and target HP is unchanged before vs after resolution. Refs: Game.Core.Tests/Services/CombatServiceTests.cs",
       "Player-owned units deal damage only to in-range enemy units or enemy buildings that are valid targets; invalid or out-of-range targets remain undamaged. Refs: Tests.Godot/tests/Scenes/Combat/test_combat_scene_targeting_range.gd",
       "MG towers acquire enemy targets and apply damage, while same-team units and same-team walls take no damage in equivalent scenarios. Refs: Tests.Godot/tests/Integration/test_combat_units_towers_walls_flow.gd",
