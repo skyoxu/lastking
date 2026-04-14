@@ -1417,7 +1417,6 @@
       "core"
     ],
     "test_refs": [
-      "Game.Core.Tests/State/GameStateMachineTests.cs",
       "Tests.Godot/tests/Adapters/test_techtree_resource_loading.gd",
       "Game.Core.Tests/Services/TechTreeManagerJsonLoadingTests.cs",
       "Game.Core.Tests/Services/TechTreeMultiplierTests.cs",
