@@ -1853,7 +1853,6 @@
       "adapter"
     ],
     "test_refs": [
-      "Tests.Godot/tests/UI/test_hud_scene.gd",
       "Tests.Godot/tests/Scenes/Camera/test_camera_controller_scroll_inputs.gd",
       "Tests.Godot/tests/Scenes/Camera/test_main_scene_camera_wiring.gd",
       "Tests.Godot/tests/Scenes/Camera/test_camera_controller_delta_speed_and_bounds.gd",

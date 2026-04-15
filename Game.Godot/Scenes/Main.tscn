@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://Game.Godot/Scripts/Main.gd" id="1_0k4m0"]
 [ext_resource type="PackedScene" path="res://Game.Godot/Scenes/UI/HUD.tscn" id="2"]
@@ -10,6 +10,7 @@
 [ext_resource type="Script" path="res://Game.Godot/Scripts/UI/SettingsLoader.cs" id="11"]
 [ext_resource type="Script" path="res://Game.Godot/Scripts/Navigation/ScreenNavigator.cs" id="13"]
 [ext_resource type="Script" path="res://Game.Godot/Scripts/Bootstrap/InputMapper.cs" id="12"]
+[ext_resource type="Script" path="res://Game.Godot/Scripts/Camera/CameraController.cs" id="14_cam"]
 
 [node name="Main" type="Control"]
 layout_mode = 3
@@ -34,6 +35,17 @@ script = ExtResource("8")
 
 [node name="EngineDemo" type="Node" parent="."]
 script = ExtResource("6")
+
+[node name="WorldRoot" type="Node2D" parent="."]
+
+[node name="Camera2D" type="Camera2D" parent="WorldRoot"]
+enabled = true
+position_smoothing_enabled = false
+
+[node name="CameraController" type="Node" parent="."]
+script = ExtResource("14_cam")
+CameraPath = NodePath("../WorldRoot/Camera2D")
+ProcessInputInReady = false
 
 [node name="HUD" parent="." instance=ExtResource("2")]
 
