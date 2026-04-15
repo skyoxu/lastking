@@ -1,0 +1,21 @@
+# task-19-chapter6-residual-needs-fix
+
+- Title: task-19-chapter6-residual-needs-fix
+- Date: 2026-04-15
+- Status: accepted
+- Supersedes: none
+- Superseded by: none
+- Branch: task/T19
+- Git Head: 599a995dc67ff423b08e0adc3c8c827b1f737772
+- Why now: Chapter 6 routing determined that another immediate 6.8 rerun would not be cost-effective.
+- Context: Remaining findings are low priority reviewer items after deterministic evidence was already sufficient. No low priority findings were captured.
+- Decision: Record the residual Needs Fix items and stop the current fast-ship closure loop until a later change hits the same reviewer anchors.
+- Consequences: The task keeps explicit follow-up evidence instead of paying for another same-shape 6.8 rerun.
+- Recovery impact: Recovery should prefer the recorded follow-up plan over reopening 6.7 or repeating 6.8 without fresh anchor hits.
+- Validation: py -3 scripts/sc/llm_review_needs_fix_fast.py --task-id 19 --delivery-profile fast-ship --rerun-failing-only --max-rounds 1
+- Related ADRs: none yet
+- Related execution plans: none yet
+- Related task id(s): `19`
+- Related run id: `32f23f219b0f41489bab5b407b65df2b`
+- Related latest.json: `logs/ci/2026-04-15/sc-review-pipeline-task-19/latest.json`
+- Related pipeline artifacts: `logs/ci/2026-04-15/sc-review-pipeline-task-19-32f23f219b0f41489bab5b407b65df2b`
