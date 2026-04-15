@@ -1513,7 +1513,6 @@
       "core"
     ],
     "test_refs": [
-      "Game.Core.Tests/State/GameStateMachineTests.cs",
       "Game.Core.Tests/Services/RewardManagerBehaviorTests.cs",
       "Tests.Godot/tests/Integration/test_day_night_reward_flow.gd",
       "Tests.Godot/tests/UI/test_reward_panel_shows_three_choices.gd",
