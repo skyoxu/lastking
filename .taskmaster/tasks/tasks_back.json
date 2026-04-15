@@ -1243,7 +1243,6 @@
       "core"
     ],
     "test_refs": [
-      "Game.Core.Tests/State/GameStateMachineTests.cs",
       "Game.Core.Tests/Domain/BuildingUpgradeTests.cs",
       "Game.Core.Tests/Services/BuildingOperationStateMachineTests.cs",
       "Tests.Godot/tests/Integration/test_building_upgrade_repair_progress_flow.gd",

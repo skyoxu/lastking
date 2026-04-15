@@ -10,6 +10,7 @@ using Game.Core.Engine;
 using Game.Core.Ports;
 using Game.Core.Services;
 using Game.Core.State;
+using Game.Core.State.Building;
 using Xunit;
 
 namespace Game.Core.Tests.Engine;
@@ -150,6 +151,31 @@ public class GameEngineCoreEventTests
         trace.Add("terminal-outcome");
 
         trace.Should().ContainInOrder("runtime-loop", "spawn-channels", "path-fallback", "terminal-outcome");
+    }
+
+    // ACC:T15.3
+    [Fact]
+    public void ShouldKeepDeterministicReplayStableWithoutMutatingCoreEventContract_WhenInputsAreFixed()
+    {
+        var plan = new[]
+        {
+            new BuildingOperationPlan("barracks-1", "upgrade", 2),
+            new BuildingOperationPlan("wall-1", "repair", 2),
+        };
+        var steps = new[] { 1, 1 };
+
+        var replayA = new BuildingOperationDeterminismReplay(plan).Replay(steps);
+        var replayB = new BuildingOperationDeterminismReplay(plan).Replay(steps);
+
+        replayA.TickTimeline.Should().Equal(replayB.TickTimeline);
+        replayA.CompletedOperations.Should().Equal(replayB.CompletedOperations);
+
+        var engine = CreateEngineAndBus(out var bus);
+        engine.Start();
+        engine.Move(1, 0);
+        engine.AddScore(5);
+
+        bus.Published.Select(e => e.Type).Should().ContainInOrder("game.started", "player.moved", "score.changed");
     }
 
     [Fact]
