@@ -1596,6 +1596,8 @@
       "core"
     ],
     "test_refs": [
+      "Tests.Godot/tests/UI/test_game_manager_transition_and_terminal_prompts.gd",
+      "Tests.Godot/tests/Integration/test_day_night_cycle_and_win_lose_outcomes.gd",
       "Game.Core.Tests/State/GameStateMachineTests.cs",
       "Tests.Godot/tests/Integration/test_game_flow_day_night_terminal_paths.gd",
       "Game.Core.Tests/Services/GameManagerCycleTests.cs",
@@ -1603,9 +1605,7 @@
       "Game.Core.Tests/Services/GameManagerTerminalConditionsTests.cs",
       "Tests.Godot/tests/UI/test_hud_day_counter_updates.gd",
       "Tests.Godot/tests/Scenes/Gameplay/test_game_manager_phase_signal_flow.gd",
-      "Game.Core.Tests/Domain/GameConfigTests.cs",
-      "Tests.Godot/tests/UI/test_game_manager_transition_and_terminal_prompts.gd",
-      "Tests.Godot/tests/Integration/test_day_night_cycle_and_win_lose_outcomes.gd"
+      "Game.Core.Tests/Domain/GameConfigTests.cs"
     ],
     "acceptance": [
       "Hard gate: UI integration tests fail unless transition and terminal event payloads map to the correct on-screen values, including correct Win/Lose prompt mapping. Refs: Tests.Godot/tests/UI/test_game_manager_transition_and_terminal_prompts.gd",

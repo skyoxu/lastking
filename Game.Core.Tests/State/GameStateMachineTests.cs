@@ -70,6 +70,10 @@ public class GameStateMachineTests
     // ACC:T9.3
     // ACC:T3.1
     // ACC:T3.2
+    // ACC:T19.3
+    // ACC:T19.5
+    // ACC:T19.8
+    // ACC:T19.22
     [Fact]
     public void ShouldEmitSingleTerminalAndStopProgression_WhenForcedTerminalPathReplayed()
     {

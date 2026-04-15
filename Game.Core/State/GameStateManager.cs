@@ -481,10 +481,6 @@ public class GameStateManager
             return;
         }
 
-        if (_dayNightRuntime.CurrentDay >= _dayNightRuntime.MaxDay)
-        {
-            EnterRunTerminal(RunTerminalOutcome.Win, reason: "day15-survived", forceDayNightTerminal: true);
-        }
     }
 
     private void EvaluateRunTerminalConditionsFromTerminal(DayNightTerminal terminal)
@@ -500,7 +496,8 @@ public class GameStateManager
             return;
         }
 
-        if (terminal.Day >= _dayNightRuntime.MaxDay)
+        if (terminal.Day >= _dayNightRuntime.MaxDay &&
+            terminal.FromPhase == DayNightPhase.Night)
         {
             EnterRunTerminal(RunTerminalOutcome.Win, reason: "terminal-max-day-reached", forceDayNightTerminal: false);
         }

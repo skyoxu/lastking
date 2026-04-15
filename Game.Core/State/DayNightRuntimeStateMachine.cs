@@ -13,7 +13,7 @@ public sealed record DayNightCycleConfig(int DayDurationSeconds = 240, int Night
 }
 
 public sealed record DayNightCheckpoint(int Day, DayNightPhase From, DayNightPhase To, long Tick, int RandomToken);
-public sealed record DayNightTerminal(int Day, long Tick);
+public sealed record DayNightTerminal(int Day, long Tick, DayNightPhase FromPhase);
 
 public sealed class DayNightRuntimeStateMachine
 {
@@ -25,6 +25,7 @@ public sealed class DayNightRuntimeStateMachine
     private double _phaseElapsedSeconds;
     private long _tick;
     private int _checkpointCount;
+    private DayNightPhase _terminalFromPhase = DayNightPhase.Day;
 
     public DayNightRuntimeStateMachine(int seed, DayNightCycleConfig? config = null)
     {
@@ -64,6 +65,7 @@ public sealed class DayNightRuntimeStateMachine
         _tick = 0;
         _checkpointCount = 0;
         _terminalRaised = false;
+        _terminalFromPhase = DayNightPhase.Day;
     }
 
     public bool RequestTransition(DayNightPhase requestedPhase)
@@ -165,6 +167,7 @@ public sealed class DayNightRuntimeStateMachine
 
         if (next == DayNightPhase.Terminal)
         {
+            _terminalFromPhase = previous;
             return;
         }
 
@@ -185,6 +188,6 @@ public sealed class DayNightRuntimeStateMachine
         }
 
         _terminalRaised = true;
-        OnTerminal?.Invoke(new DayNightTerminal(_day, _tick));
+        OnTerminal?.Invoke(new DayNightTerminal(_day, _tick, _terminalFromPhase));
     }
 }

@@ -493,6 +493,24 @@ class ActiveTaskSidecarTests(unittest.TestCase):
             self.assertIn("- Approval allowed actions: inspect, pause", markdown)
             self.assertIn("- Approval blocked actions: fork, resume, rerun", markdown)
 
+    def test_sync_summary_recovery_recommendation_should_drop_empty_recommended_command(self) -> None:
+        from _pipeline_session import _sync_summary_recovery_recommendation  # type: ignore
+
+        summary = {
+            "recommended_command": "py -3 scripts/sc/run_review_pipeline.py --task-id 14 --resume",
+            "recommended_action": "resume",
+        }
+        active_task_payload = {
+            "recommended_command": "",
+            "recommended_action": "pause",
+            "candidate_commands": {"inspect": "py -3 scripts/python/dev_cli.py inspect-run --kind pipeline --task-id 14"},
+        }
+
+        _sync_summary_recovery_recommendation(summary, active_task_payload)
+
+        self.assertNotIn("recommended_command", summary)
+        self.assertEqual("pause", summary["recommended_action"])
+
     def test_render_active_task_markdown_should_surface_run_event_summary(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

@@ -33,6 +33,8 @@ def _sync_summary_recovery_recommendation(summary: dict[str, Any], active_task_p
             summary[key] = list(value)
         else:
             summary[key] = value
+    if not str(summary.get("recommended_command") or "").strip():
+        summary.pop("recommended_command", None)
 
 
 @dataclass

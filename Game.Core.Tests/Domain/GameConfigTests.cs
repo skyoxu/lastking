@@ -10,6 +10,7 @@ namespace Game.Core.Tests.Domain;
 public class GameConfigTests
 {
     // ACC:T2.16
+    // ACC:T19.13
     [Fact]
     public void ShouldSetPropertiesAsExpected_WhenConstructed()
     {

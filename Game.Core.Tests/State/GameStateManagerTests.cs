@@ -298,6 +298,10 @@ public class GameStateManagerTests
         manager.OnRunTerminal += _ => runTerminalEvents += 1;
 
         AdvanceToDay(manager, targetDay: 15);
+        manager.CurrentDayNightDay.Should().Be(15);
+        manager.IsRunTerminal.Should().BeFalse();
+
+        manager.UpdateDayNightRuntime(2);
 
         manager.CurrentDayNightDay.Should().Be(15);
         manager.IsRunTerminal.Should().BeTrue();
@@ -369,6 +373,7 @@ public class GameStateManagerTests
     {
         var manager = CreateWinConditionManager(seed: 74, castleHp: 15, endOfGameHandling: EndOfGameHandling.Reset);
         AdvanceToDay(manager, targetDay: 15);
+        manager.UpdateDayNightRuntime(2);
 
         manager.IsRunTerminal.Should().BeTrue();
         manager.CurrentRunTerminalOutcome.Should().Be(RunTerminalOutcome.Win);
@@ -422,6 +427,7 @@ public class GameStateManagerTests
 
     // ACC:T8.8
     // ACC:T8.9
+    // ACC:T19.7
     [Fact]
     public void ShouldStayNonTerminalBeforeDay15AndWinOnFirstDay15Step_WhenCastleIsIntact()
     {
@@ -433,6 +439,12 @@ public class GameStateManagerTests
 
         manager.UpdateDayNightRuntime(2);
         manager.CurrentDayNightDay.Should().Be(15);
+        manager.CurrentDayNightPhase.Should().Be(DayNightPhase.Day);
+        manager.IsRunTerminal.Should().BeFalse();
+
+        manager.UpdateDayNightRuntime(2);
+        manager.CurrentDayNightDay.Should().Be(15);
+        manager.CurrentDayNightPhase.Should().Be(DayNightPhase.Terminal);
         manager.IsRunTerminal.Should().BeTrue();
         manager.CurrentRunTerminalOutcome.Should().Be(RunTerminalOutcome.Win);
     }
@@ -454,6 +466,7 @@ public class GameStateManagerTests
         });
 
         AdvanceToDay(manager, targetDay: 15);
+        manager.UpdateDayNightRuntime(2);
         manager.UpdateDayNightRuntime(100);
         manager.UpdateDayNightRuntime(100);
 
@@ -498,6 +511,7 @@ public class GameStateManagerTests
         manager.OnRunTerminal += state => outcomes.Add(state.Outcome);
 
         AdvanceToDay(manager, targetDay: 15);
+        manager.UpdateDayNightRuntime(2);
 
         outcomes.Should().ContainSingle();
         outcomes[0].Should().Be(RunTerminalOutcome.Win);
@@ -539,6 +553,7 @@ public class GameStateManagerTests
 
         manager.RestartRun(startingCastleHp: 6).Should().BeTrue();
         AdvanceToDay(manager, targetDay: 15);
+        manager.UpdateDayNightRuntime(2);
         manager.CurrentRunTerminalOutcome.Should().Be(RunTerminalOutcome.Win);
     }
 

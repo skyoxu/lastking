@@ -1,0 +1,21 @@
+# Task 19 Add Day/Night Cycle and Game Win/Lose Conditions acceptance-test generation plan
+
+- Title: Task 19 Add Day/Night Cycle and Game Win/Lose Conditions acceptance-test generation plan
+- Status: active
+- Branch: task/T19
+- Git Head: 599a995dc67ff423b08e0adc3c8c827b1f737772
+- Goal: Control acceptance-driven test generation complexity for task 19.
+- Scope: 7 missing refs across 2 test roots; seed refs: Game.Core.Tests/Services/GameManagerCycleTests.cs, Game.Core.Tests/Services/GameManagerTerminalConditionsTests.cs, Tests.Godot/tests/Integration/test_day_night_cycle_and_win_lose_outcomes.gd, ...
+- Current step: Review missing acceptance refs and choose the first safe red step.
+- Last completed step: n/a (new execution plan scaffold; no completed step recorded yet)
+- Stop-loss: Do not start Codex test generation until the ref mix and verify mode are explicit.
+- Next action: Run llm_generate_tests_from_acceptance_refs.py after confirming the sequence for missing refs.
+- Recovery command: `py -3 scripts/sc/run_review_pipeline.py --task-id 19 --resume`
+- Open questions: none recorded yet
+- Exit criteria: The next acceptance-driven test generation step is explicit and low-ambiguity.
+- Related ADRs: none yet
+- Related decision logs: none yet
+- Related task id(s): `19`
+- Related run id: n/a (no pipeline run id linked yet)
+- Related latest.json: n/a (no task-scoped latest.json pointer resolved yet)
+- Related pipeline artifacts: n/a (no pipeline artifact directory resolved yet)
