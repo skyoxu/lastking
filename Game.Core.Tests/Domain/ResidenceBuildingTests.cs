@@ -42,7 +42,7 @@ public sealed class ResidenceBuildingTests
     {
         var resourceManager = new ResourceManager();
         var baselinePopulationCap = resourceManager.PopulationCap;
-        var placementService = new BuildingSubtypePlacementService();
+        var placementService = new BuildingSubtypePlacementService(resourceManager: resourceManager);
         var state = new BuildingPlacementState(width: 8, height: 8, resources: 300);
 
         var outcome = placementService.TryPlace(BuildingTypeIds.Residence, new GridPoint(2, 2), state);
@@ -81,7 +81,7 @@ public sealed class ResidenceBuildingTests
     {
         var resourceManager = new ResourceManager();
         var baselinePopulationCap = resourceManager.PopulationCap;
-        var placementService = new BuildingSubtypePlacementService();
+        var placementService = new BuildingSubtypePlacementService(resourceManager: resourceManager);
         var state = new BuildingPlacementState(width: 8, height: 8, resources: 300);
 
         var firstOutcome = placementService.TryPlace(BuildingTypeIds.Residence, new GridPoint(1, 1), state);
@@ -101,7 +101,7 @@ public sealed class ResidenceBuildingTests
     {
         var subtypeResourceManager = new ResourceManager();
         var subtypeBaselinePopulationCap = subtypeResourceManager.PopulationCap;
-        var subtypePlacementService = new BuildingSubtypePlacementService();
+        var subtypePlacementService = new BuildingSubtypePlacementService(resourceManager: subtypeResourceManager);
         var subtypeState = new BuildingPlacementState(width: 8, height: 8, resources: 300);
 
         var bypassBus = new CapturingEventBus();
