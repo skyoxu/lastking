@@ -9,6 +9,7 @@ _PASCAL_CASE_RE = re.compile(r"^[A-Z][A-Za-z0-9]*$")
 _CAMEL_CASE_RE = re.compile(r"^[a-z][A-Za-z0-9]*$")
 _SHOULD_WHEN_RE = re.compile(r"^Should[A-Z][A-Za-z0-9]*_When[A-Z][A-Za-z0-9]*$")
 _TEST_ATTR_RE = re.compile(r"^\s*\[(?:Fact|Theory)(?:\s*\(.*\))?\]\s*$")
+_TEST_DATA_ATTR_RE = re.compile(r"^\s*\[(?:InlineData|MemberData|ClassData|CombinatorialData|Values)(?:\s*\(.*\))?\]\s*$")
 _CLASS_RE = re.compile(
     r"\b(?:public|internal)\s+(?:sealed\s+|abstract\s+|static\s+|partial\s+)*class\s+([A-Za-z_][A-Za-z0-9_]*)\b"
 )
@@ -78,8 +79,23 @@ def validate_csharp_test_file(*, ref: str, content: str) -> list[dict[str, Any]]
         if not method_match:
             continue
         method_name = method_match.group(1)
-        prior_window = lines[max(0, index - 6) : index - 1]
-        is_test_method = any(_TEST_ATTR_RE.match(item.strip()) for item in prior_window)
+        scan = index - 2
+        is_test_method = False
+        while scan >= 0:
+            candidate = lines[scan].strip()
+            if not candidate or candidate.startswith("//"):
+                scan -= 1
+                continue
+            if _TEST_ATTR_RE.match(candidate):
+                is_test_method = True
+                break
+            if _TEST_DATA_ATTR_RE.match(candidate):
+                scan -= 1
+                continue
+            if candidate.startswith("[") and candidate.endswith("]"):
+                scan -= 1
+                continue
+            break
         if is_test_method:
             found_test_method = True
             if not is_should_when(method_name):

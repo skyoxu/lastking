@@ -1,0 +1,21 @@
+# Task 21 Lock Windows export profile and Steam runtime startup validation acceptance-test generation plan
+
+- Title: Task 21 Lock Windows export profile and Steam runtime startup validation acceptance-test generation plan
+- Status: active
+- Branch: task/T21
+- Git Head: f68a91f7c68c8e119e033b6d3c190eba1e2603ad
+- Goal: Control acceptance-driven test generation complexity for task 21.
+- Scope: 8 missing refs across 2 test roots; seed refs: Game.Core.Tests/Engine/DeterministicCoreLoopRegressionTests.cs, Game.Core.Tests/Services/ProjectSettingsBaselineTests.cs, Game.Core.Tests/Services/SteamRuntimeStartupValidationTests.cs, ...
+- Current step: Review missing acceptance refs and choose the first safe red step.
+- Last completed step: n/a (new execution plan scaffold; no completed step recorded yet)
+- Stop-loss: Do not start Codex test generation until the ref mix and verify mode are explicit.
+- Next action: Run llm_generate_tests_from_acceptance_refs.py after confirming the sequence for missing refs.
+- Recovery command: `py -3 scripts/sc/run_review_pipeline.py --task-id 21 --resume`
+- Open questions: none recorded yet
+- Exit criteria: The next acceptance-driven test generation step is explicit and low-ambiguity.
+- Related ADRs: none yet
+- Related decision logs: none yet
+- Related task id(s): `21`
+- Related run id: n/a (no pipeline run id linked yet)
+- Related latest.json: n/a (no task-scoped latest.json pointer resolved yet)
+- Related pipeline artifacts: n/a (no pipeline artifact directory resolved yet)

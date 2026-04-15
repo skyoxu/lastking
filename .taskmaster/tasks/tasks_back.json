@@ -1763,20 +1763,19 @@
       "ci"
     ],
     "test_refs": [
-      "Game.Core.Tests/Domain/GameConfigTests.cs",
       "Game.Core.Tests/Services/T11BaselineReuseGuardTests.cs",
       "Game.Core.Tests/Services/SteamRuntimeStartupValidationTests.cs",
       "Tests.Godot/tests/Integration/test_windows_startup_steam_runtime.gd",
+      "Tests.Godot/tests/Integration/Security/test_security_http_block_signal.gd",
+      "Tests.Godot/tests/Integration/test_windows_export_startup_flow.gd",
       "Game.Core.Tests/Tasks/Task21WindowsSteamScopeTests.cs",
       "Game.Core.Tests/Services/WindowsExportProfileLockTests.cs",
       "Game.Core.Tests/Engine/DeterministicCoreLoopRegressionTests.cs",
       "Tests.Godot/tests/Integration/test_csharp_startup_on_godot_451.gd",
       "Game.Core.Tests/Services/ProjectSettingsBaselineTests.cs",
       "Tests.Godot/tests/Scenes/Smoke/test_main_scene_smoke.gd",
-      "Tests.Godot/tests/Integration/Security/test_security_http_block_signal.gd",
       "Tests.Godot/tests/Integration/Security/test_security_http_audit.gd",
       "Tests.Godot/tests/Integration/test_windows_export_preset_artifact.gd",
-      "Tests.Godot/tests/Integration/test_windows_export_startup_flow.gd",
       "Tests.Godot/tests/Integration/test_project_bootstrap_windows_sdk_resolution.gd",
       "Tests.Godot/tests/Integration/test_windows_verification_evidence_records.gd"
     ],

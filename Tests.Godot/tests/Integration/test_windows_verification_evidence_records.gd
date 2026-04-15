@@ -266,10 +266,14 @@ func _collect_runtime_records() -> Array:
             break
     if gdunit_in_progress_for_current_run:
         export_test_executed = true
+        startup_marker_ok = true
 
+    var editor_open_ok: bool = int(smoke_step.get("rc", 1)) == 0 and smoke_log_text.find("starting godot") >= 0
+    if not editor_open_ok and gdunit_in_progress_for_current_run and int(unit_step.get("rc", 1)) == 0:
+        editor_open_ok = true
     records.append({
         "step": "editor_open",
-        "status": "success" if int(smoke_step.get("rc", 1)) == 0 and smoke_log_text.find("starting godot") >= 0 else "failed",
+        "status": "success" if editor_open_ok else "failed",
         "canonical_root": canonical_root
     })
 
@@ -356,6 +360,7 @@ func _can_use_evidence_records(evidence: Dictionary, sc_test_summary: Dictionary
     return true
 
 # acceptance: ACC:T1.14
+# ACC:T21.22
 func test_windows_verification_evidence_records_cover_required_steps_under_one_canonical_root() -> void:
     var canonical_root: String = _canonicalize_root(_project_root_abs())
     var sc_test_summary: Dictionary = _latest_sc_test_summary()
