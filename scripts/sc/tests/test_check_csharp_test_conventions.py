@@ -31,6 +31,35 @@ gate = _load_module("check_csharp_test_conventions_module", "scripts/python/chec
 
 
 class CheckCsharpTestConventionsTests(unittest.TestCase):
+    def test_validate_csharp_test_file_should_treat_theory_with_multiple_inline_data_as_test_method(self) -> None:
+        content = "\n".join(
+            [
+                "using Xunit;",
+                "",
+                "public sealed class WindowsExportProfileLockTests",
+                "{",
+                "    [Theory]",
+                "    [InlineData(\"linux\")]",
+                "    [InlineData(\"macos\")]",
+                "    [InlineData(\"web\")]",
+                "    [InlineData(\"android\")]",
+                "    [InlineData(\"ios\")]",
+                "    public void ShouldRejectContract_WhenAnyNonWindowsTargetIsEnabled(string nonWindowsTarget)",
+                "    {",
+                "        var changedScopes = new[] { \"windows.export.profile\" };",
+                "    }",
+                "}",
+            ]
+        )
+
+        violations = gate.validate_csharp_test_file(
+            ref="Game.Core.Tests/Services/WindowsExportProfileLockTests.cs",
+            content=content,
+        )
+
+        helper_violations = [item for item in violations if item.get("rule") == "helper_method_name"]
+        self.assertEqual([], helper_violations)
+
     def test_validate_csharp_test_file_should_accept_good_names(self) -> None:
         content = "\n".join(
             [

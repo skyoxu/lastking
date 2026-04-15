@@ -222,6 +222,8 @@ func _validate_export_execution(report: Dictionary) -> bool:
         and bool(report.get("produced_by_export", false))
 
 # ACC:T1.8
+# ACC:T21.20
+# ACC:T21.22
 func test_windows_export_preset_scaffold_uses_canonical_candidates_and_exe_artifacts() -> void:
     var preset_candidates: PackedStringArray = _canonical_export_preset_candidates()
     assert(preset_candidates.size() >= 1)

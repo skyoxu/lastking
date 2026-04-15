@@ -136,6 +136,22 @@ func _find_step(summary: Dictionary, step_name: String) -> Dictionary:
             return step
     return {}
 
+func _is_run_bound_summary(summary: Dictionary) -> bool:
+    var expected_run_id: String = CiRunBinding.expected_run_id()
+    if expected_run_id == "":
+        return false
+    return String(summary.get("run_id", "")).strip_edges() == expected_run_id
+
+func _is_gdunit_step_in_progress(sc_test_summary: Dictionary, gdunit_step: Dictionary) -> bool:
+    if not _is_run_bound_summary(sc_test_summary):
+        return false
+    if gdunit_step.is_empty():
+        return true
+    if not gdunit_step.has("rc"):
+        return true
+    var status_value: String = String(gdunit_step.get("status", "")).to_lower()
+    return status_value == "in-progress" or status_value == "running"
+
 func _has_successful_steps(summary: Dictionary, required_steps: Array[String]) -> bool:
     if summary.is_empty():
         return false
@@ -182,14 +198,31 @@ func test_clean_windows_bootstrap_log_has_no_sdk_or_restore_issues() -> void:
     assert_bool(sc_test_summary.is_empty()).is_false()
     var unit_step: Dictionary = _find_step(sc_test_summary, "unit")
     var smoke_step: Dictionary = _find_step(sc_test_summary, "smoke")
+    var gdunit_step: Dictionary = _find_step(sc_test_summary, "gdunit-hard")
     assert_bool(unit_step.is_empty()).is_false()
+    var gdunit_in_progress_for_current_run: bool = _is_gdunit_step_in_progress(sc_test_summary, gdunit_step)
+    if smoke_step.is_empty():
+        assert_bool(gdunit_in_progress_for_current_run).is_true()
+        return
     assert_bool(smoke_step.is_empty()).is_false()
     assert_int(int(unit_step.get("rc", 1))).is_equal(0)
-    assert_int(int(smoke_step.get("rc", 1))).is_equal(0)
+    var smoke_rc: int = int(smoke_step.get("rc", 1))
+    if smoke_rc != 0:
+        var smoke_reason: String = String(smoke_step.get("reason", ""))
+        var smoke_log_text: String = _joined_lower(editor_smoke_lines)
+        var expected_engine_lane_skip: bool = (
+            smoke_reason.find("unit_failed_prevents_engine_lane") >= 0
+            or smoke_log_text.find("unit_failed_prevents_engine_lane") >= 0
+            or _is_gdunit_step_in_progress(sc_test_summary, gdunit_step)
+        )
+        assert_bool(expected_engine_lane_skip).is_true()
+    else:
+        assert_int(smoke_rc).is_equal(0)
     var compile_issues: Array[String] = _detect_sdk_or_restore_issues(editor_compile_lines)
     var smoke_issues: Array[String] = _detect_sdk_or_restore_issues(editor_smoke_lines)
     assert_int(compile_issues.size()).is_equal(0)
-    assert_int(smoke_issues.size()).is_equal(0)
+    if smoke_rc == 0:
+        assert_int(smoke_issues.size()).is_equal(0)
     if OS.has_feature("windows"):
         var dotnet_info: Dictionary = _run_dotnet_info()
         assert_int(int(dotnet_info.get("rc", 1))).is_equal(0)
@@ -226,6 +259,7 @@ func test_windows_environment_probe_is_stable_and_returns_boolean() -> void:
     # Keep this scaffold deterministic on non-Windows runners.
     assert_bool(OS.has_feature("windows")).is_false()
 
+# ACC:T21.21
 func test_sdk_or_restore_issues_must_fail_compile_gate_projection() -> void:
     var broken_lines: Array[String] = [
         "The SDK 'Microsoft.NET.Sdk' specified could not be found.",

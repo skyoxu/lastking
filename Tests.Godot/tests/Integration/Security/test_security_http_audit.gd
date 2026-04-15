@@ -18,6 +18,7 @@ func _remove_audit_file() -> void:
         var abs := ProjectSettings.globalize_path(p)
         DirAccess.remove_absolute(abs)
 
+# ACC:T21.19
 func test_audit_written_on_block() -> void:
     _remove_audit_file()
     var c = _client()

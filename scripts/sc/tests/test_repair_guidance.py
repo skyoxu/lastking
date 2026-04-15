@@ -92,6 +92,7 @@ class RepairGuidanceTests(unittest.TestCase):
             )
 
             self.assertEqual("review-needs-fix", payload["failure_kind"])
+            self.assertNotIn("recommended_command", payload)
 
     def test_build_repair_guide_should_mark_not_needed_when_no_failed_step(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
