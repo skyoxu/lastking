@@ -8,6 +8,7 @@ using Xunit;
 
 namespace Game.Core.Tests.Services;
 
+[Collection(ResourceManagerIsolationCollection.Name)]
 public sealed class ResourceManagerIntegerSafetyTests
 {
     private static readonly string RepoRoot = Path.GetFullPath(
