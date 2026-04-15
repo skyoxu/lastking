@@ -1,0 +1,21 @@
+# task-18-chapter6-complexity-plan
+
+- Title: task-18-chapter6-complexity-plan
+- Status: active
+- Branch: task/T18
+- Git Head: de570bfb98e99b94f7364a378959fa0d3ae6b942
+- Goal: Deliver Task 18 nightly reward system through Chapter 6 with verifiable acceptance refs and no P0/P1 needs-fix remaining.
+- Scope: Task-scoped changes for reward trigger, choice generation, fallback gold, related tests, and task-view/overlay backlink consistency.
+- Current step: 6.4 red stage generation after preflight + Serena context lock.
+- Last completed step: n/a (new execution plan scaffold; no completed step recorded yet)
+- Stop-loss: Stop on planned-only/artifact-integrity/rerun-guard/llm-retry-stop-loss/sc-test-retry-stop-loss/waste-signals and inspect artifacts before rerun.
+- Next action: Run 6.4 red-first for Task 18 with verify=unit, then proceed to 6.5/6.6/6.7 by gate results.
+- Recovery command: `py -3 scripts/sc/run_review_pipeline.py --task-id 18 --resume`
+- Open questions: none recorded yet
+- Exit criteria: Chapter 6 reaches 6.9 with task-scoped evidence, and current run shows no unresolved P0/P1 Needs Fix.
+- Related ADRs: ADR-0018, ADR-0021, ADR-0022
+- Related decision logs: none yet
+- Related task id(s): `18`
+- Related run id: n/a (no pipeline run id linked yet)
+- Related latest.json: n/a (no task-scoped latest.json pointer resolved yet)
+- Related pipeline artifacts: n/a (no pipeline artifact directory resolved yet)

@@ -46,7 +46,7 @@ Updated: true
 <!-- TASK_BASELINE_START -->
 ```json
 {
-  "generated_at": "2026-04-14T17:59:04.493215+00:00",
+  "generated_at": "2026-04-15T04:14:39.650617+00:00",
   "files": [
     {
       "path": ".taskmaster/tasks/tasks.json",
@@ -57,14 +57,14 @@ Updated: true
     {
       "path": ".taskmaster/tasks/tasks_back.json",
       "exists": true,
-      "sha256": "8c4a8c55c1d7cd93656783bb6602a7bf6e0fca40dd5d4375acde5600ce3557ad",
-      "bytes": 285336
+      "sha256": "ddd6c8b6491c91bd506f49cf3cd3380a04b741dbf28065f40c5bf342b9f93850",
+      "bytes": 285280
     },
     {
       "path": ".taskmaster/tasks/tasks_gameplay.json",
       "exists": true,
-      "sha256": "90d5828362f59116d4d2cbf43351298876fdd4029191b2f01ced1db22c5a45ce",
-      "bytes": 284146
+      "sha256": "02b12d16908e018d2d25f54d6ba30046879bfaa5cd32bba6ac159148f3115bbf",
+      "bytes": 284090
     }
   ]
 }
