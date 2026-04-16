@@ -250,13 +250,15 @@ The point is not to make both chapters identical. The point is to make their top
 ### 1. Preferred lane is not enforced strongly enough
 
 Problem:
-- when route returns `preferred_lane=record-residual` or `preferred_lane=inspect-first`, the top-level orchestrator may still continue into `review-pipeline`
-- this means route is treated as a hint, not as an execution contract
+- historically, when route returned `preferred_lane=record-residual` or `preferred_lane=inspect-first`, the top-level orchestrator could still continue into `review-pipeline`
+- historically, `chapter6_next_action` was not consumed as a first-class top-level decision input, so clean `continue` closures and explicit `resume` / `inspect` guidance could be lost behind lane-only handling
+- this meant route was treated as a hint, not as an execution contract
 
 Required fix:
 - add a single execution gate before every downstream step
 - if route lane is not executable for the next step, stop immediately
-- `record-residual`, `inspect-first`, `repo-noise-stop`, `fix-deterministic`, and approval-blocked states must be hard stop lanes
+- `record-residual`, `inspect-first`, `repo-noise-stop`, `fix-deterministic`, `run-6.7`, and approval-blocked states must be hard stop lanes
+- `chapter6_next_action = continue` must terminate successfully as a clean closure branch rather than reopening the lane
 
 ### 2. Fork can create approval loop
 
