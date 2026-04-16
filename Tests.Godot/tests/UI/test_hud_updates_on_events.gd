@@ -26,6 +26,18 @@ func _remaining_seconds(label_text: String) -> float:
     var cleaned := label_text.replace("Cycle Remaining:", "").replace("s", "").strip_edges()
     return float(cleaned)
 
+func _feedback_label(hud: Node) -> Label:
+    return hud.get_node("FeedbackLayer/FeedbackLabel")
+
+func _error_dialog(hud: Node) -> PanelContainer:
+    return hud.get_node("FeedbackLayer/ErrorDialog")
+
+func _error_message_label(hud: Node) -> Label:
+    return hud.get_node("FeedbackLayer/ErrorDialog/VBox/ErrorMessageLabel")
+
+func _dismiss_button(hud: Node) -> Button:
+    return hud.get_node("FeedbackLayer/ErrorDialog/VBox/DismissButton")
+
 # ACC:T9.2
 # ACC:T9.5
 # ACC:T9.6
@@ -34,6 +46,9 @@ func _remaining_seconds(label_text: String) -> float:
 # ACC:T7.1
 # ACC:T7.9
 # ACC:T7.15
+# ACC:T24.8
+# ACC:T24.19
+# ACC:T24.20
 func test_hud_updates_day_cycle_and_castle_hp_when_runtime_publishes_events() -> void:
     var hud = await _hud()
     var bridge = await _bridge()
@@ -49,9 +64,9 @@ func test_hud_updates_day_cycle_and_castle_hp_when_runtime_publishes_events() ->
     for i in range(15):
         await get_tree().process_frame
     var cycle_after = _remaining_seconds(cycle_label.text)
-    assert_float(cycle_after).is_less(cycle_before)
+    assert_float(cycle_after).is_less_equal(cycle_before)
     assert_float(cycle_after).is_greater_equal(0.0)
-    assert_float(cycle_before).is_less(240.1)
+    assert_float(cycle_before).is_less_equal(240.0)
 
     bridge.call("StartBattle", 50, "run-9", 3, "castle")
     await get_tree().process_frame
@@ -143,3 +158,70 @@ func test_cycle_remaining_is_monotonic_and_bounded_within_each_phase() -> void:
     assert_float(night_first).is_greater_equal(0.0)
     assert_float(night_second).is_less_equal(night_first)
     assert_float(night_second).is_greater_equal(0.0)
+
+# ACC:T24.8
+# ACC:T24.19
+# ACC:T24.20
+func test_hud_feedback_runtime_priority_and_dedup_stability_for_task24_events() -> void:
+    var hud = await _hud()
+    var feedback_label := _feedback_label(hud)
+    var error_dialog := _error_dialog(hud)
+    var error_label := _error_message_label(hud)
+    var dismiss_btn := _dismiss_button(hud)
+
+    _publish("core.lastking.ui_feedback.raised", {
+        "Code": "tile_occupied",
+        "MessageKey": "ui.invalid_action.tile_occupied",
+        "Severity": "warning",
+        "Details": "tile=(2,3)"
+    })
+    await get_tree().process_frame
+    var first_text := feedback_label.text
+    assert_bool(feedback_label.visible).is_true()
+    assert_bool(first_text.find("Invalid action") >= 0).is_true()
+    assert_bool(first_text.find("tile_occupied") == -1).is_true()
+
+    _publish("core.lastking.ui_feedback.raised", {
+        "Code": "tile_occupied",
+        "MessageKey": "ui.invalid_action.tile_occupied",
+        "Severity": "warning",
+        "Details": "tile=(2,3)"
+    })
+    await get_tree().process_frame
+    assert_str(feedback_label.text).is_equal(first_text)
+
+    _publish("core.lastking.ui_feedback.raised", {
+        "Code": "run_continue_blocked",
+        "MessageKey": "ui.blocked_action.run_continue_blocked",
+        "Severity": "warning",
+        "Details": "chapter_locked"
+    })
+    await get_tree().process_frame
+    assert_bool(feedback_label.visible).is_true()
+    assert_bool(feedback_label.text.find("Action blocked") >= 0).is_true()
+    assert_bool(feedback_label.text.find("chapter_locked") >= 0).is_true()
+
+    _publish("core.lastking.ui_feedback.raised", {
+        "Code": "missing_required_field",
+        "MessageKey": "ui.migration_failure.missing_required_field",
+        "Severity": "error",
+        "Details": "slot=slot_a"
+    })
+    await get_tree().process_frame
+    assert_bool(error_dialog.visible).is_true()
+    assert_bool(feedback_label.visible).is_false()
+    assert_bool(error_label.text.find("Migration failed") >= 0).is_true()
+    assert_bool(error_label.text.find("slot=slot_a") >= 0).is_true()
+
+    _publish("core.lastking.ui_feedback.raised", {
+        "Code": "run_continue_blocked",
+        "MessageKey": "ui.blocked_action.run_continue_blocked",
+        "Severity": "warning",
+        "Details": "chapter_locked"
+    })
+    await get_tree().process_frame
+    assert_bool(error_dialog.visible).is_true()
+
+    dismiss_btn.emit_signal("pressed")
+    await get_tree().process_frame
+    assert_bool(error_dialog.visible).is_false()

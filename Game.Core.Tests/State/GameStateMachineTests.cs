@@ -11,7 +11,8 @@ public class GameStateMachineTests
     // ACC:T10.3
     // ACC:T10.14
     // ACC:T16.3
-    [Fact]
+    // ACC:T24.3
+        [Fact]
     public void ShouldTransitionThroughCoreFlow_WhenInvokingStartPauseResumeEnd()
     {
         var fsm = new GameStateMachine();
