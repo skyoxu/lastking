@@ -16,6 +16,9 @@ public partial class HUD : Control
     private Label _day = default!;
     private Label _cycleRemaining = default!;
     private Label _health = default!;
+    private Button _pauseButton = default!;
+    private Button _oneXButton = default!;
+    private Button _twoXButton = default!;
 
     private int _currentDay = 1;
     private double _phaseDurationSeconds = DefaultDayDurationSeconds;
@@ -24,12 +27,19 @@ public partial class HUD : Control
 
     public override void _Ready()
     {
+        ProcessMode = ProcessModeEnum.WhenPaused;
         _day = GetNode<Label>("TopBar/HBox/DayLabel");
         _cycleRemaining = GetNode<Label>("TopBar/HBox/CycleRemainingLabel");
         _health = GetNode<Label>("TopBar/HBox/HealthLabel");
+        _pauseButton = GetNode<Button>("TopBar/HBox/SpeedControls/PauseButton");
+        _oneXButton = GetNode<Button>("TopBar/HBox/SpeedControls/OneXButton");
+        _twoXButton = GetNode<Button>("TopBar/HBox/SpeedControls/TwoXButton");
         RenderDay();
         RenderCycleRemaining();
         _health.Text = "HP: 0";
+        _pauseButton.Pressed += OnPausePressed;
+        _oneXButton.Pressed += OnOneXPressed;
+        _twoXButton.Pressed += OnTwoXPressed;
 
         _bus = GetNodeOrNull<EventBusAdapter>("/root/EventBus");
         if (_bus != null)
@@ -120,6 +130,21 @@ public partial class HUD : Control
         catch
         {
         }
+    }
+
+    private void OnPausePressed()
+    {
+        GetNodeOrNull<Node>("/root/GameManager")?.Call("SetPause");
+    }
+
+    private void OnOneXPressed()
+    {
+        GetNodeOrNull<Node>("/root/GameManager")?.Call("SetOneX");
+    }
+
+    private void OnTwoXPressed()
+    {
+        GetNodeOrNull<Node>("/root/GameManager")?.Call("SetTwoX");
     }
 
     private static int? ReadInt(JsonElement element, params string[] keys)

@@ -39,3 +39,17 @@ text = "Cycle Remaining: 240.0s"
 layout_mode = 2
 text = "HP: 0"
 
+[node name="SpeedControls" type="HBoxContainer" parent="TopBar/HBox"]
+layout_mode = 2
+
+[node name="PauseButton" type="Button" parent="TopBar/HBox/SpeedControls"]
+layout_mode = 2
+text = "Pause"
+
+[node name="OneXButton" type="Button" parent="TopBar/HBox/SpeedControls"]
+layout_mode = 2
+text = "1x"
+
+[node name="TwoXButton" type="Button" parent="TopBar/HBox/SpeedControls"]
+layout_mode = 2
+text = "2x"

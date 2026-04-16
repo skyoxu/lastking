@@ -1928,7 +1928,6 @@
       "core"
     ],
     "test_refs": [
-      "Game.Core.Tests/State/GameStateMachineTests.cs",
       "Game.Core.Tests/Services/RuntimeSpeedControllerTests.cs",
       "Tests.Godot/tests/UI/test_speed_controls_buttons_apply_speed.gd",
       "Tests.Godot/tests/Integration/test_runtime_speed_progression_order.gd",
