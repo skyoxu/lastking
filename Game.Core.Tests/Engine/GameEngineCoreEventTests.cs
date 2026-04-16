@@ -258,13 +258,23 @@ public class GameEngineCoreEventTests
 
         manager.TryAdd(20, 0, 0, "contract-check").Succeeded.Should().BeTrue();
 
-        bus.Published.Should().ContainSingle();
-        bus.Published[0].Type.Should().Be(EventTypes.LastkingResourcesChanged);
-        bus.Published[0].DataElement.HasValue.Should().BeTrue();
-        var payload = bus.Published[0].DataElement!.Value;
+        var contractCheckEvents = bus.Published
+            .Where(evt =>
+                evt.Type == EventTypes.LastkingResourcesChanged
+                && evt.DataElement.HasValue
+                && evt.DataElement.Value.TryGetProperty("reason", out var reason)
+                && string.Equals(reason.GetString(), "contract-check", StringComparison.Ordinal))
+            .ToList();
+
+        contractCheckEvents.Should().ContainSingle();
+        contractCheckEvents[0].Type.Should().Be(EventTypes.LastkingResourcesChanged);
+        contractCheckEvents[0].DataElement.HasValue.Should().BeTrue();
+        var payload = contractCheckEvents[0].DataElement!.Value;
         payload.GetProperty("gold").GetInt32().Should().Be(820);
         payload.GetProperty("iron").GetInt32().Should().Be(150);
         payload.GetProperty("populationCap").GetInt32().Should().Be(50);
+        payload.GetProperty("runId").GetString().Should().Be("run-12");
+        payload.GetProperty("dayNumber").GetInt32().Should().Be(1);
         payload.GetProperty("reason").GetString().Should().Be("contract-check");
         payload.GetProperty("delta").GetProperty("gold").GetInt32().Should().Be(20);
         payload.GetProperty("delta").GetProperty("iron").GetInt32().Should().Be(0);
