@@ -266,11 +266,9 @@ def _find_latest_green_summary(task_id: str) -> tuple[Path | None, dict[str, Any
     logs_root = repo_root() / "logs" / "ci"
     if not logs_root.exists():
         return None, {}
-    candidates = sorted(
-        [item for item in logs_root.glob("*/sc-build-tdd/summary.json") if item.is_file()],
-        key=lambda item: item.stat().st_mtime,
-        reverse=True,
-    )
+    stage_candidates = [item for item in logs_root.glob("*/sc-build-tdd/summary.green.json") if item.is_file()]
+    fallback_candidates = [item for item in logs_root.glob("*/sc-build-tdd/summary.json") if item.is_file()]
+    candidates = sorted(stage_candidates + fallback_candidates, key=lambda item: item.stat().st_mtime, reverse=True)
     for candidate in candidates:
         payload = _read_json(candidate)
         if str(payload.get("stage") or "").strip().lower() != "green":
@@ -281,6 +279,13 @@ def _find_latest_green_summary(task_id: str) -> tuple[Path | None, dict[str, Any
             continue
         return candidate, payload
     return None, {}
+
+
+def _write_stage_summary(out_dir: Path, payload: dict[str, Any]) -> None:
+    write_json(out_dir / "summary.json", payload)
+    stage_name = str(payload.get("stage") or "").strip().lower()
+    if stage_name:
+        write_json(out_dir / f"summary.{stage_name}.json", payload)
 
 
 def validate_green_red_prerequisite(*, task_id: str, out_dir: Path) -> dict[str, Any]:
@@ -665,7 +670,7 @@ def main() -> int:
         preflight_step = run_task_preflight(triplet=triplet, out_dir=out_dir)
         summary["steps"].append(preflight_step)
         if preflight_step["rc"] != 0:
-            write_json(out_dir / "summary.json", _finalize_summary(summary, start_monotonic=start_monotonic))
+            _write_stage_summary(out_dir, _finalize_summary(summary, start_monotonic=start_monotonic))
             print(f"SC_BUILD_TDD status=fail out={out_dir}")
             assert_no_new_contract_files(before_contracts, allow_changes=bool(args.allow_contract_changes))
             return 1
@@ -673,7 +678,7 @@ def main() -> int:
         ctx_step = validate_task_context_required_fields(task_id=triplet.task_id, stage="red", out_dir=out_dir)
         summary["steps"].append(ctx_step)
         if ctx_step["rc"] != 0:
-            write_json(out_dir / "summary.json", _finalize_summary(summary, start_monotonic=start_monotonic))
+            _write_stage_summary(out_dir, _finalize_summary(summary, start_monotonic=start_monotonic))
             print(f"SC_BUILD_TDD status=fail out={out_dir}")
             assert_no_new_contract_files(before_contracts, allow_changes=bool(args.allow_contract_changes))
             return 1
@@ -685,7 +690,7 @@ def main() -> int:
             out_dir=out_dir,
         )
         if not test_path:
-            write_json(out_dir / "summary.json", _finalize_summary(summary, start_monotonic=start_monotonic))
+            _write_stage_summary(out_dir, _finalize_summary(summary, start_monotonic=start_monotonic))
             print("[sc-build-tdd] ERROR: no task-scoped test found. Use --generate-red-test to create one.")
             return 2
 
@@ -699,7 +704,7 @@ def main() -> int:
 
         # In red stage, we EXPECT a failure.
         summary["status"] = "ok" if step["rc"] != 0 else "unexpected_green"
-        write_json(out_dir / "summary.json", _finalize_summary(summary, start_monotonic=start_monotonic))
+        _write_stage_summary(out_dir, _finalize_summary(summary, start_monotonic=start_monotonic))
         print(f"SC_BUILD_TDD status={summary['status']} out={out_dir}")
         assert_no_new_contract_files(before_contracts, allow_changes=bool(args.allow_contract_changes))
         return 0 if summary["status"] == "ok" else 1
@@ -708,7 +713,7 @@ def main() -> int:
         prereq_step = validate_green_red_prerequisite(task_id=triplet.task_id, out_dir=out_dir)
         summary["steps"].append(prereq_step)
         if prereq_step["rc"] != 0:
-            write_json(out_dir / "summary.json", _finalize_summary(summary, start_monotonic=start_monotonic))
+            _write_stage_summary(out_dir, _finalize_summary(summary, start_monotonic=start_monotonic))
             print(f"SC_BUILD_TDD status=fail out={out_dir}")
             assert_no_new_contract_files(before_contracts, allow_changes=bool(args.allow_contract_changes))
             return 1
@@ -716,7 +721,7 @@ def main() -> int:
         preflight_step = run_task_preflight(triplet=triplet, out_dir=out_dir)
         summary["steps"].append(preflight_step)
         if preflight_step["rc"] != 0:
-            write_json(out_dir / "summary.json", _finalize_summary(summary, start_monotonic=start_monotonic))
+            _write_stage_summary(out_dir, _finalize_summary(summary, start_monotonic=start_monotonic))
             print(f"SC_BUILD_TDD status=fail out={out_dir}")
             assert_no_new_contract_files(before_contracts, allow_changes=bool(args.allow_contract_changes))
             return 1
@@ -724,7 +729,7 @@ def main() -> int:
         ctx_step = validate_task_context_required_fields(task_id=triplet.task_id, stage="green", out_dir=out_dir)
         summary["steps"].append(ctx_step)
         if ctx_step["rc"] != 0:
-            write_json(out_dir / "summary.json", _finalize_summary(summary, start_monotonic=start_monotonic))
+            _write_stage_summary(out_dir, _finalize_summary(summary, start_monotonic=start_monotonic))
             print(f"SC_BUILD_TDD status=fail out={out_dir}")
             assert_no_new_contract_files(before_contracts, allow_changes=bool(args.allow_contract_changes))
             return 1
@@ -743,7 +748,7 @@ def main() -> int:
         if step["rc"] == 2:
             summary["steps"].append(write_coverage_hotspots(ci_out_dir=out_dir, run_dotnet_output=step.get("stdout") or ""))
         summary["status"] = "ok" if step["rc"] == 0 else "fail"
-        write_json(out_dir / "summary.json", _finalize_summary(summary, start_monotonic=start_monotonic))
+        _write_stage_summary(out_dir, _finalize_summary(summary, start_monotonic=start_monotonic))
         print(f"SC_BUILD_TDD status={summary['status']} out={out_dir}")
         assert_no_new_contract_files(before_contracts, allow_changes=bool(args.allow_contract_changes))
         return 0 if step["rc"] == 0 else 1
@@ -752,7 +757,7 @@ def main() -> int:
         prereq_step = validate_refactor_green_prerequisite(task_id=triplet.task_id, out_dir=out_dir)
         summary["steps"].append(prereq_step)
         if prereq_step["rc"] != 0:
-            write_json(out_dir / "summary.json", _finalize_summary(summary, start_monotonic=start_monotonic))
+            _write_stage_summary(out_dir, _finalize_summary(summary, start_monotonic=start_monotonic))
             print(f"SC_BUILD_TDD status=fail out={out_dir}")
             assert_no_new_contract_files(before_contracts, allow_changes=bool(args.allow_contract_changes))
             return 1
@@ -760,7 +765,7 @@ def main() -> int:
         preflight_step = run_task_preflight(triplet=triplet, out_dir=out_dir)
         summary["steps"].append(preflight_step)
         if preflight_step["rc"] != 0:
-            write_json(out_dir / "summary.json", _finalize_summary(summary, start_monotonic=start_monotonic))
+            _write_stage_summary(out_dir, _finalize_summary(summary, start_monotonic=start_monotonic))
             print(f"SC_BUILD_TDD status=fail out={out_dir}")
             assert_no_new_contract_files(before_contracts, allow_changes=bool(args.allow_contract_changes))
             return 1
@@ -768,7 +773,7 @@ def main() -> int:
         ctx_step = validate_task_context_required_fields(task_id=triplet.task_id, stage="refactor", out_dir=out_dir)
         summary["steps"].append(ctx_step)
         if ctx_step["rc"] != 0:
-            write_json(out_dir / "summary.json", _finalize_summary(summary, start_monotonic=start_monotonic))
+            _write_stage_summary(out_dir, _finalize_summary(summary, start_monotonic=start_monotonic))
             print(f"SC_BUILD_TDD status=fail out={out_dir}")
             assert_no_new_contract_files(before_contracts, allow_changes=bool(args.allow_contract_changes))
             return 1
@@ -776,7 +781,7 @@ def main() -> int:
         steps = run_refactor_checks(out_dir, task_id=triplet.task_id)
         summary["steps"].extend(steps)
         summary["status"] = "ok" if all(s["rc"] == 0 for s in steps) else "fail"
-        write_json(out_dir / "summary.json", _finalize_summary(summary, start_monotonic=start_monotonic))
+        _write_stage_summary(out_dir, _finalize_summary(summary, start_monotonic=start_monotonic))
 
         if summary["status"] != "ok":
             failed = [s for s in steps if s.get("rc") != 0]
@@ -810,7 +815,7 @@ def main() -> int:
         assert_no_new_contract_files(before_contracts, allow_changes=bool(args.allow_contract_changes))
         return 0 if summary["status"] == "ok" else 1
 
-    write_json(out_dir / "summary.json", _finalize_summary(summary, start_monotonic=start_monotonic))
+    _write_stage_summary(out_dir, _finalize_summary(summary, start_monotonic=start_monotonic))
     return 1
 
 
