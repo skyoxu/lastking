@@ -1,5 +1,6 @@
 using System;
 using System.Text.Json;
+using System.Collections.Generic;
 using Game.Core.Contracts;
 using Game.Godot.Adapters;
 using Godot;
@@ -16,9 +17,36 @@ public partial class HUD : Control
     private Label _day = default!;
     private Label _cycleRemaining = default!;
     private Label _health = default!;
+    private Label _feedbackLabel = default!;
+    private Control _feedbackLayer = default!;
+    private PanelContainer _errorDialog = default!;
+    private Label _errorMessageLabel = default!;
+    private Button _dismissButton = default!;
     private Button _pauseButton = default!;
     private Button _oneXButton = default!;
     private Button _twoXButton = default!;
+    private string _activeFeedbackCode = string.Empty;
+    private string _activeFeedbackMessageKey = string.Empty;
+    private bool _hasPendingErrorDialog;
+    private float _feedbackHideAtMs;
+    private const float DefaultFeedbackTimeoutSeconds = 1.5f;
+    private static readonly HashSet<string> InvalidPlacementCodes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "invalid_target",
+        "invalid_input",
+        "tile_occupied",
+        "blocked_tile",
+        "invalid_terrain",
+        "build_invalid_tile",
+    };
+
+    private static readonly HashSet<string> BlockedActionCodes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "run_continue_blocked",
+        "insufficient_resources",
+        "cooldown_active",
+        "chapter_locked",
+    };
 
     private int _currentDay = 1;
     private double _phaseDurationSeconds = DefaultDayDurationSeconds;
@@ -31,6 +59,11 @@ public partial class HUD : Control
         _day = GetNode<Label>("TopBar/HBox/DayLabel");
         _cycleRemaining = GetNode<Label>("TopBar/HBox/CycleRemainingLabel");
         _health = GetNode<Label>("TopBar/HBox/HealthLabel");
+        _feedbackLayer = GetNode<Control>("FeedbackLayer");
+        _feedbackLabel = GetNode<Label>("FeedbackLayer/FeedbackLabel");
+        _errorDialog = GetNode<PanelContainer>("FeedbackLayer/ErrorDialog");
+        _errorMessageLabel = GetNode<Label>("FeedbackLayer/ErrorDialog/VBox/ErrorMessageLabel");
+        _dismissButton = GetNode<Button>("FeedbackLayer/ErrorDialog/VBox/DismissButton");
         _pauseButton = GetNode<Button>("TopBar/HBox/SpeedControls/PauseButton");
         _oneXButton = GetNode<Button>("TopBar/HBox/SpeedControls/OneXButton");
         _twoXButton = GetNode<Button>("TopBar/HBox/SpeedControls/TwoXButton");
@@ -40,6 +73,15 @@ public partial class HUD : Control
         _pauseButton.Pressed += OnPausePressed;
         _oneXButton.Pressed += OnOneXPressed;
         _twoXButton.Pressed += OnTwoXPressed;
+        _dismissButton.Pressed += OnDismissFeedbackPressed;
+        _feedbackLabel.Visible = false;
+        _feedbackLabel.Text = string.Empty;
+        _errorDialog.Visible = false;
+        _errorMessageLabel.Text = string.Empty;
+        _activeFeedbackCode = string.Empty;
+        _activeFeedbackMessageKey = string.Empty;
+        _hasPendingErrorDialog = false;
+        _feedbackHideAtMs = 0f;
 
         _bus = GetNodeOrNull<EventBusAdapter>("/root/EventBus");
         if (_bus != null)
@@ -52,11 +94,13 @@ public partial class HUD : Control
     {
         if (!_phaseCountdownEnabled || delta <= 0d)
         {
+            UpdateFeedbackVisibility();
             return;
         }
 
         _phaseElapsedSeconds = Math.Max(0d, _phaseElapsedSeconds + delta);
         RenderCycleRemaining();
+        UpdateFeedbackVisibility();
     }
 
     public override void _ExitTree()
@@ -113,7 +157,10 @@ public partial class HUD : Control
 
         if (type != EventTypes.LastkingCastleHpChanged &&
             type != EventTypes.HealthUpdated &&
-            type != "player.health.changed")
+            type != "player.health.changed" &&
+            type != EventTypes.LastkingUiFeedbackRaised &&
+            type != EventTypes.SaveMigrationFailed &&
+            type != EventTypes.SaveWriteFailed)
         {
             return;
         }
@@ -126,10 +173,181 @@ public partial class HUD : Control
             {
                 _health.Text = $"HP: {hp.Value}";
             }
+
+            if (type == EventTypes.LastkingUiFeedbackRaised ||
+                type == EventTypes.SaveMigrationFailed ||
+                type == EventTypes.SaveWriteFailed)
+            {
+                HandleUiFeedbackEvent(type, doc.RootElement);
+            }
         }
         catch
         {
         }
+    }
+
+    private void HandleUiFeedbackEvent(string type, JsonElement payload)
+    {
+        var code = ReadString(payload, "Code", "code", "reason_code") ?? string.Empty;
+        var messageKey = ReadString(payload, "MessageKey", "message_key") ?? string.Empty;
+        var details = ReadString(payload, "Details", "details") ?? string.Empty;
+
+        var hasSaveFailure = type == EventTypes.SaveMigrationFailed || type == EventTypes.SaveWriteFailed;
+        var isErrorDialog = hasSaveFailure || IsMigrationOrLoadFailure(code, messageKey);
+        if (isErrorDialog)
+        {
+            ShowPersistentErrorDialog(code, messageKey, details);
+            return;
+        }
+
+        if (IsBlockedAction(code, messageKey))
+        {
+            ShowTemporaryFeedback(messageKey, details, code, priority: 2);
+            return;
+        }
+
+        if (IsInvalidPlacement(code, messageKey))
+        {
+            ShowTemporaryFeedback(messageKey, details, code, priority: 1);
+            return;
+        }
+    }
+
+    private void ShowTemporaryFeedback(string messageKey, string details, string code, int priority)
+    {
+        if (_hasPendingErrorDialog)
+        {
+            return;
+        }
+
+        var currentPriority = ResolveFeedbackPriority(_activeFeedbackCode, _activeFeedbackMessageKey);
+        if (priority < currentPriority)
+        {
+            return;
+        }
+
+        _activeFeedbackCode = code;
+        _activeFeedbackMessageKey = messageKey;
+        _feedbackLabel.Text = BuildFeedbackDisplayText(messageKey, details, code);
+        _feedbackLabel.Visible = !string.IsNullOrWhiteSpace(_feedbackLabel.Text);
+        _feedbackHideAtMs = Time.GetTicksMsec() + (DefaultFeedbackTimeoutSeconds * 1000f);
+    }
+
+    private void ShowPersistentErrorDialog(string code, string messageKey, string details)
+    {
+        _hasPendingErrorDialog = true;
+        _activeFeedbackCode = code;
+        _activeFeedbackMessageKey = messageKey;
+        _feedbackLabel.Visible = false;
+        _feedbackLabel.Text = string.Empty;
+        _feedbackHideAtMs = 0f;
+        _errorDialog.Visible = true;
+        _errorMessageLabel.Text = BuildFeedbackDisplayText(messageKey, details, code);
+    }
+
+    private void OnDismissFeedbackPressed()
+    {
+        _errorDialog.Visible = false;
+        _errorMessageLabel.Text = string.Empty;
+        _hasPendingErrorDialog = false;
+    }
+
+    private void UpdateFeedbackVisibility()
+    {
+        if (_hasPendingErrorDialog)
+        {
+            _feedbackLabel.Visible = false;
+            return;
+        }
+
+        if (!_feedbackLabel.Visible)
+        {
+            return;
+        }
+
+        if (_feedbackHideAtMs <= 0f)
+        {
+            return;
+        }
+
+        if (Time.GetTicksMsec() >= _feedbackHideAtMs)
+        {
+            _feedbackLabel.Visible = false;
+            _feedbackLabel.Text = string.Empty;
+            _activeFeedbackCode = string.Empty;
+            _activeFeedbackMessageKey = string.Empty;
+            _feedbackHideAtMs = 0f;
+        }
+    }
+
+    private static int ResolveFeedbackPriority(string code, string messageKey)
+    {
+        if (IsMigrationOrLoadFailure(code, messageKey))
+        {
+            return 3;
+        }
+
+        if (IsBlockedAction(code, messageKey))
+        {
+            return 2;
+        }
+
+        if (IsInvalidPlacement(code, messageKey))
+        {
+            return 1;
+        }
+
+        return 0;
+    }
+
+    private static bool IsInvalidPlacement(string code, string messageKey)
+    {
+        return InvalidPlacementCodes.Contains(code) ||
+               messageKey.StartsWith("ui.invalid_action.", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsBlockedAction(string code, string messageKey)
+    {
+        return BlockedActionCodes.Contains(code) ||
+               messageKey.StartsWith("ui.blocked_action.", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsMigrationOrLoadFailure(string code, string messageKey)
+    {
+        return code.Contains("migration", StringComparison.OrdinalIgnoreCase) ||
+               code.Contains("load", StringComparison.OrdinalIgnoreCase) ||
+               messageKey.StartsWith("ui.migration_failure.", StringComparison.OrdinalIgnoreCase) ||
+               messageKey.StartsWith("ui.load_failure.", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string BuildFeedbackDisplayText(string messageKey, string details, string fallbackCode)
+    {
+        var keyText = messageKey switch
+        {
+            _ when messageKey.StartsWith("ui.invalid_action.", StringComparison.OrdinalIgnoreCase) => "Invalid action.",
+            _ when messageKey.StartsWith("ui.blocked_action.", StringComparison.OrdinalIgnoreCase) => "Action blocked.",
+            _ when messageKey.StartsWith("ui.load_failure.", StringComparison.OrdinalIgnoreCase) => "Load failed.",
+            _ when messageKey.StartsWith("ui.migration_failure.", StringComparison.OrdinalIgnoreCase) => "Migration failed.",
+            _ => string.Empty,
+        };
+
+        var detailText = details?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(keyText))
+        {
+            keyText = "Feedback";
+        }
+
+        if (string.IsNullOrWhiteSpace(detailText))
+        {
+            if (string.IsNullOrWhiteSpace(fallbackCode))
+            {
+                return keyText;
+            }
+
+            return $"{keyText} ({fallbackCode.Replace('_', ' ')})";
+        }
+
+        return $"{keyText} {detailText}";
     }
 
     private void OnPausePressed()
@@ -164,6 +382,24 @@ public partial class HUD : Control
             if (valueElement.ValueKind == JsonValueKind.String && int.TryParse(valueElement.GetString(), out var parsed))
             {
                 return parsed;
+            }
+        }
+
+        return null;
+    }
+
+    private static string? ReadString(JsonElement element, params string[] keys)
+    {
+        foreach (var key in keys)
+        {
+            if (!element.TryGetProperty(key, out var valueElement))
+            {
+                continue;
+            }
+
+            if (valueElement.ValueKind == JsonValueKind.String)
+            {
+                return valueElement.GetString();
             }
         }
 

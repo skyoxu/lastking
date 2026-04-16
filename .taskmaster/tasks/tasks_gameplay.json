@@ -2023,7 +2023,6 @@
       "adapter"
     ],
     "test_refs": [
-      "Tests.Godot/tests/UI/test_hud_scene.gd",
       "Tests.Godot/tests/UI/test_hud_action_feedback.gd",
       "Tests.Godot/tests/UI/test_hud_error_dialog.gd",
       "Game.Core.Tests/State/GameStateMachineTests.cs",
@@ -2033,11 +2032,13 @@
       "Tests.Godot/tests/Integration/test_load_failure_feedback_flow.gd",
       "Tests.Godot/tests/UI/test_hud_updates_on_events.gd",
       "Tests.Godot/tests/Adapters/test_event_bus_adapter.gd",
+      "Tests.Godot/tests/UI/test_hud_scene.gd",
       "Game.Core.Tests/Domain/InvalidActionFeedbackContractTests.cs",
       "Game.Core.Tests/Services/UIFeedbackMessageResolverTests.cs",
       "Tests.Godot/tests/UI/test_settings_locale.gd",
       "Game.Core.Tests/Services/UIFeedbackRegressionTests.cs",
-      "Tests.Godot/tests/Integration/test_feedback_error_flows.gd"
+      "Tests.Godot/tests/Integration/test_feedback_error_flows.gd",
+      "Tests.Godot/tests/UI/test_hud_feedback_realtime.gd"
     ],
     "acceptance": [
       "Taskmaster #24 surfaces user-facing UI feedback for all required scenarios: invalid placement, blocked actions, and migration/load failures. Refs: Tests.Godot/tests/UI/test_hud_action_feedback.gd Tests.Godot/tests/UI/test_hud_error_dialog.gd",
