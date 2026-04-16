@@ -144,7 +144,10 @@ Prerequisites:
 Why this is stable:
 - it is the single-task Chapter 6 top-level entrypoint
 - it always starts from `resume-task` and `chapter6-route` instead of assuming a fresh run
-- it only jumps directly to `6.8` when recovery artifacts already prove that this is the cheapest valid lane
+- it now consumes both `preferred_lane` and `Chapter6 next action` from recovery artifacts instead of treating `preferred_lane` as the only top-level signal
+- it stops early when recovery explicitly says `inspect`, `resume`, `pause`, `fork`, `rerun`, `run-6.7`, `record-residual`, or another stop-loss lane, instead of reopening the full Chapter 6 chain by default
+- it now treats `Chapter6 next action = continue` as a clean closure signal and exits with `status=complete` without paying for another full rerun or unnecessary downstream hard checks
+- it only jumps directly to `6.8` when recovery artifacts already prove that this is the cheapest valid lane, either through `preferred_lane = run-6.8` or `Chapter6 next action = needs-fix-fast`
 - by default it records residual `P2/P3` findings instead of repeatedly paying for the same-shape closure loop
 - it keeps `6.9` behind the same orchestrator, so repo-level hard checks are still part of the normal closeout path
 

@@ -1335,7 +1335,9 @@ Notes:
   - `--final-pass` disables deterministic shortcuts and reviewer auto-shrink, forces a full reviewer set, and is intended for the last closure run before handoff/PR.
 - Behavior notes: round summaries now record `timeout_agents`; when `rc=124` and no child summary was produced, `failure_kind` becomes `timeout-no-summary` so timeout-only rounds are not misread as clean.
 - Behavior notes: `--llm-backend codex-cli|openai-api` now passes through to the nested `run_review_pipeline.py -> llm_review.py` call chain, so transport piloting does not require a custom wrapper.
-- Behavior notes: before paying for deterministic / LLM work, the script now consumes `chapter6-route` when a recoverable prior run already has `agent-review.json`; only `preferred_lane = run-6.8` may continue, while `inspect-first` / `repo-noise-stop` / `fix-deterministic` / `run-6.7` become controlled stop-loss exits and `record-residual` can auto-write follow-up docs.
+- Behavior notes: before paying for deterministic / LLM work, the script now consumes `chapter6-route` when a recoverable prior run already has `agent-review.json`; top-level decisions now read both `preferred_lane` and `chapter6_next_action`.
+- Behavior notes: `chapter6_next_action = continue` becomes a clean closure branch (`status = complete`) instead of reopening the Chapter 6 chain, while `pause|fork|resume|inspect|rerun` become controlled top-level stop-loss exits.
+- Behavior notes: `preferred_lane = run-6.8` or `chapter6_next_action = needs-fix-fast` may continue through the narrow closure path; `inspect-first` / `repo-noise-stop` / `fix-deterministic` / `run-6.7` remain controlled stop-loss exits and `record-residual` can auto-write follow-up docs.
 
 #### `scripts/sc/run_review_pipeline.py`
 
