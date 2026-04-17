@@ -587,10 +587,16 @@ def _parse_json_stdout(stdout: str) -> dict[str, Any]:
 
 
 def _is_missing_recovery_artifact(step: dict[str, Any], payload: dict[str, Any] | None = None) -> bool:
+    stdout_tail = str((step or {}).get("stdout_tail") or "").strip().lower()
     stderr_tail = str((step or {}).get("stderr_tail") or "").strip().lower()
-    if "no latest run index found" in stderr_tail:
+    text = f"{stdout_tail}\n{stderr_tail}"
+    if "no latest run index found" in text:
         return True
-    if "artifact-missing" in stderr_tail:
+    if "failed to build task resume summary" in text:
+        return True
+    if "failed to route chapter6 recovery" in text:
+        return True
+    if "artifact-missing" in text:
         return True
     normalized_payload = payload if isinstance(payload, dict) else {}
     failure = normalized_payload.get("failure") if isinstance(normalized_payload.get("failure"), dict) else {}
@@ -695,16 +701,17 @@ def main() -> int:
     resume_step, resume_payload = _run_json_step(out_dir, name="resume-task", cmd=build_resume_task_cmd(task_id))
     summary["steps"].append(resume_step)
     summary["resume"] = resume_payload
-    if int(resume_step["rc"]) != 0:
-        if _is_missing_recovery_artifact(resume_step, resume_payload):
-            summary["resume_missing_recovery_artifact"] = True
-            resume_payload = {}
-        else:
-            summary["status"] = "fail"
-            summary["stop_reason"] = "resume-task"
-            _write_json(out_dir / "summary.json", summary)
-            print(f"SINGLE_TASK_CHAPTER6 status=fail task={task_id} stop=resume-task")
-            return 1
+    resume_missing_latest = int(resume_step["rc"]) != 0 and _is_missing_recovery_artifact(resume_step, resume_payload)
+    if int(resume_step["rc"]) != 0 and not resume_missing_latest:
+        summary["status"] = "fail"
+        summary["stop_reason"] = "resume-task"
+        _write_json(out_dir / "summary.json", summary)
+        print(f"SINGLE_TASK_CHAPTER6 status=fail task={task_id} stop=resume-task")
+        return 1
+    if resume_missing_latest:
+        summary["resume_missing_recovery_artifact"] = True
+        summary["resume_recovery_mode"] = "fresh-start-no-latest"
+        resume_payload = {}
 
     record_residual = str(profile_policy["record_residual"]).strip().lower() == "true"
     initial_route_step, initial_route = _run_json_step(
@@ -714,22 +721,29 @@ def main() -> int:
     )
     summary["steps"].append(initial_route_step)
     summary["initial_route"] = initial_route
-    if int(initial_route_step["rc"]) != 0:
-        if _is_missing_recovery_artifact(initial_route_step, initial_route):
-            summary["initial_route_missing_recovery_artifact"] = True
-            initial_route = {
-                "preferred_lane": "inspect-first",
-                "run_id": "n/a",
-                "latest_reason": "n/a",
-                "blocked_by": "n/a",
-            }
-            summary["initial_route"] = initial_route
-        else:
+    initial_route_missing_latest = int(initial_route_step["rc"]) != 0 and _is_missing_recovery_artifact(initial_route_step, initial_route)
+    if int(initial_route_step["rc"]) != 0 and not initial_route_missing_latest:
+        summary["status"] = "fail"
+        summary["stop_reason"] = "chapter6-route-initial"
+        _write_json(out_dir / "summary.json", summary)
+        print(f"SINGLE_TASK_CHAPTER6 status=fail task={task_id} stop=chapter6-route-initial")
+        return 1
+    if initial_route_missing_latest:
+        if not resume_missing_latest:
             summary["status"] = "fail"
             summary["stop_reason"] = "chapter6-route-initial"
             _write_json(out_dir / "summary.json", summary)
             print(f"SINGLE_TASK_CHAPTER6 status=fail task={task_id} stop=chapter6-route-initial")
             return 1
+        summary["initial_route_missing_recovery_artifact"] = True
+        summary["route_recovery_mode"] = "fresh-start-no-latest"
+        initial_route = {
+            "preferred_lane": "inspect-first",
+            "run_id": "n/a",
+            "latest_reason": "n/a",
+            "blocked_by": "n/a",
+        }
+        summary["initial_route"] = initial_route
 
     plan = build_execution_plan(
         task_id=task_id,
