@@ -4,13 +4,25 @@ namespace Game.Core.State;
 
 public record SaveMetadata(DateTime CreatedAt, DateTime UpdatedAt, string Version, string Checksum);
 
+public sealed record DayNightRuntimeSnapshot(
+    int Seed,
+    int Day,
+    DayNightPhase Phase,
+    double PhaseElapsedSeconds,
+    long Tick,
+    int CheckpointCount,
+    bool TerminalRaised,
+    DayNightPhase TerminalFromPhase
+);
+
 public record SaveData(
     string Id,
     GameState State,
     GameConfig Config,
     SaveMetadata Metadata,
     string? Screenshot = null,
-    string? Title = null
+    string? Title = null,
+    DayNightRuntimeSnapshot? DayNightRuntime = null
 );
 
 public record GameStateManagerOptions(

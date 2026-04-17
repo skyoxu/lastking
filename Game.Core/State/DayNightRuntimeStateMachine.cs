@@ -18,7 +18,8 @@ public sealed record DayNightTerminal(int Day, long Tick, DayNightPhase FromPhas
 public sealed class DayNightRuntimeStateMachine
 {
     private readonly DayNightCycleConfig _config;
-    private readonly Random _random;
+    private Random _random;
+    private int _seed;
     private DayNightPhase _phase = DayNightPhase.Day;
     private int _day = 1;
     private bool _terminalRaised;
@@ -30,7 +31,8 @@ public sealed class DayNightRuntimeStateMachine
     public DayNightRuntimeStateMachine(int seed, DayNightCycleConfig? config = null)
     {
         _config = config ?? DayNightCycleConfig.Default;
-        _random = new Random(seed);
+        _seed = seed;
+        _random = CreateRandomAtCheckpoint(seed, checkpointCount: 0);
     }
 
     public DayNightPhase CurrentPhase => _phase;
@@ -43,6 +45,57 @@ public sealed class DayNightRuntimeStateMachine
 
     public event Action<DayNightCheckpoint>? OnCheckpoint;
     public event Action<DayNightTerminal>? OnTerminal;
+
+    public DayNightRuntimeSnapshot ExportSnapshot()
+    {
+        return new DayNightRuntimeSnapshot(
+            Seed: _seed,
+            Day: _day,
+            Phase: _phase,
+            PhaseElapsedSeconds: _phaseElapsedSeconds,
+            Tick: _tick,
+            CheckpointCount: _checkpointCount,
+            TerminalRaised: _terminalRaised,
+            TerminalFromPhase: _terminalFromPhase);
+    }
+
+    public void RestoreSnapshot(DayNightRuntimeSnapshot snapshot)
+    {
+        if (snapshot is null)
+        {
+            throw new ArgumentNullException(nameof(snapshot));
+        }
+
+        if (snapshot.Day <= 0)
+        {
+            throw new InvalidOperationException("DayNight runtime snapshot is invalid: day must be positive.");
+        }
+
+        if (snapshot.PhaseElapsedSeconds < 0d)
+        {
+            throw new InvalidOperationException("DayNight runtime snapshot is invalid: phase elapsed seconds must be non-negative.");
+        }
+
+        if (snapshot.Tick < 0)
+        {
+            throw new InvalidOperationException("DayNight runtime snapshot is invalid: tick must be non-negative.");
+        }
+
+        if (snapshot.CheckpointCount < 0)
+        {
+            throw new InvalidOperationException("DayNight runtime snapshot is invalid: checkpoint count must be non-negative.");
+        }
+
+        _day = snapshot.Day;
+        _phase = snapshot.Phase;
+        _phaseElapsedSeconds = snapshot.PhaseElapsedSeconds;
+        _tick = snapshot.Tick;
+        _checkpointCount = snapshot.CheckpointCount;
+        _terminalRaised = snapshot.TerminalRaised;
+        _terminalFromPhase = snapshot.TerminalFromPhase;
+        _seed = snapshot.Seed;
+        _random = CreateRandomAtCheckpoint(_seed, _checkpointCount);
+    }
 
     public bool ForceTerminal()
     {
@@ -66,6 +119,7 @@ public sealed class DayNightRuntimeStateMachine
         _checkpointCount = 0;
         _terminalRaised = false;
         _terminalFromPhase = DayNightPhase.Day;
+        _random = CreateRandomAtCheckpoint(_seed, checkpointCount: 0);
     }
 
     public bool RequestTransition(DayNightPhase requestedPhase)
@@ -189,5 +243,16 @@ public sealed class DayNightRuntimeStateMachine
 
         _terminalRaised = true;
         OnTerminal?.Invoke(new DayNightTerminal(_day, _tick, _terminalFromPhase));
+    }
+
+    private static Random CreateRandomAtCheckpoint(int seed, int checkpointCount)
+    {
+        var random = new Random(seed);
+        for (var index = 0; index < checkpointCount; index++)
+        {
+            _ = random.Next();
+        }
+
+        return random;
     }
 }

@@ -12,6 +12,7 @@ func _new_db(name: String) -> Node:
     get_tree().get_root().add_child(auto_free(db))
     return db
 
+# ACC:T25.5
 func test_savegame_cross_restart_persists() -> void:
     var path = "user://utdb_%s/save.db" % Time.get_unix_time_from_system()
     var db = _new_db("SqlDb")

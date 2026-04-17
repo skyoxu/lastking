@@ -21,6 +21,7 @@ func _force_managed() -> Node:
     helper.ForceManaged()
     return helper
 
+# ACC:T25.8
 func test_savegame_upsert_rollback_on_error() -> void:
     var path = "user://utdb_%s/save_err.db" % Time.get_unix_time_from_system()
     var db = await _new_db("SqlDb")
