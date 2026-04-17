@@ -1,0 +1,21 @@
+# Task 25 Build Save System with Autosave and Migration Handling acceptance-test generation plan
+
+- Title: Task 25 Build Save System with Autosave and Migration Handling acceptance-test generation plan
+- Status: active
+- Branch: task/T25
+- Git Head: 156232e198205235d26b0ae35a93362a0873e917
+- Goal: Control acceptance-driven test generation complexity for task 25.
+- Scope: 7 missing refs across 2 test roots; seed refs: Game.Core.Tests/State/SavePayloadSerializationTests.cs, Tests.Godot/tests/Adapters/Save/test_save_manager_autosave_slot_path.gd, Tests.Godot/tests/Adapters/Save/test_save_manager_contract_save_load.gd, ...
+- Current step: Review missing acceptance refs and choose the first safe red step.
+- Last completed step: n/a (new execution plan scaffold; no completed step recorded yet)
+- Stop-loss: Do not start Codex test generation until the ref mix and verify mode are explicit.
+- Next action: Run llm_generate_tests_from_acceptance_refs.py after confirming the sequence for missing refs.
+- Recovery command: `py -3 scripts/sc/run_review_pipeline.py --task-id 25 --resume`
+- Open questions: none recorded yet
+- Exit criteria: The next acceptance-driven test generation step is explicit and low-ambiguity.
+- Related ADRs: none yet
+- Related decision logs: none yet
+- Related task id(s): `25`
+- Related run id: n/a (no pipeline run id linked yet)
+- Related latest.json: n/a (no task-scoped latest.json pointer resolved yet)
+- Related pipeline artifacts: n/a (no pipeline artifact directory resolved yet)

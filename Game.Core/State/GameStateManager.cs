@@ -2,11 +2,15 @@ using System.Text.Json;
 using Game.Core.Contracts;
 using Game.Core.Domain;
 using Game.Core.Ports;
+using Game.Core.Services;
 
 namespace Game.Core.State;
 
 public class GameStateManager
 {
+    public const string CurrentSaveVersion = "1.0.0";
+    public const string DefaultAutoSaveSlotPath = "user://autosave.save";
+
     private readonly GameStateManagerOptions _options;
     private readonly IDataStore _store;
     private readonly DayNightRuntimeStateMachine _dayNightRuntime;
@@ -20,6 +24,7 @@ public class GameStateManager
     private bool _winPresentationVisible;
     private int _castleHp = 100;
     private RunTerminalState? _lastRunTerminalState;
+    private int _lastDayStartAutoSaveDay;
 
     private const string IndexSuffix = ":index";
 
@@ -39,6 +44,8 @@ public class GameStateManager
     public DayNightPhase CurrentDayNightPhase => _dayNightRuntime.CurrentPhase;
     public int CurrentDayNightDay => _dayNightRuntime.CurrentDay;
     public int DayNightCheckpointCount => _dayNightRuntime.CheckpointCount;
+    public long CurrentDayNightTick => _dayNightRuntime.Tick;
+    public double CurrentDayNightPhaseElapsedSeconds => _dayNightRuntime.PhaseElapsedSeconds;
     public bool IsRunTerminal => _runTerminal;
     public RunTerminalOutcome CurrentRunTerminalOutcome => _runTerminalOutcome;
     public int CurrentCastleHp => _castleHp;
@@ -149,6 +156,7 @@ public class GameStateManager
         _winPresentationVisible = false;
         _lastRunTerminalState = null;
         _dayNightRuntime.Reset();
+        _lastDayStartAutoSaveDay = 0;
 
         if (startingCastleHp is not null)
         {
@@ -169,15 +177,21 @@ public class GameStateManager
 
     public async Task<string> SaveGameAsync(string? name = null, string? screenshot = null)
     {
+        var saveId = $"{_options.StorageKey}-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}";
+        return await SaveGameToSlotAsync(saveId, name, screenshot);
+    }
+
+    public async Task<string> SaveGameToSlotAsync(string saveId, string? name = null, string? screenshot = null)
+    {
         if (_currentState is null || _currentConfig is null)
             throw new InvalidOperationException("No game state to save");
+        if (string.IsNullOrWhiteSpace(saveId))
+            throw new ArgumentException("Save slot id must be provided.", nameof(saveId));
 
         if (!string.IsNullOrEmpty(name) && name!.Length > MaxTitleLength)
             throw new ArgumentOutOfRangeException(nameof(name), $"Title too long (>{MaxTitleLength}).");
         if (!string.IsNullOrEmpty(screenshot) && screenshot!.Length > MaxScreenshotChars)
             throw new ArgumentOutOfRangeException(nameof(screenshot), $"Screenshot too large (>{MaxScreenshotChars} chars).");
-
-        var saveId = $"{_options.StorageKey}-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}";
         var checksum = CalculateChecksum(_currentState);
         var now = DateTime.UtcNow;
 
@@ -185,9 +199,10 @@ public class GameStateManager
             Id: saveId,
             State: _currentState,
             Config: _currentConfig,
-            Metadata: new SaveMetadata(now, now, "1.0.0", checksum),
+            Metadata: new SaveMetadata(now, now, CurrentSaveVersion, checksum),
             Screenshot: screenshot,
-            Title: name
+            Title: name,
+            DayNightRuntime: _dayNightRuntime.ExportSnapshot()
         );
 
         await SaveToStoreAsync(saveId, save);
@@ -205,15 +220,53 @@ public class GameStateManager
         return saveId;
     }
 
+    public async Task<string> SaveAutoSaveSlotAsync(string? screenshot = null)
+    {
+        return await SaveGameToSlotAsync(DefaultAutoSaveSlotPath, name: "autosave", screenshot: screenshot);
+    }
+
+    public async Task<bool> HandleDayStartAutoSaveAsync(int dayNumber, string? screenshot = null)
+    {
+        if (dayNumber <= 0)
+        {
+            return false;
+        }
+
+        if (_lastDayStartAutoSaveDay == dayNumber)
+        {
+            return false;
+        }
+
+        _lastDayStartAutoSaveDay = dayNumber;
+        await SaveAutoSaveSlotAsync(screenshot);
+
+        Publish(DomainEvent.Create(
+            type: EventTypes.LastkingSaveAutosaved,
+            source: nameof(GameStateManager),
+            payload: new AutoSaveDayStartedPayload(DefaultAutoSaveSlotPath, dayNumber),
+            timestamp: DateTime.UtcNow,
+            id: $"lastking-autosave-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}"
+        ));
+
+        return true;
+    }
+
     public async Task<(GameState state, GameConfig config)> LoadGameAsync(string saveId)
     {
         var save = await LoadFromStoreAsync(saveId);
+        if (!string.Equals(save.Metadata.Version, CurrentSaveVersion, StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("Save version incompatible with current runtime.");
+
         var checksum = CalculateChecksum(save.State);
         if (!string.Equals(checksum, save.Metadata.Checksum, StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Save file is corrupted");
 
         _currentState = save.State with { };
         _currentConfig = save.Config with { };
+        if (save.DayNightRuntime is not null)
+        {
+            _dayNightRuntime.RestoreSnapshot(save.DayNightRuntime);
+        }
 
         Publish(DomainEvent.Create(
             type: "game.save.loaded",
@@ -224,6 +277,53 @@ public class GameStateManager
         ));
 
         return (_currentState, _currentConfig);
+    }
+
+    public async Task<(bool ok, string reasonCode)> TryLoadWithFeedbackAsync(string saveId, UIFeedbackPipeline feedback)
+    {
+        if (feedback is null)
+        {
+            throw new ArgumentNullException(nameof(feedback));
+        }
+
+        var beforeState = _currentState is null ? null : _currentState with { };
+        var beforeConfig = _currentConfig is null ? null : _currentConfig with { };
+        var beforeRuntime = _dayNightRuntime.ExportSnapshot();
+
+        try
+        {
+            _ = await LoadGameAsync(saveId);
+            return (true, "ok");
+        }
+        catch (InvalidOperationException ex)
+        {
+            var message = ex.Message ?? string.Empty;
+            string reasonCode;
+            if (message.Contains("not found", StringComparison.OrdinalIgnoreCase))
+            {
+                reasonCode = "missing_autosave";
+                feedback.ReportLoadFailure(reasonCode, saveId);
+            }
+            else if (message.Contains("version", StringComparison.OrdinalIgnoreCase))
+            {
+                reasonCode = "migration_version_incompatible";
+                feedback.ReportMigrationFailure(reasonCode, saveId);
+            }
+            else if (message.Contains("deserialize", StringComparison.OrdinalIgnoreCase) ||
+                     message.Contains("format", StringComparison.OrdinalIgnoreCase))
+            {
+                reasonCode = "deserialize_failed";
+                feedback.ReportLoadFailure(reasonCode, saveId);
+            }
+            else
+            {
+                reasonCode = "invalid_content";
+                feedback.ReportLoadFailure(reasonCode, saveId);
+            }
+
+            RestoreRuntimeSnapshot(beforeState, beforeConfig, beforeRuntime);
+            return (false, reasonCode);
+        }
     }
 
     public async Task DeleteSaveAsync(string saveId)
@@ -324,16 +424,50 @@ public class GameStateManager
     private async Task<SaveData> LoadFromStoreAsync(string key)
     {
         var raw = await _store.LoadAsync(key) ?? throw new InvalidOperationException($"Save not found: {key}");
-        string json;
-        if (raw.StartsWith("gz:"))
+        var isCompressedPayload = raw.StartsWith("gz:", StringComparison.Ordinal);
+        if (_options.EnableCompression != isCompressedPayload)
         {
-            json = DecompressFromBase64(raw.Substring(3));
+            throw new InvalidOperationException("Save format mismatch with current serialization format.");
+        }
+
+        string json;
+        if (isCompressedPayload)
+        {
+            try
+            {
+                json = DecompressFromBase64(raw.Substring(3));
+            }
+            catch (Exception ex) when (ex is FormatException or InvalidDataException)
+            {
+                throw new InvalidOperationException("Failed to deserialize save payload.", ex);
+            }
         }
         else
         {
             json = raw;
         }
-        return JsonSerializer.Deserialize<SaveData>(json)!;
+
+        try
+        {
+            var data = JsonSerializer.Deserialize<SaveData>(json);
+            if (data is null)
+            {
+                throw new InvalidOperationException("Failed to deserialize save payload.");
+            }
+
+            return data;
+        }
+        catch (JsonException ex)
+        {
+            throw new InvalidOperationException("Failed to deserialize save payload.", ex);
+        }
+    }
+
+    private void RestoreRuntimeSnapshot(GameState? state, GameConfig? config, DayNightRuntimeSnapshot runtime)
+    {
+        _currentState = state is null ? null : state with { };
+        _currentConfig = config is null ? null : config with { };
+        _dayNightRuntime.RestoreSnapshot(runtime);
     }
 
     private async Task UpdateIndexAsync(string? add = null, string? remove = null)
@@ -393,6 +527,7 @@ public class GameStateManager
     private sealed record StateUpdatedPayload(GameState State, GameConfig? Config);
     private sealed record SaveRefPayload(string SaveId);
     private sealed record AutoSaveIntervalPayload(double IntervalMilliseconds);
+    private sealed record AutoSaveDayStartedPayload(string SlotId, int DayNumber);
     private sealed record DayNightCheckpointPayload(int Day, string From, string To, long Tick, int RandomToken);
     private sealed record DayNightTerminalPayload(int Day, long Tick);
     private sealed record CastleHpChangedPayload(int Day, int PreviousHp, int CurrentHp);

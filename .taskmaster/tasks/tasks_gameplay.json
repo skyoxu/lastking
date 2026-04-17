@@ -2115,7 +2115,6 @@
       "adapter"
     ],
     "test_refs": [
-      "Tests.Godot/tests/Integration/test_backup_restore_savegame.gd",
       "Tests.Godot/tests/Adapters/Save/test_save_manager_autosave_slot_path.gd",
       "Tests.Godot/tests/Adapters/Db/test_savegame_update_overwrite_cross_restart.gd",
       "Tests.Godot/tests/Adapters/Save/test_save_manager_daystart_autosave.gd",
