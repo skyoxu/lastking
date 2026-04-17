@@ -586,6 +586,18 @@ def _parse_json_stdout(stdout: str) -> dict[str, Any]:
     return {}
 
 
+def _is_missing_recovery_artifact(step: dict[str, Any], payload: dict[str, Any] | None = None) -> bool:
+    stderr_tail = str((step or {}).get("stderr_tail") or "").strip().lower()
+    if "no latest run index found" in stderr_tail:
+        return True
+    if "artifact-missing" in stderr_tail:
+        return True
+    normalized_payload = payload if isinstance(payload, dict) else {}
+    failure = normalized_payload.get("failure") if isinstance(normalized_payload.get("failure"), dict) else {}
+    failure_code = str(failure.get("code") or normalized_payload.get("failure_code") or "").strip().lower()
+    return failure_code in {"artifact-missing", "stale-latest", "artifact-incomplete"}
+
+
 def _run_json_step(out_dir: Path, *, name: str, cmd: list[str]) -> tuple[dict[str, Any], dict[str, Any]]:
     rc, stdout, stderr = _run_cmd(cmd, cwd=_repo_root())
     log_path = _write_step_log(out_dir, name=name, cmd=cmd, stdout=stdout, stderr=stderr, rc=rc)
@@ -597,7 +609,7 @@ def _run_json_step(out_dir: Path, *, name: str, cmd: list[str]) -> tuple[dict[st
         "stderr_tail": stderr.strip().splitlines()[-1] if stderr.strip() else "",
         "log": log_path,
     }
-    payload = _parse_json_stdout(stdout) if rc == 0 else {}
+    payload = _parse_json_stdout(stdout)
     return step, payload
 
 
@@ -684,11 +696,15 @@ def main() -> int:
     summary["steps"].append(resume_step)
     summary["resume"] = resume_payload
     if int(resume_step["rc"]) != 0:
-        summary["status"] = "fail"
-        summary["stop_reason"] = "resume-task"
-        _write_json(out_dir / "summary.json", summary)
-        print(f"SINGLE_TASK_CHAPTER6 status=fail task={task_id} stop=resume-task")
-        return 1
+        if _is_missing_recovery_artifact(resume_step, resume_payload):
+            summary["resume_missing_recovery_artifact"] = True
+            resume_payload = {}
+        else:
+            summary["status"] = "fail"
+            summary["stop_reason"] = "resume-task"
+            _write_json(out_dir / "summary.json", summary)
+            print(f"SINGLE_TASK_CHAPTER6 status=fail task={task_id} stop=resume-task")
+            return 1
 
     record_residual = str(profile_policy["record_residual"]).strip().lower() == "true"
     initial_route_step, initial_route = _run_json_step(
@@ -699,11 +715,21 @@ def main() -> int:
     summary["steps"].append(initial_route_step)
     summary["initial_route"] = initial_route
     if int(initial_route_step["rc"]) != 0:
-        summary["status"] = "fail"
-        summary["stop_reason"] = "chapter6-route-initial"
-        _write_json(out_dir / "summary.json", summary)
-        print(f"SINGLE_TASK_CHAPTER6 status=fail task={task_id} stop=chapter6-route-initial")
-        return 1
+        if _is_missing_recovery_artifact(initial_route_step, initial_route):
+            summary["initial_route_missing_recovery_artifact"] = True
+            initial_route = {
+                "preferred_lane": "inspect-first",
+                "run_id": "n/a",
+                "latest_reason": "n/a",
+                "blocked_by": "n/a",
+            }
+            summary["initial_route"] = initial_route
+        else:
+            summary["status"] = "fail"
+            summary["stop_reason"] = "chapter6-route-initial"
+            _write_json(out_dir / "summary.json", summary)
+            print(f"SINGLE_TASK_CHAPTER6 status=fail task={task_id} stop=chapter6-route-initial")
+            return 1
 
     plan = build_execution_plan(
         task_id=task_id,

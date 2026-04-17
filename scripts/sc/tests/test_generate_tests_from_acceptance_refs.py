@@ -440,6 +440,78 @@ class GenerateTestsFromAcceptanceRefsTests(unittest.TestCase):
         self.assertFalse(any_gd)
         self.assertEqual(["ok"], [item.status for item in results])
 
+    def test_main_should_disable_unit_coverage_gate_even_without_created_files(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            out_dir = root / "logs" / "ci" / "2026-03-20" / "sc-llm-acceptance-tests"
+            analyze_dir = root / "logs" / "ci" / "2026-03-20" / "sc-analyze"
+            analyze_dir.mkdir(parents=True, exist_ok=True)
+            (analyze_dir / "task_context.26.json").write_text(
+                json.dumps({"taskdoc_markdown": "Task context markdown"}, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+            existing_test = root / "Game.Core.Tests" / "Services" / "SaveManagerWorkflowTests.cs"
+            existing_test.parent.mkdir(parents=True, exist_ok=True)
+            existing_test.write_text(
+                "\n".join(
+                    [
+                        "using Xunit;",
+                        "namespace Game.Core.Tests.Services;",
+                        "public class SaveManagerWorkflowTests { [Fact] public void ShouldExist() {} }",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            argv = [
+                "llm_generate_tests_from_acceptance_refs.py",
+                "--task-id",
+                "26",
+                "--tdd-stage",
+                "red-first",
+                "--verify",
+                "unit",
+            ]
+            seen_test_cmds: list[list[str]] = []
+
+            class _Triplet26:
+                def __init__(self) -> None:
+                    self.task_id = "26"
+                    self.master = {"title": "Integrate Steam Cloud Save with Account Binding"}
+                    self.back = {
+                        "acceptance": [
+                            "Keep deterministic local behavior. Refs: Game.Core.Tests/Services/SaveManagerWorkflowTests.cs"
+                        ]
+                    }
+                    self.gameplay = None
+
+            def fake_run_cmd(cmd: list[str], cwd: Path, timeout_sec: int):  # noqa: ARG001
+                cmd_text = " ".join(cmd)
+                if "validate_acceptance_refs.py" in cmd_text:
+                    return 0, "acceptance refs ok\n"
+                if "scripts/sc/analyze.py" in cmd_text:
+                    return 0, "analyze ok\n"
+                if "update_task_test_refs_from_acceptance_refs.py" in cmd_text:
+                    return 0, "sync ok\n"
+                if cmd[:4] == ["py", "-3", "scripts/sc/test.py", "--type"]:
+                    seen_test_cmds.append(cmd)
+                    return 0, "SC_TEST status=ok out=logs/ci/2026-03-20/sc-test\n"
+                raise AssertionError(f"unexpected command: {cmd}")
+
+            with (
+                mock.patch.object(sys, "argv", argv),
+                mock.patch.object(gen_script, "repo_root", return_value=root),
+                mock.patch.object(gen_script, "ci_dir", return_value=out_dir),
+                mock.patch.object(gen_script, "resolve_triplet", return_value=_Triplet26()),
+                mock.patch.object(gen_script, "run_cmd", side_effect=fake_run_cmd),
+            ):
+                rc = gen_script.main()
+
+        self.assertEqual(0, rc)
+        self.assertEqual(1, len(seen_test_cmds))
+        self.assertIn("--no-coverage-gate", seen_test_cmds[0])
+        self.assertIn("--no-coverage-report", seen_test_cmds[0])
+
 
 if __name__ == "__main__":
     unittest.main()
