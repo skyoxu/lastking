@@ -1,5 +1,7 @@
 using System.Text.Json;
 using Game.Core.Contracts;
+using Game.Core.Contracts.Interfaces;
+using Game.Core.Contracts.Lastking;
 using Game.Core.Domain;
 using Game.Core.Ports;
 using Game.Core.Services;
@@ -14,6 +16,10 @@ public class GameStateManager
     private readonly GameStateManagerOptions _options;
     private readonly IDataStore _store;
     private readonly DayNightRuntimeStateMachine _dayNightRuntime;
+    private readonly ICloudSaveSyncService? _cloudSaveSyncService;
+    private readonly SaveManagerCloudSyncWorkflow? _cloudSaveSyncWorkflow;
+    private bool _cloudSyncEnabled;
+    private string _cloudSyncSteamAccountId = string.Empty;
     private readonly List<Action<DomainEvent>> _callbacks = new();
 
     private GameState? _currentState;
@@ -32,13 +38,19 @@ public class GameStateManager
         IDataStore store,
         GameStateManagerOptions? options = null,
         int dayNightSeed = 0,
-        DayNightCycleConfig? dayNightConfig = null)
+        DayNightCycleConfig? dayNightConfig = null,
+        ICloudSaveSyncService? cloudSaveSyncService = null)
     {
         _store = store;
         _options = options ?? GameStateManagerOptions.Default;
         _dayNightRuntime = new DayNightRuntimeStateMachine(dayNightSeed, dayNightConfig);
         _dayNightRuntime.OnCheckpoint += HandleDayNightCheckpoint;
         _dayNightRuntime.OnTerminal += HandleDayNightTerminal;
+        _cloudSaveSyncService = cloudSaveSyncService;
+        if (_cloudSaveSyncService is not null)
+        {
+            _cloudSaveSyncWorkflow = new SaveManagerCloudSyncWorkflow(_cloudSaveSyncService);
+        }
     }
 
     public DayNightPhase CurrentDayNightPhase => _dayNightRuntime.CurrentPhase;
@@ -208,6 +220,7 @@ public class GameStateManager
         await SaveToStoreAsync(saveId, save);
         await UpdateIndexAsync(add: saveId);
         await CleanupOldSavesAsync();
+        TryCloudSyncUpload(saveId, save);
 
         Publish(DomainEvent.Create(
             type: "game.save.created",
@@ -223,6 +236,43 @@ public class GameStateManager
     public async Task<string> SaveAutoSaveSlotAsync(string? screenshot = null)
     {
         return await SaveGameToSlotAsync(DefaultAutoSaveSlotPath, name: "autosave", screenshot: screenshot);
+    }
+
+    public CloudSaveSyncResultDto? SyncCloudUpload(string saveId, string steamAccountId, string payload, bool enableCloudSync = true)
+    {
+        if (_cloudSaveSyncWorkflow is null)
+        {
+            return null;
+        }
+
+        return _cloudSaveSyncWorkflow.Save(
+            new SaveWorkflowCommand(
+                SlotId: saveId,
+                EnableCloudSync: enableCloudSync,
+                SteamAccountId: steamAccountId,
+                Payload: payload));
+    }
+
+    public CloudSaveSyncResultDto? SyncCloudDownload(string saveId, string steamAccountId, bool enableCloudSync = true)
+    {
+        if (!enableCloudSync || _cloudSaveSyncService is null || string.IsNullOrWhiteSpace(saveId) || string.IsNullOrWhiteSpace(steamAccountId))
+        {
+            return null;
+        }
+
+        var runId = $"task26-load-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}";
+        return _cloudSaveSyncService.Sync(
+            runId: runId,
+            slotId: saveId,
+            direction: "download",
+            steamAccountId: steamAccountId,
+            payload: string.Empty);
+    }
+
+    public void ConfigureCloudSyncContext(bool enabled, string steamAccountId)
+    {
+        _cloudSyncEnabled = enabled;
+        _cloudSyncSteamAccountId = (steamAccountId ?? string.Empty).Trim();
     }
 
     public async Task<bool> HandleDayStartAutoSaveAsync(int dayNumber, string? screenshot = null)
@@ -253,6 +303,7 @@ public class GameStateManager
 
     public async Task<(GameState state, GameConfig config)> LoadGameAsync(string saveId)
     {
+        TryCloudSyncDownload(saveId);
         var save = await LoadFromStoreAsync(saveId);
         if (!string.Equals(save.Metadata.Version, CurrentSaveVersion, StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Save version incompatible with current runtime.");
@@ -277,6 +328,38 @@ public class GameStateManager
         ));
 
         return (_currentState, _currentConfig);
+    }
+
+    private void TryCloudSyncUpload(string saveId, SaveData save)
+    {
+        if (!_cloudSyncEnabled || string.IsNullOrWhiteSpace(_cloudSyncSteamAccountId) || _cloudSaveSyncWorkflow is null)
+        {
+            return;
+        }
+
+        var payload = JsonSerializer.Serialize(save);
+        _ = _cloudSaveSyncWorkflow.Save(
+            new SaveWorkflowCommand(
+                SlotId: saveId,
+                EnableCloudSync: true,
+                SteamAccountId: _cloudSyncSteamAccountId,
+                Payload: payload));
+    }
+
+    private void TryCloudSyncDownload(string saveId)
+    {
+        if (!_cloudSyncEnabled || string.IsNullOrWhiteSpace(_cloudSyncSteamAccountId) || _cloudSaveSyncService is null)
+        {
+            return;
+        }
+
+        var runId = $"task26-load-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}";
+        _ = _cloudSaveSyncService.Sync(
+            runId: runId,
+            slotId: saveId,
+            direction: "download",
+            steamAccountId: _cloudSyncSteamAccountId,
+            payload: string.Empty);
     }
 
     public async Task<(bool ok, string reasonCode)> TryLoadWithFeedbackAsync(string saveId, UIFeedbackPipeline feedback)

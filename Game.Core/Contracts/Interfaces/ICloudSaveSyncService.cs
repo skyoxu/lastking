@@ -19,6 +19,7 @@ public interface ICloudSaveSyncService
     /// <param name="slotId">Save slot identifier.</param>
     /// <param name="direction">Sync direction, for example upload/download.</param>
     /// <param name="steamAccountId">Steam account identity bound to this sync.</param>
+    /// <param name="payload">Serialized save payload to sync.</param>
     /// <returns>Deterministic sync result payload.</returns>
-    CloudSaveSyncResultDto Sync(string runId, string slotId, string direction, string steamAccountId);
+    CloudSaveSyncResultDto Sync(string runId, string slotId, string direction, string steamAccountId, string payload);
 }

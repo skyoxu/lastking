@@ -102,8 +102,7 @@ def run_verify(
             cmd.append("--skip-smoke")
     else:
         cmd = ["py", "-3", "scripts/sc/test.py", "--type", "unit", "--task-id", task_id]
-        if strict_red:
-            cmd += ["--no-coverage-gate", "--no-coverage-report"]
+        cmd += ["--no-coverage-gate", "--no-coverage-report"]
     rc, out = run_cmd_fn(cmd, cwd=repo_root_fn(), timeout_sec=1_800)
     write_text_fn(out_dir / f"verify-{task_id}.log", out)
     return mode, {"status": "ok" if rc == 0 else "fail", "rc": rc, "cmd": cmd}

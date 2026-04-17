@@ -138,7 +138,7 @@ public class LastkingContractsTests
         dispatched.MessageKey.Should().Be("ui.feedback.code");
 
         ICloudSaveSyncService cloudSaveSyncService = new StubCloudSaveSyncService();
-        var syncResult = cloudSaveSyncService.Sync("run-1", "autosave", "upload", "steam-acc-1");
+        var syncResult = cloudSaveSyncService.Sync("run-1", "autosave", "upload", "steam-acc-1", "payload-json");
         syncResult.Success.Should().BeTrue();
     }
 
@@ -175,7 +175,7 @@ public class LastkingContractsTests
 
     private sealed class StubCloudSaveSyncService : ICloudSaveSyncService
     {
-        public CloudSaveSyncResultDto Sync(string runId, string slotId, string direction, string steamAccountId)
+        public CloudSaveSyncResultDto Sync(string runId, string slotId, string direction, string steamAccountId, string payload)
         {
             return new CloudSaveSyncResultDto(
                 slotId,
