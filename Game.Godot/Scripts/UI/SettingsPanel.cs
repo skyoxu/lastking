@@ -1,6 +1,7 @@
 using Godot;
 using System;
 using Game.Godot.Adapters;
+using Game.Godot.Scripts.Audio;
 
 namespace Game.Godot.Scripts.UI;
 
@@ -9,7 +10,8 @@ public partial class SettingsPanel : Control
     private static readonly string[] SupportedLocales = { "en-US", "zh-CN" };
     private static readonly string[] LegacyLocales = { "en", "zh" };
 
-    private HSlider _volume = default!;
+    private HSlider _musicVolume = default!;
+    private HSlider _sfxVolume = default!;
     private OptionButton _graphics = default!;
     private OptionButton _language = default!;
     private Button _save = default!;
@@ -19,10 +21,15 @@ public partial class SettingsPanel : Control
     private const string UserId = "default";
     private const string ConfigPath = "user://settings.cfg";
     private const string ConfigSection = "settings";
+    private const string MusicVolumeKey = "music_volume";
+    private const string SfxVolumeKey = "sfx_volume";
+    private const string LegacyMusicVolumeDbKey = "music_volume_db";
+    private const string LegacySfxVolumeDbKey = "sfx_volume_db";
 
     public override void _Ready()
     {
-        _volume = GetNode<HSlider>("VBox/VolRow/VolSlider");
+        _musicVolume = GetNode<HSlider>("VBox/VolRow/VolSlider");
+        _sfxVolume = GetNode<HSlider>("VBox/SfxRow/SfxSlider");
         _graphics = GetNode<OptionButton>("VBox/GraphicsRow/GraphicsOpt");
         _language = GetNode<OptionButton>("VBox/LangRow/LangOpt");
         _save = GetNode<Button>("VBox/Buttons/SaveBtn");
@@ -48,7 +55,8 @@ public partial class SettingsPanel : Control
         }
 
         // Realtime apply handlers
-        _volume.ValueChanged += OnVolumeChanged;
+        _musicVolume.ValueChanged += OnMusicVolumeChanged;
+        _sfxVolume.ValueChanged += OnSfxVolumeChanged;
         _graphics.ItemSelected += OnGraphicsChanged;
         _language.ItemSelected += OnLanguageChanged;
 
@@ -57,13 +65,16 @@ public partial class SettingsPanel : Control
 
     private SqliteDataStore? Db() => GetNodeOrNull<SqliteDataStore>("/root/SqlDb");
 
-    private void SaveToConfig(float vol, string gfx, string lang)
+    private void SaveToConfig(float musicVolume, float sfxVolume, string gfx, string lang)
     {
         lang = NormalizeLocaleOrDefault(lang);
         var cfg = new ConfigFile();
         // Load existing to preserve unrelated keys
         cfg.Load(ConfigPath);
-        cfg.SetValue(ConfigSection, nameof(vol), vol);
+        cfg.SetValue(ConfigSection, MusicVolumeKey, musicVolume);
+        cfg.SetValue(ConfigSection, SfxVolumeKey, sfxVolume);
+        cfg.SetValue(ConfigSection, LegacyMusicVolumeDbKey, musicVolume);
+        cfg.SetValue(ConfigSection, LegacySfxVolumeDbKey, sfxVolume);
         cfg.SetValue(ConfigSection, nameof(gfx), gfx ?? "medium");
         cfg.SetValue(ConfigSection, nameof(lang), lang ?? "en-US");
         var err = cfg.Save(ConfigPath);
@@ -73,9 +84,12 @@ public partial class SettingsPanel : Control
         }
     }
 
-    private bool TryLoadFromConfig(out float vol, out string gfx, out string lang)
+    private bool TryLoadFromConfig(out float musicVolume, out float sfxVolume, out string gfx, out string lang)
     {
-        vol = 0.5f; gfx = "medium"; lang = "en-US";
+        musicVolume = 0.5f;
+        sfxVolume = 0.5f;
+        gfx = "medium";
+        lang = "en-US";
         var cfg = new ConfigFile();
         var err = cfg.Load(ConfigPath);
         if (err != Error.Ok)
@@ -84,10 +98,24 @@ public partial class SettingsPanel : Control
         }
         try
         {
-            Variant v = cfg.GetValue(ConfigSection, nameof(vol), 0.5f);
+            Variant mv = cfg.GetValue(
+                ConfigSection,
+                MusicVolumeKey,
+                cfg.GetValue(
+                    ConfigSection,
+                    LegacyMusicVolumeDbKey,
+                    cfg.GetValue(ConfigSection, nameof(musicVolume), 0.5f)));
+            Variant sv = cfg.GetValue(
+                ConfigSection,
+                SfxVolumeKey,
+                cfg.GetValue(
+                    ConfigSection,
+                    LegacySfxVolumeDbKey,
+                    cfg.GetValue(ConfigSection, "audio_volume", 0.5f)));
             Variant g = cfg.GetValue(ConfigSection, nameof(gfx), "medium");
             Variant l = cfg.GetValue(ConfigSection, nameof(lang), "en-US");
-            vol = v.VariantType == Variant.Type.Nil ? 0.5f : (float)v.AsDouble();
+            musicVolume = mv.VariantType == Variant.Type.Nil ? 0.5f : (float)mv.AsDouble();
+            sfxVolume = sv.VariantType == Variant.Type.Nil ? 0.5f : (float)sv.AsDouble();
             gfx = g.VariantType == Variant.Type.Nil ? "medium" : g.AsString();
             lang = NormalizeLocaleOrDefault(l.VariantType == Variant.Type.Nil ? "en-US" : l.AsString());
             return true;
@@ -112,42 +140,54 @@ public partial class SettingsPanel : Control
         var rows = db.Query("SELECT audio_volume, graphics_quality, language FROM settings WHERE user_id=@0;", UserId);
         if (rows.Count == 0) return;
         var r = rows[0];
-        float vol = 0.5f; string gfx = "medium"; string lang = "en-US";
+        float musicVolume = 0.5f;
+        float sfxVolume = 0.5f;
+        string gfx = "medium";
+        string lang = "en-US";
         if (r.TryGetValue("audio_volume", out var v) && v != null)
-            vol = Convert.ToSingle(v);
+        {
+            musicVolume = Convert.ToSingle(v);
+            sfxVolume = Convert.ToSingle(v);
+        }
         if (r.TryGetValue("graphics_quality", out var g) && g != null)
             gfx = g.ToString() ?? "medium";
         if (r.TryGetValue("language", out var l) && l != null)
             lang = NormalizeLocaleOrDefault(l.ToString() ?? "en-US");
-        SaveToConfig(vol, gfx, lang);
+        SaveToConfig(musicVolume, sfxVolume, gfx, lang);
     }
 
     private void OnSave()
     {
-        var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-        var vol = Mathf.Clamp((float)_volume.Value, 0, 1);
+        var musicVolume = Mathf.Clamp((float)_musicVolume.Value, 0, 1);
+        var sfxVolume = Mathf.Clamp((float)_sfxVolume.Value, 0, 1);
         var gfx = _graphics.GetItemText(_graphics.Selected);
         var lang = _language.GetItemText(_language.Selected);
         // SSoT to ConfigFile
-        SaveToConfig(vol, gfx, lang);
+        SaveToConfig(musicVolume, sfxVolume, gfx, lang);
 
         // Apply immediately
-        ApplyVolume(vol);
+        ApplyMusicVolume(musicVolume);
+        ApplySfxVolume(sfxVolume);
         ApplyLanguage(lang);
     }
 
     private void OnLoad()
     {
         // Prefer ConfigFile; migrate once from DB if missing
-        float vol; string gfx; string lang;
-        if (!TryLoadFromConfig(out vol, out gfx, out lang))
+        float musicVolume;
+        float sfxVolume;
+        string gfx;
+        string lang;
+        if (!TryLoadFromConfig(out musicVolume, out sfxVolume, out gfx, out lang))
         {
             MigrateFromDbIfConfigMissing();
-            if (!TryLoadFromConfig(out vol, out gfx, out lang))
+            if (!TryLoadFromConfig(out musicVolume, out sfxVolume, out gfx, out lang))
                 return;
         }
-        _volume.Value = vol;
-        ApplyVolume(vol);
+        _musicVolume.Value = musicVolume;
+        _sfxVolume.Value = sfxVolume;
+        ApplyMusicVolume(musicVolume);
+        ApplySfxVolume(sfxVolume);
         // graphics selection
         if (!string.IsNullOrEmpty(gfx))
         {
@@ -178,9 +218,14 @@ public partial class SettingsPanel : Control
 
     public void ShowPanel() => Visible = true;
 
-    private void OnVolumeChanged(double value)
+    private void OnMusicVolumeChanged(double value)
     {
-        ApplyVolume((float)value);
+        ApplyMusicVolume((float)value);
+    }
+
+    private void OnSfxVolumeChanged(double value)
+    {
+        ApplySfxVolume((float)value);
     }
 
     private void OnGraphicsChanged(long index)
@@ -195,13 +240,41 @@ public partial class SettingsPanel : Control
         ApplyLanguage(lang);
     }
 
-    private void ApplyVolume(float vol)
+    private AudioManager? GetAudioManager() => GetNodeOrNull<AudioManager>("/root/Main/AudioManager");
+
+    private static void ApplyBusVolume(string preferredBus, float vol)
     {
-        int bus = AudioServer.GetBusIndex("Master");
+        int bus = AudioServer.GetBusIndex(preferredBus);
+        if (bus < 0)
+        {
+            bus = AudioServer.GetBusIndex("Master");
+        }
         if (bus >= 0)
         {
             AudioServer.SetBusVolumeDb(bus, Mathf.LinearToDb(Mathf.Clamp(vol, 0, 1)));
         }
+    }
+
+    private void ApplyMusicVolume(float vol)
+    {
+        var audioManager = GetAudioManager();
+        if (audioManager != null)
+        {
+            audioManager.SetMusicVolume(Mathf.Clamp(vol, 0, 1));
+            return;
+        }
+        ApplyBusVolume("Music", vol);
+    }
+
+    private void ApplySfxVolume(float vol)
+    {
+        var audioManager = GetAudioManager();
+        if (audioManager != null)
+        {
+            audioManager.SetSfxVolume(Mathf.Clamp(vol, 0, 1));
+            return;
+        }
+        ApplyBusVolume("SFX", vol);
     }
 
     private void ApplyLanguage(string lang)

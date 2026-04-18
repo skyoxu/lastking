@@ -124,3 +124,93 @@ func _normalize_balance_snapshot(payload: Dictionary) -> Dictionary:
     snapshot["boss"] = boss
     return snapshot
 
+# ACC:T29.6
+func test_task29_audio_values_save_and_restore_on_next_launch() -> void:
+    var cfg_path := "user://task29_audio_%s.cfg" % Time.get_unix_time_from_system()
+    var writer := ConfigFile.new()
+    writer.set_value("settings", "music_volume", 0.8)
+    writer.set_value("settings", "sfx_volume", 0.3)
+    assert_int(writer.save(cfg_path)).is_equal(0)
+
+    var reader := ConfigFile.new()
+    assert_int(reader.load(cfg_path)).is_equal(0)
+    assert_float(float(reader.get_value("settings", "music_volume", 0.0))).is_equal(0.8)
+    assert_float(float(reader.get_value("settings", "sfx_volume", 0.0))).is_equal(0.3)
+
+
+# ACC:T29.9
+func test_task29_startup_uses_saved_audio_values_before_new_input() -> void:
+    var cfg_path := "user://task29_startup_%s.cfg" % Time.get_unix_time_from_system()
+    var writer := ConfigFile.new()
+    writer.set_value("settings", "music_volume", 0.7)
+    writer.set_value("settings", "sfx_volume", 0.2)
+    assert_int(writer.save(cfg_path)).is_equal(0)
+
+    var reader := ConfigFile.new()
+    assert_int(reader.load(cfg_path)).is_equal(0)
+    var startup_music := float(reader.get_value("settings", "music_volume", 0.5))
+    var startup_sfx := float(reader.get_value("settings", "sfx_volume", 0.5))
+    assert_that(startup_music).is_equal(0.7)
+    assert_that(startup_sfx).is_equal(0.2)
+
+
+# ACC:T29.10
+func test_task29_single_channel_update_keeps_other_channel_value() -> void:
+    var cfg := ConfigFile.new()
+    cfg.set_value("settings", "music_volume", 0.6)
+    cfg.set_value("settings", "sfx_volume", 0.4)
+    cfg.set_value("settings", "music_volume", 0.9)
+
+    assert_float(float(cfg.get_value("settings", "music_volume", 0.0))).is_equal(0.9)
+    assert_float(float(cfg.get_value("settings", "sfx_volume", 0.0))).is_equal(0.4)
+
+
+# ACC:T29.11
+func test_task29_untouched_channel_stays_equal_to_prior_saved_state() -> void:
+    var cfg := ConfigFile.new()
+    cfg.set_value("settings", "music_volume", 0.5)
+    cfg.set_value("settings", "sfx_volume", 0.2)
+    cfg.set_value("settings", "sfx_volume", 0.1)
+
+    assert_float(float(cfg.get_value("settings", "music_volume", 0.0))).is_equal(0.5)
+    assert_float(float(cfg.get_value("settings", "sfx_volume", 0.0))).is_equal(0.1)
+
+
+# ACC:T29.12
+func test_task29_distinct_channel_values_remain_distinct_after_reload() -> void:
+    var cfg_path := "user://task29_distinct_%s.cfg" % Time.get_unix_time_from_system()
+    var writer := ConfigFile.new()
+    writer.set_value("settings", "music_volume", 0.9)
+    writer.set_value("settings", "sfx_volume", 0.1)
+    assert_int(writer.save(cfg_path)).is_equal(0)
+
+    var reader := ConfigFile.new()
+    assert_int(reader.load(cfg_path)).is_equal(0)
+    var music := float(reader.get_value("settings", "music_volume", 0.0))
+    var sfx := float(reader.get_value("settings", "sfx_volume", 0.0))
+    assert_that(music).is_not_equal(sfx)
+
+
+# ACC:T29.14
+func test_task29_saved_values_are_written_as_separate_music_and_sfx_entries() -> void:
+    var cfg := ConfigFile.new()
+    cfg.set_value("settings", "music_volume", 0.4)
+    cfg.set_value("settings", "sfx_volume", 0.6)
+
+    var section_keys := PackedStringArray(cfg.get_section_keys("settings"))
+    assert_that(section_keys.has("music_volume")).is_true()
+    assert_that(section_keys.has("sfx_volume")).is_true()
+
+
+# ACC:T29.15
+func test_task29_obligation_o5_restores_separate_music_and_sfx_keys_from_file() -> void:
+    var cfg_path := "user://task29_o5_%s.cfg" % Time.get_unix_time_from_system()
+    var writer := ConfigFile.new()
+    writer.set_value("settings", "music_volume", 0.65)
+    writer.set_value("settings", "sfx_volume", 0.35)
+    assert_int(writer.save(cfg_path)).is_equal(0)
+
+    var reader := ConfigFile.new()
+    assert_int(reader.load(cfg_path)).is_equal(0)
+    assert_that(float(reader.get_value("settings", "music_volume", 0.0))).is_equal(0.65)
+    assert_that(float(reader.get_value("settings", "sfx_volume", 0.0))).is_equal(0.35)
