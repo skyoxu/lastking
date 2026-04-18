@@ -1711,6 +1711,120 @@ class RunReviewPipelineMarathonTests(unittest.TestCase):
             self.assertEqual("", fork_execution_context["approval"]["required_action"])
             self.assertEqual("not-needed", fork_execution_context["approval"]["status"])
 
+    def test_fork_with_allow_full_rerun_should_not_copy_completed_steps(self) -> None:
+        source_run_id = uuid.uuid4().hex
+        fork_run_id = uuid.uuid4().hex
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp_root = Path(tmpdir)
+            source_out_dir = tmp_root / f"sc-review-pipeline-task-1-{source_run_id}"
+            fork_out_dir = tmp_root / f"sc-review-pipeline-task-1-{fork_run_id}"
+            latest_path = tmp_root / "sc-review-pipeline-task-1" / "latest.json"
+            source_out_dir.mkdir(parents=True, exist_ok=True)
+            (source_out_dir / "summary.json").write_text(
+                json.dumps(
+                    {
+                        "cmd": "sc-review-pipeline",
+                        "task_id": "1",
+                        "requested_run_id": source_run_id,
+                        "run_id": source_run_id,
+                        "allow_overwrite": False,
+                        "force_new_run_id": False,
+                        "status": "ok",
+                        "steps": [
+                            {"name": "sc-test", "cmd": ["py", "-3", "scripts/sc/test.py"], "rc": 0, "status": "ok", "log": "sc-test.log"},
+                            {"name": "sc-acceptance-check", "cmd": ["py", "-3", "scripts/sc/acceptance_check.py"], "rc": 0, "status": "ok", "log": "sc-acceptance.log"},
+                            {"name": "sc-llm-review", "cmd": ["py", "-3", "scripts/sc/llm_review.py"], "rc": 0, "status": "ok", "log": "sc-llm.log"},
+                        ],
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (source_out_dir / "marathon-state.json").write_text(
+                json.dumps(
+                    {
+                        "schema_version": "1.0.0",
+                        "task_id": "1",
+                        "run_id": source_run_id,
+                        "requested_run_id": source_run_id,
+                        "status": "ok",
+                        "resume_count": 1,
+                        "max_step_retries": 0,
+                        "last_completed_step": "sc-llm-review",
+                        "last_failed_step": "",
+                        "next_step_name": "",
+                        "steps": {
+                            "sc-test": {"attempt_count": 1, "status": "ok", "last_rc": 0, "log": "sc-test.log"},
+                            "sc-acceptance-check": {"attempt_count": 1, "status": "ok", "last_rc": 0, "log": "sc-acceptance.log"},
+                            "sc-llm-review": {"attempt_count": 1, "status": "ok", "last_rc": 0, "log": "sc-llm.log"},
+                        },
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            latest_path.parent.mkdir(parents=True, exist_ok=True)
+            latest_path.write_text(
+                json.dumps(
+                    {
+                        "task_id": "1",
+                        "run_id": source_run_id,
+                        "status": "ok",
+                        "latest_out_dir": str(source_out_dir),
+                        "summary_path": str(source_out_dir / "summary.json"),
+                        "marathon_state_path": str(source_out_dir / "marathon-state.json"),
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            call_counts: dict[str, int] = {}
+
+            def rerun_all(*, out_dir: Path, name: str, cmd: list[str], timeout_sec: int) -> dict:
+                call_counts[name] = call_counts.get(name, 0) + 1
+                return {
+                    "name": name,
+                    "cmd": cmd,
+                    "rc": 0,
+                    "status": "ok",
+                    "log": str(out_dir / f"{name}.fork.full.log"),
+                    "reported_out_dir": "",
+                    "summary_file": "",
+                }
+
+            argv = [
+                str(REPO_ROOT / "scripts" / "sc" / "run_review_pipeline.py"),
+                "--task-id",
+                "1",
+                "--fork",
+                "--run-id",
+                fork_run_id,
+                "--allow-full-rerun",
+                "--allow-large-change-scope-rerun",
+                "--skip-agent-review",
+            ]
+            with mock.patch.dict(os.environ, _stable_env(), clear=False), \
+                mock.patch.object(sys, "argv", argv), \
+                mock.patch.object(run_review_pipeline_module, "_pipeline_latest_index_path", return_value=latest_path), \
+                mock.patch.object(run_review_pipeline_module, "_pipeline_run_dir", return_value=fork_out_dir), \
+                mock.patch.object(run_review_pipeline_module, "_run_step", side_effect=rerun_all):
+                rc = run_review_pipeline_module.main()
+
+            self.assertEqual(0, rc)
+            self.assertEqual(1, call_counts["sc-test"])
+            self.assertEqual(1, call_counts["sc-acceptance-check"])
+            self.assertEqual(1, call_counts["sc-llm-review"])
+            fork_summary = json.loads((fork_out_dir / "summary.json").read_text(encoding="utf-8"))
+            self.assertEqual(fork_run_id, fork_summary["run_id"])
+            self.assertEqual("ok", fork_summary["status"])
+
 
 if __name__ == "__main__":
     unittest.main()

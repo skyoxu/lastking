@@ -198,6 +198,28 @@ public class GameEngineCoreEventTests
     }
 
     [Fact]
+    public void ShouldExposeTask29WindowsBaselineGate_WhenEngineCanStartAndEmitCoreEvent()
+    {
+        var engine = CreateEngineAndBus(out var bus);
+        engine.Start();
+
+        bus.Published.Should().ContainSingle(evt => evt.Type == "game.started");
+    }
+
+    [Fact]
+    public void ShouldKeepTask29DeterministicStateMachinePathStable_WhenSequenceIsFixed()
+    {
+        var fsm = new GameStateMachine();
+
+        fsm.Start().Should().BeTrue();
+        fsm.Pause().Should().BeTrue();
+        fsm.Resume().Should().BeTrue();
+        fsm.End().Should().BeTrue();
+
+        fsm.State.Should().Be(GameFlowState.GameOver);
+    }
+
+    [Fact]
     public void ShouldPublishPlayerHealthChangedEvent_WhenApplyDamageCalled()
     {
         // Arrange

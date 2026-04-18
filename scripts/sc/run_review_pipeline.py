@@ -1903,6 +1903,7 @@ def main() -> int:
                 requested_run_id=requested_run_id,
                 max_step_retries=source_max_step_retries,
                 max_wall_time_sec=args.max_wall_time_sec,
+                copy_completed_steps=not bool(args.allow_full_rerun),
             )
         else:
             run_id, out_dir = _allocate_out_dir(

@@ -27,9 +27,23 @@ layout_mode = 2
 
 [node name="VolLabel" type="Label" parent="VBox/VolRow"]
 layout_mode = 2
-text = "Volume"
+text = "Music Volume"
 
 [node name="VolSlider" type="HSlider" parent="VBox/VolRow"]
+layout_mode = 2
+min_value = 0.0
+max_value = 1.0
+step = 0.05
+size_flags_horizontal = 3
+
+[node name="SfxRow" type="HBoxContainer" parent="VBox"]
+layout_mode = 2
+
+[node name="SfxLabel" type="Label" parent="VBox/SfxRow"]
+layout_mode = 2
+text = "SFX Volume"
+
+[node name="SfxSlider" type="HSlider" parent="VBox/SfxRow"]
 layout_mode = 2
 min_value = 0.0
 max_value = 1.0

@@ -245,17 +245,24 @@ def build_initial_state(
     return _recompute_run_state(state, fallback_status=str(summary.get("status") or "running"))
 
 
-def build_forked_summary(source_summary: dict[str, Any], *, new_run_id: str, requested_run_id: str) -> dict[str, Any]:
+def build_forked_summary(
+    source_summary: dict[str, Any],
+    *,
+    new_run_id: str,
+    requested_run_id: str,
+    copy_completed_steps: bool = True,
+) -> dict[str, Any]:
     cloned_steps: list[dict[str, Any]] = []
-    for name in STEP_SEQUENCE:
-        step = _summary_steps_by_name(source_summary).get(name)
-        if not isinstance(step, dict):
+    if copy_completed_steps:
+        for name in STEP_SEQUENCE:
+            step = _summary_steps_by_name(source_summary).get(name)
+            if not isinstance(step, dict):
+                break
+            status = _normalize_step_status(step.get("status"))
+            if status in {"ok", "skipped"}:
+                cloned_steps.append(dict(step))
+                continue
             break
-        status = _normalize_step_status(step.get("status"))
-        if status in {"ok", "skipped"}:
-            cloned_steps.append(dict(step))
-            continue
-        break
     return {
         "cmd": "sc-review-pipeline",
         "task_id": str(source_summary.get("task_id") or ""),
@@ -283,8 +290,14 @@ def build_forked_state(
     requested_run_id: str,
     max_step_retries: int,
     max_wall_time_sec: int,
+    copy_completed_steps: bool = True,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
-    summary = build_forked_summary(source_summary, new_run_id=new_run_id, requested_run_id=requested_run_id)
+    summary = build_forked_summary(
+        source_summary,
+        new_run_id=new_run_id,
+        requested_run_id=requested_run_id,
+        copy_completed_steps=copy_completed_steps,
+    )
     task_id = str(summary.get("task_id") or "")
     fork_depth = _normalize_int((source_state or {}).get("fork_depth"), minimum=0) + 1
     state = build_initial_state(

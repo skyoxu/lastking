@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://Game.Godot/Scripts/Main.gd" id="1_0k4m0"]
 [ext_resource type="PackedScene" path="res://Game.Godot/Scenes/UI/HUD.tscn" id="2"]
@@ -11,6 +11,7 @@
 [ext_resource type="Script" path="res://Game.Godot/Scripts/Navigation/ScreenNavigator.cs" id="13"]
 [ext_resource type="Script" path="res://Game.Godot/Scripts/Bootstrap/InputMapper.cs" id="12"]
 [ext_resource type="Script" path="res://Game.Godot/Scripts/Camera/CameraController.cs" id="14_cam"]
+[ext_resource type="Script" path="res://Game.Godot/Scripts/Audio/AudioManager.cs" id="15_audio"]
 
 [node name="Main" type="Control"]
 layout_mode = 3
@@ -79,6 +80,13 @@ mouse_filter = 1
 
 
 [node name="SettingsPanel" parent="." instance=ExtResource("7")]
+
+[node name="AudioManager" type="Node" parent="."]
+script = ExtResource("15_audio")
+
+[node name="MusicPlayer" type="AudioStreamPlayer" parent="AudioManager"]
+
+[node name="SfxPlayer" type="AudioStreamPlayer" parent="AudioManager"]
 
 [node name="VBox" type="VBoxContainer" parent="."]
 layout_mode = 2

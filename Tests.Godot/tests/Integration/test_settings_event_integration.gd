@@ -13,6 +13,7 @@ func _load_main() -> Node:
 
 # ACC:T28.5
 # ACC:T28.18
+# ACC:T29.13
 func test_settings_panel_opens_on_ui_event() -> void:
     var main = await _load_main()
     var bus = get_node_or_null("/root/EventBus")
@@ -33,3 +34,19 @@ func test_settings_panel_opens_on_ui_event() -> void:
             await get_tree().process_frame
         shown = panel.visible
     assert_bool(shown).is_true()
+    var music_slider = panel.get_node_or_null("VBox/VolRow/VolSlider")
+    var sfx_slider = panel.get_node_or_null("VBox/SfxRow/SfxSlider")
+    assert_object(music_slider).is_not_null()
+    assert_object(sfx_slider).is_not_null()
+    var original_music := float(music_slider.value)
+    var original_sfx := float(sfx_slider.value)
+    music_slider.value = 0.8
+    await get_tree().process_frame
+    assert_float(float(music_slider.value)).is_equal(0.8)
+    assert_float(float(sfx_slider.value)).is_equal(original_sfx)
+    sfx_slider.value = 0.2
+    await get_tree().process_frame
+    assert_float(float(sfx_slider.value)).is_equal(0.2)
+    assert_float(float(music_slider.value)).is_equal(0.8)
+    if absf(original_music - 0.8) < 0.0001:
+        assert_bool(absf(original_sfx - 0.2) > 0.0001).is_true()
