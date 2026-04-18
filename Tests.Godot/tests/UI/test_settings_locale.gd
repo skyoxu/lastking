@@ -11,6 +11,10 @@ func after() -> void:
 
 # ACC:T24.18
 # ACC:T24.23
+# ACC:T28.4
+# ACC:T28.11
+# ACC:T28.12
+# ACC:T28.16
 func test_language_applies_runtime() -> void:
     var packed = load("res://Game.Godot/Scenes/UI/SettingsPanel.tscn")
     if packed == null:
@@ -52,6 +56,7 @@ func _spawn_hud_with_event_bus() -> Dictionary:
 
 # ACC:T24.18
 # ACC:T24.23
+# ACC:T28.5
 func test_localized_feedback_text_is_user_facing_and_avoids_raw_reason_codes_after_locale_switch() -> void:
     var setup = await _spawn_hud_with_event_bus()
     if setup.is_empty():

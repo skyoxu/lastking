@@ -2371,7 +2371,6 @@
       "ci"
     ],
     "test_refs": [
-      "Game.Core.Tests/State/GameStateMachineTests.cs",
       "Game.Core.Tests/Tasks/Task28LocalizationScopeLockTests.cs",
       "Tests.Godot/tests/Integration/test_i18n_full_behavior_sweep.gd",
       "Game.Core.Tests/Engine/CoreLoopDeterminismLocalizationTests.cs",

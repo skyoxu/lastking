@@ -11,6 +11,8 @@ func _load_main() -> Node:
     await get_tree().process_frame
     return main
 
+# ACC:T28.5
+# ACC:T28.18
 func test_settings_panel_opens_on_ui_event() -> void:
     var main = await _load_main()
     var bus = get_node_or_null("/root/EventBus")

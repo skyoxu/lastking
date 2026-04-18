@@ -3,6 +3,7 @@ extends "res://addons/gdUnit4/src/GdUnitTestSuite.gd"
 # ACC:T2.1
 # ACC:T2.2
 # ACC:T2.12
+# ACC:T28.7
 func test_settings_persistence_cross_restart() -> void:
     var cfg_path = "user://settings_%s.cfg" % Time.get_unix_time_from_system()
     var cfg = ConfigFile.new()
