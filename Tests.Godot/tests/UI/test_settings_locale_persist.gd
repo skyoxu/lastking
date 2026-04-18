@@ -29,6 +29,8 @@ func _clear_config() -> void:
     if dir and dir.file_exists("settings.cfg"):
         dir.remove("settings.cfg")
 
+# ACC:T28.7
+# ACC:T28.17
 func test_settings_locale_persist_cross_restart_via_config() -> void:
     _clear_config()
     var panel = await _new_panel()

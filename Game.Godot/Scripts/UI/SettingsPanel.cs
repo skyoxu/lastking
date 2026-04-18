@@ -6,6 +6,9 @@ namespace Game.Godot.Scripts.UI;
 
 public partial class SettingsPanel : Control
 {
+    private static readonly string[] SupportedLocales = { "en-US", "zh-CN" };
+    private static readonly string[] LegacyLocales = { "en", "zh" };
+
     private HSlider _volume = default!;
     private OptionButton _graphics = default!;
     private OptionButton _language = default!;
@@ -41,7 +44,6 @@ public partial class SettingsPanel : Control
         {
             _language.AddItem("en");
             _language.AddItem("zh");
-            _language.AddItem("ja");
             _language.Selected = 0;
         }
 
@@ -57,12 +59,13 @@ public partial class SettingsPanel : Control
 
     private void SaveToConfig(float vol, string gfx, string lang)
     {
+        lang = NormalizeLocaleOrDefault(lang);
         var cfg = new ConfigFile();
         // Load existing to preserve unrelated keys
         cfg.Load(ConfigPath);
         cfg.SetValue(ConfigSection, nameof(vol), vol);
         cfg.SetValue(ConfigSection, nameof(gfx), gfx ?? "medium");
-        cfg.SetValue(ConfigSection, nameof(lang), lang ?? "en");
+        cfg.SetValue(ConfigSection, nameof(lang), lang ?? "en-US");
         var err = cfg.Save(ConfigPath);
         if (err != Error.Ok)
         {
@@ -72,7 +75,7 @@ public partial class SettingsPanel : Control
 
     private bool TryLoadFromConfig(out float vol, out string gfx, out string lang)
     {
-        vol = 0.5f; gfx = "medium"; lang = "en";
+        vol = 0.5f; gfx = "medium"; lang = "en-US";
         var cfg = new ConfigFile();
         var err = cfg.Load(ConfigPath);
         if (err != Error.Ok)
@@ -83,10 +86,10 @@ public partial class SettingsPanel : Control
         {
             Variant v = cfg.GetValue(ConfigSection, nameof(vol), 0.5f);
             Variant g = cfg.GetValue(ConfigSection, nameof(gfx), "medium");
-            Variant l = cfg.GetValue(ConfigSection, nameof(lang), "en");
+            Variant l = cfg.GetValue(ConfigSection, nameof(lang), "en-US");
             vol = v.VariantType == Variant.Type.Nil ? 0.5f : (float)v.AsDouble();
             gfx = g.VariantType == Variant.Type.Nil ? "medium" : g.AsString();
-            lang = l.VariantType == Variant.Type.Nil ? "en" : l.AsString();
+            lang = NormalizeLocaleOrDefault(l.VariantType == Variant.Type.Nil ? "en-US" : l.AsString());
             return true;
         }
         catch
@@ -109,13 +112,13 @@ public partial class SettingsPanel : Control
         var rows = db.Query("SELECT audio_volume, graphics_quality, language FROM settings WHERE user_id=@0;", UserId);
         if (rows.Count == 0) return;
         var r = rows[0];
-        float vol = 0.5f; string gfx = "medium"; string lang = "en";
+        float vol = 0.5f; string gfx = "medium"; string lang = "en-US";
         if (r.TryGetValue("audio_volume", out var v) && v != null)
             vol = Convert.ToSingle(v);
         if (r.TryGetValue("graphics_quality", out var g) && g != null)
             gfx = g.ToString() ?? "medium";
         if (r.TryGetValue("language", out var l) && l != null)
-            lang = l.ToString() ?? "en";
+            lang = NormalizeLocaleOrDefault(l.ToString() ?? "en-US");
         SaveToConfig(vol, gfx, lang);
     }
 
@@ -157,12 +160,19 @@ public partial class SettingsPanel : Control
         // language
         if (!string.IsNullOrEmpty(lang))
         {
+            var normalized = NormalizeLocaleOrDefault(lang);
             for (int i = 0; i < _language.ItemCount; i++)
             {
-                if (_language.GetItemText(i).Equals(lang, StringComparison.OrdinalIgnoreCase))
-                { _language.Selected = i; break; }
+                var itemText = _language.GetItemText(i);
+                var itemNormalized = NormalizeLocaleOrDefault(itemText);
+                if (itemText.Equals(normalized, StringComparison.OrdinalIgnoreCase)
+                    || itemNormalized.Equals(normalized, StringComparison.OrdinalIgnoreCase))
+                {
+                    _language.Selected = i;
+                    break;
+                }
             }
-            ApplyLanguage(_language.GetItemText(_language.Selected));
+            ApplyLanguage(normalized);
         }
     }
 
@@ -196,8 +206,62 @@ public partial class SettingsPanel : Control
 
     private void ApplyLanguage(string lang)
     {
-        if (!string.IsNullOrEmpty(lang))
-            TranslationServer.SetLocale(lang);
+        var normalized = NormalizeLocaleOrDefault(lang);
+        if (!IsSupportedLocale(normalized))
+        {
+            return;
+        }
+
+        TranslationServer.SetLocale(normalized);
+    }
+
+    private static bool IsSupportedLocale(string locale)
+    {
+        for (var i = 0; i < SupportedLocales.Length; i++)
+        {
+            if (SupportedLocales[i].Equals(locale, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static string NormalizeLocaleOrDefault(string locale)
+    {
+        if (string.IsNullOrWhiteSpace(locale))
+        {
+            return "en-US";
+        }
+
+        if (locale.Equals("en", StringComparison.OrdinalIgnoreCase))
+        {
+            return "en-US";
+        }
+
+        if (locale.Equals("zh", StringComparison.OrdinalIgnoreCase))
+        {
+            return "zh-CN";
+        }
+
+        for (var i = 0; i < SupportedLocales.Length; i++)
+        {
+            if (SupportedLocales[i].Equals(locale, StringComparison.OrdinalIgnoreCase))
+            {
+                return SupportedLocales[i];
+            }
+        }
+
+        for (var i = 0; i < LegacyLocales.Length; i++)
+        {
+            if (LegacyLocales[i].Equals(locale, StringComparison.OrdinalIgnoreCase))
+            {
+                return NormalizeLocaleOrDefault(LegacyLocales[i]);
+            }
+        }
+
+        return locale;
     }
 
     private void ApplyGraphicsQuality(string quality)

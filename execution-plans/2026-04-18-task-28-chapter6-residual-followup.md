@@ -1,0 +1,26 @@
+# task-28-chapter6-residual-followup
+
+- Title: task-28-chapter6-residual-followup
+- Status: active
+- Branch: task/T28
+- Goal: Close residual medium reviewer findings for Task 28 when re-entering this area.
+- Scope:
+  - `llm-code-reviewer-needs-fix` (medium)
+  - `llm-security-auditor-needs-fix` (medium)
+- Current step: Residual recorded; deterministic loop is already green.
+- Stop-loss:
+  - Do not reopen full 6.7 without new deterministic failure.
+  - Do not rerun 6.8 unless edits directly hit reviewer anchors.
+- Next action: `py -3 scripts/python/dev_cli.py inspect-run --kind pipeline --latest logs/ci/2026-04-18/sc-review-pipeline-task-28/latest.json`
+- Recovery command: `py -3 scripts/sc/run_review_pipeline.py --task-id 28 --resume`
+- Evidence anchors:
+  - `logs/ci/2026-04-18/sc-llm-review-task-28/review-code-reviewer.md`
+  - `logs/ci/2026-04-18/sc-llm-review-task-28/review-security-auditor.md`
+- Exit criteria:
+  - Reviewer medium findings are cleared in a subsequent run, or
+  - superseded by a later residual record.
+- Related decision logs: `decision-logs/2026-04-18-task-28-chapter6-residual-needs-fix.md`
+- Related task id(s): `28`
+- Related run id: `8afbc6345cfe4a1395a79e572427ebe4`
+- Related latest.json: `logs/ci/2026-04-18/sc-review-pipeline-task-28/latest.json`
+- Related pipeline artifacts: `logs/ci/2026-04-18/sc-review-pipeline-task-28-8afbc6345cfe4a1395a79e572427ebe4`

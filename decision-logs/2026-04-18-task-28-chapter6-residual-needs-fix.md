@@ -1,0 +1,23 @@
+# task-28-chapter6-residual-needs-fix
+
+- Title: task-28-chapter6-residual-needs-fix
+- Date: 2026-04-18
+- Status: accepted
+- Supersedes: none
+- Superseded by: none
+- Branch: task/T28
+- Why now: Chapter 6 reached `pipeline_clean`, but reviewer still reports medium-severity Needs Fix.
+- Context: Deterministic gates are green (`sc-test/sc-acceptance-check`), remaining items are reviewer semantic-strength findings.
+- Decision: Stop fast-ship closure loop at current state and record residual medium findings for follow-up.
+- Consequences: Task can close under "fix P0/P1 only" policy, while medium findings remain visible and traceable.
+- Recovery impact: Next recovery should start from `inspect-run` and target reviewer anchors instead of reopening broad deterministic reruns.
+- Validation: `py -3 scripts/python/dev_cli.py inspect-run --kind pipeline --latest logs/ci/2026-04-18/sc-review-pipeline-task-28/latest.json`
+- Related task id(s): `28`
+- Related run id: `8afbc6345cfe4a1395a79e572427ebe4`
+- Related latest.json: `logs/ci/2026-04-18/sc-review-pipeline-task-28/latest.json`
+- Related pipeline artifacts: `logs/ci/2026-04-18/sc-review-pipeline-task-28-8afbc6345cfe4a1395a79e572427ebe4`
+- Residual findings:
+  - `llm-code-reviewer-needs-fix` (severity: medium)
+    - Evidence: `logs/ci/2026-04-18/sc-llm-review-task-28/review-code-reviewer.md`
+  - `llm-security-auditor-needs-fix` (severity: medium)
+    - Evidence: `logs/ci/2026-04-18/sc-llm-review-task-28/review-security-auditor.md`
