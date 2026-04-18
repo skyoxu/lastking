@@ -45,7 +45,7 @@ public sealed class AchievementDefinitionLoaderTests
     [Fact]
     public void ShouldRefuseHardcodedOnlySource_WhenExternalConfigurationIsUnavailable()
     {
-        var missingConfigPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.json");
+        var missingConfigPath = BuildRelativeTempPath($"missing-config-{Guid.NewGuid():N}.json");
 
         Action act = () =>
         {
@@ -213,9 +213,20 @@ public sealed class AchievementDefinitionLoaderTests
 
     private static string CreateTempJsonFile(string json)
     {
-        var filePath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.json");
+        var filePath = BuildRelativeTempPath($"{Guid.NewGuid():N}.json");
+        var directory = Path.GetDirectoryName(filePath);
+        if (!string.IsNullOrWhiteSpace(directory))
+        {
+            Directory.CreateDirectory(directory);
+        }
+
         File.WriteAllText(filePath, json);
         return filePath;
+    }
+
+    private static string BuildRelativeTempPath(string fileName)
+    {
+        return Path.Combine("logs", "tmp", fileName);
     }
 
     private sealed record AchievementDefinitionSnapshot(
