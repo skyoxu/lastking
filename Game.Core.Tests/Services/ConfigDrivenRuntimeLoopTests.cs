@@ -85,7 +85,8 @@ public class ConfigDrivenRuntimeLoopTests
         var fileName = Path.GetFileName(path);
         return fileName.EndsWith("Config.cs", StringComparison.OrdinalIgnoreCase)
                || fileName.Equals("ConfigLoadResult.cs", StringComparison.OrdinalIgnoreCase)
-               || fileName.Equals("BalanceSnapshot.cs", StringComparison.OrdinalIgnoreCase);
+               || fileName.Equals("BalanceSnapshot.cs", StringComparison.OrdinalIgnoreCase)
+               || fileName.Equals("AchievementConfigRepository.cs", StringComparison.OrdinalIgnoreCase);
     }
 
     private static string? FindRepositoryRoot()
