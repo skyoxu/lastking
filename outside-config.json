@@ -1,0 +1,1 @@
+[{"description":"Win first battle","id":"first_blood","name":"First Blood","unlockCondition":"battle_won >= 1"},{"description":"Clear wave","id":"perfect_wave","name":"Perfect Wave","unlockCondition":"wave_clear >= 1"}]

@@ -1,0 +1,21 @@
+# Task 27 Implement Achievements System with Deterministic Unlocking acceptance-test generation plan
+
+- Title: Task 27 Implement Achievements System with Deterministic Unlocking acceptance-test generation plan
+- Status: active
+- Branch: task/T127
+- Git Head: e89b1df8241cecd41cb29ab7846aac1c893e54c8
+- Goal: Control acceptance-driven test generation complexity for task 27.
+- Scope: 20 missing refs across 2 test roots; seed refs: Game.Core.Tests/Engine/CoreLoopDeterminismRegressionTests.cs, Game.Core.Tests/Repositories/AchievementConfigRepositoryTests.cs, Game.Core.Tests/Services/AchievementDefinitionLoaderTests.cs, ...
+- Current step: Review missing acceptance refs and choose the first safe red step.
+- Last completed step: n/a (new execution plan scaffold; no completed step recorded yet)
+- Stop-loss: Do not start Codex test generation until the ref mix and verify mode are explicit.
+- Next action: Run llm_generate_tests_from_acceptance_refs.py after confirming the sequence for missing refs.
+- Recovery command: `py -3 scripts/sc/run_review_pipeline.py --task-id 27 --resume`
+- Open questions: none recorded yet
+- Exit criteria: The next acceptance-driven test generation step is explicit and low-ambiguity.
+- Related ADRs: none yet
+- Related decision logs: none yet
+- Related task id(s): `27`
+- Related run id: n/a (no pipeline run id linked yet)
+- Related latest.json: n/a (no task-scoped latest.json pointer resolved yet)
+- Related pipeline artifacts: n/a (no pipeline artifact directory resolved yet)
