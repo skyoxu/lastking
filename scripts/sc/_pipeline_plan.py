@@ -82,8 +82,12 @@ def build_pipeline_steps(
 ) -> list[tuple[str, list[str], int, bool]]:
     steps: list[tuple[str, list[str], int, bool]] = []
 
+    # Mixed tasks may not declare .gd refs in acceptance/test refs, but still rely on
+    # engine-lane guardrails (see sc-test mixed coverage softening rules in fast-ship).
+    # For task-scoped review pipeline, prefer all-mode so deterministic checks include
+    # gdunit/smoke and avoid hard-failing purely on task-scoped unit coverage percentage.
     has_gd_refs = bool(triplet) and task_requires_headless_e2e(triplet)
-    test_type = "all" if has_gd_refs else "unit"
+    test_type = "all"
     test_cmd = ["py", "-3", "scripts/sc/test.py", "--type", test_type, "--task-id", task_id, "--run-id", run_id, "--delivery-profile", delivery_profile]
     if args.godot_bin:
         test_cmd += ["--godot-bin", str(args.godot_bin)]

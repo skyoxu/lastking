@@ -1,0 +1,61 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://lastking.local/schemas/enemy-config.schema.json",
+  "title": "Lastking Enemy Config Schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "seed_policy",
+    "enemies"
+  ],
+  "properties": {
+    "seed_policy": {
+      "type": "string",
+      "enum": [
+        "deterministic"
+      ]
+    },
+    "enemies": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "enemy_id",
+          "enemy_type",
+          "behavior",
+          "health",
+          "damage",
+          "speed"
+        ],
+        "properties": {
+          "enemy_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "enemy_type": {
+            "type": "string",
+            "minLength": 1
+          },
+          "behavior": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "health": {
+            "type": "number",
+            "minimum": 1
+          },
+          "damage": {
+            "type": "number",
+            "minimum": 0
+          },
+          "speed": {
+            "type": "number",
+            "minimum": 0
+          }
+        }
+      }
+    }
+  }
+}

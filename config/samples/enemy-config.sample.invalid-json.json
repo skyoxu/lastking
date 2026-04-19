@@ -1,0 +1,14 @@
+{
+  "seed_policy": "deterministic",
+  "enemies": [
+    {
+      "enemy_id": "grunt",
+      "enemy_type": "melee",
+      "behavior": {
+        "mode": "rush"
+      },
+      "health": 12,
+      "damage": 3,
+      "speed": 1.2
+    }
+  ]

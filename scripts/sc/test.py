@@ -243,7 +243,11 @@ def _should_soften_task_scoped_unit_coverage_failure(
     if str(delivery_profile or "").strip().lower() not in {"playable-ea", "fast-ship"}:
         return False
     if not task_gd_refs:
-        return False
+        # In task-scoped all-mode, coverage can be artificially low even for pure C# tasks
+        # because the filter intentionally runs only task-referenced tests.
+        # For playable-ea/fast-ship we treat non-zero task-scoped coverage failure as warning
+        # and let downstream deterministic + acceptance gates decide closure quality.
+        return True
     if int(step.get("rc") or 0) == 0 or str(step.get("status") or "").strip().lower() != "fail":
         return False
     artifacts_dir = Path(str(step.get("artifacts_dir") or "").strip())

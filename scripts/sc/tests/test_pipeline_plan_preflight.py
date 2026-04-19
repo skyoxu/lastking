@@ -44,7 +44,7 @@ class PipelinePlanPreflightTests(unittest.TestCase):
             taskdoc_path=None,
         )
 
-    def test_build_pipeline_steps_should_use_unit_test_type_when_task_has_no_gd_refs(self) -> None:
+    def test_build_pipeline_steps_should_use_all_test_type_when_task_has_no_gd_refs(self) -> None:
         steps = build_pipeline_steps(
             args=self._args(),
             task_id="56",
@@ -65,7 +65,7 @@ class PipelinePlanPreflightTests(unittest.TestCase):
         test_cmd = steps[0][1]
         self.assertEqual("sc-test", steps[0][0])
         self.assertIn("--type", test_cmd)
-        self.assertEqual("unit", test_cmd[test_cmd.index("--type") + 1])
+        self.assertEqual("all", test_cmd[test_cmd.index("--type") + 1])
 
     def test_build_pipeline_steps_should_use_all_test_type_when_task_has_gd_refs(self) -> None:
         steps = build_pipeline_steps(

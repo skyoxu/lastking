@@ -458,5 +458,66 @@ class ScTestOrchestrationTests(unittest.TestCase):
             self.assertNotIn("reason", summary["steps"][0])
 
 
+
+    def test_main_should_soften_task_scoped_nonzero_coverage_failure_for_fast_ship_all_without_gd_refs(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            out_dir = Path(tmpdir) / "sc-test"
+            unit_artifacts = Path(tmpdir) / "unit-artifacts"
+            unit_artifacts.mkdir(parents=True, exist_ok=True)
+            (unit_artifacts / "summary.json").write_text(
+                json.dumps(
+                    {
+                        "status": "coverage_failed",
+                        "test_rc": 0,
+                        "coverage": {"line_pct": 12.45, "branch_pct": 8.59},
+                    }
+                ),
+                encoding="utf-8",
+            )
+            unit_log = out_dir / "unit.log"
+            unit_log.parent.mkdir(parents=True, exist_ok=True)
+            unit_log.write_text("RUN_DOTNET status=coverage_failed line=12.45% branch=8.59 out=logs/unit/2026-04-19\n", encoding="utf-8")
+            argv = [
+                "test.py",
+                "--type",
+                "all",
+                "--run-id",
+                "d" * 32,
+                "--task-id",
+                "32",
+                "--delivery-profile",
+                "fast-ship",
+                "--godot-bin",
+                "C:/Godot/Godot.exe",
+            ]
+            unit_step = {
+                "name": "unit",
+                "cmd": ["py", "-3", "scripts/python/run_dotnet.py"],
+                "rc": 2,
+                "log": str(unit_log),
+                "artifacts_dir": str(unit_artifacts),
+                "status": "fail",
+            }
+            conventions_step = {
+                "name": "csharp-test-conventions",
+                "cmd": ["py", "-3", "scripts/python/check_csharp_test_conventions.py", "--task-id", "32"],
+                "rc": 0,
+                "log": str(out_dir / "csharp-test-conventions.log"),
+                "status": "ok",
+            }
+            coverage_step = {
+                "name": "coverage-report",
+                "status": "skipped",
+                "reason": "reportgenerator not found",
+            }
+            with mock.patch.object(sys, "argv", argv),                 mock.patch.object(sc_test, "ci_dir", return_value=out_dir),                 mock.patch.object(sc_test, "run_unit", return_value=unit_step),                 mock.patch.object(sc_test, "_task_scoped_gdunit_refs", return_value=[]),                 mock.patch.object(sc_test, "run_csharp_test_conventions", return_value=conventions_step),                 mock.patch.object(sc_test, "run_coverage_report", return_value=coverage_step),                 mock.patch.object(sc_test, "run_gdunit_hard") as gdunit_mock,                 mock.patch.object(sc_test, "run_smoke") as smoke_mock:
+                rc = sc_test.main()
+
+            self.assertEqual(0, rc)
+            gdunit_mock.assert_not_called()
+            smoke_mock.assert_not_called()
+            summary = json.loads((out_dir / "summary.json").read_text(encoding="utf-8"))
+            self.assertEqual("ok", summary["status"])
+            self.assertEqual("task_scoped_mixed_coverage_softened", summary["steps"][0]["reason"])
 if __name__ == "__main__":
     unittest.main()

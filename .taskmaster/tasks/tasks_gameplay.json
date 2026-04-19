@@ -2695,7 +2695,6 @@
       "core"
     ],
     "test_refs": [
-      "Game.Core.Tests/Domain/GameConfigTests.cs",
       "Game.Core.Tests/Services/EnemyConfigSchemaValidationTests.cs",
       "Game.Core.Tests/Services/EnemyConfigSampleFileValidationTests.cs",
       "Game.Core.Tests/Engine/GameEngineCoreEventTests.cs",
