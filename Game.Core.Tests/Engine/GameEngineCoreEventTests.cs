@@ -77,6 +77,7 @@ public class GameEngineCoreEventTests
     // ACC:T10.1
     // ACC:T10.3
     // ACC:T16.3
+    // ACC:T32.3
     [Fact]
     public void ShouldPublishGameStartedEvent_WhenStartCalled()
     {

@@ -12,6 +12,7 @@ public class GameStateMachineTests
     // ACC:T10.14
     // ACC:T16.3
     // ACC:T24.3
+    // ACC:T32.3
     [Fact]
     public void ShouldTransitionThroughCoreFlow_WhenInvokingStartPauseResumeEnd()
     {
