@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lastking.local/schemas/difficulty-config.schema.json",
+  "title": "Lastking Difficulty Config Schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "difficulty_level",
+    "modifiers"
+  ],
+  "properties": {
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+$",
+      "description": "Schema version metadata for backward-trackability."
+    },
+    "difficulty_level": {
+      "type": "string",
+      "enum": [
+        "easy",
+        "medium",
+        "hard"
+      ]
+    },
+    "modifiers": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enemy_hp_mult": {
+          "type": "number",
+          "minimum": 1
+        },
+        "enemy_dmg_mult": {
+          "type": "number",
+          "minimum": 1
+        },
+        "resource_mult": {
+          "type": "number",
+          "minimum": 1
+        },
+        "budget_mult_normal": {
+          "type": "number",
+          "minimum": 1
+        },
+        "budget_mult_elite": {
+          "type": "number",
+          "minimum": 1
+        },
+        "budget_mult_boss": {
+          "type": "number",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "enemy_hp_mult",
+        "enemy_dmg_mult",
+        "resource_mult",
+        "budget_mult_normal",
+        "budget_mult_elite",
+        "budget_mult_boss"
+      ]
+    }
+  }
+}

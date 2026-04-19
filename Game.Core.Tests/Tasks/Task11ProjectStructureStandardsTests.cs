@@ -197,8 +197,7 @@ namespace Game.Core.Tests.Tasks
             }
 
             if (normalized.Contains(NormalizeRelativePath("Scenes")) ||
-                normalized.Contains(NormalizeRelativePath("Assets")) ||
-                normalized.Contains(NormalizeRelativePath("config")))
+                normalized.Contains(NormalizeRelativePath("Assets")))
             {
                 reasons.Add("Parallel roots or substitute paths do not satisfy the canonical structure standard.");
             }

@@ -18,6 +18,7 @@ public class GameEngineCore
     private double _distanceTraveled;
     private int _moves;
     private int _enemiesDefeated;
+    private bool _runStarted;
 
     public GameConfig Config { get; private set; }
     public GameState State { get; private set; }
@@ -31,6 +32,7 @@ public class GameEngineCore
         _bus = bus;
         _time = time;
         _enemiesDefeated = 0;
+        _runStarted = false;
 
         State = new GameState(
             Id: Guid.NewGuid().ToString("N"),
@@ -45,9 +47,26 @@ public class GameEngineCore
 
     public GameState Start()
     {
+        _runStarted = true;
         _startUtc = DateTime.UtcNow;
         Publish("game.started", new { stateId = State.Id });
         return State;
+    }
+
+    public bool TryChangeDifficulty(Difficulty targetDifficulty)
+    {
+        if (_runStarted)
+        {
+            return false;
+        }
+
+        if (Config.Difficulty == targetDifficulty)
+        {
+            return true;
+        }
+
+        Config = Config with { Difficulty = targetDifficulty };
+        return true;
     }
 
     public GameState Move(double dx, double dy)
