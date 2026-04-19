@@ -2770,17 +2770,17 @@
       "core"
     ],
     "test_refs": [
-      "Game.Core.Tests/Domain/GameConfigTests.cs",
       "Game.Core.Tests/Engine/GameEngineDifficultyLockTests.cs",
       "Game.Core.Tests/Domain/DifficultyConfigSchemaTests.cs",
       "Game.Core.Tests/Engine/GameEngineCoreEventTests.cs",
+      "Game.Core.Tests/Domain/GameConfigTests.cs",
       "Game.Core.Tests/Services/DifficultyConfigSchemaValidationTests.cs",
       "Game.Core.Tests/State/GameStateManagerTests.cs"
     ],
     "acceptance": [
       "当一次运行已开始后，任何修改当前生效难度的请求都会被拒绝，且当前生效难度值保持不变。 Refs: Game.Core.Tests/Engine/GameEngineDifficultyLockTests.cs",
       "在 Windows Godot+C# 基线环境中，本任务关联的自动化测试必须全部通过。 Refs: Game.Core.Tests/Domain/DifficultyConfigSchemaTests.cs Game.Core.Tests/Engine/GameEngineDifficultyLockTests.cs",
-      "引入本任务改动后，确定性模拟与核心循环回归检查已执行且无新增失败。 Refs: Game.Core.Tests/Engine/GameEngineCoreEventTests.cs",
+      "引入本任务改动后，确定性模拟与核心循环回归检查已执行且无新增失败。 Refs: Game.Core.Tests/Engine/GameEngineCoreEventTests.cs Game.Core.Tests/State/GameStateMachineTests.cs",
       "必须存在 config/schemas/difficulty-config.schema.json，且文件内容可解析为有效 JSON。 Refs: Game.Core.Tests/Domain/DifficultyConfigSchemaTests.cs",
       "Schema 必须将 version 与 difficulty_level 声明为必填；缺少 version 时校验必须失败。 Refs: Game.Core.Tests/Domain/DifficultyConfigSchemaTests.cs",
       "version 必须是字符串并匹配 ^\\d+\\.\\d+$；示例中 1.0 通过，而 v1 与 1 失败。 Refs: Game.Core.Tests/Domain/DifficultyConfigSchemaTests.cs",
@@ -2799,7 +2799,7 @@
       "满足 O8：version、difficulty_level、modifiers 这些可配置字段都不得被单值常量化；对 const/单值 enum 约束的反例校验必须失败。 Refs: Game.Core.Tests/Domain/DifficultyConfigSchemaTests.cs",
       "在 difficulty_level 与 modifiers 相同条件下，至少两个合法 version（如 1.0、2.1）应被接受，以验证版本字段未被单值锁死。 Refs: Game.Core.Tests/Domain/DifficultyConfigSchemaTests.cs",
       "若 version 被错误约束为单一常量（如 const 或单值 enum），测试必须报告失败而非通过。 Refs: Game.Core.Tests/Domain/DifficultyConfigSchemaTests.cs",
-      "覆盖子任务 1：验收需同时验证难度层级定义（easy、medium、hard）、运行开始后的锁定语义，以及由顶层必填 version 提供的迁移/回溯元数据。 Refs: Game.Core.Tests/Domain/GameConfigTests.cs",
+      "覆盖子任务 1：验收需同时验证难度层级定义（easy、medium、hard）、运行开始后的锁定语义，以及由顶层必填 version 提供的迁移/回溯元数据。 Refs: Game.Core.Tests/Domain/DifficultyConfigSchemaTests.cs",
       "覆盖子任务 2：严格校验需对非法层级枚举、缺失必填项、modifiers 类型不匹配、以及声明数值边界违规给出明确拒绝原因。 Refs: Game.Core.Tests/Services/DifficultyConfigSchemaValidationTests.cs",
       "覆盖子任务 3：回归夹具的通过/失败结果在重复执行中保持稳定；加载非法难度配置时必须拒绝激活，并保持最后一次有效运行状态（或预设安全默认值）。 Refs: Game.Core.Tests/State/GameStateManagerTests.cs"
     ],

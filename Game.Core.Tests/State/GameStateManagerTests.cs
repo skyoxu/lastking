@@ -686,6 +686,38 @@ public class GameStateManagerTests
         Assert.Equal(goodSaveId, saves[0].Id);
     }
 
+    // ACC:T33.24
+    [Fact]
+    public async Task ShouldRestoreLastKnownGoodRuntimeState_WhenLoadingInvalidSavePayload()
+    {
+        var store = new InMemoryDataStore();
+        var manager = new GameStateManager(store, new GameStateManagerOptions(EnableCompression: false));
+        var feedback = new Game.Core.Services.UIFeedbackPipeline();
+
+        var baselineState = MakeState(level: 7, score: 70);
+        var baselineConfig = MakeConfig() with { Difficulty = Difficulty.Hard };
+        manager.SetState(baselineState, baselineConfig);
+        var baselineSnapshot = manager.GetState();
+        var baselineEffectiveConfig = manager.GetConfig();
+        baselineSnapshot.Should().NotBeNull();
+        baselineEffectiveConfig.Should().NotBeNull();
+
+        var badSaveId = "task33-invalid-save";
+        await store.SaveAsync(badSaveId, "{ invalid_json");
+
+        var (ok, reasonCode) = await manager.TryLoadWithFeedbackAsync(badSaveId, feedback);
+
+        ok.Should().BeFalse();
+        reasonCode.Should().Be("deserialize_failed");
+        var restoredState = manager.GetState();
+        var restoredConfig = manager.GetConfig();
+        restoredState.Should().NotBeNull();
+        restoredConfig.Should().NotBeNull();
+        restoredState!.Level.Should().Be(baselineSnapshot!.Level);
+        restoredState.Score.Should().Be(baselineSnapshot.Score);
+        restoredConfig!.Difficulty.Should().Be(baselineEffectiveConfig!.Difficulty);
+    }
+
     private static GameStateManager CreateDayNightManager(int seed)
     {
         return new GameStateManager(
