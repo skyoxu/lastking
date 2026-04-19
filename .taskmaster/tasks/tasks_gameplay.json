@@ -2620,13 +2620,13 @@
       "ci"
     ],
     "test_refs": [
-      "Game.Core.Tests/Domain/GameConfigTests.cs",
       "Game.Core.Tests/Tasks/Task31ConfigWorkspaceGuardrailsTests.cs",
       "Tests.Godot/tests/Adapters/Config/test_settings_config_utf8.gd",
       "Game.Core.Tests/Services/CollisionServiceTests.cs",
       "Tests.Godot/tests/Integration/test_hud_integration.gd",
       "Tests.Godot/tests/Scenes/Smoke/test_glue_connections.gd",
       "Tests.Godot/tests/Security/Hard/test_settings_config_security.gd",
+      "Game.Core.Tests/Domain/GameConfigTests.cs",
       "Game.Core.Tests/Tasks/Task31ConfigContractWiringTests.cs"
     ],
     "acceptance": [

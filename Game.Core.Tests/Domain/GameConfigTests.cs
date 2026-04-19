@@ -32,6 +32,7 @@ public class GameConfigTests
     }
 
     // ACC:T2.16
+    // ACC:T31.9
     [Fact]
     public void ShouldExposeTypedBalanceSnapshotWithDeterministicDefaults_WhenOptionalFieldsAreMissing()
     {
@@ -59,6 +60,7 @@ public class GameConfigTests
     }
 
     // ACC:T2.2
+    // ACC:T31.13
     [Fact]
     public void ShouldKeepLoadReloadFallbackOrderDeterministic_WhenAppliedInSequence()
     {
