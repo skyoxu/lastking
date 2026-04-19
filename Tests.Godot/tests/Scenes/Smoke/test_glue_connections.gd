@@ -39,6 +39,8 @@ func _trigger_play(main: Node) -> void:
 
 # ACC:T1.10
 # ACC:T11.17 ACC:T11.26
+# ACC:T31.4
+# ACC:T31.14
 func test_main_scene_glue_publishes_on_menu_start() -> void:
     var configured_main_scene: String = _read_root_project_setting("run/main_scene")
     assert_bool(configured_main_scene == CANONICAL_MAIN_SCENE_PATH).is_true()

@@ -2,6 +2,7 @@ extends "res://addons/gdUnit4/src/GdUnitTestSuite.gd"
 
 # ACC:T2.18
 # ACC:T2.19
+# ACC:T31.2
 func test_configfile_utf8_roundtrip() -> void:
     var path: String = "user://settings_%s.cfg" % Time.get_unix_time_from_system()
     var cfg := ConfigFile.new()

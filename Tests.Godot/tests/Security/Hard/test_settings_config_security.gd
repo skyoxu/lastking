@@ -2,6 +2,7 @@ extends "res://addons/gdUnit4/src/GdUnitTestSuite.gd"
 
 # ACC:T2.3
 # ACC:T2.19
+# ACC:T31.7
 func test_settings_configfile_path_security() -> void:
     var safe: Node = preload("res://Game.Godot/Adapters/Security/SafeConfig.gd").new()
     add_child(auto_free(safe))

@@ -6,6 +6,7 @@ namespace Game.Core.Tests.Services;
 
 public class CollisionServiceTests
 {
+    // ACC:T31.3
     [Fact]
     public void ShouldDetectIntersections_WhenUsingAabb()
     {
