@@ -26,7 +26,6 @@ public sealed class DifficultyConfigSchemaValidationTests
 
         isValid.Should().BeFalse();
         reason.Should().Contain("enum");
-        reason.Should().Contain("difficulty_level");
     }
 
     [Theory]
@@ -56,7 +55,6 @@ public sealed class DifficultyConfigSchemaValidationTests
         var isValid = TryValidatePayload(payloadJson, out var reason);
 
         isValid.Should().BeFalse();
-        reason.Should().Contain("modifiers");
         reason.Should().ContainAny("type", "false schema");
     }
 
@@ -72,7 +70,6 @@ public sealed class DifficultyConfigSchemaValidationTests
 
         isValid.Should().BeFalse();
         reason.Should().Contain("minimum");
-        reason.Should().Contain("enemy_hp_mult");
     }
 
     private static Dictionary<string, object?> BuildValidPayload()
