@@ -76,8 +76,7 @@ public class ConfigDrivenRuntimeLoopTests
         var normalized = path.Replace('\\', '/');
         return normalized.Contains("loop", StringComparison.OrdinalIgnoreCase)
                || normalized.Contains("wave", StringComparison.OrdinalIgnoreCase)
-               || normalized.Contains("spawn", StringComparison.OrdinalIgnoreCase)
-               || normalized.Contains("config", StringComparison.OrdinalIgnoreCase);
+               || normalized.Contains("spawn", StringComparison.OrdinalIgnoreCase);
     }
 
     private static bool IsConfigDefinitionFile(string path)

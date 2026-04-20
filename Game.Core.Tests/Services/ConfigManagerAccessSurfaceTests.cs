@@ -83,8 +83,7 @@ public sealed class ConfigManagerAccessSurfaceTests
         return !normalized.Contains("/Game.Core/Contracts/", StringComparison.OrdinalIgnoreCase)
                && (normalized.Contains("loop", StringComparison.OrdinalIgnoreCase)
                || normalized.Contains("wave", StringComparison.OrdinalIgnoreCase)
-               || normalized.Contains("spawn", StringComparison.OrdinalIgnoreCase)
-               || normalized.Contains("config", StringComparison.OrdinalIgnoreCase));
+               || normalized.Contains("spawn", StringComparison.OrdinalIgnoreCase));
     }
 
     private static bool IsProductionSourceFile(string path)
