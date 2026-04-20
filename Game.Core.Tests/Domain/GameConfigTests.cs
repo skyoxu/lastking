@@ -66,6 +66,7 @@ public class GameConfigTests
     }
 
     // ACC:T2.2
+    // ACC:T37.2
     // ACC:T31.13
     // ACC:T34.1
     // ACC:T34.2
