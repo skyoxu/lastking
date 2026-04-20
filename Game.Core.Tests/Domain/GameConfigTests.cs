@@ -125,6 +125,26 @@ public class GameConfigTests
         first.ReasonCodes.Should().Contain(ConfigManager.InvalidOrderReason);
     }
 
+    // ACC:T35.1
+    [Fact]
+    public void ShouldExposePressureNormalizationSchemaContractKeywords_WhenInspectingTask35SchemaFile()
+    {
+        var schemaPath = Path.Combine(
+            EnemyConfigSchemaTestSupport.ResolveRepoRoot().FullName,
+            "config",
+            "schemas",
+            "pressure-normalization.config.schema.json");
+        var schemaJson = File.ReadAllText(schemaPath);
+        using var schemaDocument = JsonDocument.Parse(schemaJson);
+        var root = schemaDocument.RootElement;
+        var properties = root.GetProperty("properties");
+        var required = root.GetProperty("required").EnumerateArray().Select(x => x.GetString()).ToHashSet(StringComparer.Ordinal);
+
+        required.Should().Contain(new[] { "baseline", "min_pressure", "max_pressure", "normalization_factors" });
+        properties.GetProperty("baseline").GetProperty("minimum").GetDouble().Should().Be(0d);
+        root.GetProperty("x-range-check").GetString().Should().Be("min_pressure < max_pressure");
+    }
+
     // ACC:T11.11
     [Fact]
     public void ShouldDeserializeFromJsonWithoutErrors_WhenConfigurationPayloadProvided()

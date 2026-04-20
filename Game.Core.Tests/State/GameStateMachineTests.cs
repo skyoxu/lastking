@@ -133,4 +133,24 @@ public class GameStateMachineTests
         firstTerminalEvents.Should().Be(1);
         first.ForceTerminal().Should().BeFalse();
     }
+
+    // ACC:T35.3
+    [Fact]
+    public void ShouldKeepStateMachineDeterministic_WhenTask35PressureSchemaChangesExistInWorkspace()
+    {
+        const int seed = 19;
+        var first = new DayNightRuntimeStateMachine(seed);
+        var second = new DayNightRuntimeStateMachine(seed);
+
+        for (var i = 0; i < 8; i++)
+        {
+            first.Update(60);
+            second.Update(60);
+        }
+
+        first.CurrentDay.Should().Be(second.CurrentDay);
+        first.CurrentPhase.Should().Be(second.CurrentPhase);
+        first.Tick.Should().Be(second.Tick);
+        first.CheckpointCount.Should().Be(second.CheckpointCount);
+    }
 }
