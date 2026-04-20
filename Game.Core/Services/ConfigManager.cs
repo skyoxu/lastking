@@ -14,6 +14,7 @@ public sealed class ConfigManager
     public const string ParseErrorReason = "CFG_PARSE_ERROR";
     public const string FileNotFoundReason = "CFG_FILE_NOT_FOUND";
     public const string FileUnreadableReason = "CFG_FILE_UNREADABLE";
+    public const string SchemaRejectedReason = "CFG_SCHEMA_REJECTED";
     public const string InvalidOrderReason = "CFG_INVALID_LOAD_ORDER";
     public const string MissingKeyReason = "CFG_MISSING_KEY";
     public const string InvalidTypeReason = "CFG_INVALID_TYPE";
@@ -144,6 +145,13 @@ public sealed class ConfigManager
         using (document)
         {
             var root = document.RootElement;
+            if (LooksLikePressureNormalizationPayload(root) &&
+                !PressureNormalizationConfigContractValidator.TryValidate(root, out _))
+            {
+                snapshot = BalanceSnapshot.Default;
+                reasonCodes = new[] { SchemaRejectedReason };
+                return false;
+            }
 
             var daySeconds = ReadRequiredInt(root, "time.day_seconds", minimum: 1, reasons);
             var nightSeconds = ReadRequiredInt(root, "time.night_seconds", minimum: 1, reasons);
@@ -294,6 +302,20 @@ public sealed class ConfigManager
         }
 
         return true;
+    }
+
+    private static bool LooksLikePressureNormalizationPayload(JsonElement root)
+    {
+        if (root.ValueKind != JsonValueKind.Object)
+        {
+            return false;
+        }
+
+        return root.TryGetProperty("baseline", out _) ||
+               root.TryGetProperty("min_pressure", out _) ||
+               root.TryGetProperty("max_pressure", out _) ||
+               root.TryGetProperty("normalization_factors", out _) ||
+               root.TryGetProperty("constraints", out _);
     }
 
     private static string ComputeHash(string text)
