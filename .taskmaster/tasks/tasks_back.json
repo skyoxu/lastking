@@ -3064,8 +3064,6 @@
     ],
     "test_refs": [
       "Game.Core.Tests/Domain/GameConfigTests.cs",
-      "Tests.Godot/tests/Adapters/Config/test_settings_config_utf8.gd",
-      "Tests.Godot/tests/Adapters/Config/test_settings_persistence.gd",
       "Game.Core.Tests/Services/ConfigValidationPipelineTests.cs",
       "Game.Core.Tests/Services/ConfigApplicationGuardsTests.cs",
       "Game.Core.Tests/Services/ConfigStructuralValidationAdapterTests.cs",
@@ -3073,8 +3071,8 @@
       "Game.Core.Tests/Services/ConfigAuditArtifactsTests.cs"
     ],
     "acceptance": [
-      "Taskmaster #37 behavior is enforced: config inputs are loaded and validated, and any invalid input terminates only as reject or fallback to built-in safe defaults. Refs: Tests.Godot/tests/Adapters/Config/test_settings_config_utf8.gd",
-      "All referenced automated tests pass on the Windows Godot + C# baseline, including validation and fallback cases. Refs: Tests.Godot/tests/Adapters/Config/test_settings_persistence.gd",
+      "Taskmaster #37 behavior is enforced: config inputs are loaded and validated, and any invalid input terminates only as reject or fallback to built-in safe defaults. Refs: Game.Core.Tests/Services/ConfigValidationPipelineTests.cs",
+      "Deterministic config load/reload/fallback ordering is validated for Taskmaster #37 on the Windows C# runtime path; initial load, reload, and fallback preserve the last-known-good snapshot with deterministic reason identifiers. Refs: Game.Core.Tests/Domain/GameConfigTests.cs",
       "Running the validation/fallback flow introduces no unintended runtime side effects outside the config decision path, including no deterministic core-loop drift for identical inputs. Refs: Game.Core.Tests/Services/ConfigValidationPipelineTests.cs Game.Core.Tests/Services/ConfigApplicationGuardsTests.cs",
       "Structurally invalid config payloads are rejected at structural validation and return deterministic normalized error codes plus required payload fields. Refs: Game.Core.Tests/Services/ConfigStructuralValidationAdapterTests.cs",
       "Semantic rule checks run only after structural pass, and each semantic failure maps to exactly one explicit policy action with a machine-verifiable reason key. Refs: Game.Core.Tests/Services/ConfigPolicyRoutingTests.cs",

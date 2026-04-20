@@ -1,0 +1,21 @@
+# Task 37 Implement config validation and fallback handling in C# acceptance-test generation plan
+
+- Title: Task 37 Implement config validation and fallback handling in C# acceptance-test generation plan
+- Status: completed
+- Branch: task/T37
+- Git Head: 9b06264c8c951e6db0d04ce80f13b72a8cf99228
+- Goal: Control acceptance-driven test generation complexity for task 37.
+- Scope: 5 missing refs across 1 test roots; seed refs: Game.Core.Tests/Services/ConfigApplicationGuardsTests.cs, Game.Core.Tests/Services/ConfigAuditArtifactsTests.cs, Game.Core.Tests/Services/ConfigPolicyRoutingTests.cs, ...
+- Current step: Record residual P2 findings and stop at fast-ship P0/P1 boundary.
+- Last completed step: Full Chapter 6 deterministic rerun + reviewer sweep for Task 37.
+- Stop-loss: Do not start Codex test generation until the ref mix and verify mode are explicit.
+- Next action: Follow up residual P2 findings only when a new change targets the same reviewer anchors.
+- Recovery command: `py -3 scripts/python/dev_cli.py inspect-run --kind pipeline --latest logs/ci/2026-04-20/sc-review-pipeline-task-37/latest.json --recommendation-only`
+- Open questions: none recorded yet
+- Exit criteria: P0/P1 findings are closed and residual P2 findings are recorded with evidence.
+- Related ADRs: none yet
+- Related decision logs: `decision-logs/2026-04-20-task-37-chapter6-residual-needs-fix.md`
+- Related task id(s): `37`
+- Related run id: `c6810b5d4ab0488a9ca4792c8563f226`
+- Related latest.json: `logs/ci/2026-04-20/sc-review-pipeline-task-37/latest.json`
+- Related pipeline artifacts: `logs/ci/2026-04-20/sc-review-pipeline-task-37-c6810b5d4ab0488a9ca4792c8563f226`
