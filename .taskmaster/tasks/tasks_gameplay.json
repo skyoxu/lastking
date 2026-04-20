@@ -2993,7 +2993,6 @@
       "core"
     ],
     "test_refs": [
-      "Game.Core.Tests/Domain/GameConfigTests.cs",
       "Game.Core.Tests/Tasks/Task36ConfigSampleArtifactsTests.cs",
       "Game.Core.Tests/Tasks/Task36ConfigValidationFlowTests.cs"
     ],
