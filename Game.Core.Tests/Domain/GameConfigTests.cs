@@ -39,30 +39,140 @@ public class GameConfigTests
 
     // ACC:T2.16
     // ACC:T31.9
+    // ACC:T38.15
     [Fact]
-    public void ShouldExposeTypedBalanceSnapshotWithDeterministicDefaults_WhenOptionalFieldsAreMissing()
+    public void ShouldResolveRuntimeTuningFromConfigManagerSnapshot_WhenOnlyConfigPayloadChanges()
     {
         var manager = new ConfigManager();
-        const string json = """
-                            {
-                              "time": { "day_seconds": 240, "night_seconds": 120 },
-                              "waves": { "normal": { "day1_budget": 50, "daily_growth": 1.2 } },
-                              "channels": { "elite": "elite", "boss": "boss" }
-                            }
-                            """;
+        var resolver = new EnemyConfigRuntimeResolver();
+        const string baselineJson = """
+                                    {
+                                      "time": { "day_seconds": 240, "night_seconds": 120 },
+                                      "waves": { "normal": { "day1_budget": 50, "daily_growth": 1.2 } },
+                                      "channels": { "elite": "elite", "boss": "boss" },
+                                      "spawn": { "cadence_seconds": 10 },
+                                      "boss": { "count": 2 },
+                                      "enemies": [
+                                        {
+                                          "enemy_id": "grunt",
+                                          "enemy_type": "melee",
+                                          "behavior": { "mode": "rush" },
+                                          "health": 12,
+                                          "damage": 3,
+                                          "speed": 1.2
+                                        }
+                                      ]
+                                    }
+                                    """;
+        const string promotedJson = """
+                                    {
+                                      "time": { "day_seconds": 240, "night_seconds": 120 },
+                                      "waves": { "normal": { "day1_budget": 95, "daily_growth": 1.35 } },
+                                      "channels": { "elite": "elite", "boss": "boss" },
+                                      "spawn": { "cadence_seconds": 6 },
+                                      "boss": { "count": 4 },
+                                      "enemies": [
+                                        {
+                                          "enemy_id": "grunt",
+                                          "enemy_type": "melee",
+                                          "behavior": { "mode": "rush" },
+                                          "health": 24,
+                                          "damage": 7,
+                                          "speed": 1.9
+                                        }
+                                      ]
+                                    }
+                                    """;
 
-        var result = manager.LoadInitialFromJson(json, "res://Config/balance.json");
+        var baselineLoad = manager.LoadInitialFromJson(baselineJson, "res://Config/balance.baseline.json");
+        baselineLoad.Accepted.Should().BeTrue();
+        baselineLoad.Snapshot.Day1Budget.Should().Be(50);
+        baselineLoad.Snapshot.SpawnCadenceSeconds.Should().Be(10);
+        baselineLoad.Snapshot.BossCount.Should().Be(2);
 
-        result.Accepted.Should().BeTrue();
-        result.Source.Should().Be("initial");
-        result.Snapshot.DaySeconds.Should().Be(240);
-        result.Snapshot.NightSeconds.Should().Be(120);
-        result.Snapshot.Day1Budget.Should().Be(50);
-        result.Snapshot.DailyGrowth.Should().Be(1.2m);
-        result.Snapshot.EliteChannel.Should().Be("elite");
-        result.Snapshot.BossChannel.Should().Be("boss");
-        result.Snapshot.SpawnCadenceSeconds.Should().Be(10);
-        result.Snapshot.BossCount.Should().Be(2);
+        var baselineEnemy = resolver.Resolve(manager, manager.ActiveConfigJson)
+            .Single(enemy => string.Equals(enemy.EnemyId, "grunt", StringComparison.Ordinal));
+        baselineEnemy.Health.Should().Be(12m);
+        baselineEnemy.Damage.Should().Be(3m);
+        baselineEnemy.Speed.Should().Be(1.2m);
+
+        var promotedLoad = manager.ReloadFromJson(promotedJson, "res://Config/balance.promoted.json");
+        promotedLoad.Accepted.Should().BeTrue();
+        promotedLoad.Snapshot.Day1Budget.Should().Be(95);
+        promotedLoad.Snapshot.SpawnCadenceSeconds.Should().Be(6);
+        promotedLoad.Snapshot.BossCount.Should().Be(4);
+
+        var promotedEnemy = resolver.Resolve(manager, manager.ActiveConfigJson)
+            .Single(enemy => string.Equals(enemy.EnemyId, "grunt", StringComparison.Ordinal));
+        promotedEnemy.Health.Should().Be(24m);
+        promotedEnemy.Damage.Should().Be(7m);
+        promotedEnemy.Speed.Should().Be(1.9m);
+    }
+
+    // ACC:T38.16
+    [Fact]
+    public void ShouldRejectPromotionAndKeepActiveSnapshotUnchanged_WhenGovernanceMetadataIsMissingOrInvalid()
+    {
+        var manager = new ConfigManager();
+        const string governedBaselineJson = """
+                                            {
+                                              "time": { "day_seconds": 240, "night_seconds": 120 },
+                                              "waves": { "normal": { "day1_budget": 50, "daily_growth": 1.2 } },
+                                              "channels": { "elite": "elite", "boss": "boss" },
+                                              "spawn": { "cadence_seconds": 10 },
+                                              "boss": { "count": 2 },
+                                              "governance": {
+                                                "schema_version": "1.0.0",
+                                                "tuning_set_id": "task38-baseline",
+                                                "promotion": {
+                                                  "approval_ticket": "CAB-38",
+                                                  "soak_report_id": "SOAK-38",
+                                                  "regression_gate_passed": true
+                                                }
+                                              }
+                                            }
+                                            """;
+        const string missingGovernanceJson = """
+                                            {
+                                              "time": { "day_seconds": 240, "night_seconds": 120 },
+                                              "waves": { "normal": { "day1_budget": 90, "daily_growth": 1.35 } },
+                                              "channels": { "elite": "elite", "boss": "boss" },
+                                              "spawn": { "cadence_seconds": 5 },
+                                              "boss": { "count": 4 }
+                                            }
+                                            """;
+        const string invalidGovernanceJson = """
+                                            {
+                                              "time": { "day_seconds": 240, "night_seconds": 120 },
+                                              "waves": { "normal": { "day1_budget": 95, "daily_growth": 1.4 } },
+                                              "channels": { "elite": "elite", "boss": "boss" },
+                                              "spawn": { "cadence_seconds": 4 },
+                                              "boss": { "count": 5 },
+                                              "governance": {
+                                                "schema_version": "1.0.0",
+                                                "tuning_set_id": "task38-invalid",
+                                                "promotion": {
+                                                  "approval_ticket": "CAB-38",
+                                                  "soak_report_id": "SOAK-38",
+                                                  "regression_gate_passed": false
+                                                }
+                                              }
+                                            }
+                                            """;
+
+        var baselineLoad = manager.LoadInitialFromJson(governedBaselineJson, "res://Config/governed-baseline.json");
+        baselineLoad.Accepted.Should().BeTrue();
+        var baselineSnapshot = manager.Snapshot;
+
+        var missingGovernanceReload = manager.ReloadFromJson(missingGovernanceJson, "res://Config/missing-governance.json");
+        missingGovernanceReload.Accepted.Should().BeFalse();
+        missingGovernanceReload.ReasonCodes.Should().Contain(ConfigManager.GovernanceMetadataMissingReason);
+        manager.Snapshot.Should().Be(baselineSnapshot);
+
+        var invalidGovernanceReload = manager.ReloadFromJson(invalidGovernanceJson, "res://Config/invalid-governance.json");
+        invalidGovernanceReload.Accepted.Should().BeFalse();
+        invalidGovernanceReload.ReasonCodes.Should().Contain(ConfigManager.GovernancePrerequisiteInvalidReason);
+        manager.Snapshot.Should().Be(baselineSnapshot);
     }
 
     // ACC:T2.2

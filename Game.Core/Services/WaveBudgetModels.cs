@@ -16,15 +16,18 @@ public sealed record ChannelBudgetConfiguration(ChannelRule Normal, ChannelRule 
 
         var snapshot = configManager.Snapshot;
         var normalRule = new ChannelRule(
-            Day1Budget: snapshot.Day1Budget,
-            DailyGrowth: snapshot.DailyGrowth,
-            ChannelLimit: 20,
-            CostPerEnemy: 10);
+            snapshot.Day1Budget,
+            snapshot.DailyGrowth,
+            20,
+            10);
+
+        var snapshotEliteRule = snapshot.EliteRule ?? new ChannelRule(120, 1.2m, 8, 20);
+        var snapshotBossRule = snapshot.BossRule ?? new ChannelRule(300, 1.2m, 3, 100);
 
         return new ChannelBudgetConfiguration(
             Normal: normalRule,
-            Elite: eliteRule ?? new ChannelRule(120, 1.2m, 8, 20),
-            Boss: bossRule ?? new ChannelRule(300, 1.2m, 3, 100));
+            Elite: eliteRule ?? snapshotEliteRule,
+            Boss: bossRule ?? snapshotBossRule);
     }
 
     public ChannelRule GetRule(string channelName)

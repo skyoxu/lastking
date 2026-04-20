@@ -8,6 +8,8 @@ namespace Lastking.Game.Godot.Scripts.Combat;
 
 public partial class EnemyAi : Node
 {
+    private static int ReadConfigManagerCadence(ConfigManager manager) => manager.Snapshot.SpawnCadenceSeconds;
+
     [Export]
     public bool EnemyAiActive { get; set; } = true;
 

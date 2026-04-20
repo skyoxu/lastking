@@ -90,9 +90,12 @@ public sealed partial class WaveManager
     {
         ArgumentNullException.ThrowIfNull(configManager);
         var snapshot = configManager.Snapshot;
+        var cadence = isBossNight
+            ? snapshot.BossSpawnCadenceSeconds ?? snapshot.SpawnCadenceSeconds
+            : snapshot.RegularSpawnCadenceSeconds ?? snapshot.SpawnCadenceSeconds;
         var spawnPolicy = new NightSpawnPolicy(
             NightDurationSeconds: snapshot.NightSeconds,
-            CadenceSeconds: snapshot.SpawnCadenceSeconds,
+            CadenceSeconds: cadence,
             BossSpawnCount: snapshot.BossCount);
 
         return GenerateNightSpawns(spawnPolicy, isBossNight, spawnPoints);

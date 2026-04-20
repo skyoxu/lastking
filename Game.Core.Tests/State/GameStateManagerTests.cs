@@ -7,6 +7,7 @@ using FluentAssertions;
 using Game.Core.Contracts;
 using Game.Core.Domain;
 using Game.Core.Ports;
+using Game.Core.Services;
 using Game.Core.State;
 using Xunit;
 
@@ -58,6 +59,63 @@ public class GameStateManagerTests
             AutoSave: false,
             Difficulty: Difficulty.Medium
         );
+
+    // ACC:T38.17
+    [Fact]
+    public void ShouldReturnDeterministicGovernanceRejectReasonsAndNoActiveStateSideEffects_WhenInvalidPromotionInputRepeats()
+    {
+        var configManager = new ConfigManager();
+        const string governedBaselineJson = """
+                                            {
+                                              "time": { "day_seconds": 240, "night_seconds": 120 },
+                                              "waves": { "normal": { "day1_budget": 50, "daily_growth": 1.2 } },
+                                              "channels": { "elite": "elite", "boss": "boss" },
+                                              "spawn": { "cadence_seconds": 10 },
+                                              "boss": { "count": 2 },
+                                              "governance": {
+                                                "schema_version": "1.0.0",
+                                                "tuning_set_id": "task38-governed-baseline",
+                                                "promotion": {
+                                                  "approval_ticket": "CAB-38",
+                                                  "soak_report_id": "SOAK-38",
+                                                  "regression_gate_passed": true
+                                                }
+                                              }
+                                            }
+                                            """;
+        const string invalidPromotionJson = """
+                                           {
+                                             "time": { "day_seconds": 240, "night_seconds": 120 },
+                                             "waves": { "normal": { "day1_budget": 90, "daily_growth": 1.35 } },
+                                             "channels": { "elite": "elite", "boss": "boss" },
+                                             "spawn": { "cadence_seconds": 6 },
+                                             "boss": { "count": 4 },
+                                             "governance": {
+                                               "schema_version": "1.0.0",
+                                               "tuning_set_id": "task38-invalid-candidate",
+                                               "promotion": {
+                                                 "approval_ticket": "CAB-38",
+                                                 "soak_report_id": "SOAK-38",
+                                                 "regression_gate_passed": false
+                                               }
+                                             }
+                                           }
+                                           """;
+
+        var baselineLoad = configManager.LoadInitialFromJson(governedBaselineJson, "res://Config/task38-governed-baseline.json");
+        baselineLoad.Accepted.Should().BeTrue();
+        var baselineSnapshot = configManager.Snapshot;
+
+        var firstReject = configManager.ReloadFromJson(invalidPromotionJson, "res://Config/task38-invalid-candidate-a.json");
+        var secondReject = configManager.ReloadFromJson(invalidPromotionJson, "res://Config/task38-invalid-candidate-b.json");
+
+        firstReject.Accepted.Should().BeFalse();
+        secondReject.Accepted.Should().BeFalse();
+        firstReject.ReasonCodes.Should().NotBeEmpty();
+        secondReject.ReasonCodes.Should().Equal(firstReject.ReasonCodes);
+        firstReject.ReasonCodes.Should().Contain(ConfigManager.GovernancePrerequisiteInvalidReason);
+        configManager.Snapshot.Should().Be(baselineSnapshot);
+    }
 
     // ACC:T3.4
     // ACC:T3.7
