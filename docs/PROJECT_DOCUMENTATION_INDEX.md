@@ -42,6 +42,7 @@ This file is the top-level navigation for project docs.
 - Local hard checks: `docs/workflows/local-hard-checks.md`
 - Stable entrypoint index: `docs/workflows/stable-public-entrypoints.md`
 - Script entrypoint index: `docs/workflows/script-entrypoints-index.md`
+- UI wiring GDD board: `docs/gdd/ui-gdd-flow.md`
 
 ## Recovery And Stop-Loss
 
