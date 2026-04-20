@@ -16,6 +16,8 @@ public sealed record EnemyAiDeterminismState(IReadOnlyList<EnemyAiDeterminismCan
 
 public sealed class EnemyAiDeterminismService
 {
+    private static int ReadConfigManagerCadence(ConfigManager manager) => manager.Snapshot.SpawnCadenceSeconds;
+
     public string[] RunLoop(EnemyAiDeterminismState state, int seed, int steps)
     {
         var decisions = new string[steps];

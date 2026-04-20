@@ -3140,13 +3140,13 @@
       "core"
     ],
     "test_refs": [
-      "Game.Core.Tests/Domain/GameConfigTests.cs",
       "Game.Core.Tests/Tasks/Task38ConfigGovernanceTests.cs",
       "Game.Core.Tests/Services/GameplayTuningConfigIntegrationTests.cs",
       "Game.Core.Tests/Services/WaveSeedDeterminismTests.cs",
       "Game.Core.Tests/Services/EnemyStatConfigBindingTests.cs",
       "Game.Core.Tests/Services/SpawnTimingConfigBindingTests.cs",
       "Game.Core.Tests/Services/GameplayConfigSetSwitchingTests.cs",
+      "Game.Core.Tests/Domain/GameConfigTests.cs",
       "Game.Core.Tests/State/GameStateManagerTests.cs",
       "Game.Core.Tests/Services/ConfigGovernanceAuditTests.cs",
       "Game.Core.Tests/Services/ConfigGovernancePromotionServiceTests.cs"

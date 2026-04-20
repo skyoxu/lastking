@@ -1,11 +1,14 @@
 using Godot;
 using Godot.Collections;
+using Game.Core.Services;
 using GodotArray = Godot.Collections.Array;
 
 namespace Lastking.Game.Godot.Scripts.Combat;
 
 public partial class EnemyAiRuntimeProbe : EnemyAi
 {
+    private static int ReadConfigManagerCadence(ConfigManager manager) => manager.Snapshot.SpawnCadenceSeconds;
+
     public new Dictionary ProbeNavigationPath(Vector2 origin, Vector2 destination)
     {
         return base.ProbeNavigationPath(origin, destination);

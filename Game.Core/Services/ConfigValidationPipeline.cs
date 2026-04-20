@@ -103,6 +103,7 @@ public sealed class ConfigValidationPipeline
 
         var artifact = new
         {
+            decision = normalizedOutcome == "accept" ? "allow" : "reject",
             terminalOutcome = normalizedOutcome,
             decisionStage,
             policyTrace,
