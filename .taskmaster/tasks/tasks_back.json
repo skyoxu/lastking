@@ -2540,7 +2540,6 @@
       "adapter"
     ],
     "test_refs": [
-      "Game.Core.Tests/State/GameStateMachineTests.cs",
       "Game.Core.Tests/Tasks/Task30PerformanceScopeGuardTests.cs",
       "Tests.Godot/tests/Integration/test_performance_gate_windows_baseline.gd",
       "Game.Core.Tests/Engine/DeterministicCoreLoopRegressionTests.cs",
