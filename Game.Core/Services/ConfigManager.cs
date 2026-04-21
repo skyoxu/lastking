@@ -3,6 +3,7 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using Game.Core.Ports;
 
 namespace Game.Core.Services;
 
@@ -23,14 +24,19 @@ public sealed class ConfigManager
     public const string GovernancePrerequisiteMissingReason = "CFG_GOVERNANCE_PREREQUISITE_MISSING";
     public const string GovernancePrerequisiteInvalidReason = "CFG_GOVERNANCE_PREREQUISITE_INVALID";
     public const string GovernancePromotionBlockedReason = "CFG_GOVERNANCE_PROMOTION_BLOCKED";
+    public const string VersionMismatchReason = "CFG_VERSION_MISMATCH";
+    public const string VersionMigrationRequiredReason = "CFG_VERSION_MIGRATION_REQUIRED";
+    public const string MigrationFatalReason = "CFG_MIGRATION_FATAL";
 
     private BalanceSnapshot _snapshot;
     private bool _hasLoaded;
     private bool _governanceRequiredForReload;
     private string _activeConfigJson;
+    private readonly ILogger? _logger;
 
-    public ConfigManager()
+    public ConfigManager(ILogger? logger = null)
     {
+        _logger = logger;
         _snapshot = BalanceSnapshot.Default;
         _hasLoaded = false;
         _governanceRequiredForReload = false;
@@ -144,7 +150,7 @@ public sealed class ConfigManager
             ReasonCodes: Array.Empty<string>());
     }
 
-    private static bool TryParse(
+    private bool TryParse(
         string json,
         bool requireGovernanceMetadata,
         out BalanceSnapshot snapshot,
@@ -175,6 +181,17 @@ public sealed class ConfigManager
             {
                 snapshot = BalanceSnapshot.Default;
                 reasonCodes = new[] { SchemaRejectedReason };
+                return false;
+            }
+
+            if (TryEvaluateVersionPolicy(root, out var versionPolicyReasons, out var versionPolicyLogMessage))
+            {
+                if (!string.IsNullOrWhiteSpace(versionPolicyLogMessage))
+                {
+                    _logger?.Error(versionPolicyLogMessage);
+                }
+                snapshot = BalanceSnapshot.Default;
+                reasonCodes = versionPolicyReasons;
                 return false;
             }
 
@@ -336,6 +353,96 @@ public sealed class ConfigManager
         }
 
         return value.GetString() ?? string.Empty;
+    }
+
+    private static bool TryEvaluateVersionPolicy(
+        JsonElement root,
+        out IReadOnlyList<string> reasonCodes,
+        out string logMessage)
+    {
+        reasonCodes = Array.Empty<string>();
+        logMessage = string.Empty;
+
+        if (!TryResolvePath(root, "version", out var versionElement) ||
+            versionElement.ValueKind != JsonValueKind.String ||
+            !TryResolvePath(root, "expectedVersion", out var expectedVersionElement) ||
+            expectedVersionElement.ValueKind != JsonValueKind.String)
+        {
+            return false;
+        }
+
+        var version = versionElement.GetString() ?? string.Empty;
+        var expectedVersion = expectedVersionElement.GetString() ?? string.Empty;
+        if (string.Equals(version, expectedVersion, StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        var reasons = new List<string>
+        {
+            VersionMismatchReason,
+            VersionMigrationRequiredReason
+        };
+        logMessage =
+            $"Config version mismatch; migration required. version='{version}', expectedVersion='{expectedVersion}'.";
+
+        var forceMigration = TryResolvePath(root, "forceMigration", out var forceMigrationElement) &&
+                             forceMigrationElement.ValueKind == JsonValueKind.True;
+
+        if (!forceMigration || !TryResolvePath(root, "migration", out var migration) || migration.ValueKind != JsonValueKind.Object)
+        {
+            reasonCodes = reasons;
+            return true;
+        }
+
+        var migrationStatus = ReadOptionalString(migration, "status");
+        var migrationRecoverable = TryResolvePath(migration, "recoverable", out var recoverableElement) &&
+                                   recoverableElement.ValueKind == JsonValueKind.True;
+
+        if (string.Equals(migrationStatus, "failed", StringComparison.OrdinalIgnoreCase) && !migrationRecoverable)
+        {
+            var errorCode = ReadOptionalString(migration, "errorCode");
+            var resolvedErrorCode = string.IsNullOrWhiteSpace(errorCode) ? MigrationFatalReason : errorCode;
+            reasons.Add(resolvedErrorCode);
+            logMessage =
+                $"Config migration failed fatally after version mismatch. version='{version}', expectedVersion='{expectedVersion}', errorCode='{resolvedErrorCode}'.";
+            reasonCodes = reasons;
+            return true;
+        }
+
+        if (string.Equals(migrationStatus, "succeeded", StringComparison.OrdinalIgnoreCase) &&
+            TryResolvePath(migration, "steps", out var stepsElement) &&
+            stepsElement.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var step in stepsElement.EnumerateArray())
+            {
+                if (step.ValueKind != JsonValueKind.Object)
+                {
+                    continue;
+                }
+
+                var isStrict = TryResolvePath(step, "strict", out var strictElement) && strictElement.ValueKind == JsonValueKind.True;
+                if (!isStrict)
+                {
+                    continue;
+                }
+
+                var stepName = ReadOptionalString(step, "name");
+                if (string.IsNullOrWhiteSpace(stepName))
+                {
+                    continue;
+                }
+
+                var stepReason = $"CFG_MIGRATION_STEP_{stepName.Trim().ToUpperInvariant()}";
+                if (!reasons.Contains(stepReason, StringComparer.Ordinal))
+                {
+                    reasons.Add(stepReason);
+                }
+            }
+        }
+
+        reasonCodes = reasons;
+        return true;
     }
 
     private static bool ContainsGovernanceSection(string json)

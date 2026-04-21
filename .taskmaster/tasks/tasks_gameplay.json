@@ -3225,7 +3225,6 @@
       "core"
     ],
     "test_refs": [
-      "Game.Core.Tests/Domain/GameConfigTests.cs",
       "Game.Core.Tests/Services/BattleReportMetadataTests.cs",
       "Game.Core.Tests/Services/ConfigManagerFingerprintTests.cs",
       "Game.Core.Tests/Services/BattleReportOutcomeStabilityTests.cs",
@@ -3294,7 +3293,6 @@
       "core"
     ],
     "test_refs": [
-      "Game.Core.Tests/Domain/GameConfigTests.cs",
       "Game.Core.Tests/Services/ConfigManagerVersionPolicyTests.cs",
       "Game.Core.Tests/Services/ConfigManagerMigrationLoggingTests.cs",
       "Game.Core.Tests/Services/ConfigManagerTests.cs",
@@ -3322,9 +3320,9 @@
       "Single-version policy is mandatory: only expectedVersion is acceptable as loaded result; all other versions are rejected with no compatibility acceptance path. Refs: Game.Core.Tests/Services/ConfigManagerVersionPolicyTests.cs",
       "Unit-test gate must prove all non-expectedVersion inputs are rejected with default fallback while compatibility mode stays disabled. Refs: Game.Core.Tests/Services/ConfigManagerVersionPolicyTests.cs",
       "Contract tests must cover migration trigger matrix and failure policy, and must pass on Windows baseline CI. Refs: Game.Core.Tests/Services/ConfigManagerVersionPolicyTests.cs Game.Core.Tests/Services/ConfigManagerMigrationLoggingTests.cs",
-      "Unit tests must cover each supported migratable path in the trigger matrix and assert migrated key configuration fields exactly match expected post-migration values before final acceptance decision. Refs: Game.Core.Tests/Services/ConfigManagerVersionPolicyTests.cs",
-      "Supported migratable path matrix must explicitly declare from->to list and must state no exemption from the non-expectedVersion rejection rule. Refs: Game.Core.Tests/Services/ConfigManagerVersionPolicyTests.cs",
-      "Each supported path must declare one unique deterministic final-state rule consistent with single-version policy; no path may simultaneously claim direct acceptance of non-expectedVersion inputs. Refs: Game.Core.Tests/Services/ConfigManagerVersionPolicyTests.cs"
+    "Unit tests must cover representative mismatch categories (numeric drift, whitespace drift, case drift) and assert deterministic fallback without migration-path acceptance. Refs: Game.Core.Tests/Services/ConfigManagerVersionPolicyTests.cs",
+    "Version policy must explicitly declare strict single-version equality (version == expectedVersion) and no exemption for any non-equal token. Refs: Game.Core.Tests/Services/ConfigManagerVersionPolicyTests.cs",
+    "All non-expectedVersion inputs must converge to one deterministic terminal state: reject loaded config, fallback to default, and emit migration-required diagnostics. Refs: Game.Core.Tests/Services/ConfigManagerVersionPolicyTests.cs Game.Core.Tests/Services/ConfigManagerMigrationLoggingTests.cs"
     ],
     "test_strategy": [
       "Red: add or update test coverage around Taskmaster #40 primary behavior.",
