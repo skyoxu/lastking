@@ -1,0 +1,9 @@
+{
+  "baseline_1pct_low_fps": 45,
+  "baseline_avg_fps": 60,
+  "post_1pct_low_fps": 47,
+  "post_avg_fps": 61,
+  "applied_variance_window_percent": 3,
+  "threshold_1pct_low_fps": 45,
+  "threshold_avg_fps": 60
+}
