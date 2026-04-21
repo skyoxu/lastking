@@ -3227,7 +3227,6 @@
       "core"
     ],
     "test_refs": [
-      "Game.Core.Tests/Domain/GameConfigTests.cs",
       "Game.Core.Tests/Services/BattleReportMetadataTests.cs",
       "Game.Core.Tests/Services/ConfigManagerFingerprintTests.cs",
       "Game.Core.Tests/Services/BattleReportOutcomeStabilityTests.cs",
