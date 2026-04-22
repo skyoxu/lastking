@@ -1,0 +1,285 @@
+{
+  "generated_at": "2026-04-22",
+  "source_gdd": "docs/gdd/ui-gdd-flow.md",
+  "completed_master_tasks_count": 40,
+  "needed_wiring_features_count": 40,
+  "candidates": [
+    {
+      "bucket": "entry",
+      "screen_group": "MainMenu And Boot Flow",
+      "matrix_link": "## 5. UI Wiring Matrix row Entry And Bootstrap (T01, T11, T21)",
+      "scope_task_ids": [
+        1,
+        11,
+        21
+      ],
+      "scope_task_refs": "T01, T11, T21",
+      "ui_entry": "MainMenu / Boot Flow",
+      "candidate_type": "task-shaped UI wiring spec",
+      "player_action": "Launch, continue, retry bootstrap, or enter a run",
+      "system_response": "Show canonical startup path, valid continue behavior, and explicit startup failure recovery",
+      "empty_state": "On Windows, baseline verification requires Godot 4.5.1 .NET editor and a compatible .NET SDK to be installed and detected, with no missing-SDK warning.",
+      "failure_state": "After a clean editor restart, two consecutive runs from the canonical root must enter the same startup flow, with any setup-introduced regression causing failure.",
+      "completion_result": "Baseline verification passes only if the editor opens the canonical root, C# compilation succeeds, and the configured startup scene runs with its attached C# script.",
+      "requirement_ids": [
+        "RQ-RUNTIME-INTERACTION",
+        "RQ-CORE-LOOP-STATE",
+        "RQ-ECONOMY-BUILD-RULES"
+      ],
+      "validation_artifact_targets": [
+        "logs/ci/<YYYY-MM-DD>/task-triplet-audit/report.json",
+        "logs/unit/<YYYY-MM-DD>/coverage.json",
+        "logs/ci/<YYYY-MM-DD>/export.log"
+      ],
+      "suggested_standalone_surfaces": [
+        "MainMenu",
+        "BootStatusPanel",
+        "ContinueGateDialog"
+      ],
+      "test_refs": [
+        "Game.Core.Tests/State/GameStateMachineTests.cs",
+        "Tests.Godot/tests/Integration/test_project_bootstrap_editor_compile_run.gd",
+        "Tests.Godot/tests/Integration/test_windows_export_startup_flow.gd",
+        "Tests.Godot/tests/Scenes/Smoke/test_main_scene_smoke.gd"
+      ]
+    },
+    {
+      "bucket": "loop",
+      "screen_group": "Runtime HUD And Outcome Surfaces",
+      "matrix_link": "## 5. UI Wiring Matrix row Core Loop State And Outcome (T03, T07, T08, T09, T10, T18, T19, T23, T24)",
+      "scope_task_ids": [
+        3,
+        7,
+        8,
+        9,
+        10,
+        18,
+        19,
+        23,
+        24
+      ],
+      "scope_task_refs": "T03, T07, T08, T09, T10, T18, T19, T23, T24",
+      "ui_entry": "HUD / Prompt / Outcome Surfaces",
+      "candidate_type": "task-shaped UI wiring spec",
+      "player_action": "Play a run, observe timing, rewards, prompts, and terminal transitions",
+      "system_response": "Render readable phase, timer, HP, reward, prompt, and win/lose state from runtime events",
+      "empty_state": "Day/Night phase durations must be configuration-driven (not hardcoded): default Day=4:00 and Night=2:00; transition is allowed only when the active phase reaches its configured threshold, and transition cannot be manually forced before threshold.",
+      "failure_state": "Day/Night runtime updates must be driven by the Godot process loop (_Process and/or _PhysicsProcess) into GameStateManager.UpdateDayNightRuntime; when loop updates are paused or stopped, cycle progression must not advance.",
+      "completion_result": "Hard gate: deterministic cycle verification must include a fixed-seed forced-terminal scenario, not only natural Day15 completion paths.",
+      "requirement_ids": [
+        "RQ-RUNTIME-SPEED-MODES",
+        "RQ-RUNTIME-ERROR-FEEDBACK",
+        "RQ-COMBAT-QUEUE-TECH",
+        "RQ-COMBAT-QUEUE-TECH",
+        "RQ-CORE-LOOP-STATE",
+        "RQ-CORE-LOOP-STATE",
+        "RQ-CORE-LOOP-STATE",
+        "RQ-CORE-LOOP-STATE",
+        "RQ-CORE-LOOP-STATE"
+      ],
+      "validation_artifact_targets": [
+        "logs/ci/<YYYY-MM-DD>/task-triplet-audit/report.json",
+        "logs/unit/<YYYY-MM-DD>/coverage.json",
+        "logs/e2e/<YYYY-MM-DD>/runtime-ui/summary.json"
+      ],
+      "suggested_standalone_surfaces": [
+        "RuntimeHud",
+        "OutcomePanel",
+        "RuntimePromptPanel"
+      ],
+      "test_refs": [
+        "Game.Core.Tests/State/GameStateMachineTests.cs",
+        "Game.Core.Tests/State/GameStateManagerTests.cs",
+        "Game.Core.Tests/Tasks/Task3DayNightScopeGuardTests.cs",
+        "Game.Core.Tests/Tasks/Task3DayNightDesignArtifactTests.cs"
+      ]
+    },
+    {
+      "bucket": "combat",
+      "screen_group": "Combat Pressure And Interaction Surfaces",
+      "matrix_link": "## 5. UI Wiring Matrix row Combat Pressure And Interaction (T04, T05, T06, T20, T22)",
+      "scope_task_ids": [
+        4,
+        5,
+        6,
+        20,
+        22
+      ],
+      "scope_task_refs": "T04, T05, T06, T20, T22",
+      "ui_entry": "Combat HUD / Pressure / Camera Feedback",
+      "candidate_type": "task-shaped UI wiring spec",
+      "player_action": "Fight, observe pressure, targeting, pathing, and camera responses",
+      "system_response": "Render enemy pressure, targeting, combat outcomes, and camera interaction without hidden state",
+      "empty_state": "Wave generation preserves deterministic replay for the same day/config/seed, and wave-budget computation is isolated to wave inputs without cross-system side effects.",
+      "failure_state": "Taskmaster #6 is complete only when combat runs demonstrate target selection by the required priority chain and blocked-path fallback attacks whenever routes to priority targets are obstructed.",
+      "completion_result": "Changing only one channel budget must change that channel's input budget and alter at least one spawn decision for the same day and seed, while non-target channel outputs remain unchanged.",
+      "requirement_ids": [
+        "RQ-CAMERA-SCROLL",
+        "RQ-COMBAT-QUEUE-TECH",
+        "RQ-CORE-LOOP-STATE",
+        "RQ-CORE-LOOP-STATE",
+        "RQ-CORE-LOOP-STATE"
+      ],
+      "validation_artifact_targets": [
+        "logs/ci/<YYYY-MM-DD>/task-triplet-audit/report.json",
+        "logs/unit/<YYYY-MM-DD>/coverage.json",
+        "logs/e2e/<YYYY-MM-DD>/runtime-ui/summary.json"
+      ],
+      "suggested_standalone_surfaces": [
+        "CombatHud",
+        "PressurePanel",
+        "CameraControlOverlay"
+      ],
+      "test_refs": [
+        "Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs",
+        "Game.Core.Tests/Services/WaveManagerDeterminismTests.cs",
+        "Game.Core.Tests/Engine/GameEngineCoreDeterminismTests.cs",
+        "Game.Core.Tests/Services/WaveBudgetAllocatorTests.cs"
+      ]
+    },
+    {
+      "bucket": "economy",
+      "screen_group": "Economy And Progression Panels",
+      "matrix_link": "## 5. UI Wiring Matrix row Economy Build And Progression (T12, T13, T14, T15, T16, T17)",
+      "scope_task_ids": [
+        12,
+        13,
+        14,
+        15,
+        16,
+        17
+      ],
+      "scope_task_refs": "T12, T13, T14, T15, T16, T17",
+      "ui_entry": "Resource / Build / Progression Panels",
+      "candidate_type": "task-shaped UI wiring spec",
+      "player_action": "Spend resources, place/build, train, upgrade, repair, or pick rewards",
+      "system_response": "Render deterministic resource, build, queue, upgrade, and progression changes with clear invalid-state feedback",
+      "empty_state": "During long train/cancel sequences with large integer values, resource totals stay accurate integers, never negative, and without overflow/underflow.",
+      "failure_state": "Integer safety is enforced through both static scan and runtime assertion gates; any non-integer resource arithmetic fails immediately and gameplay-visible resource state remains unchanged.",
+      "completion_result": "Integer safety is enforced through both static scan and runtime assertion gates; any non-integer resource arithmetic fails immediately and gameplay-visible resource state remains unchanged.",
+      "requirement_ids": [
+        "RQ-COMBAT-QUEUE-TECH",
+        "RQ-COMBAT-QUEUE-TECH",
+        "RQ-ECONOMY-BUILD-RULES",
+        "RQ-ECONOMY-BUILD-RULES",
+        "RQ-ECONOMY-BUILD-RULES",
+        "RQ-ECONOMY-BUILD-RULES"
+      ],
+      "validation_artifact_targets": [
+        "logs/unit/<YYYY-MM-DD>/coverage.json"
+      ],
+      "suggested_standalone_surfaces": [
+        "ResourcePanel",
+        "BuildPanel",
+        "ProgressionPanel"
+      ],
+      "test_refs": [
+        "Game.Core.Tests/Services/ResourceManagerIntegerSafetyTests.cs",
+        "Game.Core.Tests/Engine/GameEngineCoreEventTests.cs",
+        "Game.Core.Tests/Services/ResourceManagerTests.cs",
+        "Game.Core.Tests/Services/ResourceManagerEventTests.cs"
+      ]
+    },
+    {
+      "bucket": "meta",
+      "screen_group": "Save, Settings, And Meta Surfaces",
+      "matrix_link": "## 5. UI Wiring Matrix row Meta Systems And Platform (T25, T26, T27, T28, T29, T30)",
+      "scope_task_ids": [
+        25,
+        26,
+        27,
+        28,
+        29,
+        30
+      ],
+      "scope_task_refs": "T25, T26, T27, T28, T29, T30",
+      "ui_entry": "Settings / Save / Meta Surfaces",
+      "candidate_type": "task-shaped UI wiring spec",
+      "player_action": "Save, load, localize, tune audio, or inspect platform/runtime status",
+      "system_response": "Render persistence, localization, audio, performance, and platform status on governed player-visible surfaces",
+      "empty_state": "If no autosave file exists, load returns a deterministic failure result, shows explicit user feedback, and leaves runtime state unchanged.",
+      "failure_state": "All save writes target only the single autosave slot at user://autosave.save (Windows-safe user path); any write to an alternate slot path fails acceptance.",
+      "completion_result": "If no autosave file exists, load returns a deterministic failure result, shows explicit user feedback, and leaves runtime state unchanged.",
+      "requirement_ids": [
+        "RQ-I18N-LANG-SWITCH",
+        "RQ-AUDIO-CHANNEL-SETTINGS",
+        "RQ-PERF-GATE",
+        "RQ-SAVE-MIGRATION-CLOUD",
+        "RQ-SAVE-MIGRATION-CLOUD",
+        "RQ-SAVE-MIGRATION-CLOUD"
+      ],
+      "validation_artifact_targets": [
+        "logs/ci/<YYYY-MM-DD>/save-migration/report.json",
+        "logs/ci/<YYYY-MM-DD>/steam-cloud/report.json",
+        "logs/ci/<YYYY-MM-DD>/achievements/report.json",
+        "logs/e2e/<YYYY-MM-DD>/settings/summary.json"
+      ],
+      "suggested_standalone_surfaces": [
+        "SettingsMenu",
+        "SavePanel",
+        "RunSummaryPanel"
+      ],
+      "test_refs": [
+        "Tests.Godot/tests/Adapters/Save/test_save_manager_autosave_slot_path.gd",
+        "Tests.Godot/tests/Adapters/Db/test_savegame_update_overwrite_cross_restart.gd",
+        "Tests.Godot/tests/Adapters/Save/test_save_manager_daystart_autosave.gd",
+        "Tests.Godot/tests/Adapters/Db/test_savegame_persistence_cross_restart.gd"
+      ]
+    },
+    {
+      "bucket": "governance",
+      "screen_group": "Config Audit And Migration Surfaces",
+      "matrix_link": "## 5. UI Wiring Matrix row Config Governance And Audit (T02, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40)",
+      "scope_task_ids": [
+        2,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39,
+        40
+      ],
+      "scope_task_refs": "T02, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40",
+      "ui_entry": "Config Summary / Audit / Migration Surfaces",
+      "candidate_type": "task-shaped UI wiring spec",
+      "player_action": "Inspect config state, validation, governance, migration, and report metadata",
+      "system_response": "Render active config, schema status, fallback policy, migration status, and audit metadata without relying on logs-only evidence",
+      "empty_state": "Loading path must be implemented by runtime file I/O or resource-backed path, and switching artifact content without code changes must change observed gameplay outputs after reload.",
+      "failure_state": "Hard gate: malformed JSON/INI input must deterministically fail with a fixed reason code, and parse failure must not advance runtime config snapshot (must keep last-known-good or documented fallback).",
+      "completion_result": "Hard gate: malformed JSON/INI input must deterministically fail with a fixed reason code, and parse failure must not advance runtime config snapshot (must keep last-known-good or documented fallback).",
+      "requirement_ids": [
+        "RQ-CONFIG-CONTRACT-GOV",
+        "RQ-CONFIG-CONTRACT-GOV",
+        "RQ-CONFIG-CONTRACT-GOV",
+        "RQ-CONFIG-CONTRACT-GOV",
+        "RQ-CONFIG-CONTRACT-GOV",
+        "RQ-CONFIG-CONTRACT-GOV",
+        "RQ-CONFIG-CONTRACT-GOV",
+        "RQ-CONFIG-CONTRACT-GOV",
+        "RQ-CONFIG-CONTRACT-GOV",
+        "RQ-CONFIG-CONTRACT-GOV",
+        "RQ-CORE-LOOP-STATE"
+      ],
+      "validation_artifact_targets": [
+        "logs/ci/<YYYY-MM-DD>/task-triplet-audit/report.json",
+        "logs/ci/<YYYY-MM-DD>/overlay-lint/report.json",
+        "logs/ci/<YYYY-MM-DD>/config-governance/report.json"
+      ],
+      "suggested_standalone_surfaces": [
+        "ConfigAuditPanel",
+        "MigrationStatusDialog",
+        "ReportMetadataPanel"
+      ],
+      "test_refs": [
+        "Tests.Godot/tests/Adapters/Config/test_settings_persistence.gd",
+        "Game.Core.Tests/Domain/GameConfigTests.cs",
+        "Tests.Godot/tests/Security/Hard/test_settings_config_security.gd",
+        "Tests.Godot/tests/Integration/test_balance_runtime_config_reload.gd"
+      ]
+    }
+  ]
+}

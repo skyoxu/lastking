@@ -334,7 +334,7 @@
           3,
           4
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": "1",
@@ -398,7 +398,7 @@
         "dependencies": [
           1
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": "1",
@@ -528,7 +528,7 @@
           3,
           7
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [],
         "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
         "adrRefs": [
@@ -556,7 +556,7 @@
           3,
           7
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": "1",
@@ -628,7 +628,7 @@
           8,
           9
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
@@ -805,7 +805,7 @@
         "dependencies": [
           11
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": "1",
@@ -905,7 +905,7 @@
           11,
           12
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": "1",
@@ -1008,7 +1008,7 @@
           12,
           13
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": "1",
@@ -1073,7 +1073,7 @@
           13,
           14
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": "1",
@@ -1138,7 +1138,7 @@
           13,
           14
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": "1",
@@ -1203,7 +1203,7 @@
           13,
           16
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": "1",
@@ -1268,7 +1268,7 @@
           12,
           14
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [],
         "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
         "adrRefs": [
@@ -1295,7 +1295,7 @@
           11,
           13
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": "1",
@@ -1400,7 +1400,7 @@
           16,
           17
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": "1",
@@ -1458,7 +1458,7 @@
         "id": 21,
         "title": "Lock Windows export profile and Steam runtime startup validation",
         "description": "On top of T11, lock Windows-only export profile and validate Steam runtime startup path for single-player mode.",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           11
         ],
@@ -1519,7 +1519,7 @@
         "id": 22,
         "title": "Implement Camera and Interaction System with Edge and Keyboard Scrolling",
         "description": "Develop camera controls for edge scrolling and keyboard-based scrolling in the game world.",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           21
         ],
@@ -1583,7 +1583,7 @@
         "id": 23,
         "title": "Develop Runtime Speed Controls (Pause, 1x, 2x) with Timer Freeze",
         "description": "Implement game speed controls including pause, 1x, and 2x speeds, ensuring all timers freeze during pause.",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           21
         ],
@@ -1647,7 +1647,7 @@
         "id": 24,
         "title": "Create UI Feedback System for Invalid Actions and Errors",
         "description": "Implement UI feedback for invalid placement, blocked actions, and migration/load errors with clear user-facing messages.",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           21
         ],
@@ -1711,7 +1711,7 @@
         "id": 25,
         "title": "Build Save System with Autosave and Migration Handling",
         "description": "Develop a save system with one autosave slot, start-of-day autosaves, and migration for invalid configs/loads.",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           21
         ],
@@ -1810,7 +1810,7 @@
         "id": 26,
         "title": "Integrate Steam Cloud Save with Account Binding",
         "description": "Implement Steam cloud save functionality using Steam account binding for save data synchronization.",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           25
         ],
@@ -1872,7 +1872,7 @@
         "id": 27,
         "title": "Implement Achievements System with Deterministic Unlocking",
         "description": "Create an achievements system with a visible list, non-hidden achievements, and deterministic unlock triggers.",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           21
         ],
@@ -1934,7 +1934,7 @@
         "id": 28,
         "title": "Set Up Localization (i18n) for zh-CN and en-US",
         "description": "Implement key-based internationalization workflow supporting zh-CN and en-US at launch.",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           21
         ],
@@ -1996,7 +1996,7 @@
         "id": 29,
         "title": "Add Audio Settings for Music and SFX Channels",
         "description": "Implement audio settings to control music and sound effects volume at launch.",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           21
         ],
@@ -2020,7 +2020,7 @@
         "id": 30,
         "title": "Optimize for Performance Targets (45 FPS 1% Low, 60 FPS Average)",
         "description": "Implement optimizations to meet non-functional goals: low-end baseline 45 FPS (1% low) and average 60 FPS target.",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           21,
           22,
@@ -2132,7 +2132,7 @@
         "dependencies": [
           21
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": "1",
@@ -2193,7 +2193,7 @@
         "dependencies": [
           31
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [],
         "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
         "adrRefs": [
@@ -2217,7 +2217,7 @@
         "dependencies": [
           31
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": "1",
@@ -2279,7 +2279,7 @@
         "dependencies": [
           31
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [],
         "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
         "adrRefs": [
@@ -2303,7 +2303,7 @@
         "dependencies": [
           31
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": "1",
@@ -2368,7 +2368,7 @@
           34,
           35
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
@@ -2451,7 +2451,7 @@
           34,
           35
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
@@ -2533,7 +2533,7 @@
         "dependencies": [
           37
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": "1",
@@ -2595,7 +2595,7 @@
         "dependencies": [
           37
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [],
         "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
         "adrRefs": [
@@ -2619,7 +2619,7 @@
         "dependencies": [
           37
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": "1",
