@@ -1,0 +1,21 @@
+# chapter7-ui-wiring-followup
+
+- Title: chapter7-ui-wiring-followup
+- Status: active
+- Branch: chapter7
+- Git Head: bd4b88a11d670b4f76e63dd73adaa48a3fe58453
+- Goal: Turn the governed Chapter 7 wiring board into executable UI wiring tasks for the playable loop.
+- Scope: docs/gdd/ui-gdd-flow.md, Chapter 7 task candidate shaping, and related gate evidence only.
+- Current step: Convert high-level UI wiring candidates into task-shaped specs linked to concrete matrix rows and tests.
+- Last completed step: n/a (new execution plan scaffold; no completed step recorded yet)
+- Stop-loss: Stop if Chapter 7 hard gate regresses, if completed-task coverage breaks, or if task shaping requires inventing unsupported gameplay scope.
+- Next action: Refine docs/gdd/ui-gdd-flow.md candidate tasks to include UI entry, player action, system response, failure/empty state, completion result, and test refs; then rerun Chapter 7 validation.
+- Recovery command: n/a (no task-scoped recovery command recorded yet)
+- Open questions: none recorded yet
+- Exit criteria: Chapter 7 GDD remains gate-clean and exposes concrete next UI wiring tasks that satisfy workflow.md 7.6 generation rules.
+- Related ADRs: none yet
+- Related decision logs: none yet
+- Related task id(s): n/a (no Taskmaster task id linked yet)
+- Related run id: `n/a`
+- Related latest.json: `logs/ci/2026-04-22/chapter7-ui-wiring/summary.json`
+- Related pipeline artifacts: n/a (no pipeline artifact directory resolved yet)
