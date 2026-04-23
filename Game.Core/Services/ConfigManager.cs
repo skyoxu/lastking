@@ -19,21 +19,31 @@ public sealed class ConfigManager
     public const string MissingKeyReason = "CFG_MISSING_KEY";
     public const string InvalidTypeReason = "CFG_INVALID_TYPE";
     public const string OutOfRangeReason = "CFG_OUT_OF_RANGE";
+    public const string GovernanceMetadataMissingReason = "CFG_GOVERNANCE_METADATA_MISSING";
+    public const string GovernancePrerequisiteMissingReason = "CFG_GOVERNANCE_PREREQUISITE_MISSING";
+    public const string GovernancePrerequisiteInvalidReason = "CFG_GOVERNANCE_PREREQUISITE_INVALID";
+    public const string GovernancePromotionBlockedReason = "CFG_GOVERNANCE_PROMOTION_BLOCKED";
 
     private BalanceSnapshot _snapshot;
     private bool _hasLoaded;
+    private bool _governanceRequiredForReload;
+    private string _activeConfigJson;
 
     public ConfigManager()
     {
         _snapshot = BalanceSnapshot.Default;
         _hasLoaded = false;
+        _governanceRequiredForReload = false;
+        _activeConfigJson = string.Empty;
     }
 
     public BalanceSnapshot Snapshot => _snapshot;
+    public string ActiveConfigJson => _activeConfigJson;
 
     public ConfigLoadResult LoadInitialFromJson(string json, string sourcePath)
     {
-        return Apply(json, sourcePath, isReload: false);
+        var preferGovernance = ContainsGovernanceSection(json);
+        return Apply(json, sourcePath, isReload: false, preferGovernanceValidation: preferGovernance);
     }
 
     public ConfigLoadResult ReloadFromJson(string json, string sourcePath)
@@ -49,7 +59,7 @@ public sealed class ConfigManager
                 ReasonCodes: new[] { InvalidOrderReason });
         }
 
-        return Apply(json, sourcePath, isReload: true);
+        return Apply(json, sourcePath, isReload: true, preferGovernanceValidation: false);
     }
 
     public ConfigLoadResult LoadInitialFromFile(string filePath)
@@ -93,9 +103,15 @@ public sealed class ConfigManager
         }
     }
 
-    private ConfigLoadResult Apply(string json, string sourcePath, bool isReload)
+    private ConfigLoadResult Apply(string json, string sourcePath, bool isReload, bool preferGovernanceValidation)
     {
-        if (!TryParse(json, out var parsed, out var reasons))
+        var requireGovernanceMetadata = preferGovernanceValidation || (isReload && _governanceRequiredForReload);
+        if (!TryParse(
+                json,
+                requireGovernanceMetadata,
+                out var parsed,
+                out var reasons,
+                out var parsedHasGovernanceMetadata))
         {
             var fallbackSnapshot = _snapshot;
             var source = "fallback";
@@ -116,6 +132,8 @@ public sealed class ConfigManager
         _snapshot = parsed;
         var resolvedSource = isReload && _hasLoaded ? "reload" : "initial";
         _hasLoaded = true;
+        _governanceRequiredForReload = _governanceRequiredForReload || parsedHasGovernanceMetadata;
+        _activeConfigJson = json;
 
         return new ConfigLoadResult(
             Accepted: true,
@@ -126,9 +144,15 @@ public sealed class ConfigManager
             ReasonCodes: Array.Empty<string>());
     }
 
-    private static bool TryParse(string json, out BalanceSnapshot snapshot, out IReadOnlyList<string> reasonCodes)
+    private static bool TryParse(
+        string json,
+        bool requireGovernanceMetadata,
+        out BalanceSnapshot snapshot,
+        out IReadOnlyList<string> reasonCodes,
+        out bool hasGovernanceMetadata)
     {
         var reasons = new HashSet<string>(StringComparer.Ordinal);
+        hasGovernanceMetadata = false;
 
         JsonDocument document;
         try
@@ -139,6 +163,7 @@ public sealed class ConfigManager
         {
             snapshot = BalanceSnapshot.Default;
             reasonCodes = new[] { ParseErrorReason };
+            hasGovernanceMetadata = false;
             return false;
         }
 
@@ -161,8 +186,22 @@ public sealed class ConfigManager
             var bossChannel = ReadRequiredString(root, "channels.boss", reasons);
 
             var spawnCadence = ReadOptionalInt(root, "spawn.cadence_seconds", defaultValue: 10, minimum: 1, reasons);
+            var regularCadence = ReadOptionalInt(root, "spawn.profiles.regular.cadence_seconds", defaultValue: spawnCadence, minimum: 1, reasons);
+            var bossCadence = ReadOptionalInt(root, "spawn.profiles.boss.cadence_seconds", defaultValue: spawnCadence, minimum: 1, reasons);
             var bossCount = ReadOptionalInt(root, "boss.count", defaultValue: 2, minimum: 1, reasons);
             var castleStartHp = ReadOptionalInt(root, "battle.castle_start_hp", defaultValue: 100, minimum: 1, reasons);
+            var eliteRule = ReadOptionalChannelRule(root, "waves.elite", defaultRule: new ChannelRule(120, 1.2m, 8, 20), reasons);
+            var bossRule = ReadOptionalChannelRule(root, "waves.boss", defaultRule: new ChannelRule(300, 1.2m, 3, 100), reasons);
+            if (TryResolvePath(root, "governance", out var governance) && governance.ValueKind == JsonValueKind.Object)
+            {
+                hasGovernanceMetadata = true;
+                ValidateGovernance(governance, reasons);
+            }
+            else if (requireGovernanceMetadata)
+            {
+                reasons.Add(GovernanceMetadataMissingReason);
+                reasons.Add(GovernancePromotionBlockedReason);
+            }
             var economyRules = EconomyRulesReader.ReadEconomyRules(
                 root,
                 reasons,
@@ -184,12 +223,133 @@ public sealed class ConfigManager
                 EliteChannel: eliteChannel,
                 BossChannel: bossChannel,
                 SpawnCadenceSeconds: spawnCadence,
+                RegularSpawnCadenceSeconds: regularCadence,
+                BossSpawnCadenceSeconds: bossCadence,
                 BossCount: bossCount,
-                CastleStartHp: castleStartHp)
+                CastleStartHp: castleStartHp,
+                EliteRule: eliteRule,
+                BossRule: bossRule)
                 .WithEconomyRules(economyRules);
 
             reasonCodes = Array.Empty<string>();
             return true;
+        }
+    }
+
+    private static ChannelRule ReadOptionalChannelRule(
+        JsonElement root,
+        string path,
+        ChannelRule defaultRule,
+        ISet<string> reasons)
+    {
+        if (!TryResolvePath(root, path, out var value) || value.ValueKind != JsonValueKind.Object)
+        {
+            return defaultRule;
+        }
+
+        var day1Budget = ReadOptionalInt(value, "day1_budget", defaultValue: defaultRule.Day1Budget, minimum: 0, reasons);
+        var dailyGrowth = ReadOptionalDecimal(value, "daily_growth", defaultValue: defaultRule.DailyGrowth, minimumExclusive: 0m, reasons);
+        var channelLimit = ReadOptionalInt(value, "channel_limit", defaultValue: defaultRule.ChannelLimit, minimum: 1, reasons);
+        var costPerEnemy = ReadOptionalInt(value, "cost_per_enemy", defaultValue: defaultRule.CostPerEnemy, minimum: 1, reasons);
+        return new ChannelRule(day1Budget, dailyGrowth, channelLimit, costPerEnemy);
+    }
+
+    private static decimal ReadOptionalDecimal(JsonElement root, string path, decimal defaultValue, decimal minimumExclusive, ISet<string> reasons)
+    {
+        if (!TryResolvePath(root, path, out var value))
+        {
+            return defaultValue;
+        }
+
+        if (value.ValueKind != JsonValueKind.Number)
+        {
+            reasons.Add(InvalidTypeReason);
+            return defaultValue;
+        }
+
+        var raw = value.GetRawText();
+        if (!decimal.TryParse(raw, NumberStyles.Number, CultureInfo.InvariantCulture, out var parsed))
+        {
+            reasons.Add(InvalidTypeReason);
+            return defaultValue;
+        }
+
+        if (parsed <= minimumExclusive)
+        {
+            reasons.Add(OutOfRangeReason);
+            return defaultValue;
+        }
+
+        return parsed;
+    }
+
+    private static void ValidateGovernance(JsonElement governance, ISet<string> reasons)
+    {
+        var schemaVersion = ReadOptionalString(governance, "schema_version");
+        var tuningSetId = ReadOptionalString(governance, "tuning_set_id");
+        if (string.IsNullOrWhiteSpace(schemaVersion) || string.IsNullOrWhiteSpace(tuningSetId))
+        {
+            reasons.Add(GovernanceMetadataMissingReason);
+            reasons.Add(GovernancePromotionBlockedReason);
+        }
+
+        if (!TryResolvePath(governance, "promotion", out var promotion) || promotion.ValueKind != JsonValueKind.Object)
+        {
+            reasons.Add(GovernancePrerequisiteMissingReason);
+            reasons.Add(GovernancePromotionBlockedReason);
+            return;
+        }
+
+        var approvalTicket = ReadOptionalString(promotion, "approval_ticket");
+        var soakReportId = ReadOptionalString(promotion, "soak_report_id");
+        if (string.IsNullOrWhiteSpace(approvalTicket) || string.IsNullOrWhiteSpace(soakReportId))
+        {
+            reasons.Add(GovernancePrerequisiteMissingReason);
+            reasons.Add(GovernancePromotionBlockedReason);
+        }
+
+        if (TryResolvePath(promotion, "regression_gate_passed", out var regressionGate))
+        {
+            if (regressionGate.ValueKind != JsonValueKind.True && regressionGate.ValueKind != JsonValueKind.False)
+            {
+                reasons.Add(InvalidTypeReason);
+                reasons.Add(GovernancePromotionBlockedReason);
+            }
+            else if (!regressionGate.GetBoolean())
+            {
+                reasons.Add(GovernancePrerequisiteInvalidReason);
+                reasons.Add(GovernancePromotionBlockedReason);
+            }
+        }
+        else
+        {
+            reasons.Add(GovernancePrerequisiteMissingReason);
+            reasons.Add(GovernancePromotionBlockedReason);
+        }
+    }
+
+    private static string ReadOptionalString(JsonElement root, string path)
+    {
+        if (!TryResolvePath(root, path, out var value) || value.ValueKind != JsonValueKind.String)
+        {
+            return string.Empty;
+        }
+
+        return value.GetString() ?? string.Empty;
+    }
+
+    private static bool ContainsGovernanceSection(string json)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(json);
+            return document.RootElement.ValueKind == JsonValueKind.Object
+                   && document.RootElement.TryGetProperty("governance", out var governance)
+                   && governance.ValueKind == JsonValueKind.Object;
+        }
+        catch
+        {
+            return false;
         }
     }
 

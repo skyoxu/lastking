@@ -8,6 +8,8 @@ public sealed record EnemyAiRetargetCandidate(string TargetId, int Priority, boo
 
 public sealed class EnemyAiRetargetingService
 {
+    private static int ReadConfigManagerCadence(ConfigManager manager) => manager.Snapshot.SpawnCadenceSeconds;
+
     public EnemyAiRetargetCandidate? SelectNextReachableTarget(
         IEnumerable<EnemyAiRetargetCandidate> candidates,
         string? currentTargetId)

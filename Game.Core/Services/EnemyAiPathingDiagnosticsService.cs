@@ -7,6 +7,8 @@ public sealed record EnemyAiPathingDiagnostic(int Step, string Reason);
 
 public sealed class EnemyAiPathingDiagnosticsService
 {
+    private static int ReadConfigManagerCadence(ConfigManager manager) => manager.Snapshot.SpawnCadenceSeconds;
+
     public IReadOnlyList<EnemyAiPathingDiagnostic> BuildDiagnostics(IEnumerable<string> reasons)
     {
         var list = new List<EnemyAiPathingDiagnostic>();

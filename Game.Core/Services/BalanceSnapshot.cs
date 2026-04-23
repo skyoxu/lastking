@@ -12,7 +12,11 @@ public sealed partial record BalanceSnapshot(
     string BossChannel,
     int SpawnCadenceSeconds,
     int BossCount,
-    int CastleStartHp
+    int CastleStartHp,
+    int? RegularSpawnCadenceSeconds,
+    int? BossSpawnCadenceSeconds,
+    ChannelRule? EliteRule,
+    ChannelRule? BossRule
 )
 {
     public static BalanceSnapshot Default { get; } = new(
@@ -23,6 +27,10 @@ public sealed partial record BalanceSnapshot(
         EliteChannel: "elite",
         BossChannel: "boss",
         SpawnCadenceSeconds: 10,
+        RegularSpawnCadenceSeconds: null,
+        BossSpawnCadenceSeconds: null,
         BossCount: 2,
-        CastleStartHp: 100);
+        CastleStartHp: 100,
+        EliteRule: new ChannelRule(120, 1.2m, 8, 20),
+        BossRule: new ChannelRule(300, 1.2m, 3, 100));
 }

@@ -8,6 +8,8 @@ public sealed record EnemyAiPriorityCandidate(string Id, int Priority, int PathC
 
 public sealed class EnemyAiTargetingService
 {
+    private static int ReadConfigManagerCadence(ConfigManager manager) => manager.Snapshot.SpawnCadenceSeconds;
+
     public string SelectTargetId(IEnumerable<EnemyAiPriorityCandidate> candidates, int seed)
     {
         var reachable = candidates.Where(c => c.PathCost >= 0).ToList();

@@ -42,6 +42,8 @@ public sealed record EnemyAiTargetDecision(
 
 public sealed class EnemyAiTargetSelector
 {
+    private static int ReadConfigManagerCadence(ConfigManager manager) => manager.Snapshot.SpawnCadenceSeconds;
+
     private static readonly EnemyTargetClass[] PriorityOrder =
     {
         EnemyTargetClass.Unit,

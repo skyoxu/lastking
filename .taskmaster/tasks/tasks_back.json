@@ -2540,7 +2540,6 @@
       "adapter"
     ],
     "test_refs": [
-      "Game.Core.Tests/State/GameStateMachineTests.cs",
       "Game.Core.Tests/Tasks/Task30PerformanceScopeGuardTests.cs",
       "Tests.Godot/tests/Integration/test_performance_gate_windows_baseline.gd",
       "Game.Core.Tests/Engine/DeterministicCoreLoopRegressionTests.cs",
@@ -3140,13 +3139,13 @@
       "core"
     ],
     "test_refs": [
-      "Game.Core.Tests/Domain/GameConfigTests.cs",
       "Game.Core.Tests/Tasks/Task38ConfigGovernanceTests.cs",
       "Game.Core.Tests/Services/GameplayTuningConfigIntegrationTests.cs",
       "Game.Core.Tests/Services/WaveSeedDeterminismTests.cs",
       "Game.Core.Tests/Services/EnemyStatConfigBindingTests.cs",
       "Game.Core.Tests/Services/SpawnTimingConfigBindingTests.cs",
       "Game.Core.Tests/Services/GameplayConfigSetSwitchingTests.cs",
+      "Game.Core.Tests/Domain/GameConfigTests.cs",
       "Game.Core.Tests/State/GameStateManagerTests.cs",
       "Game.Core.Tests/Services/ConfigGovernanceAuditTests.cs",
       "Game.Core.Tests/Services/ConfigGovernancePromotionServiceTests.cs"
@@ -3227,7 +3226,6 @@
       "core"
     ],
     "test_refs": [
-      "Game.Core.Tests/Domain/GameConfigTests.cs",
       "Game.Core.Tests/Services/BattleReportMetadataTests.cs",
       "Game.Core.Tests/Services/ConfigManagerFingerprintTests.cs",
       "Game.Core.Tests/Services/BattleReportOutcomeStabilityTests.cs",
