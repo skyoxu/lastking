@@ -403,6 +403,8 @@ func test_single_canonical_root_is_used_for_bootstrap_compile_layout_export() ->
 # ACC:T21.4
 # ACC:T21.20
 # ACC:T21.21
+# acceptance: ACC:T41.6
+# acceptance: ACC:T41.7
 func test_exported_windows_artifact_launch_reaches_baseline_startup_flow() -> void:
     var preset_text: String = _load_export_preset_text()
     assert_bool(preset_text.findn("platform=\"Windows Desktop\"") >= 0).is_true()
@@ -427,6 +429,7 @@ func test_windows_export_validation_confirms_executed_build_reaches_startup_flow
     assert_bool(_validate_windows_export_execution(blocked_report)).is_false()
 
 # acceptance: ACC:T1.9
+# acceptance: ACC:T41.8
 func test_standalone_launch_compatibility_requires_no_blocking_initialization_errors() -> void:
     var compatible_report: Dictionary = _collect_export_execution_evidence()
     var blocked_report: Dictionary = compatible_report.duplicate()

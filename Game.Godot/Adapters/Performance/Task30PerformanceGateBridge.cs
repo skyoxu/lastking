@@ -58,7 +58,7 @@ public partial class Task30PerformanceGateBridge : Node
 
     public Dictionary ValidatePerfGateArtifactPath(string relativePath)
     {
-        var repoRoot = ProjectSettings.GlobalizePath("res://../");
+        var repoRoot = ProjectSettings.GlobalizePath("res://");
         var isAllowedPath = artifactContractService.IsAllowedArtifactPath(repoRoot, relativePath);
         if (!isAllowedPath)
         {

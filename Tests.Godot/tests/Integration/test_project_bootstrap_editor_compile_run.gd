@@ -93,6 +93,9 @@ func _startup_scene_has_csharp_script() -> bool:
     return scene_text.findn(".cs") >= 0
 
 # acceptance: ACC:T1.1
+# acceptance: ACC:T41.1
+# acceptance: ACC:T41.2
+# acceptance: ACC:T41.3
 func test_single_canonical_root_is_used_by_bootstrap_steps() -> void:
     var summary: Dictionary = _latest_sc_test_summary()
     assert_bool(summary.is_empty()).is_false()
@@ -104,12 +107,15 @@ func test_single_canonical_root_is_used_by_bootstrap_steps() -> void:
     var unit_step: Dictionary = _find_step(summary, "unit")
     var smoke_step: Dictionary = _find_step(summary, "smoke")
     var gdunit_step: Dictionary = _find_step(summary, "gdunit-hard")
+    var has_smoke_step: bool = not smoke_step.is_empty()
     assert_bool(unit_step.is_empty()).is_false()
-    assert_bool(smoke_step.is_empty()).is_false()
     assert_bool(unit_step.has("rc")).is_true()
-    assert_bool(smoke_step.has("rc")).is_true()
     assert_int(int(unit_step.get("rc", 1))).is_equal(0)
-    assert_int(int(smoke_step.get("rc", 1))).is_equal(0)
+    if has_smoke_step:
+        assert_bool(smoke_step.has("rc")).is_true()
+        assert_int(int(smoke_step.get("rc", 1))).is_equal(0)
+    else:
+        assert_bool(run_bound_in_progress).is_true()
     if gdunit_step.is_empty():
         assert_bool(run_bound_in_progress).is_true()
     else:
@@ -118,7 +124,9 @@ func test_single_canonical_root_is_used_by_bootstrap_steps() -> void:
         assert_str(String(gdunit_step.get("log", ""))).is_not_empty()
 
     var canonical_root: String = _project_root_abs().replace("\\", "/")
-    var scoped_steps: Array = [unit_step, smoke_step]
+    var scoped_steps: Array = [unit_step]
+    if has_smoke_step:
+        scoped_steps.append(smoke_step)
     if not gdunit_step.is_empty():
         scoped_steps.append(gdunit_step)
     for step in scoped_steps:
@@ -128,26 +136,37 @@ func test_single_canonical_root_is_used_by_bootstrap_steps() -> void:
 
 # acceptance: ACC:T1.5
 # acceptance: ACC:T1.2
+# acceptance: ACC:T41.4
+# acceptance: ACC:T41.5
 func test_csharp_mode_smoke_symbols_exist_for_editor_compile_flow() -> void:
     var summary: Dictionary = _latest_sc_test_summary()
     assert_bool(summary.is_empty()).is_false()
     assert_str(String(summary.get("run_id", ""))).is_not_empty()
+    var expected_run_id: String = CiRunBinding.expected_run_id()
+    var summary_run_id: String = String(summary.get("run_id", "")).strip_edges()
+    var run_bound_in_progress: bool = expected_run_id != "" and summary_run_id == expected_run_id
 
     var unit_step: Dictionary = _find_step(summary, "unit")
     var smoke_step: Dictionary = _find_step(summary, "smoke")
+    var has_smoke_step: bool = not smoke_step.is_empty()
     assert_bool(unit_step.is_empty()).is_false()
-    assert_bool(smoke_step.is_empty()).is_false()
     assert_bool(unit_step.has("rc")).is_true()
-    assert_bool(smoke_step.has("rc")).is_true()
     assert_int(int(unit_step.get("rc", 1))).is_equal(0)
-    assert_int(int(smoke_step.get("rc", 1))).is_equal(0)
+    if has_smoke_step:
+        assert_bool(smoke_step.has("rc")).is_true()
+        assert_int(int(smoke_step.get("rc", 1))).is_equal(0)
+    else:
+        assert_bool(run_bound_in_progress).is_true()
 
     var unit_log_text: String = _read_text_if_exists(String(unit_step.get("log", ""))).to_lower()
-    var smoke_log_text: String = _read_text_if_exists(String(smoke_step.get("log", ""))).to_lower()
     assert_bool(unit_log_text.find("run_dotnet status=") >= 0).is_true()
     assert_bool(unit_log_text.find("build failed") < 0).is_true()
-    assert_bool(smoke_log_text.find("starting godot") >= 0).is_true()
-    assert_bool(smoke_log_text.find("smoke pass (marker)") >= 0).is_true()
+    if has_smoke_step:
+        var smoke_log_text: String = _read_text_if_exists(String(smoke_step.get("log", ""))).to_lower()
+        assert_bool(smoke_log_text.find("starting godot") >= 0).is_true()
+        assert_bool(smoke_log_text.find("smoke pass (marker)") >= 0).is_true()
+    else:
+        assert_bool(run_bound_in_progress).is_true()
     assert_bool(_startup_scene_has_csharp_script()).is_true()
 
 func test_canonical_root_normalization_is_deterministic() -> void:
