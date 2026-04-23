@@ -309,6 +309,12 @@ def _build_candidate_specs(summary: dict[str, Any]) -> list[dict[str, Any]]:
                 for value in (item.get("overlay_requirement_ids") or [])
             ]
         )
+        contract_refs: list[str] = []
+        for item in items:
+            for value in item.get("contract_refs") or []:
+                ref = str(value).strip()
+                if ref and ref not in contract_refs:
+                    contract_refs.append(ref)
         expected_logs: list[str] = []
         for item in items:
             for value in item.get("overlay_expected_logs") or []:
@@ -329,6 +335,7 @@ def _build_candidate_specs(summary: dict[str, Any]) -> list[dict[str, Any]]:
                 "failure_state": semantics["failure"],
                 "completion_result": semantics["completion"],
                 "requirement_ids": requirement_ids,
+                "contract_refs": contract_refs,
                 "validation_artifact_targets": expected_logs[:4],
                 "suggested_standalone_surfaces": [part.strip().strip("`") for part in _suggested_surfaces(bucket).split(",")],
                 "test_refs": refs[:4],

@@ -228,7 +228,7 @@ Test-Refs:
 
 ## Chapter 7 UI Wiring Contract Reuse (`T41-T46`)
 
-`T41-T46` ??? `Game.Core/Contracts/DomainEvent.cs` and `Game.Core/Contracts/EventTypes.cs` ?? skeleton??????? core event?DTO ? interface ??????????????????? UI ???
+`T41-T46` must first reuse the existing `Game.Core/Contracts/DomainEvent.cs` and `Game.Core/Contracts/EventTypes.cs` skeleton. Add a core event, DTO, or interface only when the required runtime signal cannot be represented by the existing contract set; presentation-only UI state must stay outside core contracts.
 
 | Task IDs | UI Slice | Required Existing Contracts |
 | --- | --- | --- |
@@ -240,4 +240,3 @@ Test-Refs:
 | `T46` | Config Audit And Migration Surfaces | `Game.Core/Contracts/Lastking/ConfigLoaded.cs`, `Game.Core/Contracts/Config/config-change-audit.schema.json`, `Game.Core/Contracts/Config/enemy-config.schema.json`, `Game.Core/Contracts/Config/difficulty-config.schema.json` |
 
 Contract update rule: only add a new contract if a Chapter 7 implementation needs a new domain event or DTO that cannot be represented by the listed contracts. UI scene classes, panel view models, and presentation-only state do not belong under `Game.Core/Contracts/DomainEvent.cs` and `Game.Core/Contracts/EventTypes.cs`.
-

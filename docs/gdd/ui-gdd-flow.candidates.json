@@ -26,6 +26,10 @@
         "RQ-CORE-LOOP-STATE",
         "RQ-ECONOMY-BUILD-RULES"
       ],
+      "contract_refs": [
+        "core.lastking.bootstrap.ready",
+        "core.lastking.windows_runtime.validated"
+      ],
       "validation_artifact_targets": [
         "logs/ci/<YYYY-MM-DD>/task-triplet-audit/report.json",
         "logs/unit/<YYYY-MM-DD>/coverage.json",
@@ -77,6 +81,16 @@
         "RQ-CORE-LOOP-STATE",
         "RQ-CORE-LOOP-STATE"
       ],
+      "contract_refs": [
+        "core.lastking.day.started",
+        "core.lastking.night.started",
+        "core.lastking.castle.hp_changed",
+        "core.lastking.wave.spawned",
+        "core.lastking.reward.offered",
+        "core.lastking.save.autosaved",
+        "core.lastking.time_scale.changed",
+        "core.lastking.ui_feedback.raised"
+      ],
       "validation_artifact_targets": [
         "logs/ci/<YYYY-MM-DD>/task-triplet-audit/report.json",
         "logs/unit/<YYYY-MM-DD>/coverage.json",
@@ -119,6 +133,11 @@
         "RQ-CORE-LOOP-STATE",
         "RQ-CORE-LOOP-STATE",
         "RQ-CORE-LOOP-STATE"
+      ],
+      "contract_refs": [
+        "core.lastking.wave.spawned",
+        "core.lastking.castle.hp_changed",
+        "core.lastking.camera.scrolled"
       ],
       "validation_artifact_targets": [
         "logs/ci/<YYYY-MM-DD>/task-triplet-audit/report.json",
@@ -165,6 +184,12 @@
         "RQ-ECONOMY-BUILD-RULES",
         "RQ-ECONOMY-BUILD-RULES"
       ],
+      "contract_refs": [
+        "core.lastking.resources.changed",
+        "core.lastking.ui_feedback.raised",
+        "core.lastking.tax.collected",
+        "core.lastking.tech.applied"
+      ],
       "validation_artifact_targets": [
         "logs/unit/<YYYY-MM-DD>/coverage.json"
       ],
@@ -207,6 +232,16 @@
         "RQ-SAVE-MIGRATION-CLOUD",
         "RQ-SAVE-MIGRATION-CLOUD",
         "RQ-SAVE-MIGRATION-CLOUD"
+      ],
+      "contract_refs": [
+        "core.lastking.save.autosaved",
+        "core.lastking.cloud_save.sync.completed",
+        "core.lastking.day.started",
+        "core.lastking.castle.hp_changed",
+        "core.lastking.reward.offered",
+        "core.lastking.ui_feedback.raised",
+        "core.lastking.audio_settings.changed",
+        "core.lastking.perf.sampled"
       ],
       "validation_artifact_targets": [
         "logs/ci/<YYYY-MM-DD>/save-migration/report.json",
@@ -263,6 +298,9 @@
         "RQ-CONFIG-CONTRACT-GOV",
         "RQ-CONFIG-CONTRACT-GOV",
         "RQ-CORE-LOOP-STATE"
+      ],
+      "contract_refs": [
+        "core.lastking.config.loaded"
       ],
       "validation_artifact_targets": [
         "logs/ci/<YYYY-MM-DD>/task-triplet-audit/report.json",

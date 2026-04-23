@@ -206,7 +206,7 @@ Test-Refs:
 
 ### Slice D - Chapter 7 UI Wiring (`T41-T46`)
 
-- Scope: ? `docs/gdd/ui-gdd-flow.md` ? `docs/gdd/ui-gdd-flow.candidates.json` ???? UI wiring slice ??????????????HUD?????????/??????????????
+- Scope: derive UI wiring slices from `docs/gdd/ui-gdd-flow.md` and `docs/gdd/ui-gdd-flow.candidates.json`, covering player-visible entry, HUD, combat feedback, economy panels, save/settings, and config governance surfaces.
 - Key tasks: `T41`, `T42`, `T43`, `T44`, `T45`, `T46`.
 - Source GDD:
   - `docs/gdd/ui-gdd-flow.md`
@@ -222,7 +222,6 @@ Test-Refs:
   - `Game.Core/Contracts/Lastking/SaveAutosaved.cs`
   - `Game.Core/Contracts/Lastking/ConfigLoaded.cs`
 - Failure focus:
-  - UI wiring task ???????????? empty/failure/completion ????????
-  - standalone surface ??????? candidate sidecar ? `suggested_standalone_surfaces`?
-  - ??? P2 polish?????????? `T41-T46` ? P0/P1 wiring scope?
-
+  - Each UI wiring task must keep explicit empty, failure, and completion-state acceptance.
+  - Standalone surface ownership must match the candidate sidecar `suggested_standalone_surfaces`.
+  - Presentation polish remains P2 unless it is required for the `T41-T46` P0/P1 wiring scope.

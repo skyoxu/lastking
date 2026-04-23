@@ -207,6 +207,7 @@ def _view_task(*, prefix: str, task_id: int, candidate: dict[str, Any], owner: s
     screen_group = str(candidate.get("screen_group") or f"Chapter 7 Slice {task_id}")
     bucket = str(candidate.get("bucket") or "ui")
     test_refs = _merge_refs(list(candidate.get("test_refs") or []))
+    contract_refs = _merge_refs(list(candidate.get("contract_refs") or []))
     scope_ids = [int(item) for item in candidate.get("scope_task_ids") or [] if isinstance(item, int)]
     depends_on = [_view_id(prefix, item) for item in scope_ids]
     priority = _view_priority(_priority_for_bucket(bucket))
@@ -228,7 +229,7 @@ def _view_task(*, prefix: str, task_id: int, candidate: dict[str, Any], owner: s
         "labels": [source_label, "lastking", "taskmaster-view", "chapter7-ui", bucket],
         "test_refs": test_refs,
         "acceptance": _acceptance(candidate, test_refs),
-        "contractRefs": _merge_refs(list(candidate.get("requirement_ids") or [])),
+        "contractRefs": contract_refs,
         "ui_wiring_candidate": {
             "source": UI_CANDIDATES.as_posix(),
             "screen_group": screen_group,
