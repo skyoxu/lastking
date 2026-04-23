@@ -3397,9 +3397,8 @@
       "MainMenu And Boot Flow validation must include both referenced GdUnit and xUnit suites, and Chapter 7 artifact evidence must record auditable pass/fail outcomes for each framework; when one framework has no applicable case, acceptance must explicitly record that framework as N/A with rationale instead of omitting it. Refs: Game.Core.Tests/State/GameStateMachineTests.cs Tests.Godot/tests/Integration/test_project_bootstrap_editor_compile_run.gd Tests.Godot/tests/Integration/test_windows_export_startup_flow.gd Tests.Godot/tests/Scenes/Smoke/test_main_scene_smoke.gd"
     ],
     "contractRefs": [
-      "RQ-RUNTIME-INTERACTION",
-      "RQ-CORE-LOOP-STATE",
-      "RQ-ECONOMY-BUILD-RULES"
+      "core.lastking.bootstrap.ready",
+      "core.lastking.windows_runtime.validated"
     ],
     "ui_wiring_candidate": {
       "source": "docs/gdd/ui-gdd-flow.candidates.json",
@@ -3480,10 +3479,14 @@
       "Runtime HUD And Outcome Surfaces validation must include the referenced xUnit suite and an explicit GdUnit N/A record when no GdUnit case applies, and Chapter 7 artifact evidence must record auditable pass/fail outcomes for each framework; when one framework has no applicable case, acceptance must explicitly record that framework as N/A with rationale instead of omitting it. Refs: Game.Core.Tests/State/GameStateMachineTests.cs Game.Core.Tests/State/GameStateManagerTests.cs Game.Core.Tests/Tasks/Task3DayNightScopeGuardTests.cs Game.Core.Tests/Tasks/Task3DayNightDesignArtifactTests.cs"
     ],
     "contractRefs": [
-      "RQ-RUNTIME-SPEED-MODES",
-      "RQ-RUNTIME-ERROR-FEEDBACK",
-      "RQ-COMBAT-QUEUE-TECH",
-      "RQ-CORE-LOOP-STATE"
+      "core.lastking.day.started",
+      "core.lastking.night.started",
+      "core.lastking.castle.hp_changed",
+      "core.lastking.wave.spawned",
+      "core.lastking.reward.offered",
+      "core.lastking.save.autosaved",
+      "core.lastking.time_scale.changed",
+      "core.lastking.ui_feedback.raised"
     ],
     "ui_wiring_candidate": {
       "source": "docs/gdd/ui-gdd-flow.candidates.json",
@@ -3565,9 +3568,9 @@
       "Combat Pressure And Interaction Surfaces validation must include the referenced xUnit suite and an explicit GdUnit N/A record when no GdUnit case applies, and Chapter 7 artifact evidence must record auditable pass/fail outcomes for each framework; when one framework has no applicable case, acceptance must explicitly record that framework as N/A with rationale instead of omitting it. Refs: Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs Game.Core.Tests/Services/WaveManagerDeterminismTests.cs Game.Core.Tests/Engine/GameEngineCoreDeterminismTests.cs Game.Core.Tests/Services/WaveBudgetAllocatorTests.cs"
     ],
     "contractRefs": [
-      "RQ-CAMERA-SCROLL",
-      "RQ-COMBAT-QUEUE-TECH",
-      "RQ-CORE-LOOP-STATE"
+      "core.lastking.wave.spawned",
+      "core.lastking.castle.hp_changed",
+      "core.lastking.camera.scrolled"
     ],
     "ui_wiring_candidate": {
       "source": "docs/gdd/ui-gdd-flow.candidates.json",
@@ -3646,8 +3649,10 @@
       "Economy And Progression Panels validation must include the referenced xUnit suite and an explicit GdUnit N/A record when no GdUnit case applies, and Chapter 7 artifact evidence must record auditable pass/fail outcomes for each framework; when one framework has no applicable case, acceptance must explicitly record that framework as N/A with rationale instead of omitting it. Refs: Game.Core.Tests/Services/ResourceManagerIntegerSafetyTests.cs Game.Core.Tests/Engine/GameEngineCoreEventTests.cs Game.Core.Tests/Services/ResourceManagerTests.cs Game.Core.Tests/Services/ResourceManagerEventTests.cs"
     ],
     "contractRefs": [
-      "RQ-COMBAT-QUEUE-TECH",
-      "RQ-ECONOMY-BUILD-RULES"
+      "core.lastking.resources.changed",
+      "core.lastking.ui_feedback.raised",
+      "core.lastking.tax.collected",
+      "core.lastking.tech.applied"
     ],
     "ui_wiring_candidate": {
       "source": "docs/gdd/ui-gdd-flow.candidates.json",
@@ -3727,10 +3732,14 @@
       "Save, Settings, And Meta Surfaces validation must include the referenced GdUnit suite and an explicit xUnit N/A record when no xUnit case applies, and Chapter 7 artifact evidence must record auditable pass/fail outcomes for each framework; when one framework has no applicable case, acceptance must explicitly record that framework as N/A with rationale instead of omitting it. Refs: Tests.Godot/tests/Adapters/Save/test_save_manager_autosave_slot_path.gd Tests.Godot/tests/Adapters/Db/test_savegame_update_overwrite_cross_restart.gd Tests.Godot/tests/Adapters/Save/test_save_manager_daystart_autosave.gd Tests.Godot/tests/Adapters/Db/test_savegame_persistence_cross_restart.gd"
     ],
     "contractRefs": [
-      "RQ-I18N-LANG-SWITCH",
-      "RQ-AUDIO-CHANNEL-SETTINGS",
-      "RQ-PERF-GATE",
-      "RQ-SAVE-MIGRATION-CLOUD"
+      "core.lastking.save.autosaved",
+      "core.lastking.cloud_save.sync.completed",
+      "core.lastking.day.started",
+      "core.lastking.castle.hp_changed",
+      "core.lastking.reward.offered",
+      "core.lastking.ui_feedback.raised",
+      "core.lastking.audio_settings.changed",
+      "core.lastking.perf.sampled"
     ],
     "ui_wiring_candidate": {
       "source": "docs/gdd/ui-gdd-flow.candidates.json",
@@ -3815,8 +3824,7 @@
       "Config Audit And Migration Surfaces validation must include both referenced GdUnit and xUnit suites, and Chapter 7 artifact evidence must record auditable pass/fail outcomes for each framework; when one framework has no applicable case, acceptance must explicitly record that framework as N/A with rationale instead of omitting it. Refs: Tests.Godot/tests/Adapters/Config/test_settings_persistence.gd Game.Core.Tests/Domain/GameConfigTests.cs Tests.Godot/tests/Security/Hard/test_settings_config_security.gd Tests.Godot/tests/Integration/test_balance_runtime_config_reload.gd"
     ],
     "contractRefs": [
-      "RQ-CONFIG-CONTRACT-GOV",
-      "RQ-CORE-LOOP-STATE"
+      "core.lastking.config.loaded"
     ],
     "ui_wiring_candidate": {
       "source": "docs/gdd/ui-gdd-flow.candidates.json",

@@ -111,6 +111,7 @@ class Chapter7UiWiringTests(unittest.TestCase):
                     "failure_state": "Show startup failure explicitly.",
                     "completion_result": "Player reaches stable entry.",
                     "requirement_ids": ["RQ-ENTRY"],
+                    "contract_refs": ["core.lastking.bootstrap.ready", "core.run.started"],
                     "validation_artifact_targets": ["logs/ci/<YYYY-MM-DD>/chapter7-ui-wiring/summary.json"],
                     "suggested_standalone_surfaces": ["MainMenu", "BootStatusPanel"],
                     "test_refs": ["Tests.Godot/tests/UI/test_main_menu.gd"],
@@ -129,6 +130,7 @@ class Chapter7UiWiringTests(unittest.TestCase):
                     "completion_result": "Hard gate: deterministic cycle verification must include a fixed-seed forced-terminal scenario, not only natural Day15 completion paths.",
                     "contract_boundary": "keeps deterministic domain state behind existing contracts, adds no unrelated gameplay behavior",
                     "requirement_ids": ["RQ-HUD"],
+                    "contract_refs": ["core.lastking.daynight.terminal", "core.lastking.time_scale.changed"],
                     "validation_artifact_targets": [
                         "logs/ci/<YYYY-MM-DD>/task-triplet-audit/report.json",
                         "logs/unit/<YYYY-MM-DD>/coverage.json",
@@ -804,6 +806,20 @@ class Chapter7UiWiringTests(unittest.TestCase):
         self.assertEqual([4, 5], second_payload["updated_task_ids"])
         self.assertIn("phase, timer, HP, reward, prompt, and win/lose state", runtime_acceptance)
         self.assertIn("logs/unit/<YYYY-MM-DD>/coverage.json", runtime_acceptance)
+
+    def test_create_tasks_should_write_contract_refs_from_candidate_events_not_requirements(self) -> None:
+        module = _load_module("create_chapter7_tasks_module_for_contract_refs", "scripts/python/create_chapter7_tasks_from_ui_candidates.py")
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            self._write_sample_repo(root, gdd_text="# stale doc without candidates\n")
+            self._write_candidate_sidecar(root)
+            rc, _ = module.create_tasks(repo_root=root, dry_run=False)
+            back = json.loads((root / ".taskmaster" / "tasks" / "tasks_back.json").read_text(encoding="utf-8"))
+            entry_task = next(item for item in back if item["taskmaster_id"] == 4)
+
+        self.assertEqual(0, rc)
+        self.assertEqual(["core.lastking.bootstrap.ready", "core.run.started"], entry_task["contractRefs"])
+        self.assertNotIn("RQ-ENTRY", entry_task["contractRefs"])
 
     def test_orchestrator_self_check_should_include_create_tasks_step_when_requested(self) -> None:
         run_module = _load_module("run_chapter7_ui_wiring_module_for_create_tasks_self_check", "scripts/python/run_chapter7_ui_wiring.py")

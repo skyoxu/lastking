@@ -64,8 +64,7 @@ Test-Refs:
 
 ## Chapter 7 UI Wiring Acceptance (`T41-T46`)
 
-- `T41-T46` ??????? `docs/gdd/ui-gdd-flow.md` ? `## 5. UI Wiring Matrix` ? `## 11. Next UI Wiring Task Candidates`?
-- ???????? `docs/gdd/ui-gdd-flow.candidates.json` ??? candidate ? `ui_entry`?`player_action`?`system_response`?`empty_state`?`failure_state`?`completion_result`?`suggested_standalone_surfaces`?
-- ?????????? test refs ??????????????????????????
-- `T41-T46` ???? presentation-only contract??? domain event/DTO ???????? `workflow.md` ????? `Game.Core/Contracts/DomainEvent.cs` and `Game.Core/Contracts/EventTypes.cs` skeleton?
-
+- `T41-T46` must trace to `docs/gdd/ui-gdd-flow.md` section `## 5. UI Wiring Matrix` and `## 11. Next UI Wiring Task Candidates`.
+- Each task must be generated from one `docs/gdd/ui-gdd-flow.candidates.json` candidate and preserve `ui_entry`, `player_action`, `system_response`, `empty_state`, `failure_state`, `completion_result`, and `suggested_standalone_surfaces`.
+- Each acceptance item must keep concrete test refs and auditable artifact refs instead of relying on logs-only evidence.
+- `T41-T46` must reuse presentation-safe existing contracts; only add a new domain event, DTO, or interface when `workflow.md` and `Game.Core/Contracts/DomainEvent.cs` plus `Game.Core/Contracts/EventTypes.cs` cannot represent the required signal.
