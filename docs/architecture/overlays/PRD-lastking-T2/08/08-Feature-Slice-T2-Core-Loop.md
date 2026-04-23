@@ -202,3 +202,27 @@ Test-Refs:
   - 配置缺失未回退内置安全默认；
   - 契约版本迁移策略未强制执行；
   - 报告缺少 config hash/version 审计字段。
+
+
+### Slice D - Chapter 7 UI Wiring (`T41-T46`)
+
+- Scope: ? `docs/gdd/ui-gdd-flow.md` ? `docs/gdd/ui-gdd-flow.candidates.json` ???? UI wiring slice ??????????????HUD?????????/??????????????
+- Key tasks: `T41`, `T42`, `T43`, `T44`, `T45`, `T46`.
+- Source GDD:
+  - `docs/gdd/ui-gdd-flow.md`
+  - `docs/gdd/ui-gdd-flow.candidates.json`
+- Contract anchor:
+  - `Game.Core/Contracts/DomainEvent.cs`
+  - `Game.Core/Contracts/EventTypes.cs`
+  - `Game.Core/Contracts/Lastking/BootstrapReady.cs`
+  - `Game.Core/Contracts/Lastking/TimeScaleChanged.cs`
+  - `Game.Core/Contracts/Lastking/UiFeedbackRaised.cs`
+  - `Game.Core/Contracts/Lastking/CameraScrolled.cs`
+  - `Game.Core/Contracts/Lastking/ResourcesChanged.cs`
+  - `Game.Core/Contracts/Lastking/SaveAutosaved.cs`
+  - `Game.Core/Contracts/Lastking/ConfigLoaded.cs`
+- Failure focus:
+  - UI wiring task ???????????? empty/failure/completion ????????
+  - standalone surface ??????? candidate sidecar ? `suggested_standalone_surfaces`?
+  - ??? P2 polish?????????? `T41-T46` ? P0/P1 wiring scope?
+

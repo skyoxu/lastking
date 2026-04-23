@@ -44,6 +44,13 @@ Test-Refs:
 | RQ-PERF-GATE | 30 | `Tests.Godot/tests/Integration/test_backup_restore_savegame.gd` | `logs/perf/<YYYY-MM-DD>/summary.json` |
 | RQ-CONFIG-CONTRACT-GOV | 31-40 | `Game.Core.Tests/Domain/GameConfigTests.cs`, `Game.Core.Tests/Contracts/DomainEventPayloadTests.cs` | `logs/ci/<YYYY-MM-DD>/overlay-lint/report.json` |
 
+| RQ-CH7-ENTRY-WIRING | 41 | `Tests.Godot/tests/Scenes/Smoke/test_main_scene_smoke.gd`, `Tests.Godot/tests/Integration/test_project_bootstrap_editor_compile_run.gd` | `logs/ci/<YYYY-MM-DD>/chapter7-ui-wiring/summary.json` |
+| RQ-CH7-HUD-OUTCOME-WIRING | 42 | `Tests.Godot/tests/UI/test_hud_scene.gd`, `Tests.Godot/tests/UI/test_hud_updates_on_events.gd` | `logs/e2e/<YYYY-MM-DD>/runtime-ui/summary.json` |
+| RQ-CH7-COMBAT-WIRING | 43 | `Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs`, `Tests.Godot/tests/Scenes/Camera/test_camera_controller_scroll_inputs.gd` | `logs/e2e/<YYYY-MM-DD>/runtime-ui/summary.json` |
+| RQ-CH7-ECONOMY-WIRING | 44 | `Game.Core.Tests/Services/ResourceManagerIntegerSafetyTests.cs`, `Tests.Godot/tests/Scenes/Building/test_build_mode_preview_and_confirm.gd` | `logs/unit/<YYYY-MM-DD>/coverage.json` |
+| RQ-CH7-META-WIRING | 45 | `Tests.Godot/tests/Adapters/Save/test_save_manager_daystart_autosave.gd`, `Tests.Godot/tests/UI/test_hud_scene.gd` | `logs/e2e/<YYYY-MM-DD>/settings/summary.json` |
+| RQ-CH7-CONFIG-AUDIT-WIRING | 46 | `Tests.Godot/tests/Adapters/Config/test_settings_persistence.gd`, `Game.Core.Tests/Domain/GameConfigTests.cs` | `logs/ci/<YYYY-MM-DD>/config-governance/report.json` |
+
 ## Task-to-Test Focus (P0)
 
 - `T21/T22`: 镜头与交互至少覆盖边缘滚屏阈值、键盘滚屏、镜头边界三项行为。

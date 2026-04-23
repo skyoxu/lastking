@@ -431,6 +431,8 @@ def build_run_chapter7_ui_wiring_cmd(args) -> list[str]:
         cmd += ["--delivery-profile", args.delivery_profile]
     if getattr(args, 'write_doc', False):
         cmd.append("--write-doc")
+    if getattr(args, 'create_tasks', False):
+        cmd.append("--create-tasks")
     if getattr(args, 'out_json', ''):
         cmd += ["--out-json", args.out_json]
     if getattr(args, 'self_check', False):

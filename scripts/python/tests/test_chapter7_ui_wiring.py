@@ -89,6 +89,59 @@ class Chapter7UiWiringTests(unittest.TestCase):
         (tasks_dir / "tasks_back.json").write_text(json.dumps(back, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         (docs_dir / "ui-gdd-flow.md").write_text(gdd_text, encoding="utf-8")
 
+    def _write_candidate_sidecar(self, root: Path) -> Path:
+        sidecar = root / "docs" / "gdd" / "ui-gdd-flow.candidates.json"
+        sidecar.parent.mkdir(parents=True, exist_ok=True)
+        payload = {
+            "generated_at": "2026-04-23",
+            "source_gdd": "docs/gdd/ui-gdd-flow.md",
+            "completed_master_tasks_count": 40,
+            "needed_wiring_features_count": 40,
+            "candidates": [
+                {
+                    "bucket": "entry",
+                    "screen_group": "MainMenu And Boot Flow",
+                    "scope_task_ids": [1, 11, 21],
+                    "scope_task_refs": "T01, T11, T21",
+                    "ui_entry": "MainMenu / Boot Flow",
+                    "candidate_type": "task-shaped UI wiring spec",
+                    "player_action": "Launch or continue",
+                    "system_response": "Show boot state",
+                    "empty_state": "Show no active run state until runtime data is available.",
+                    "failure_state": "Show startup failure explicitly.",
+                    "completion_result": "Player reaches stable entry.",
+                    "requirement_ids": ["RQ-ENTRY"],
+                    "validation_artifact_targets": ["logs/ci/<YYYY-MM-DD>/chapter7-ui-wiring/summary.json"],
+                    "suggested_standalone_surfaces": ["MainMenu", "BootStatusPanel"],
+                    "test_refs": ["Tests.Godot/tests/UI/test_main_menu.gd"],
+                },
+                {
+                    "bucket": "loop",
+                    "screen_group": "Runtime HUD And Outcome Surfaces",
+                    "scope_task_ids": [3, 9],
+                    "scope_task_refs": "T03, T09",
+                    "ui_entry": "HUD / Prompt / Outcome Surfaces",
+                    "candidate_type": "task-shaped UI wiring spec",
+                    "player_action": "Play a run, observe timing, rewards, prompts, and terminal transitions",
+                    "system_response": "Render readable phase, timer, HP, reward, prompt, and win/lose state from runtime events",
+                    "empty_state": "Day/Night phase durations must be configuration-driven (not hardcoded): default Day=4:00 and Night=2:00; transition is allowed only when the active phase reaches its configured threshold, and transition cannot be manually forced before threshold.",
+                    "failure_state": "Day/Night runtime updates must be driven by the Godot process loop (_Process and/or _PhysicsProcess) into GameStateManager.UpdateDayNightRuntime; when loop updates are paused or stopped, cycle progression must not advance.",
+                    "completion_result": "Hard gate: deterministic cycle verification must include a fixed-seed forced-terminal scenario, not only natural Day15 completion paths.",
+                    "contract_boundary": "keeps deterministic domain state behind existing contracts, adds no unrelated gameplay behavior",
+                    "requirement_ids": ["RQ-HUD"],
+                    "validation_artifact_targets": [
+                        "logs/ci/<YYYY-MM-DD>/task-triplet-audit/report.json",
+                        "logs/unit/<YYYY-MM-DD>/coverage.json",
+                        "logs/e2e/<YYYY-MM-DD>/runtime-ui/summary.json",
+                    ],
+                    "suggested_standalone_surfaces": ["RuntimeHud"],
+                    "test_refs": ["Tests.Godot/tests/UI/test_hud_scene.gd"],
+                },
+            ],
+        }
+        sidecar.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
+        return sidecar
+
     def _write_rich_sample_repo(self, root: Path) -> None:
         tasks_dir = root / ".taskmaster" / "tasks"
         tasks_dir.mkdir(parents=True)
@@ -663,6 +716,104 @@ class Chapter7UiWiringTests(unittest.TestCase):
 
         self.assertEqual(0, rc)
         self.assertEqual(["collect", "write-doc", "validate"], payload["planned_steps"])
+
+    def test_create_tasks_should_consume_only_ui_gdd_candidate_sidecar(self) -> None:
+        module = _load_module("create_chapter7_tasks_module", "scripts/python/create_chapter7_tasks_from_ui_candidates.py")
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            self._write_sample_repo(root, gdd_text="# stale doc without candidates\n")
+            self._write_candidate_sidecar(root)
+            rc, payload = module.create_tasks(repo_root=root, dry_run=False)
+
+            tasks = json.loads((root / ".taskmaster" / "tasks" / "tasks.json").read_text(encoding="utf-8"))["master"]["tasks"]
+            back = json.loads((root / ".taskmaster" / "tasks" / "tasks_back.json").read_text(encoding="utf-8"))
+            gameplay = json.loads((root / ".taskmaster" / "tasks" / "tasks_gameplay.json").read_text(encoding="utf-8"))
+
+        self.assertEqual(0, rc)
+        self.assertEqual("ok", payload["status"])
+        self.assertEqual(2, payload["created_count"])
+        self.assertEqual([4, 5], payload["created_task_ids"])
+        self.assertEqual("Wire UI: MainMenu And Boot Flow", tasks[-2]["title"])
+        self.assertEqual("Wire UI: Runtime HUD And Outcome Surfaces", tasks[-1]["title"])
+        self.assertEqual("pending", tasks[-1]["status"])
+        self.assertIn(3, tasks[-1]["dependencies"])
+        self.assertIn(9, tasks[-1]["dependencies"])
+        self.assertIn("keeps deterministic domain state behind existing contracts", tasks[-1]["details"])
+        self.assertIn("adds no unrelated gameplay behavior", tasks[-1]["details"])
+        self.assertEqual("NG-0004", back[-2]["id"])
+        self.assertEqual(4, back[-2]["taskmaster_id"])
+        self.assertEqual("GM-0104", gameplay[-2]["id"])
+        self.assertEqual(4, gameplay[-2]["taskmaster_id"])
+        self.assertIn("Tests.Godot/tests/UI/test_hud_scene.gd", gameplay[-1]["test_refs"])
+        self.assertIn("Refs: Tests.Godot/tests/UI/test_hud_scene.gd", gameplay[-1]["acceptance"][0])
+        runtime_acceptance = " ".join(gameplay[-1]["acceptance"])
+        self.assertIn("timing, rewards, prompts, and terminal transitions", runtime_acceptance)
+        self.assertIn("phase, timer, HP, reward, prompt, and win/lose state", runtime_acceptance)
+        self.assertIn("default Day=4:00 and Night=2:00", runtime_acceptance)
+        self.assertIn("active phase reaches its configured threshold", runtime_acceptance)
+        self.assertIn("cannot be manually forced before threshold", runtime_acceptance)
+        self.assertIn("GameStateManager.UpdateDayNightRuntime", runtime_acceptance)
+        self.assertIn("paused or stopped", runtime_acceptance)
+        self.assertIn("state remains unchanged", runtime_acceptance)
+        self.assertIn("cycle progression must not advance", runtime_acceptance)
+        self.assertIn("fixed-seed forced-terminal scenario", runtime_acceptance)
+        self.assertIn("logs/ci/<YYYY-MM-DD>/task-triplet-audit/report.json", runtime_acceptance)
+        self.assertIn("logs/unit/<YYYY-MM-DD>/coverage.json", runtime_acceptance)
+        self.assertIn("logs/e2e/<YYYY-MM-DD>/runtime-ui/summary.json", runtime_acceptance)
+
+    def test_create_tasks_should_be_idempotent_for_same_candidate_sidecar(self) -> None:
+        module = _load_module("create_chapter7_tasks_module_for_idempotency", "scripts/python/create_chapter7_tasks_from_ui_candidates.py")
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            self._write_sample_repo(root, gdd_text="# stale doc without candidates\n")
+            self._write_candidate_sidecar(root)
+            first_rc, first_payload = module.create_tasks(repo_root=root, dry_run=False)
+            second_rc, second_payload = module.create_tasks(repo_root=root, dry_run=False)
+            tasks = json.loads((root / ".taskmaster" / "tasks" / "tasks.json").read_text(encoding="utf-8"))["master"]["tasks"]
+
+        self.assertEqual(0, first_rc)
+        self.assertEqual(0, second_rc)
+        self.assertEqual(2, first_payload["created_count"])
+        self.assertEqual(0, second_payload["created_count"])
+        self.assertEqual([4, 5], second_payload["existing_task_ids"])
+        self.assertEqual(5, len(tasks))
+
+    def test_create_tasks_should_refresh_existing_chapter7_tasks_from_candidate_sidecar(self) -> None:
+        module = _load_module("create_chapter7_tasks_module_for_refresh", "scripts/python/create_chapter7_tasks_from_ui_candidates.py")
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            self._write_sample_repo(root, gdd_text="# stale doc without candidates\n")
+            self._write_candidate_sidecar(root)
+            first_rc, _ = module.create_tasks(repo_root=root, dry_run=False)
+
+            sidecar = root / "docs" / "gdd" / "ui-gdd-flow.candidates.json"
+            payload = json.loads(sidecar.read_text(encoding="utf-8"))
+            runtime = next(item for item in payload["candidates"] if item["screen_group"] == "Runtime HUD And Outcome Surfaces")
+            runtime["system_response"] = "Render readable phase, timer, HP, reward, prompt, and win/lose state from runtime events"
+            runtime["validation_artifact_targets"].append("logs/unit/<YYYY-MM-DD>/coverage.json")
+            sidecar.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+            second_rc, second_payload = module.create_tasks(repo_root=root, dry_run=False)
+            back = json.loads((root / ".taskmaster" / "tasks" / "tasks_back.json").read_text(encoding="utf-8"))
+            runtime_task = next(item for item in back if item["taskmaster_id"] == 5)
+            runtime_acceptance = " ".join(runtime_task["acceptance"])
+
+        self.assertEqual(0, first_rc)
+        self.assertEqual(0, second_rc)
+        self.assertEqual(0, second_payload["created_count"])
+        self.assertEqual([4, 5], second_payload["updated_task_ids"])
+        self.assertIn("phase, timer, HP, reward, prompt, and win/lose state", runtime_acceptance)
+        self.assertIn("logs/unit/<YYYY-MM-DD>/coverage.json", runtime_acceptance)
+
+    def test_orchestrator_self_check_should_include_create_tasks_step_when_requested(self) -> None:
+        run_module = _load_module("run_chapter7_ui_wiring_module_for_create_tasks_self_check", "scripts/python/run_chapter7_ui_wiring.py")
+        output = io.StringIO()
+        with redirect_stdout(output):
+            rc = run_module.main(["--delivery-profile", "fast-ship", "--write-doc", "--create-tasks", "--self-check"])
+        payload = json.loads(output.getvalue())
+
+        self.assertEqual(0, rc)
+        self.assertEqual(["collect", "write-doc", "validate", "create-tasks"], payload["planned_steps"])
 
 
     def test_write_doc_should_export_stable_candidate_sidecar_json(self) -> None:

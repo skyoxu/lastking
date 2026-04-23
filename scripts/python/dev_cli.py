@@ -483,6 +483,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_ch7.add_argument("--repo-root", default=".")
     p_ch7.add_argument("--delivery-profile", default="")
     p_ch7.add_argument("--write-doc", action="store_true")
+    p_ch7.add_argument("--create-tasks", action="store_true")
     p_ch7.add_argument("--out-json", default="")
     p_ch7.add_argument("--self-check", action="store_true")
     p_ch7.set_defaults(func=cmd_run_chapter7_ui_wiring)
