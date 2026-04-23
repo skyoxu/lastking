@@ -172,6 +172,7 @@ func _run_external_scene_probe() -> Dictionary:
 # ACC:T1.16
 # ACC:T11.2 ACC:T11.24
 # ACC:T21.14
+# ACC:T41.9
 func test_main_scene_instantiates_and_visible() -> void:
     var scene: Node = _instantiate_main_scene()
     await get_tree().process_frame

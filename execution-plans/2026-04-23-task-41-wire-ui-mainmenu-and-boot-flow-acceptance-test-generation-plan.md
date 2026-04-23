@@ -1,0 +1,21 @@
+# Task 41 Wire UI: MainMenu And Boot Flow acceptance-test generation plan
+
+- Title: Task 41 Wire UI: MainMenu And Boot Flow acceptance-test generation plan
+- Status: active
+- Branch: task/T41
+- Git Head: 2dcc86a09345aded9c32f001124bf8d7fd280aec
+- Goal: Control acceptance-driven test generation complexity for task 41.
+- Scope: 0 missing refs across 0 test roots; seed refs: no missing refs detected
+- Current step: Address remaining reviewer needs-fix items via Chapter 6 step 6.8 narrow closure.
+- Last completed step: Deterministic acceptance refs/anchors and security hard gate reached green under Task 41 pipeline.
+- Stop-loss: Do not start Codex test generation until the ref mix and verify mode are explicit.
+- Next action: Run `llm_review_needs_fix_fast.py --task-id 41 --delivery-profile fast-ship --rerun-failing-only --max-rounds 1` after reviewer-targeted fixes.
+- Recovery command: `py -3 scripts/sc/run_review_pipeline.py --task-id 41 --resume`
+- Open questions: none recorded yet
+- Exit criteria: The next acceptance-driven test generation step is explicit and low-ambiguity.
+- Related ADRs: none yet
+- Related decision logs: none yet
+- Related task id(s): `41`
+- Related run id: `0508e93ac3a943ef9a54618f35ca6cf4` (latest full pipeline, deterministic green with LLM Needs Fix)
+- Related latest.json: `logs/ci/2026-04-23/sc-review-pipeline-task-41/latest.json`
+- Related pipeline artifacts: `logs/ci/2026-04-23/sc-review-pipeline-task-41-0508e93ac3a943ef9a54618f35ca6cf4`

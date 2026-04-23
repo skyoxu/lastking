@@ -3411,7 +3411,12 @@
         21
       ],
       "ui_entry": "MainMenu / Boot Flow"
-    }
+    },
+    "test_strategy": [
+      "Build MainMenu/Boot flow wiring with explicit empty/failure/completion states and keep evidence aligned with acceptance Refs.",
+      "Preserve contract boundary by consuming existing core.lastking bootstrap/runtime events and avoid introducing new core contracts during UI-only wiring.",
+      "Validate with referenced xUnit plus GdUnit integration/smoke suites, then record artifact evidence under logs/ci and logs/unit paths listed in acceptance."
+    ]
   },
   {
     "id": "NG-0042",
