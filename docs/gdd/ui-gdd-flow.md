@@ -3,7 +3,7 @@ GDD-ID: GDD-LASTKING-UI-WIRING-V1
 Title: Lastking Chapter 7 UI Wiring Board
 Status: Draft
 Owner: codex
-Last Updated: 2026-04-22
+Last Updated: 2026-04-23
 Encoding: UTF-8
 Applies-To:
   - .taskmaster/tasks/tasks.json

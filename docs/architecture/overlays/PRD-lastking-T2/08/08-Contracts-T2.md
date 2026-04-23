@@ -224,3 +224,20 @@ Test-Refs:
 
 - `py -3 scripts/python/validate_overlay_execution.py --prd-id PRD-lastking-T2`
 - `py -3 scripts/python/validate_contracts.py`
+
+
+## Chapter 7 UI Wiring Contract Reuse (`T41-T46`)
+
+`T41-T46` ??? `Game.Core/Contracts/DomainEvent.cs` and `Game.Core/Contracts/EventTypes.cs` ?? skeleton??????? core event?DTO ? interface ??????????????????? UI ???
+
+| Task IDs | UI Slice | Required Existing Contracts |
+| --- | --- | --- |
+| `T41` | MainMenu And Boot Flow | `Game.Core/Contracts/Lastking/BootstrapReady.cs`, `Game.Core/Contracts/Lastking/WindowsRuntimeValidated.cs`, `Game.Core/Contracts/DomainEvent.cs` |
+| `T42` | Runtime HUD And Outcome Surfaces | `Game.Core/Contracts/Lastking/DayStarted.cs`, `Game.Core/Contracts/Lastking/NightStarted.cs`, `Game.Core/Contracts/Lastking/TimeScaleChanged.cs`, `Game.Core/Contracts/Lastking/UiFeedbackRaised.cs` |
+| `T43` | Combat Pressure And Interaction Surfaces | `Game.Core/Contracts/Lastking/WaveSpawned.cs`, `Game.Core/Contracts/Lastking/CastleHpChanged.cs`, `Game.Core/Contracts/Lastking/CameraScrolled.cs`, `Game.Core/Contracts/Lastking/WaveBudgetDto.cs` |
+| `T44` | Economy And Progression Panels | `Game.Core/Contracts/Lastking/ResourcesChanged.cs`, `Game.Core/Contracts/Lastking/TaxCollected.cs`, `Game.Core/Contracts/Lastking/TechApplied.cs`, `Game.Core/Contracts/Lastking/RewardOffered.cs` |
+| `T45` | Save, Settings, And Meta Surfaces | `Game.Core/Contracts/Lastking/SaveAutosaved.cs`, `Game.Core/Contracts/Lastking/CloudSaveSyncCompleted.cs`, `Game.Core/Contracts/Lastking/AudioSettingsChanged.cs`, `Game.Core/Contracts/Lastking/PerfSampled.cs` |
+| `T46` | Config Audit And Migration Surfaces | `Game.Core/Contracts/Lastking/ConfigLoaded.cs`, `Game.Core/Contracts/Config/config-change-audit.schema.json`, `Game.Core/Contracts/Config/enemy-config.schema.json`, `Game.Core/Contracts/Config/difficulty-config.schema.json` |
+
+Contract update rule: only add a new contract if a Chapter 7 implementation needs a new domain event or DTO that cannot be represented by the listed contracts. UI scene classes, panel view models, and presentation-only state do not belong under `Game.Core/Contracts/DomainEvent.cs` and `Game.Core/Contracts/EventTypes.cs`.
+

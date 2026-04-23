@@ -63,7 +63,7 @@ def _artifact_entry(*, repo_root: Path, path: Path, artifact_type: str, producer
     }
 
 
-def orchestrate(*, repo_root: Path, delivery_profile: str, write_doc: bool) -> tuple[int, dict[str, Any]]:
+def orchestrate(*, repo_root: Path, delivery_profile: str, write_doc: bool, create_tasks: bool) -> tuple[int, dict[str, Any]]:
     out_dir = repo_root / 'logs' / 'ci' / _today() / 'chapter7-ui-wiring'
     steps: list[dict[str, Any]] = []
     artifact_entries: list[dict[str, str]] = []
@@ -73,6 +73,8 @@ def orchestrate(*, repo_root: Path, delivery_profile: str, write_doc: bool) -> t
     if write_doc:
         commands.append(('write-doc', ['py', '-3', _script_path('chapter7_ui_gdd_writer.py'), '--repo-root', str(repo_root)]))
     commands.append(('validate', ['py', '-3', _script_path('validate_chapter7_ui_wiring.py'), '--repo-root', str(repo_root)]))
+    if create_tasks:
+        commands.append(('create-tasks', ['py', '-3', _script_path('create_chapter7_tasks_from_ui_candidates.py'), '--repo-root', str(repo_root)]))
     overall_rc = 0
     for name, cmd in commands:
         rc, output = _run(cmd, cwd=repo_root)
@@ -87,6 +89,7 @@ def orchestrate(*, repo_root: Path, delivery_profile: str, write_doc: bool) -> t
         'status': 'ok' if overall_rc == 0 else 'fail',
         'delivery_profile': delivery_profile,
         'write_doc': write_doc,
+        'create_tasks': create_tasks,
         'out_dir': str(out_dir).replace('\\', '/'),
         'steps': steps,
     }
@@ -140,6 +143,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument('--repo-root', default='.')
     parser.add_argument('--delivery-profile', default='fast-ship')
     parser.add_argument('--write-doc', action='store_true')
+    parser.add_argument('--create-tasks', action='store_true')
     parser.add_argument('--out-json', default='')
     parser.add_argument('--self-check', action='store_true')
     args = parser.parse_args(argv)
@@ -150,18 +154,26 @@ def main(argv: list[str] | None = None) -> int:
         if args.write_doc:
             planned_steps.append('write-doc')
         planned_steps.append('validate')
+        if args.create_tasks:
+            planned_steps.append('create-tasks')
         payload = {
             'ts': dt.datetime.now(dt.timezone.utc).isoformat(),
             'action': 'run-chapter7-ui-wiring',
             'status': 'ok',
             'delivery_profile': args.delivery_profile,
             'write_doc': bool(args.write_doc),
+            'create_tasks': bool(args.create_tasks),
             'planned_steps': planned_steps,
         }
         print(json.dumps(payload, ensure_ascii=False, indent=2))
         return 0
 
-    rc, payload = orchestrate(repo_root=repo_root, delivery_profile=args.delivery_profile, write_doc=bool(args.write_doc))
+    rc, payload = orchestrate(
+        repo_root=repo_root,
+        delivery_profile=args.delivery_profile,
+        write_doc=bool(args.write_doc),
+        create_tasks=bool(args.create_tasks),
+    )
     out = Path(args.out_json) if args.out_json else (repo_root / 'logs' / 'ci' / _today() / 'chapter7-ui-wiring' / 'summary.json')
     out.parent.mkdir(parents=True, exist_ok=True)
     manifest_path = Path(payload['artifact_manifest'])

@@ -3339,5 +3339,506 @@
     ],
     "evidence_refs": [],
     "semantic_review_tier": "full"
+  },
+  {
+    "id": "NG-0041",
+    "story_id": "BACKLOG-LASTKING-M1",
+    "owner": "architecture",
+    "depends_on": [
+      "NG-0001",
+      "NG-0011",
+      "NG-0021"
+    ],
+    "taskmaster_exported": false,
+    "taskmaster_id": 41,
+    "title": "Wire UI: MainMenu And Boot Flow",
+    "description": "Create the Chapter 7 UI wiring slice for MainMenu And Boot Flow from docs/gdd/ui-gdd-flow.candidates.json.",
+    "status": "pending",
+    "priority": "P1",
+    "layer": "adapter",
+    "adr_refs": [
+      "ADR-0010",
+      "ADR-0011",
+      "ADR-0019",
+      "ADR-0025"
+    ],
+    "chapter_refs": [
+      "CH02",
+      "CH06",
+      "CH07",
+      "CH10"
+    ],
+    "overlay_refs": [
+      "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
+    ],
+    "labels": [
+      "backlog",
+      "lastking",
+      "taskmaster-view",
+      "chapter7-ui",
+      "entry"
+    ],
+    "test_refs": [
+      "Game.Core.Tests/State/GameStateMachineTests.cs",
+      "Tests.Godot/tests/Integration/test_project_bootstrap_editor_compile_run.gd",
+      "Tests.Godot/tests/Integration/test_windows_export_startup_flow.gd",
+      "Tests.Godot/tests/Scenes/Smoke/test_main_scene_smoke.gd"
+    ],
+    "acceptance": [
+      "MainMenu / Boot Flow UI wiring is implemented for the Chapter 7 candidate MainMenu And Boot Flow, and each player action (Launch, continue, retry bootstrap, enter a run) produces an observable end-to-end startup transition; if any action path is missing, acceptance fails. Refs: Game.Core.Tests/State/GameStateMachineTests.cs Tests.Godot/tests/Integration/test_project_bootstrap_editor_compile_run.gd Tests.Godot/tests/Integration/test_windows_export_startup_flow.gd Tests.Godot/tests/Scenes/Smoke/test_main_scene_smoke.gd",
+      "The wiring uses the suggested standalone surfaces from docs/gdd/ui-gdd-flow.candidates.json (MainMenu, BootStatusPanel, ContinueGateDialog) or an explicitly mapped equivalent set, and the selected surfaces are all present in the boot/menu flow; otherwise acceptance fails. Refs: Game.Core.Tests/State/GameStateMachineTests.cs Tests.Godot/tests/Integration/test_project_bootstrap_editor_compile_run.gd Tests.Godot/tests/Integration/test_windows_export_startup_flow.gd Tests.Godot/tests/Scenes/Smoke/test_main_scene_smoke.gd",
+      "Runtime events drive the UI to show all required system responses: canonical startup path, valid continue behavior, and explicit startup failure recovery; if any required response cannot be observed, acceptance fails. Refs: Game.Core.Tests/State/GameStateMachineTests.cs Tests.Godot/tests/Integration/test_project_bootstrap_editor_compile_run.gd Tests.Godot/tests/Integration/test_windows_export_startup_flow.gd Tests.Godot/tests/Scenes/Smoke/test_main_scene_smoke.gd",
+      "For the Windows empty state, baseline verification is accepted only when Godot 4.5.1 .NET editor and a compatible .NET SDK are installed and detected, and no missing-SDK warning is shown in observable verification output; otherwise acceptance fails. Refs: Game.Core.Tests/State/GameStateMachineTests.cs Tests.Godot/tests/Integration/test_project_bootstrap_editor_compile_run.gd Tests.Godot/tests/Integration/test_windows_export_startup_flow.gd Tests.Godot/tests/Scenes/Smoke/test_main_scene_smoke.gd",
+      "For the failure-state rule, after a clean editor restart, two consecutive runs from the canonical root must enter the same startup flow; any setup-introduced divergence or regression is a failure. Refs: Game.Core.Tests/State/GameStateMachineTests.cs Tests.Godot/tests/Integration/test_project_bootstrap_editor_compile_run.gd Tests.Godot/tests/Integration/test_windows_export_startup_flow.gd Tests.Godot/tests/Scenes/Smoke/test_main_scene_smoke.gd",
+      "Completion is accepted only when baseline verification confirms the editor opens the canonical root, C# compilation succeeds, and the configured startup scene runs with its attached C# script; deterministic domain state remains behind existing contracts, no unrelated gameplay behavior is added, and evidence is produced at logs/ci/<YYYY-MM-DD>/task-triplet-audit/report.json, logs/unit/<YYYY-MM-DD>/coverage.json, and logs/ci/<YYYY-MM-DD>/export.log. Refs: Game.Core.Tests/State/GameStateMachineTests.cs Tests.Godot/tests/Integration/test_project_bootstrap_editor_compile_run.gd Tests.Godot/tests/Integration/test_windows_export_startup_flow.gd Tests.Godot/tests/Scenes/Smoke/test_main_scene_smoke.gd",
+      "Acceptance evidence explicitly maps each listed Requirement ID (RQ-RUNTIME-INTERACTION, RQ-CORE-LOOP-STATE, RQ-ECONOMY-BUILD-RULES) to concrete behavior, test evidence, or artifact evidence; any missing mapping fails acceptance. Refs: Game.Core.Tests/State/GameStateMachineTests.cs Tests.Godot/tests/Integration/test_project_bootstrap_editor_compile_run.gd Tests.Godot/tests/Integration/test_windows_export_startup_flow.gd Tests.Godot/tests/Scenes/Smoke/test_main_scene_smoke.gd",
+      "Acceptance evidence explicitly maps implementation and verification to each scope item (T01, T11, T21); if any scope item lacks evidence, or completion depends on out-of-scope gameplay changes, acceptance fails. Refs: Game.Core.Tests/State/GameStateMachineTests.cs Tests.Godot/tests/Integration/test_project_bootstrap_editor_compile_run.gd Tests.Godot/tests/Integration/test_windows_export_startup_flow.gd Tests.Godot/tests/Scenes/Smoke/test_main_scene_smoke.gd",
+      "Validation includes both referenced GdUnit and xUnit suites, and Chapter 7 artifact evidence records auditable pass/fail outcomes per framework; when one framework has no applicable case, it must be recorded as N/A with rationale rather than omitted. Refs: Game.Core.Tests/State/GameStateMachineTests.cs Tests.Godot/tests/Integration/test_project_bootstrap_editor_compile_run.gd Tests.Godot/tests/Integration/test_windows_export_startup_flow.gd Tests.Godot/tests/Scenes/Smoke/test_main_scene_smoke.gd"
+    ],
+    "contractRefs": [
+      "RQ-RUNTIME-INTERACTION",
+      "RQ-CORE-LOOP-STATE",
+      "RQ-ECONOMY-BUILD-RULES"
+    ],
+    "ui_wiring_candidate": {
+      "source": "docs/gdd/ui-gdd-flow.candidates.json",
+      "screen_group": "MainMenu And Boot Flow",
+      "scope_task_ids": [
+        1,
+        11,
+        21
+      ],
+      "ui_entry": "MainMenu / Boot Flow"
+    }
+  },
+  {
+    "id": "NG-0042",
+    "story_id": "BACKLOG-LASTKING-M1",
+    "owner": "architecture",
+    "depends_on": [
+      "NG-0003",
+      "NG-0007",
+      "NG-0008",
+      "NG-0009",
+      "NG-0010",
+      "NG-0018",
+      "NG-0019",
+      "NG-0023",
+      "NG-0024"
+    ],
+    "taskmaster_exported": false,
+    "taskmaster_id": 42,
+    "title": "Wire UI: Runtime HUD And Outcome Surfaces",
+    "description": "Create the Chapter 7 UI wiring slice for Runtime HUD And Outcome Surfaces from docs/gdd/ui-gdd-flow.candidates.json.",
+    "status": "pending",
+    "priority": "P1",
+    "layer": "adapter",
+    "adr_refs": [
+      "ADR-0010",
+      "ADR-0011",
+      "ADR-0019",
+      "ADR-0025"
+    ],
+    "chapter_refs": [
+      "CH02",
+      "CH06",
+      "CH07",
+      "CH10"
+    ],
+    "overlay_refs": [
+      "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
+    ],
+    "labels": [
+      "backlog",
+      "lastking",
+      "taskmaster-view",
+      "chapter7-ui",
+      "loop"
+    ],
+    "test_refs": [
+      "Game.Core.Tests/State/GameStateMachineTests.cs",
+      "Game.Core.Tests/State/GameStateManagerTests.cs",
+      "Game.Core.Tests/Tasks/Task3DayNightScopeGuardTests.cs",
+      "Game.Core.Tests/Tasks/Task3DayNightDesignArtifactTests.cs"
+    ],
+    "acceptance": [
+      "A concrete Chapter 7 UI wiring slice for HUD / Prompt / Outcome Surfaces is deliverable and observable end-to-end: when playing a run, the player can see timing, rewards, prompts, and terminal transitions in UI from run start to terminal state. Refs: Game.Core.Tests/State/GameStateMachineTests.cs Game.Core.Tests/State/GameStateManagerTests.cs Game.Core.Tests/Tasks/Task3DayNightScopeGuardTests.cs Game.Core.Tests/Tasks/Task3DayNightDesignArtifactTests.cs",
+      "The slice includes the suggested standalone surfaces RuntimeHud, OutcomePanel, and RuntimePromptPanel (selected or created for this candidate), and acceptance fails if these surfaces are missing from the shipped UI wiring. Refs: Game.Core.Tests/State/GameStateMachineTests.cs Game.Core.Tests/State/GameStateManagerTests.cs Game.Core.Tests/Tasks/Task3DayNightScopeGuardTests.cs Game.Core.Tests/Tasks/Task3DayNightDesignArtifactTests.cs",
+      "Runtime events drive readable HUD/Outcome presentation for phase, timer, HP, reward, prompt, and win/lose state; acceptance fails if any listed field is absent or not updated from runtime events. Refs: Game.Core.Tests/State/GameStateMachineTests.cs Game.Core.Tests/State/GameStateManagerTests.cs Game.Core.Tests/Tasks/Task3DayNightScopeGuardTests.cs Game.Core.Tests/Tasks/Task3DayNightDesignArtifactTests.cs",
+      "Day/Night durations are configuration-driven (not hardcoded) with defaults Day=4:00 and Night=2:00, and phase transition is blocked until the active phase reaches its configured threshold; any manual pre-threshold transition attempt must leave phase state unchanged. Refs: Game.Core.Tests/State/GameStateMachineTests.cs Game.Core.Tests/State/GameStateManagerTests.cs Game.Core.Tests/Tasks/Task3DayNightScopeGuardTests.cs Game.Core.Tests/Tasks/Task3DayNightDesignArtifactTests.cs",
+      "Day/Night runtime progression is driven by Godot process-loop ticks (_Process and/or _PhysicsProcess) routed into GameStateManager.UpdateDayNightRuntime; if loop updates are paused or stopped, cycle progression must not advance. Refs: Game.Core.Tests/State/GameStateMachineTests.cs Game.Core.Tests/State/GameStateManagerTests.cs Game.Core.Tests/Tasks/Task3DayNightScopeGuardTests.cs Game.Core.Tests/Tasks/Task3DayNightDesignArtifactTests.cs",
+      "Completion requires deterministic cycle verification that includes a fixed-seed forced-terminal scenario (not only natural Day15 completion), preserves deterministic domain state behind existing contracts, adds no unrelated gameplay behavior, and produces evidence at logs/ci/<YYYY-MM-DD>/task-triplet-audit/report.json, logs/unit/<YYYY-MM-DD>/coverage.json, and logs/e2e/<YYYY-MM-DD>/runtime-ui/summary.json. Refs: Game.Core.Tests/State/GameStateMachineTests.cs Game.Core.Tests/State/GameStateManagerTests.cs Game.Core.Tests/Tasks/Task3DayNightScopeGuardTests.cs Game.Core.Tests/Tasks/Task3DayNightDesignArtifactTests.cs",
+      "When _Process/_PhysicsProcess updates are paused or stopped, runtime phase/timer snapshots before and after the pause window remain unchanged; any observed advancement during pause fails acceptance. Refs: Game.Core.Tests/State/GameStateMachineTests.cs Game.Core.Tests/State/GameStateManagerTests.cs Game.Core.Tests/Tasks/Task3DayNightScopeGuardTests.cs Game.Core.Tests/Tasks/Task3DayNightDesignArtifactTests.cs",
+      "Acceptance evidence explicitly maps each Requirement ID (RQ-RUNTIME-SPEED-MODES, RQ-RUNTIME-ERROR-FEEDBACK, RQ-COMBAT-QUEUE-TECH, RQ-CORE-LOOP-STATE) to concrete runtime behavior and test/artifact proof; missing any ID mapping fails acceptance. Refs: Game.Core.Tests/State/GameStateMachineTests.cs Game.Core.Tests/State/GameStateManagerTests.cs Game.Core.Tests/Tasks/Task3DayNightScopeGuardTests.cs Game.Core.Tests/Tasks/Task3DayNightDesignArtifactTests.cs",
+      "Acceptance evidence explicitly maps implementation and verification to every scope item (T03, T07, T08, T09, T10, T18, T19, T23, T24); missing any scope item mapping fails acceptance, and out-of-scope gameplay changes are excluded from completion credit. Refs: Game.Core.Tests/State/GameStateMachineTests.cs Game.Core.Tests/State/GameStateManagerTests.cs Game.Core.Tests/Tasks/Task3DayNightScopeGuardTests.cs Game.Core.Tests/Tasks/Task3DayNightDesignArtifactTests.cs",
+      "Validation includes the referenced xUnit suite plus GdUnit results where applicable, and Chapter 7 evidence records auditable pass/fail outcomes per framework; if one framework has no applicable case, acceptance must record explicit N/A with rationale instead of omission. Refs: Game.Core.Tests/State/GameStateMachineTests.cs Game.Core.Tests/State/GameStateManagerTests.cs Game.Core.Tests/Tasks/Task3DayNightScopeGuardTests.cs Game.Core.Tests/Tasks/Task3DayNightDesignArtifactTests.cs"
+    ],
+    "contractRefs": [
+      "RQ-RUNTIME-SPEED-MODES",
+      "RQ-RUNTIME-ERROR-FEEDBACK",
+      "RQ-COMBAT-QUEUE-TECH",
+      "RQ-CORE-LOOP-STATE"
+    ],
+    "ui_wiring_candidate": {
+      "source": "docs/gdd/ui-gdd-flow.candidates.json",
+      "screen_group": "Runtime HUD And Outcome Surfaces",
+      "scope_task_ids": [
+        3,
+        7,
+        8,
+        9,
+        10,
+        18,
+        19,
+        23,
+        24
+      ],
+      "ui_entry": "HUD / Prompt / Outcome Surfaces"
+    }
+  },
+  {
+    "id": "NG-0043",
+    "story_id": "BACKLOG-LASTKING-M1",
+    "owner": "architecture",
+    "depends_on": [
+      "NG-0004",
+      "NG-0005",
+      "NG-0006",
+      "NG-0020",
+      "NG-0022"
+    ],
+    "taskmaster_exported": false,
+    "taskmaster_id": 43,
+    "title": "Wire UI: Combat Pressure And Interaction Surfaces",
+    "description": "Create the Chapter 7 UI wiring slice for Combat Pressure And Interaction Surfaces from docs/gdd/ui-gdd-flow.candidates.json.",
+    "status": "pending",
+    "priority": "P1",
+    "layer": "adapter",
+    "adr_refs": [
+      "ADR-0010",
+      "ADR-0011",
+      "ADR-0019",
+      "ADR-0025"
+    ],
+    "chapter_refs": [
+      "CH02",
+      "CH06",
+      "CH07",
+      "CH10"
+    ],
+    "overlay_refs": [
+      "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
+    ],
+    "labels": [
+      "backlog",
+      "lastking",
+      "taskmaster-view",
+      "chapter7-ui",
+      "combat"
+    ],
+    "test_refs": [
+      "Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs",
+      "Game.Core.Tests/Services/WaveManagerDeterminismTests.cs",
+      "Game.Core.Tests/Engine/GameEngineCoreDeterminismTests.cs",
+      "Game.Core.Tests/Services/WaveBudgetAllocatorTests.cs"
+    ],
+    "acceptance": [
+      "Chapter 7 UI wiring for Combat Pressure And Interaction Surfaces is implemented through Combat HUD / Pressure / Camera Feedback, and at least one combat run shows the full player loop end-to-end: fight, observe pressure, targeting, pathing, and camera responses. Refs: Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs Game.Core.Tests/Services/WaveManagerDeterminismTests.cs Game.Core.Tests/Engine/GameEngineCoreDeterminismTests.cs Game.Core.Tests/Services/WaveBudgetAllocatorTests.cs",
+      "Before acceptance, the candidate must select or create the standalone surfaces from docs/gdd/ui-gdd-flow.candidates.json (CombatHud, PressurePanel, CameraControlOverlay) and wire them into the UI entry flow. Refs: Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs Game.Core.Tests/Services/WaveManagerDeterminismTests.cs Game.Core.Tests/Engine/GameEngineCoreDeterminismTests.cs Game.Core.Tests/Services/WaveBudgetAllocatorTests.cs",
+      "The runtime UI renders enemy pressure, targeting, combat outcomes, and camera interaction from runtime events, and displayed results are observable through exposed state/events rather than hidden state. Refs: Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs Game.Core.Tests/Services/WaveManagerDeterminismTests.cs Game.Core.Tests/Engine/GameEngineCoreDeterminismTests.cs Game.Core.Tests/Services/WaveBudgetAllocatorTests.cs",
+      "For the same day/config/seed, wave generation is replay-deterministic across repeated runs, and wave-budget computation remains isolated to wave inputs so unrelated system changes do not alter wave-budget outputs. Refs: Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs Game.Core.Tests/Services/WaveManagerDeterminismTests.cs Game.Core.Tests/Engine/GameEngineCoreDeterminismTests.cs Game.Core.Tests/Services/WaveBudgetAllocatorTests.cs",
+      "Failure-state validation passes only when combat runs demonstrate target selection by the required priority chain and execute blocked-path fallback attacks whenever routes to priority targets are obstructed. Refs: Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs Game.Core.Tests/Services/WaveManagerDeterminismTests.cs Game.Core.Tests/Engine/GameEngineCoreDeterminismTests.cs Game.Core.Tests/Services/WaveBudgetAllocatorTests.cs",
+      "Keeping deterministic domain state behind existing contracts and adding no unrelated gameplay behavior, changing only one channel budget changes that channel input budget and alters at least one spawn decision for the same day and seed while non-target channel outputs stay unchanged, with validation artifacts produced at logs/ci/<YYYY-MM-DD>/task-triplet-audit/report.json, logs/unit/<YYYY-MM-DD>/coverage.json, and logs/e2e/<YYYY-MM-DD>/runtime-ui/summary.json. Refs: Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs Game.Core.Tests/Services/WaveManagerDeterminismTests.cs Game.Core.Tests/Engine/GameEngineCoreDeterminismTests.cs Game.Core.Tests/Services/WaveBudgetAllocatorTests.cs",
+      "Acceptance evidence explicitly maps every Requirement ID (RQ-CAMERA-SCROLL, RQ-COMBAT-QUEUE-TECH, RQ-CORE-LOOP-STATE) to concrete behavior plus test or artifact evidence; missing any Requirement ID mapping fails acceptance. Refs: Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs Game.Core.Tests/Services/WaveManagerDeterminismTests.cs Game.Core.Tests/Engine/GameEngineCoreDeterminismTests.cs Game.Core.Tests/Services/WaveBudgetAllocatorTests.cs",
+      "Acceptance evidence explicitly maps implementation and verification to each scope item (T04, T05, T06, T20, T22); missing any scope mapping fails acceptance, and out-of-scope gameplay changes do not count toward completion. Refs: Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs Game.Core.Tests/Services/WaveManagerDeterminismTests.cs Game.Core.Tests/Engine/GameEngineCoreDeterminismTests.cs Game.Core.Tests/Services/WaveBudgetAllocatorTests.cs",
+      "Validation includes the referenced xUnit suite and auditable Chapter 7 pass/fail outcomes per framework; when no GdUnit case applies, evidence must explicitly record GdUnit as N/A with rationale instead of omission. Refs: Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs Game.Core.Tests/Services/WaveManagerDeterminismTests.cs Game.Core.Tests/Engine/GameEngineCoreDeterminismTests.cs Game.Core.Tests/Services/WaveBudgetAllocatorTests.cs"
+    ],
+    "contractRefs": [
+      "RQ-CAMERA-SCROLL",
+      "RQ-COMBAT-QUEUE-TECH",
+      "RQ-CORE-LOOP-STATE"
+    ],
+    "ui_wiring_candidate": {
+      "source": "docs/gdd/ui-gdd-flow.candidates.json",
+      "screen_group": "Combat Pressure And Interaction Surfaces",
+      "scope_task_ids": [
+        4,
+        5,
+        6,
+        20,
+        22
+      ],
+      "ui_entry": "Combat HUD / Pressure / Camera Feedback"
+    }
+  },
+  {
+    "id": "NG-0044",
+    "story_id": "BACKLOG-LASTKING-M1",
+    "owner": "architecture",
+    "depends_on": [
+      "NG-0012",
+      "NG-0013",
+      "NG-0014",
+      "NG-0015",
+      "NG-0016",
+      "NG-0017"
+    ],
+    "taskmaster_exported": false,
+    "taskmaster_id": 44,
+    "title": "Wire UI: Economy And Progression Panels",
+    "description": "Create the Chapter 7 UI wiring slice for Economy And Progression Panels from docs/gdd/ui-gdd-flow.candidates.json.",
+    "status": "pending",
+    "priority": "P1",
+    "layer": "adapter",
+    "adr_refs": [
+      "ADR-0010",
+      "ADR-0011",
+      "ADR-0019",
+      "ADR-0025"
+    ],
+    "chapter_refs": [
+      "CH02",
+      "CH06",
+      "CH07",
+      "CH10"
+    ],
+    "overlay_refs": [
+      "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
+    ],
+    "labels": [
+      "backlog",
+      "lastking",
+      "taskmaster-view",
+      "chapter7-ui",
+      "economy"
+    ],
+    "test_refs": [
+      "Game.Core.Tests/Services/ResourceManagerIntegerSafetyTests.cs",
+      "Game.Core.Tests/Engine/GameEngineCoreEventTests.cs",
+      "Game.Core.Tests/Services/ResourceManagerTests.cs",
+      "Game.Core.Tests/Services/ResourceManagerEventTests.cs"
+    ],
+    "acceptance": [
+      "Deliver a concrete Chapter 7 UI wiring slice for Economy And Progression Panels at the Resource/Build/Progression entry, where a player can complete end-to-end actions for spend resources, place/build, train, upgrade, repair, and pick rewards. Refs: Game.Core.Tests/Services/ResourceManagerIntegerSafetyTests.cs Game.Core.Tests/Engine/GameEngineCoreEventTests.cs Game.Core.Tests/Services/ResourceManagerTests.cs Game.Core.Tests/Services/ResourceManagerEventTests.cs",
+      "Use the candidate standalone surfaces (ResourcePanel, BuildPanel, ProgressionPanel) by selecting existing surfaces or creating missing ones, and wire them before acceptance is considered complete. Refs: Game.Core.Tests/Services/ResourceManagerIntegerSafetyTests.cs Game.Core.Tests/Engine/GameEngineCoreEventTests.cs Game.Core.Tests/Services/ResourceManagerTests.cs Game.Core.Tests/Services/ResourceManagerEventTests.cs",
+      "From runtime events, the UI must render deterministic resource/build/queue/upgrade/progression changes and show clear invalid-state feedback when an action cannot be applied. Refs: Game.Core.Tests/Services/ResourceManagerIntegerSafetyTests.cs Game.Core.Tests/Engine/GameEngineCoreEventTests.cs Game.Core.Tests/Services/ResourceManagerTests.cs Game.Core.Tests/Services/ResourceManagerEventTests.cs",
+      "For long train/cancel sequences with large integer values, observable resource totals remain integer-accurate, never become negative, and show no overflow or underflow in gameplay-visible state. Refs: Game.Core.Tests/Services/ResourceManagerIntegerSafetyTests.cs Game.Core.Tests/Engine/GameEngineCoreEventTests.cs Game.Core.Tests/Services/ResourceManagerTests.cs Game.Core.Tests/Services/ResourceManagerEventTests.cs",
+      "Integer safety is enforced by both static scan and runtime assertion gates; if any non-integer resource arithmetic is attempted, it fails immediately and gameplay-visible resource state remains unchanged. Refs: Game.Core.Tests/Services/ResourceManagerIntegerSafetyTests.cs Game.Core.Tests/Engine/GameEngineCoreEventTests.cs Game.Core.Tests/Services/ResourceManagerTests.cs Game.Core.Tests/Services/ResourceManagerEventTests.cs",
+      "Completion requires the same integer-safety failure behavior, keeps deterministic domain state behind existing contracts, introduces no unrelated gameplay behavior, and records validation evidence at logs/unit/<YYYY-MM-DD>/coverage.json. Refs: Game.Core.Tests/Services/ResourceManagerIntegerSafetyTests.cs Game.Core.Tests/Engine/GameEngineCoreEventTests.cs Game.Core.Tests/Services/ResourceManagerTests.cs Game.Core.Tests/Services/ResourceManagerEventTests.cs",
+      "Acceptance evidence must explicitly map each Requirement ID (RQ-COMBAT-QUEUE-TECH and RQ-ECONOMY-BUILD-RULES) to concrete behavior plus test or artifact evidence; missing either mapping fails acceptance. Refs: Game.Core.Tests/Services/ResourceManagerIntegerSafetyTests.cs Game.Core.Tests/Engine/GameEngineCoreEventTests.cs Game.Core.Tests/Services/ResourceManagerTests.cs Game.Core.Tests/Services/ResourceManagerEventTests.cs",
+      "Acceptance evidence must explicitly map implementation and verification to every scope item (T12, T13, T14, T15, T16, T17); missing any scope item fails acceptance, and out-of-scope gameplay changes do not count. Refs: Game.Core.Tests/Services/ResourceManagerIntegerSafetyTests.cs Game.Core.Tests/Engine/GameEngineCoreEventTests.cs Game.Core.Tests/Services/ResourceManagerTests.cs Game.Core.Tests/Services/ResourceManagerEventTests.cs",
+      "Validation includes the referenced xUnit suite and, when no GdUnit case applies, an explicit GdUnit N/A record with rationale; Chapter 7 artifacts must record auditable pass/fail outcomes per framework instead of omission. Refs: Game.Core.Tests/Services/ResourceManagerIntegerSafetyTests.cs Game.Core.Tests/Engine/GameEngineCoreEventTests.cs Game.Core.Tests/Services/ResourceManagerTests.cs Game.Core.Tests/Services/ResourceManagerEventTests.cs"
+    ],
+    "contractRefs": [
+      "RQ-COMBAT-QUEUE-TECH",
+      "RQ-ECONOMY-BUILD-RULES"
+    ],
+    "ui_wiring_candidate": {
+      "source": "docs/gdd/ui-gdd-flow.candidates.json",
+      "screen_group": "Economy And Progression Panels",
+      "scope_task_ids": [
+        12,
+        13,
+        14,
+        15,
+        16,
+        17
+      ],
+      "ui_entry": "Resource / Build / Progression Panels"
+    }
+  },
+  {
+    "id": "NG-0045",
+    "story_id": "BACKLOG-LASTKING-M1",
+    "owner": "architecture",
+    "depends_on": [
+      "NG-0025",
+      "NG-0026",
+      "NG-0027",
+      "NG-0028",
+      "NG-0029",
+      "NG-0030"
+    ],
+    "taskmaster_exported": false,
+    "taskmaster_id": 45,
+    "title": "Wire UI: Save, Settings, And Meta Surfaces",
+    "description": "Create the Chapter 7 UI wiring slice for Save, Settings, And Meta Surfaces from docs/gdd/ui-gdd-flow.candidates.json.",
+    "status": "pending",
+    "priority": "P2",
+    "layer": "adapter",
+    "adr_refs": [
+      "ADR-0010",
+      "ADR-0011",
+      "ADR-0019",
+      "ADR-0025"
+    ],
+    "chapter_refs": [
+      "CH02",
+      "CH06",
+      "CH07",
+      "CH10"
+    ],
+    "overlay_refs": [
+      "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
+    ],
+    "labels": [
+      "backlog",
+      "lastking",
+      "taskmaster-view",
+      "chapter7-ui",
+      "meta"
+    ],
+    "test_refs": [
+      "Tests.Godot/tests/Adapters/Save/test_save_manager_autosave_slot_path.gd",
+      "Tests.Godot/tests/Adapters/Db/test_savegame_update_overwrite_cross_restart.gd",
+      "Tests.Godot/tests/Adapters/Save/test_save_manager_daystart_autosave.gd",
+      "Tests.Godot/tests/Adapters/Db/test_savegame_persistence_cross_restart.gd"
+    ],
+    "acceptance": [
+      "The Chapter 7 UI wiring slice for Save, Settings, And Meta Surfaces is executable end-to-end from the Settings / Save / Meta Surfaces entry, and each listed player action (save, load, localize, tune audio, inspect platform/runtime status) produces observable UI state or feedback. Refs: Tests.Godot/tests/Adapters/Save/test_save_manager_autosave_slot_path.gd Tests.Godot/tests/Adapters/Db/test_savegame_update_overwrite_cross_restart.gd Tests.Godot/tests/Adapters/Save/test_save_manager_daystart_autosave.gd Tests.Godot/tests/Adapters/Db/test_savegame_persistence_cross_restart.gd",
+      "Acceptance requires the suggested standalone surfaces from docs/gdd/ui-gdd-flow.candidates.json to exist and be wired in this slice (SettingsMenu, SavePanel, RunSummaryPanel), whether reused or newly created. Refs: Tests.Godot/tests/Adapters/Save/test_save_manager_autosave_slot_path.gd Tests.Godot/tests/Adapters/Db/test_savegame_update_overwrite_cross_restart.gd Tests.Godot/tests/Adapters/Save/test_save_manager_daystart_autosave.gd Tests.Godot/tests/Adapters/Db/test_savegame_persistence_cross_restart.gd",
+      "Runtime events must render persistence, localization, audio, performance, and platform status on governed player-visible surfaces; missing any listed status domain fails acceptance. Refs: Tests.Godot/tests/Adapters/Save/test_save_manager_autosave_slot_path.gd Tests.Godot/tests/Adapters/Db/test_savegame_update_overwrite_cross_restart.gd Tests.Godot/tests/Adapters/Save/test_save_manager_daystart_autosave.gd Tests.Godot/tests/Adapters/Db/test_savegame_persistence_cross_restart.gd",
+      "When no autosave file exists, invoking load must deterministically return failure, show explicit user feedback, and leave runtime state unchanged. Refs: Tests.Godot/tests/Adapters/Save/test_save_manager_autosave_slot_path.gd Tests.Godot/tests/Adapters/Db/test_savegame_update_overwrite_cross_restart.gd Tests.Godot/tests/Adapters/Save/test_save_manager_daystart_autosave.gd Tests.Godot/tests/Adapters/Db/test_savegame_persistence_cross_restart.gd",
+      "All save writes must target only the single autosave slot at user://autosave.save (Windows-safe user path); any attempt to write an alternate slot path is rejected and fails acceptance. Refs: Tests.Godot/tests/Adapters/Save/test_save_manager_autosave_slot_path.gd Tests.Godot/tests/Adapters/Db/test_savegame_update_overwrite_cross_restart.gd Tests.Godot/tests/Adapters/Save/test_save_manager_daystart_autosave.gd Tests.Godot/tests/Adapters/Db/test_savegame_persistence_cross_restart.gd",
+      "Completion requires keeping deterministic domain state behind existing contracts, adding no unrelated gameplay behavior, and producing validation artifacts at logs/ci/<YYYY-MM-DD>/save-migration/report.json, logs/ci/<YYYY-MM-DD>/steam-cloud/report.json, logs/ci/<YYYY-MM-DD>/achievements/report.json, and logs/e2e/<YYYY-MM-DD>/settings/summary.json; additionally, the no-autosave load case must return deterministic failure with explicit feedback and unchanged runtime state. Refs: Tests.Godot/tests/Adapters/Save/test_save_manager_autosave_slot_path.gd Tests.Godot/tests/Adapters/Db/test_savegame_update_overwrite_cross_restart.gd Tests.Godot/tests/Adapters/Save/test_save_manager_daystart_autosave.gd Tests.Godot/tests/Adapters/Db/test_savegame_persistence_cross_restart.gd",
+      "Acceptance evidence must map every listed Requirement ID (RQ-I18N-LANG-SWITCH, RQ-AUDIO-CHANNEL-SETTINGS, RQ-PERF-GATE, RQ-SAVE-MIGRATION-CLOUD) to concrete behavior plus test or artifact proof; any missing Requirement ID mapping fails acceptance. Refs: Tests.Godot/tests/Adapters/Save/test_save_manager_autosave_slot_path.gd Tests.Godot/tests/Adapters/Db/test_savegame_update_overwrite_cross_restart.gd Tests.Godot/tests/Adapters/Save/test_save_manager_daystart_autosave.gd Tests.Godot/tests/Adapters/Db/test_savegame_persistence_cross_restart.gd",
+      "Acceptance evidence must map implementation and verification results to each scope item (T25, T26, T27, T28, T29, T30); missing any scope mapping fails acceptance, and out-of-scope gameplay changes do not count toward completion. Refs: Tests.Godot/tests/Adapters/Save/test_save_manager_autosave_slot_path.gd Tests.Godot/tests/Adapters/Db/test_savegame_update_overwrite_cross_restart.gd Tests.Godot/tests/Adapters/Save/test_save_manager_daystart_autosave.gd Tests.Godot/tests/Adapters/Db/test_savegame_persistence_cross_restart.gd",
+      "Validation must include the referenced GdUnit suite and record auditable Chapter 7 pass/fail outcomes by framework; when no xUnit case applies, acceptance must include an explicit xUnit N/A record with rationale instead of omission. Refs: Tests.Godot/tests/Adapters/Save/test_save_manager_autosave_slot_path.gd Tests.Godot/tests/Adapters/Db/test_savegame_update_overwrite_cross_restart.gd Tests.Godot/tests/Adapters/Save/test_save_manager_daystart_autosave.gd Tests.Godot/tests/Adapters/Db/test_savegame_persistence_cross_restart.gd"
+    ],
+    "contractRefs": [
+      "RQ-I18N-LANG-SWITCH",
+      "RQ-AUDIO-CHANNEL-SETTINGS",
+      "RQ-PERF-GATE",
+      "RQ-SAVE-MIGRATION-CLOUD"
+    ],
+    "ui_wiring_candidate": {
+      "source": "docs/gdd/ui-gdd-flow.candidates.json",
+      "screen_group": "Save, Settings, And Meta Surfaces",
+      "scope_task_ids": [
+        25,
+        26,
+        27,
+        28,
+        29,
+        30
+      ],
+      "ui_entry": "Settings / Save / Meta Surfaces"
+    }
+  },
+  {
+    "id": "NG-0046",
+    "story_id": "BACKLOG-LASTKING-M1",
+    "owner": "architecture",
+    "depends_on": [
+      "NG-0002",
+      "NG-0031",
+      "NG-0032",
+      "NG-0033",
+      "NG-0034",
+      "NG-0035",
+      "NG-0036",
+      "NG-0037",
+      "NG-0038",
+      "NG-0039",
+      "NG-0040"
+    ],
+    "taskmaster_exported": false,
+    "taskmaster_id": 46,
+    "title": "Wire UI: Config Audit And Migration Surfaces",
+    "description": "Create the Chapter 7 UI wiring slice for Config Audit And Migration Surfaces from docs/gdd/ui-gdd-flow.candidates.json.",
+    "status": "pending",
+    "priority": "P2",
+    "layer": "core",
+    "adr_refs": [
+      "ADR-0010",
+      "ADR-0011",
+      "ADR-0019",
+      "ADR-0025"
+    ],
+    "chapter_refs": [
+      "CH02",
+      "CH06",
+      "CH07",
+      "CH10"
+    ],
+    "overlay_refs": [
+      "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
+    ],
+    "labels": [
+      "backlog",
+      "lastking",
+      "taskmaster-view",
+      "chapter7-ui",
+      "governance"
+    ],
+    "test_refs": [
+      "Tests.Godot/tests/Adapters/Config/test_settings_persistence.gd",
+      "Game.Core.Tests/Domain/GameConfigTests.cs",
+      "Tests.Godot/tests/Security/Hard/test_settings_config_security.gd",
+      "Tests.Godot/tests/Integration/test_balance_runtime_config_reload.gd"
+    ],
+    "acceptance": [
+      "From the Config Summary / Audit / Migration Surfaces entry, the Chapter 7 UI wiring slice must allow end-to-end player inspection of config state, validation status, governance status, migration status, and report metadata in UI-visible fields; if any of these cannot be inspected in the UI flow, acceptance fails. Refs: Tests.Godot/tests/Adapters/Config/test_settings_persistence.gd Game.Core.Tests/Domain/GameConfigTests.cs Tests.Godot/tests/Security/Hard/test_settings_config_security.gd Tests.Godot/tests/Integration/test_balance_runtime_config_reload.gd",
+      "Before acceptance, the implementation must instantiate or map to standalone surfaces covering ConfigAuditPanel, MigrationStatusDialog, and ReportMetadataPanel responsibilities; missing any one surface responsibility fails acceptance. Refs: Tests.Godot/tests/Adapters/Config/test_settings_persistence.gd Game.Core.Tests/Domain/GameConfigTests.cs Tests.Godot/tests/Security/Hard/test_settings_config_security.gd Tests.Godot/tests/Integration/test_balance_runtime_config_reload.gd",
+      "The UI must render active config, schema status, fallback policy, migration status, and audit metadata from runtime config/state sources during execution, and these outputs must be observable without relying on logs-only evidence. Refs: Tests.Godot/tests/Adapters/Config/test_settings_persistence.gd Game.Core.Tests/Domain/GameConfigTests.cs Tests.Godot/tests/Security/Hard/test_settings_config_security.gd Tests.Godot/tests/Integration/test_balance_runtime_config_reload.gd",
+      "The empty/loading path must be backed by runtime file I/O or resource-backed loading, and changing artifact content without code changes must produce changed observed gameplay outputs after reload; unchanged outputs under changed artifacts fail acceptance. Refs: Tests.Godot/tests/Adapters/Config/test_settings_persistence.gd Game.Core.Tests/Domain/GameConfigTests.cs Tests.Godot/tests/Security/Hard/test_settings_config_security.gd Tests.Godot/tests/Integration/test_balance_runtime_config_reload.gd",
+      "For malformed JSON/INI input, the flow must deterministically fail with a fixed reason code, and parse failure must not advance the runtime config snapshot (must retain last-known-good or documented fallback); any snapshot advance after parse failure fails acceptance. Refs: Tests.Godot/tests/Adapters/Config/test_settings_persistence.gd Game.Core.Tests/Domain/GameConfigTests.cs Tests.Godot/tests/Security/Hard/test_settings_config_security.gd Tests.Godot/tests/Integration/test_balance_runtime_config_reload.gd",
+      "Completion requires the same malformed-input hard gate behavior, deterministic domain state kept behind existing contracts, no unrelated gameplay behavior added, and generated validation artifacts at logs/ci/<YYYY-MM-DD>/task-triplet-audit/report.json, logs/ci/<YYYY-MM-DD>/overlay-lint/report.json, and logs/ci/<YYYY-MM-DD>/config-governance/report.json; missing any required artifact or violating contract boundary fails acceptance. Refs: Tests.Godot/tests/Adapters/Config/test_settings_persistence.gd Game.Core.Tests/Domain/GameConfigTests.cs Tests.Godot/tests/Security/Hard/test_settings_config_security.gd Tests.Godot/tests/Integration/test_balance_runtime_config_reload.gd",
+      "Acceptance evidence must explicitly map both Requirement IDs (RQ-CONFIG-CONTRACT-GOV, RQ-CORE-LOOP-STATE) to concrete runtime behavior and to test or artifact evidence; if either Requirement ID lacks explicit mapping, acceptance fails. Refs: Tests.Godot/tests/Adapters/Config/test_settings_persistence.gd Game.Core.Tests/Domain/GameConfigTests.cs Tests.Godot/tests/Security/Hard/test_settings_config_security.gd Tests.Godot/tests/Integration/test_balance_runtime_config_reload.gd",
+      "Acceptance evidence must explicitly map implementation and verification to every scope item (T02, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40); any missing scope mapping fails acceptance, and out-of-scope gameplay changes cannot be used as completion evidence. Refs: Tests.Godot/tests/Adapters/Config/test_settings_persistence.gd Game.Core.Tests/Domain/GameConfigTests.cs Tests.Godot/tests/Security/Hard/test_settings_config_security.gd Tests.Godot/tests/Integration/test_balance_runtime_config_reload.gd",
+      "Validation must include both referenced GdUnit and xUnit suites, and Chapter 7 artifact evidence must record auditable pass/fail results per framework; if one framework has no applicable case, it must be explicitly marked N/A with rationale rather than omitted. Refs: Tests.Godot/tests/Adapters/Config/test_settings_persistence.gd Game.Core.Tests/Domain/GameConfigTests.cs Tests.Godot/tests/Security/Hard/test_settings_config_security.gd Tests.Godot/tests/Integration/test_balance_runtime_config_reload.gd"
+    ],
+    "contractRefs": [
+      "RQ-CONFIG-CONTRACT-GOV",
+      "RQ-CORE-LOOP-STATE"
+    ],
+    "ui_wiring_candidate": {
+      "source": "docs/gdd/ui-gdd-flow.candidates.json",
+      "screen_group": "Config Audit And Migration Surfaces",
+      "scope_task_ids": [
+        2,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39,
+        40
+      ],
+      "ui_entry": "Config Summary / Audit / Migration Surfaces"
+    }
   }
 ]

@@ -58,6 +58,13 @@ Test-Refs:
 | `T30` performance | `logs/perf/<YYYY-MM-DD>/summary.json` | `avg_fps`, `fps_1pct_low`, `samples`, `gate` |
 | `T31-T40` config governance | `logs/ci/<YYYY-MM-DD>/config-governance/report.json` | `config_hash`, `schema_version`, `fallback_used`, `status` |
 
+| `T41` Chapter 7 entry wiring | `logs/ci/<YYYY-MM-DD>/chapter7-ui-wiring/summary.json` | `candidate_sidecar`, `steps`, `status`, `artifact_manifest` |
+| `T42` Chapter 7 HUD/outcome wiring | `logs/e2e/<YYYY-MM-DD>/runtime-ui/summary.json` | `screen_group`, `empty_state`, `failure_state`, `completion_result` |
+| `T43` Chapter 7 combat wiring | `logs/e2e/<YYYY-MM-DD>/runtime-ui/summary.json` | `pressure_visible`, `camera_feedback`, `targeting_feedback`, `status` |
+| `T44` Chapter 7 economy wiring | `logs/unit/<YYYY-MM-DD>/coverage.json` | `resource_panel`, `build_panel`, `progression_panel`, `status` |
+| `T45` Chapter 7 save/settings wiring | `logs/e2e/<YYYY-MM-DD>/settings/summary.json` | `settings_surface`, `save_surface`, `applied`, `persisted` |
+| `T46` Chapter 7 config audit wiring | `logs/ci/<YYYY-MM-DD>/config-governance/report.json` | `config_surface`, `schema_status`, `fallback_status`, `audit_metadata` |
+
 ## Manifest Drift Guard
 
 - 任务回链路径由 `overlay-manifest.json` 统一声明，变更页面文件名时必须先更新 manifest。
