@@ -38,17 +38,6 @@ func _error_message_label(hud: Node) -> Label:
 func _dismiss_button(hud: Node) -> Button:
     return hud.get_node("FeedbackLayer/ErrorDialog/VBox/DismissButton")
 
-# ACC:T9.2
-# ACC:T9.5
-# ACC:T9.6
-# ACC:T9.8
-# ACC:T9.9
-# ACC:T7.1
-# ACC:T7.9
-# ACC:T7.15
-# ACC:T24.8
-# ACC:T24.19
-# ACC:T24.20
 func test_hud_updates_day_cycle_and_castle_hp_when_runtime_publishes_events() -> void:
     var hud = await _hud()
     var bridge = await _bridge()
@@ -78,13 +67,28 @@ func test_hud_updates_day_cycle_and_castle_hp_when_runtime_publishes_events() ->
     assert_int(int(bridge.GetCurrentHp())).is_equal(42)
     assert_str(hp_label.text).is_equal("HP: 42")
 
+# ACC:T9.2
 # ACC:T9.5
 # ACC:T9.6
+# ACC:T9.8
+# ACC:T9.9
+# ACC:T7.1
+# ACC:T7.9
+# ACC:T7.15
+# ACC:T42.1
+# ACC:T42.2
+# ACC:T42.3
+# ACC:T42.4
+# ACC:T42.6
 func test_hud_acceptance_anchor_binding_for_t9_refs() -> void:
     var hud = await _hud()
     var day_label: Label = hud.get_node("TopBar/HBox/DayLabel")
     var cycle_label: Label = hud.get_node("TopBar/HBox/CycleRemainingLabel")
     var hp_label: Label = hud.get_node("TopBar/HBox/HealthLabel")
+    assert_bool(hud.has_node("FeedbackLayer")).is_true()
+    assert_bool(hud.has_node("FeedbackLayer/FeedbackLabel")).is_true()
+    assert_bool(hud.has_node("FeedbackLayer/ErrorDialog")).is_true()
+    assert_bool(hud.has_node("FeedbackLayer/ErrorDialog/VBox/DismissButton")).is_true()
 
     _publish("core.lastking.day.started", {"day": 20, "from": "Night", "to": "Day", "tick": 1})
     _publish("core.lastking.castle.hp_changed", {"Day": 15, "PreviousHp": 100, "CurrentHp": 66})

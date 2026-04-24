@@ -17,6 +17,7 @@ public partial class DayNightRuntimeLoopNode : Node
 
     public int CurrentDay => _manager.CurrentDayNightDay;
     public DayNightPhase CurrentPhase => _manager.CurrentDayNightPhase;
+    public double CurrentPhaseElapsedSeconds => _manager.CurrentDayNightPhaseElapsedSeconds;
 
     public override void _Process(double delta)
     {

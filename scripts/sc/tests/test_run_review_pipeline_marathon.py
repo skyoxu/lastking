@@ -19,6 +19,7 @@ SC_DIR = REPO_ROOT / "scripts" / "sc"
 sys.path.insert(0, str(SC_DIR))
 
 import run_review_pipeline as run_review_pipeline_module  # noqa: E402
+import _marathon_state as marathon_state_module  # noqa: E402
 
 
 def _stable_env() -> dict[str, str]:
@@ -1824,6 +1825,153 @@ class RunReviewPipelineMarathonTests(unittest.TestCase):
             fork_summary = json.loads((fork_out_dir / "summary.json").read_text(encoding="utf-8"))
             self.assertEqual(fork_run_id, fork_summary["run_id"])
             self.assertEqual("ok", fork_summary["status"])
+
+    def test_build_forked_summary_should_not_copy_llm_review_when_review_needs_fix(self) -> None:
+        source_summary = {
+            "cmd": "sc-review-pipeline",
+            "task_id": "1",
+            "requested_run_id": "source",
+            "run_id": "source",
+            "status": "ok",
+            "failure_kind": "review-needs-fix",
+            "steps": [
+                {"name": "sc-test", "status": "ok", "rc": 0, "cmd": ["py", "-3", "scripts/sc/test.py"]},
+                {"name": "sc-acceptance-check", "status": "ok", "rc": 0, "cmd": ["py", "-3", "scripts/sc/acceptance_check.py"]},
+                {"name": "sc-llm-review", "status": "ok", "rc": 0, "cmd": ["py", "-3", "scripts/sc/llm_review.py"]},
+            ],
+        }
+        source_state = {
+            "agent_review": {
+                "review_verdict": "needs-fix",
+                "recommended_action": "resume",
+            }
+        }
+        forked = marathon_state_module.build_forked_summary(
+            source_summary,
+            new_run_id="forked",
+            requested_run_id="forked",
+            source_state=source_state,
+            copy_completed_steps=True,
+        )
+        copied_step_names = [str(step.get("name") or "") for step in forked.get("steps") or [] if isinstance(step, dict)]
+        self.assertIn("sc-test", copied_step_names)
+        self.assertIn("sc-acceptance-check", copied_step_names)
+        self.assertNotIn("sc-llm-review", copied_step_names)
+
+    def test_fork_should_rerun_llm_review_when_source_failure_kind_is_review_needs_fix(self) -> None:
+        source_run_id = uuid.uuid4().hex
+        fork_run_id = uuid.uuid4().hex
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp_root = Path(tmpdir)
+            source_out_dir = tmp_root / f"sc-review-pipeline-task-1-{source_run_id}"
+            fork_out_dir = tmp_root / f"sc-review-pipeline-task-1-{fork_run_id}"
+            latest_path = tmp_root / "sc-review-pipeline-task-1" / "latest.json"
+            source_out_dir.mkdir(parents=True, exist_ok=True)
+            (source_out_dir / "summary.json").write_text(
+                json.dumps(
+                    {
+                        "cmd": "sc-review-pipeline",
+                        "task_id": "1",
+                        "requested_run_id": source_run_id,
+                        "run_id": source_run_id,
+                        "allow_overwrite": False,
+                        "force_new_run_id": False,
+                        "status": "ok",
+                        "failure_kind": "review-needs-fix",
+                        "steps": [
+                            {"name": "sc-test", "cmd": ["py", "-3", "scripts/sc/test.py"], "rc": 0, "status": "ok", "log": "sc-test.log"},
+                            {"name": "sc-acceptance-check", "cmd": ["py", "-3", "scripts/sc/acceptance_check.py"], "rc": 0, "status": "ok", "log": "sc-acceptance.log"},
+                            {"name": "sc-llm-review", "cmd": ["py", "-3", "scripts/sc/llm_review.py"], "rc": 0, "status": "ok", "log": "sc-llm.log"},
+                        ],
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (source_out_dir / "marathon-state.json").write_text(
+                json.dumps(
+                    {
+                        "schema_version": "1.0.0",
+                        "task_id": "1",
+                        "run_id": source_run_id,
+                        "requested_run_id": source_run_id,
+                        "status": "ok",
+                        "resume_count": 1,
+                        "max_step_retries": 0,
+                        "last_completed_step": "sc-llm-review",
+                        "last_failed_step": "",
+                        "next_step_name": "",
+                        "steps": {
+                            "sc-test": {"attempt_count": 1, "status": "ok", "last_rc": 0, "log": "sc-test.log"},
+                            "sc-acceptance-check": {"attempt_count": 1, "status": "ok", "last_rc": 0, "log": "sc-acceptance.log"},
+                            "sc-llm-review": {"attempt_count": 1, "status": "ok", "last_rc": 0, "log": "sc-llm.log"},
+                        },
+                        "agent_review": {
+                            "review_verdict": "needs-fix",
+                            "recommended_action": "resume",
+                        },
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            latest_path.parent.mkdir(parents=True, exist_ok=True)
+            latest_path.write_text(
+                json.dumps(
+                    {
+                        "task_id": "1",
+                        "run_id": source_run_id,
+                        "status": "ok",
+                        "latest_out_dir": str(source_out_dir),
+                        "summary_path": str(source_out_dir / "summary.json"),
+                        "marathon_state_path": str(source_out_dir / "marathon-state.json"),
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            call_counts: dict[str, int] = {}
+
+            def rerun_after_fork(*, out_dir: Path, name: str, cmd: list[str], timeout_sec: int) -> dict:
+                call_counts[name] = call_counts.get(name, 0) + 1
+                return {
+                    "name": name,
+                    "cmd": cmd,
+                    "rc": 0,
+                    "status": "ok",
+                    "log": str(out_dir / f"{name}.fork.review-needs-fix.log"),
+                    "reported_out_dir": "",
+                    "summary_file": "",
+                }
+
+            argv = [
+                str(REPO_ROOT / "scripts" / "sc" / "run_review_pipeline.py"),
+                "--task-id",
+                "1",
+                "--fork",
+                "--run-id",
+                fork_run_id,
+                "--allow-large-change-scope-rerun",
+                "--skip-agent-review",
+            ]
+            with mock.patch.dict(os.environ, _stable_env(), clear=False), \
+                mock.patch.object(sys, "argv", argv), \
+                mock.patch.object(run_review_pipeline_module, "_pipeline_latest_index_path", return_value=latest_path), \
+                mock.patch.object(run_review_pipeline_module, "_pipeline_run_dir", return_value=fork_out_dir), \
+                mock.patch.object(run_review_pipeline_module, "_run_step", side_effect=rerun_after_fork):
+                rc = run_review_pipeline_module.main()
+
+            self.assertEqual(0, rc)
+            self.assertNotIn("sc-test", call_counts)
+            self.assertNotIn("sc-acceptance-check", call_counts)
+            self.assertEqual(1, call_counts["sc-llm-review"])
 
 
 if __name__ == "__main__":

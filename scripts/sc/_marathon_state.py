@@ -250,8 +250,13 @@ def build_forked_summary(
     *,
     new_run_id: str,
     requested_run_id: str,
+    source_state: dict[str, Any] | None = None,
     copy_completed_steps: bool = True,
 ) -> dict[str, Any]:
+    failure_kind = str(source_summary.get("failure_kind") or "").strip().lower()
+    source_agent_review = (source_state or {}).get("agent_review") if isinstance((source_state or {}).get("agent_review"), dict) else {}
+    source_review_verdict = str(source_agent_review.get("review_verdict") or "").strip().lower()
+    should_rerun_llm_review = failure_kind.startswith("review-") or source_review_verdict in {"needs-fix", "block"}
     cloned_steps: list[dict[str, Any]] = []
     if copy_completed_steps:
         for name in STEP_SEQUENCE:
@@ -260,6 +265,8 @@ def build_forked_summary(
                 break
             status = _normalize_step_status(step.get("status"))
             if status in {"ok", "skipped"}:
+                if name == "sc-llm-review" and should_rerun_llm_review:
+                    break
                 cloned_steps.append(dict(step))
                 continue
             break
@@ -296,6 +303,7 @@ def build_forked_state(
         source_summary,
         new_run_id=new_run_id,
         requested_run_id=requested_run_id,
+        source_state=source_state,
         copy_completed_steps=copy_completed_steps,
     )
     task_id = str(summary.get("task_id") or "")

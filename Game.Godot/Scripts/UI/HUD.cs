@@ -158,6 +158,8 @@ public partial class HUD : Control
         if (type != EventTypes.LastkingCastleHpChanged &&
             type != EventTypes.HealthUpdated &&
             type != "player.health.changed" &&
+            type != EventTypes.LastkingRewardOffered &&
+            type != EventTypes.RunStateTransitioned &&
             type != EventTypes.LastkingUiFeedbackRaised &&
             type != EventTypes.SaveMigrationFailed &&
             type != EventTypes.SaveWriteFailed)
@@ -172,6 +174,16 @@ public partial class HUD : Control
             if (hp.HasValue)
             {
                 _health.Text = $"HP: {hp.Value}";
+            }
+
+            if (type == EventTypes.LastkingRewardOffered)
+            {
+                HandleRewardOfferedEvent(doc.RootElement);
+            }
+
+            if (type == EventTypes.RunStateTransitioned)
+            {
+                HandleRunStateTransitionedEvent(doc.RootElement);
             }
 
             if (type == EventTypes.LastkingUiFeedbackRaised ||
@@ -210,6 +222,38 @@ public partial class HUD : Control
         {
             ShowTemporaryFeedback(messageKey, details, code, priority: 1);
             return;
+        }
+
+        if (IsRuntimeOutcomeMessage(messageKey, code))
+        {
+            ShowTemporaryFeedback(messageKey, details, code, priority: 2);
+        }
+    }
+
+    private void HandleRewardOfferedEvent(JsonElement payload)
+    {
+        var optionA = ReadString(payload, "option_a", "OptionA");
+        var optionB = ReadString(payload, "option_b", "OptionB");
+        var optionC = ReadString(payload, "option_c", "OptionC");
+        var details = string.Join(", ", new[] { optionA, optionB, optionC }.Where(value => !string.IsNullOrWhiteSpace(value)));
+        ShowTemporaryFeedback("ui.reward.offer.presented", details, code: "reward_offered", priority: 1);
+    }
+
+    private void HandleRunStateTransitionedEvent(JsonElement payload)
+    {
+        var outcome = ReadString(payload, "outcome", "Outcome") ?? string.Empty;
+        var day = ReadInt(payload, "day", "Day");
+        var details = day.HasValue ? $"day={day.Value}" : string.Empty;
+        if (string.Equals(outcome, "win", StringComparison.OrdinalIgnoreCase))
+        {
+            ShowTemporaryFeedback("ui.run.win.day15", details, code: "run_win", priority: 2);
+            return;
+        }
+
+        if (string.Equals(outcome, "loss", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(outcome, "lose", StringComparison.OrdinalIgnoreCase))
+        {
+            ShowTemporaryFeedback("ui.run.lose.castle_fall", details, code: "run_lose", priority: 2);
         }
     }
 
@@ -312,6 +356,16 @@ public partial class HUD : Control
                messageKey.StartsWith("ui.blocked_action.", StringComparison.OrdinalIgnoreCase);
     }
 
+    private static bool IsRuntimeOutcomeMessage(string messageKey, string code)
+    {
+        return messageKey.StartsWith("ui.run.win.", StringComparison.OrdinalIgnoreCase) ||
+               messageKey.StartsWith("ui.run.lose.", StringComparison.OrdinalIgnoreCase) ||
+               code.StartsWith("run.win.", StringComparison.OrdinalIgnoreCase) ||
+               code.StartsWith("run.lose.", StringComparison.OrdinalIgnoreCase) ||
+               string.Equals(code, "run_win", StringComparison.OrdinalIgnoreCase) ||
+               string.Equals(code, "run_lose", StringComparison.OrdinalIgnoreCase);
+    }
+
     private static bool IsMigrationOrLoadFailure(string code, string messageKey)
     {
         return code.Contains("migration", StringComparison.OrdinalIgnoreCase) ||
@@ -328,6 +382,9 @@ public partial class HUD : Control
             _ when messageKey.StartsWith("ui.blocked_action.", StringComparison.OrdinalIgnoreCase) => "Action blocked.",
             _ when messageKey.StartsWith("ui.load_failure.", StringComparison.OrdinalIgnoreCase) => "Load failed.",
             _ when messageKey.StartsWith("ui.migration_failure.", StringComparison.OrdinalIgnoreCase) => "Migration failed.",
+            _ when messageKey.StartsWith("ui.reward.offer.", StringComparison.OrdinalIgnoreCase) => "Reward offered.",
+            _ when messageKey.StartsWith("ui.run.win.", StringComparison.OrdinalIgnoreCase) => "Victory!",
+            _ when messageKey.StartsWith("ui.run.lose.", StringComparison.OrdinalIgnoreCase) => "Defeat.",
             _ => string.Empty,
         };
 

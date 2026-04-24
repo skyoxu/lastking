@@ -1,41 +1,74 @@
 extends "res://addons/gdUnit4/src/GdUnitTestSuite.gd"
 
-class _UiMappingHarness:
-    extends RefCounted
+var _bus: Node
 
-    var transition_label: String = ""
-    var terminal_prompt: String = ""
+func before() -> void:
+	_bus = preload("res://Game.Godot/Adapters/EventBusAdapter.cs").new()
+	_bus.name = "EventBus"
+	get_tree().get_root().add_child(auto_free(_bus))
 
-    func apply_transition_payload(payload: Dictionary) -> void:
-        var day: int = int(payload.get("day", 0))
-        var phase: String = String(payload.get("phase", "UNKNOWN"))
-        transition_label = "Day %d - %s" % [day, phase]
+func _hud() -> Node:
+	var hud = preload("res://Game.Godot/Scenes/UI/HUD.tscn").instantiate()
+	add_child(auto_free(hud))
+	await get_tree().process_frame
+	return hud
 
-    func apply_terminal_payload(payload: Dictionary) -> void:
-        var outcome: String = String(payload.get("outcome", "NONE"))
-        if outcome == "WIN":
-            terminal_prompt = "Victory! You survived the siege."
-        elif outcome == "LOSE":
-            terminal_prompt = "Defeat. Your castle has fallen."
+func _publish(type_name: String, payload: Dictionary) -> void:
+	_bus.PublishSimple(type_name, "ut", JSON.stringify(payload))
+
+func _feedback_label(hud: Node) -> Label:
+	return hud.get_node("FeedbackLayer/FeedbackLabel")
 
 # acceptance: ACC:T19.1
-# hard gate: transition and terminal payloads must map to correct on-screen values.
-func test_transition_and_terminal_payloads_map_to_ui_values_and_win_lose_prompts() -> void:
-    var ui := _UiMappingHarness.new()
+# acceptance: ACC:T42.3
+# acceptance: ACC:T42.10
+func test_terminal_and_reward_runtime_events_should_drive_hud_feedback_surfaces() -> void:
+	var hud = await _hud()
+	var feedback_label := _feedback_label(hud)
 
-    ui.apply_transition_payload({"day": 5, "phase": "NIGHT"})
-    ui.apply_terminal_payload({"outcome": "WIN"})
+	_publish("core.lastking.reward.offered", {
+		"day_number": 5,
+		"is_elite_night": true,
+		"is_boss_night": false,
+		"option_a": "artifact+1",
+		"option_b": "gold+600",
+		"option_c": "tech+3"
+	})
+	await get_tree().process_frame
+	assert_bool(feedback_label.visible).is_true()
+	assert_bool(feedback_label.text.find("Reward offered.") >= 0).is_true()
+	assert_bool(feedback_label.text.find("artifact+1") >= 0).is_true()
+	assert_bool(feedback_label.text.find("gold+600") >= 0).is_true()
+	assert_bool(feedback_label.text.find("tech+3") >= 0).is_true()
 
-    assert_that(ui.transition_label).is_equal("Day 5 - NIGHT")
-    assert_that(ui.terminal_prompt).is_equal("Victory! You survived the siege.")
+	_publish("core.run.state.transitioned", {
+		"outcome": "Win",
+		"day": 15,
+		"castle_hp": 80
+	})
+	await get_tree().process_frame
+	assert_bool(feedback_label.visible).is_true()
+	assert_bool(feedback_label.text.find("Victory!") >= 0).is_true()
+	assert_bool(feedback_label.text.find("day=15") >= 0).is_true()
 
-    ui.apply_terminal_payload({"outcome": "LOSE"})
-    assert_that(ui.terminal_prompt).is_equal("Defeat. Your castle has fallen.")
+	_publish("core.run.state.transitioned", {
+		"outcome": "Loss",
+		"day": 8,
+		"castle_hp": 0
+	})
+	await get_tree().process_frame
+	assert_bool(feedback_label.visible).is_true()
+	assert_bool(feedback_label.text.find("Defeat.") >= 0).is_true()
+	assert_bool(feedback_label.text.find("day=8") >= 0).is_true()
 
-func test_terminal_prompt_stays_unchanged_for_non_terminal_outcome() -> void:
-    var ui := _UiMappingHarness.new()
+func test_terminal_feedback_should_ignore_non_terminal_outcome() -> void:
+	var hud = await _hud()
+	var feedback_label := _feedback_label(hud)
 
-    ui.terminal_prompt = "Victory! You survived the siege."
-    ui.apply_terminal_payload({"outcome": "NONE"})
-
-    assert_that(ui.terminal_prompt).is_equal("Victory! You survived the siege.")
+	_publish("core.run.state.transitioned", {
+		"outcome": "NONE",
+		"day": 3,
+		"castle_hp": 90
+	})
+	await get_tree().process_frame
+	assert_bool(feedback_label.visible).is_false()

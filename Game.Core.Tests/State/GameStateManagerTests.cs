@@ -117,6 +117,7 @@ public class GameStateManagerTests
         configManager.Snapshot.Should().Be(baselineSnapshot);
     }
 
+    // ACC:T42.4
     // ACC:T3.4
     // ACC:T3.7
     // ACC:T3.12
@@ -141,6 +142,7 @@ public class GameStateManagerTests
         manager.CurrentDayNightDay.Should().Be(2);
     }
 
+    // ACC:T42.7
     // ACC:T3.7
     [Fact]
     public void ShouldRejectManualTransitionBeforeThreshold_WhenRequestingPhaseChange()
