@@ -4,6 +4,7 @@ import datetime as dt
 import json
 import os
 import subprocess
+import sys
 from pathlib import Path
 from typing import Any, Iterable, Sequence
 
@@ -53,8 +54,13 @@ def run_cmd(
     cwd: Path | None = None,
     timeout_sec: int = 900,
 ) -> tuple[int, str]:
+    cmd = [str(item) for item in args]
+    if len(cmd) >= 3 and cmd[0].strip().lower() == "py" and cmd[1].strip() == "-3":
+        python_exec = str(Path(sys.executable or "").resolve()) if str(sys.executable or "").strip() else ""
+        if python_exec:
+            cmd = [python_exec, *cmd[2:]]
     proc = subprocess.Popen(
-        list(args),
+        cmd,
         cwd=str(cwd or repo_root()),
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,

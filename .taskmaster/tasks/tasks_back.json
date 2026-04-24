@@ -3467,23 +3467,24 @@
       "chapter7-ui",
       "loop"
     ],
-    "test_refs": [
-      "Game.Core.Tests/State/GameStateMachineTests.cs",
-      "Game.Core.Tests/State/GameStateManagerTests.cs",
-      "Game.Core.Tests/Tasks/Task3DayNightScopeGuardTests.cs",
-      "Game.Core.Tests/Tasks/Task3DayNightDesignArtifactTests.cs"
-    ],
+      "test_refs": [
+        "Game.Core.Tests/State/GameStateManagerTests.cs",
+        "Tests.Godot/tests/UI/test_hud_updates_on_events.gd",
+        "Tests.Godot/tests/UI/test_game_manager_transition_and_terminal_prompts.gd",
+        "Tests.Godot/tests/UI/test_hud_day_night_cycle_status.gd",
+        "Tests.Godot/tests/Scenes/Runtime/test_nodes_process_mode_pause_resume.gd"
+      ],
     "acceptance": [
-      "Runtime HUD And Outcome Surfaces is implemented as a concrete Chapter 7 UI wiring slice using HUD / Prompt / Outcome Surfaces, and the player action is visible end-to-end: Play a run, observe timing, rewards, prompts, and terminal transitions. Refs: Game.Core.Tests/State/GameStateMachineTests.cs Game.Core.Tests/State/GameStateManagerTests.cs Game.Core.Tests/Tasks/Task3DayNightScopeGuardTests.cs Game.Core.Tests/Tasks/Task3DayNightDesignArtifactTests.cs",
-      "Runtime HUD And Outcome Surfaces selects or creates the suggested standalone surfaces from docs/gdd/ui-gdd-flow.candidates.json before implementation is accepted. Refs: Game.Core.Tests/State/GameStateMachineTests.cs Game.Core.Tests/State/GameStateManagerTests.cs Game.Core.Tests/Tasks/Task3DayNightScopeGuardTests.cs Game.Core.Tests/Tasks/Task3DayNightDesignArtifactTests.cs",
-      "Runtime HUD And Outcome Surfaces renders the candidate system response from runtime events: Render readable phase, timer, HP, reward, prompt, and win/lose state from runtime events. Refs: Game.Core.Tests/State/GameStateMachineTests.cs Game.Core.Tests/State/GameStateManagerTests.cs Game.Core.Tests/Tasks/Task3DayNightScopeGuardTests.cs Game.Core.Tests/Tasks/Task3DayNightDesignArtifactTests.cs",
-      "Runtime HUD And Outcome Surfaces exposes the candidate empty-state rules without relying on logs-only evidence: Day/Night phase durations must be configuration-driven (not hardcoded): default Day=4:00 and Night=2:00; transition is allowed only when the active phase reaches its configured threshold, and transition cannot be manually forced before threshold.. Refs: Game.Core.Tests/State/GameStateMachineTests.cs Game.Core.Tests/State/GameStateManagerTests.cs Game.Core.Tests/Tasks/Task3DayNightScopeGuardTests.cs Game.Core.Tests/Tasks/Task3DayNightDesignArtifactTests.cs",
-      "Runtime HUD And Outcome Surfaces exposes the candidate failure-state rules without relying on logs-only evidence: Day/Night runtime updates must be driven by the Godot process loop (_Process and/or _PhysicsProcess) into GameStateManager.UpdateDayNightRuntime; when loop updates are paused or stopped, cycle progression must not advance.. Refs: Game.Core.Tests/State/GameStateMachineTests.cs Game.Core.Tests/State/GameStateManagerTests.cs Game.Core.Tests/Tasks/Task3DayNightScopeGuardTests.cs Game.Core.Tests/Tasks/Task3DayNightDesignArtifactTests.cs",
-      "Runtime HUD And Outcome Surfaces satisfies the completion result, keeps deterministic domain state behind existing contracts, adds no unrelated gameplay behavior and must produce validation evidence at logs/ci/<YYYY-MM-DD>/task-triplet-audit/report.json, logs/unit/<YYYY-MM-DD>/coverage.json, logs/e2e/<YYYY-MM-DD>/runtime-ui/summary.json: Hard gate: deterministic cycle verification must include a fixed-seed forced-terminal scenario, not only natural Day15 completion paths.. Refs: Game.Core.Tests/State/GameStateMachineTests.cs Game.Core.Tests/State/GameStateManagerTests.cs Game.Core.Tests/Tasks/Task3DayNightScopeGuardTests.cs Game.Core.Tests/Tasks/Task3DayNightDesignArtifactTests.cs",
-      "Runtime HUD And Outcome Surfaces must assert that when _Process/_PhysicsProcess updates are paused or stopped, cycle progression does not advance and runtime phase/timer state remains unchanged. Refs: Game.Core.Tests/State/GameStateMachineTests.cs Game.Core.Tests/State/GameStateManagerTests.cs Game.Core.Tests/Tasks/Task3DayNightScopeGuardTests.cs Game.Core.Tests/Tasks/Task3DayNightDesignArtifactTests.cs",
-      "Runtime HUD And Outcome Surfaces acceptance must explicitly map every listed Requirement ID (RQ-RUNTIME-SPEED-MODES, RQ-RUNTIME-ERROR-FEEDBACK, RQ-COMBAT-QUEUE-TECH, RQ-CORE-LOOP-STATE) to concrete behavior, test evidence, or artifact evidence; missing any Requirement ID mapping fails acceptance. Refs: Game.Core.Tests/State/GameStateMachineTests.cs Game.Core.Tests/State/GameStateManagerTests.cs Game.Core.Tests/Tasks/Task3DayNightScopeGuardTests.cs Game.Core.Tests/Tasks/Task3DayNightDesignArtifactTests.cs",
-      "Runtime HUD And Outcome Surfaces acceptance must explicitly map implementation and verification evidence to each scope item (T03, T07, T08, T09, T10, T18, T19, T23, T24); missing any scope mapping fails acceptance, and out-of-scope gameplay changes do not count toward completion. Refs: Game.Core.Tests/State/GameStateMachineTests.cs Game.Core.Tests/State/GameStateManagerTests.cs Game.Core.Tests/Tasks/Task3DayNightScopeGuardTests.cs Game.Core.Tests/Tasks/Task3DayNightDesignArtifactTests.cs",
-      "Runtime HUD And Outcome Surfaces validation must include the referenced xUnit suite and an explicit GdUnit N/A record when no GdUnit case applies, and Chapter 7 artifact evidence must record auditable pass/fail outcomes for each framework; when one framework has no applicable case, acceptance must explicitly record that framework as N/A with rationale instead of omitting it. Refs: Game.Core.Tests/State/GameStateMachineTests.cs Game.Core.Tests/State/GameStateManagerTests.cs Game.Core.Tests/Tasks/Task3DayNightScopeGuardTests.cs Game.Core.Tests/Tasks/Task3DayNightDesignArtifactTests.cs"
+      "Runtime HUD And Outcome Surfaces is implemented as a concrete Chapter 7 UI wiring slice using HUD / Prompt / Outcome Surfaces, and the player action is visible end-to-end: Play a run, observe timing, rewards, and prompts from runtime event wiring. Refs: Tests.Godot/tests/UI/test_hud_updates_on_events.gd Tests.Godot/tests/Scenes/Runtime/test_nodes_process_mode_pause_resume.gd",
+      "Runtime HUD And Outcome Surfaces selects or creates the suggested standalone surfaces from docs/gdd/ui-gdd-flow.candidates.json before implementation is accepted. Refs: Tests.Godot/tests/UI/test_hud_updates_on_events.gd",
+      "Runtime HUD And Outcome Surfaces renders the candidate system response from runtime events: Render readable phase, timer, HP, reward, prompt, and win/lose state from runtime events. Refs: Tests.Godot/tests/UI/test_hud_updates_on_events.gd Tests.Godot/tests/UI/test_game_manager_transition_and_terminal_prompts.gd",
+      "Runtime HUD And Outcome Surfaces exposes the candidate empty-state rules without relying on logs-only evidence: Day/Night phase durations must be configuration-driven (not hardcoded): default Day=4:00 and Night=2:00; transition is allowed only when the active phase reaches its configured threshold, and transition cannot be manually forced before threshold. Refs: Tests.Godot/tests/UI/test_hud_updates_on_events.gd Game.Core.Tests/State/GameStateManagerTests.cs",
+      "Runtime HUD And Outcome Surfaces exposes the candidate failure-state rules without relying on logs-only evidence: Day/Night runtime updates must be driven by the Godot process loop (_Process and/or _PhysicsProcess) into GameStateManager.UpdateDayNightRuntime; when loop updates are paused or stopped, cycle progression must not advance. Refs: Tests.Godot/tests/Scenes/Runtime/test_nodes_process_mode_pause_resume.gd",
+      "Runtime HUD And Outcome Surfaces satisfies the completion result, keeps deterministic domain state behind existing contracts, adds no unrelated gameplay behavior and must produce validation evidence at logs/ci/<YYYY-MM-DD>/task-triplet-audit/report.json, logs/unit/<YYYY-MM-DD>/coverage.json, logs/e2e/<YYYY-MM-DD>/runtime-ui/summary.json: Hard gate: deterministic cycle verification must include a fixed-seed forced-terminal scenario, not only natural Day15 completion paths. Refs: Game.Core.Tests/State/GameStateManagerTests.cs Tests.Godot/tests/UI/test_hud_updates_on_events.gd",
+      "Runtime HUD And Outcome Surfaces must assert that when _Process/_PhysicsProcess updates are paused or stopped, cycle progression does not advance and runtime phase/timer state remains unchanged. Refs: Tests.Godot/tests/Scenes/Runtime/test_nodes_process_mode_pause_resume.gd",
+      "Runtime HUD And Outcome Surfaces acceptance must explicitly map every listed Requirement ID (RQ-RUNTIME-SPEED-MODES, RQ-RUNTIME-ERROR-FEEDBACK, RQ-COMBAT-QUEUE-TECH, RQ-CORE-LOOP-STATE) to concrete behavior, test evidence, or artifact evidence; missing any Requirement ID mapping fails acceptance. Refs: Tests.Godot/tests/UI/test_hud_day_night_cycle_status.gd",
+      "Runtime HUD And Outcome Surfaces acceptance must explicitly map implementation and verification evidence to each scope item (T03, T07, T08, T09, T10, T18, T19, T23, T24); missing any scope mapping fails acceptance, and out-of-scope gameplay changes do not count toward completion. Refs: Tests.Godot/tests/UI/test_hud_day_night_cycle_status.gd",
+      "Runtime HUD And Outcome Surfaces validation must include xUnit deterministic/runtime checks and GdUnit runtime UI wiring checks, and Chapter 6/7 artifacts must record auditable pass/fail outcomes per framework; when one framework has no applicable case, acceptance must explicitly record that framework as N/A with rationale instead of omitting it. Refs: Game.Core.Tests/State/GameStateManagerTests.cs Tests.Godot/tests/UI/test_hud_updates_on_events.gd Tests.Godot/tests/UI/test_game_manager_transition_and_terminal_prompts.gd"
     ],
     "contractRefs": [
       "core.lastking.day.started",
@@ -3510,7 +3511,12 @@
         24
       ],
       "ui_entry": "HUD / Prompt / Outcome Surfaces"
-    }
+    },
+    "test_strategy": [
+      "Implement Runtime HUD and outcome surfaces wiring with explicit runtime state transitions and deterministic UI evidence mapping.",
+      "Keep core contracts unchanged (BCL-only in Game.Core contracts) and consume existing runtime events through Godot adapter boundaries.",
+      "Validate through referenced xUnit and GdUnit suites, then bind acceptance evidence to logs/ci and logs/unit artifacts for Chapter 6 traceability."
+    ]
   },
   {
     "id": "NG-0043",

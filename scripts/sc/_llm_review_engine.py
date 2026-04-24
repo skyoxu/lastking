@@ -464,9 +464,14 @@ def main() -> int:
         write_text(trace_path, trace_out)
 
         last_msg = ""
-        if output_path.is_file():
+        if rc == 0 and output_path.is_file():
             last_msg = output_path.read_text(encoding="utf-8", errors="ignore")
             write_text(output_path, last_msg)
+        elif output_path.exists():
+            try:
+                output_path.unlink()
+            except OSError:
+                pass
 
         status = "ok" if (rc == 0 and last_msg.strip()) else ("fail" if args.strict else "skipped")
         if status != "ok":
