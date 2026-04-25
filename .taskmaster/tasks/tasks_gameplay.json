@@ -981,7 +981,8 @@
       "Game.Core.Tests/Services/ResourceManagerIntegerSafetyTests.cs",
       "Game.Core.Tests/Engine/GameEngineCoreEventTests.cs",
       "Game.Core.Tests/Services/ResourceManagerTests.cs",
-      "Game.Core.Tests/Services/ResourceManagerEventTests.cs"
+      "Game.Core.Tests/Services/ResourceManagerEventTests.cs",
+      "Game.Core.Tests/Tasks/Task44UiWiringAcceptanceGovernanceTests.cs"
     ],
     "acceptance": [
       "Integer safety is enforced through both static scan and runtime assertion gates; any non-integer resource arithmetic fails immediately and gameplay-visible resource state remains unchanged. Refs: Game.Core.Tests/Services/ResourceManagerIntegerSafetyTests.cs",
@@ -3655,18 +3656,19 @@
       "Game.Core.Tests/Services/ResourceManagerIntegerSafetyTests.cs",
       "Game.Core.Tests/Engine/GameEngineCoreEventTests.cs",
       "Game.Core.Tests/Services/ResourceManagerTests.cs",
-      "Game.Core.Tests/Services/ResourceManagerEventTests.cs"
+      "Game.Core.Tests/Services/ResourceManagerEventTests.cs",
+      "Game.Core.Tests/Tasks/Task44UiWiringAcceptanceGovernanceTests.cs"
     ],
     "acceptance": [
-      "Economy And Progression Panels is implemented as a concrete Chapter 7 UI wiring slice using Resource / Build / Progression Panels, and the player action is visible end-to-end: Spend resources, place/build, train, upgrade, repair, or pick rewards. Refs: Game.Core.Tests/Services/ResourceManagerIntegerSafetyTests.cs Game.Core.Tests/Engine/GameEngineCoreEventTests.cs Game.Core.Tests/Services/ResourceManagerTests.cs Game.Core.Tests/Services/ResourceManagerEventTests.cs",
-      "Economy And Progression Panels selects or creates the suggested standalone surfaces from docs/gdd/ui-gdd-flow.candidates.json before implementation is accepted. Refs: Game.Core.Tests/Services/ResourceManagerIntegerSafetyTests.cs Game.Core.Tests/Engine/GameEngineCoreEventTests.cs Game.Core.Tests/Services/ResourceManagerTests.cs Game.Core.Tests/Services/ResourceManagerEventTests.cs",
-      "Economy And Progression Panels renders the candidate system response from runtime events: Render deterministic resource, build, queue, upgrade, and progression changes with clear invalid-state feedback. Refs: Game.Core.Tests/Services/ResourceManagerIntegerSafetyTests.cs Game.Core.Tests/Engine/GameEngineCoreEventTests.cs Game.Core.Tests/Services/ResourceManagerTests.cs Game.Core.Tests/Services/ResourceManagerEventTests.cs",
+      "Economy And Progression Panels keeps the Task 44 scope bound to deterministic economy/progression runtime behavior (resource spend/add/subtract and queue-related state transitions) with auditable snapshot/event evidence, without claiming unimplemented standalone UI panels. Refs: Game.Core.Tests/Services/ResourceManagerIntegerSafetyTests.cs Game.Core.Tests/Engine/GameEngineCoreEventTests.cs Game.Core.Tests/Services/ResourceManagerTests.cs Game.Core.Tests/Services/ResourceManagerEventTests.cs Game.Core.Tests/Tasks/Task44UiWiringAcceptanceGovernanceTests.cs",
+      "Economy And Progression Panels keeps Chapter 7 candidate binding for scope items T12, T13, T14, T15, T16, T17 and preserves requirement/scope traceability from docs/gdd/ui-gdd-flow.candidates.json; scope drift fails acceptance. Refs: Game.Core.Tests/Services/ResourceManagerTests.cs Game.Core.Tests/Tasks/Task44UiWiringAcceptanceGovernanceTests.cs",
+      "Economy And Progression Panels renders deterministic resource-change responses from runtime events and keeps rejected mutations atomic (state unchanged and no successful-mutation event emitted), so invalid operations remain observable through deterministic evidence. Refs: Game.Core.Tests/Services/ResourceManagerIntegerSafetyTests.cs Game.Core.Tests/Engine/GameEngineCoreEventTests.cs Game.Core.Tests/Services/ResourceManagerTests.cs Game.Core.Tests/Services/ResourceManagerEventTests.cs",
       "Economy And Progression Panels exposes the candidate empty-state rules without relying on logs-only evidence: During long train/cancel sequences with large integer values, resource totals stay accurate integers, never negative, and without overflow/underflow.. Refs: Game.Core.Tests/Services/ResourceManagerIntegerSafetyTests.cs Game.Core.Tests/Engine/GameEngineCoreEventTests.cs Game.Core.Tests/Services/ResourceManagerTests.cs Game.Core.Tests/Services/ResourceManagerEventTests.cs",
       "Economy And Progression Panels exposes the candidate failure-state rules without relying on logs-only evidence: Integer safety is enforced through both static scan and runtime assertion gates; any non-integer resource arithmetic fails immediately and gameplay-visible resource state remains unchanged.. Refs: Game.Core.Tests/Services/ResourceManagerIntegerSafetyTests.cs Game.Core.Tests/Engine/GameEngineCoreEventTests.cs Game.Core.Tests/Services/ResourceManagerTests.cs Game.Core.Tests/Services/ResourceManagerEventTests.cs",
-      "Economy And Progression Panels satisfies the completion result, keeps deterministic domain state behind existing contracts, adds no unrelated gameplay behavior and must produce validation evidence at logs/unit/<YYYY-MM-DD>/coverage.json: Integer safety is enforced through both static scan and runtime assertion gates; any non-integer resource arithmetic fails immediately and gameplay-visible resource state remains unchanged.. Refs: Game.Core.Tests/Services/ResourceManagerIntegerSafetyTests.cs Game.Core.Tests/Engine/GameEngineCoreEventTests.cs Game.Core.Tests/Services/ResourceManagerTests.cs Game.Core.Tests/Services/ResourceManagerEventTests.cs",
-      "Economy And Progression Panels acceptance must explicitly map every listed Requirement ID (RQ-COMBAT-QUEUE-TECH, RQ-ECONOMY-BUILD-RULES) to concrete behavior, test evidence, or artifact evidence; missing any Requirement ID mapping fails acceptance. Refs: Game.Core.Tests/Services/ResourceManagerIntegerSafetyTests.cs Game.Core.Tests/Engine/GameEngineCoreEventTests.cs Game.Core.Tests/Services/ResourceManagerTests.cs Game.Core.Tests/Services/ResourceManagerEventTests.cs",
-      "Economy And Progression Panels acceptance must explicitly map implementation and verification evidence to each scope item (T12, T13, T14, T15, T16, T17); missing any scope mapping fails acceptance, and out-of-scope gameplay changes do not count toward completion. Refs: Game.Core.Tests/Services/ResourceManagerIntegerSafetyTests.cs Game.Core.Tests/Engine/GameEngineCoreEventTests.cs Game.Core.Tests/Services/ResourceManagerTests.cs Game.Core.Tests/Services/ResourceManagerEventTests.cs",
-      "Economy And Progression Panels validation must include the referenced xUnit suite and an explicit GdUnit N/A record when no GdUnit case applies, and Chapter 7 artifact evidence must record auditable pass/fail outcomes for each framework; when one framework has no applicable case, acceptance must explicitly record that framework as N/A with rationale instead of omitting it. Refs: Game.Core.Tests/Services/ResourceManagerIntegerSafetyTests.cs Game.Core.Tests/Engine/GameEngineCoreEventTests.cs Game.Core.Tests/Services/ResourceManagerTests.cs Game.Core.Tests/Services/ResourceManagerEventTests.cs"
+      "Economy And Progression Panels satisfies the completion result, keeps deterministic domain state behind existing contracts, adds no unrelated gameplay behavior, and must produce validation evidence at logs/unit/<YYYY-MM-DD>/summary.json: Integer safety is enforced through both static scan and runtime assertion gates; any non-integer resource arithmetic fails immediately and gameplay-visible resource state remains unchanged. Refs: Game.Core.Tests/Services/ResourceManagerIntegerSafetyTests.cs Game.Core.Tests/Engine/GameEngineCoreEventTests.cs Game.Core.Tests/Services/ResourceManagerTests.cs Game.Core.Tests/Services/ResourceManagerEventTests.cs",
+      "Economy And Progression Panels acceptance must explicitly map every listed Requirement ID (RQ-COMBAT-QUEUE-TECH, RQ-ECONOMY-BUILD-RULES) to concrete behavior, test evidence, or artifact evidence; missing any Requirement ID mapping fails acceptance. Refs: Game.Core.Tests/Services/ResourceManagerIntegerSafetyTests.cs Game.Core.Tests/Engine/GameEngineCoreEventTests.cs Game.Core.Tests/Services/ResourceManagerTests.cs Game.Core.Tests/Services/ResourceManagerEventTests.cs Game.Core.Tests/Tasks/Task44UiWiringAcceptanceGovernanceTests.cs",
+      "Economy And Progression Panels acceptance must explicitly map implementation and verification evidence to each scope item (T12, T13, T14, T15, T16, T17); missing any scope mapping fails acceptance, and out-of-scope gameplay changes do not count toward completion. Refs: Game.Core.Tests/Services/ResourceManagerIntegerSafetyTests.cs Game.Core.Tests/Engine/GameEngineCoreEventTests.cs Game.Core.Tests/Services/ResourceManagerTests.cs Game.Core.Tests/Services/ResourceManagerEventTests.cs Game.Core.Tests/Tasks/Task44UiWiringAcceptanceGovernanceTests.cs",
+      "Economy And Progression Panels validation must include the referenced xUnit suite and an explicit GdUnit N/A record when no GdUnit case applies; acceptance remains deterministic at task-view level and omits non-deterministic artifact pass/fail parsing requirements. Refs: Game.Core.Tests/Services/ResourceManagerIntegerSafetyTests.cs Game.Core.Tests/Engine/GameEngineCoreEventTests.cs Game.Core.Tests/Services/ResourceManagerTests.cs Game.Core.Tests/Services/ResourceManagerEventTests.cs Game.Core.Tests/Tasks/Task44UiWiringAcceptanceGovernanceTests.cs"
     ],
     "contractRefs": [
       "core.lastking.resources.changed",
@@ -3686,7 +3688,10 @@
         17
       ],
       "ui_entry": "Resource / Build / Progression Panels"
-    }
+    },
+    "test_strategy": [
+      "Validate the UI slice with the referenced GdUnit/xUnit tests and Chapter 7 artifact evidence."
+    ]
   },
   {
     "id": "GM-0145",

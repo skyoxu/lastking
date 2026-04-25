@@ -17,6 +17,8 @@ public sealed class ResourceManagerIntegerSafetyTests
     // ACC:T12.1
     // ACC:T12.13
     // ACC:T12.18
+    // ACC:T44.5
+    // ACC:T44.6
     [Fact]
     [Trait("acceptance", "ACC:T12.1")]
     [Trait("acceptance", "ACC:T12.13")]
@@ -35,6 +37,8 @@ public sealed class ResourceManagerIntegerSafetyTests
         stateAfter.Should().Be(stateBefore, "rejected non-integer arithmetic must not commit resource state mutation.");
     }
 
+    // ACC:T44.4
+    // ACC:T44.5
     [Fact]
     public void ShouldFailStaticScan_WhenResourceMutationPathContainsFloatingPointTypes()
     {
