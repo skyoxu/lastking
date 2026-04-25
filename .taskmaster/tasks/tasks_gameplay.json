@@ -2037,6 +2037,7 @@
       "Game.Core.Tests/Domain/InvalidActionFeedbackContractTests.cs",
       "Game.Core.Tests/Services/UIFeedbackMessageResolverTests.cs",
       "Tests.Godot/tests/UI/test_settings_locale.gd",
+      "Tests.Godot/tests/UI/test_hud_scene.gd",
       "Game.Core.Tests/Services/UIFeedbackRegressionTests.cs",
       "Tests.Godot/tests/Integration/test_feedback_error_flows.gd",
       "Tests.Godot/tests/UI/test_hud_feedback_realtime.gd"
@@ -3741,20 +3742,32 @@
     ],
     "test_refs": [
       "Tests.Godot/tests/Adapters/Save/test_save_manager_autosave_slot_path.gd",
-      "Tests.Godot/tests/Adapters/Db/test_savegame_update_overwrite_cross_restart.gd",
       "Tests.Godot/tests/Adapters/Save/test_save_manager_daystart_autosave.gd",
-      "Tests.Godot/tests/Adapters/Db/test_savegame_persistence_cross_restart.gd"
+      "Tests.Godot/tests/Adapters/Save/test_save_manager_load_failures_feedback.gd",
+      "Tests.Godot/tests/Adapters/Db/test_savegame_update_overwrite_cross_restart.gd",
+      "Tests.Godot/tests/Adapters/Db/test_savegame_persistence_cross_restart.gd",
+      "Tests.Godot/tests/Integration/test_save_manager_steam_cloud_sync_flow.gd",
+      "Tests.Godot/tests/Integration/test_backup_restore_savegame.gd",
+      "Tests.Godot/tests/Integration/test_achievements_end_to_end_unlock_and_sync.gd",
+      "Tests.Godot/tests/UI/test_achievements_list_visible_on_session_start.gd",
+      "Tests.Godot/tests/UI/test_settings_locale.gd",
+      "Tests.Godot/tests/UI/test_hud_scene.gd",
+      "Tests.Godot/tests/Adapters/Config/test_settings_persistence.gd",
+      "Game.Core.Tests/Services/CloudSaveConflictResolverTests.cs",
+      "Game.Core.Tests/Services/FrameTimeHotspotRankingTests.cs",
+      "Game.Core.Tests/Services/SaveManagerWorkflowTests.cs",
+      "Game.Core.Tests/Tasks/Task45UiWiringAcceptanceGovernanceTests.cs"
     ],
     "acceptance": [
-      "Save, Settings, And Meta Surfaces is implemented as a concrete Chapter 7 UI wiring slice using Settings / Save / Meta Surfaces, and the player action is visible end-to-end: Save, load, localize, tune audio, or inspect platform/runtime status. Refs: Tests.Godot/tests/Adapters/Save/test_save_manager_autosave_slot_path.gd Tests.Godot/tests/Adapters/Db/test_savegame_update_overwrite_cross_restart.gd Tests.Godot/tests/Adapters/Save/test_save_manager_daystart_autosave.gd Tests.Godot/tests/Adapters/Db/test_savegame_persistence_cross_restart.gd",
-      "Save, Settings, And Meta Surfaces selects or creates the suggested standalone surfaces from docs/gdd/ui-gdd-flow.candidates.json before implementation is accepted. Refs: Tests.Godot/tests/Adapters/Save/test_save_manager_autosave_slot_path.gd Tests.Godot/tests/Adapters/Db/test_savegame_update_overwrite_cross_restart.gd Tests.Godot/tests/Adapters/Save/test_save_manager_daystart_autosave.gd Tests.Godot/tests/Adapters/Db/test_savegame_persistence_cross_restart.gd",
-      "Save, Settings, And Meta Surfaces renders the candidate system response from runtime events: Render persistence, localization, audio, performance, and platform status on governed player-visible surfaces. Refs: Tests.Godot/tests/Adapters/Save/test_save_manager_autosave_slot_path.gd Tests.Godot/tests/Adapters/Db/test_savegame_update_overwrite_cross_restart.gd Tests.Godot/tests/Adapters/Save/test_save_manager_daystart_autosave.gd Tests.Godot/tests/Adapters/Db/test_savegame_persistence_cross_restart.gd",
-      "Save, Settings, And Meta Surfaces exposes the candidate empty-state rules without relying on logs-only evidence: If no autosave file exists, load returns a deterministic failure result, shows explicit user feedback, and leaves runtime state unchanged.. Refs: Tests.Godot/tests/Adapters/Save/test_save_manager_autosave_slot_path.gd Tests.Godot/tests/Adapters/Db/test_savegame_update_overwrite_cross_restart.gd Tests.Godot/tests/Adapters/Save/test_save_manager_daystart_autosave.gd Tests.Godot/tests/Adapters/Db/test_savegame_persistence_cross_restart.gd",
-      "Save, Settings, And Meta Surfaces exposes the candidate failure-state rules without relying on logs-only evidence: All save writes target only the single autosave slot at user://autosave.save (Windows-safe user path); any write to an alternate slot path fails acceptance.. Refs: Tests.Godot/tests/Adapters/Save/test_save_manager_autosave_slot_path.gd Tests.Godot/tests/Adapters/Db/test_savegame_update_overwrite_cross_restart.gd Tests.Godot/tests/Adapters/Save/test_save_manager_daystart_autosave.gd Tests.Godot/tests/Adapters/Db/test_savegame_persistence_cross_restart.gd",
-      "Save, Settings, And Meta Surfaces satisfies the completion result, keeps deterministic domain state behind existing contracts, adds no unrelated gameplay behavior and must produce validation evidence at logs/ci/<YYYY-MM-DD>/save-migration/report.json, logs/ci/<YYYY-MM-DD>/steam-cloud/report.json, logs/ci/<YYYY-MM-DD>/achievements/report.json, logs/e2e/<YYYY-MM-DD>/settings/summary.json: If no autosave file exists, load returns a deterministic failure result, shows explicit user feedback, and leaves runtime state unchanged.. Refs: Tests.Godot/tests/Adapters/Save/test_save_manager_autosave_slot_path.gd Tests.Godot/tests/Adapters/Db/test_savegame_update_overwrite_cross_restart.gd Tests.Godot/tests/Adapters/Save/test_save_manager_daystart_autosave.gd Tests.Godot/tests/Adapters/Db/test_savegame_persistence_cross_restart.gd",
-      "Save, Settings, And Meta Surfaces acceptance must explicitly map every listed Requirement ID (RQ-I18N-LANG-SWITCH, RQ-AUDIO-CHANNEL-SETTINGS, RQ-PERF-GATE, RQ-SAVE-MIGRATION-CLOUD) to concrete behavior, test evidence, or artifact evidence; missing any Requirement ID mapping fails acceptance. Refs: Tests.Godot/tests/Adapters/Save/test_save_manager_autosave_slot_path.gd Tests.Godot/tests/Adapters/Db/test_savegame_update_overwrite_cross_restart.gd Tests.Godot/tests/Adapters/Save/test_save_manager_daystart_autosave.gd Tests.Godot/tests/Adapters/Db/test_savegame_persistence_cross_restart.gd",
-      "Save, Settings, And Meta Surfaces acceptance must explicitly map implementation and verification evidence to each scope item (T25, T26, T27, T28, T29, T30); missing any scope mapping fails acceptance, and out-of-scope gameplay changes do not count toward completion. Refs: Tests.Godot/tests/Adapters/Save/test_save_manager_autosave_slot_path.gd Tests.Godot/tests/Adapters/Db/test_savegame_update_overwrite_cross_restart.gd Tests.Godot/tests/Adapters/Save/test_save_manager_daystart_autosave.gd Tests.Godot/tests/Adapters/Db/test_savegame_persistence_cross_restart.gd",
-      "Save, Settings, And Meta Surfaces validation must include the referenced GdUnit suite and an explicit xUnit N/A record when no xUnit case applies, and Chapter 7 artifact evidence must record auditable pass/fail outcomes for each framework; when one framework has no applicable case, acceptance must explicitly record that framework as N/A with rationale instead of omitting it. Refs: Tests.Godot/tests/Adapters/Save/test_save_manager_autosave_slot_path.gd Tests.Godot/tests/Adapters/Db/test_savegame_update_overwrite_cross_restart.gd Tests.Godot/tests/Adapters/Save/test_save_manager_daystart_autosave.gd Tests.Godot/tests/Adapters/Db/test_savegame_persistence_cross_restart.gd"
+      "Save, Settings, And Meta Surfaces is implemented as a concrete Chapter 7 UI wiring slice using Settings / Save / Meta Surfaces, and the player action is visible end-to-end: Save, load, localize, tune audio, or inspect platform/runtime status. Refs: Tests.Godot/tests/Adapters/Save/test_save_manager_load_failures_feedback.gd Tests.Godot/tests/UI/test_settings_locale.gd Tests.Godot/tests/UI/test_hud_scene.gd Tests.Godot/tests/Adapters/Config/test_settings_persistence.gd Tests.Godot/tests/Integration/test_save_manager_steam_cloud_sync_flow.gd Game.Core.Tests/Services/FrameTimeHotspotRankingTests.cs",
+      "Save, Settings, And Meta Surfaces selects or creates the suggested standalone surfaces from docs/gdd/ui-gdd-flow.candidates.json before implementation is accepted. Refs: Tests.Godot/tests/Adapters/Save/test_save_manager_daystart_autosave.gd Tests.Godot/tests/UI/test_settings_locale.gd Game.Core.Tests/Tasks/Task45UiWiringAcceptanceGovernanceTests.cs",
+      "Save, Settings, And Meta Surfaces renders the candidate system response from runtime events: Render persistence, localization, audio, performance, and platform status on governed player-visible surfaces. Refs: Tests.Godot/tests/UI/test_settings_locale.gd Tests.Godot/tests/UI/test_hud_scene.gd Tests.Godot/tests/Adapters/Config/test_settings_persistence.gd Tests.Godot/tests/Integration/test_save_manager_steam_cloud_sync_flow.gd Game.Core.Tests/Services/FrameTimeHotspotRankingTests.cs",
+      "Save, Settings, And Meta Surfaces exposes the candidate empty-state rules without relying on logs-only evidence: If no autosave file exists, load returns a deterministic failure result, shows explicit user feedback, and leaves runtime state unchanged. Refs: Tests.Godot/tests/Adapters/Save/test_save_manager_load_failures_feedback.gd Tests.Godot/tests/Adapters/Db/test_savegame_persistence_cross_restart.gd",
+      "Save, Settings, And Meta Surfaces exposes the candidate failure-state rules without relying on logs-only evidence: All save writes target only the single autosave slot at user://autosave.save (Windows-safe user path); any write to an alternate slot path fails acceptance. Refs: Tests.Godot/tests/Adapters/Save/test_save_manager_autosave_slot_path.gd Tests.Godot/tests/Adapters/Save/test_save_manager_daystart_autosave.gd",
+      "Save, Settings, And Meta Surfaces satisfies the completion result, keeps deterministic domain state behind existing contracts, adds no unrelated gameplay behavior and must produce validation evidence at logs/ci/<YYYY-MM-DD>/save-migration/report.json, logs/ci/<YYYY-MM-DD>/steam-cloud/report.json, logs/ci/<YYYY-MM-DD>/achievements/report.json, logs/e2e/<YYYY-MM-DD>/settings/summary.json. Refs: Tests.Godot/tests/Integration/test_save_manager_steam_cloud_sync_flow.gd Tests.Godot/tests/Integration/test_backup_restore_savegame.gd Tests.Godot/tests/Integration/test_achievements_end_to_end_unlock_and_sync.gd Tests.Godot/tests/UI/test_settings_locale.gd",
+      "Save, Settings, And Meta Surfaces acceptance must explicitly map every listed Requirement ID (RQ-I18N-LANG-SWITCH, RQ-AUDIO-CHANNEL-SETTINGS, RQ-PERF-GATE, RQ-SAVE-MIGRATION-CLOUD) to concrete behavior, test evidence, or artifact evidence; missing any Requirement ID mapping fails acceptance. Refs: Tests.Godot/tests/UI/test_settings_locale.gd Tests.Godot/tests/Adapters/Config/test_settings_persistence.gd Game.Core.Tests/Services/FrameTimeHotspotRankingTests.cs Tests.Godot/tests/Integration/test_save_manager_steam_cloud_sync_flow.gd Tests.Godot/tests/Integration/test_backup_restore_savegame.gd Game.Core.Tests/Tasks/Task45UiWiringAcceptanceGovernanceTests.cs",
+      "Save, Settings, And Meta Surfaces acceptance must explicitly map implementation and verification evidence to each scope item (T25, T26, T27, T28, T29, T30); missing any scope mapping fails acceptance, and out-of-scope gameplay changes do not count toward completion. Refs: Tests.Godot/tests/Adapters/Save/test_save_manager_load_failures_feedback.gd Tests.Godot/tests/Integration/test_save_manager_steam_cloud_sync_flow.gd Tests.Godot/tests/Integration/test_achievements_end_to_end_unlock_and_sync.gd Tests.Godot/tests/UI/test_settings_locale.gd Tests.Godot/tests/Adapters/Config/test_settings_persistence.gd Game.Core.Tests/Services/FrameTimeHotspotRankingTests.cs Game.Core.Tests/Tasks/Task45UiWiringAcceptanceGovernanceTests.cs",
+      "Save, Settings, And Meta Surfaces validation must include referenced GdUnit and xUnit suites, and Chapter 7 artifact evidence must record auditable pass/fail outcomes for each framework; when one framework has no applicable case, acceptance must explicitly record that framework as N/A with rationale instead of omitting it. Refs: Tests.Godot/tests/Adapters/Save/test_save_manager_load_failures_feedback.gd Tests.Godot/tests/Integration/test_save_manager_steam_cloud_sync_flow.gd Game.Core.Tests/Services/SaveManagerWorkflowTests.cs Game.Core.Tests/Tasks/Task45UiWiringAcceptanceGovernanceTests.cs"
     ],
     "contractRefs": [
       "core.lastking.save.autosaved",
@@ -3778,7 +3791,10 @@
         30
       ],
       "ui_entry": "Settings / Save / Meta Surfaces"
-    }
+    },
+    "test_strategy": [
+      "Validate the UI slice with the referenced GdUnit/xUnit tests and Chapter 7 artifact evidence."
+    ]
   },
   {
     "id": "GM-0146",

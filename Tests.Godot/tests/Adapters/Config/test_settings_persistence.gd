@@ -4,6 +4,7 @@ extends "res://addons/gdUnit4/src/GdUnitTestSuite.gd"
 # ACC:T2.2
 # ACC:T2.12
 # ACC:T28.7
+# ACC:T45.3
 func test_settings_persistence_cross_restart() -> void:
     var cfg_path = "user://settings_%s.cfg" % Time.get_unix_time_from_system()
     var cfg = ConfigFile.new()
@@ -125,6 +126,8 @@ func _normalize_balance_snapshot(payload: Dictionary) -> Dictionary:
     return snapshot
 
 # ACC:T29.6
+# ACC:T45.1
+# ACC:T45.6
 func test_task29_audio_values_save_and_restore_on_next_launch() -> void:
     var cfg_path := "user://task29_audio_%s.cfg" % Time.get_unix_time_from_system()
     var writer := ConfigFile.new()

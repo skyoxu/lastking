@@ -1,22 +1,7 @@
 extends "res://addons/gdUnit4/src/GdUnitTestSuite.gd"
 
-# RED-FIRST: contract tests for autosave slot path policy.
-class SaveManagerContractProbe:
-    const AUTOSAVE_PATH := "user://autosave.save"
-
-    var writes: Array[String] = []
-    var created_files: Array[String] = []
-
-    func request_save(slot_path: String, payload: Dictionary) -> bool:
-        if slot_path != AUTOSAVE_PATH:
-            return false
-
-        writes.append(slot_path)
-        created_files.append(slot_path)
-        return true
-
-    func on_day_start(day_index: int) -> void:
-        request_save(AUTOSAVE_PATH, {"day": day_index})
+const BRIDGE_PATH := "res://Game.Godot/Adapters/Save/SaveManagerTestBridge.cs"
+const AUTOSAVE_PATH := "user://autosave.save"
 
 static func _unique_paths(paths: Array[String]) -> Array[String]:
     var seen := {}
@@ -27,24 +12,52 @@ static func _unique_paths(paths: Array[String]) -> Array[String]:
             unique.append(path)
     return unique
 
+# ACC:T45.5
 # acceptance: ACC:T25.1
 func test_rejects_write_to_alternate_slot_path() -> void:
-    var sut := SaveManagerContractProbe.new()
+    var bridge_script = load(BRIDGE_PATH)
+    var sut = bridge_script.new()
+    add_child(auto_free(sut))
+    sut.call("ResetRuntime", "task45-autosave-slot-path", false, 20250425, 10, 10, 15)
 
-    var accepted := sut.request_save("user://slot_2.save", {"gold": 10})
+    var accepted := bool(sut.call("SaveToSlot", "user://slot_2.save", JSON.stringify({
+        "id": "slot-2",
+        "level": 2,
+        "score": 10,
+        "health": 99,
+        "inventory": ["wood"],
+        "x": 1.0,
+        "y": 2.0
+    })))
 
     assert_bool(accepted).is_false()
-    assert_that(sut.writes.size()).is_equal(0)
+    var writes: Array = sut.call("GetObservedWriteKeys")
+    assert_that(writes.size()).is_equal(0)
+    assert_bool(bool(sut.call("SlotExists", "user://slot_2.save"))).is_false()
+    assert_bool(bool(sut.call("SlotExists", AUTOSAVE_PATH))).is_false()
 
+# ACC:T45.2
 # acceptance: ACC:T25.4
 func test_day_start_autosave_keeps_single_fixed_path_and_no_extra_slot_files() -> void:
-    var sut := SaveManagerContractProbe.new()
+    var bridge_script = load(BRIDGE_PATH)
+    var sut = bridge_script.new()
+    add_child(auto_free(sut))
+    sut.call("ResetRuntime", "task45-daystart-autosave", false, 20250425, 10, 10, 15)
 
-    sut.on_day_start(1)
-    sut.on_day_start(2)
-    sut.on_day_start(3)
+    assert_bool(bool(sut.call("HandleDayStartAutoSave", 1))).is_true()
+    assert_bool(bool(sut.call("HandleDayStartAutoSave", 2))).is_true()
+    assert_bool(bool(sut.call("HandleDayStartAutoSave", 3))).is_true()
 
-    var unique := _unique_paths(sut.created_files)
+    var writes: Array = sut.call("GetObservedWriteKeys")
+    var slot_writes: Array[String] = []
+    for raw in writes:
+        var key := str(raw)
+        if not key.ends_with(":index"):
+            slot_writes.append(key)
+
+    var unique := _unique_paths(slot_writes)
+    assert_that(slot_writes.size()).is_equal(3)
     assert_that(unique.size()).is_equal(1)
-    assert_str(unique[0]).is_equal("user://autosave.save")
-    assert_bool(sut.created_files.has("user://autosave_day_2.save")).is_false()
+    assert_str(unique[0]).is_equal(AUTOSAVE_PATH)
+    assert_bool(bool(sut.call("SlotExists", AUTOSAVE_PATH))).is_true()
+    assert_bool(bool(sut.call("SlotExists", "user://autosave_day_2.save"))).is_false()

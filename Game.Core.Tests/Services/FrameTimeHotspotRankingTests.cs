@@ -10,6 +10,7 @@ namespace Game.Core.Tests.Services;
 public sealed class FrameTimeHotspotRankingTests
 {
     // ACC:T30.5
+    // ACC:T45.3
     [Fact]
     public void ShouldRankSubsystemOffendersByFrameTime_WhenProfilingSamplesAreProvided()
     {

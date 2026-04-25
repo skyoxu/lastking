@@ -34,6 +34,7 @@ func test_day_start_triggers_exactly_one_autosave_write_attempt() -> void:
     assert_that(writes.count(AUTOSAVE_PATH)).is_equal(1)
 
 # ACC:T25.3
+# ACC:T45.2
 func test_repeated_day_start_keeps_same_autosave_path_and_no_extra_slot_files() -> void:
     var bridge = _new_bridge()
 
