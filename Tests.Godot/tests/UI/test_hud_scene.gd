@@ -14,9 +14,17 @@ func test_hud_scene_instantiates() -> void:
     var day_label: Label = scene.get_node("TopBar/HBox/DayLabel")
     var cycle_label: Label = scene.get_node("TopBar/HBox/CycleRemainingLabel")
     var hp_label: Label = scene.get_node("TopBar/HBox/HealthLabel")
+    var feedback_layer: Control = scene.get_node("FeedbackLayer")
+    var feedback_label: Label = scene.get_node("FeedbackLayer/FeedbackLabel")
+    var error_dialog: PanelContainer = scene.get_node("FeedbackLayer/ErrorDialog")
+    var dismiss_button: Button = scene.get_node("FeedbackLayer/ErrorDialog/VBox/DismissButton")
     assert_str(day_label.text).is_not_empty()
     assert_str(cycle_label.text).is_not_empty()
     assert_str(hp_label.text).is_equal("HP: 0")
+    assert_object(feedback_layer).is_not_null()
+    assert_object(feedback_label).is_not_null()
+    assert_object(error_dialog).is_not_null()
+    assert_object(dismiss_button).is_not_null()
 
 # ACC:T9.16
 # ACC:T9.18

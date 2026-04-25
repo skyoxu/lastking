@@ -1,0 +1,19 @@
+# task-43-chapter6-residual-followup-p2
+
+- Title: task-43-chapter6-residual-followup-p2
+- Status: active
+- Branch: task/T43
+- Goal: Close the remaining Task 43 non-P0/P1 reviewer residual after P0/P1 clearance.
+- Scope: P2 only (`ACC:T43.3` hidden-state drift assertion shape).
+- Current step: Stop after P0/P1 clearance and keep residual documented for a later targeted closure pass.
+- Last completed step: Cleared P0/P1 findings from governance and HUD fallback mapping tests; reran Chapter 6 fork loop with updated evidence.
+- Stop-loss: Do not reopen full 6.7 just to chase unchanged reviewer language. Reopen only when `ACC:T43.3` drift coverage is intentionally updated.
+- Next action: When reopening this residual, add explicit post-feedback unrelated-event drift assertions for `ACC:T43.3`, then run narrow validation and rerun pipeline.
+- Recovery command: `py -3 scripts/python/dev_cli.py inspect-run --kind pipeline --latest logs/ci/2026-04-25/sc-review-pipeline-task-43/latest.json`
+- Exit criteria: No remaining P0/P1/P2 Needs Fix in latest review sidecar, or explicit superseding decision log.
+- Related ADRs: none yet
+- Related decision logs: `decision-logs/2026-04-25-task-43-chapter6-residual-needs-fix-p2.md`
+- Related task id(s): `43`
+- Related run id: `a7f7b6d273eb4555a44c00fcbf09f9f3`
+- Related latest.json: `logs/ci/2026-04-25/sc-review-pipeline-task-43/latest.json`
+- Related pipeline artifacts: `logs/ci/2026-04-25/sc-review-pipeline-task-43-a7f7b6d273eb4555a44c00fcbf09f9f3`
