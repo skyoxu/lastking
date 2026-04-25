@@ -38,6 +38,7 @@ func _error_message_label(hud: Node) -> Label:
 func _dismiss_button(hud: Node) -> Button:
     return hud.get_node("FeedbackLayer/ErrorDialog/VBox/DismissButton")
 
+# ACC:T43.3
 func test_hud_updates_day_cycle_and_castle_hp_when_runtime_publishes_events() -> void:
     var hud = await _hud()
     var bridge = await _bridge()
@@ -66,6 +67,61 @@ func test_hud_updates_day_cycle_and_castle_hp_when_runtime_publishes_events() ->
     await get_tree().process_frame
     assert_int(int(bridge.GetCurrentHp())).is_equal(42)
     assert_str(hp_label.text).is_equal("HP: 42")
+
+# ACC:T43.3
+func test_hud_renders_runtime_combat_outcome_and_feedback_messages() -> void:
+    var hud = await _hud()
+    var feedback_label := _feedback_label(hud)
+
+    _publish("core.run.state.transitioned", {"outcome": "win", "day": 15})
+    await get_tree().process_frame
+    assert_bool(feedback_label.visible).is_true()
+    assert_bool(feedback_label.text.find("Victory!") >= 0).is_true()
+    assert_bool(feedback_label.text.find("day=15") >= 0).is_true()
+
+    _publish("core.lastking.ui_feedback.raised", {
+        "Code": "run_continue_blocked",
+        "MessageKey": "ui.blocked_action.run_continue_blocked",
+        "Details": "camera_locked"
+    })
+    await get_tree().process_frame
+    assert_bool(feedback_label.visible).is_true()
+    assert_bool(feedback_label.text.find("Action blocked") >= 0).is_true()
+    assert_bool(feedback_label.text.find("camera_locked") >= 0).is_true()
+
+# ACC:T43.2
+# ACC:T43.3
+func test_hud_feedback_surfaces_stay_hidden_without_relevant_feedback_events() -> void:
+    var hud = await _hud()
+    var feedback_label := _feedback_label(hud)
+    var error_dialog := _error_dialog(hud)
+
+    assert_bool(feedback_label.visible).is_false()
+    assert_bool(error_dialog.visible).is_false()
+
+# ACC:T43.5
+func test_hud_maps_blocked_path_fallback_outcome_to_declared_feedback_surface() -> void:
+    var hud = await _hud()
+    var feedback_label := _feedback_label(hud)
+    var error_dialog := _error_dialog(hud)
+
+    _publish("core.lastking.ui_feedback.raised", {
+        "Code": "target_path_blocked_fallback",
+        "MessageKey": "ui.combat.target_path_blocked_fallback",
+        "Details": "fallback_attack_executed"
+    })
+    await get_tree().process_frame
+
+    assert_bool(feedback_label.visible).is_true()
+    assert_bool(feedback_label.text.find("Action blocked") >= 0).is_true()
+    assert_bool(feedback_label.text.find("fallback_attack_executed") >= 0).is_true()
+
+    _publish("core.score.updated", {"value": 123})
+    _publish("core.lastking.castle.hp_changed", {"Day": 4, "PreviousHp": 100, "CurrentHp": 96})
+    await get_tree().process_frame
+
+    assert_bool(feedback_label.visible).is_true()
+    assert_bool(error_dialog.visible).is_false()
 
 # ACC:T9.2
 # ACC:T9.5

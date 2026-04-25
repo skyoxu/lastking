@@ -14,6 +14,7 @@ public sealed class WaveManagerBudgetChannelTests
     private const string BossChannel = "boss";
 
     // ACC:T4.1
+    // ACC:T43.1
     [Fact]
     public void ShouldProduceNormalEliteBossResultsFromConfiguredChannelBudgets_WhenGeneratingWave()
     {
@@ -65,6 +66,7 @@ public sealed class WaveManagerBudgetChannelTests
     }
 
     // ACC:T4.5
+    // ACC:T43.4
     [Fact]
     public void ShouldComputeNormalBudgetAs50_WhenUsingDefaultDay1Configuration()
     {
@@ -153,6 +155,7 @@ public sealed class WaveManagerBudgetChannelTests
     }
 
     // ACC:T4.11
+    // ACC:T43.6
     [Theory]
     [InlineData(NormalChannel)]
     [InlineData(EliteChannel)]

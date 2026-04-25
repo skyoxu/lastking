@@ -7,6 +7,7 @@ namespace Game.Core.Tests.Services;
 public class EnemyAiTargetSelectionTests
 {
     // ACC:T6.4
+    // ACC:T43.5
     [Fact]
     public void ShouldSelectUnit_WhenUnitAndOtherReachableTargetsExist()
     {
@@ -44,6 +45,7 @@ public class EnemyAiTargetSelectionTests
     }
 
     // ACC:T6.10
+    // ACC:T43.8
     [Fact]
     public void ShouldNotSelectLowerPriority_WhenHigherPriorityReachableInSameDecisionCycle()
     {
@@ -136,6 +138,7 @@ public class EnemyAiTargetSelectionTests
     }
 
     // ACC:T10.6
+    // ACC:T43.5
     [Fact]
     public void ShouldStayResponsiveUnderBlockedPathAndRecover_WhenRouteBecomesReachableAgain()
     {

@@ -54,6 +54,8 @@ func _advance_frames(frames: int) -> void:
 
 
 # acceptance: ACC:T22.1
+# ACC:T43.1
+# ACC:T43.7
 func test_continuous_navigation_with_edge_and_keyboard_scroll_inputs_uses_real_controller() -> void:
 	var main := await _load_main()
 	var controller := _controller(main)
@@ -144,6 +146,7 @@ func test_same_frame_combines_edge_and_keyboard_contributions_on_real_controller
 
 
 # acceptance: ACC:T22.10
+# ACC:T43.8
 func test_default_margin_20_pixels_and_manual_keyboard_with_mouse_combined_read_on_real_controller() -> void:
 	var main := await _load_main()
 	var controller := _controller(main)

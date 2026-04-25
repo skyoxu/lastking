@@ -3465,13 +3465,13 @@
       "chapter7-ui",
       "loop"
     ],
-      "test_refs": [
-        "Game.Core.Tests/State/GameStateManagerTests.cs",
-        "Tests.Godot/tests/UI/test_hud_updates_on_events.gd",
-        "Tests.Godot/tests/UI/test_game_manager_transition_and_terminal_prompts.gd",
-        "Tests.Godot/tests/UI/test_hud_day_night_cycle_status.gd",
-        "Tests.Godot/tests/Scenes/Runtime/test_nodes_process_mode_pause_resume.gd"
-      ],
+    "test_refs": [
+      "Game.Core.Tests/State/GameStateManagerTests.cs",
+      "Tests.Godot/tests/UI/test_hud_updates_on_events.gd",
+      "Tests.Godot/tests/UI/test_game_manager_transition_and_terminal_prompts.gd",
+      "Tests.Godot/tests/UI/test_hud_day_night_cycle_status.gd",
+      "Tests.Godot/tests/Scenes/Runtime/test_nodes_process_mode_pause_resume.gd"
+    ],
     "acceptance": [
       "Runtime HUD And Outcome Surfaces is implemented as a concrete Chapter 7 UI wiring slice using HUD / Prompt / Outcome Surfaces, and the player action is visible end-to-end: Play a run, observe timing, rewards, and prompts from runtime event wiring. Refs: Tests.Godot/tests/UI/test_hud_updates_on_events.gd Tests.Godot/tests/Scenes/Runtime/test_nodes_process_mode_pause_resume.gd",
       "Runtime HUD And Outcome Surfaces selects or creates the suggested standalone surfaces from docs/gdd/ui-gdd-flow.candidates.json before implementation is accepted. Refs: Tests.Godot/tests/UI/test_hud_updates_on_events.gd",
@@ -3529,8 +3529,8 @@
     ],
     "taskmaster_exported": true,
     "taskmaster_id": 43,
-    "title": "Wire UI: Combat Pressure And Interaction Surfaces",
-    "description": "Create the Chapter 7 UI wiring slice for Combat Pressure And Interaction Surfaces from docs/gdd/ui-gdd-flow.candidates.json.",
+    "title": "Wire UI: Combat Interaction Surfaces",
+    "description": "Create the Chapter 7 UI wiring slice for Combat Interaction Surfaces from docs/gdd/ui-gdd-flow.candidates.json, scoped to currently implemented HUD and camera-controller feedback paths.",
     "status": "pending",
     "priority": "P1",
     "layer": "adapter",
@@ -3565,18 +3565,24 @@
       "Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs",
       "Game.Core.Tests/Services/WaveManagerDeterminismTests.cs",
       "Game.Core.Tests/Engine/GameEngineCoreDeterminismTests.cs",
-      "Game.Core.Tests/Services/WaveBudgetAllocatorTests.cs"
+      "Game.Core.Tests/Services/WaveBudgetAllocatorTests.cs",
+      "Game.Core.Tests/Services/EnemyAiTargetSelectionTests.cs",
+      "Game.Core.Tests/Engine/GameEngineCoreEventTests.cs",
+      "Tests.Godot/tests/UI/test_hud_scene.gd",
+      "Tests.Godot/tests/UI/test_hud_updates_on_events.gd",
+      "Tests.Godot/tests/Scenes/Camera/test_camera_controller_scroll_inputs.gd",
+      "Game.Core.Tests/Tasks/Task43UiWiringAcceptanceGovernanceTests.cs"
     ],
     "acceptance": [
-      "Combat Pressure And Interaction Surfaces is implemented as a concrete Chapter 7 UI wiring slice using Combat HUD / Pressure / Camera Feedback, and the player action is visible end-to-end: Fight, observe pressure, targeting, pathing, and camera responses. Refs: Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs Game.Core.Tests/Services/WaveManagerDeterminismTests.cs Game.Core.Tests/Engine/GameEngineCoreDeterminismTests.cs Game.Core.Tests/Services/WaveBudgetAllocatorTests.cs",
-      "Combat Pressure And Interaction Surfaces selects or creates the suggested standalone surfaces from docs/gdd/ui-gdd-flow.candidates.json before implementation is accepted. Refs: Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs Game.Core.Tests/Services/WaveManagerDeterminismTests.cs Game.Core.Tests/Engine/GameEngineCoreDeterminismTests.cs Game.Core.Tests/Services/WaveBudgetAllocatorTests.cs",
-      "Combat Pressure And Interaction Surfaces renders the candidate system response from runtime events: Render enemy pressure, targeting, combat outcomes, and camera interaction without hidden state. Refs: Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs Game.Core.Tests/Services/WaveManagerDeterminismTests.cs Game.Core.Tests/Engine/GameEngineCoreDeterminismTests.cs Game.Core.Tests/Services/WaveBudgetAllocatorTests.cs",
-      "Combat Pressure And Interaction Surfaces exposes the candidate empty-state rules without relying on logs-only evidence: Wave generation preserves deterministic replay for the same day/config/seed, and wave-budget computation is isolated to wave inputs without cross-system side effects.. Refs: Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs Game.Core.Tests/Services/WaveManagerDeterminismTests.cs Game.Core.Tests/Engine/GameEngineCoreDeterminismTests.cs Game.Core.Tests/Services/WaveBudgetAllocatorTests.cs",
-      "Combat Pressure And Interaction Surfaces exposes the candidate failure-state rules without relying on logs-only evidence: Taskmaster #6 is complete only when combat runs demonstrate target selection by the required priority chain and blocked-path fallback attacks whenever routes to priority targets are obstructed.. Refs: Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs Game.Core.Tests/Services/WaveManagerDeterminismTests.cs Game.Core.Tests/Engine/GameEngineCoreDeterminismTests.cs Game.Core.Tests/Services/WaveBudgetAllocatorTests.cs",
-      "Combat Pressure And Interaction Surfaces satisfies the completion result, keeps deterministic domain state behind existing contracts, adds no unrelated gameplay behavior and must produce validation evidence at logs/ci/<YYYY-MM-DD>/task-triplet-audit/report.json, logs/unit/<YYYY-MM-DD>/coverage.json, logs/e2e/<YYYY-MM-DD>/runtime-ui/summary.json: Changing only one channel budget must change that channel's input budget and alter at least one spawn decision for the same day and seed, while non-target channel outputs remain unchanged.. Refs: Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs Game.Core.Tests/Services/WaveManagerDeterminismTests.cs Game.Core.Tests/Engine/GameEngineCoreDeterminismTests.cs Game.Core.Tests/Services/WaveBudgetAllocatorTests.cs",
-      "Combat Pressure And Interaction Surfaces acceptance must explicitly map every listed Requirement ID (RQ-CAMERA-SCROLL, RQ-COMBAT-QUEUE-TECH, RQ-CORE-LOOP-STATE) to concrete behavior, test evidence, or artifact evidence; missing any Requirement ID mapping fails acceptance. Refs: Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs Game.Core.Tests/Services/WaveManagerDeterminismTests.cs Game.Core.Tests/Engine/GameEngineCoreDeterminismTests.cs Game.Core.Tests/Services/WaveBudgetAllocatorTests.cs",
-      "Combat Pressure And Interaction Surfaces acceptance must explicitly map implementation and verification evidence to each scope item (T04, T05, T06, T20, T22); missing any scope mapping fails acceptance, and out-of-scope gameplay changes do not count toward completion. Refs: Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs Game.Core.Tests/Services/WaveManagerDeterminismTests.cs Game.Core.Tests/Engine/GameEngineCoreDeterminismTests.cs Game.Core.Tests/Services/WaveBudgetAllocatorTests.cs",
-      "Combat Pressure And Interaction Surfaces validation must include the referenced xUnit suite and an explicit GdUnit N/A record when no GdUnit case applies, and Chapter 7 artifact evidence must record auditable pass/fail outcomes for each framework; when one framework has no applicable case, acceptance must explicitly record that framework as N/A with rationale instead of omitting it. Refs: Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs Game.Core.Tests/Services/WaveManagerDeterminismTests.cs Game.Core.Tests/Engine/GameEngineCoreDeterminismTests.cs Game.Core.Tests/Services/WaveBudgetAllocatorTests.cs"
+      "Combat Interaction Surfaces must keep deterministic wave behavior stable for identical day/config/seed while camera controller interaction wiring remains executable in the same Task 43 evidence set. Refs: Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs Tests.Godot/tests/Scenes/Camera/test_camera_controller_scroll_inputs.gd",
+      "Combat Interaction Surfaces must expose currently implemented HUD scene surfaces (TopBar labels plus FeedbackLayer/ErrorDialog) and keep those nodes auditable from runtime-instantiated UI tests. Refs: Tests.Godot/tests/UI/test_hud_scene.gd Tests.Godot/tests/UI/test_hud_updates_on_events.gd",
+      "Combat Interaction Surfaces must render runtime-updated day/cycle/castle-HP feedback and combat outcome messages through published event channels, and avoid hidden-state drift when unrelated events are published. Refs: Tests.Godot/tests/UI/test_hud_updates_on_events.gd Game.Core.Tests/Engine/GameEngineCoreEventTests.cs",
+      "Combat Interaction Surfaces empty-state must preserve deterministic replay and wave-budget isolation when combat inputs stay unchanged. Refs: Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs Game.Core.Tests/Services/WaveManagerDeterminismTests.cs Game.Core.Tests/Engine/GameEngineCoreDeterminismTests.cs Game.Core.Tests/Services/WaveBudgetAllocatorTests.cs",
+      "Combat Interaction Surfaces failure-state must verify target-priority chain and blocked-path fallback attack behavior when higher-priority routes are obstructed, and must map published blocked/fallback feedback events to declared feedback surfaces in this slice rather than leaving the signal as core-only state. Refs: Game.Core.Tests/Services/EnemyAiTargetSelectionTests.cs Game.Core.Tests/Engine/GameEngineCoreEventTests.cs Tests.Godot/tests/UI/test_hud_updates_on_events.gd",
+      "Combat Interaction Surfaces completion must verify single-channel budget tuning changes targeted spawn decisions while non-target channels remain unchanged. Refs: Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs Game.Core.Tests/Services/WaveManagerDeterminismTests.cs Game.Core.Tests/Services/WaveBudgetAllocatorTests.cs",
+      "Combat Interaction Surfaces must map Requirement IDs with executable evidence: RQ-CAMERA-SCROLL (camera input tests), RQ-COMBAT-QUEUE-TECH (priority/fallback tests), RQ-CORE-LOOP-STATE (determinism tests). Refs: Tests.Godot/tests/Scenes/Camera/test_camera_controller_scroll_inputs.gd Game.Core.Tests/Services/EnemyAiTargetSelectionTests.cs Game.Core.Tests/Engine/GameEngineCoreDeterminismTests.cs",
+      "Combat Interaction Surfaces must map implementation and verification evidence to T04/T05/T06/T20/T22 scope items and restrict validation evidence to the declared Task 43 UI slice. Refs: Tests.Godot/tests/Scenes/Camera/test_camera_controller_scroll_inputs.gd Game.Core.Tests/Services/EnemyAiTargetSelectionTests.cs Game.Core.Tests/Tasks/Task43UiWiringAcceptanceGovernanceTests.cs",
+      "Combat Interaction Surfaces validation must include both xUnit and GdUnit evidence paths in Task 43 refs, while governance checks remain distinct from runtime behavior checks. Refs: Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs Tests.Godot/tests/UI/test_hud_scene.gd Game.Core.Tests/Tasks/Task43UiWiringAcceptanceGovernanceTests.cs"
     ],
     "contractRefs": [
       "core.lastking.wave.spawned",
@@ -3585,7 +3591,7 @@
     ],
     "ui_wiring_candidate": {
       "source": "docs/gdd/ui-gdd-flow.candidates.json",
-      "screen_group": "Combat Pressure And Interaction Surfaces",
+      "screen_group": "Combat Interaction Surfaces",
       "scope_task_ids": [
         4,
         5,
@@ -3593,8 +3599,11 @@
         20,
         22
       ],
-      "ui_entry": "Combat HUD / Pressure / Camera Feedback"
-    }
+      "ui_entry": "Combat HUD / Camera Feedback"
+    },
+    "test_strategy": [
+      "Validate the UI slice with the referenced GdUnit/xUnit tests and Chapter 7 artifact evidence."
+    ]
   },
   {
     "id": "GM-0144",
