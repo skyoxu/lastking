@@ -40,6 +40,7 @@ public class GameConfigTests
     // ACC:T2.16
     // ACC:T31.9
     // ACC:T38.15
+    // ACC:T46.2
     [Fact]
     public void ShouldResolveRuntimeTuningFromConfigManagerSnapshot_WhenOnlyConfigPayloadChanges()
     {
@@ -110,6 +111,7 @@ public class GameConfigTests
     }
 
     // ACC:T38.16
+    // ACC:T46.5
     [Fact]
     public void ShouldRejectPromotionAndKeepActiveSnapshotUnchanged_WhenGovernanceMetadataIsMissingOrInvalid()
     {
@@ -234,6 +236,36 @@ public class GameConfigTests
         first.Accepted.Should().BeFalse();
         first.Source.Should().Be("fallback");
         first.ReasonCodes.Should().Contain(ConfigManager.InvalidOrderReason);
+    }
+
+    // ACC:T46.4
+    [Fact]
+    public void ShouldKeepSnapshotStable_WhenReloadingEquivalentConfigPayload()
+    {
+        var manager = new ConfigManager();
+        const string baselineJson = """
+                                    {
+                                      "time": { "day_seconds": 240, "night_seconds": 120 },
+                                      "waves": { "normal": { "day1_budget": 50, "daily_growth": 1.2 } },
+                                      "channels": { "elite": "elite", "boss": "boss" },
+                                      "spawn": { "cadence_seconds": 10 },
+                                      "boss": { "count": 2 }
+                                    }
+                                    """;
+
+        var initial = manager.LoadInitialFromJson(baselineJson, "res://Config/balance-equivalent.json");
+        initial.Accepted.Should().BeTrue();
+        initial.Source.Should().Be("initial");
+        var baselineSnapshot = initial.Snapshot;
+        var baselineHash = initial.ConfigHash;
+
+        var equivalentReload = manager.ReloadFromJson(baselineJson, "res://Config/balance-equivalent.json");
+        equivalentReload.Accepted.Should().BeTrue();
+        equivalentReload.Source.Should().Be("reload");
+        equivalentReload.Snapshot.Should().BeEquivalentTo(baselineSnapshot);
+        equivalentReload.ConfigHash.Should().Be(baselineHash);
+        equivalentReload.ReasonCodes.Should().BeEmpty();
+        manager.Snapshot.Should().BeEquivalentTo(baselineSnapshot);
     }
 
     // ACC:T35.1
