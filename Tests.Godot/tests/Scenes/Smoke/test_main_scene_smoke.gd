@@ -167,7 +167,6 @@ func _run_external_scene_probe() -> Dictionary:
     return {"rc": rc, "output": output_text}
 
 # ACC:T1.2
-# ACC:T1.6
 # ACC:T1.13
 # ACC:T1.16
 # ACC:T11.2 ACC:T11.24
@@ -180,6 +179,7 @@ func test_main_scene_instantiates_and_visible() -> void:
     var csharp_bindings: Array = _collect_csharp_script_paths(scene)
     assert_int(csharp_bindings.size()).is_greater(0)
 
+# ACC:T1.6
 # ACC:T11.24
 func test_main_scene_naming_and_bootstrap_paths_follow_canonical_convention() -> void:
     var scene: Node = _instantiate_main_scene()
