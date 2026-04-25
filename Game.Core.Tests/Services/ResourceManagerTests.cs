@@ -16,6 +16,8 @@ public sealed class ResourceManagerTests
     [Trait("acceptance", "ACC:T12.6")]
     [Trait("acceptance", "ACC:T12.20")]
     [Trait("acceptance", "ACC:T12.21")]
+    // ACC:T44.1
+    // ACC:T44.2
     [Fact]
     public void ShouldExposeCanonicalInitialState_WhenConstructed()
     {
@@ -30,6 +32,7 @@ public sealed class ResourceManagerTests
     // ACC:T12.7
     // ACC:T12.14
     // ACC:T12.16
+    // ACC:T44.3
     [Fact]
     [Trait("acceptance", "ACC:T12.7")]
     [Trait("acceptance", "ACC:T12.14")]

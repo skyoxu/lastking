@@ -35,6 +35,7 @@ public sealed class ResourceManagerEventTests
     // ACC:T12.12
     // ACC:T12.10
     // ACC:T12.16
+    // ACC:T44.3
     [Fact]
     [Trait("acceptance", "ACC:T12.12")]
     [Trait("acceptance", "ACC:T12.10")]
