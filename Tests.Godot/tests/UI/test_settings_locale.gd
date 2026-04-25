@@ -15,6 +15,8 @@ func after() -> void:
 # ACC:T28.11
 # ACC:T28.12
 # ACC:T28.16
+# ACC:T45.3
+# ACC:T45.6
 func test_language_applies_runtime() -> void:
     var packed = load("res://Game.Godot/Scenes/UI/SettingsPanel.tscn")
     if packed == null:

@@ -23,6 +23,7 @@ func _seed_slot(bridge: Node) -> void:
     assert_bool(bool(bridge.call("SaveToSlot", AUTOSAVE_PATH, state_json))).is_true()
 
 # ACC:T25.7
+# ACC:T45.4
 func test_load_returns_deterministic_failure_feedback_and_unchanged_state_when_autosave_missing() -> void:
     var bridge = _new_bridge()
     var before_state = str(bridge.call("SnapshotStateJson"))
@@ -39,6 +40,8 @@ func test_load_returns_deterministic_failure_feedback_and_unchanged_state_when_a
     assert_that(after_state).is_equal(before_state)
 
 # ACC:T25.9
+# ACC:T45.1
+# ACC:T45.3
 func test_load_fails_with_explicit_feedback_and_no_partial_state_on_corrupt_content() -> void:
     var bridge = _new_bridge()
     _seed_slot(bridge)
@@ -56,6 +59,7 @@ func test_load_fails_with_explicit_feedback_and_no_partial_state_on_corrupt_cont
     assert_that(after_state).is_equal(before_state)
 
 # ACC:T25.14
+# ACC:T45.6
 func test_load_reports_explicit_deserialization_failure_and_keeps_state_unchanged() -> void:
     var bridge = _new_bridge()
     _seed_slot(bridge)

@@ -46,3 +46,26 @@ func test_hud_scene_exposes_expected_labels() -> void:
             label_count += 1
     assert_int(label_count).is_equal(3)
 
+# ACC:T45.3
+func test_hud_renders_perf_and_platform_status_feedback_from_runtime_events() -> void:
+    var scene := preload("res://Game.Godot/Scenes/UI/HUD.tscn").instantiate()
+    add_child(auto_free(scene))
+    var bus: Node = preload("res://Game.Godot/Adapters/EventBusAdapter.cs").new()
+    bus.name = "EventBus"
+    get_tree().get_root().add_child(auto_free(bus))
+    await get_tree().process_frame
+
+    var feedback_label: Label = scene.get_node("FeedbackLayer/FeedbackLabel")
+    assert_bool(feedback_label.visible).is_false()
+
+    bus.PublishSimple("core.lastking.ui_feedback.raised", "ut", JSON.stringify({
+        "Code": "perf_gate_warn",
+        "MessageKey": "ui.blocked_action.perf_gate_warn",
+        "Details": "p95=41.7 platform=windows"
+    }))
+    await get_tree().process_frame
+
+    assert_bool(feedback_label.visible).is_true()
+    assert_bool(feedback_label.text.find("Action blocked") >= 0).is_true()
+    assert_bool(feedback_label.text.find("platform=windows") >= 0).is_true()
+
