@@ -3,7 +3,7 @@ using Godot;
 
 namespace Game.Godot.Adapters.Config;
 
-public partial class ConfigManagerTestBridge : Node
+public partial class ConfigRuntimeBridge : Node
 {
     private readonly ConfigManager manager = new();
 

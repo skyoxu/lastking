@@ -1,6 +1,6 @@
 extends "res://addons/gdUnit4/src/GdUnitTestSuite.gd"
 
-const CONFIG_BRIDGE_PATH := "res://Game.Godot/Adapters/Config/ConfigManagerTestBridge.cs"
+const CONFIG_BRIDGE_PATH := "res://Game.Godot/Adapters/Config/ConfigRuntimeBridge.cs"
 
 func _simulate_runtime_metrics(balance: Dictionary, wave_index: int) -> Dictionary:
 	var cycle_seconds := float(balance.get("day_night_cycle_seconds", 120.0))
@@ -92,7 +92,7 @@ func test_replacing_balance_config_and_reloading_changes_runtime_outcomes() -> v
 func test_runtime_reload_uses_real_config_manager_chain_and_keeps_reason_snapshot_contract() -> void:
 	var bridge_script := load(CONFIG_BRIDGE_PATH)
 	if bridge_script == null:
-		push_warning("SKIP: ConfigManagerTestBridge unavailable, skip")
+		push_warning("SKIP: ConfigRuntimeBridge unavailable, skip")
 		return
 
 	var bridge: Node = bridge_script.new()
