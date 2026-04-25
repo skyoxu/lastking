@@ -6,15 +6,13 @@
 - Supersedes: decision-logs/2026-04-24-task-43-chapter6-residual-needs-fix-2.md
 - Superseded by: none
 - Branch: task/T43
+- Git Head: 01c75ae953df947b891d13636e9581c9de54a392
 - Why now: Chapter 6 loops were continued until all actionable P0/P1 findings were closed, while one reviewer-only P2 item remained.
 - Context: Latest run shows `failure_kind=review-needs-fix` with `code-reviewer=OK`, `semantic-equivalence-auditor=skipped`, and `security-auditor=Needs Fix` limited to a P2 drift assertion for `ACC:T43.3`.
 - Decision: Stop the current loop after clearing P0/P1 and record the remaining P2 as residual work instead of paying additional same-shape reruns.
 - Consequences: Task 43 stays blocked only by a non-P0/P1 residual item; recovery must reference this log before deciding any additional 6.8/6.7 cost.
 - Recovery impact: Prefer targeted future edits on `ACC:T43.3` drift semantics only when the branch intentionally reopens Task 43 residual closure.
-- Validation:
-  - `py -3 scripts/python/dev_cli.py resume-task --task-id 43 --recommendation-only`
-  - `py -3 scripts/python/dev_cli.py chapter6-route --task-id 43 --recommendation-only`
-  - `py -3 scripts/python/dev_cli.py inspect-run --kind pipeline --latest logs/ci/2026-04-25/sc-review-pipeline-task-43/latest.json`
+- Validation: `py -3 scripts/python/dev_cli.py resume-task --task-id 43 --recommendation-only`; `py -3 scripts/python/dev_cli.py chapter6-route --task-id 43 --recommendation-only`; `py -3 scripts/python/dev_cli.py inspect-run --kind pipeline --latest logs/ci/2026-04-25/sc-review-pipeline-task-43/latest.json`
 - Related ADRs: none yet
 - Related execution plans: execution-plans/2026-04-25-task-43-chapter6-residual-followup-p2.md
 - Related task id(s): `43`
