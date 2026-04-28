@@ -8,11 +8,15 @@ import json
 from pathlib import Path
 from typing import Any
 
-from collect_ui_wiring_inputs import TASKS_JSON, UI_GDD_FLOW, build_summary
+from collect_ui_wiring_inputs import TASKS_BACK, TASKS_GAMEPLAY, TASKS_JSON, OVERLAY_ROOT, UI_GDD_FLOW, build_summary
 
 
 def _today() -> str:
     return dt.date.today().strftime("%Y-%m-%d")
+
+
+def _resolve_path(value: str | Path) -> Path:
+    return value if isinstance(value, Path) else Path(value)
 
 
 def _feature_bucket(feature: dict[str, Any]) -> str:
@@ -197,11 +201,11 @@ def _screen_group_title(bucket: str) -> str:
     }[bucket]
 
 
-def _merge_adrs(summary: dict[str, Any], *, repo_root: Path) -> list[str]:
+def _merge_adrs(summary: dict[str, Any], *, repo_root: Path, tasks_json_path: Path = TASKS_JSON) -> list[str]:
     try:
         import json
 
-        payload = json.loads((repo_root / TASKS_JSON).read_text(encoding="utf-8"))
+        payload = json.loads((repo_root / tasks_json_path).read_text(encoding="utf-8"))
     except Exception:
         return []
     tasks = payload.get("master", {}).get("tasks", []) if isinstance(payload, dict) else []
@@ -557,9 +561,9 @@ def _screen_state_matrix_lines() -> list[str]:
     return lines
 
 
-def render_ui_gdd_flow(*, repo_root: Path, summary: dict[str, Any]) -> str:
+def render_ui_gdd_flow(*, repo_root: Path, summary: dict[str, Any], tasks_json_path: Path = TASKS_JSON) -> str:
     inventory, flow, matrix, unwired, candidates, requirements = _slice_lines(summary)
-    adr_refs = _merge_adrs(summary, repo_root=repo_root)
+    adr_refs = _merge_adrs(summary, repo_root=repo_root, tasks_json_path=tasks_json_path)
     top_test_refs = _merge_top_refs(summary)
     today = _today()
     screen_contracts = _screen_contract_lines()
@@ -685,12 +689,15 @@ def render_ui_gdd_flow(*, repo_root: Path, summary: dict[str, Any]) -> str:
     ) + "\n"
 
 
-def export_candidate_sidecar(*, repo_root: Path, summary: dict[str, Any]) -> Path:
-    out = repo_root / "docs" / "gdd" / "ui-gdd-flow.candidates.json"
+def export_candidate_sidecar(*, repo_root: Path, summary: dict[str, Any], ui_gdd_flow_path: Path = UI_GDD_FLOW) -> Path:
+    ui_gdd_flow_path = _resolve_path(ui_gdd_flow_path)
+    out = ui_gdd_flow_path.with_suffix(".candidates.json")
+    if not out.is_absolute():
+        out = repo_root / out
     out.parent.mkdir(parents=True, exist_ok=True)
     payload = {
         "generated_at": _today(),
-        "source_gdd": str(UI_GDD_FLOW).replace("\\", "/"),
+        "source_gdd": str(ui_gdd_flow_path).replace("\\", "/"),
         "completed_master_tasks_count": summary["completed_master_tasks_count"],
         "needed_wiring_features_count": summary["needed_wiring_features_count"],
         "candidates": _build_candidate_specs(summary),
@@ -699,25 +706,55 @@ def export_candidate_sidecar(*, repo_root: Path, summary: dict[str, Any]) -> Pat
     return out
 
 
-def write_ui_gdd_flow(*, repo_root: Path, summary: dict[str, Any]) -> Path:
-    out = repo_root / UI_GDD_FLOW
+def write_ui_gdd_flow(
+    *,
+    repo_root: Path,
+    summary: dict[str, Any],
+    ui_gdd_flow_path: Path = UI_GDD_FLOW,
+    tasks_json_path: Path = TASKS_JSON,
+) -> Path:
+    ui_gdd_flow_path = _resolve_path(ui_gdd_flow_path)
+    tasks_json_path = _resolve_path(tasks_json_path)
+    out = ui_gdd_flow_path if ui_gdd_flow_path.is_absolute() else (repo_root / ui_gdd_flow_path)
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(render_ui_gdd_flow(repo_root=repo_root, summary=summary), encoding="utf-8", newline="\n")
-    export_candidate_sidecar(repo_root=repo_root, summary=summary)
+    out.write_text(
+        render_ui_gdd_flow(repo_root=repo_root, summary=summary, tasks_json_path=tasks_json_path),
+        encoding="utf-8",
+        newline="\n",
+    )
+    export_candidate_sidecar(repo_root=repo_root, summary=summary, ui_gdd_flow_path=ui_gdd_flow_path)
     return out
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Generate the governed Chapter 7 UI wiring GDD artifact.")
     parser.add_argument("--repo-root", default=".")
+    parser.add_argument("--ui-gdd-flow-path", default=str(UI_GDD_FLOW))
+    parser.add_argument("--tasks-json-path", default=str(TASKS_JSON))
+    parser.add_argument("--tasks-back-path", default="")
+    parser.add_argument("--tasks-gameplay-path", default="")
+    parser.add_argument("--overlay-root-path", default="")
     args = parser.parse_args(argv)
 
     repo_root = Path(args.repo_root).resolve()
-    summary = build_summary(repo_root=repo_root)
-    out = write_ui_gdd_flow(repo_root=repo_root, summary=summary)
+    summary = build_summary(
+        repo_root=repo_root,
+        tasks_json_path=Path(args.tasks_json_path),
+        tasks_back_path=Path(args.tasks_back_path) if args.tasks_back_path else TASKS_BACK,
+        tasks_gameplay_path=Path(args.tasks_gameplay_path) if args.tasks_gameplay_path else TASKS_GAMEPLAY,
+        overlay_root_path=Path(args.overlay_root_path) if args.overlay_root_path else OVERLAY_ROOT,
+    )
+    out = write_ui_gdd_flow(
+        repo_root=repo_root,
+        summary=summary,
+        ui_gdd_flow_path=Path(args.ui_gdd_flow_path),
+        tasks_json_path=Path(args.tasks_json_path),
+    )
     print(f"CHAPTER7_UI_GDD_WRITER status=ok tasks={summary['completed_master_tasks_count']} out={str(out).replace('\\', '/')}")
     return 0
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
+def _resolve_path(value: str | Path) -> Path:
+    return value if isinstance(value, Path) else Path(value)

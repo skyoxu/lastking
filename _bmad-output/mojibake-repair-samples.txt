@@ -1,0 +1,14 @@
+LINE 68 ORIGINAL: 
+LINE 68 FIXED: 
+
+LINE 70 ORIGINAL: 2. **白天准备阶段**：玩家进入局内后，可通过现有系统进行资源管理、部分建造、升级、训练、科技相关操作；但这些能力更多是系统已存在，统一的 `ResourcePanel / BuildPanel / ProgressionPanel` 仍未完全成型。
+LINE 70 FIXED: <ERR 'utf-8' codec can't decode byte 0xb0 in position 5: invalid start byte>
+
+LINE 79 ORIGINAL: 
+LINE 79 FIXED: 
+
+LINE 91 ORIGINAL: - **可验证主循环**：Day/Night 状态机、波次、战斗、基础 HUD、设置、部分存档已可串联；
+LINE 91 FIXED: <ERR 'utf-8' codec can't decode byte 0xbf in position 4: invalid start byte>
+
+LINE 92 ORIGINAL: - **可验证系统正确性**：大量 contract、audit、schema、migration 与 gate 已经建立；
+LINE 92 FIXED: <ERR 'utf-8' codec can't decode byte 0xbf in position 4: invalid start byte>

@@ -1,0 +1,331 @@
+=== _bmad-output/gdd.zh-CN.md ===
+0002: stepsCompleted: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+0003: inputDocuments:
+0005: documentCounts:
+0006: briefs: 0
+0007: research: 0
+0008: brainstorming: 0
+0009: projectDocs: 0
+0010: workflowType: 'gdd'
+0011: lastStep: 14
+0012: project_name: 'lastking'
+0013: user_name: 'skyo'
+0015: game_type: 'tower-defense'
+0016: game_name: 'lastking'
+0019: # lastking - 游戏设计文档
+0023: **目标平台：** Windows（Steam 单机）
+0031: lastking
+0050: - **Daytime planning and nighttime proof under locked deterministic rules**
+0053: - **System-governed difficulty, spawning, and auditability**
+0056: - **Castle-defense loop with economy debt pressure instead of pure expansion fantasy**
+0059: - **M1 as a truthful vertical slice instead of a fake feature-complete façade**
+0069: 1. **启动与入口阶段**：玩家从 `MainMenu` 进入，能够接触到基础启动入口与设置入口，但 `Boot状态Panel`、`ContinueGateDialog` 这类启动治理面仍未稳定落地。
+0070: 2. **白天准备阶段**：玩家进入局内后，可通过现有系统进行资源管理、部分建造、升级、训练、科技相关操作；但这些能力更多是系统已存在，统一的 `ResourcePanel / BuildPanel / ProgressionPanel` 仍未完全成型。
+0071: 3. **夜晚防守阶段**：夜晚波次、预算、敌军生成、目标优先级与基础战斗逻辑已有较强实现，HUD 可显示部分运行时状态；但 `CombatHud`、`PressurePanel`、`CameraControlOverlay` 等战斗壳层还不完整。
+0080: - `waves`：夜晚敌军按预算、通道和 schedule 生成；
+0081: - `placement`：白天建造与占地规则是核心准备手段；
+0082: - `strategy/resources/planning`：资源、债务、训练队列、升级和科技都服务于长期防守规划；
+0083: - `survival pressure`：玩家目标不是探索地图，而是在多日防守压力下维持城堡与经济体系。
+0092: - **可验证系统正确性**：大量 contract、audit、schema、migration 与 gate 已经建立；
+0093: - **不可视为完整玩家体验**：Prompt/Outcome、Combat UI、Economy/Progression panel、Save/Meta summary、Config audit surfaces 仍大量处于 partial/test-only/docs-only 状态。
+0103: Windows PC（通过 Steam，仅单机）
+0107: - 发布范围锁定为 `Windows only` 和 `Steam single-player`。
+0109: - 运行时交互围绕 `keyboard/mouse only` 构建；首发不计划支持手柄。
+0112: - 首发范围明确排除 `mod/workshop` 和 `safe-mode startup`。
+0116: - 主要输入：`keyboard + mouse`
+0118: - mouse-driven UI navigation
+0119: - keyboard/mouse camera and runtime control
+0120: - in-match time controls: `pause, 1x, 2x`
+0121: - settings support for key rebinding and mouse sensitivity
+0130: - Primary audience: PC strategy/tower-defense players on Steam
+0131: - Likely age band: late-teen to adult players who are comfortable reading layered UI and managing multiple systems at once
+0132: - Current M1 practical audience: players or internal evaluators who tolerate partial UI wiring and can validate systems despite incomplete presentation layers
+0157: 每局约 `60-90 minutes`。
+0176: - **Ship a playable Day1-Day15 defense loop**
+0177: Deliver a full run structure that can move from `DayStart` to `DefeatReport / Day15 victory` without blocker-level breaks in the core runtime flow.
+0179: - **Validate system-first tower-defense design under deterministic rules**
+0180: Prove that economy, wave generation, combat targeting, reward state, save snapshots, and config governance can coexist in one reproducible ruleset.
+0182: - **Close the gap between strong backend systems and incomplete player-facing surfaces**
+0183: Turn the current M1 state from “systems mostly exist, surfaces are partial” into a clearer playable slice where players can actually read, act, and understand outcomes in real time.
+0185: - **Establish a scalable PRD-to-task-to-wiring workflow**
+0186: Use this project not only to ship gameplay, but to prove that the repository’s governed workflow can carry a feature from locked PRD rules through implementation, UI wiring, audit evidence, and future expansion.
+0200: - **Daytime planning and nighttime proof under locked deterministic rules**
+0201: Many defense games create tension through volume and spectacle. `lastking` instead emphasizes whether your daytime economic, building, recruitment, and tech decisions actually hold up under a fixed nighttime validation loop.
+0203: - **System-governed difficulty, spawning, and auditability**
+0204: Core runtime behavior is not treated as loose tuning data. Difficulty, spawn composition, pressure scoring, migration, and config safety are all governed by explicit contracts and validation paths, giving the game a stronger “designed and reviewable system” identity.
+0206: - **Castle-defense loop with economy debt pressure instead of pure expansion fantasy**
+0207: The game’s rules around debt, refund, queue interruption, night pressure, and victory/failure produce a harsher planning space than a conventional relaxed builder. The player is not simply optimizing growth; they are making survivability tradeoffs under locked constraints.
+0209: - **M1 designed as a truthful vertical slice, not a fake feature-complete façade**
+0210: The current milestone is valuable because it exposes the real state of the game: strong systems, partial surfaces, and specific wiring gaps. That honesty supports faster iteration and better design correction than pretending the experience is already complete.
+0224: - **Prepared Survival Over Reactive Chaos**
+0225: The game is about whether the player’s daytime preparation can survive nighttime pressure, not about last-second twitch recovery or high-APM control.
+0227: - **Deterministic Pressure With Legible Consequences**
+0228: Waves, economy, targeting, rewards, and failure states should feel strict but understandable. Players should be able to see that outcomes follow rules, not arbitrary spikes.
+0230: - **Strategic Tradeoffs Across a 15-Day Arc**
+0231: Every build, upgrade, recruit, repair, and tech choice must compete for limited resources and future survivability. Short-term relief should often cost long-term resilience.
+0233: - **Readable Systems Before Spectacle**
+0234: UI, feedback, and flow should help players understand state, pressure, and consequences. If a system exists but the player cannot read it, the design is still incomplete.
+0236: **Pillar Prioritization:** When pillars conflict, prioritize in this order:
+0237: 1. Prepared Survival Over Reactive Chaos
+0238: 2. Deterministic Pressure With Legible Consequences
+0239: 3. Strategic Tradeoffs Across a 15-Day Arc
+0246: **DayStart -> BuildAndRecruit -> NightPrepare -> NightCombat -> Settlement -> RewardChoice -> NextDay**
+0250: **Loop Diagram:**
+0251: `Income/Autosave -> Build/Upgrade/Train -> Lock Night State -> Defend Against Wave -> Resolve Damage/Losses -> Pick Reward -> Start Next Day`
+0253: **Loop Timing:**
+0254: - One macro loop: `Day 4 minutes + Night 2 minutes`
+0255: - One full run target: `Day 1 ~ Day 15`
+0256: - 预期单局长度：`60-90 minutes`
+0258: **Loop Variation:**
+0278: - `Castle HP reaches 0`
+0286: - underbuilt defenses
+0287: - weak economy timing
+0288: - poor queue or upgrade sequencing
+0289: - inability to absorb late-night pressure
+0299: - **玩家行为：** Place structures during daytime using footprint and pathing rules
+0300: - **使用时机：** Constantly during the preparation phase
+0301: - **考验内容：** Planning, spatial judgment, lane prioritization, future-risk management
+0302: - **体验感受：** Deliberate, grid-aware, consequence-heavy
+0303: - **成长方式：** More meaningful as the player unlocks better structures, understands lane pressure, and learns where placement mistakes cascade into night failures
+0304: - **服务支柱：** Prepared Survival Over Reactive Chaos; Strategic Tradeoffs Across a 15-Day Arc
+0307: - **玩家行为：** Spend, save, recover, and sequence actions under gold and iron constraints, including debt rules
+0308: - **使用时机：** Constantly during daytime and indirectly across the full run
+0309: - **考验内容：** Resource prioritization, discipline, sequencing, risk tolerance
+0310: - **体验感受：** Tight, restrictive, always slightly pressured
+0311: - **成长方式：** The player gains mastery not by earning infinite resources, but by learning when to spend, pause, or accept short-term weakness
+0312: - **服务支柱：** Deterministic Pressure With Legible Consequences; Strategic Tradeoffs Across a 15-Day Arc
+0315: - **玩家行为：** Manage training queues, building upgrades, and repairs inside limited timing and cost windows
+0316: - **使用时机：** Frequently during daytime and between pressure spikes
+0317: - **考验内容：** Sequencing, anticipation, opportunity cost judgment
+0318: - **体验感受：** Structured, system-heavy, timing-sensitive
+0319: - **成长方式：** Complexity rises as more concurrent needs compete for the same economy and preparation window
+0320: - **服务支柱：** Prepared Survival Over Reactive Chaos; Strategic Tradeoffs Across a 15-Day Arc
+0323: - **玩家行为：** Observe HUD state, wave pressure, lane escalation, damage intake, and defense performance during night combat
+0324: - **使用时机：** Constantly during nighttime
+0325: - **考验内容：** Situational reading, anticipation, interpretation of consequences rather than direct twitch execution
+0326: - **体验感受：** Tense, validating, constrained
+0327: - **成长方式：** Nights become harder through budget scaling, elite/boss structure, and compounding earlier decisions
+0328: - **服务支柱：** Deterministic Pressure With Legible Consequences; Readable Systems Before Spectacle
+0331: - **玩家行为：** Resolve nightly reward choices, guide build direction, and shape future planning through progression options
+0332: - **使用时机：** Once per night at a meaningful decision point
+0333: - **考验内容：** Long-term planning, adaptation, valuation under uncertainty
+0334: - **体验感受：** Relieving but strategic, never free of consequence
+0335: - **成长方式：** Choices become more meaningful as the run matures and existing weaknesses or strengths compound
+0336: - **服务支柱：** Strategic Tradeoffs Across a 15-Day Arc; Prepared Survival Over Reactive Chaos
+0342: - economy determines whether building, upgrading, training, and repairing are possible
+0343: - building placement changes lane pressure, target resolution, and survivability at night
+0344: - queue and upgrade timing compete with construction and repair for the same resource window
+0345: - nighttime outcomes feed settlement and reward choices
+0346: - reward choices influence the next day’s economy, defense priorities, and progression direction
+0347: - incomplete M1 surfaces currently weaken readability, but the underlying interaction chain already exists
+0349: In design terms, the game is strongest when the player can clearly see:
+0350: `resource decision -> preparation outcome -> night pressure result -> reward/progression consequence`
+0356: - early days teach basic building, recruitment, and survival rhythm
+0357: - mid-run introduces stronger pressure from scaling waves, economy stress, and higher-value tradeoffs
+0358: - late-run tests whether the player built a resilient system rather than a fragile short-term setup
+0359: - elite and boss nights act as validation spikes for earlier choices
+0360: - in the current M1 stage, progression understanding is partially limited by incomplete runtime presentation panels, not by missing systemic depth
+0366: ### 控制方案（Windows PC / Steam）
+0369: - **Mouse**
+0370: - navigate menus and panels
+0371: - select structures, options, and reward choices
+0372: - place buildings and confirm interaction targets
+0374: - camera movement
+0375: - runtime time controls: `pause`, `1x`, `2x`
+0376: - fast access to high-frequency gameplay actions
+0377: - settings and utility shortcuts
+0408: - 局内语言切换：`zh-CN / en-US`
+0425: - **Castle-linked core defense structures**
+0427: - **Blocking and path-shaping structures**
+0429: - **Armed defense buildings**
+0431: - **Barracks-linked military production structures**
+0433: - **Progression-linked support structures or upgrades**
+0436: 这意味着 `lastking` 的“塔”不是单一炮塔 catalogue，而是一个混合防守系统。
+0450: - Day `5` / `10` 为 `Elite Night`
+0451: - Day `15` 为 `Boss Night`
+0456: - `normal / elite / boss` 三通道独立
+0457: - 刷怪由 `budget -> spawn` 规则驱动，而不是脚本硬排
+0458: - 采样遵循 `greedy_fill + seeded_weighted_topk`
+0480: - 建造受 footprint 规则约束
+0485: - choke point 的价值极高
+0496: - `iron_ore`
+0522: **What currently fills the ‘powers’ role:**
+0525: - 时间控制（`pause / 1x / 2x`）带来的节奏掌控
+0535: - 难度系统为 `config-driven`
+0543: - elite / boss 夜作为不同 run 的关键验证点
+0545: - battle report、pressure score、config-governed auditability 带来的复盘价值
+0548: - 不是高度随机 roguelike
+0549: - 不是 endless-first score chase
+0554: 当前 M1 阶段的 replayability 潜力已经存在，但一部分复盘与结果展示面仍受限于 partial outcome/meta/config surfaces。
+0586: - 这种 power progression 受资源与 debt rules 严格约束，不是无限正反馈
+0589: - Day `1` 到 Day `15` 本身就是内容推进结构
+0590: - `Elite Night` 与 `Boss Night` 构成阶段性验证节点
+0599: - 中段开始感受到明显压力抬升，尤其是 elite night 前后
+0605: `lastking` 的难度曲线更接近**分段抬升的 sawtooth + overall upward escalation**，而不是平滑线性增长。
+0611: - 天数带来的 budget scaling
+0612: - `normal / elite / boss` 夜型切换
+0623: - **Day 5 / Day 10**
+0624: - 精英夜 spike
+0637: - 难度系统为 `config-driven`
+0642: - 当前设计不依赖动态 rubber band 或临场自动救济
+0646: 本作存在明确且非常核心的 economy/resource system，因此这一节必须保留。
+0648: `lastking` 的经济不是辅助系统，而是核心 gameplay pressure source 之一。它决定玩家白天能做什么，也决定夜晚是否会因准备不足而崩盘。
+0655: - 允许为负，直接形成 debt gameplay
+0657: - **Iron Ore**
+0661: - **Population / Tech Points**
+0663: - 服务于训练与科技 progression，而不是自由消费货币
+0668: - DayStart 结算税收
+0677: - reroll 或其他受成本约束的 run 内选择
+0681: - in-progress 行为与 new spend 行为有不同债务处理规则
+0682: - repair、queue、upgrade、building 并不是彼此独立的支出池，而是在争夺同一安全边际
+0687: - refund、queue cancel、destroyed-state refund 等规则使系统后果可读、可控、可复盘
+0697: `lastking` 最合适的结构不是传统线性关卡列表，也不是开放世界，而是一个**single-run campaign structure**：
+0700: - run 由 `Day 1 -> Day 15` 的连续日夜循环组成
+0703: - 整体结构更接近“持续战役式 arena/campaign hybrid”
+0717: - 对应 `Elite Night` 节点，如 `Day 5`、`Day 10`
+0736: - `housing -> barracks -> survive first night` 的三步引导
+0741: - 先教玩家如何开始 build
+0747: 本作没有传统意义的 secret level 或独立 bonus level，但有明确的“特殊内容节点”：
+0749: - `Elite Night`
+0750: - 中段 spike
+0753: - `Boss Night`
+0757: - `DefeatReport / Outcome Resolution`
+0764: 本作的内容推进方式是**strict linear campaign progression inside a single run**。
+0778: - `Elite Night` 和 `Boss Night` 是按日程锁定触发
+0781: - 主要 unlock 在 difficulty 层
+0799: 建议为本作明确以下 level design 原则：
+0801: - **Teach the loop through real pressure**
+0804: - **Each day should prepare a different question for the night**
+0807: - **Pressure escalation should come from systems, not surprise gimmicks**
+0810: - **Special nights must validate prior decisions, not replace them**
+0813: - **Spatial readability matters as much as mechanical correctness**
+0822: `lastking` 最适合的视觉方向不是高写实，也不是超轻量抽象，而是**readable stylized strategy presentation**。它的首要目标不是炫技，而是支持玩家在长时段单局中快速读懂路径、防线、压力、损伤和层级关系。
+0834: - 路径、 choke point、火力覆盖和损伤结果可被快速识别
+0841: - **They Are Billions / Kingdom 风格的压力可读性**
+0844: - **Northgard / 轻 RTS 风格的功能清晰度**
+0850: 如果后续要补正式视觉 reference，建议明确到：
+0881: - 相机应服务于策略可读性，而不是 cinematic 表演
+0887: `lastking` 的音频方向应服务于两件事：
+0892: 因此更适合的不是高密度旋律驱动，而是**atmospheric strategy tension + readable combat feedback**。
+0917: - 奖励选择、结算、战报与重要 milestone 的确认反馈
+0918: - 时间控制切换（pause / 1x / 2x）的清晰状态反馈
+0941: 本作的 art/audio 必须服务于此前已经定义的 pillars，而不是自成体系。
+0962: `lastking` 的技术要求首先服从其平台锁定与长时段 run 结构：这是一个 `Windows only`、`Steam single-player`、单局 `60-90` 分钟的策略防守游戏。因此性能目标不能只看“能跑”，而必须看“在长时间局内压力和持续 UI 读面下是否稳定”。
+0966: - 主要目标：`60 FPS average`
+0967: - 下限硬门：`1% Low >= 45 FPS`
+0969: - `logic P95 <= 16.6ms`
+0970: - `logic P99 <= 22.0ms`
+0992: - 由于本作是单张持续战场上的 campaign-style run，优先追求：
+0995: - autosave / settlement / report 流转稳定
+1002: #### Windows PC / Steam 要求
+1004: - 平台：`Steam single-player, Windows only`
+1005: - 输入：`keyboard/mouse only`
+1006: - No controller support at launch
+1007: - Steam 账号范围的存档归属
+1008: - 需要支持 Steam Cloud
+1010: - 首发不支持 mod / workshop
+1015: - fullscreen 为默认显示模式
+1016: - key rebinding 必须支持
+1017: - mouse sensitivity 必须支持
+1018: - in-match language switching 支持 `zh-CN / en-US`
+1019: - time controls 必须支持：`pause / 1x / 2x`
+1020: - pause 语义必须是真正的 full freeze，而不是只停表面动画
+1021: - low-spec stability 需要 performance preset 支撑
+1025: - 存档策略：`single autosave only`
+1027: - 存档迁移：`forced migration with pre-backup`
+1028: - migration failure 时必须拒绝加载并建议删除存档
+1029: - unofficial / dirty save 与 cloud / achievement 行为必须遵守 PRD 锁定策略
+1030: - config mismatch / load failure 必须阻止开局，而不是 silent fallback into unsafe runtime
+1044: - HUD / Prompt / Outcome / Settings / Meta UI 资产
+1045: - Config / audit / report / migration 相关玩家面资产（如后续继续补齐）
+1048: - silhouette clarity 高于复杂细节
+1059: - Elite / Boss pressure variation tracks
+1060: - build / upgrade / repair / cancel / error / confirm 反馈音效
+1061: - damage / breach / loss / milestone / reward / report 反馈音效
+1062: - settings 和 time-control 反馈音效
+1088: - Engine / stack 已锁定为 `Godot 4.5.1 + C#`
+1089: - Windows-only 目标限制了输入与平台设计边界
+1090: - 长时间单局结构要求 autosave、report、config validation、migration 都必须稳定
+1091: - 本地化硬门要求 `zh-CN / en-US` HUD 无截断、无重叠
+1092: - performance preset 不是可有可无选项，而是低配稳定性必需项
+1095: - HUD / outcome readability
+1096: - combat interaction surfaces
+1097: - economy/progression panels
+1098: - meta/report/config audit surfaces
+1109: | 2 | 核心生存循环与 HUD 可读性 | Day/Night 状态机、城堡 HP、胜负、基础 HUD、运行时结果与提示闭环 | 1 | 8-10 |
+1117: 1. **Epic 1: Foundation, Boot, and Runtime Baseline**
+1118: 先建立 Windows/Steam 单机、Godot 4.5.1 + C#、主菜单、主场景和运行时起点，否则后续所有可玩性都没有落脚点。
+1120: 2. **Epic 2: Core Survival Loop and HUD Readability**
+1123: 3. **Epic 3: Combat Pressure and Defensive Validation**
+1126: 4. **Epic 4: Economy, Building, and Progression Systems**
+1129: 5. **Epic 5: Meta Systems, Save, and Platform Services**
+1132: 6. **Epic 6: UI Wiring, Auditability, and Production Closure**
+1133: 最后把大量 partial/test-only/docs-only 的玩家面收口，并把配置治理、迁移、战报、审计面做成真实可读体验。
+1137: **The first playable milestone:**
+1138: 玩家可以从主菜单进入游戏，完成 `housing -> barracks -> survive first night` 的最小 onboarding，看到基础 HUD、经历白天准备与第一晚防守，并在结果后继续进入下一天。这是最小真实 vertical slice，而不是假演示。
+1157: | 存读档完整性 | `0 blocker-level corruption cases in gated validation` | 存档迁移、自动存档和恢复测试套件 |
+1158: | 配置校验安全性 | `0 unsafe match starts after config mismatch/load failure` | 配置校验门禁、审计日志和负路径测试 |
+1159: | i18n HUD 硬门 | `0 critical truncation / overlap in zh-CN and en-US` | 截图差异对比 + 人工抽查 |
+1160: | 构建稳定性 | `0 release-blocking bootstrap/export failures on governed baseline` | Windows 导出 / 启动验证流水线 |
+1165: - 不只是 benchmark 好看
+1166: - 而是 boot、run、save、config、i18n、performance 全部在一个真实 vertical slice 内能同时成立
+1171: 本作的 gameplay metric 必须围绕此前定义的 pillars 和 goals，而不是泛泛看留存。
+1177: | First-Night Survival Clarity | 新玩家在最小 onboarding 后能理解第一晚为何成功或失败 | Guided playtest observation + structured post-run interview |
+1181: | Economy Decision Meaningfulness | 玩家能感知债务、升级、训练、修理之间的真实取舍 | Post-session surveys + observation of repeated misplays |
+1182: | Combat Fairness Perception | 玩家普遍将失败归因为决策不足而非随机不公 | Defeat interviews + battle report review |
+1184: | UI Readability Closure | 测试玩家能通过 surface 直接读懂状态，而不是靠外部解释 | UI-focused playtests on HUD / outcome / economy / meta surfaces |
+1185: | Battle Report Usefulness | 玩家或测试者能用战报解释 run 的关键失误或成功点 | Battle report review sessions |
+1186: | 通过策略差异形成的重玩性 | 不同 build / reward / difficulty 路径能产生不同 run 体验 | 对比 seeded run 试玩 |
+1198: 以下 qualitative signs 对本作同样关键：
+1214: - **每次 gated validation / CI review**
+1218: - config safety
+1219: - i18n hard gate
+1221: - **每个 playable milestone**
+1222: - first-night clarity
+1223: - HUD / outcome readability
+1224: - economy and reward understanding
+1225: - battle report usefulness
+1227: - **每个 major vertical slice review**
+1228: - Day1-Day15 完整体验质量
+1229: - difficulty 梯度是否成立
+1230: - replayability 是否来自真实策略差异
+1231: - 当前 partial/test-only/docs-only surfaces 是否继续收口
+1241: 以下内容明确不属于当前 `lastking` v1 / M1 交付范围：
+1246: - Mod / Workshop / 地图编辑器
+1248: - 无限模式、纯分数追逐型 endless mode 作为首发主模式
+1250: - 高对比模式、色盲模式等更重 accessibility 扩展（当前 v1 不含）
+1251: - 大规模 post-launch 内容包、DLC 地图包、额外战役章节
+1258: - 更多语言支持：`ru-RU`、`es-419`、`pt-BR`、`de-DE`
+1260: - 更成熟的 achievements/readout surface
+1261: - 更强的 config audit / migration / report 可视面 polish
+1271: - 玩家平台为 `Windows PC + Steam`，并接受键鼠为唯一首发输入方式。
+1274: - 配置治理、schema、migration、audit 这类底层治理能力会继续保留为正式产品约束，而不是开发期临时手段。
+1275: - 难度梯度通过配置和 seeded validation 可以持续校准，不需要在 v1 引入动态 rubber band 机制。
+1280: - `Godot 4.5.1 + C#` 运行时与导出链稳定可用
+1281: - Steam 平台能力可用，包括 Cloud、achievement、账号范围存档语义
+1282: - 当前使用的测试、CI、配置审计和 review pipeline 继续可运行
+1284: - Windows 导出与目标 baseline 机器环境可复现性能门结果
+1289: - 如果 battle report、migration、config audit 只停留在治理面而不转成玩家可读面，后续复盘价值会被削弱。
+1291: - 如果 difficulty curve 与 reward/economy pressure 失衡，会破坏“公平但严苛”的设计身份。
+1298: **Document:** lastking - 游戏设计文档
+
+=== _bmad-output/epics.zh-CN.md ===
+0001: # lastking - 开发史诗
+0008: | 2 | 核心生存循环与 HUD 可读性 | Day/Night 状态机、城堡 HP、胜负、基础 HUD、运行时结果与提示闭环 | 1 | 8-10 |
+0023: - Windows-only / Steam single-player 基线
+0024: - Godot 4.5.1 + C# 项目结构
+0026: - 基础启动流与运行时 bootstrap
+0048: ## Epic 2：核心生存循环与 HUD 可读性
+0055: - Day/Night 状态机
+0060: - 最小 onboarding 节律
+0065: - 完整结果/战报 polish
+0097: - 完整 progression 深度
+0099: - 完整 config audit surfaces
+0126: - 建造与 footprint
+0134: - 完整 settings/save polish
+0166: - Steam 相关平台要求
+0171: - 最终 production closure
+0189: ## Epic 6：UI 接线、可审计性与生产收口
+0196: - 六大 UI slice 的真实 surface 收口
+0197: - MainMenu / HUD / Combat / Economy / Meta / Config Audit 统一接线
+0221: - 作为开发者或高级玩家，我可以通过受治理、可读的界面检查 config、migration 和 report 元数据。

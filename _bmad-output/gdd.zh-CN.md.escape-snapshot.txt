@@ -1,0 +1,489 @@
+0001: ---
+0002: steps??d: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+0003: inputDocuments:
+0004:   []
+0005: documentCounts:
+0006:   briefs: 0
+0007:   research: 0
+0008:   brainstorming: 0
+0009:   projectDocs: 0
+0010: workflowType: 'gdd'
+0011: lastStep: 14
+0012: project_name: 'lastking'
+0013: user_name: 'skyo'
+0014: date: '2026-04-27'
+0015: game_type: 'tower-defense'
+0016: game_name: 'lastking'
+0017: ---
+0018: 
+0019: # lastking - ??????
+0020: 
+0021: **???** skyo
+0022: **?????** ?? / ????
+0023: **?????** Windows?Steam ???
+0024: 
+0025: ---
+0026: 
+0027: ## ????
+0028: 
+0029: ### ????
+0030: 
+0031: lastking
+0032: 
+0033: ### ????
+0034: 
+0035: `lastking` \u7684\u539f\u59cb PRD \u6307\u5411\u4e00\u4e2a\u4ee5 `Day 1 ~ Day 15` \u4e3a\u7eb5\u5411\u6218\u5f79\u7ed3\u6784\u7684\u5355\u673a\u5854\u9632/\u9632\u5b88\u578b\u7b56\u7565\u6e38\u620f\uff1a\u73a9\u5bb6\u5728\u767d\u5929\u8fdb\u884c\u8d44\u6e90\u5206\u914d\u3001\u5efa\u9020\u3001\u7ef4\u4fee\u3001\u8bad\u7ec3\u4e0e\u79d1\u6280\u51b3\u7b56\uff0c\u5728\u591c\u665a\u627f\u53d7\u6309\u9884\u7b97\u3001\u901a\u9053\u548c\u591c\u578b\u89c4\u5219\u9a71\u52a8\u7684\u654c\u519b\u538b\u529b\uff0c\u76ee\u6807\u662f\u5728\u57ce\u5821\u751f\u547d\u503c\u5f52\u96f6\u524d\u6491\u8fc7\u7b2c 15 \u5929\u3002\u5176\u6838\u5fc3\u4f53\u9a8c\u4e0d\u662f\u9ad8\u901f\u64cd\u4f5c\uff0c\u800c\u662f\u201c\u767d\u5929\u505a\u51c6\u5907\u3001\u591c\u665a\u9a8c\u8bc1\u51b3\u7b56\u201d\u7684\u95ed\u73af\u538b\u529b\u7ba1\u7406\u3002
+0036: 
+0037: \u4f46\u7ed3\u5408 `docs/gdd/t1-t46-m1-wiring-audit.md` \u7684\u5f53\u524d\u8bc1\u636e\uff0cM1 \u7248\u672c\u8fd8\u4e0d\u80fd\u5b8c\u5168\u5b9e\u73b0 PRD \u9884\u671f\u7684\u5b8c\u6574\u4f53\u9a8c\u3002\u5f53\u524d\u66f4\u51c6\u786e\u7684\u4ea7\u54c1\u5b9a\u4e49\u5e94\u662f\uff1a\u4e00\u4e2a\u5df2\u5177\u5907\u6838\u5fc3\u72b6\u6001\u673a\u3001\u6ce2\u6b21\u3001\u8d44\u6e90\u3001\u90e8\u5206 HUD\u3001\u8bbe\u7f6e\u3001\u5b58\u6863\u548c\u914d\u7f6e\u6cbb\u7406\u80fd\u529b\uff0c\u4f46\u5927\u91cf\u73a9\u5bb6\u9762\u4ecd\u53ea\u5b8c\u6210\u90e8\u5206\u63a5\u7ebf\u7684\u53ef\u73a9\u5782\u76f4\u5207\u7247\u3002\u56e0\u6b64\u672c\u9636\u6bb5 GDD \u5e94\u4f18\u5148\u63cf\u8ff0\u201c\u5f53\u524d\u53ef\u88ab\u73a9\u5bb6\u5b9e\u9645\u4e32\u8054\u6e38\u73a9\u7684\u6700\u5c0f\u95ed\u73af\u201d\uff0c\u800c\u4e0d\u662f\u9ed8\u8ba4\u628a\u6240\u6709 PRD \u80fd\u529b\u90fd\u89c6\u4e3a\u5df2\u5b8c\u6574\u4e0a\u7ebf\u3002
+0038: 
+0039: \u5728\u8fd9\u4e2a M1 \u53ef\u73a9\u95ed\u73af\u4e2d\uff0c\u73a9\u5bb6\u80fd\u591f\u4ece\u4e3b\u83dc\u5355\u8fdb\u5165\u6e38\u620f\uff0c\u67e5\u770b\u57fa\u7840 HUD\uff0c\u7ecf\u5386\u767d\u5929/\u591c\u665a\u5faa\u73af\uff0c\u627f\u53d7\u654c\u519b\u6ce2\u6b21\uff0c\u4f7f\u7528\u4e00\u90e8\u5206\u8d44\u6e90\u3001\u5efa\u9020\u3001\u8bad\u7ec3\u3001\u5956\u52b1\u4e0e\u8bbe\u7f6e\u76f8\u5173\u80fd\u529b\uff0c\u5e76\u5728\u80dc\u8d1f\u6761\u4ef6\u3001\u63d0\u793a\u53cd\u9988\u3001\u8fdb\u5ea6\u9762\u677f\u3001\u6218\u6597\u4ea4\u4e92\u58f3\u5c42\u3001\u914d\u7f6e\u5ba1\u8ba1\u9762\u7b49\u4f4d\u7f6e\u4f53\u9a8c\u5230\u4e0d\u540c\u7a0b\u5ea6\u7684\u964d\u7ea7\u6216\u7f3a\u53e3\u3002\u6362\u8a00\u4e4b\uff0cM1 \u5f53\u524d\u6700\u771f\u5b9e\u7684\u8bbe\u8ba1\u76ee\u6807\u4e0d\u662f\u201c\u5b8c\u6210\u7248\u57ce\u5821\u9632\u5b88\u4f53\u9a8c\u201d\uff0c\u800c\u662f\u201c\u9a8c\u8bc1 Day/Night \u6838\u5fc3\u5faa\u73af\u662f\u5426\u5df2\u7ecf\u6709\u8db3\u591f\u591a\u7684\u771f\u5b9e\u63a5\u7ebf\uff0c\u53ef\u4ee5\u652f\u6491\u4e0b\u4e00\u8f6e UI \u6536\u53e3\u4e0e\u4f53\u9a8c\u95ed\u73af\u4fee\u6b63\u201d\u3002
+0040: 
+0041: ### ????
+0042: 
+0043: - \u504f\u4e2d\u6838\u7684 PC \u5854\u9632/\u7b56\u7565\u73a9\u5bb6
+0044: - \u80fd\u63a5\u53d7 `60-90` \u5206\u949f\u5355\u5c40\u65f6\u957f\u7684 Steam \u5355\u673a\u73a9\u5bb6
+0045: - \u613f\u610f\u5904\u7406\u8d44\u6e90\u3001\u961f\u5217\u3001\u5efa\u9020\u3001\u79d1\u6280\u548c\u591c\u665a\u538b\u529b\u534f\u540c\u7684\u73a9\u5bb6
+0046: - \u5728\u5f53\u524d M1 \u9636\u6bb5\uff0c\u4e5f\u5305\u62ec\u80fd\u591f\u5bb9\u5fcd partial UI \u63a5\u7ebf\u5e76\u5e2e\u52a9\u9a8c\u8bc1\u7cfb\u7edf\u95ed\u73af\u7684\u5185\u90e8\u4f53\u9a8c\u8005
+0047: 
+0048: ### ?????USP?
+0049: 
+0050: - **Daytime planning and nighttime proof under locked deterministic rules**  
+0051:   \u8bb8\u591a\u9632\u5b88\u6e38\u620f\u901a\u8fc7\u602a\u7269\u6570\u91cf\u548c\u89c6\u89c9 spectacle \u5236\u9020\u7d27\u5f20\u611f\uff0c`lastking` \u66f4\u5f3a\u8c03\u767d\u5929\u505a\u51fa\u7684\u7ecf\u6d4e\u3001\u5efa\u9020\u3001\u52df\u5175\u4e0e\u79d1\u6280\u9009\u62e9\uff0c\u662f\u5426\u771f\u80fd\u5728\u591c\u665a\u538b\u529b\u4e0b\u6210\u7acb\u3002
+0052: 
+0053: - **System-governed difficulty, spawning, and auditability**  
+0054:   \u96be\u5ea6\u3001\u5237\u602a\u3001\u538b\u529b\u8bc4\u5206\u3001\u8fc1\u79fb\u4e0e\u914d\u7f6e\u5b89\u5168\u5e76\u4e0d\u662f\u677e\u6563\u8c03\u53c2\uff0c\u800c\u662f\u901a\u8fc7\u663e\u5f0f\u5951\u7ea6\u3001\u6821\u9a8c\u548c\u5ba1\u8ba1\u94fe\u8def\u6cbb\u7406\uff0c\u5f62\u6210\u66f4\u53ef\u9a8c\u8bc1\u7684\u7cfb\u7edf\u8eab\u4efd\u3002
+0055: 
+0056: - **Castle-defense loop with economy debt pressure instead of pure expansion fantasy**  
+0057:   \u503a\u52a1\u3001\u9000\u6b3e\u3001\u961f\u5217\u4e2d\u65ad\u3001\u591c\u665a\u538b\u529b\u4e0e\u552f\u4e00\u5931\u8d25\u6761\u4ef6\u5171\u540c\u6784\u6210\u66f4\u4e25\u82db\u7684\u751f\u5b58\u51b3\u7b56\u7a7a\u95f4\uff0c\u800c\u4e0d\u662f\u8f7b\u91cf\u6269\u5f20\u5e7b\u60f3\u3002
+0058: 
+0059: - **M1 as a truthful vertical slice instead of a fake feature-complete fa\xe7ade**  
+0060:   \u5f53\u524d\u91cc\u7a0b\u7891\u7684\u4ef7\u503c\u5728\u4e8e\u5982\u5b9e\u66b4\u9732\u201c\u7cfb\u7edf\u5f3a\u3001\u8868\u9762\u5f31\u3001\u63a5\u7ebf\u7f3a\u53e3\u660e\u786e\u201d\u7684\u73b0\u72b6\uff0c\u4fbf\u4e8e\u540e\u7eed\u6309\u8bc1\u636e\u4fee\u6b63\u4f53\u9a8c\u95ed\u73af\u3002
+0061: 
+0062: ### ????
+0063: 
+0064: **???** ??
+0065: **???** ? GDD ?? `tower-defense` ?????????????????????? / ??????????????
+0066: 
+0067: ### M1 ????????
+0068: 
+0069: 1. **\u542f\u52a8\u4e0e\u5165\u53e3\u9636\u6bb5**\uff1a\u73a9\u5bb6\u4ece `MainMenu` \u8fdb\u5165\uff0c\u80fd\u591f\u63a5\u89e6\u5230\u57fa\u7840\u542f\u52a8\u5165\u53e3\u4e0e\u8bbe\u7f6e\u5165\u53e3\uff0c\u4f46 `Boot??Panel`\u3001`ContinueGateDialog` \u8fd9\u7c7b\u542f\u52a8\u6cbb\u7406\u9762\u4ecd\u672a\u7a33\u5b9a\u843d\u5730\u3002
+0070: 2. **\u767d\u5929\u51c6\u5907\u9636\u6bb5**\uff1a\u73a9\u5bb6\u8fdb\u5165\u5c40\u5185\u540e\uff0c\u53ef\u901a\u8fc7\u73b0\u6709\u7cfb\u7edf\u8fdb\u884c\u8d44\u6e90\u7ba1\u7406\u3001\u90e8\u5206\u5efa\u9020\u3001\u5347\u7ea7\u3001\u8bad\u7ec3\u3001\u79d1\u6280\u76f8\u5173\u64cd\u4f5c\uff1b\u4f46\u8fd9\u4e9b\u80fd\u529b\u66f4\u591a\u662f\u7cfb\u7edf\u5df2\u5b58\u5728\uff0c\u7edf\u4e00\u7684 `ResourcePanel / BuildPanel / ProgressionPanel` \u4ecd\u672a\u5b8c\u5168\u6210\u578b\u3002
+0071: 3. **\u591c\u665a\u9632\u5b88\u9636\u6bb5**\uff1a\u591c\u665a\u6ce2\u6b21\u3001\u9884\u7b97\u3001\u654c\u519b\u751f\u6210\u3001\u76ee\u6807\u4f18\u5148\u7ea7\u4e0e\u57fa\u7840\u6218\u6597\u903b\u8f91\u5df2\u6709\u8f83\u5f3a\u5b9e\u73b0\uff0cHUD \u53ef\u663e\u793a\u90e8\u5206\u8fd0\u884c\u65f6\u72b6\u6001\uff1b\u4f46 `CombatHud`\u3001`PressurePanel`\u3001`CameraControlOverlay` \u7b49\u6218\u6597\u58f3\u5c42\u8fd8\u4e0d\u5b8c\u6574\u3002
+0072: 4. **\u591c\u95f4\u7ed3\u7b97\u4e0e\u5956\u52b1\u9636\u6bb5**\uff1a\u5956\u52b1\u7cfb\u7edf\u5df2\u5177\u5907\u6838\u5fc3\u903b\u8f91\u548c\u5c40\u90e8\u8fd0\u884c\u65f6\u9762\u677f\uff0c\u4f46\u5956\u52b1\u5165\u53e3\u3001\u786e\u8ba4\u3001\u53cd\u9988\u4e0e\u4e0b\u4e00\u65e5\u8854\u63a5\u4ecd\u672a\u5b8c\u5168\u6536\u675f\u5230\u7edf\u4e00 outcome flow\u3002
+0073: 5. **\u5c40\u5185\u8f85\u52a9\u4e0e\u5143\u7cfb\u7edf\u9636\u6bb5**\uff1a\u8bbe\u7f6e\u3001\u672c\u5730\u5316\u3001\u97f3\u9891\u548c\u90e8\u5206\u5b58\u6863\u80fd\u529b\u76f8\u5bf9\u6700\u6210\u719f\uff1b\u4f46\u4e91\u5b58\u6863\u51b2\u7a81\u3001\u6218\u62a5\u5c55\u793a\u3001\u6210\u5c31\u53ef\u89c6\u5316\u3001\u914d\u7f6e\u5ba1\u8ba1\u4e0e\u8fc1\u79fb\u72b6\u6001\u66f4\u504f\u5411\u6d4b\u8bd5/\u6cbb\u7406\u8bc1\u636e\uff0c\u800c\u975e\u6210\u719f\u73a9\u5bb6\u9762\u3002
+0074: 6. **\u4e00\u5c40\u7ed3\u675f\u9636\u6bb5**\uff1aPRD \u7684\u771f\u5b9e\u76ee\u6807\u662f\u6491\u5230 Day 15 \u6216\u5728\u57ce\u5821 HP \u5f52\u96f6\u65f6\u5931\u8d25\uff1b\u4f46 M1 \u5f53\u524d\u66f4\u50cf\u662f\u201c\u53ef\u8dd1\u901a\u6838\u5fc3\u5faa\u73af\u5e76\u66b4\u9732\u7f3a\u53e3\u201d\u7684\u9a8c\u8bc1\u7248\uff0c\u4e00\u5c40\u7ed3\u675f\u4f53\u9a8c\u5728 outcome \u5c55\u793a\u4e0e\u6536\u675f\u65b9\u9762\u4ecd\u672a\u5b8c\u5168\u8fbe\u6807\u3002
+0075: 
+0076: ### ????????
+0077: 
+0078: \u672c\u9879\u76ee\u4e0e `??` \u6700\u5339\u914d\uff0c\u539f\u56e0\u662f\u5176\u4e3b\u4fe1\u53f7\u96c6\u4e2d\u5728\uff1a
+0079: 
+0080: - `waves`\uff1a\u591c\u665a\u654c\u519b\u6309\u9884\u7b97\u3001\u901a\u9053\u548c schedule \u751f\u6210\uff1b
+0081: - `placement`\uff1a\u767d\u5929\u5efa\u9020\u4e0e\u5360\u5730\u89c4\u5219\u662f\u6838\u5fc3\u51c6\u5907\u624b\u6bb5\uff1b
+0082: - `strategy/resources/planning`\uff1a\u8d44\u6e90\u3001\u503a\u52a1\u3001\u8bad\u7ec3\u961f\u5217\u3001\u5347\u7ea7\u548c\u79d1\u6280\u90fd\u670d\u52a1\u4e8e\u957f\u671f\u9632\u5b88\u89c4\u5212\uff1b
+0083: - `survival pressure`\uff1a\u73a9\u5bb6\u76ee\u6807\u4e0d\u662f\u63a2\u7d22\u5730\u56fe\uff0c\u800c\u662f\u5728\u591a\u65e5\u9632\u5b88\u538b\u529b\u4e0b\u7ef4\u6301\u57ce\u5821\u4e0e\u7ecf\u6d4e\u4f53\u7cfb\u3002
+0084: 
+0085: \u5b83\u540c\u65f6\u5177\u6709\u660e\u663e\u7684 `strategy` \u7279\u5f81\uff0c\u4f46\u5f53\u524d\u6700\u5f3a\u7684\u73a9\u6cd5\u6846\u67b6\u4ecd\u7136\u662f\u201c\u5efa\u9020\u51c6\u5907 + \u6ce2\u6b21\u9632\u5b88 + \u591c\u665a\u538b\u529b\u9a8c\u8bc1\u201d\uff0c\u6240\u4ee5\u5728 BMAD \u7c7b\u578b\u5206\u7c7b\u4e2d\u5e94\u4ee5 `tower-defense` \u4e3a\u4e3b\uff0c\u800c\u628a\u7b56\u7565\u6df1\u5ea6\u89c6\u4e3a\u5176\u6df7\u5408\u5c5e\u6027\u3002
+0086: 
+0087: ### M1 ????
+0088: 
+0089: \u5f53\u524d M1 \u4e0d\u80fd\u88ab\u5b9a\u4e49\u4e3a\u201c\u6309 PRD \u5b8c\u6574\u53ef\u4ea4\u4ed8\u7684\u6b63\u5f0f\u53ef\u73a9\u7248\u672c\u201d\uff0c\u800c\u5e94\u88ab\u5b9a\u4e49\u4e3a\uff1a
+0090: 
+0091: - **\u53ef\u9a8c\u8bc1\u4e3b\u5faa\u73af**\uff1aDay/Night \u72b6\u6001\u673a\u3001\u6ce2\u6b21\u3001\u6218\u6597\u3001\u57fa\u7840 HUD\u3001\u8bbe\u7f6e\u3001\u90e8\u5206\u5b58\u6863\u5df2\u53ef\u4e32\u8054\uff1b
+0092: - **\u53ef\u9a8c\u8bc1\u7cfb\u7edf\u6b63\u786e\u6027**\uff1a\u5927\u91cf contract\u3001audit\u3001schema\u3001migration \u4e0e gate \u5df2\u7ecf\u5efa\u7acb\uff1b
+0093: - **\u4e0d\u53ef\u89c6\u4e3a\u5b8c\u6574\u73a9\u5bb6\u4f53\u9a8c**\uff1aPrompt/Outcome\u3001Combat UI\u3001Economy/Progression panel\u3001Save/Meta summary\u3001Config audit surfaces \u4ecd\u5927\u91cf\u5904\u4e8e partial/test-only/docs-only \u72b6\u6001\u3002
+0094: 
+0095: \u56e0\u6b64\uff0c\u540e\u7eed GDD \u4e0e\u73a9\u5bb6\u6e38\u73a9\u52a8\u7ebf\u8bbe\u8ba1\u90fd\u5e94\u4ee5\u201c\u5982\u4f55\u5728\u73b0\u6709\u5df2\u63a5\u7ebf\u80fd\u529b\u4e0a\u5f62\u6210\u6700\u5c0f\u53ef\u73a9\u95ed\u73af\uff0c\u5e76\u660e\u786e\u7f3a\u53e3\u5904\u7684\u964d\u7ea7\u4f53\u9a8c\u201d\u4e3a\u4e3b\u7ebf\u3002
+0096: 
+0097: ---
+0098: 
+0099: ## ????
+0100: 
+0101: ### ????
+0102: 
+0103: Windows PC??? Steam?????
+0104: 
+0105: ### ????
+0106: 
+0107: - ??????? `Windows only` ? `Steam single-player`?
+0108: - ????? `60-90 minutes`?????????????????????????????
+0109: - ??????? `keyboard/mouse only` ?????????????
+0110: - PRD ????????? `Steam Cloud`????????????????????
+0111: - ????????????`Avg >= 60 FPS`?`1% Low >= 45 FPS`??????????????????
+0112: - ???????? `mod/workshop` ? `safe-mode startup`?
+0113: 
+0114: ### ????
+0115: 
+0116: - ?????`keyboard + mouse`
+0117: - ????????
+0118:   - mouse-driven UI navigation
+0119:   - keyboard/mouse camera and runtime control
+0120:   - in-match time controls: `pause, 1x, 2x`
+0121:   - settings support for key rebinding and mouse sensitivity
+0122: - ????????????????
+0123: 
+0124: ---
+0125: 
+0126: ## ????
+0127: 
+0128: ### ????
+0129: 
+0130: - ????: PC strategy/tower-defense players on Steam
+0131: - ?????: late-teen to adult players who are comfortable reading layered UI and managing multiple systems at once
+0132: - ?? M1 ????: players or internal evaluators who tolerate partial UI wiring and can validate systems despite incomplete presentation layers
+0133: 
+0134: ### ????
+0135: 
+0136: ????????????????????????
+0137: 
+0138: ?????????
+0139: - ??????
+0140: - ?????????
+0141: - ???????
+0142: - ???????
+0143: - ??????????
+0144: 
+0145: ### ?????
+0146: 
+0147: ????????????????????????
+0148: 
+0149: ??????????????????????????
+0150: - ??????????????
+0151: - ?? / ????
+0152: - ??????????
+0153: - ????????????
+0154: 
+0155: ### ????
+0156: 
+0157: ??? `60-90 minutes`?
+0158: 
+0159: ????? PC ????????????????????????????????????? / ???????
+0160: 
+0161: ### ????
+0162: 
+0163: ???????????????
+0164: - ??????? 15 ??????????
+0165: - ??????????????
+0166: - ??????????????
+0167: - ??????????????????
+0168: - ????????????????????
+0169: 
+0170: ---
+0171: 
+0172: ## ?????
+0173: 
+0174: ### ????
+0175: 
+0176: - **Ship a playable Day1-Day15 defense loop**  
+0177:   Deliver a full run structure that can move from `DayStart` to `DefeatReport / Day15 victory` without blocker-level breaks in the core runtime flow.
+0178: 
+0179: - **Validate system-first tower-defense design under deterministic rules**  
+0180:   Prove that economy, wave generation, combat targeting, reward state, save snapshots, and config governance can coexist in one reproducible ruleset.
+0181: 
+0182: - **Close the gap between strong backend systems and incomplete player-facing surfaces**  
+0183:   Turn the current M1 state from \u201csystems mostly exist, surfaces are partial\u201d into a clearer playable slice where players can actually read, act, and understand outcomes in real time.
+0184: 
+0185: - **Establish a scalable PRD-to-task-to-wiring workflow**  
+0186:   Use this project not only to ship gameplay, but to prove that the repository\u2019s governed workflow can carry a feature from locked PRD rules through implementation, UI wiring, audit evidence, and future expansion.
+0187: 
+0188: ### ?????
+0189: 
+0190: `lastking` matters because it is trying to build a defense game around pressure, planning, and deterministic accountability rather than around raw action density or loosely tuned sandbox chaos. The PRD defines a very specific promise: a 15-day survival structure where daytime preparation and nighttime validation form the heart of the experience.
+0191: 
+0192: The current repository state shows that a large part of this promise already exists at the systems and governance level. Day/night state flow, wave channels, budget logic, economy rules, save handling, configuration safety, and validation infrastructure are substantially stronger than the current player-facing presentation. That makes this project important now: the next major value is no longer \u201cinvent the rules,\u201d but \u201cmake the existing rules legible, playable, and coherent for an actual player.\u201d
+0193: 
+0194: From a development perspective, this project also represents a disciplined alternative to ad hoc prototype growth. It combines game rules, config contracts, auditability, and UI wiring under one governed workflow. That is a meaningful differentiator for a solo or small-team strategy project, because it reduces drift while making future balancing and expansion more defensible.
+0195: 
+0196: ---
+0197: 
+0198: ## Unique Selling Points (USPs)
+0199: 
+0200: - **Daytime planning and nighttime proof under locked deterministic rules**  
+0201:   Many defense games create tension through volume and spectacle. `lastking` instead emphasizes whether your daytime economic, building, recruitment, and tech decisions actually hold up under a fixed nighttime validation loop.
+0202: 
+0203: - **System-governed difficulty, spawning, and auditability**  
+0204:   Core runtime behavior is not treated as loose tuning data. Difficulty, spawn composition, pressure scoring, migration, and config safety are all governed by explicit contracts and validation paths, giving the game a stronger \u201cdesigned and reviewable system\u201d identity.
+0205: 
+0206: - **Castle-defense loop with economy debt pressure instead of pure expansion fantasy**  
+0207:   The game\u2019s rules around debt, refund, queue interruption, night pressure, and victory/failure produce a harsher planning space than a conventional relaxed builder. The player is not simply optimizing growth; they are making survivability tradeoffs under locked constraints.
+0208: 
+0209: - **M1 designed as a truthful vertical slice, not a fake feature-complete fa\xe7ade**  
+0210:   The current milestone is valuable because it exposes the real state of the game: strong systems, partial surfaces, and specific wiring gaps. That honesty supports faster iteration and better design correction than pretending the experience is already complete.
+0211: 
+0212: ### ????
+0213: 
+0214: `lastking` is best positioned as a midcore ?? PC tower-defense/strategy hybrid for players who want stronger rule clarity, higher systemic accountability, and longer-form run pressure than casual tower defense games usually provide.
+0215: 
+0216: It does not primarily compete on spectacle, narrative character fantasy, or broad accessibility-first reach. It competes on the quality of its survival loop, the legibility of its planning consequences, and the credibility of its deterministic systems. If fully realized, it can stand out as a more governed, pressure-focused, systems-heavy alternative inside the PC defense niche.
+0217: 
+0218: ---
+0219: 
+0220: ## ????
+0221: 
+0222: ### ????
+0223: 
+0224: - **Prepared Survival Over Reactive Chaos**  
+0225:   The game is about whether the player\u2019s daytime preparation can survive nighttime pressure, not about last-second twitch recovery or high-APM control.
+0226: 
+0227: - **Deterministic Pressure With Legible Consequences**  
+0228:   Waves, economy, targeting, rewards, and failure states should feel strict but understandable. Players should be able to see that outcomes follow rules, not arbitrary spikes.
+0229: 
+0230: - **Strategic Tradeoffs Across a 15-Day Arc**  
+0231:   Every build, upgrade, recruit, repair, and tech choice must compete for limited resources and future survivability. Short-term relief should often cost long-term resilience.
+0232: 
+0233: - **Readable Systems Before Spectacle**  
+0234:   UI, feedback, and flow should help players understand state, pressure, and consequences. If a system exists but the player cannot read it, the design is still incomplete.
+0235: 
+0236: **Pillar Prioritization:** When pillars conflict, prioritize in this order:  
+0237: 1. Prepared Survival Over Reactive Chaos  
+0238: 2. Deterministic Pressure With Legible Consequences  
+0239: 3. Strategic Tradeoffs Across a 15-Day Arc  
+0240: 4. ???????????
+0241: 
+0242: ### ??????
+0243: 
+0244: `lastking` ???????????????? / ???????
+0245: 
+0246: **DayStart -> BuildAndRecruit -> NightPrepare -> NightCombat -> Settlement -> RewardChoice -> NextDay**
+0247: 
+0248: During the day, the player stabilizes economy, spends resources, places or upgrades structures, manages training queues, and makes progression decisions. During night preparation, the game locks in the coming pressure phase. During night combat, the player watches the consequences of earlier planning play out under deterministic wave and targeting rules. Settlement then summarizes losses and gains, followed by a reward choice that slightly reshapes the next day\u2019s options. The next day begins under tighter pressure, repeating the cycle until the run ends.
+0249: 
+0250: **Loop Diagram:**  
+0251: `Income/Autosave -> Build/Upgrade/Train -> Lock Night State -> Defend Against Wave -> Resolve Damage/Losses -> Pick Reward -> Start Next Day`
+0252: 
+0253: **Loop Timing:**  
+0254: - One macro loop: `Day 4 minutes + Night 2 minutes`  
+0255: - One full run target: `Day 1 ~ Day 15`  
+0256: - ???????`60-90 minutes`
+0257: 
+0258: **Loop Variation:**  
+0259: Each iteration changes because of:
+0260: - ????????????
+1080: - \u901a\u7528\u73af\u5883\u5143\u7d20
+1081: - \u57fa\u7840\u97f3\u6548\u5e93
+1082: \u800c\u4e0d\u662f\u7528\u4e8e\u51b3\u5b9a\u6574\u4e2a\u9879\u76ee\u6838\u5fc3\u8bc6\u522b\u5ea6\u7684\u5173\u952e\u6218\u573a\u8d44\u4ea7\u3002
+1083: 
+1084: ### ????
+1085: 
+1086: \u5f53\u524d\u5df2\u77e5\u6280\u672f\u7ea6\u675f\u5e94\u660e\u786e\u5199\u5165\uff1a
+1087: 
+1088: - Engine / stack \u5df2\u9501\u5b9a\u4e3a `Godot 4.5.1 + C#`
+1089: - Windows-only \u76ee\u6807\u9650\u5236\u4e86\u8f93\u5165\u4e0e\u5e73\u53f0\u8bbe\u8ba1\u8fb9\u754c
+1090: - \u957f\u65f6\u95f4\u5355\u5c40\u7ed3\u6784\u8981\u6c42 autosave\u3001report\u3001config validation\u3001migration \u90fd\u5fc5\u987b\u7a33\u5b9a
+1091: - \u672c\u5730\u5316\u786c\u95e8\u8981\u6c42 `zh-CN / en-US` HUD \u65e0\u622a\u65ad\u3001\u65e0\u91cd\u53e0
+1092: - performance preset \u4e0d\u662f\u53ef\u6709\u53ef\u65e0\u9009\u9879\uff0c\u800c\u662f\u4f4e\u914d\u7a33\u5b9a\u6027\u5fc5\u9700\u9879
+1093: - \u5f53\u524d M1 \u7684\u4e3b\u8981\u6280\u672f\u98ce\u9669\u4e0d\u53ea\u662f\u6027\u80fd\uff0c\u800c\u662f\u201c\u7cfb\u7edf\u80fd\u529b\u5b58\u5728\uff0c\u4f46\u73a9\u5bb6\u9762\u8868\u8fbe\u4e0d\u8db3\u201d
+1094: - \u56e0\u6b64\u540e\u7eed\u6280\u672f\u5de5\u4f5c\u4e0d\u5e94\u53ea\u5806\u5e95\u5c42\u80fd\u529b\uff0c\u8fd8\u5fc5\u987b\u4f18\u5148\u8865\u9f50\uff1a
+1095:   - HUD / outcome readability
+1096:   - combat interaction surfaces
+1097:   - economy/progression panels
+1098:   - meta/report/config audit surfaces
+1099: 
+1100: ---
+1101: 
+1102: ## ????
+1103: 
+1104: ### Epic ??
+1105: 
+1106: | # | Epic ?? | ?? | ?? | ????? |
+1107: | --- | --- | --- | --- | --- |
+1108: | 1 | ??????????? | ????????????????????????????? | None | 6-8 |
+1109: | 2 | ??????? HUD ??? | Day/Night ?????? HP?????? HUD??????????? | 1 | 8-10 |
+1110: | 3 | ????????? | ???????????????????????????????? | 1, 2 | 8-10 |
+1111: | 4 | ?????????? | ????????????????????????? | 2, 3 | 10-12 |
+1112: | 5 | ??????????? | ???????????????????????????? | 1, 2 | 8-10 |
+1113: | 6 | UI ???????????? | Chapter 7 ?? UI slice ???????????????????????? | 2, 3, 4, 5 | 10-12 |
+1114: 
+1115: ### ????
+1116: 
+1117: 1. **Epic 1: Foundation, Boot, and Runtime Baseline**  
+1118:    \u5148\u5efa\u7acb Windows/Steam \u5355\u673a\u3001Godot 4.5.1 + C#\u3001\u4e3b\u83dc\u5355\u3001\u4e3b\u573a\u666f\u548c\u8fd0\u884c\u65f6\u8d77\u70b9\uff0c\u5426\u5219\u540e\u7eed\u6240\u6709\u53ef\u73a9\u6027\u90fd\u6ca1\u6709\u843d\u811a\u70b9\u3002
+1119: 
+1120: 2. **Epic 2: Core Survival Loop and HUD Readability**  
+1121:    \u5148\u8ba9\u73a9\u5bb6\u80fd\u771f\u6b63\u8fdb\u5165\u4e00\u5c40\u3001\u770b\u5230\u663c\u591c\u4e0e HP\u3001\u77e5\u9053\u8d62\u8f93\u4e0e\u7ed3\u679c\uff0c\u5426\u5219\u65e0\u6cd5\u9a8c\u8bc1\u4e3b\u5faa\u73af\u3002
+1122: 
+1123: 3. **Epic 3: Combat Pressure and Defensive Validation**  
+1124:    \u5728 loop \u80fd\u8dd1\u4ee5\u540e\uff0c\u8865\u8db3\u591c\u665a\u771f\u6b63\u7684\u654c\u519b\u538b\u529b\u3001\u6ce2\u6b21\u4e0e\u8def\u5f84\u903b\u8f91\uff0c\u8ba9\u201c\u767d\u5929\u51c6\u5907 / \u591c\u665a\u9a8c\u8bc1\u201d\u6210\u7acb\u3002
+1125: 
+1126: 4. **Epic 4: Economy, Building, and Progression Systems**  
+1127:    \u628a\u5efa\u9020\u3001\u8d44\u6e90\u3001\u8bad\u7ec3\u3001\u5347\u7ea7\u3001\u79d1\u6280\u3001\u5956\u52b1\u63a5\u5165\u4e3b\u5faa\u73af\uff0c\u5f62\u6210\u771f\u6b63\u7684\u7b56\u7565\u9632\u5b88\u800c\u4e0d\u662f\u7a7a\u58f3\u591c\u6218\u3002
+1128: 
+1129: 5. **Epic 5: Meta Systems, Save, and Platform Services**  
+1130:    \u5f53\u6838\u5fc3\u53ef\u73a9\u540e\uff0c\u518d\u628a\u5b58\u6863\u3001\u8bbe\u7f6e\u3001\u672c\u5730\u5316\u3001\u97f3\u9891\u3001\u5e73\u53f0\u670d\u52a1\u4e0e\u6027\u80fd\u95e8\u505a\u6210\u7a33\u5b9a\u4ea7\u54c1\u5c42\u3002
+1131: 
+1132: 6. **Epic 6: UI Wiring, Auditability, and Production Closure**  
+1133:    \u6700\u540e\u628a\u5927\u91cf partial/test-only/docs-only \u7684\u73a9\u5bb6\u9762\u6536\u53e3\uff0c\u5e76\u628a\u914d\u7f6e\u6cbb\u7406\u3001\u8fc1\u79fb\u3001\u6218\u62a5\u3001\u5ba1\u8ba1\u9762\u505a\u6210\u771f\u5b9e\u53ef\u8bfb\u4f53\u9a8c\u3002
+1134: 
+1135: ### ????
+1136: 
+1137: **The first playable milestone:**  
+1138: \u73a9\u5bb6\u53ef\u4ee5\u4ece\u4e3b\u83dc\u5355\u8fdb\u5165\u6e38\u620f\uff0c\u5b8c\u6210 `housing -> barracks -> survive first night` \u7684\u6700\u5c0f onboarding\uff0c\u770b\u5230\u57fa\u7840 HUD\u3001\u7ecf\u5386\u767d\u5929\u51c6\u5907\u4e0e\u7b2c\u4e00\u665a\u9632\u5b88\uff0c\u5e76\u5728\u7ed3\u679c\u540e\u7ee7\u7eed\u8fdb\u5165\u4e0b\u4e00\u5929\u3002\u8fd9\u662f\u6700\u5c0f\u771f\u5b9e vertical slice\uff0c\u800c\u4e0d\u662f\u5047\u6f14\u793a\u3002
+1139: 
+1140: ---
+1141: 
+1142: ## ????
+1143: 
+1144: ### ????
+1145: 
+1146: \u672c\u4f5c\u7684\u6280\u672f\u6210\u529f\u6807\u51c6\u4e0d\u53ea\u662f\u201c\u80fd\u8fd0\u884c\u201d\uff0c\u800c\u662f\u201c\u5728\u957f\u65f6\u95f4\u5355\u5c40\u3001\u6301\u7eed\u8bfb\u9762\u3001\u7cfb\u7edf\u538b\u529b\u7d2f\u79ef\u7684\u524d\u63d0\u4e0b\u4f9d\u7136\u7a33\u5b9a\u3001\u6e05\u6670\u3001\u53ef\u9a8c\u8bc1\u201d\u3002
+1147: 
+1148: #### ???? KPI
+1149: 
+1150: | ?? | ?? | ???? |
+1151: | --- | --- | --- |
+1152: | ???? | `>= 60 FPS` | ?????????????????????? |
+1153: | 1% Low ?? | `>= 45 FPS` | ??????? + ??????? |
+1154: | ?? P95 | `<= 16.6ms` | ????? run ??????? |
+1155: | ?? P99 | `<= 22.0ms` | ????? run ??????? |
+1156: | ????? | `<= 3.0s` | ????????????????? |
+1157: | ?????? | `0 blocker-level corruption cases in gated validation` | ???????????????? |
+1158: | ??????? | `0 unsafe match starts after config mismatch/load failure` | ????????????????? |
+1159: | i18n HUD ?? | `0 critical truncation / overlap in zh-CN and en-US` | ?????? + ???? |
+1160: | ????? | `0 release-blocking bootstrap/export failures on governed baseline` | Windows ?? / ??????? |
+1161: 
+1162: #### ??????
+1163: 
+1164: \u6280\u672f\u4e0a\u6210\u529f\u610f\u5473\u7740\uff1a
+1165: - \u4e0d\u53ea\u662f benchmark \u597d\u770b
+1166: - \u800c\u662f boot\u3001run\u3001save\u3001config\u3001i18n\u3001performance \u5168\u90e8\u5728\u4e00\u4e2a\u771f\u5b9e vertical slice \u5185\u80fd\u540c\u65f6\u6210\u7acb
+1167: - \u5c24\u5176\u4e0d\u80fd\u51fa\u73b0\u201c\u5e95\u5c42\u7cfb\u7edf\u662f\u5bf9\u7684\uff0c\u4f46\u73a9\u5bb6\u9762\u8bfb\u4e0d\u61c2\u201d\u7684\u4f2a\u6210\u529f
+1168: 
+1169: ### ????
+1170: 
+1171: \u672c\u4f5c\u7684 gameplay metric \u5fc5\u987b\u56f4\u7ed5\u6b64\u524d\u5b9a\u4e49\u7684 pillars \u548c goals\uff0c\u800c\u4e0d\u662f\u6cdb\u6cdb\u770b\u7559\u5b58\u3002
+1172: 
+1173: #### ???? KPI
+1174: 
+1175: | ?? | ?? | ???? |
+1176: | --- | --- | --- |
+1177: | ??????? | ?????? onboarding ?????????????? | ??????? + ??????? |
+1178: | ??????? | ?????????????????????????? | ??????????? |
+1179: | ??????? Day1-Day15 ??? | ????????????????? PRD ?????? | ?????? + seeded run ?? |
+1180: | ?????? | ????????????????????????? | ?? / ???? + ???? |
+1181: | ??????? | ??????????????????????? | ???? + ??????? |
+1182: | ??????? | ????????????????????? | ???? + ???? |
+1183: | ??????? | ???????????? planning ????? | ?????? + ???? |
+1184: | UI ??????? | ????????? surface ?????????????? | ?? HUD / outcome / economy / meta surface ? UI ?? |
+1185: | ????? | ????????????? run ????????? | ?????? |
+1186: | ???????????? | ?? build / reward / difficulty ??????? run ?? | ?? seeded run ?? |
+1187: 
+1188: #### ??????
+1189: 
+1190: \u73a9\u6cd5\u4e0a\u6210\u529f\u610f\u5473\u7740\uff1a
+1191: - \u73a9\u5bb6\u771f\u7684\u611f\u53d7\u5230\u201c\u767d\u5929\u89c4\u5212 / \u591c\u665a\u5ba1\u5224\u201d
+1192: - \u5931\u8d25\u88ab\u7406\u89e3\u4e3a\u7cfb\u7edf\u540e\u679c\uff0c\u800c\u4e0d\u662f\u9ed1\u7bb1\u60e9\u7f5a
+1193: - \u7ecf\u6d4e\u3001\u6218\u6597\u3001\u6210\u957f\u3001\u5956\u52b1\u90fd\u5728\u63a8\u52a8\u540c\u4e00\u4e2a\u751f\u5b58\u4e3b\u5faa\u73af
+1194: - M1 \u4e0d\u518d\u53ea\u662f\u7cfb\u7edf\u5b58\u5728\uff0c\u800c\u662f\u4f53\u9a8c\u53ef\u8bfb
+1195: 
+1196: ### ??????
+1197: 
+1198: \u4ee5\u4e0b qualitative signs \u5bf9\u672c\u4f5c\u540c\u6837\u5173\u952e\uff1a
+1199: 
+1200: - \u73a9\u5bb6\u4f1a\u4e3b\u52a8\u7528\u201c\u51c6\u5907\u3001\u538b\u529b\u3001\u6491\u4f4f\u3001\u625b\u591c\u3001\u89c4\u5212\u5931\u8bef\u201d\u8fd9\u7c7b\u8bcd\u63cf\u8ff0\u4f53\u9a8c
+1201: - \u73a9\u5bb6\u80fd\u591f\u5728\u4e0d\u4f9d\u8d56\u5f00\u53d1\u8005\u89e3\u91ca\u7684\u60c5\u51b5\u4e0b\uff0c\u8bf4\u6e05\u81ea\u5df1\u4e3a\u4ec0\u4e48\u8f93
+1202: - \u73a9\u5bb6\u8ba4\u4e3a\u9ad8\u538b\u6765\u81ea\u7cfb\u7edf\uff0c\u800c\u4e0d\u662f\u6765\u81ea\u6df7\u4e71\u6216\u4fe1\u606f\u7f3a\u5931
+1203: - \u73a9\u5bb6\u628a\u7cbe\u82f1\u591c\u548c\u9996\u9886\u591c\u89c6\u4e3a\u201c\u9a8c\u8bc1\u70b9\u201d\uff0c\u800c\u4e0d\u662f\u65e0\u610f\u4e49 spike
+1204: - \u73a9\u5bb6\u4f1a\u63d0\u5230\uff1a
+1205:   - run \u5f88\u957f\uff0c\u4f46\u8282\u594f\u662f\u6e05\u695a\u7684
+1206:   - \u8d44\u6e90\u538b\u529b\u771f\u5b9e\u5b58\u5728
+1207:   - \u5931\u8d25\u540e\u77e5\u9053\u4e0b\u6b21\u8981\u6539\u4ec0\u4e48
+1208: - \u5185\u90e8\u8bc4\u5ba1\u4e0d\u518d\u628a M1 \u8bc4\u4ef7\u4e3a\u201c\u529f\u80fd\u5f88\u591a\u4f46\u63a5\u4e0d\u8d77\u6765\u201d\uff0c\u800c\u662f\u201c\u5df2\u7ecf\u5f62\u6210\u771f\u5b9e\u53ef\u73a9\u7684\u9632\u5b88\u95ed\u73af\u201d
+1209: 
+1210: ### ??????
+1211: 
+1212: \u5efa\u8bae\u5c06\u6307\u6807\u5206\u4e09\u5c42\u56de\u987e\uff1a
+1213: 
+1214: - **\u6bcf\u6b21 gated validation / CI review**
+1215:   - \u6027\u80fd
+1216:   - \u542f\u52a8
+1217:   - \u5b58\u6863
+1218:   - config safety
+1219:   - i18n hard gate
+1220: 
+1221: - **\u6bcf\u4e2a playable milestone**
+1222:   - first-night clarity
+1223:   - HUD / outcome readability
+1224:   - economy and reward understanding
+1225:   - battle report usefulness
+1226: 
+1227: - **\u6bcf\u4e2a major vertical slice review**
+1228:   - Day1-Day15 \u5b8c\u6574\u4f53\u9a8c\u8d28\u91cf
+1229:   - difficulty \u68af\u5ea6\u662f\u5426\u6210\u7acb
+1230:   - replayability \u662f\u5426\u6765\u81ea\u771f\u5b9e\u7b56\u7565\u5dee\u5f02
+1231:   - \u5f53\u524d partial/test-only/docs-only surfaces \u662f\u5426\u7ee7\u7eed\u6536\u53e3
+1232: 
+1233: \u6700\u7ec8\uff0c\u8fd9\u4e9b metrics \u7684\u4f5c\u7528\u4e0d\u662f\u505a\u5f62\u5f0f\u5316\u6c47\u62a5\uff0c\u800c\u662f\u56de\u7b54\u4e00\u4e2a\u6838\u5fc3\u95ee\u9898\uff1a
+1234: 
+1235: **`lastking` \u662f\u5426\u5df2\u7ecf\u4ece\u201c\u89c4\u5219\u6b63\u786e\u201d\u8fdb\u5316\u5230\u201c\u73a9\u5bb6\u53ef\u8bfb\u3001\u53ef\u73a9\u3001\u53ef\u590d\u76d8\u3001\u53ef\u6301\u7eed\u4f18\u5316\u201d\u7684\u771f\u5b9e\u4ea7\u54c1\u72b6\u6001\u3002**
+1236: 
+1237: ---
+1238: 
+1239: ## ?????
+1240: 
+1241: \u4ee5\u4e0b\u5185\u5bb9\u660e\u786e\u4e0d\u5c5e\u4e8e\u5f53\u524d `lastking` v1 / M1 \u4ea4\u4ed8\u8303\u56f4\uff1a
+1242: 
+1243: - \u591a\u4eba\u8054\u673a\u3001PVP\u3001\u5408\u4f5c\u6a21\u5f0f
+1244: - \u4e3b\u673a\u7248\u3001\u79fb\u52a8\u7248\u3001Web \u7248\u3001VR \u7248\u79fb\u690d
+1245: - \u624b\u67c4\u9996\u53d1\u652f\u6301
+1246: - Mod / Workshop / \u5730\u56fe\u7f16\u8f91\u5668
+1247: - \u5f00\u653e\u4e16\u754c\u3001\u81ea\u7531\u63a2\u7d22\u578b\u5730\u56fe\u7ed3\u6784
+1248: - \u65e0\u9650\u6a21\u5f0f\u3001\u7eaf\u5206\u6570\u8ffd\u9010\u578b endless mode \u4f5c\u4e3a\u9996\u53d1\u4e3b\u6a21\u5f0f
+1249: - \u5927\u89c4\u6a21\u5267\u60c5\u6f14\u51fa\u3001\u5b8c\u6574\u914d\u97f3\u3001\u89d2\u8272\u9a71\u52a8\u53d9\u4e8b\u6269\u5c55
+1250: - \u9ad8\u5bf9\u6bd4\u6a21\u5f0f\u3001\u8272\u76f2\u6a21\u5f0f\u7b49\u66f4\u91cd accessibility \u6269\u5c55\uff08\u5f53\u524d v1 \u4e0d\u542b\uff09
+1251: - \u5927\u89c4\u6a21 post-launch \u5185\u5bb9\u5305\u3001DLC \u5730\u56fe\u5305\u3001\u989d\u5916\u6218\u5f79\u7ae0\u8282
+1252: - \u4efb\u4f55\u4f1a\u7834\u574f PRD \u9501\u5b9a\u89c4\u5219\u7684\u4e34\u65f6\u6551\u6d4e\u8bbe\u8ba1\uff0c\u4f8b\u5982\u5bf9\u5c40\u4e2d\u6539\u96be\u5ea6\u3001\u975e\u5ba1\u8ba1\u70ed\u66f4\u6838\u5fc3\u914d\u7f6e
+1253: 
+1254: ### ??????
+1255: 
+1256: \u53ef\u5728\u540e\u7eed\u7248\u672c\u8bc4\u4f30\uff0c\u4f46\u5f53\u524d\u4e0d\u7eb3\u5165\u9996\u53d1\u627f\u8bfa\u7684\u65b9\u5411\u5305\u62ec\uff1a
+1257: 
+1258: - \u66f4\u591a\u8bed\u8a00\u652f\u6301\uff1a`ru-RU`\u3001`es-419`\u3001`pt-BR`\u3001`de-DE`
+1259: - \u66f4\u4e30\u5bcc\u7684 meta \u7edf\u8ba1\u4e0e\u957f\u671f\u6210\u957f\u5c42
+1260: - \u66f4\u6210\u719f\u7684 achievements/readout surface
+1261: - \u66f4\u5f3a\u7684 config audit / migration / report \u53ef\u89c6\u9762 polish
+1262: - \u66f4\u590d\u6742\u7684\u4e3b\u52a8\u80fd\u529b\u7cfb\u7edf
+1263: - \u66f4\u591a\u5730\u56fe\u3001\u6a21\u5f0f\u6216\u7279\u6b8a\u4e8b\u4ef6\u7ed3\u6784
+1264: 
+1265: ---
+1266: 
+1267: ## ?????
+1268: 
+1269: ### ????
+1270: 
+1271: - \u73a9\u5bb6\u5e73\u53f0\u4e3a `Windows PC + Steam`\uff0c\u5e76\u63a5\u53d7\u952e\u9f20\u4e3a\u552f\u4e00\u9996\u53d1\u8f93\u5165\u65b9\u5f0f\u3002
+1272: - \u73a9\u5bb6\u613f\u610f\u8fdb\u884c `60-90` \u5206\u949f\u5355\u5c40\u4f53\u9a8c\uff0c\u800c\u4e0d\u662f\u788e\u7247\u5316\u77ed\u4f1a\u8bdd\u73a9\u6cd5\u3002
+1273: - \u5f53\u524d\u4ea7\u54c1\u4ef7\u503c\u4e3b\u8981\u6765\u81ea\u201c\u767d\u5929\u89c4\u5212 / \u591c\u665a\u9a8c\u8bc1\u201d\u7684\u7cfb\u7edf\u95ed\u73af\uff0c\u800c\u4e0d\u662f\u91cd\u53d9\u4e8b\u6216\u9ad8\u52a8\u4f5c\u5bc6\u5ea6\u3002
+1274: - \u914d\u7f6e\u6cbb\u7406\u3001schema\u3001migration\u3001audit \u8fd9\u7c7b\u5e95\u5c42\u6cbb\u7406\u80fd\u529b\u4f1a\u7ee7\u7eed\u4fdd\u7559\u4e3a\u6b63\u5f0f\u4ea7\u54c1\u7ea6\u675f\uff0c\u800c\u4e0d\u662f\u5f00\u53d1\u671f\u4e34\u65f6\u624b\u6bb5\u3002
+1275: - \u96be\u5ea6\u68af\u5ea6\u901a\u8fc7\u914d\u7f6e\u548c seeded validation \u53ef\u4ee5\u6301\u7eed\u6821\u51c6\uff0c\u4e0d\u9700\u8981\u5728 v1 \u5f15\u5165\u52a8\u6001 rubber band \u673a\u5236\u3002
+1276: - \u5f53\u524d M1 \u7684\u4e3b\u8981\u77ed\u677f\u5728\u73a9\u5bb6\u9762\u6536\u53e3\u4e0e\u53ef\u8bfb\u6027\uff0c\u800c\u4e0d\u662f\u6838\u5fc3\u89c4\u5219\u7f3a\u5931\u3002
+1277: 
+1278: ### ????
+1279: 
+1280: - `Godot 4.5.1 + C#` \u8fd0\u884c\u65f6\u4e0e\u5bfc\u51fa\u94fe\u7a33\u5b9a\u53ef\u7528
+1281: - Steam \u5e73\u53f0\u80fd\u529b\u53ef\u7528\uff0c\u5305\u62ec Cloud\u3001achievement\u3001\u8d26\u53f7\u8303\u56f4\u5b58\u6863\u8bed\u4e49
+1282: - \u5f53\u524d\u4f7f\u7528\u7684\u6d4b\u8bd5\u3001CI\u3001\u914d\u7f6e\u5ba1\u8ba1\u548c review pipeline \u7ee7\u7eed\u53ef\u8fd0\u884c
+1283: - \u6240\u6709\u7b2c\u4e09\u65b9\u7d20\u6750\u6216\u5de5\u5177\u94fe\u7684\u6388\u6743\u4fdd\u6301\u6709\u6548
+1284: - Windows \u5bfc\u51fa\u4e0e\u76ee\u6807 baseline \u673a\u5668\u73af\u5883\u53ef\u590d\u73b0\u6027\u80fd\u95e8\u7ed3\u679c
+1285: 
+1286: ### ????
+1287: 
+1288: - \u5982\u679c UI wiring \u7ee7\u7eed\u843d\u540e\u4e8e\u7cfb\u7edf\u5b9e\u73b0\uff0c\u9879\u76ee\u4f1a\u7ee7\u7eed\u505c\u7559\u5728\u201c\u89c4\u5219\u6b63\u786e\u4f46\u4f53\u9a8c\u4e0d\u5b8c\u6574\u201d\u7684\u72b6\u6001\u3002
+1289: - \u5982\u679c battle report\u3001migration\u3001config audit \u53ea\u505c\u7559\u5728\u6cbb\u7406\u9762\u800c\u4e0d\u8f6c\u6210\u73a9\u5bb6\u53ef\u8bfb\u9762\uff0c\u540e\u7eed\u590d\u76d8\u4ef7\u503c\u4f1a\u88ab\u524a\u5f31\u3002
+1290: - \u5982\u679c\u957f\u5c40\u6027\u80fd\u548c\u4e2d\u82f1\u6587\u672c\u5730\u5316\u8bfb\u9762\u4e0d\u7a33\u5b9a\uff0c\u4f1a\u76f4\u63a5\u635f\u5bb3\u76ee\u6807\u7528\u6237\u4f53\u9a8c\u3002
+1291: - \u5982\u679c difficulty curve \u4e0e reward/economy pressure \u5931\u8861\uff0c\u4f1a\u7834\u574f\u201c\u516c\u5e73\u4f46\u4e25\u82db\u201d\u7684\u8bbe\u8ba1\u8eab\u4efd\u3002
+1292: - \u5982\u679c\u4fdd\u5b58\u3001\u8fc1\u79fb\u6216\u914d\u7f6e\u6821\u9a8c\u51fa\u73b0 blocker \u7ea7\u4e0d\u7a33\u5b9a\uff0c\u957f\u65f6\u6bb5\u5355\u5c40\u7ed3\u6784\u4f1a\u5931\u53bb\u53ef\u4fe1\u5ea6\u3002
+1293: 
+1294: ---
+1295: 
+1296: ## ????
+1297: 
+1298: **Document:** lastking - ??????  
+1299: **??:** 1.0  
+1300: **????:** 2026-04-27  
+1301: **??:** skyo  
+1302: **???** ??
+1303: 
+1304: ### ????
+1305: 
+1306: | ?? | ?? | ?? |
+1307: | --- | --- | --- |
+1308: | 1.0 | 2026-04-27 | ?? GDD ?? |

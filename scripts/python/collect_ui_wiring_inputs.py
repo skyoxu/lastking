@@ -24,8 +24,12 @@ def _read_json(path: Path) -> Any:
     return json.loads(path.read_text(encoding='utf-8'))
 
 
-def _load_master_tasks(repo_root: Path) -> list[dict[str, Any]]:
-    payload = _read_json(repo_root / TASKS_JSON)
+def _resolve_path(value: str | Path) -> Path:
+    return value if isinstance(value, Path) else Path(value)
+
+
+def _load_master_tasks(repo_root: Path, tasks_json_path: Path) -> list[dict[str, Any]]:
+    payload = _read_json(repo_root / tasks_json_path)
     tasks = payload.get('master', {}).get('tasks', []) if isinstance(payload, dict) else []
     return [item for item in tasks if isinstance(item, dict)]
 
@@ -78,8 +82,8 @@ def _read_text_if_exists(path: Path) -> str:
         return ''
 
 
-def _overlay_file_map(repo_root: Path) -> dict[str, Path]:
-    manifest_path = repo_root / OVERLAY_ROOT / 'overlay-manifest.json'
+def _overlay_file_map(repo_root: Path, overlay_root: Path) -> dict[str, Path]:
+    manifest_path = repo_root / overlay_root / 'overlay-manifest.json'
     try:
         payload = _read_json(manifest_path)
     except FileNotFoundError:
@@ -88,7 +92,7 @@ def _overlay_file_map(repo_root: Path) -> dict[str, Path]:
     result: dict[str, Path] = {}
     for key, value in files.items():
         if isinstance(value, str) and value.strip():
-            result[key] = repo_root / OVERLAY_ROOT / value
+            result[key] = repo_root / overlay_root / value
     return result
 
 
@@ -109,8 +113,8 @@ def _task_ids_from_scope(scope_text: str) -> set[int]:
     return hits
 
 
-def _collect_overlay_requirement_mapping(repo_root: Path) -> dict[int, list[dict[str, Any]]]:
-    files = _overlay_file_map(repo_root)
+def _collect_overlay_requirement_mapping(repo_root: Path, overlay_root: Path) -> dict[int, list[dict[str, Any]]]:
+    files = _overlay_file_map(repo_root, overlay_root)
     text = _read_text_if_exists(files.get('testing', Path('__missing__')))
     mapping: dict[int, list[dict[str, Any]]] = {}
     for line in text.splitlines():
@@ -135,8 +139,8 @@ def _collect_overlay_requirement_mapping(repo_root: Path) -> dict[int, list[dict
     return mapping
 
 
-def _collect_overlay_evidence_mapping(repo_root: Path) -> dict[int, list[dict[str, Any]]]:
-    files = _overlay_file_map(repo_root)
+def _collect_overlay_evidence_mapping(repo_root: Path, overlay_root: Path) -> dict[int, list[dict[str, Any]]]:
+    files = _overlay_file_map(repo_root, overlay_root)
     text = _read_text_if_exists(files.get('observability', Path('__missing__')))
     mapping: dict[int, list[dict[str, Any]]] = {}
     for line in text.splitlines():
@@ -158,8 +162,8 @@ def _collect_overlay_evidence_mapping(repo_root: Path) -> dict[int, list[dict[st
     return mapping
 
 
-def _collect_overlay_acceptance_notes(repo_root: Path) -> dict[int, list[str]]:
-    files = _overlay_file_map(repo_root)
+def _collect_overlay_acceptance_notes(repo_root: Path, overlay_root: Path) -> dict[int, list[str]]:
+    files = _overlay_file_map(repo_root, overlay_root)
     text = _read_text_if_exists(files.get('feature', Path('__missing__')))
     mapping: dict[int, list[str]] = {}
     for line in text.splitlines():
@@ -185,11 +189,23 @@ def _collect_overlay_acceptance_notes(repo_root: Path) -> dict[int, list[str]]:
     return mapping
 
 
-def build_summary(*, repo_root: Path) -> dict[str, Any]:
-    master_tasks = _load_master_tasks(repo_root)
+def build_summary(
+    *,
+    repo_root: Path,
+    tasks_json_path: Path = TASKS_JSON,
+    tasks_back_path: Path = TASKS_BACK,
+    tasks_gameplay_path: Path = TASKS_GAMEPLAY,
+    overlay_root_path: Path = OVERLAY_ROOT,
+) -> dict[str, Any]:
+    tasks_json_path = _resolve_path(tasks_json_path)
+    tasks_back_path = _resolve_path(tasks_back_path)
+    tasks_gameplay_path = _resolve_path(tasks_gameplay_path)
+    overlay_root_path = _resolve_path(overlay_root_path)
+
+    master_tasks = _load_master_tasks(repo_root, tasks_json_path)
     done_master = [task for task in master_tasks if str(task.get('status') or '').lower() == 'done']
-    back_tasks = _load_view_tasks(repo_root, TASKS_BACK)
-    gameplay_tasks = _load_view_tasks(repo_root, TASKS_GAMEPLAY)
+    back_tasks = _load_view_tasks(repo_root, tasks_back_path)
+    gameplay_tasks = _load_view_tasks(repo_root, tasks_gameplay_path)
     back_by_tm: dict[int, list[dict[str, Any]]] = {}
     gameplay_by_tm: dict[int, list[dict[str, Any]]] = {}
     for item in back_tasks:
@@ -200,9 +216,9 @@ def build_summary(*, repo_root: Path) -> dict[str, Any]:
         tm = item.get('taskmaster_id')
         if isinstance(tm, int):
             gameplay_by_tm.setdefault(tm, []).append(item)
-    overlay_requirement_map = _collect_overlay_requirement_mapping(repo_root)
-    overlay_evidence_map = _collect_overlay_evidence_mapping(repo_root)
-    overlay_acceptance_map = _collect_overlay_acceptance_notes(repo_root)
+    overlay_requirement_map = _collect_overlay_requirement_mapping(repo_root, overlay_root_path)
+    overlay_evidence_map = _collect_overlay_evidence_mapping(repo_root, overlay_root_path)
+    overlay_acceptance_map = _collect_overlay_acceptance_notes(repo_root, overlay_root_path)
 
     needed: list[dict[str, Any]] = []
     for task in done_master:
@@ -243,7 +259,12 @@ def build_summary(*, repo_root: Path) -> dict[str, Any]:
         'ts': dt.datetime.now(dt.timezone.utc).isoformat(),
         'action': 'collect-ui-wiring-inputs',
         'repo_root': str(repo_root).replace('\\', '/'),
-        'source_files': [str(TASKS_JSON).replace('\\', '/'), str(TASKS_BACK).replace('\\', '/'), str(TASKS_GAMEPLAY).replace('\\', '/')],
+        'source_files': [
+            str(tasks_json_path).replace('\\', '/'),
+            str(tasks_back_path).replace('\\', '/'),
+            str(tasks_gameplay_path).replace('\\', '/'),
+        ],
+        'overlay_root': str(overlay_root_path).replace('\\', '/'),
         'completed_master_tasks_count': len(done_master),
         'needed_wiring_features_count': len(needed),
         'feature_family_counts': families,
@@ -254,11 +275,21 @@ def build_summary(*, repo_root: Path) -> dict[str, Any]:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description='Collect completed task triplet inputs for Chapter 7 UI wiring flow.')
     parser.add_argument('--repo-root', default='.')
+    parser.add_argument('--tasks-json-path', default=str(TASKS_JSON))
+    parser.add_argument('--tasks-back-path', default=str(TASKS_BACK))
+    parser.add_argument('--tasks-gameplay-path', default=str(TASKS_GAMEPLAY))
+    parser.add_argument('--overlay-root-path', default=str(OVERLAY_ROOT))
     parser.add_argument('--out', default='')
     args = parser.parse_args(argv)
 
     repo_root = Path(args.repo_root).resolve()
-    payload = build_summary(repo_root=repo_root)
+    payload = build_summary(
+        repo_root=repo_root,
+        tasks_json_path=Path(args.tasks_json_path),
+        tasks_back_path=Path(args.tasks_back_path),
+        tasks_gameplay_path=Path(args.tasks_gameplay_path),
+        overlay_root_path=Path(args.overlay_root_path),
+    )
     out = Path(args.out) if args.out else (repo_root / 'logs' / 'ci' / _today() / 'chapter7-ui-wiring-inputs' / 'summary.json')
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')

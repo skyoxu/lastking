@@ -206,6 +206,28 @@ Test-Refs:
 
 ### Slice D - Chapter 7 UI Wiring (`T41-T46`)
 
+#### Chapter 7 Closure Status
+
+- Current closure source: `logs/ci/2026-04-27/chapter7-ui-wiring/closure-summary.json`.
+- Current write-back source: `logs/ci/2026-04-27/chapter7-ui-wiring/task-status-patch.json`, `logs/ci/2026-04-27/chapter7-ui-wiring/apply-summary.json`.
+- Sequencing recommendation: `T42 -> T43 -> T41 -> T44 -> T45 -> T46`.
+- Chapter 7 closure is not a new feature batch. It is a wiring/readout closure pass that converts partial or docs-only evidence into governed runtime evidence.
+
+| Task | Current Status | Evidence Status | Pending Surfaces | Missing Surface Owners | Gap To Close |
+| --- | --- | --- | --- | --- | --- |
+| `T41` | `review` | `partial` | 2 | `BootStatusPanel, ContinueGateDialog` | Need a governed boot/export status surface instead of relying only on export and startup verification artifacts. / Need to materialize BootStatusPanel and ContinueGateDialog as stable owned surfaces with direct runtime evidence. |
+| `T42` | `pending` | `docs-only` | 2 | `OutcomePanel, RuntimePromptPanel` | Need explicit speed-control widgets and direct runtime evidence that pause and timer freeze are visible and owned by the HUD slice. / Need a concrete prompt/error surface with runtime-triggered messages and direct validation coverage. / Need OutcomePanel and RuntimePromptPanel to exist as stable surfaces with direct runtime assertions. |
+| `T43` | `pending` | `docs-only` | 3 | `CombatHud, PressurePanel, CameraControlOverlay` | Need an actual camera-control overlay or direct scene evidence instead of candidate-only planning. / Need CombatHud, PressurePanel, and CameraControlOverlay to be realized as stable surfaces with direct runtime checks. |
+| `T44` | `review` | `partial` | 3 | `ResourcePanel, BuildPanel, ProgressionPanel` | Need ResourcePanel, BuildPanel, and ProgressionPanel to exist as concrete surfaces with direct scenario assertions. |
+| `T45` | `review` | `partial` | 3 | `SettingsMenu, SavePanel, RunSummaryPanel` | Need a governed achievements/readout surface so unlock evidence is not limited to tests and adapters. / Need an operator-facing performance status surface if this capability must be treated as a governed visible panel rather than a gate-only artifact. / Need SavePanel and RunSummaryPanel to be stabilized as owned surfaces alongside the already-real settings UI. |
+| `T46` | `review` | `partial` | 3 | `ConfigAuditPanel, MigrationStatusDialog, ReportMetadataPanel` | Need a governed read surface that exposes config-contract workspace presence and ownership rather than only file-system evidence. / Need enemy config validation results to be visible through an owned audit surface instead of schema and resolver evidence alone. / Need difficulty lock/version outcomes to surface on a governed config read panel rather than only in contracts and tests. / Need spawn composition validation and loaded values to appear on an audit surface instead of staying in schema and integration evidence. / Need range-check verdicts and active normalization values to be exposed on a config audit surface. / Need sample-config coverage and selection evidence to be surfaced as governed artifacts instead of static sample files only. / Need gameplay-facing or operator-facing panels that show which active config snapshot is governing runtime behavior. / Need report metadata to be surfaced through a stable report/audit panel instead of reader-validator evidence only. / Need migration failure and force-migration status to be owned by a visible migration dialog or audit panel. / Need ConfigAuditPanel, MigrationStatusDialog, and ReportMetadataPanel to exist as stable owned surfaces with direct runtime validation. |
+
+#### Closure Exit Criteria
+
+- `T41-T46` cannot return to `done` only by keeping historical test refs green.
+- Each Chapter 7 slice must reach `evidence_status = runtime`, `pending_surfaces = 0`, and `gap_to_close = 0` in `logs/ci/<YYYY-MM-DD>/chapter7-ui-wiring/closure-summary.json`.
+- Each owned surface must be player-visible and directly asserted by scene/runtime evidence rather than governance docs only.
+
 - Scope: derive UI wiring slices from `docs/gdd/ui-gdd-flow.md` and `docs/gdd/ui-gdd-flow.candidates.json`, covering player-visible entry, HUD, combat feedback, economy panels, save/settings, and config governance surfaces.
 - Key tasks: `T41`, `T42`, `T43`, `T44`, `T45`, `T46`.
 - Source GDD:

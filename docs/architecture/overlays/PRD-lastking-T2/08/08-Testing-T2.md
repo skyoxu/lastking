@@ -44,12 +44,12 @@ Test-Refs:
 | RQ-PERF-GATE | 30 | `Tests.Godot/tests/Integration/test_backup_restore_savegame.gd` | `logs/perf/<YYYY-MM-DD>/summary.json` |
 | RQ-CONFIG-CONTRACT-GOV | 31-40 | `Game.Core.Tests/Domain/GameConfigTests.cs`, `Game.Core.Tests/Contracts/DomainEventPayloadTests.cs` | `logs/ci/<YYYY-MM-DD>/overlay-lint/report.json` |
 
-| RQ-CH7-ENTRY-WIRING | 41 | `Tests.Godot/tests/Scenes/Smoke/test_main_scene_smoke.gd`, `Tests.Godot/tests/Integration/test_project_bootstrap_editor_compile_run.gd` | `logs/ci/<YYYY-MM-DD>/chapter7-ui-wiring/summary.json` |
-| RQ-CH7-HUD-OUTCOME-WIRING | 42 | `Tests.Godot/tests/UI/test_hud_scene.gd`, `Tests.Godot/tests/UI/test_hud_updates_on_events.gd` | `logs/e2e/<YYYY-MM-DD>/runtime-ui/summary.json` |
-| RQ-CH7-COMBAT-WIRING | 43 | `Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs`, `Tests.Godot/tests/Scenes/Camera/test_camera_controller_scroll_inputs.gd` | `logs/e2e/<YYYY-MM-DD>/runtime-ui/summary.json` |
-| RQ-CH7-ECONOMY-WIRING | 44 | `Game.Core.Tests/Services/ResourceManagerIntegerSafetyTests.cs`, `Tests.Godot/tests/Scenes/Building/test_build_mode_preview_and_confirm.gd` | `logs/unit/<YYYY-MM-DD>/coverage.json` |
-| RQ-CH7-META-WIRING | 45 | `Tests.Godot/tests/Adapters/Save/test_save_manager_daystart_autosave.gd`, `Tests.Godot/tests/UI/test_hud_scene.gd` | `logs/e2e/<YYYY-MM-DD>/settings/summary.json` |
-| RQ-CH7-CONFIG-AUDIT-WIRING | 46 | `Tests.Godot/tests/Adapters/Config/test_settings_persistence.gd`, `Game.Core.Tests/Domain/GameConfigTests.cs` | `logs/ci/<YYYY-MM-DD>/config-governance/report.json` |
+| RQ-CH7-ENTRY-WIRING | 41 | `Tests.Godot/tests/Scenes/Smoke/test_main_scene_smoke.gd`, `Tests.Godot/tests/Integration/test_project_bootstrap_editor_compile_run.gd` | `logs/ci/<YYYY-MM-DD>/chapter7-ui-wiring/summary.json`, `logs/ci/<YYYY-MM-DD>/chapter7-ui-wiring/closure-summary.json` |
+| RQ-CH7-HUD-OUTCOME-WIRING | 42 | `Tests.Godot/tests/UI/test_hud_scene.gd`, `Tests.Godot/tests/UI/test_hud_updates_on_events.gd` | `logs/e2e/<YYYY-MM-DD>/runtime-ui/summary.json`, `logs/ci/<YYYY-MM-DD>/chapter7-ui-wiring/closure-summary.json` |
+| RQ-CH7-COMBAT-WIRING | 43 | `Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs`, `Tests.Godot/tests/Scenes/Camera/test_camera_controller_scroll_inputs.gd` | `logs/e2e/<YYYY-MM-DD>/runtime-ui/summary.json`, `logs/ci/<YYYY-MM-DD>/chapter7-ui-wiring/closure-summary.json` |
+| RQ-CH7-ECONOMY-WIRING | 44 | `Game.Core.Tests/Services/ResourceManagerIntegerSafetyTests.cs`, `Tests.Godot/tests/Scenes/Building/test_build_mode_preview_and_confirm.gd` | `logs/unit/<YYYY-MM-DD>/coverage.json`, `logs/ci/<YYYY-MM-DD>/chapter7-ui-wiring/closure-summary.json` |
+| RQ-CH7-META-WIRING | 45 | `Tests.Godot/tests/Adapters/Save/test_save_manager_daystart_autosave.gd`, `Tests.Godot/tests/UI/test_hud_scene.gd` | `logs/e2e/<YYYY-MM-DD>/settings/summary.json`, `logs/ci/<YYYY-MM-DD>/chapter7-ui-wiring/closure-summary.json` |
+| RQ-CH7-CONFIG-AUDIT-WIRING | 46 | `Tests.Godot/tests/Adapters/Config/test_settings_persistence.gd`, `Game.Core.Tests/Domain/GameConfigTests.cs` | `logs/ci/<YYYY-MM-DD>/config-governance/report.json`, `logs/ci/<YYYY-MM-DD>/chapter7-ui-wiring/closure-summary.json` |
 
 ## Task-to-Test Focus (P0)
 
@@ -73,3 +73,11 @@ Test-Refs:
 - 每次变更至少更新 1 条 Test-Refs 指向现存测试文件。
 - 每次 CI 至少产出 1 份可机器读取 JSON 摘要用于审计。
 - Refactor 阶段不允许空 `test_refs` 映射。
+## Chapter 7 Closure Gates
+
+- `RQ-CH7-ENTRY-WIRING` through `RQ-CH7-CONFIG-AUDIT-WIRING` require both the original test refs and the Chapter 7 closure artifact gate.
+- Closure artifact gate authority: `logs/ci/<YYYY-MM-DD>/chapter7-ui-wiring/closure-summary.json`.
+- A Chapter 7 wiring task is not complete unless the matching slice reports `evidence_status = runtime`, `pending_surfaces = 0`, and `gap_to_close = 0`.
+- `summary.json` can prove routing coverage, but only `closure-summary.json` can prove slice closure readiness.
+- If a slice remains `docs-only` or `partial`, keep the task open even when legacy deterministic tests still pass.
+
