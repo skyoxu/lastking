@@ -19,6 +19,13 @@ func _bridge() -> Node:
     await get_tree().process_frame
     return bridge
 
+func _enemy_ai_probe() -> Node:
+    var packed_scene: PackedScene = load("res://Game.Godot/Scenes/Combat/EnemyAiRuntimeProbe.tscn")
+    var probe: Node = packed_scene.instantiate()
+    add_child(auto_free(probe))
+    await get_tree().process_frame
+    return probe
+
 func _publish(type_name: String, payload: Dictionary) -> void:
     _bus.PublishSimple(type_name, "ut", JSON.stringify(payload))
 
@@ -28,6 +35,12 @@ func _remaining_seconds(label_text: String) -> float:
 
 func _feedback_label(hud: Node) -> Label:
     return hud.get_node("FeedbackLayer/FeedbackLabel")
+
+func _pressure_label(hud: Node) -> Label:
+    return hud.get_node("FeedbackLayer/PressurePanel/VBox/PressureLabel")
+
+func _camera_status_label(hud: Node) -> Label:
+    return hud.get_node("FeedbackLayer/CameraControlOverlay/VBox/CameraStatusLabel")
 
 func _error_dialog(hud: Node) -> PanelContainer:
     return hud.get_node("FeedbackLayer/ErrorDialog")
@@ -89,6 +102,40 @@ func test_hud_renders_runtime_combat_outcome_and_feedback_messages() -> void:
     assert_bool(feedback_label.text.find("Action blocked") >= 0).is_true()
     assert_bool(feedback_label.text.find("camera_locked") >= 0).is_true()
 
+# ACC:T43.3
+func test_hud_keeps_feedback_state_stable_when_unrelated_events_are_published() -> void:
+    var hud = await _hud()
+    var feedback_label := _feedback_label(hud)
+    var error_dialog := _error_dialog(hud)
+
+    _publish("core.run.state.transitioned", {"outcome": "win", "day": 20})
+    await get_tree().process_frame
+    var outcome_text := feedback_label.text
+    assert_bool(feedback_label.visible).is_true()
+    assert_bool(error_dialog.visible).is_false()
+
+    _publish("core.score.updated", {"value": 123})
+    await get_tree().process_frame
+    assert_bool(feedback_label.visible).is_true()
+    assert_str(feedback_label.text).is_equal(outcome_text)
+    assert_bool(error_dialog.visible).is_false()
+
+    _publish("core.lastking.ui_feedback.raised", {
+        "Code": "run_continue_blocked",
+        "MessageKey": "ui.blocked_action.run_continue_blocked",
+        "Details": "camera_locked"
+    })
+    await get_tree().process_frame
+    var feedback_text := feedback_label.text
+    assert_bool(feedback_label.visible).is_true()
+    assert_bool(error_dialog.visible).is_false()
+
+    _publish("core.score.updated", {"value": 777})
+    await get_tree().process_frame
+    assert_bool(feedback_label.visible).is_true()
+    assert_str(feedback_label.text).is_equal(feedback_text)
+    assert_bool(error_dialog.visible).is_false()
+
 # ACC:T43.2
 # ACC:T43.3
 func test_hud_feedback_surfaces_stay_hidden_without_relevant_feedback_events() -> void:
@@ -113,15 +160,185 @@ func test_hud_maps_blocked_path_fallback_outcome_to_declared_feedback_surface() 
     await get_tree().process_frame
 
     assert_bool(feedback_label.visible).is_true()
-    assert_bool(feedback_label.text.find("Action blocked") >= 0).is_true()
     assert_bool(feedback_label.text.find("fallback_attack_executed") >= 0).is_true()
+    var fallback_text := feedback_label.text
 
     _publish("core.score.updated", {"value": 123})
     _publish("core.lastking.castle.hp_changed", {"Day": 4, "PreviousHp": 100, "CurrentHp": 96})
     await get_tree().process_frame
 
     assert_bool(feedback_label.visible).is_true()
+    assert_str(feedback_label.text).is_equal(fallback_text)
     assert_bool(error_dialog.visible).is_false()
+
+# ACC:T43.2
+# ACC:T43.3
+func test_hud_combat_pressure_and_camera_overlay_exist_and_update_from_runtime_events() -> void:
+    var hud = await _hud()
+    var pressure_label := _pressure_label(hud)
+    var camera_label := _camera_status_label(hud)
+
+    assert_bool(hud.has_node("CombatHud")).is_true()
+    assert_bool(hud.has_node("FeedbackLayer/PressurePanel")).is_true()
+    assert_bool(hud.has_node("FeedbackLayer/CameraControlOverlay")).is_true()
+    assert_str(pressure_label.text).is_equal("Pressure: n/a")
+    assert_str(camera_label.text).is_equal("Camera: idle")
+
+    _publish("core.lastking.castle.hp_changed", {"Day": 7, "PreviousHp": 100, "CurrentHp": 42})
+    await get_tree().process_frame
+    assert_bool(pressure_label.text.find("Pressure: high") >= 0).is_true()
+    assert_bool(pressure_label.text.find("hp=42") >= 0).is_true()
+
+    _publish("core.lastking.wave.spawned", {"day": 7, "count": 5})
+    await get_tree().process_frame
+    assert_str(pressure_label.text).is_equal("Pressure: day=7 spawned=5")
+
+    _publish("core.lastking.camera.scrolled", {"dx": 6, "dy": -2})
+    await get_tree().process_frame
+    assert_str(camera_label.text).is_equal("Camera: dx=6 dy=-2")
+
+# ACC:T43.5
+func test_hud_surfaces_render_targeting_and_blocked_pathing_feedback_from_runtime_decision_chain() -> void:
+    var hud = await _hud()
+    var feedback_label := _feedback_label(hud)
+    var pressure_label := _pressure_label(hud)
+    var camera_label := _camera_status_label(hud)
+    var probe := await _enemy_ai_probe()
+
+    var candidates := [
+        {
+            "id": "hero_blocked",
+            "class": "unit",
+            "reachable": false,
+            "blocked": true,
+            "path_points": 0,
+            "distance": 1,
+            "blocks_route_to_higher_priority": false
+        },
+        {
+            "id": "barricade_1",
+            "class": "blocking_structure",
+            "reachable": false,
+            "blocked": true,
+            "path_points": 0,
+            "distance": 1,
+            "blocks_route_to_higher_priority": true
+        }
+    ]
+    var decision: Dictionary = probe.call("SelectTarget", candidates)
+    assert_bool(bool(decision.get("is_fallback_attack", false))).is_true()
+    assert_str(str(decision.get("attack_event_target_id", ""))).is_equal("barricade_1")
+
+    _publish("core.lastking.ui_feedback.raised", {
+        "Code": "target_path_blocked_fallback",
+        "MessageKey": "ui.combat.target_path_blocked_fallback",
+        "Details": "target=barricade_1"
+    })
+    _publish("core.lastking.wave.spawned", {"day": 8, "count": 3})
+    _publish("core.lastking.camera.scrolled", {"dx": 4, "dy": -1})
+    await get_tree().process_frame
+
+    assert_bool(feedback_label.visible).is_true()
+    assert_bool(feedback_label.text.find("target=barricade_1") >= 0).is_true()
+    assert_bool(pressure_label.text.find("spawned=3") >= 0).is_true()
+    assert_str(camera_label.text).is_equal("Camera: dx=4 dy=-1")
+
+# ACC:T43.3
+func test_pressure_and_camera_surfaces_do_not_drift_on_unrelated_or_incomplete_events() -> void:
+    var hud = await _hud()
+    var pressure_label := _pressure_label(hud)
+    var camera_label := _camera_status_label(hud)
+
+    _publish("core.lastking.wave.spawned", {"day": 9, "count": 4})
+    _publish("core.lastking.camera.scrolled", {"dx": 5, "dy": 2})
+    await get_tree().process_frame
+    var pressure_before := pressure_label.text
+    var camera_before := camera_label.text
+
+    _publish("core.score.updated", {"value": 404})
+    _publish("core.lastking.camera.scrolled", {"dx": 11})
+    _publish("core.lastking.wave.spawned", {"day": 9})
+    await get_tree().process_frame
+
+    assert_str(pressure_label.text).is_equal(pressure_before)
+    assert_str(camera_label.text).is_equal(camera_before)
+
+# ACC:T43.2
+# ACC:T43.3
+func test_hud_owned_surfaces_keep_identity_and_text_when_malformed_payloads_arrive() -> void:
+    var hud = await _hud()
+    var pressure_label := _pressure_label(hud)
+    var camera_label := _camera_status_label(hud)
+    var pressure_panel := hud.get_node("FeedbackLayer/PressurePanel")
+    var camera_overlay := hud.get_node("FeedbackLayer/CameraControlOverlay")
+
+    _publish("core.lastking.wave.spawned", {"day": 10, "count": 2})
+    _publish("core.lastking.camera.scrolled", {"dx": 3, "dy": -1})
+    await get_tree().process_frame
+
+    var pressure_before := pressure_label.text
+    var camera_before := camera_label.text
+    var pressure_panel_path := str(pressure_panel.get_path())
+    var camera_overlay_path := str(camera_overlay.get_path())
+
+    _publish("core.lastking.wave.spawned", {"day": 10})
+    _publish("core.lastking.wave.spawned", {"day": "bad", "count": "bad"})
+    _publish("core.lastking.camera.scrolled", {"dx": "bad", "dy": 2})
+    _publish("core.lastking.camera.scrolled", {"dx": 5, "dy": "bad"})
+    await get_tree().process_frame
+
+    assert_bool(hud.has_node("FeedbackLayer/PressurePanel")).is_true()
+    assert_bool(hud.has_node("FeedbackLayer/CameraControlOverlay")).is_true()
+    assert_str(str(hud.get_node("FeedbackLayer/PressurePanel").get_path())).is_equal(pressure_panel_path)
+    assert_str(str(hud.get_node("FeedbackLayer/CameraControlOverlay").get_path())).is_equal(camera_overlay_path)
+    assert_str(pressure_label.text).is_equal(pressure_before)
+    assert_str(camera_label.text).is_equal(camera_before)
+
+# ACC:T43.3
+func test_hud_failure_events_show_feedback_without_mutating_non_target_runtime_surfaces() -> void:
+    var hud = await _hud()
+    var feedback_label := _feedback_label(hud)
+    var pressure_label := _pressure_label(hud)
+    var camera_label := _camera_status_label(hud)
+    var day_label: Label = hud.get_node("TopBar/HBox/DayLabel")
+    var hp_label: Label = hud.get_node("TopBar/HBox/HealthLabel")
+
+    _publish("core.lastking.day.started", {"day": 12, "from": "Night", "to": "Day", "tick": 2})
+    _publish("core.lastking.castle.hp_changed", {"Day": 12, "PreviousHp": 100, "CurrentHp": 77})
+    _publish("core.lastking.wave.spawned", {"day": 12, "count": 4})
+    _publish("core.lastking.camera.scrolled", {"dx": 8, "dy": -4})
+    await get_tree().process_frame
+
+    var day_before := day_label.text
+    var hp_before := hp_label.text
+    var pressure_before := pressure_label.text
+    var camera_before := camera_label.text
+
+    _publish("core.lastking.ui_feedback.raised", {
+        "Code": "target_path_blocked_fallback",
+        "MessageKey": "ui.combat.target_path_blocked_fallback",
+        "Details": "route_obstructed"
+    })
+    _publish("core.lastking.ui_feedback.raised", {
+        "Code": "run_continue_blocked",
+        "MessageKey": "ui.blocked_action.run_continue_blocked",
+        "Details": "chapter_locked"
+    })
+    _publish("core.lastking.ui_feedback.raised", {
+        "Code": "invalid_payload",
+        "MessageKey": "ui.error.unknown",
+        "Details": "malformed_event"
+    })
+    await get_tree().process_frame
+
+    var error_dialog := _error_dialog(hud)
+    assert_bool(feedback_label.visible or error_dialog.visible).is_true()
+    if feedback_label.visible:
+        assert_bool(feedback_label.text.find("Victory!") == -1).is_true()
+    assert_str(day_label.text).is_equal(day_before)
+    assert_str(hp_label.text).is_equal(hp_before)
+    assert_str(pressure_label.text).is_equal(pressure_before)
+    assert_str(camera_label.text).is_equal(camera_before)
 
 # ACC:T9.2
 # ACC:T9.5

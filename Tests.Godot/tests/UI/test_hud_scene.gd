@@ -48,11 +48,12 @@ func test_hud_scene_exposes_expected_labels() -> void:
 
 # ACC:T45.3
 func test_hud_renders_perf_and_platform_status_feedback_from_runtime_events() -> void:
-    var scene := preload("res://Game.Godot/Scenes/UI/HUD.tscn").instantiate()
-    add_child(auto_free(scene))
     var bus: Node = preload("res://Game.Godot/Adapters/EventBusAdapter.cs").new()
     bus.name = "EventBus"
     get_tree().get_root().add_child(auto_free(bus))
+
+    var scene := preload("res://Game.Godot/Scenes/UI/HUD.tscn").instantiate()
+    add_child(auto_free(scene))
     await get_tree().process_frame
 
     var feedback_label: Label = scene.get_node("FeedbackLayer/FeedbackLabel")
@@ -68,4 +69,19 @@ func test_hud_renders_perf_and_platform_status_feedback_from_runtime_events() ->
     assert_bool(feedback_label.visible).is_true()
     assert_bool(feedback_label.text.find("Action blocked") >= 0).is_true()
     assert_bool(feedback_label.text.find("platform=windows") >= 0).is_true()
+
+# ACC:T43.2
+func test_hud_scene_exposes_task43_owned_surfaces_with_player_visible_defaults() -> void:
+    var scene := preload("res://Game.Godot/Scenes/UI/HUD.tscn").instantiate()
+    add_child(auto_free(scene))
+    await get_tree().process_frame
+
+    assert_bool(scene.has_node("CombatHud")).is_true()
+    assert_bool(scene.has_node("FeedbackLayer/PressurePanel")).is_true()
+    assert_bool(scene.has_node("FeedbackLayer/CameraControlOverlay")).is_true()
+
+    var pressure_label: Label = scene.get_node("FeedbackLayer/PressurePanel/VBox/PressureLabel")
+    var camera_label: Label = scene.get_node("FeedbackLayer/CameraControlOverlay/VBox/CameraStatusLabel")
+    assert_str(pressure_label.text).is_equal("Pressure: n/a")
+    assert_str(camera_label.text).is_equal("Camera: idle")
 
