@@ -22,6 +22,10 @@ offset_bottom = 240.0
 layout_mode = 2
 text = "Play"
 
+[node name="BtnContinue" type="Button" parent="VBox"]
+layout_mode = 2
+text = "Continue"
+
 [node name="BtnSettings" type="Button" parent="VBox"]
 layout_mode = 2
 text = "Settings"
@@ -29,4 +33,54 @@ text = "Settings"
 [node name="BtnQuit" type="Button" parent="VBox"]
 layout_mode = 2
 text = "Quit"
+
+[node name="BootStatusPanel" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -380.0
+offset_top = 24.0
+offset_right = -24.0
+offset_bottom = 132.0
+
+[node name="VBox" type="VBoxContainer" parent="BootStatusPanel"]
+layout_mode = 2
+
+[node name="BootStatusLabel" type="Label" parent="BootStatusPanel/VBox"]
+layout_mode = 2
+text = "Boot Status: Ready"
+
+[node name="ExportStatusLabel" type="Label" parent="BootStatusPanel/VBox"]
+layout_mode = 2
+text = "Export Status: Pending"
+
+[node name="ContinueGateDialog" type="PanelContainer" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -220.0
+offset_top = -110.0
+offset_right = 220.0
+offset_bottom = 110.0
+
+[node name="VBox" type="VBoxContainer" parent="ContinueGateDialog"]
+layout_mode = 2
+
+[node name="GateMessageLabel" type="Label" parent="ContinueGateDialog/VBox"]
+layout_mode = 2
+autowrap_mode = 3
+text = "Continue unavailable. Start a new run or retry bootstrap."
+
+[node name="BtnRetryBootstrap" type="Button" parent="ContinueGateDialog/VBox"]
+layout_mode = 2
+text = "Retry Bootstrap"
+
+[node name="BtnDismissGate" type="Button" parent="ContinueGateDialog/VBox"]
+layout_mode = 2
+text = "Dismiss"
 
