@@ -3,6 +3,7 @@ extends "res://addons/gdUnit4/src/GdUnitTestSuite.gd"
 # ACC:T2.3
 # ACC:T2.19
 # ACC:T31.7
+# ACC:T46.5
 func test_settings_configfile_path_security() -> void:
     var safe: Node = preload("res://Game.Godot/Adapters/Security/SafeConfig.gd").new()
     add_child(auto_free(safe))
@@ -20,6 +21,7 @@ func test_settings_configfile_path_security() -> void:
     assert_bool(traversal_save_result != 0).is_true()
 
 # ACC:T2.3
+# ACC:T46.3
 func test_settings_security_requires_source_scan_and_runtime_regression_gates() -> void:
     var source_scan: Dictionary = _source_scan_gate_result()
     var runtime_regression: Dictionary = _runtime_regression_gate_result()

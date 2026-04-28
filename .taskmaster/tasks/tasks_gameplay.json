@@ -3840,7 +3840,9 @@
       "Tests.Godot/tests/Adapters/Config/test_settings_persistence.gd",
       "Game.Core.Tests/Domain/GameConfigTests.cs",
       "Tests.Godot/tests/Security/Hard/test_settings_config_security.gd",
-      "Tests.Godot/tests/Integration/test_balance_runtime_config_reload.gd"
+      "Tests.Godot/tests/Integration/test_balance_runtime_config_reload.gd",
+      "Game.Core.Tests/Tasks/Task46UiWiringAcceptanceGovernanceTests.cs",
+      "Tests.Godot/tests/UI/test_hud_config_audit_surfaces.gd"
     ],
     "acceptance": [
       "From the Config Summary / Audit / Migration entry, the player or operator can inspect active config state, validation results, governance status, migration status, and report metadata in one end-to-end Chapter 7 UI flow; acceptance fails if any category is only available through logs or file inspection. Refs: Tests.Godot/tests/Adapters/Config/test_settings_persistence.gd Game.Core.Tests/Domain/GameConfigTests.cs Tests.Godot/tests/Security/Hard/test_settings_config_security.gd Tests.Godot/tests/Integration/test_balance_runtime_config_reload.gd",
@@ -3862,7 +3864,16 @@
       "ConfigAuditPanel displays range-check verdicts and active normalization values governing runtime behavior, and runtime evidence shows these fields on the owned audit surface. Refs: Game.Core.Tests/Domain/GameConfigTests.cs logs/ci/<YYYY-MM-DD>/config-governance/report.json logs/ci/<YYYY-MM-DD>/chapter7-ui-wiring/closure-summary.json",
       "The slice surfaces sample-config coverage and selection evidence as governed runtime-visible artifacts; static sample files alone do not satisfy acceptance. Refs: logs/ci/<YYYY-MM-DD>/config-governance/report.json docs/gdd/ui-gdd-flow.md logs/ci/<YYYY-MM-DD>/chapter7-ui-wiring/closure-summary.json",
       "A gameplay-facing or operator-facing panel identifies the active config snapshot currently governing runtime behavior; acceptance fails if governing snapshot identity is inferable only from logs, tests, or indirect metadata. Refs: logs/ci/<YYYY-MM-DD>/config-governance/report.json logs/ci/<YYYY-MM-DD>/chapter7-ui-wiring/closure-summary.json",
-      "MigrationStatusDialog or ConfigAuditPanel displays migration failure status and force-migration status for active runtime config; acceptance fails if these statuses are available only through tests, logs, or backend evidence. Refs: logs/ci/<YYYY-MM-DD>/config-governance/report.json Game.Core.Tests/Domain/GameConfigTests.cs logs/ci/<YYYY-MM-DD>/chapter7-ui-wiring/closure-summary.json"
+      "MigrationStatusDialog or ConfigAuditPanel displays migration failure status and force-migration status for active runtime config; acceptance fails if these statuses are available only through tests, logs, or backend evidence. Refs: logs/ci/<YYYY-MM-DD>/config-governance/report.json Game.Core.Tests/Domain/GameConfigTests.cs logs/ci/<YYYY-MM-DD>/chapter7-ui-wiring/closure-summary.json",
+      "Config Audit And Migration Surfaces keeps the Task 46 UI slice bound to deterministic config audit and migration outcomes with runtime-observable evidence rather than logs-only inspection. Refs: Tests.Godot/tests/UI/test_hud_config_audit_surfaces.gd Tests.Godot/tests/Adapters/Config/test_settings_persistence.gd Game.Core.Tests/Domain/GameConfigTests.cs Tests.Godot/tests/Security/Hard/test_settings_config_security.gd Tests.Godot/tests/Integration/test_balance_runtime_config_reload.gd",
+      "Config Audit And Migration Surfaces preserves Chapter 7 candidate binding for scope items T02, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40 and keeps scope drift as acceptance failure. Refs: Game.Core.Tests/Domain/GameConfigTests.cs Game.Core.Tests/Tasks/Task46UiWiringAcceptanceGovernanceTests.cs",
+      "Config Audit And Migration Surfaces renders active config, schema status, fallback policy, migration status, and audit metadata through deterministic runtime checks with explicit reason codes. Refs: Tests.Godot/tests/UI/test_hud_config_audit_surfaces.gd Tests.Godot/tests/Adapters/Config/test_settings_persistence.gd Game.Core.Tests/Domain/GameConfigTests.cs Tests.Godot/tests/Security/Hard/test_settings_config_security.gd Tests.Godot/tests/Integration/test_balance_runtime_config_reload.gd",
+      "Config Audit And Migration Surfaces enforces candidate empty-state behavior where reload from equivalent config content remains stable and no false gameplay mutation is emitted. Refs: Tests.Godot/tests/UI/test_hud_config_audit_surfaces.gd Tests.Godot/tests/Adapters/Config/test_settings_persistence.gd Game.Core.Tests/Domain/GameConfigTests.cs Tests.Godot/tests/Integration/test_balance_runtime_config_reload.gd",
+      "Config Audit And Migration Surfaces enforces candidate failure-state behavior where malformed JSON/INI must fail deterministically with fixed reason code and keep last-known-good snapshot. Refs: Tests.Godot/tests/Adapters/Config/test_settings_persistence.gd Game.Core.Tests/Domain/GameConfigTests.cs Tests.Godot/tests/Security/Hard/test_settings_config_security.gd",
+      "Config Audit And Migration Surfaces completion keeps deterministic domain state behind existing contracts, adds no unrelated gameplay behavior, and keeps validation artifact paths auditable: logs/ci/<YYYY-MM-DD>/task-triplet-audit/report.json logs/ci/<YYYY-MM-DD>/overlay-lint/report.json logs/ci/<YYYY-MM-DD>/config-governance/report.json. Refs: Game.Core.Tests/Domain/GameConfigTests.cs Game.Core.Tests/Tasks/Task46UiWiringAcceptanceGovernanceTests.cs",
+      "Config Audit And Migration Surfaces acceptance must map all Requirement IDs (RQ-CONFIG-CONTRACT-GOV, RQ-CORE-LOOP-STATE) to executable evidence; missing any ID mapping fails acceptance. Refs: Tests.Godot/tests/Adapters/Config/test_settings_persistence.gd Game.Core.Tests/Domain/GameConfigTests.cs Game.Core.Tests/Tasks/Task46UiWiringAcceptanceGovernanceTests.cs",
+      "Config Audit And Migration Surfaces acceptance must map implementation and verification evidence to each scope item (T02, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40); missing any scope mapping fails acceptance and out-of-scope gameplay edits do not count. Refs: Tests.Godot/tests/Adapters/Config/test_settings_persistence.gd Game.Core.Tests/Domain/GameConfigTests.cs Tests.Godot/tests/Security/Hard/test_settings_config_security.gd Tests.Godot/tests/Integration/test_balance_runtime_config_reload.gd Game.Core.Tests/Tasks/Task46UiWiringAcceptanceGovernanceTests.cs",
+      "Config Audit And Migration Surfaces validation must include both referenced GdUnit and xUnit evidence paths and keep explicit governance-level verification of pass/fail semantics for both frameworks. Refs: Tests.Godot/tests/UI/test_hud_config_audit_surfaces.gd Tests.Godot/tests/Adapters/Config/test_settings_persistence.gd Tests.Godot/tests/Security/Hard/test_settings_config_security.gd Tests.Godot/tests/Integration/test_balance_runtime_config_reload.gd Game.Core.Tests/Domain/GameConfigTests.cs Game.Core.Tests/Tasks/Task46UiWiringAcceptanceGovernanceTests.cs"
     ],
     "contractRefs": [
       "core.lastking.config.loaded"
@@ -3885,6 +3896,11 @@
       ],
       "ui_entry": "Config Summary / Audit / Migration Surfaces"
     },
-    "semantic_review_tier": "full"
+    "semantic_review_tier": "full",
+    "test_strategy": [
+      "xUnit: validate config audit and migration service behavior in Game.Core tests.",
+      "GdUnit4: verify settings/config UI flow emits expected audit and migration feedback.",
+      "Acceptance refs/anchors gate: keep Task 46 refs and anchors synchronized before review pipeline."
+    ]
   }
 ]

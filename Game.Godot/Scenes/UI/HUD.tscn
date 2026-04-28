@@ -101,3 +101,59 @@ text = ""
 [node name="DismissButton" type="Button" parent="FeedbackLayer/ErrorDialog/VBox"]
 layout_mode = 2
 text = "Dismiss"
+
+[node name="ConfigAuditPanel" type="PanelContainer" parent="FeedbackLayer"]
+layout_mode = 1
+anchors_preset = 0
+offset_left = 12.0
+offset_top = 48.0
+offset_right = 388.0
+offset_bottom = 148.0
+
+[node name="VBox" type="VBoxContainer" parent="FeedbackLayer/ConfigAuditPanel"]
+layout_mode = 2
+
+[node name="AuditSummaryLabel" type="Label" parent="FeedbackLayer/ConfigAuditPanel/VBox"]
+layout_mode = 2
+autowrap_mode = 3
+text = "Config: n/a | Schema: n/a | Fallback: n/a"
+
+[node name="RefreshButton" type="Button" parent="FeedbackLayer/ConfigAuditPanel/VBox"]
+layout_mode = 2
+text = "Refresh Audit"
+
+[node name="MigrationStatusDialog" type="PanelContainer" parent="FeedbackLayer"]
+layout_mode = 1
+anchors_preset = 0
+offset_left = 12.0
+offset_top = 160.0
+offset_right = 388.0
+offset_bottom = 246.0
+
+[node name="VBox" type="VBoxContainer" parent="FeedbackLayer/MigrationStatusDialog"]
+layout_mode = 2
+
+[node name="MigrationStatusLabel" type="Label" parent="FeedbackLayer/MigrationStatusDialog/VBox"]
+layout_mode = 2
+autowrap_mode = 3
+text = "Migration: n/a"
+
+[node name="RetryButton" type="Button" parent="FeedbackLayer/MigrationStatusDialog/VBox"]
+layout_mode = 2
+text = "Retry Migration"
+
+[node name="ReportMetadataPanel" type="PanelContainer" parent="FeedbackLayer"]
+layout_mode = 1
+anchors_preset = 0
+offset_left = 12.0
+offset_top = 258.0
+offset_right = 388.0
+offset_bottom = 332.0
+
+[node name="VBox" type="VBoxContainer" parent="FeedbackLayer/ReportMetadataPanel"]
+layout_mode = 2
+
+[node name="ReportMetadataLabel" type="Label" parent="FeedbackLayer/ReportMetadataPanel/VBox"]
+layout_mode = 2
+autowrap_mode = 3
+text = "Metadata: n/a"

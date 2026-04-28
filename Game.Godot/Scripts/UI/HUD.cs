@@ -23,6 +23,14 @@ public partial class HUD : Control
     private PanelContainer _errorDialog = default!;
     private Label _errorMessageLabel = default!;
     private Button _dismissButton = default!;
+    private PanelContainer _configAuditPanel = default!;
+    private Label _configAuditSummaryLabel = default!;
+    private Button _configAuditRefreshButton = default!;
+    private PanelContainer _migrationStatusDialog = default!;
+    private Label _migrationStatusLabel = default!;
+    private Button _migrationRetryButton = default!;
+    private PanelContainer _reportMetadataPanel = default!;
+    private Label _reportMetadataLabel = default!;
     private Button _pauseButton = default!;
     private Button _oneXButton = default!;
     private Button _twoXButton = default!;
@@ -65,6 +73,14 @@ public partial class HUD : Control
         _errorDialog = GetNode<PanelContainer>("FeedbackLayer/ErrorDialog");
         _errorMessageLabel = GetNode<Label>("FeedbackLayer/ErrorDialog/VBox/ErrorMessageLabel");
         _dismissButton = GetNode<Button>("FeedbackLayer/ErrorDialog/VBox/DismissButton");
+        _configAuditPanel = GetNode<PanelContainer>("FeedbackLayer/ConfigAuditPanel");
+        _configAuditSummaryLabel = GetNode<Label>("FeedbackLayer/ConfigAuditPanel/VBox/AuditSummaryLabel");
+        _configAuditRefreshButton = GetNode<Button>("FeedbackLayer/ConfigAuditPanel/VBox/RefreshButton");
+        _migrationStatusDialog = GetNode<PanelContainer>("FeedbackLayer/MigrationStatusDialog");
+        _migrationStatusLabel = GetNode<Label>("FeedbackLayer/MigrationStatusDialog/VBox/MigrationStatusLabel");
+        _migrationRetryButton = GetNode<Button>("FeedbackLayer/MigrationStatusDialog/VBox/RetryButton");
+        _reportMetadataPanel = GetNode<PanelContainer>("FeedbackLayer/ReportMetadataPanel");
+        _reportMetadataLabel = GetNode<Label>("FeedbackLayer/ReportMetadataPanel/VBox/ReportMetadataLabel");
         _pauseButton = GetNode<Button>("TopBar/HBox/SpeedControls/PauseButton");
         _oneXButton = GetNode<Button>("TopBar/HBox/SpeedControls/OneXButton");
         _twoXButton = GetNode<Button>("TopBar/HBox/SpeedControls/TwoXButton");
@@ -79,6 +95,12 @@ public partial class HUD : Control
         _feedbackLabel.Text = string.Empty;
         _errorDialog.Visible = false;
         _errorMessageLabel.Text = string.Empty;
+        _configAuditPanel.Visible = true;
+        _migrationStatusDialog.Visible = true;
+        _reportMetadataPanel.Visible = true;
+        _configAuditSummaryLabel.Text = "Config: n/a | Schema: n/a | Fallback: n/a";
+        _migrationStatusLabel.Text = "Migration: n/a";
+        _reportMetadataLabel.Text = "Metadata: n/a";
         _activeFeedbackCode = string.Empty;
         _activeFeedbackMessageKey = string.Empty;
         _hasPendingErrorDialog = false;
@@ -492,5 +514,59 @@ public partial class HUD : Control
     public void SetHealth(int hp)
     {
         _health.Text = $"HP: {hp}";
+    }
+
+    public void ApplyConfigAuditView(global::Godot.Collections.Dictionary payload)
+    {
+        var activeConfig = ReadDictionaryString(payload, "active_config", "activeConfig", "config_id");
+        var schemaStatus = ReadDictionaryString(payload, "schema_status", "schemaStatus");
+        var fallbackPolicy = ReadDictionaryString(payload, "fallback_policy", "fallbackPolicy");
+        var migrationStatus = ReadDictionaryString(payload, "migration_status", "migrationStatus");
+        var reasonCode = ReadDictionaryString(payload, "reason_code", "reasonCode");
+        var reportMetadata = ReadDictionaryString(payload, "report_metadata", "reportMetadata");
+
+        _configAuditSummaryLabel.Text = $"Config: {activeConfig} | Schema: {schemaStatus} | Fallback: {fallbackPolicy}";
+        _migrationStatusLabel.Text = string.IsNullOrWhiteSpace(reasonCode)
+            ? $"Migration: {migrationStatus}"
+            : $"Migration: {migrationStatus} ({reasonCode})";
+        _reportMetadataLabel.Text = $"Metadata: {reportMetadata}";
+
+        _configAuditPanel.Visible = true;
+        _migrationStatusDialog.Visible = true;
+        _reportMetadataPanel.Visible = true;
+        _configAuditRefreshButton.Disabled = false;
+        _migrationRetryButton.Disabled = false;
+    }
+
+    private static string ReadDictionaryString(global::Godot.Collections.Dictionary payload, params string[] keys)
+    {
+        foreach (var key in keys)
+        {
+            if (!payload.ContainsKey(key))
+            {
+                continue;
+            }
+
+            var value = payload[key];
+            if (value.VariantType == Variant.Type.String)
+            {
+                var text = value.AsString().Trim();
+                if (text.Length > 0)
+                {
+                    return text;
+                }
+            }
+
+            if (value.VariantType != Variant.Type.Nil)
+            {
+                var text = value.ToString().Trim();
+                if (text.Length > 0)
+                {
+                    return text;
+                }
+            }
+        }
+
+        return "n/a";
     }
 }
