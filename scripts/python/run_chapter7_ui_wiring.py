@@ -75,6 +75,19 @@ def _read_text_if_exists(path: Path) -> str:
         return ''
 
 
+def _scene_has_surface_nodes(repo_root: Path, scene_rel_path: str, surfaces: list[str]) -> list[str]:
+    scene_path = (repo_root / scene_rel_path).resolve()
+    scene_text = _read_text_if_exists(scene_path)
+    if not scene_text:
+        return []
+    present: list[str] = []
+    for surface in surfaces:
+        token = f'[node name="{surface}"'
+        if token in scene_text:
+            present.append(surface)
+    return present
+
+
 def _extract_section(text: str, heading: str | list[str]) -> str:
     headings = {heading} if isinstance(heading, str) else set(heading)
     lines = text.splitlines()
@@ -398,7 +411,11 @@ def _build_closure_summary(
         implemented_surfaces: list[str] = []
         pending_surfaces = list(suggested_surfaces)
         if bucket == 'entry':
-            implemented_surfaces = ['MainMenu']
+            implemented_surfaces = _scene_has_surface_nodes(
+                repo_root=repo_root,
+                scene_rel_path='Game.Godot/Scenes/UI/MainMenu.tscn',
+                surfaces=suggested_surfaces,
+            )
             pending_surfaces = [item for item in suggested_surfaces if item not in implemented_surfaces]
         elif bucket == 'loop':
             implemented_surfaces = ['HUD']
@@ -788,16 +805,15 @@ def orchestrate(
                     producer_step='collect',
                 )
             )
-    if write_doc and overall_rc == 0:
+    if overall_rc == 0:
         candidate_sidecar_path = ui_candidates_path if ui_candidates_path.is_absolute() else (repo_root / ui_candidates_path)
         ui_gdd_path = ui_gdd_flow_path if ui_gdd_flow_path.is_absolute() else (repo_root / ui_gdd_flow_path)
-        candidate_sidecar = str(candidate_sidecar_path.resolve()).replace('\\', '/')
-        ui_gdd = str(ui_gdd_path.resolve()).replace('\\', '/')
-        payload['candidate_sidecar'] = candidate_sidecar
+        payload['ui_gdd'] = str(ui_gdd_path.resolve()).replace('\\', '/')
+        payload['candidate_sidecar'] = str(candidate_sidecar_path.resolve()).replace('\\', '/')
         artifact_entries.extend(
             [
-                _artifact_entry(repo_root=repo_root, path=ui_gdd_path, artifact_type='ui-gdd', producer_step='write-doc'),
-                _artifact_entry(repo_root=repo_root, path=candidate_sidecar_path, artifact_type='candidate-sidecar', producer_step='write-doc'),
+                _artifact_entry(repo_root=repo_root, path=ui_gdd_path, artifact_type='ui-gdd', producer_step='collect'),
+                _artifact_entry(repo_root=repo_root, path=candidate_sidecar_path, artifact_type='candidate-sidecar', producer_step='collect'),
             ]
         )
     summary_path = out_dir / 'summary.json'
