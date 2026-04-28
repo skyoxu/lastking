@@ -27,6 +27,8 @@ from dev_cli_builders import (
     build_new_execution_plan_cmd,
     build_inspect_run_cmd,
     build_chapter6_route_cmd,
+    build_apply_chapter7_status_patch_cmd,
+    build_run_chapter7_backlog_gap_cmd,
     build_preflight_cmd,
     build_project_health_scan_cmd,
     build_resume_task_cmd,
@@ -251,6 +253,18 @@ def cmd_run_chapter7_ui_wiring(args: argparse.Namespace) -> int:
     """Run the Chapter 7 UI wiring orchestrator."""
 
     return run(build_run_chapter7_ui_wiring_cmd(args))
+
+
+def cmd_run_chapter7_backlog_gap(args: argparse.Namespace) -> int:
+    """Run the Chapter 7 backlog-gap analyzer."""
+
+    return run(build_run_chapter7_backlog_gap_cmd(args))
+
+
+def cmd_apply_chapter7_status_patch(args: argparse.Namespace) -> int:
+    """Apply or dry-run a Chapter 7 task status patch contract."""
+
+    return run(build_apply_chapter7_status_patch_cmd(args))
 
 
 def cmd_run_prototype_tdd(args: argparse.Namespace) -> int:
@@ -482,11 +496,49 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p_ch7.add_argument("--repo-root", default=".")
     p_ch7.add_argument("--delivery-profile", default="")
+    p_ch7.add_argument("--tasks-json-path", default="")
+    p_ch7.add_argument("--tasks-back-path", default="")
+    p_ch7.add_argument("--tasks-gameplay-path", default="")
+    p_ch7.add_argument("--overlay-root-path", default="")
+    p_ch7.add_argument("--ui-gdd-flow-path", default="")
+    p_ch7.add_argument("--alignment-audit-path", default="")
+    p_ch7.add_argument("--wiring-audit-path", default="")
+    p_ch7.add_argument("--repo-label", default="")
+    p_ch7.add_argument("--back-story-id", default="")
+    p_ch7.add_argument("--gameplay-story-id", default="")
     p_ch7.add_argument("--write-doc", action="store_true")
     p_ch7.add_argument("--create-tasks", action="store_true")
     p_ch7.add_argument("--out-json", default="")
     p_ch7.add_argument("--self-check", action="store_true")
     p_ch7.set_defaults(func=cmd_run_chapter7_ui_wiring)
+
+    # apply-chapter7-status-patch
+    p_ch7_apply = sub.add_parser(
+        "apply-chapter7-status-patch",
+        help="apply or dry-run a machine-readable Chapter 7 task-status patch contract",
+    )
+    p_ch7_apply.add_argument("--patch", required=True)
+    p_ch7_apply.add_argument("--dry-run", action="store_true")
+    p_ch7_apply.add_argument("--out-json", default="")
+    p_ch7_apply.add_argument("--self-check", action="store_true")
+    p_ch7_apply.set_defaults(func=cmd_apply_chapter7_status_patch)
+
+    # run-chapter7-backlog-gap
+    p_ch7_gap = sub.add_parser(
+        "run-chapter7-backlog-gap",
+        help="analyze design/epics vs task triplet before creating new Chapter 7 tasks",
+    )
+    p_ch7_gap.add_argument("--repo-root", default=".")
+    p_ch7_gap.add_argument("--delivery-profile", default="")
+    p_ch7_gap.add_argument("--tasks-json-path", default="")
+    p_ch7_gap.add_argument("--tasks-back-path", default="")
+    p_ch7_gap.add_argument("--tasks-gameplay-path", default="")
+    p_ch7_gap.add_argument("--design-doc-path", required=True)
+    p_ch7_gap.add_argument("--epics-doc-path", required=True)
+    p_ch7_gap.add_argument("--duplicate-audit-path", required=True)
+    p_ch7_gap.add_argument("--out-json", default="")
+    p_ch7_gap.add_argument("--self-check", action="store_true")
+    p_ch7_gap.set_defaults(func=cmd_run_chapter7_backlog_gap)
 
     # run-prototype-tdd
     p_proto = sub.add_parser(

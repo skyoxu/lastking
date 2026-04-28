@@ -1,0 +1,82 @@
+0001: # lastking - Development Epics
+0003: ## Epic Overview
+0005: | # | Epic Name | Goal | Dependencies | Playable Result |
+0008: | 2 | Core Survival Loop and HUD Readability | 建立昼夜、胜负、基础 HUD 和结果感知 | 1 | 玩家能体验最小主循环 |
+0016: ## Epic 1: Foundation, Boot, and Runtime Baseline
+0022: **Includes:**
+0023: - Windows-only / Steam single-player 基线
+0024: - Godot 4.5.1 + C# 项目结构
+0029: **Excludes:**
+0034: ### Dependencies
+0037: ### Deliverable
+0040: ### Stories
+0041: - As a player, I can launch the game and reach the main menu so that the product feels like a real runnable build.
+0042: - As a player, I can start a new run from a stable entry point so that the core game can begin consistently.
+0043: - As a developer, I can validate Windows startup/export behavior so that later features build on a reliable baseline.
+0044: - As a player, I can access essential top-level navigation so that boot flow is understandable.
+0048: ## Epic 2: Core Survival Loop and HUD Readability
+0054: **Includes:**
+0055: - Day/Night 状态机
+0060: - 最小 onboarding 节律
+0062: **Excludes:**
+0067: ### Dependencies
+0070: ### Deliverable
+0073: ### Stories
+0074: - As a player, I can see whether it is day or night so that I know what phase of the run I am in.
+0075: - As a player, I can see castle health so that I understand survival risk.
+0076: - As a player, I can lose only when the castle is destroyed so that failure rules stay clear.
+0077: - As a player, I can reach the next day after surviving a night so that the run meaningfully progresses.
+0078: - As a player, I can receive basic prompts and outcomes so that the loop is legible.
+0082: ## Epic 3: Combat Pressure and Defensive Validation
+0088: **Includes:**
+0096: **Excludes:**
+0097: - 完整 progression 深度
+0099: - 完整 config audit surfaces
+0101: ### Dependencies
+0105: ### Deliverable
+0108: ### Stories
+0109: - As a player, I can face escalating nightly waves so that the game tests my preparation.
+0110: - As a player, I can rely on deterministic enemy path and targeting behavior so that failures feel fair.
+0111: - As a player, I can observe when enemies are blocked and how they respond so that spatial decisions matter.
+0112: - As a player, I can read combat pressure well enough to understand where my defense is failing.
+0113: - As a player, I can survive or collapse based on my actual defensive setup rather than arbitrary chaos.
+0117: ## Epic 4: Economy, Building, and Progression Systems
+0123: **Includes:**
+0126: - 建造与 footprint
+0132: **Excludes:**
+0134: - 完整 settings/save polish
+0137: ### Dependencies
+0141: ### Deliverable
+0144: ### Stories
+0145: - As a player, I can spend gold and iron on meaningful defense decisions so that the day phase matters.
+0146: - As a player, I can enter debt and feel its restrictions so that resource mistakes have weight.
+0147: - As a player, I can place buildings with footprint consequences so that map space becomes strategic.
+0148: - As a player, I can train units and manage queues so that military planning becomes part of survival.
+0149: - As a player, I can upgrade, repair, and invest in tech so that long-run structure matters.
+0150: - As a player, I can choose nightly rewards so that each run develops differently.
+0154: ## Epic 5: Meta Systems, Save, and Platform Services
+0160: **Includes:**
+0168: **Excludes:**
+0171: - 最终 production closure
+0173: ### Dependencies
+0177: ### Deliverable
+0180: ### Stories
+0181: - As a player, my run autosaves safely so that long sessions are protected.
+0182: - As a player, I can change settings and have them persist so that the game fits my machine and preference.
+0183: - As a player, I can switch between supported languages so that UI remains usable in zh-CN and en-US.
+0184: - As a player, I can benefit from cloud save behavior consistent with account ownership rules.
+0185: - As a player, I can rely on the game’s performance preset so that longer runs remain stable.
+0189: ## Epic 6: UI Wiring, Auditability, and Production Closure
+0195: **Includes:**
+0196: - 六大 UI slice 的真实 surface 收口
+0197: - MainMenu / HUD / Combat / Economy / Meta / Config Audit 统一接线
+0202: **Excludes:**
+0207: ### Dependencies
+0213: ### Deliverable
+0216: ### Stories
+0217: - As a player, I can understand boot and continue state through clear entry surfaces.
+0218: - As a player, I can read outcomes, prompts, and errors through stable runtime surfaces.
+0219: - As a player, I can manage economy and progression through dedicated panels rather than inferred behavior.
+0220: - As a player, I can understand meta state, save state, and summary state through clear UI surfaces.
+0221: - As a developer or advanced player, I can inspect config, migration, and report metadata through governed readable surfaces.
+0222: - As a team, we can treat the M1 build as a true vertical slice rather than a collection of partial systems.

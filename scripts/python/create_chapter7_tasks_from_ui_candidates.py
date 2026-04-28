@@ -13,15 +13,48 @@ TASKS_JSON = Path(".taskmaster/tasks/tasks.json")
 TASKS_BACK = Path(".taskmaster/tasks/tasks_back.json")
 TASKS_GAMEPLAY = Path(".taskmaster/tasks/tasks_gameplay.json")
 UI_CANDIDATES = Path("docs/gdd/ui-gdd-flow.candidates.json")
-OVERLAY_INDEX = "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
-OVERLAY_REFS = [
-    "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
-    "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
-    "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
-    "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
-    "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
-    "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md",
-]
+DEFAULT_OVERLAY_ROOT = Path("docs/architecture/overlays/PRD-lastking-T2/08")
+DEFAULT_STORY_ID_BACK = "BACKLOG-LASTKING-M1"
+DEFAULT_STORY_ID_GAMEPLAY = "PRD-LASTKING-v1.2"
+DEFAULT_REPO_LABEL = "lastking"
+
+
+def _resolve_path(value: str | Path) -> Path:
+    return value if isinstance(value, Path) else Path(value)
+
+
+def _normalize_rel_path(path: Path) -> str:
+    return path.as_posix().lstrip('./')
+
+
+def _overlay_refs_from_root(overlay_root: Path) -> list[str]:
+    refs = [
+        overlay_root / '_index.md',
+        overlay_root / '08-Feature-Slice-T2-Core-Loop.md',
+        overlay_root / '08-Contracts-T2.md',
+        overlay_root / '08-Testing-T2.md',
+        overlay_root / '08-Observability-T2.md',
+        overlay_root / 'ACCEPTANCE_CHECKLIST.md',
+    ]
+    return [_normalize_rel_path(item) for item in refs]
+
+
+def _overlay_index_from_root(overlay_root: Path) -> str:
+    return _normalize_rel_path(overlay_root / '_index.md')
+
+
+def _repo_label_from_tasks_json(tasks_json_path: Path) -> str:
+    stem = tasks_json_path.stem.lower()
+    if stem == 'tasks':
+        return 'taskmaster'
+    return stem.replace('_', '-').replace('.', '-') or DEFAULT_REPO_LABEL
+
+
+def _default_story_ids(repo_label: str) -> tuple[str, str]:
+    normalized = repo_label.upper().replace('-', '_')
+    back = f'BACKLOG-{normalized}-M1'
+    gameplay = f'PRD-{normalized}-v1.2'
+    return back, gameplay
 
 
 def _today() -> str:
@@ -155,7 +188,7 @@ def _acceptance(candidate: dict[str, Any], test_refs: list[str]) -> list[str]:
     return acceptance
 
 
-def _master_task(task_id: int, candidate: dict[str, Any]) -> dict[str, Any]:
+def _master_task(task_id: int, candidate: dict[str, Any], *, ui_candidates_path: Path, overlay_index: str) -> dict[str, Any]:
     screen_group = str(candidate.get("screen_group") or f"Chapter 7 Slice {task_id}")
     bucket = str(candidate.get("bucket") or "ui")
     test_refs = _merge_refs(list(candidate.get("test_refs") or []))
@@ -168,7 +201,7 @@ def _master_task(task_id: int, candidate: dict[str, Any]) -> dict[str, Any]:
     details = "\n".join(
         [
             f"Chapter7 Candidate: {screen_group}",
-            f"Source: {UI_CANDIDATES.as_posix()}",
+            f"Source: {_normalize_rel_path(ui_candidates_path)}",
             f"Scope: {candidate.get('scope_task_refs') or ', '.join(f'T{item:02d}' for item in scope_ids)}",
             f"UI entry: {candidate.get('ui_entry') or 'TBD'}",
             f"Candidate type: {candidate.get('candidate_type') or 'task-shaped UI wiring spec'}",
@@ -193,7 +226,7 @@ def _master_task(task_id: int, candidate: dict[str, Any]) -> dict[str, Any]:
         "dependencies": scope_ids,
         "status": "pending",
         "subtasks": [],
-        "overlay": OVERLAY_INDEX,
+        "overlay": overlay_index,
         "adrRefs": ["ADR-0010", "ADR-0011", "ADR-0019", "ADR-0025"],
         "archRefs": ["CH02", "CH06", "CH07", "CH10"],
     }
@@ -203,7 +236,7 @@ def _view_id(prefix: str, task_id: int) -> str:
     return f"GM-{100 + task_id:04d}" if prefix == "GM" else f"NG-{task_id:04d}"
 
 
-def _view_task(*, prefix: str, task_id: int, candidate: dict[str, Any], owner: str, story_id: str, source_label: str) -> dict[str, Any]:
+def _view_task(*, prefix: str, task_id: int, candidate: dict[str, Any], owner: str, story_id: str, source_label: str, repo_label: str, overlay_refs: list[str], ui_candidates_path: Path) -> dict[str, Any]:
     screen_group = str(candidate.get("screen_group") or f"Chapter 7 Slice {task_id}")
     bucket = str(candidate.get("bucket") or "ui")
     test_refs = _merge_refs(list(candidate.get("test_refs") or []))
@@ -225,13 +258,13 @@ def _view_task(*, prefix: str, task_id: int, candidate: dict[str, Any], owner: s
         "layer": _layer_for_bucket(bucket),
         "adr_refs": ["ADR-0010", "ADR-0011", "ADR-0019", "ADR-0025"],
         "chapter_refs": ["CH02", "CH06", "CH07", "CH10"],
-        "overlay_refs": OVERLAY_REFS,
-        "labels": [source_label, "lastking", "taskmaster-view", "chapter7-ui", bucket],
+        "overlay_refs": overlay_refs,
+        "labels": [source_label, repo_label, "taskmaster-view", "chapter7-ui", bucket],
         "test_refs": test_refs,
         "acceptance": _acceptance(candidate, test_refs),
         "contractRefs": contract_refs,
         "ui_wiring_candidate": {
-            "source": UI_CANDIDATES.as_posix(),
+            "source": _normalize_rel_path(ui_candidates_path),
             "screen_group": screen_group,
             "scope_task_ids": scope_ids,
             "ui_entry": candidate.get("ui_entry") or "",
@@ -265,14 +298,43 @@ def _replace_view_task_by_taskmaster_id(
     return False
 
 
-def create_tasks(*, repo_root: Path, dry_run: bool = False) -> tuple[int, dict[str, Any]]:
-    sidecar_path = repo_root / UI_CANDIDATES
+def create_tasks(
+    *,
+    repo_root: Path,
+    dry_run: bool = False,
+    tasks_json_path: Path = TASKS_JSON,
+    tasks_back_path: Path = TASKS_BACK,
+    tasks_gameplay_path: Path = TASKS_GAMEPLAY,
+    ui_candidates_path: Path = UI_CANDIDATES,
+    overlay_root_path: Path = DEFAULT_OVERLAY_ROOT,
+    repo_label: str = DEFAULT_REPO_LABEL,
+    back_story_id: str = DEFAULT_STORY_ID_BACK,
+    gameplay_story_id: str = DEFAULT_STORY_ID_GAMEPLAY,
+) -> tuple[int, dict[str, Any]]:
+    tasks_json_path = _resolve_path(tasks_json_path)
+    tasks_back_path = _resolve_path(tasks_back_path)
+    tasks_gameplay_path = _resolve_path(tasks_gameplay_path)
+    ui_candidates_path = _resolve_path(ui_candidates_path)
+    overlay_root_path = _resolve_path(overlay_root_path)
+    sidecar_path = ui_candidates_path if ui_candidates_path.is_absolute() else (repo_root / ui_candidates_path)
+    overlay_root = overlay_root_path if overlay_root_path.is_absolute() else (repo_root / overlay_root_path)
+    overlay_refs = _overlay_refs_from_root(overlay_root_path)
+    overlay_index = _overlay_index_from_root(overlay_root_path)
+    effective_repo_label = (repo_label or '').strip() or _repo_label_from_tasks_json(tasks_json_path)
+    effective_back_story_id = (back_story_id or '').strip()
+    effective_gameplay_story_id = (gameplay_story_id or '').strip()
+    if not effective_back_story_id or not effective_gameplay_story_id:
+        inferred_back_story_id, inferred_gameplay_story_id = _default_story_ids(effective_repo_label)
+        if not effective_back_story_id:
+            effective_back_story_id = inferred_back_story_id
+        if not effective_gameplay_story_id:
+            effective_gameplay_story_id = inferred_gameplay_story_id
     if not sidecar_path.exists():
         payload = {
             "action": "create-chapter7-tasks-from-ui-candidates",
             "status": "fail",
             "reason": "missing_candidate_sidecar",
-            "source": UI_CANDIDATES.as_posix(),
+            "source": _normalize_rel_path(ui_candidates_path),
         }
         return 1, payload
 
@@ -281,15 +343,15 @@ def create_tasks(*, repo_root: Path, dry_run: bool = False) -> tuple[int, dict[s
     if not isinstance(candidates, list):
         raise ValueError("ui-gdd-flow.candidates.json candidates must be a list")
 
-    tasks_json_path = repo_root / TASKS_JSON
-    tasks_payload = _read_json(tasks_json_path)
+    resolved_tasks_json_path = tasks_json_path if tasks_json_path.is_absolute() else (repo_root / tasks_json_path)
+    tasks_payload = _read_json(resolved_tasks_json_path)
     master = tasks_payload.setdefault("master", {})
     master_tasks = master.setdefault("tasks", [])
     if not isinstance(master_tasks, list):
         raise ValueError("tasks.json master.tasks must be a list")
 
-    back_tasks = _load_view_tasks(repo_root, TASKS_BACK)
-    gameplay_tasks = _load_view_tasks(repo_root, TASKS_GAMEPLAY)
+    back_tasks = _load_view_tasks(repo_root, tasks_back_path)
+    gameplay_tasks = _load_view_tasks(repo_root, tasks_gameplay_path)
     existing_by_candidate = _existing_chapter7_task_ids(master_tasks)
     next_id = _max_master_id(master_tasks) + 1
     created_task_ids: list[int] = []
@@ -305,7 +367,7 @@ def create_tasks(*, repo_root: Path, dry_run: bool = False) -> tuple[int, dict[s
         existing_id = existing_by_candidate.get(screen_group)
         if existing_id is not None:
             existing_task_ids.append(existing_id)
-            _replace_task_by_id(master_tasks, existing_id, _master_task(existing_id, candidate))
+            _replace_task_by_id(master_tasks, existing_id, _master_task(existing_id, candidate, ui_candidates_path=ui_candidates_path, overlay_index=overlay_index))
             _replace_view_task_by_taskmaster_id(
                 back_tasks,
                 existing_id,
@@ -314,8 +376,11 @@ def create_tasks(*, repo_root: Path, dry_run: bool = False) -> tuple[int, dict[s
                     task_id=existing_id,
                     candidate=candidate,
                     owner="architecture",
-                    story_id="BACKLOG-LASTKING-M1",
+                    story_id=effective_back_story_id,
                     source_label="backlog",
+                    repo_label=effective_repo_label,
+                    overlay_refs=overlay_refs,
+                    ui_candidates_path=ui_candidates_path,
                 ),
             )
             _replace_view_task_by_taskmaster_id(
@@ -326,23 +391,29 @@ def create_tasks(*, repo_root: Path, dry_run: bool = False) -> tuple[int, dict[s
                     task_id=existing_id,
                     candidate=candidate,
                     owner="gameplay",
-                    story_id="PRD-LASTKING-v1.2",
+                    story_id=effective_gameplay_story_id,
                     source_label="prd",
+                    repo_label=effective_repo_label,
+                    overlay_refs=overlay_refs,
+                    ui_candidates_path=ui_candidates_path,
                 ),
             )
             updated_task_ids.append(existing_id)
             continue
         task_id = next_id
         next_id += 1
-        master_tasks.append(_master_task(task_id, candidate))
+        master_tasks.append(_master_task(task_id, candidate, ui_candidates_path=ui_candidates_path, overlay_index=overlay_index))
         back_tasks.append(
             _view_task(
                 prefix="NG",
                 task_id=task_id,
                 candidate=candidate,
                 owner="architecture",
-                story_id="BACKLOG-LASTKING-M1",
+                story_id=effective_back_story_id,
                 source_label="backlog",
+                repo_label=effective_repo_label,
+                overlay_refs=overlay_refs,
+                ui_candidates_path=ui_candidates_path,
             )
         )
         gameplay_tasks.append(
@@ -351,8 +422,11 @@ def create_tasks(*, repo_root: Path, dry_run: bool = False) -> tuple[int, dict[s
                 task_id=task_id,
                 candidate=candidate,
                 owner="gameplay",
-                story_id="PRD-LASTKING-v1.2",
+                story_id=effective_gameplay_story_id,
                 source_label="prd",
+                repo_label=effective_repo_label,
+                overlay_refs=overlay_refs,
+                ui_candidates_path=ui_candidates_path,
             )
         )
         created_task_ids.append(task_id)
@@ -362,7 +436,7 @@ def create_tasks(*, repo_root: Path, dry_run: bool = False) -> tuple[int, dict[s
         "ts": dt.datetime.now(dt.timezone.utc).isoformat(),
         "action": "create-chapter7-tasks-from-ui-candidates",
         "status": "ok",
-        "source": UI_CANDIDATES.as_posix(),
+        "source": _normalize_rel_path(ui_candidates_path),
         "dry_run": dry_run,
         "candidate_count": len(candidates),
         "created_count": len(created_task_ids),
@@ -370,26 +444,49 @@ def create_tasks(*, repo_root: Path, dry_run: bool = False) -> tuple[int, dict[s
         "existing_task_ids": existing_task_ids,
         "updated_count": len(updated_task_ids),
         "updated_task_ids": updated_task_ids,
-        "tasks_json": TASKS_JSON.as_posix(),
-        "tasks_back": TASKS_BACK.as_posix(),
-        "tasks_gameplay": TASKS_GAMEPLAY.as_posix(),
+        "tasks_json": _normalize_rel_path(tasks_json_path),
+        "tasks_back": _normalize_rel_path(tasks_back_path),
+        "tasks_gameplay": _normalize_rel_path(tasks_gameplay_path),
+        "overlay_root": _normalize_rel_path(overlay_root_path),
+        "repo_label": effective_repo_label,
+        "back_story_id": effective_back_story_id,
+        "gameplay_story_id": effective_gameplay_story_id,
     }
     if not dry_run:
-        _write_json(tasks_json_path, tasks_payload)
-        _write_json(repo_root / TASKS_BACK, back_tasks)
-        _write_json(repo_root / TASKS_GAMEPLAY, gameplay_tasks)
+        _write_json(resolved_tasks_json_path, tasks_payload)
+        _write_json(tasks_back_path if tasks_back_path.is_absolute() else (repo_root / tasks_back_path), back_tasks)
+        _write_json(tasks_gameplay_path if tasks_gameplay_path.is_absolute() else (repo_root / tasks_gameplay_path), gameplay_tasks)
     return 0, payload
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Create Taskmaster triplet tasks from Chapter 7 UI GDD candidates.")
     parser.add_argument("--repo-root", default=".")
+    parser.add_argument("--tasks-json-path", default=str(TASKS_JSON))
+    parser.add_argument("--tasks-back-path", default=str(TASKS_BACK))
+    parser.add_argument("--tasks-gameplay-path", default=str(TASKS_GAMEPLAY))
+    parser.add_argument("--ui-candidates-path", default=str(UI_CANDIDATES))
+    parser.add_argument("--overlay-root-path", default=str(DEFAULT_OVERLAY_ROOT))
+    parser.add_argument("--repo-label", default="")
+    parser.add_argument("--back-story-id", default="")
+    parser.add_argument("--gameplay-story-id", default="")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--out-json", default="")
     args = parser.parse_args(argv)
 
     repo_root = Path(args.repo_root).resolve()
-    rc, payload = create_tasks(repo_root=repo_root, dry_run=bool(args.dry_run))
+    rc, payload = create_tasks(
+        repo_root=repo_root,
+        dry_run=bool(args.dry_run),
+        tasks_json_path=Path(args.tasks_json_path),
+        tasks_back_path=Path(args.tasks_back_path),
+        tasks_gameplay_path=Path(args.tasks_gameplay_path),
+        ui_candidates_path=Path(args.ui_candidates_path),
+        overlay_root_path=Path(args.overlay_root_path),
+        repo_label=args.repo_label,
+        back_story_id=args.back_story_id,
+        gameplay_story_id=args.gameplay_story_id,
+    )
     out = Path(args.out_json) if args.out_json else (
         repo_root / "logs" / "ci" / _today() / "chapter7-ui-task-creation" / "summary.json"
     )

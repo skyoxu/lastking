@@ -58,12 +58,12 @@ Test-Refs:
 | `T30` performance | `logs/perf/<YYYY-MM-DD>/summary.json` | `avg_fps`, `fps_1pct_low`, `samples`, `gate` |
 | `T31-T40` config governance | `logs/ci/<YYYY-MM-DD>/config-governance/report.json` | `config_hash`, `schema_version`, `fallback_used`, `status` |
 
-| `T41` Chapter 7 entry wiring | `logs/ci/<YYYY-MM-DD>/chapter7-ui-wiring/summary.json` | `candidate_sidecar`, `steps`, `status`, `artifact_manifest` |
-| `T42` Chapter 7 HUD/outcome wiring | `logs/e2e/<YYYY-MM-DD>/runtime-ui/summary.json` | `screen_group`, `empty_state`, `failure_state`, `completion_result` |
-| `T43` Chapter 7 combat wiring | `logs/e2e/<YYYY-MM-DD>/runtime-ui/summary.json` | `pressure_visible`, `camera_feedback`, `targeting_feedback`, `status` |
-| `T44` Chapter 7 economy wiring | `logs/unit/<YYYY-MM-DD>/coverage.json` | `resource_panel`, `build_panel`, `progression_panel`, `status` |
-| `T45` Chapter 7 save/settings wiring | `logs/e2e/<YYYY-MM-DD>/settings/summary.json` | `settings_surface`, `save_surface`, `applied`, `persisted` |
-| `T46` Chapter 7 config audit wiring | `logs/ci/<YYYY-MM-DD>/config-governance/report.json` | `config_surface`, `schema_status`, `fallback_status`, `audit_metadata` |
+| `T41` Chapter 7 entry wiring | `logs/ci/<YYYY-MM-DD>/chapter7-ui-wiring/summary.json`, `logs/ci/<YYYY-MM-DD>/chapter7-ui-wiring/closure-summary.json` | `candidate_sidecar`, `steps`, `status`, `artifact_manifest`, `evidence_status`, `pending_surfaces`, `gap_to_close` |
+| `T42` Chapter 7 HUD/outcome wiring | `logs/e2e/<YYYY-MM-DD>/runtime-ui/summary.json`, `logs/ci/<YYYY-MM-DD>/chapter7-ui-wiring/closure-summary.json` | `screen_group`, `empty_state`, `failure_state`, `completion_result`, `evidence_status`, `pending_surfaces`, `gap_to_close` |
+| `T43` Chapter 7 combat wiring | `logs/e2e/<YYYY-MM-DD>/runtime-ui/summary.json`, `logs/ci/<YYYY-MM-DD>/chapter7-ui-wiring/closure-summary.json` | `pressure_visible`, `camera_feedback`, `targeting_feedback`, `status`, `evidence_status`, `pending_surfaces`, `gap_to_close` |
+| `T44` Chapter 7 economy wiring | `logs/unit/<YYYY-MM-DD>/coverage.json`, `logs/ci/<YYYY-MM-DD>/chapter7-ui-wiring/closure-summary.json` | `resource_panel`, `build_panel`, `progression_panel`, `status`, `evidence_status`, `pending_surfaces`, `gap_to_close` |
+| `T45` Chapter 7 save/settings wiring | `logs/e2e/<YYYY-MM-DD>/settings/summary.json`, `logs/ci/<YYYY-MM-DD>/chapter7-ui-wiring/closure-summary.json` | `settings_surface`, `save_surface`, `applied`, `persisted`, `evidence_status`, `pending_surfaces`, `gap_to_close` |
+| `T46` Chapter 7 config audit wiring | `logs/ci/<YYYY-MM-DD>/config-governance/report.json`, `logs/ci/<YYYY-MM-DD>/chapter7-ui-wiring/closure-summary.json` | `config_surface`, `schema_status`, `fallback_status`, `audit_metadata`, `evidence_status`, `pending_surfaces`, `gap_to_close` |
 
 ## Manifest Drift Guard
 
@@ -81,3 +81,22 @@ Test-Refs:
 - CI release-health job is the authoritative gate for Crash-Free enforcement.
 - Overlay docs only reference gate ownership and evidence path, not threshold duplication.
 - Any gate policy change must be captured by ADR before doc/script change.
+## Chapter 7 Closure Artifacts
+
+- Routing summary: `logs/ci/<YYYY-MM-DD>/chapter7-ui-wiring/summary.json`.
+- Closure authority: `logs/ci/<YYYY-MM-DD>/chapter7-ui-wiring/closure-summary.json`.
+- Status patch artifact: `logs/ci/<YYYY-MM-DD>/chapter7-ui-wiring/task-status-patch.json`.
+- Status patch apply result: `logs/ci/<YYYY-MM-DD>/chapter7-ui-wiring/apply-summary.json`.
+- Chapter 7 task status may move to `review` or `pending` from closure artifacts even if historical task execution was already merged.
+
+## Chapter 7 Closure Evidence Matrix
+
+| Task | Closure Status Target | Required Closure Fields | Current Open Surface Theme |
+| --- | --- | --- | --- |
+| `T41` | `runtime` | `evidence_status`, `pending_surfaces`, `gap_to_close`, `standalone_surface_status` | `BootStatusPanel`, `ContinueGateDialog` |
+| `T42` | `runtime` | `evidence_status`, `pending_surfaces`, `gap_to_close`, `standalone_surface_status` | `OutcomePanel`, `RuntimePromptPanel` |
+| `T43` | `runtime` | `evidence_status`, `pending_surfaces`, `gap_to_close`, `standalone_surface_status` | `CombatHud`, `PressurePanel`, `CameraControlOverlay` |
+| `T44` | `runtime` | `evidence_status`, `pending_surfaces`, `gap_to_close`, `standalone_surface_status` | `ResourcePanel`, `BuildPanel`, `ProgressionPanel` |
+| `T45` | `runtime` | `evidence_status`, `pending_surfaces`, `gap_to_close`, `standalone_surface_status` | governed save/readout meta surfaces |
+| `T46` | `runtime` | `evidence_status`, `pending_surfaces`, `gap_to_close`, `standalone_surface_status` | governed config/audit/migration readout surfaces |
+
