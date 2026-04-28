@@ -3351,7 +3351,7 @@
     "taskmaster_id": 41,
     "title": "Wire UI: MainMenu And Boot Flow",
     "description": "Close the Chapter 7 MainMenu/Boot slice by materializing the missing startup and continue surfaces with direct runtime evidence.",
-    "status": "review",
+    "status": "done",
     "priority": "P1",
     "layer": "adapter",
     "adr_refs": [
@@ -3437,7 +3437,7 @@
     "taskmaster_id": 42,
     "title": "Wire UI: Runtime HUD And Outcome Surfaces",
     "description": "Close the Chapter 7 runtime loop slice by landing owned outcome/prompt surfaces and direct HUD runtime evidence.",
-    "status": "pending",
+    "status": "review",
     "priority": "P0",
     "layer": "adapter",
     "adr_refs": [
@@ -3534,7 +3534,7 @@
     "taskmaster_id": 43,
     "title": "Wire UI: Combat Pressure And Interaction Surfaces",
     "description": "Close the Chapter 7 combat slice by landing owned combat pressure and camera-control surfaces with runtime checks.",
-    "status": "pending",
+    "status": "review",
     "priority": "P0",
     "layer": "adapter",
     "adr_refs": [

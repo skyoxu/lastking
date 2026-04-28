@@ -2683,7 +2683,7 @@
           11,
           21
         ],
-        "status": "review",
+        "status": "done",
         "subtasks": [],
         "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
         "adrRefs": [
@@ -2717,7 +2717,7 @@
           23,
           24
         ],
-        "status": "pending",
+        "status": "review",
         "subtasks": [],
         "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
         "adrRefs": [
@@ -2747,7 +2747,7 @@
           20,
           22
         ],
-        "status": "pending",
+        "status": "review",
         "subtasks": [],
         "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
         "adrRefs": [
