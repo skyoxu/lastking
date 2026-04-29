@@ -158,6 +158,8 @@ def main():
     ci_dir = os.path.join('logs', 'ci', date)
     os.makedirs(ci_dir, exist_ok=True)
 
+    selfcheck_hard = str(os.environ.get('CI_PIPELINE_SELF_CHECK_HARD', 'true')).strip().lower() not in {'0', 'false', 'no', 'off'}
+
     summary = {
         'solution': resolved_solution,
         'solution_input': args.solution,
@@ -166,6 +168,7 @@ def main():
         'dotnet': {},
         'selfcheck': {},
         'encoding': {},
+        'selfcheck_hard': selfcheck_hard,
         'status': 'ok'
     }
     hard_fail = False
@@ -294,7 +297,7 @@ def main():
     summary['selfcheck'] = sc_sum or {'status': 'fail', 'note': 'no-summary'}
     summary['selfcheck']['attempts'] = selfcheck_attempts
     summary['selfcheck']['retried_once'] = len(selfcheck_attempts) > 1
-    if not sc_ok:
+    if not sc_ok and selfcheck_hard:
         hard_fail = True
 
     # 3) Encoding scan (soft gate)

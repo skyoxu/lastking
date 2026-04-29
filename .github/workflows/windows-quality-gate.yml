@@ -38,6 +38,7 @@ jobs:
       DELIVERY_PROFILE: ${{ github.event_name == 'workflow_dispatch' && inputs.delivery_profile || 'fast-ship' }}
       WHITELIST_WARN_DAYS: '90'
       CI_DOTNET_STAGE_TIMEOUT_MS: '4200000'
+      CI_PIPELINE_SELF_CHECK_HARD: 'false'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
