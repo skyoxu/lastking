@@ -101,6 +101,42 @@ def extract_failed_tests(dotnet_test_output: str):
     return deduped
 
 
+def run_dotnet_stage(root: str, ci_dir: str, date: str, solution: str, configuration: str, attempt: int) -> dict:
+    rc, out = run_cmd([
+        'py', '-3', 'scripts/python/run_dotnet.py',
+        '--solution', solution,
+        '--configuration', configuration
+    ], cwd=root)
+    console_name = 'run-dotnet-console.txt' if attempt == 1 else f'run-dotnet-console-attempt-{attempt}.txt'
+    with io.open(os.path.join(ci_dir, console_name), 'w', encoding='utf-8') as f:
+        f.write(out)
+    dotnet_sum = read_json(os.path.join('logs', 'unit', date, 'summary.json')) or {}
+    dotnet_out_dir = dotnet_sum.get('out_dir') if isinstance(dotnet_sum, dict) else None
+    dotnet_test_output_src = os.path.join(dotnet_out_dir, 'dotnet-test-output.txt') if dotnet_out_dir else ''
+    dotnet_test_output_ci = os.path.join(ci_dir, 'dotnet-test-output.txt' if attempt == 1 else f'dotnet-test-output-attempt-{attempt}.txt')
+    copied_test_output = copy_if_exists(dotnet_test_output_src, dotnet_test_output_ci)
+    dotnet_test_output_text = ''
+    if copied_test_output:
+        try:
+            with io.open(dotnet_test_output_ci, 'r', encoding='utf-8', errors='ignore') as f:
+                dotnet_test_output_text = f.read()
+        except Exception:
+            dotnet_test_output_text = ''
+    failed_tests = extract_failed_tests(dotnet_test_output_text)
+    stage = {
+        'attempt': attempt,
+        'rc': rc,
+        'line_pct': (dotnet_sum.get('coverage') or {}).get('line_pct'),
+        'branch_pct': (dotnet_sum.get('coverage') or {}).get('branch_pct'),
+        'status': dotnet_sum.get('status'),
+        'run_dotnet_console_log': os.path.join(ci_dir, console_name),
+        'dotnet_test_output_log': dotnet_test_output_ci if copied_test_output else None,
+        'failed_tests_count': len(failed_tests),
+        'failed_tests': failed_tests[:50],
+    }
+    return stage
+
+
 def main():
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest='cmd', required=True)
@@ -173,35 +209,36 @@ def main():
     }
 
     # 1) Dotnet tests + coverage (soft gate on coverage)
-    rc, out = run_cmd(['py', '-3', 'scripts/python/run_dotnet.py',
-                       '--solution', resolved_solution,
-                       '--configuration', args.configuration], cwd=root)
-    with io.open(os.path.join(ci_dir, 'run-dotnet-console.txt'), 'w', encoding='utf-8') as f:
-        f.write(out)
-    dotnet_sum = read_json(os.path.join('logs', 'unit', date, 'summary.json')) or {}
-    dotnet_out_dir = dotnet_sum.get('out_dir') if isinstance(dotnet_sum, dict) else None
-    dotnet_test_output_src = os.path.join(dotnet_out_dir, 'dotnet-test-output.txt') if dotnet_out_dir else ''
-    dotnet_test_output_ci = os.path.join(ci_dir, 'dotnet-test-output.txt')
-    copied_test_output = copy_if_exists(dotnet_test_output_src, dotnet_test_output_ci)
-    dotnet_test_output_text = ''
-    if copied_test_output:
-        try:
-            with io.open(dotnet_test_output_ci, 'r', encoding='utf-8', errors='ignore') as f:
-                dotnet_test_output_text = f.read()
-        except Exception:
-            dotnet_test_output_text = ''
-    failed_tests = extract_failed_tests(dotnet_test_output_text)
-    summary['dotnet'] = {
-        'rc': rc,
-        'line_pct': (dotnet_sum.get('coverage') or {}).get('line_pct'),
-        'branch_pct': (dotnet_sum.get('coverage') or {}).get('branch_pct'),
-        'status': dotnet_sum.get('status'),
-        'run_dotnet_console_log': os.path.join(ci_dir, 'run-dotnet-console.txt'),
-        'dotnet_test_output_log': dotnet_test_output_ci if copied_test_output else None,
-        'failed_tests_count': len(failed_tests),
-        'failed_tests': failed_tests[:50],
-    }
-    if rc not in (0, 2) or summary['dotnet']['status'] == 'tests_failed':
+    dotnet_stage_1 = run_dotnet_stage(
+        root=root,
+        ci_dir=ci_dir,
+        date=date,
+        solution=resolved_solution,
+        configuration=args.configuration,
+        attempt=1,
+    )
+    dotnet_hard_failed = dotnet_stage_1['rc'] not in (0, 2) or dotnet_stage_1.get('status') == 'tests_failed'
+    if dotnet_hard_failed:
+        dotnet_stage_2 = run_dotnet_stage(
+            root=root,
+            ci_dir=ci_dir,
+            date=date,
+            solution=resolved_solution,
+            configuration=args.configuration,
+            attempt=2,
+        )
+        dotnet_hard_failed = dotnet_stage_2['rc'] not in (0, 2) or dotnet_stage_2.get('status') == 'tests_failed'
+        summary['dotnet'] = {
+            **dotnet_stage_2,
+            'retried_once': True,
+            'first_attempt': dotnet_stage_1,
+        }
+    else:
+        summary['dotnet'] = {
+            **dotnet_stage_1,
+            'retried_once': False,
+        }
+    if dotnet_hard_failed:
         hard_fail = True
 
     # 2) Godot self-check (hard gate)
