@@ -3717,7 +3717,7 @@
     "taskmaster_id": 45,
     "title": "Wire UI: Save, Settings, And Meta Surfaces",
     "description": "Close the Chapter 7 meta slice by stabilizing save/readout surfaces beyond the already-landed settings UI.",
-    "status": "review",
+    "status": "done",
     "priority": "P1",
     "layer": "adapter",
     "adr_refs": [

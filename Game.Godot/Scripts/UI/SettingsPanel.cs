@@ -1,5 +1,7 @@
 using Godot;
 using System;
+using System.IO;
+using System.Text.Json;
 using Game.Godot.Adapters;
 using Game.Godot.Scripts.Audio;
 
@@ -17,6 +19,12 @@ public partial class SettingsPanel : Control
     private Button _save = default!;
     private Button _load = default!;
     private Button _close = default!;
+    private Label _autosavePathLabel = default!;
+    private Label _saveStatusLabel = default!;
+    private Label _summaryLocaleLabel = default!;
+    private Label _summaryAchievementsLabel = default!;
+    private Label _summaryPerfLabel = default!;
+    private Label _summaryUpdatedLabel = default!;
 
     private const string UserId = "default";
     private const string ConfigPath = "user://settings.cfg";
@@ -25,6 +33,9 @@ public partial class SettingsPanel : Control
     private const string SfxVolumeKey = "sfx_volume";
     private const string LegacyMusicVolumeDbKey = "music_volume_db";
     private const string LegacySfxVolumeDbKey = "sfx_volume_db";
+    private const string AutoSaveSlotPath = "user://autosave.save";
+    private const string AchievementSnapshotPath = "user://logs/tmp/task27-achievements.json";
+    private const string PerfSnapshotPath = "user://logs/perf/perf.json";
 
     public override void _Ready()
     {
@@ -35,6 +46,12 @@ public partial class SettingsPanel : Control
         _save = GetNode<Button>("VBox/Buttons/SaveBtn");
         _load = GetNode<Button>("VBox/Buttons/LoadBtn");
         _close = GetNode<Button>("VBox/Buttons/CloseBtn");
+        _autosavePathLabel = GetNode<Label>("VBox/SavePanel/VBox/AutosavePathLabel");
+        _saveStatusLabel = GetNode<Label>("VBox/SavePanel/VBox/SaveStatusLabel");
+        _summaryLocaleLabel = GetNode<Label>("VBox/RunSummaryPanel/VBox/SummaryLocaleLabel");
+        _summaryAchievementsLabel = GetNode<Label>("VBox/RunSummaryPanel/VBox/SummaryAchievementsLabel");
+        _summaryPerfLabel = GetNode<Label>("VBox/RunSummaryPanel/VBox/SummaryPerfLabel");
+        _summaryUpdatedLabel = GetNode<Label>("VBox/RunSummaryPanel/VBox/SummaryUpdatedLabel");
 
         _save.Pressed += OnSave;
         _load.Pressed += OnLoad;
@@ -59,6 +76,10 @@ public partial class SettingsPanel : Control
         _sfxVolume.ValueChanged += OnSfxVolumeChanged;
         _graphics.ItemSelected += OnGraphicsChanged;
         _language.ItemSelected += OnLanguageChanged;
+
+        _autosavePathLabel.Text = $"Autosave Slot: {AutoSaveSlotPath}";
+        _saveStatusLabel.Text = "Save Status: idle";
+        RefreshMetaSummary("panel_ready");
 
         Visible = false;
     }
@@ -169,6 +190,8 @@ public partial class SettingsPanel : Control
         ApplyMusicVolume(musicVolume);
         ApplySfxVolume(sfxVolume);
         ApplyLanguage(lang);
+        RefreshMetaSummary("saved");
+        _saveStatusLabel.Text = $"Save Status: saved to {AutoSaveSlotPath}";
     }
 
     private void OnLoad()
@@ -182,7 +205,11 @@ public partial class SettingsPanel : Control
         {
             MigrateFromDbIfConfigMissing();
             if (!TryLoadFromConfig(out musicVolume, out sfxVolume, out gfx, out lang))
+            {
+                RefreshMetaSummary("load_no_config");
+                _saveStatusLabel.Text = $"Save Status: no_config at {AutoSaveSlotPath}";
                 return;
+            }
         }
         _musicVolume.Value = musicVolume;
         _sfxVolume.Value = sfxVolume;
@@ -214,9 +241,15 @@ public partial class SettingsPanel : Control
             }
             ApplyLanguage(normalized);
         }
+        RefreshMetaSummary("loaded");
+        _saveStatusLabel.Text = $"Save Status: loaded from {AutoSaveSlotPath}";
     }
 
-    public void ShowPanel() => Visible = true;
+    public void ShowPanel()
+    {
+        Visible = true;
+        RefreshMetaSummary("show_panel");
+    }
 
     private void OnMusicVolumeChanged(double value)
     {
@@ -286,6 +319,7 @@ public partial class SettingsPanel : Control
         }
 
         TranslationServer.SetLocale(normalized);
+        _summaryLocaleLabel.Text = $"Locale: {normalized}";
     }
 
     private static bool IsSupportedLocale(string locale)
@@ -359,6 +393,74 @@ public partial class SettingsPanel : Control
             // Set via dynamic property names to avoid API differences
             try { vp.Set("msaa_2d", msaa); } catch { }
             try { vp.Set("msaa_3d", msaa); } catch { }
+        }
+    }
+
+    private void RefreshMetaSummary(string source)
+    {
+        _summaryLocaleLabel.Text = $"Locale: {TranslationServer.GetLocale()}";
+        _summaryAchievementsLabel.Text = $"Achievements: {ReadAchievementsSummary()}";
+        _summaryPerfLabel.Text = $"Performance: {ReadPerformanceSummary()}";
+        _summaryUpdatedLabel.Text = $"Summary Updated: {source}";
+    }
+
+    private static string ReadAchievementsSummary()
+    {
+        try
+        {
+            if (!FileAccess.FileExists(AchievementSnapshotPath))
+            {
+                return "no_snapshot";
+            }
+
+            using var file = FileAccess.Open(AchievementSnapshotPath, FileAccess.ModeFlags.Read);
+            var json = file.GetAsText();
+            using var doc = JsonDocument.Parse(json);
+            if (doc.RootElement.TryGetProperty("unlock_ids", out var unlockIds) && unlockIds.ValueKind == JsonValueKind.Array)
+            {
+                var ids = unlockIds.EnumerateArray()
+                    .Select(item => item.GetString())
+                    .Where(item => !string.IsNullOrWhiteSpace(item))
+                    .ToArray();
+                if (ids.Length > 0)
+                {
+                    return $"unlocked={ids.Length}";
+                }
+            }
+            return "snapshot_loaded";
+        }
+        catch
+        {
+            return "snapshot_invalid";
+        }
+    }
+
+    private static string ReadPerformanceSummary()
+    {
+        try
+        {
+            if (!FileAccess.FileExists(PerfSnapshotPath))
+            {
+                return "no_perf_log";
+            }
+
+            using var file = FileAccess.Open(PerfSnapshotPath, FileAccess.ModeFlags.Read);
+            var json = file.GetAsText();
+            using var doc = JsonDocument.Parse(json);
+            var root = doc.RootElement;
+            if (root.TryGetProperty("p95_ms", out var p95Ms))
+            {
+                return $"p95_ms={p95Ms.GetDouble():F2}";
+            }
+            if (root.TryGetProperty("avg_ms", out var avgMs))
+            {
+                return $"avg_ms={avgMs.GetDouble():F2}";
+            }
+            return "perf_loaded";
+        }
+        catch
+        {
+            return "perf_invalid";
         }
     }
 }
