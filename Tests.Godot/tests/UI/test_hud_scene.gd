@@ -85,3 +85,37 @@ func test_hud_scene_exposes_task43_owned_surfaces_with_player_visible_defaults()
     assert_str(pressure_label.text).is_equal("Pressure: n/a")
     assert_str(camera_label.text).is_equal("Camera: idle")
 
+# ACC:T42.2
+# ACC:T42.6
+func test_hud_scene_exposes_task42_owned_surfaces_with_runtime_defaults() -> void:
+    var scene := preload("res://Game.Godot/Scenes/UI/HUD.tscn").instantiate()
+    add_child(auto_free(scene))
+    await get_tree().process_frame
+
+    assert_bool(scene.has_node("FeedbackLayer/OutcomePanel")).is_true()
+    assert_bool(scene.has_node("FeedbackLayer/RuntimePromptPanel")).is_true()
+    var outcome_label: Label = scene.get_node("FeedbackLayer/OutcomePanel/VBox/OutcomeLabel")
+    var prompt_label: Label = scene.get_node("FeedbackLayer/RuntimePromptPanel/VBox/RuntimePromptLabel")
+    assert_str(outcome_label.text).is_equal("Outcome: n/a")
+    assert_str(prompt_label.text).is_equal("Prompt: n/a")
+
+# ACC:T44.1
+# ACC:T44.2
+# ACC:T44.3
+func test_hud_scene_exposes_task44_owned_surfaces_with_runtime_defaults() -> void:
+    var scene := preload("res://Game.Godot/Scenes/UI/HUD.tscn").instantiate()
+    add_child(auto_free(scene))
+    await get_tree().process_frame
+
+    assert_bool(scene.has_node("FeedbackLayer/ResourcePanel")).is_true()
+    assert_bool(scene.has_node("FeedbackLayer/BuildPanel")).is_true()
+    assert_bool(scene.has_node("FeedbackLayer/ProgressionPanel")).is_true()
+
+    var resource_label: Label = scene.get_node("FeedbackLayer/ResourcePanel/VBox/ResourceSummaryLabel")
+    var build_label: Label = scene.get_node("FeedbackLayer/BuildPanel/VBox/BuildSummaryLabel")
+    var progression_label: Label = scene.get_node("FeedbackLayer/ProgressionPanel/VBox/ProgressionSummaryLabel")
+
+    assert_str(resource_label.text).is_equal("Resources: gold=n/a iron=n/a pop=n/a")
+    assert_str(build_label.text).is_equal("Build: tax=n/a total_gold=n/a")
+    assert_str(progression_label.text).is_equal("Progression: tech=n/a reward=n/a")
+

@@ -80,10 +80,15 @@ def _scene_has_surface_nodes(repo_root: Path, scene_rel_path: str, surfaces: lis
     scene_text = _read_text_if_exists(scene_path)
     if not scene_text:
         return []
+
+    alias_map = {
+        'RuntimeHud': ['RuntimeHud', 'HUD'],
+        'SettingsMenu': ['SettingsMenu', 'SettingsPanel', 'SettingsScreen'],
+    }
     present: list[str] = []
     for surface in surfaces:
-        token = f'[node name="{surface}"'
-        if token in scene_text:
+        aliases = alias_map.get(surface, [surface])
+        if any(f'[node name="{alias}"' in scene_text for alias in aliases):
             present.append(surface)
     return present
 
@@ -383,13 +388,14 @@ def _build_closure_summary(
     candidates_by_bucket = _candidate_by_bucket(candidate_payload)
     audit_text = _read_text_if_exists(wiring_audit_path) if wiring_audit_path and wiring_audit_path.exists() else ''
     bucket_order = ['entry', 'loop', 'combat', 'economy', 'meta', 'governance']
+    # Chapter 7 closure should be judged by the dedicated wiring task row itself.
     bucket_task_map = {
-        'entry': [21, 41],
-        'loop': [23, 24, 42],
-        'combat': [22, 43],
+        'entry': [41],
+        'loop': [42],
+        'combat': [43],
         'economy': [44],
-        'meta': [27, 30, 45],
-        'governance': [31, 32, 33, 34, 35, 36, 38, 39, 40, 46],
+        'meta': [45],
+        'governance': [46],
     }
     wiring_task_map = {
         'entry': 41,
@@ -410,18 +416,21 @@ def _build_closure_summary(
         suggested_surfaces = list(candidate.get('suggested_standalone_surfaces') or [])
         implemented_surfaces: list[str] = []
         pending_surfaces = list(suggested_surfaces)
-        if bucket == 'entry':
+        scene_map = {
+            'entry': 'Game.Godot/Scenes/UI/MainMenu.tscn',
+            'loop': 'Game.Godot/Scenes/UI/HUD.tscn',
+            'combat': 'Game.Godot/Scenes/UI/HUD.tscn',
+            'economy': 'Game.Godot/Scenes/UI/HUD.tscn',
+            'meta': 'Game.Godot/Scenes/UI/SettingsPanel.tscn',
+            'governance': 'Game.Godot/Scenes/UI/HUD.tscn',
+        }
+        scene_rel = scene_map.get(bucket)
+        if scene_rel:
             implemented_surfaces = _scene_has_surface_nodes(
                 repo_root=repo_root,
-                scene_rel_path='Game.Godot/Scenes/UI/MainMenu.tscn',
+                scene_rel_path=scene_rel,
                 surfaces=suggested_surfaces,
             )
-            pending_surfaces = [item for item in suggested_surfaces if item not in implemented_surfaces]
-        elif bucket == 'loop':
-            implemented_surfaces = ['HUD']
-            pending_surfaces = [item for item in suggested_surfaces if item not in {'HUD', 'RuntimeHud'}]
-        elif bucket == 'meta':
-            implemented_surfaces = ['SettingsPanel', 'SettingsScreen']
             pending_surfaces = [item for item in suggested_surfaces if item not in implemented_surfaces]
         gap_to_close = [row['gap_to_close'] for row in task_rows if row.get('gap_to_close') and row.get('gap_to_close') != 'None']
         epic_usable = evidence_status == 'runtime' and len(pending_surfaces) == 0 and not gap_to_close
@@ -875,6 +884,10 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(payload, ensure_ascii=False, indent=2))
         return 0
 
+    effective_wiring_audit = Path(args.wiring_audit_path) if args.wiring_audit_path else Path('docs/gdd/t1-t46-m1-wiring-audit.md')
+    if not (repo_root / effective_wiring_audit).exists() and not effective_wiring_audit.is_absolute():
+        effective_wiring_audit = None
+
     rc, payload = orchestrate(
         repo_root=repo_root,
         delivery_profile=args.delivery_profile,
@@ -886,7 +899,7 @@ def main(argv: list[str] | None = None) -> int:
         overlay_root_path=Path(args.overlay_root_path),
         ui_gdd_flow_path=Path(args.ui_gdd_flow_path),
         alignment_audit_path=Path(args.alignment_audit_path) if args.alignment_audit_path else None,
-        wiring_audit_path=Path(args.wiring_audit_path) if args.wiring_audit_path else None,
+        wiring_audit_path=effective_wiring_audit,
         repo_label=args.repo_label,
         back_story_id=args.back_story_id,
         gameplay_story_id=args.gameplay_story_id,

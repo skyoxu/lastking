@@ -35,6 +35,16 @@ public partial class HUD : Control
     private Button _migrationRetryButton = default!;
     private PanelContainer _reportMetadataPanel = default!;
     private Label _reportMetadataLabel = default!;
+    private PanelContainer _outcomePanel = default!;
+    private Label _outcomeLabel = default!;
+    private PanelContainer _runtimePromptPanel = default!;
+    private Label _runtimePromptLabel = default!;
+    private PanelContainer _resourcePanel = default!;
+    private Label _resourceSummaryLabel = default!;
+    private PanelContainer _buildPanel = default!;
+    private Label _buildSummaryLabel = default!;
+    private PanelContainer _progressionPanel = default!;
+    private Label _progressionSummaryLabel = default!;
     private Button _pauseButton = default!;
     private Button _oneXButton = default!;
     private Button _twoXButton = default!;
@@ -89,6 +99,16 @@ public partial class HUD : Control
         _migrationRetryButton = GetNode<Button>("FeedbackLayer/MigrationStatusDialog/VBox/RetryButton");
         _reportMetadataPanel = GetNode<PanelContainer>("FeedbackLayer/ReportMetadataPanel");
         _reportMetadataLabel = GetNode<Label>("FeedbackLayer/ReportMetadataPanel/VBox/ReportMetadataLabel");
+        _outcomePanel = GetNode<PanelContainer>("FeedbackLayer/OutcomePanel");
+        _outcomeLabel = GetNode<Label>("FeedbackLayer/OutcomePanel/VBox/OutcomeLabel");
+        _runtimePromptPanel = GetNode<PanelContainer>("FeedbackLayer/RuntimePromptPanel");
+        _runtimePromptLabel = GetNode<Label>("FeedbackLayer/RuntimePromptPanel/VBox/RuntimePromptLabel");
+        _resourcePanel = GetNode<PanelContainer>("FeedbackLayer/ResourcePanel");
+        _resourceSummaryLabel = GetNode<Label>("FeedbackLayer/ResourcePanel/VBox/ResourceSummaryLabel");
+        _buildPanel = GetNode<PanelContainer>("FeedbackLayer/BuildPanel");
+        _buildSummaryLabel = GetNode<Label>("FeedbackLayer/BuildPanel/VBox/BuildSummaryLabel");
+        _progressionPanel = GetNode<PanelContainer>("FeedbackLayer/ProgressionPanel");
+        _progressionSummaryLabel = GetNode<Label>("FeedbackLayer/ProgressionPanel/VBox/ProgressionSummaryLabel");
         _pauseButton = GetNode<Button>("TopBar/HBox/SpeedControls/PauseButton");
         _oneXButton = GetNode<Button>("TopBar/HBox/SpeedControls/OneXButton");
         _twoXButton = GetNode<Button>("TopBar/HBox/SpeedControls/TwoXButton");
@@ -110,9 +130,19 @@ public partial class HUD : Control
         _configAuditPanel.Visible = true;
         _migrationStatusDialog.Visible = true;
         _reportMetadataPanel.Visible = true;
+        _outcomePanel.Visible = true;
+        _runtimePromptPanel.Visible = true;
+        _resourcePanel.Visible = true;
+        _buildPanel.Visible = true;
+        _progressionPanel.Visible = true;
         _configAuditSummaryLabel.Text = "Config: n/a | Schema: n/a | Fallback: n/a";
         _migrationStatusLabel.Text = "Migration: n/a";
         _reportMetadataLabel.Text = "Metadata: n/a";
+        _outcomeLabel.Text = "Outcome: n/a";
+        _runtimePromptLabel.Text = "Prompt: n/a";
+        _resourceSummaryLabel.Text = "Resources: gold=n/a iron=n/a pop=n/a";
+        _buildSummaryLabel.Text = "Build: tax=n/a total_gold=n/a";
+        _progressionSummaryLabel.Text = "Progression: tech=n/a reward=n/a";
         _activeFeedbackCode = string.Empty;
         _activeFeedbackMessageKey = string.Empty;
         _hasPendingErrorDialog = false;
@@ -140,13 +170,21 @@ public partial class HUD : Control
 
     public override void _ExitTree()
     {
-        if (_bus != null)
+        if (_bus == null || !GodotObject.IsInstanceValid(_bus))
+        {
+            return;
+        }
+
+        try
         {
             var callable = new Callable(this, nameof(OnDomainEventEmitted));
             if (_bus.IsConnected(EventBusAdapter.SignalName.DomainEventEmitted, callable))
             {
                 _bus.Disconnect(EventBusAdapter.SignalName.DomainEventEmitted, callable);
             }
+        }
+        catch (ObjectDisposedException)
+        {
         }
     }
 
@@ -196,6 +234,9 @@ public partial class HUD : Control
             type != EventTypes.LastkingWaveSpawned &&
             type != EventTypes.LastkingCameraScrolled &&
             type != EventTypes.LastkingRewardOffered &&
+            type != EventTypes.LastkingResourcesChanged &&
+            type != EventTypes.LastkingTaxCollected &&
+            type != EventTypes.LastkingTechApplied &&
             type != EventTypes.RunStateTransitioned &&
             type != EventTypes.LastkingUiFeedbackRaised &&
             type != EventTypes.SaveMigrationFailed &&
@@ -217,6 +258,21 @@ public partial class HUD : Control
             if (type == EventTypes.LastkingRewardOffered)
             {
                 HandleRewardOfferedEvent(doc.RootElement);
+            }
+
+            if (type == EventTypes.LastkingResourcesChanged)
+            {
+                HandleResourcesChangedEvent(doc.RootElement);
+            }
+
+            if (type == EventTypes.LastkingTaxCollected)
+            {
+                HandleTaxCollectedEvent(doc.RootElement);
+            }
+
+            if (type == EventTypes.LastkingTechApplied)
+            {
+                HandleTechAppliedEvent(doc.RootElement);
             }
 
             if (type == EventTypes.RunStateTransitioned)
@@ -251,6 +307,7 @@ public partial class HUD : Control
         var code = ReadString(payload, "Code", "code", "reason_code") ?? string.Empty;
         var messageKey = ReadString(payload, "MessageKey", "message_key") ?? string.Empty;
         var details = ReadString(payload, "Details", "details") ?? string.Empty;
+        RenderRuntimePrompt(messageKey, details, code);
 
         var hasSaveFailure = type == EventTypes.SaveMigrationFailed || type == EventTypes.SaveWriteFailed;
         var isErrorDialog = hasSaveFailure || IsMigrationOrLoadFailure(code, messageKey);
@@ -285,6 +342,9 @@ public partial class HUD : Control
         var optionC = ReadString(payload, "option_c", "OptionC");
         var details = string.Join(", ", new[] { optionA, optionB, optionC }.Where(value => !string.IsNullOrWhiteSpace(value)));
         ShowTemporaryFeedback("ui.reward.offer.presented", details, code: "reward_offered", priority: 1);
+        _progressionSummaryLabel.Text = string.IsNullOrWhiteSpace(details)
+            ? "Progression: tech=n/a reward=offered"
+            : $"Progression: tech=n/a reward={details}";
     }
 
     private void HandleRunStateTransitionedEvent(JsonElement payload)
@@ -295,6 +355,9 @@ public partial class HUD : Control
         if (string.Equals(outcome, "win", StringComparison.OrdinalIgnoreCase))
         {
             ShowTemporaryFeedback("ui.run.win.day15", details, code: "run_win", priority: 2);
+            _outcomeLabel.Text = string.IsNullOrWhiteSpace(details)
+                ? "Outcome: win"
+                : $"Outcome: win {details}";
             return;
         }
 
@@ -302,6 +365,17 @@ public partial class HUD : Control
             string.Equals(outcome, "lose", StringComparison.OrdinalIgnoreCase))
         {
             ShowTemporaryFeedback("ui.run.lose.castle_fall", details, code: "run_lose", priority: 2);
+            _outcomeLabel.Text = string.IsNullOrWhiteSpace(details)
+                ? "Outcome: loss"
+                : $"Outcome: loss {details}";
+            return;
+        }
+
+        if (!string.IsNullOrWhiteSpace(outcome))
+        {
+            _outcomeLabel.Text = string.IsNullOrWhiteSpace(details)
+                ? $"Outcome: {outcome}"
+                : $"Outcome: {outcome} {details}";
         }
     }
 
@@ -336,6 +410,48 @@ public partial class HUD : Control
         {
             _cameraStatusLabel.Text = $"Camera: {mode}";
         }
+    }
+
+    private void HandleResourcesChangedEvent(JsonElement payload)
+    {
+        var gold = ReadInt(payload, "gold", "Gold");
+        var iron = ReadInt(payload, "iron", "Iron");
+        var popCap = ReadInt(payload, "population_cap", "PopulationCap");
+        if (gold.HasValue || iron.HasValue || popCap.HasValue)
+        {
+            _resourceSummaryLabel.Text =
+                $"Resources: gold={DisplayInt(gold)} iron={DisplayInt(iron)} pop={DisplayInt(popCap)}";
+        }
+    }
+
+    private void HandleTaxCollectedEvent(JsonElement payload)
+    {
+        var taxDelta = ReadInt(payload, "gold_delta", "GoldDelta");
+        var totalGold = ReadInt(payload, "total_gold", "TotalGold", "gold_after", "GoldAfter");
+        var residenceId = ReadString(payload, "residence_id", "ResidenceId");
+        var details = !string.IsNullOrWhiteSpace(residenceId) ? $"residence={residenceId}" : "residence=n/a";
+        _buildSummaryLabel.Text =
+            $"Build: tax={DisplayInt(taxDelta)} total_gold={DisplayInt(totalGold)} {details}";
+    }
+
+    private void HandleTechAppliedEvent(JsonElement payload)
+    {
+        var techId = ReadString(payload, "tech_id", "TechId");
+        var statKey = ReadString(payload, "stat_key", "StatKey");
+        var previous = ReadInt(payload, "previous_value", "PreviousValue");
+        var current = ReadInt(payload, "current_value", "CurrentValue");
+        var techText = !string.IsNullOrWhiteSpace(techId) ? techId : "n/a";
+        var statText = !string.IsNullOrWhiteSpace(statKey) ? statKey : "n/a";
+        _progressionSummaryLabel.Text =
+            $"Progression: tech={techText}:{statText} {DisplayInt(previous)}->{DisplayInt(current)} reward=n/a";
+    }
+
+    private void RenderRuntimePrompt(string messageKey, string details, string fallbackCode)
+    {
+        var text = BuildFeedbackDisplayText(messageKey, details, fallbackCode);
+        _runtimePromptLabel.Text = string.IsNullOrWhiteSpace(text)
+            ? "Prompt: n/a"
+            : $"Prompt: {text}";
     }
 
     private void UpdatePressureLabelFromHp(int hp)
@@ -504,6 +620,11 @@ public partial class HUD : Control
         }
 
         return $"{keyText} {detailText}";
+    }
+
+    private static string DisplayInt(int? value)
+    {
+        return value.HasValue ? value.Value.ToString() : "n/a";
     }
 
     private void OnPausePressed()
