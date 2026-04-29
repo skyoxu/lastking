@@ -3,7 +3,7 @@ GDD-ID: GDD-LASTKING-UI-WIRING-V1
 Title: Lastking Chapter 7 UI Wiring Board
 Status: Draft
 Owner: codex
-Last Updated: 2026-04-27
+Last Updated: 2026-04-29
 Encoding: UTF-8
 Applies-To:
   - .taskmaster/tasks/tasks.json
@@ -57,11 +57,11 @@ Test-Refs:
 
 | Capability Slice | Audience | Task IDs | Player-Facing Meaning | Primary UI Need |
 | --- | --- | --- | --- | --- |
-| Entry And Bootstrap | player-facing | T01, T11, T21, T41, T42 | Show canonical startup path, valid continue behavior, and explicit startup failure recovery | MainMenu / Boot Flow |
+| Entry And Bootstrap | player-facing | T01, T11, T21, T41 | Show canonical startup path, valid continue behavior, and explicit startup failure recovery | MainMenu / Boot Flow |
 | Core Loop State And Outcome | player-facing | T03, T07, T08, T09, T10, T18, T19, T23, T24 | Render readable phase, timer, HP, reward, prompt, and win/lose state from runtime events | HUD / Prompt / Outcome Surfaces |
-| Combat Pressure And Interaction | player-facing | T04, T05, T06, T20, T22, T43 | Render enemy pressure, targeting, combat outcomes, and camera interaction without hidden state | Combat HUD / Pressure / Camera Feedback |
+| Combat Pressure And Interaction | player-facing | T04, T05, T06, T20, T22 | Render enemy pressure, targeting, combat outcomes, and camera interaction without hidden state | Combat HUD / Pressure / Camera Feedback |
 | Economy Build And Progression | player-facing | T12, T13, T14, T15, T16, T17 | Render deterministic resource, build, queue, upgrade, and progression changes with clear invalid-state feedback | Resource / Build / Progression Panels |
-| Meta Systems And Platform | player-facing or mixed | T25, T26, T27, T28, T29, T30, T44, T45, T46 | Render persistence, localization, audio, performance, and platform status on governed player-visible surfaces | Settings / Save / Meta Surfaces |
+| Meta Systems And Platform | player-facing or mixed | T25, T26, T27, T28, T29, T30 | Render persistence, localization, audio, performance, and platform status on governed player-visible surfaces | Settings / Save / Meta Surfaces |
 | Config Governance And Audit | operator-facing or mixed | T02, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40 | Render active config, schema status, fallback policy, migration status, and audit metadata without relying on logs-only evidence | Config Summary / Audit / Migration Surfaces |
 
 ## 4. Flow Recomposition
@@ -72,7 +72,6 @@ Test-Refs:
 - T11 `Refine baseline bootstrap with main-scene and structure standards`
 - T21 `Lock Windows export profile and Steam runtime startup validation`
 - T41 `Wire UI: MainMenu And Boot Flow`
-- T42 `Wire UI: Runtime HUD And Outcome Surfaces`
 ### Core Loop State And Outcome
 
 - T03 `Develop runtime state machine for Day/Night cycles`
@@ -91,7 +90,6 @@ Test-Refs:
 - T06 `Implement enemy AI with target priority and pathing`
 - T20 `Integrate Combat with Friendly Fire Disabled`
 - T22 `Implement Camera and Interaction System with Edge and Keyboard Scrolling`
-- T43 `Wire UI: Combat Pressure And Interaction Surfaces`
 ### Economy Build And Progression
 
 - T12 `Implement Core Resource System with Integer Safety`
@@ -108,9 +106,6 @@ Test-Refs:
 - T28 `Set Up Localization (i18n) for zh-CN and en-US`
 - T29 `Add Audio Settings for Music and SFX Channels`
 - T30 `Optimize for Performance Targets (45 FPS 1% Low, 60 FPS Average)`
-- T44 `Wire UI: Economy And Progression Panels`
-- T45 `Wire UI: Save, Settings, And Meta Surfaces`
-- T46 `Wire UI: Config Audit And Migration Surfaces`
 ### Config Governance And Audit
 
 - T02 `Implement config-first balancing system`
@@ -129,11 +124,11 @@ Test-Refs:
 
 | Feature | UI Surface | Player Action | System Response | Test Refs |
 | --- | --- | --- | --- | --- |
-| Entry And Bootstrap (T01, T11, T21, T41, T42) | MainMenu / Boot Flow | Launch, continue, retry bootstrap, or enter a run | Show canonical startup path, valid continue behavior, and explicit startup failure recovery | `Game.Core.Tests/State/GameStateMachineTests.cs`, `Tests.Godot/tests/Integration/test_project_bootstrap_editor_compile_run.gd`, `Tests.Godot/tests/Integration/test_windows_export_startup_flow.gd`, `Tests.Godot/tests/Scenes/Smoke/test_main_scene_smoke.gd` |
+| Entry And Bootstrap (T01, T11, T21, T41) | MainMenu / Boot Flow | Launch, continue, retry bootstrap, or enter a run | Show canonical startup path, valid continue behavior, and explicit startup failure recovery | `Game.Core.Tests/State/GameStateMachineTests.cs`, `Tests.Godot/tests/Integration/test_project_bootstrap_editor_compile_run.gd`, `Tests.Godot/tests/Integration/test_windows_export_startup_flow.gd`, `Tests.Godot/tests/Scenes/Smoke/test_main_scene_smoke.gd` |
 | Core Loop State And Outcome (T03, T07, T08, T09, T10, T18, T19, T23, T24) | HUD / Prompt / Outcome Surfaces | Play a run, observe timing, rewards, prompts, and terminal transitions | Render readable phase, timer, HP, reward, prompt, and win/lose state from runtime events | `Game.Core.Tests/State/GameStateMachineTests.cs`, `Game.Core.Tests/State/GameStateManagerTests.cs`, `Game.Core.Tests/Tasks/Task3DayNightScopeGuardTests.cs`, `Game.Core.Tests/Tasks/Task3DayNightDesignArtifactTests.cs` |
-| Combat Pressure And Interaction (T04, T05, T06, T20, T22, T43) | Combat HUD / Pressure / Camera Feedback | Fight, observe pressure, targeting, pathing, and camera responses | Render enemy pressure, targeting, combat outcomes, and camera interaction without hidden state | `Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs`, `Game.Core.Tests/Services/WaveManagerDeterminismTests.cs`, `Game.Core.Tests/Engine/GameEngineCoreDeterminismTests.cs`, `Game.Core.Tests/Services/WaveBudgetAllocatorTests.cs` |
+| Combat Pressure And Interaction (T04, T05, T06, T20, T22) | Combat HUD / Pressure / Camera Feedback | Fight, observe pressure, targeting, pathing, and camera responses | Render enemy pressure, targeting, combat outcomes, and camera interaction without hidden state | `Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs`, `Game.Core.Tests/Services/WaveManagerDeterminismTests.cs`, `Game.Core.Tests/Engine/GameEngineCoreDeterminismTests.cs`, `Game.Core.Tests/Services/WaveBudgetAllocatorTests.cs` |
 | Economy Build And Progression (T12, T13, T14, T15, T16, T17) | Resource / Build / Progression Panels | Spend resources, place/build, train, upgrade, repair, or pick rewards | Render deterministic resource, build, queue, upgrade, and progression changes with clear invalid-state feedback | `Game.Core.Tests/Services/ResourceManagerIntegerSafetyTests.cs`, `Game.Core.Tests/Engine/GameEngineCoreEventTests.cs`, `Game.Core.Tests/Services/ResourceManagerTests.cs`, `Game.Core.Tests/Services/ResourceManagerEventTests.cs` |
-| Meta Systems And Platform (T25, T26, T27, T28, T29, T30, T44, T45, T46) | Settings / Save / Meta Surfaces | Save, load, localize, tune audio, or inspect platform/runtime status | Render persistence, localization, audio, performance, and platform status on governed player-visible surfaces | `Tests.Godot/tests/Adapters/Save/test_save_manager_autosave_slot_path.gd`, `Tests.Godot/tests/Adapters/Db/test_savegame_update_overwrite_cross_restart.gd`, `Tests.Godot/tests/Adapters/Save/test_save_manager_daystart_autosave.gd`, `Tests.Godot/tests/Adapters/Db/test_savegame_persistence_cross_restart.gd` |
+| Meta Systems And Platform (T25, T26, T27, T28, T29, T30) | Settings / Save / Meta Surfaces | Save, load, localize, tune audio, or inspect platform/runtime status | Render persistence, localization, audio, performance, and platform status on governed player-visible surfaces | `Tests.Godot/tests/Adapters/Save/test_save_manager_autosave_slot_path.gd`, `Tests.Godot/tests/Adapters/Db/test_savegame_update_overwrite_cross_restart.gd`, `Tests.Godot/tests/Adapters/Save/test_save_manager_daystart_autosave.gd`, `Tests.Godot/tests/Adapters/Db/test_savegame_persistence_cross_restart.gd` |
 | Config Governance And Audit (T02, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40) | Config Summary / Audit / Migration Surfaces | Inspect config state, validation, governance, migration, and report metadata | Render active config, schema status, fallback policy, migration status, and audit metadata without relying on logs-only evidence | `Tests.Godot/tests/Adapters/Config/test_settings_persistence.gd`, `Game.Core.Tests/Domain/GameConfigTests.cs`, `Tests.Godot/tests/Security/Hard/test_settings_config_security.gd`, `Tests.Godot/tests/Integration/test_balance_runtime_config_reload.gd` |
 
 ## 6. Screen And Surface Requirements
@@ -242,19 +237,19 @@ Test-Refs:
 
 ## 10. Unwired UI Feature List
 
-- Entry And Bootstrap: define concrete scene ownership, empty/failure states, and validation evidence for T01, T11, T21, T41, T42.
+- Entry And Bootstrap: define concrete scene ownership, empty/failure states, and validation evidence for T01, T11, T21, T41.
 - Core Loop State And Outcome: define concrete scene ownership, empty/failure states, and validation evidence for T03, T07, T08, T09, T10, T18, T19, T23, T24.
-- Combat Pressure And Interaction: define concrete scene ownership, empty/failure states, and validation evidence for T04, T05, T06, T20, T22, T43.
+- Combat Pressure And Interaction: define concrete scene ownership, empty/failure states, and validation evidence for T04, T05, T06, T20, T22.
 - Economy Build And Progression: define concrete scene ownership, empty/failure states, and validation evidence for T12, T13, T14, T15, T16, T17.
-- Meta Systems And Platform: define concrete scene ownership, empty/failure states, and validation evidence for T25, T26, T27, T28, T29, T30, T44, T45, T46.
+- Meta Systems And Platform: define concrete scene ownership, empty/failure states, and validation evidence for T25, T26, T27, T28, T29, T30.
 - Config Governance And Audit: define concrete scene ownership, empty/failure states, and validation evidence for T02, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40.
 
 ## 11. Next UI Wiring Task Candidates
 
 ### Candidate Slice MainMenu And Boot Flow
 
-- Matrix link: `## 5. UI Wiring Matrix row Entry And Bootstrap (T01, T11, T21, T41, T42)`.
-- Scope: T01, T11, T21, T41, T42.
+- Matrix link: `## 5. UI Wiring Matrix row Entry And Bootstrap (T01, T11, T21, T41)`.
+- Scope: T01, T11, T21, T41.
 - UI entry: MainMenu / Boot Flow.
 - Candidate type: task-shaped UI wiring spec.
 - Screen group: MainMenu And Boot Flow.
@@ -263,7 +258,7 @@ Test-Refs:
 - Empty state: On Windows, baseline verification requires Godot 4.5.1 .NET editor and a compatible .NET SDK to be installed and detected, with no missing-SDK warning.
 - Failure state: After a clean editor restart, two consecutive runs from the canonical root must enter the same startup flow, with any setup-introduced regression causing failure.
 - Completion result: Baseline verification passes only if the editor opens the canonical root, C# compilation succeeds, and the configured startup scene runs with its attached C# script.
-- Requirement IDs: `RQ-RUNTIME-INTERACTION`, `RQ-CH7-ENTRY-WIRING`, `RQ-CH7-HUD-OUTCOME-WIRING`, `RQ-CORE-LOOP-STATE`, `RQ-ECONOMY-BUILD-RULES`.
+- Requirement IDs: `RQ-RUNTIME-INTERACTION`, `RQ-CH7-ENTRY-WIRING`, `RQ-CORE-LOOP-STATE`, `RQ-ECONOMY-BUILD-RULES`.
 - Validation artifact targets: `logs/ci/<YYYY-MM-DD>/task-triplet-audit/report.json`, `logs/unit/<YYYY-MM-DD>/coverage.json`, `logs/ci/<YYYY-MM-DD>/export.log`, `logs/ci/<YYYY-MM-DD>/chapter7-ui-wiring/summary.json`.
 - Suggested standalone surfaces: `MainMenu`, `BootStatusPanel`, `ContinueGateDialog`.
 - Test refs: `Game.Core.Tests/State/GameStateMachineTests.cs`, `Tests.Godot/tests/Integration/test_project_bootstrap_editor_compile_run.gd`, `Tests.Godot/tests/Integration/test_windows_export_startup_flow.gd`, `Tests.Godot/tests/Scenes/Smoke/test_main_scene_smoke.gd`.
@@ -285,8 +280,8 @@ Test-Refs:
 - Test refs: `Game.Core.Tests/State/GameStateMachineTests.cs`, `Game.Core.Tests/State/GameStateManagerTests.cs`, `Game.Core.Tests/Tasks/Task3DayNightScopeGuardTests.cs`, `Game.Core.Tests/Tasks/Task3DayNightDesignArtifactTests.cs`.
 ### Candidate Slice Combat Pressure And Interaction Surfaces
 
-- Matrix link: `## 5. UI Wiring Matrix row Combat Pressure And Interaction (T04, T05, T06, T20, T22, T43)`.
-- Scope: T04, T05, T06, T20, T22, T43.
+- Matrix link: `## 5. UI Wiring Matrix row Combat Pressure And Interaction (T04, T05, T06, T20, T22)`.
+- Scope: T04, T05, T06, T20, T22.
 - UI entry: Combat HUD / Pressure / Camera Feedback.
 - Candidate type: task-shaped UI wiring spec.
 - Screen group: Combat Pressure And Interaction Surfaces.
@@ -295,7 +290,7 @@ Test-Refs:
 - Empty state: Wave generation preserves deterministic replay for the same day/config/seed, and wave-budget computation is isolated to wave inputs without cross-system side effects.
 - Failure state: Taskmaster #6 is complete only when combat runs demonstrate target selection by the required priority chain and blocked-path fallback attacks whenever routes to priority targets are obstructed.
 - Completion result: Changing only one channel budget must change that channel's input budget and alter at least one spawn decision for the same day and seed, while non-target channel outputs remain unchanged.
-- Requirement IDs: `RQ-CAMERA-SCROLL`, `RQ-CH7-COMBAT-WIRING`, `RQ-COMBAT-QUEUE-TECH`, `RQ-CORE-LOOP-STATE`, `RQ-CORE-LOOP-STATE`, `RQ-CORE-LOOP-STATE`.
+- Requirement IDs: `RQ-CAMERA-SCROLL`, `RQ-COMBAT-QUEUE-TECH`, `RQ-CORE-LOOP-STATE`, `RQ-CORE-LOOP-STATE`, `RQ-CORE-LOOP-STATE`.
 - Validation artifact targets: `logs/ci/<YYYY-MM-DD>/task-triplet-audit/report.json`, `logs/unit/<YYYY-MM-DD>/coverage.json`, `logs/e2e/<YYYY-MM-DD>/runtime-ui/summary.json`.
 - Suggested standalone surfaces: `CombatHud`, `PressurePanel`, `CameraControlOverlay`.
 - Test refs: `Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs`, `Game.Core.Tests/Services/WaveManagerDeterminismTests.cs`, `Game.Core.Tests/Engine/GameEngineCoreDeterminismTests.cs`, `Game.Core.Tests/Services/WaveBudgetAllocatorTests.cs`.
@@ -317,8 +312,8 @@ Test-Refs:
 - Test refs: `Game.Core.Tests/Services/ResourceManagerIntegerSafetyTests.cs`, `Game.Core.Tests/Engine/GameEngineCoreEventTests.cs`, `Game.Core.Tests/Services/ResourceManagerTests.cs`, `Game.Core.Tests/Services/ResourceManagerEventTests.cs`.
 ### Candidate Slice Save, Settings, And Meta Surfaces
 
-- Matrix link: `## 5. UI Wiring Matrix row Meta Systems And Platform (T25, T26, T27, T28, T29, T30, T44, T45, T46)`.
-- Scope: T25, T26, T27, T28, T29, T30, T44, T45, T46.
+- Matrix link: `## 5. UI Wiring Matrix row Meta Systems And Platform (T25, T26, T27, T28, T29, T30)`.
+- Scope: T25, T26, T27, T28, T29, T30.
 - UI entry: Settings / Save / Meta Surfaces.
 - Candidate type: task-shaped UI wiring spec.
 - Screen group: Save, Settings, And Meta Surfaces.
@@ -327,7 +322,7 @@ Test-Refs:
 - Empty state: If no autosave file exists, load returns a deterministic failure result, shows explicit user feedback, and leaves runtime state unchanged.
 - Failure state: All save writes target only the single autosave slot at user://autosave.save (Windows-safe user path); any write to an alternate slot path fails acceptance.
 - Completion result: If no autosave file exists, load returns a deterministic failure result, shows explicit user feedback, and leaves runtime state unchanged.
-- Requirement IDs: `RQ-I18N-LANG-SWITCH`, `RQ-AUDIO-CHANNEL-SETTINGS`, `RQ-PERF-GATE`, `RQ-SAVE-MIGRATION-CLOUD`, `RQ-SAVE-MIGRATION-CLOUD`, `RQ-SAVE-MIGRATION-CLOUD`, `RQ-CH7-CONFIG-AUDIT-WIRING`, `RQ-CH7-ECONOMY-WIRING`, `RQ-CH7-META-WIRING`.
+- Requirement IDs: `RQ-I18N-LANG-SWITCH`, `RQ-AUDIO-CHANNEL-SETTINGS`, `RQ-PERF-GATE`, `RQ-SAVE-MIGRATION-CLOUD`, `RQ-SAVE-MIGRATION-CLOUD`, `RQ-SAVE-MIGRATION-CLOUD`.
 - Validation artifact targets: `logs/ci/<YYYY-MM-DD>/save-migration/report.json`, `logs/ci/<YYYY-MM-DD>/steam-cloud/report.json`, `logs/ci/<YYYY-MM-DD>/achievements/report.json`, `logs/e2e/<YYYY-MM-DD>/settings/summary.json`.
 - Suggested standalone surfaces: `SettingsMenu`, `SavePanel`, `RunSummaryPanel`.
 - Test refs: `Tests.Godot/tests/Adapters/Save/test_save_manager_autosave_slot_path.gd`, `Tests.Godot/tests/Adapters/Db/test_savegame_update_overwrite_cross_restart.gd`, `Tests.Godot/tests/Adapters/Save/test_save_manager_daystart_autosave.gd`, `Tests.Godot/tests/Adapters/Db/test_savegame_persistence_cross_restart.gd`.
@@ -361,32 +356,32 @@ Test-Refs:
 - Any new UI slice should add or name a concrete validation path before implementation.
 
 ### MainMenu And Boot Flow
-- Requirement IDs: `RQ-RUNTIME-INTERACTION`, `RQ-CH7-ENTRY-WIRING`, `RQ-CH7-HUD-OUTCOME-WIRING`, `RQ-CORE-LOOP-STATE`, `RQ-ECONOMY-BUILD-RULES`.
+- Requirement IDs: `RQ-RUNTIME-INTERACTION`, `RQ-CH7-ENTRY-WIRING`, `RQ-CORE-LOOP-STATE`, `RQ-ECONOMY-BUILD-RULES`.
 - Expected artifacts: `logs/ci/<YYYY-MM-DD>/task-triplet-audit/report.json`, `logs/unit/<YYYY-MM-DD>/coverage.json`, `logs/ci/<YYYY-MM-DD>/export.log`, `logs/ci/<YYYY-MM-DD>/chapter7-ui-wiring/summary.json`.
-- Evidence fields: platform, profile, status, duration_ms, candidate_sidecar, steps, artifact_manifest, screen_group.
-- Overlay acceptance notes: Presentation polish remains P2 unless it is required for the T41-T46 P0/P1 wiring scope.
+- Evidence fields: platform, profile, status, duration_ms, candidate_sidecar, steps, artifact_manifest, evidence_status.
+- Overlay acceptance notes: Sequencing recommendation: T42 -> T43 -> T41 -> T44 -> T45 -> T46.
 
 ### Runtime HUD And Outcome Surfaces
 - Requirement IDs: `RQ-RUNTIME-SPEED-MODES`, `RQ-RUNTIME-ERROR-FEEDBACK`, `RQ-COMBAT-QUEUE-TECH`, `RQ-CORE-LOOP-STATE`.
 - Expected artifacts: `logs/ci/<YYYY-MM-DD>/task-triplet-audit/report.json`, `logs/unit/<YYYY-MM-DD>/coverage.json`, `logs/e2e/<YYYY-MM-DD>/runtime-ui/summary.json`.
 - Evidence fields: speed_mode, timers_frozen, resume_tick, status, error_code, message_key, displayed, duration_ms.
-- Overlay acceptance notes: T23 速度档位 Pause/1x/2x 切换时，波次计时和关键运行时计时器必须冻结/恢复一致。
+- Overlay acceptance notes: Chapter 7 closure is not a new feature batch. It is a wiring/readout closure pass that converts partial or docs-only evidence into governed runtime evidence.
 
 ### Combat Pressure And Interaction Surfaces
-- Requirement IDs: `RQ-CAMERA-SCROLL`, `RQ-CH7-COMBAT-WIRING`, `RQ-COMBAT-QUEUE-TECH`, `RQ-CORE-LOOP-STATE`.
+- Requirement IDs: `RQ-CAMERA-SCROLL`, `RQ-COMBAT-QUEUE-TECH`, `RQ-CORE-LOOP-STATE`.
 - Expected artifacts: `logs/ci/<YYYY-MM-DD>/task-triplet-audit/report.json`, `logs/unit/<YYYY-MM-DD>/coverage.json`, `logs/e2e/<YYYY-MM-DD>/runtime-ui/summary.json`.
-- Evidence fields: camera_mode, edge_threshold_px, keyboard_vector, clamped, pressure_visible, camera_feedback, targeting_feedback, status.
-- Overlay acceptance notes: T22 镜头交互要求边缘滚屏 + 键盘滚屏同时生效，且镜头严格受地图边界约束。
+- Evidence fields: camera_mode, edge_threshold_px, keyboard_vector, clamped.
+- Overlay acceptance notes: Current closure source: logs/ci/2026-04-27/chapter7-ui-wiring/closure-summary.json.
 
 ### Economy And Progression Panels
 - Requirement IDs: `RQ-COMBAT-QUEUE-TECH`, `RQ-ECONOMY-BUILD-RULES`.
 - Expected artifacts: `logs/unit/<YYYY-MM-DD>/coverage.json`.
 
 ### Save, Settings, And Meta Surfaces
-- Requirement IDs: `RQ-I18N-LANG-SWITCH`, `RQ-AUDIO-CHANNEL-SETTINGS`, `RQ-PERF-GATE`, `RQ-SAVE-MIGRATION-CLOUD`, `RQ-CH7-CONFIG-AUDIT-WIRING`, `RQ-CH7-ECONOMY-WIRING`, `RQ-CH7-META-WIRING`.
+- Requirement IDs: `RQ-I18N-LANG-SWITCH`, `RQ-AUDIO-CHANNEL-SETTINGS`, `RQ-PERF-GATE`, `RQ-SAVE-MIGRATION-CLOUD`.
 - Expected artifacts: `logs/ci/<YYYY-MM-DD>/save-migration/report.json`, `logs/ci/<YYYY-MM-DD>/steam-cloud/report.json`, `logs/ci/<YYYY-MM-DD>/achievements/report.json`, `logs/e2e/<YYYY-MM-DD>/settings/summary.json`.
 - Evidence fields: save_version, migration_path, result, error_code, account_id_hash, sync_direction, conflict_policy, achievement_id.
-- Overlay acceptance notes: T28 语言切换至少覆盖 zh-CN/en-US，切换后界面文本即时生效并持久化。
+- Overlay acceptance notes: Current closure source: logs/ci/2026-04-27/chapter7-ui-wiring/closure-summary.json.
 
 ### Config Audit And Migration Surfaces
 - Requirement IDs: `RQ-CONFIG-CONTRACT-GOV`, `RQ-CORE-LOOP-STATE`.
@@ -397,7 +392,7 @@ Test-Refs:
 
 ## 14. Task Alignment
 
-- Completed task count currently expected by Chapter 7: 46.
+- Completed task count currently expected by Chapter 7: 41.
 - Chapter 7 uses `.taskmaster/tasks/tasks.json` as the completion-state SSoT.
 - View files remain enrichment sources for test refs, acceptance, labels, and contract context.
 

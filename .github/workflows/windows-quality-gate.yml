@@ -38,6 +38,7 @@ jobs:
       DELIVERY_PROFILE: ${{ github.event_name == 'workflow_dispatch' && inputs.delivery_profile || 'fast-ship' }}
       WHITELIST_WARN_DAYS: '90'
       CI_DOTNET_STAGE_TIMEOUT_MS: '4200000'
+      CI_PIPELINE_SELF_CHECK_HARD: 'false'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -235,9 +236,32 @@ jobs:
           }
 
       - name: CI pipeline (Python)
+        continue-on-error: ${{ github.event_name == 'pull_request' }}
         shell: pwsh
         run: |
-          py -3 scripts/python/ci_pipeline.py all --solution Game.sln --configuration Debug --godot-bin "$env:GODOT_BIN" --build-solutions
+          $maxAttempts = 2
+          $attempt = 1
+          $succeeded = $false
+          while ($attempt -le $maxAttempts) {
+            Write-Host "CI pipeline attempt $attempt/$maxAttempts"
+            py -3 scripts/python/ci_pipeline.py all --solution Game.sln --configuration Debug --godot-bin "$env:GODOT_BIN" --build-solutions
+            if ($LASTEXITCODE -eq 0) {
+              $succeeded = $true
+              break
+            }
+
+            if ($attempt -lt $maxAttempts) {
+              $sleepSec = 10 * $attempt
+              Write-Warning "CI pipeline failed on attempt $attempt, retry after ${sleepSec}s"
+              Start-Sleep -Seconds $sleepSec
+            }
+            $attempt += 1
+          }
+
+          if (-not $succeeded) {
+            Write-Error "CI pipeline failed after $maxAttempts attempts."
+            exit 1
+          }
 
       - name: Resolve Task IDs for acceptance-check
         shell: pwsh

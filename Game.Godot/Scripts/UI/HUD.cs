@@ -20,6 +20,10 @@ public partial class HUD : Control
     private Label _health = default!;
     private Label _feedbackLabel = default!;
     private Control _feedbackLayer = default!;
+    private PanelContainer _pressurePanel = default!;
+    private Label _pressureLabel = default!;
+    private PanelContainer _cameraControlOverlay = default!;
+    private Label _cameraStatusLabel = default!;
     private PanelContainer _errorDialog = default!;
     private Label _errorMessageLabel = default!;
     private Button _dismissButton = default!;
@@ -70,6 +74,10 @@ public partial class HUD : Control
         _health = GetNode<Label>("TopBar/HBox/HealthLabel");
         _feedbackLayer = GetNode<Control>("FeedbackLayer");
         _feedbackLabel = GetNode<Label>("FeedbackLayer/FeedbackLabel");
+        _pressurePanel = GetNode<PanelContainer>("FeedbackLayer/PressurePanel");
+        _pressureLabel = GetNode<Label>("FeedbackLayer/PressurePanel/VBox/PressureLabel");
+        _cameraControlOverlay = GetNode<PanelContainer>("FeedbackLayer/CameraControlOverlay");
+        _cameraStatusLabel = GetNode<Label>("FeedbackLayer/CameraControlOverlay/VBox/CameraStatusLabel");
         _errorDialog = GetNode<PanelContainer>("FeedbackLayer/ErrorDialog");
         _errorMessageLabel = GetNode<Label>("FeedbackLayer/ErrorDialog/VBox/ErrorMessageLabel");
         _dismissButton = GetNode<Button>("FeedbackLayer/ErrorDialog/VBox/DismissButton");
@@ -93,6 +101,10 @@ public partial class HUD : Control
         _dismissButton.Pressed += OnDismissFeedbackPressed;
         _feedbackLabel.Visible = false;
         _feedbackLabel.Text = string.Empty;
+        _pressurePanel.Visible = true;
+        _pressureLabel.Text = "Pressure: n/a";
+        _cameraControlOverlay.Visible = true;
+        _cameraStatusLabel.Text = "Camera: idle";
         _errorDialog.Visible = false;
         _errorMessageLabel.Text = string.Empty;
         _configAuditPanel.Visible = true;
@@ -181,6 +193,8 @@ public partial class HUD : Control
         if (type != EventTypes.LastkingCastleHpChanged &&
             type != EventTypes.HealthUpdated &&
             type != "player.health.changed" &&
+            type != EventTypes.LastkingWaveSpawned &&
+            type != EventTypes.LastkingCameraScrolled &&
             type != EventTypes.LastkingRewardOffered &&
             type != EventTypes.RunStateTransitioned &&
             type != EventTypes.LastkingUiFeedbackRaised &&
@@ -197,6 +211,7 @@ public partial class HUD : Control
             if (hp.HasValue)
             {
                 _health.Text = $"HP: {hp.Value}";
+                UpdatePressureLabelFromHp(hp.Value);
             }
 
             if (type == EventTypes.LastkingRewardOffered)
@@ -207,6 +222,16 @@ public partial class HUD : Control
             if (type == EventTypes.RunStateTransitioned)
             {
                 HandleRunStateTransitionedEvent(doc.RootElement);
+            }
+
+            if (type == EventTypes.LastkingWaveSpawned)
+            {
+                HandleWaveSpawnedEvent(doc.RootElement);
+            }
+
+            if (type == EventTypes.LastkingCameraScrolled)
+            {
+                HandleCameraScrolledEvent(doc.RootElement);
             }
 
             if (type == EventTypes.LastkingUiFeedbackRaised ||
@@ -278,6 +303,56 @@ public partial class HUD : Control
         {
             ShowTemporaryFeedback("ui.run.lose.castle_fall", details, code: "run_lose", priority: 2);
         }
+    }
+
+    private void HandleWaveSpawnedEvent(JsonElement payload)
+    {
+        var count = ReadInt(payload, "count", "Count", "spawn_count", "SpawnCount");
+        var day = ReadInt(payload, "day", "Day");
+        if (count.HasValue && day.HasValue)
+        {
+            _pressureLabel.Text = $"Pressure: day={day.Value} spawned={count.Value}";
+            return;
+        }
+
+        if (count.HasValue)
+        {
+            _pressureLabel.Text = $"Pressure: spawned={count.Value}";
+        }
+    }
+
+    private void HandleCameraScrolledEvent(JsonElement payload)
+    {
+        var dx = ReadInt(payload, "dx", "Dx", "delta_x", "DeltaX");
+        var dy = ReadInt(payload, "dy", "Dy", "delta_y", "DeltaY");
+        if (dx.HasValue && dy.HasValue)
+        {
+            _cameraStatusLabel.Text = $"Camera: dx={dx.Value} dy={dy.Value}";
+            return;
+        }
+
+        var mode = ReadString(payload, "mode", "Mode");
+        if (!string.IsNullOrWhiteSpace(mode))
+        {
+            _cameraStatusLabel.Text = $"Camera: {mode}";
+        }
+    }
+
+    private void UpdatePressureLabelFromHp(int hp)
+    {
+        if (hp <= 20)
+        {
+            _pressureLabel.Text = $"Pressure: critical (hp={hp})";
+            return;
+        }
+
+        if (hp <= 60)
+        {
+            _pressureLabel.Text = $"Pressure: high (hp={hp})";
+            return;
+        }
+
+        _pressureLabel.Text = $"Pressure: stable (hp={hp})";
     }
 
     private void ShowTemporaryFeedback(string messageKey, string details, string code, int priority)
@@ -376,7 +451,8 @@ public partial class HUD : Control
     private static bool IsBlockedAction(string code, string messageKey)
     {
         return BlockedActionCodes.Contains(code) ||
-               messageKey.StartsWith("ui.blocked_action.", StringComparison.OrdinalIgnoreCase);
+               messageKey.StartsWith("ui.blocked_action.", StringComparison.OrdinalIgnoreCase) ||
+               string.Equals(messageKey, "ui.combat.target_path_blocked_fallback", StringComparison.OrdinalIgnoreCase);
     }
 
     private static bool IsRuntimeOutcomeMessage(string messageKey, string code)

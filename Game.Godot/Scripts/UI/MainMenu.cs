@@ -7,6 +7,11 @@ namespace Game.Godot.Scripts.UI;
 
 public partial class MainMenu : Control
 {
+    private static readonly JsonDocumentOptions EventJsonOptions = new()
+    {
+        MaxDepth = 16,
+    };
+
     private const string BootstrapReadyOverrideEnv = "LASTKING_BOOT_READY_OVERRIDE";
     private Button _btnPlay = default!;
     private Button _btnContinue = default!;
@@ -231,7 +236,7 @@ public partial class MainMenu : Control
                 return (false, "empty_continue_state");
             }
 
-            using var parsed = JsonDocument.Parse(content);
+            using var parsed = JsonDocument.Parse(content, EventJsonOptions);
             return parsed.RootElement.ValueKind == JsonValueKind.Object
                 ? (true, string.Empty)
                 : (false, "invalid_continue_state_root");

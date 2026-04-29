@@ -1,21 +1,20 @@
 {
-  "generated_at": "2026-04-27",
+  "generated_at": "2026-04-29",
   "source_gdd": "docs/gdd/ui-gdd-flow.md",
-  "completed_master_tasks_count": 46,
-  "needed_wiring_features_count": 46,
+  "completed_master_tasks_count": 41,
+  "needed_wiring_features_count": 41,
   "candidates": [
     {
       "bucket": "entry",
       "screen_group": "MainMenu And Boot Flow",
-      "matrix_link": "## 5. UI Wiring Matrix row Entry And Bootstrap (T01, T11, T21, T41, T42)",
+      "matrix_link": "## 5. UI Wiring Matrix row Entry And Bootstrap (T01, T11, T21, T41)",
       "scope_task_ids": [
         1,
         11,
         21,
-        41,
-        42
+        41
       ],
-      "scope_task_refs": "T01, T11, T21, T41, T42",
+      "scope_task_refs": "T01, T11, T21, T41",
       "ui_entry": "MainMenu / Boot Flow",
       "candidate_type": "task-shaped UI wiring spec",
       "player_action": "Launch, continue, retry bootstrap, or enter a run",
@@ -26,21 +25,12 @@
       "requirement_ids": [
         "RQ-RUNTIME-INTERACTION",
         "RQ-CH7-ENTRY-WIRING",
-        "RQ-CH7-HUD-OUTCOME-WIRING",
         "RQ-CORE-LOOP-STATE",
         "RQ-ECONOMY-BUILD-RULES"
       ],
       "contract_refs": [
         "core.lastking.bootstrap.ready",
-        "core.lastking.windows_runtime.validated",
-        "core.lastking.day.started",
-        "core.lastking.night.started",
-        "core.lastking.castle.hp_changed",
-        "core.lastking.wave.spawned",
-        "core.lastking.reward.offered",
-        "core.lastking.save.autosaved",
-        "core.lastking.time_scale.changed",
-        "core.lastking.ui_feedback.raised"
+        "core.lastking.windows_runtime.validated"
       ],
       "validation_artifact_targets": [
         "logs/ci/<YYYY-MM-DD>/task-triplet-audit/report.json",
@@ -124,16 +114,15 @@
     {
       "bucket": "combat",
       "screen_group": "Combat Pressure And Interaction Surfaces",
-      "matrix_link": "## 5. UI Wiring Matrix row Combat Pressure And Interaction (T04, T05, T06, T20, T22, T43)",
+      "matrix_link": "## 5. UI Wiring Matrix row Combat Pressure And Interaction (T04, T05, T06, T20, T22)",
       "scope_task_ids": [
         4,
         5,
         6,
         20,
-        22,
-        43
+        22
       ],
-      "scope_task_refs": "T04, T05, T06, T20, T22, T43",
+      "scope_task_refs": "T04, T05, T06, T20, T22",
       "ui_entry": "Combat HUD / Pressure / Camera Feedback",
       "candidate_type": "task-shaped UI wiring spec",
       "player_action": "Fight, observe pressure, targeting, pathing, and camera responses",
@@ -143,7 +132,6 @@
       "completion_result": "Changing only one channel budget must change that channel's input budget and alter at least one spawn decision for the same day and seed, while non-target channel outputs remain unchanged.",
       "requirement_ids": [
         "RQ-CAMERA-SCROLL",
-        "RQ-CH7-COMBAT-WIRING",
         "RQ-COMBAT-QUEUE-TECH",
         "RQ-CORE-LOOP-STATE",
         "RQ-CORE-LOOP-STATE",
@@ -223,19 +211,16 @@
     {
       "bucket": "meta",
       "screen_group": "Save, Settings, And Meta Surfaces",
-      "matrix_link": "## 5. UI Wiring Matrix row Meta Systems And Platform (T25, T26, T27, T28, T29, T30, T44, T45, T46)",
+      "matrix_link": "## 5. UI Wiring Matrix row Meta Systems And Platform (T25, T26, T27, T28, T29, T30)",
       "scope_task_ids": [
         25,
         26,
         27,
         28,
         29,
-        30,
-        44,
-        45,
-        46
+        30
       ],
-      "scope_task_refs": "T25, T26, T27, T28, T29, T30, T44, T45, T46",
+      "scope_task_refs": "T25, T26, T27, T28, T29, T30",
       "ui_entry": "Settings / Save / Meta Surfaces",
       "candidate_type": "task-shaped UI wiring spec",
       "player_action": "Save, load, localize, tune audio, or inspect platform/runtime status",
@@ -249,10 +234,7 @@
         "RQ-PERF-GATE",
         "RQ-SAVE-MIGRATION-CLOUD",
         "RQ-SAVE-MIGRATION-CLOUD",
-        "RQ-SAVE-MIGRATION-CLOUD",
-        "RQ-CH7-CONFIG-AUDIT-WIRING",
-        "RQ-CH7-ECONOMY-WIRING",
-        "RQ-CH7-META-WIRING"
+        "RQ-SAVE-MIGRATION-CLOUD"
       ],
       "contract_refs": [
         "core.lastking.save.autosaved",
@@ -262,11 +244,7 @@
         "core.lastking.reward.offered",
         "core.lastking.ui_feedback.raised",
         "core.lastking.audio_settings.changed",
-        "core.lastking.perf.sampled",
-        "core.lastking.resources.changed",
-        "core.lastking.tax.collected",
-        "core.lastking.tech.applied",
-        "core.lastking.config.loaded"
+        "core.lastking.perf.sampled"
       ],
       "validation_artifact_targets": [
         "logs/ci/<YYYY-MM-DD>/save-migration/report.json",
