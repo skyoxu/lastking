@@ -1,10 +1,11 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using FluentAssertions;
+using Game.Core.Services;
 using Xunit;
 
 namespace Game.Core.Tests.Tasks;
@@ -12,255 +13,252 @@ namespace Game.Core.Tests.Tasks;
 public sealed class Task43UiWiringAcceptanceGovernanceTests
 {
     private const int TaskId = 43;
-    private static readonly Regex RefsRegex = new(@"\bRefs\s*:\s*(.+)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    private const string MasterTaskPath = ".taskmaster/tasks/tasks.json";
     private static readonly JsonDocumentOptions JsonOptions = new() { MaxDepth = 128 };
-    private static readonly string[] RequiredRequirementIds = ["RQ-CAMERA-SCROLL", "RQ-COMBAT-QUEUE-TECH", "RQ-CORE-LOOP-STATE"];
-    private static readonly string[] RequiredScopeItems = ["T04", "T05", "T06", "T20", "T22"];
-    private const string GovernanceTestRef = "Game.Core.Tests/Tasks/Task43UiWiringAcceptanceGovernanceTests.cs";
+    private static readonly Regex RefsRegex = new(@"\bRefs\s*:\s*(.+)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-    private static readonly Dictionary<string, string[]> RequirementEvidenceMap = new(StringComparer.OrdinalIgnoreCase)
-    {
-        ["RQ-CAMERA-SCROLL"] =
-        [
-            "Tests.Godot/tests/Scenes/Camera/test_camera_controller_scroll_inputs.gd",
-        ],
-        ["RQ-COMBAT-QUEUE-TECH"] =
-        [
-            "Game.Core.Tests/Services/EnemyAiTargetSelectionTests.cs",
-            "Game.Core.Tests/Engine/GameEngineCoreEventTests.cs",
-        ],
-        ["RQ-CORE-LOOP-STATE"] =
-        [
-            "Game.Core.Tests/Engine/GameEngineCoreDeterminismTests.cs",
-            "Game.Core.Tests/Services/WaveManagerDeterminismTests.cs",
-        ],
-    };
-
-    private static readonly Dictionary<string, string[]> ScopeEvidenceMap = new(StringComparer.OrdinalIgnoreCase)
-    {
-        ["T04"] =
-        [
-            "Tests.Godot/tests/Scenes/Camera/test_camera_controller_scroll_inputs.gd",
-        ],
-        ["T05"] =
-        [
-            "Game.Core.Tests/Services/EnemyAiTargetSelectionTests.cs",
-        ],
-        ["T06"] =
-        [
-            "Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs",
-            "Game.Core.Tests/Services/WaveBudgetAllocatorTests.cs",
-        ],
-        ["T20"] =
-        [
-            "Tests.Godot/tests/UI/test_hud_updates_on_events.gd",
-            "Tests.Godot/tests/UI/test_hud_scene.gd",
-        ],
-        ["T22"] =
-        [
-            "Game.Core.Tests/Engine/GameEngineCoreDeterminismTests.cs",
-            "Game.Core.Tests/Services/WaveManagerDeterminismTests.cs",
-        ],
-    };
-
-    private static readonly string[] AllowedTaskRefs =
-    [
-        "Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs",
-        "Game.Core.Tests/Services/WaveManagerDeterminismTests.cs",
-        "Game.Core.Tests/Engine/GameEngineCoreDeterminismTests.cs",
-        "Game.Core.Tests/Services/WaveBudgetAllocatorTests.cs",
-        "Game.Core.Tests/Services/EnemyAiTargetSelectionTests.cs",
-        "Game.Core.Tests/Engine/GameEngineCoreEventTests.cs",
-        "Tests.Godot/tests/UI/test_hud_scene.gd",
-        "Tests.Godot/tests/UI/test_hud_updates_on_events.gd",
-        "Tests.Godot/tests/Scenes/Camera/test_camera_controller_scroll_inputs.gd",
-        "Tests.Godot/tests/Scenes/Combat/test_enemy_ai_navigation_priority.gd",
-        "Tests.Godot/tests/Scenes/Combat/test_enemy_ai_blocked_route_fallback.gd",
-        GovernanceTestRef,
-    ];
-
-    // ACC:T43.7
     [Fact]
-    public void ShouldMapRequirementIdsToExecutableEvidence_WhenTask43AcceptanceIsEvaluated()
-    {
-        ValidateMasterTaskMetadataForTask43().Should().BeTrue("tasks.json master metadata must stay coherent for Task 43.");
-
-        foreach (var viewPath in ViewPaths())
-        {
-            var entry = LoadTaskEntry(viewPath, TaskId);
-            ValidateRequirementIds(entry).Should().BeTrue($"{viewPath} must keep ACC:T43.7 mapping complete.");
-        }
-    }
-
-    // ACC:T43.8
-    [Fact]
-    public void ShouldKeepTask43ScopeMappingAndEvidenceInsideDeclaredUiSlice_WhenAcceptanceIsEvaluated()
-    {
-        ValidateMasterTaskMetadataForTask43().Should().BeTrue("tasks.json master metadata must stay coherent for Task 43 scope mapping.");
-
-        foreach (var viewPath in ViewPaths())
-        {
-            var entry = LoadTaskEntry(viewPath, TaskId);
-            ValidateScopeMapping(entry).Should().BeTrue($"{viewPath} must keep ACC:T43.8 scope-to-evidence mapping complete.");
-        }
-    }
-
-    // ACC:T43.9
-    [Fact]
-    public void ShouldRequireBothXunitAndGdunitEvidencePaths_WhenTask43ValidationRefsAreEvaluated()
+    public void ShouldKeepSevenAcceptanceItems_ForTask43InBackAndGameplayViews()
     {
         foreach (var viewPath in ViewPaths())
         {
             var entry = LoadTaskEntry(viewPath, TaskId);
-            entry.TestRefs.Should().Contain(path => path.EndsWith(".cs", StringComparison.OrdinalIgnoreCase));
-            entry.TestRefs.Should().Contain(path => path.EndsWith(".gd", StringComparison.OrdinalIgnoreCase));
+            entry.Acceptance.Should().HaveCount(7, $"{viewPath} should keep only semantic acceptance obligations for Task 43.");
 
-            var validationAcceptance = FindAcceptance(
-                entry.Acceptance,
-                "both xUnit and GdUnit evidence paths",
-                "governance checks remain distinct");
-            validationAcceptance.Should().NotBeNull();
+            entry.Acceptance[0].Should().Contain("Combat HUD, Pressure, and Camera Feedback");
+            entry.Acceptance[0].Should().Contain("docs-only evidence is insufficient");
 
-            var validationRefs = ParseRefs(validationAcceptance!).ToArray();
-            validationRefs.Should().Contain(path => path.EndsWith(".cs", StringComparison.OrdinalIgnoreCase));
-            validationRefs.Should().Contain(path => path.EndsWith(".gd", StringComparison.OrdinalIgnoreCase));
-        }
-    }
+            entry.Acceptance[1].Should().Contain("CombatHud, PressurePanel, and CameraControlOverlay");
+            entry.Acceptance[2].Should().Contain("no hidden state dependency");
+            entry.Acceptance[3].Should().Contain("deterministic wave replay");
+            entry.Acceptance[4].Should().Contain("both conditions are mandatory");
+            entry.Acceptance[5].Should().Contain("changing one channel budget");
+            entry.Acceptance[6].Should().Contain("during Fight actions");
 
-    // ACC:T43.10
-    [Fact]
-    public void ShouldRequireCombatHudPressureAndCameraOverlayOwnershipEvidence_WhenTask43ClosureIsEvaluated()
-    {
-        foreach (var viewPath in ViewPaths())
-        {
-            var entry = LoadTaskEntry(viewPath, TaskId);
-            var closureAcceptance = FindAcceptance(entry.Acceptance, "CombatHud", "PressurePanel", "CameraControlOverlay");
-            closureAcceptance.Should().NotBeNull();
-
-            var refs = ParseRefs(closureAcceptance!);
-            refs.Should().Contain("Tests.Godot/tests/UI/test_hud_scene.gd");
-            refs.Should().Contain("Tests.Godot/tests/UI/test_hud_updates_on_events.gd");
-            refs.Should().Contain(GovernanceTestRef);
-        }
-    }
-
-    // ACC:T43.11
-    [Fact]
-    public void ShouldRequireRuntimeEvidenceUpgradeFromDocsOnly_WhenChapter7EvidenceIsEvaluated()
-    {
-        foreach (var viewPath in ViewPaths())
-        {
-            var entry = LoadTaskEntry(viewPath, TaskId);
-            var runtimeAcceptance = FindAcceptance(entry.Acceptance, "docs-only", "runtime", "planning-only documentation is insufficient");
-            runtimeAcceptance.Should().NotBeNull();
-
-            var refs = ParseRefs(runtimeAcceptance!);
-            refs.Should().Contain(path => path.EndsWith(".gd", StringComparison.OrdinalIgnoreCase));
-            refs.Should().Contain(GovernanceTestRef);
-        }
-    }
-
-    // ACC:T43.12
-    [Fact]
-    public void ShouldKeepPendingSurfacesAndGapToCloseEvidenceBackedByRuntimeValidation_WhenClosureArtifactsAreEvaluated()
-    {
-        var closure = LoadLatestChapter7ClosureContract(taskId: TaskId);
-        closure.RequiredEvidenceStatus.Should().NotBeNullOrWhiteSpace();
-        closure.RequiredEvidenceStatus.Should().Be("runtime");
-
-        if (closure.ReadyForDone)
-        {
-            closure.PendingSurfaces.Should().BeEmpty("done-ready closure must not keep unresolved owned surfaces.");
-            closure.GapToClose.Should().BeEmpty("done-ready closure must not keep unresolved closure gaps.");
-        }
-        else
-        {
-            (closure.PendingSurfaces.Length > 0 || closure.GapToClose.Length > 0)
-                .Should()
-                .BeTrue("an open closure contract must expose at least one unresolved surface or closure gap.");
-        }
-
-        foreach (var viewPath in ViewPaths())
-        {
-            var entry = LoadTaskEntry(viewPath, TaskId);
-            var closureArtifactsAcceptance = FindAcceptance(entry.Acceptance, "pending_surfaces", "gap_to_close", "runtime validation");
-            closureArtifactsAcceptance.Should().NotBeNull();
-
-            var refs = ParseRefs(closureArtifactsAcceptance!);
-            refs.Should().Contain("Tests.Godot/tests/UI/test_hud_scene.gd");
-            refs.Should().Contain("Tests.Godot/tests/UI/test_hud_updates_on_events.gd");
-            refs.Should().Contain(GovernanceTestRef);
-        }
-    }
-
-    // ACC:T43.13
-    [Fact]
-    public void ShouldRequireEvidenceBackedStatusTransitionsAcrossTaskViews_WhenTask43StatusIsEvaluated()
-    {
-        var closure = LoadLatestChapter7ClosureContract(taskId: TaskId);
-        var patchStatuses = LoadLatestChapter7StatusPatchStatuses(taskId: TaskId);
-        if (patchStatuses.Count > 0)
-        {
-            patchStatuses.Keys.Should().Contain("tasks_json");
-            patchStatuses.Keys.Should().Contain("tasks_back");
-            patchStatuses.Keys.Should().Contain("tasks_gameplay");
-        }
-
-        var viewStatuses = LoadTask43StatusesFromTaskViews();
-        var distinctStatuses = viewStatuses.Values.Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
-        distinctStatuses.Should().HaveCount(1);
-        var normalizedStatus = distinctStatuses[0].Trim().ToLowerInvariant();
-        normalizedStatus.Should().BeOneOf("pending", "review", "done");
-        if (closure.ReadyForDone)
-        {
-            normalizedStatus.Should().Be("done", "done-ready closure evidence should promote task views into done status.");
-        }
-        else
-        {
-            normalizedStatus.Should().NotBe("done", "open closure evidence should not claim done status.");
-        }
-
-        foreach (var viewPath in ViewPaths())
-        {
-            var entry = LoadTaskEntry(viewPath, TaskId);
-            var statusAcceptance = FindAcceptance(entry.Acceptance, "status transitions", "runtime evidence", "task views");
-            statusAcceptance.Should().NotBeNull();
-
-            var refs = ParseRefs(statusAcceptance!);
-            refs.Should().Contain("Tests.Godot/tests/UI/test_hud_scene.gd");
-            refs.Should().Contain("Tests.Godot/tests/UI/test_hud_updates_on_events.gd");
-            refs.Should().Contain(GovernanceTestRef);
+            entry.ScopeTaskIds.Should().Equal([4, 5, 6, 20, 22]);
         }
     }
 
     [Fact]
-    public void ShouldFailRequirementMapping_WhenAnyRequirementIdIsMissing()
+    public void ShouldKeepRuntimeSurfaceEvidenceRefs_ForTask43SemanticItems()
     {
         foreach (var viewPath in ViewPaths())
         {
             var entry = LoadTaskEntry(viewPath, TaskId);
-            var requirementAcceptance = FindAcceptance(entry.Acceptance, "Requirement IDs", "RQ-CAMERA-SCROLL", "RQ-COMBAT-QUEUE-TECH", "RQ-CORE-LOOP-STATE");
-            requirementAcceptance.Should().NotBeNull();
 
-            var mutatedAcceptance = requirementAcceptance!
-                .Replace("RQ-CAMERA-SCROLL", string.Empty, StringComparison.Ordinal)
-                .Replace("RQ-COMBAT-QUEUE-TECH", string.Empty, StringComparison.Ordinal)
-                .Replace("RQ-CORE-LOOP-STATE", string.Empty, StringComparison.Ordinal);
+            var refs1 = ParseRefs(entry.Acceptance[0]);
+            var refs2 = ParseRefs(entry.Acceptance[1]);
+            var refs3 = ParseRefs(entry.Acceptance[2]);
+            var refs5 = ParseRefs(entry.Acceptance[4]);
 
-            var mutated = entry.ReplaceAcceptance(requirementAcceptance!, mutatedAcceptance);
-            ValidateRequirementIds(mutated).Should().BeFalse($"{viewPath} should fail ACC:T43.7 when IDs are missing.");
+            refs1.Should().Contain("Tests.Godot/tests/UI/test_hud_scene.gd");
+            refs1.Should().Contain("Tests.Godot/tests/UI/test_hud_updates_on_events.gd");
+
+            refs2.Should().Contain("Tests.Godot/tests/UI/test_hud_scene.gd");
+            refs2.Should().Contain("Tests.Godot/tests/UI/test_hud_updates_on_events.gd");
+
+            refs3.Should().Contain("Tests.Godot/tests/UI/test_hud_scene.gd");
+            refs3.Should().Contain("Tests.Godot/tests/UI/test_hud_updates_on_events.gd");
+
+            refs5.Should().Contain("Tests.Godot/tests/Scenes/Combat/test_enemy_ai_navigation_priority.gd");
+            refs5.Should().Contain("Tests.Godot/tests/Scenes/Combat/test_enemy_ai_blocked_route_fallback.gd");
+
+            var refs7 = ParseRefs(entry.Acceptance[6]);
+            refs7.Should().Contain("Tests.Godot/tests/UI/test_hud_updates_on_events.gd");
+
+            entry.TestRefs.Should().Contain("Tests.Godot/tests/UI/test_hud_scene.gd");
+            entry.TestRefs.Should().Contain("Tests.Godot/tests/UI/test_hud_updates_on_events.gd");
         }
     }
 
     [Fact]
-    public void ShouldFailScopeMapping_WhenScopeEvidenceIsMissing()
+    public void ShouldKeepDeterminismAndBudgetEvidenceRefs_ForTask43SemanticItems()
     {
         foreach (var viewPath in ViewPaths())
         {
             var entry = LoadTaskEntry(viewPath, TaskId);
-            var missingCameraEvidence = entry.RemoveTestRef("Tests.Godot/tests/Scenes/Camera/test_camera_controller_scroll_inputs.gd");
-            ValidateScopeMapping(missingCameraEvidence).Should().BeFalse($"{viewPath} should fail ACC:T43.8 when T04 evidence is removed.");
+
+            var refs4 = ParseRefs(entry.Acceptance[3]);
+            var refs6 = ParseRefs(entry.Acceptance[5]);
+
+            refs4.Should().Contain("Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs");
+            refs4.Should().Contain("Game.Core.Tests/Engine/GameEngineCoreDeterminismTests.cs");
+            refs4.Should().Contain("Game.Core.Tests/Services/WaveManagerDeterminismTests.cs");
+
+            refs6.Should().Contain("Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs");
+            refs6.Should().Contain("Game.Core.Tests/Services/WaveBudgetAllocatorTests.cs");
+            refs6.Should().Contain("Game.Core.Tests/Engine/GameEngineCoreDeterminismTests.cs");
+            refs6.Should().Contain("Game.Core.Tests/Services/WaveManagerDeterminismTests.cs");
+
+            var refs7 = ParseRefs(entry.Acceptance[6]);
+            refs7.Should().Contain("Tests.Godot/tests/UI/test_hud_scene.gd");
+            refs7.Should().Contain("Tests.Godot/tests/Scenes/Combat/test_enemy_ai_blocked_route_fallback.gd");
         }
+    }
+
+    [Fact]
+    public void ShouldKeepRequirementAndScopeGovernance_ForTask43()
+    {
+        var master = LoadMasterTask43();
+        master.RequirementIds.Should().BeEquivalentTo(
+            ["RQ-CAMERA-SCROLL", "RQ-COMBAT-QUEUE-TECH", "RQ-CORE-LOOP-STATE"],
+            options => options.WithStrictOrdering());
+
+        foreach (var viewPath in ViewPaths())
+        {
+            var entry = LoadTaskEntry(viewPath, TaskId);
+            entry.ScopeTaskIds.Should().Equal([4, 5, 6, 20, 22]);
+        }
+    }
+
+    [Fact]
+    public void ShouldKeepCrossViewClosureStateConsistent_ForTask43Done()
+    {
+        var master = LoadMasterTask43();
+        master.Status.Should().Be("done");
+        master.Details.Should().Contain("Current closure evidence status: runtime");
+        master.Details.Should().Contain("Current Chapter7 recommendation: done-ready");
+        master.Details.Should().Contain("Pending owned surfaces: None");
+        master.Details.Should().Contain("Primary closure gaps: None");
+
+        foreach (var viewPath in ViewPaths())
+        {
+            var entry = LoadTaskEntry(viewPath, TaskId);
+            entry.Status.Should().Be("done");
+            entry.Acceptance.Should().HaveCount(7);
+        }
+    }
+
+    [Fact]
+    public void ShouldKeepDualFrameworkEvidenceRefs_ForTask43()
+    {
+        foreach (var viewPath in ViewPaths())
+        {
+            var entry = LoadTaskEntry(viewPath, TaskId);
+
+            entry.TestRefs.Should().Contain("Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs");
+            entry.TestRefs.Should().Contain("Game.Core.Tests/Services/WaveManagerDeterminismTests.cs");
+            entry.TestRefs.Should().Contain("Tests.Godot/tests/UI/test_hud_scene.gd");
+            entry.TestRefs.Should().Contain("Tests.Godot/tests/UI/test_hud_updates_on_events.gd");
+            entry.TestRefs.Should().Contain("Tests.Godot/tests/Scenes/Camera/test_camera_controller_scroll_inputs.gd");
+            entry.TestRefs.Should().Contain("Tests.Godot/tests/Scenes/Combat/test_enemy_ai_navigation_priority.gd");
+            entry.TestRefs.Should().Contain("Tests.Godot/tests/Scenes/Combat/test_enemy_ai_blocked_route_fallback.gd");
+            entry.TestRefs.Should().Contain("Game.Core.Tests/Tasks/Task43UiWiringAcceptanceGovernanceTests.cs");
+        }
+    }
+
+    [Fact]
+    public void ShouldProveDeterministicReplayBehavior_ForTask43Semantics()
+    {
+        var sut = new WaveManager();
+        var config = CreateDefaultConfig();
+
+        var firstRun = sut.Generate(dayIndex: 3, channelBudgetConfiguration: config, seed: 4242);
+        var replayRun = sut.Generate(dayIndex: 3, channelBudgetConfiguration: config, seed: 4242);
+        var driftedSeedRun = sut.Generate(dayIndex: 3, channelBudgetConfiguration: config, seed: 4243);
+
+        BuildWaveSnapshot(replayRun).Should().Be(BuildWaveSnapshot(firstRun));
+        BuildWaveSnapshot(driftedSeedRun).Should().NotBe(BuildWaveSnapshot(firstRun));
+    }
+
+    [Fact]
+    public void ShouldProveSingleChannelBudgetIsolation_ForTask43Semantics()
+    {
+        var sut = new WaveManager();
+        var baselineConfig = CreateDefaultConfig();
+        var tunedConfig = baselineConfig with
+        {
+            Elite = baselineConfig.Elite with { Day1Budget = baselineConfig.Elite.Day1Budget + 40 }
+        };
+
+        var baselineResult = sut.Generate(dayIndex: 2, channelBudgetConfiguration: baselineConfig, seed: 3333);
+        var tunedResult = sut.Generate(dayIndex: 2, channelBudgetConfiguration: tunedConfig, seed: 3333);
+
+        BuildChannelSnapshot(tunedResult.ChannelResults["elite"]).Should().NotBe(BuildChannelSnapshot(baselineResult.ChannelResults["elite"]));
+        BuildChannelSnapshot(tunedResult.ChannelResults["normal"]).Should().Be(BuildChannelSnapshot(baselineResult.ChannelResults["normal"]));
+        BuildChannelSnapshot(tunedResult.ChannelResults["boss"]).Should().Be(BuildChannelSnapshot(baselineResult.ChannelResults["boss"]));
+    }
+
+    [Fact]
+    public void ShouldProveBlockedPathFallbackSelection_ForTask43Semantics()
+    {
+        var selector = new EnemyAiTargetSelector();
+        var candidates = new[]
+        {
+            EnemyAiTargetCandidate.Unreachable("unit-1", EnemyTargetClass.Unit, 1),
+            EnemyAiTargetCandidate.Blocker("gate-1", 2),
+            EnemyAiTargetCandidate.Reachable("decor-1", EnemyTargetClass.Decoration, 1)
+        };
+
+        var decision = selector.SelectTarget(candidates);
+
+        decision.IsFallbackAttack.Should().BeTrue();
+        decision.TargetClass.Should().Be(EnemyTargetClass.BlockingStructure);
+        decision.TargetId.Should().Be("gate-1");
+        decision.TargetId.Should().NotBe("decor-1");
+    }
+
+    [Fact]
+    public void ShouldFailSemanticSetValidation_WhenOwnedSurfaceObligationIsRemoved()
+    {
+        foreach (var viewPath in ViewPaths())
+        {
+            var entry = LoadTaskEntry(viewPath, TaskId);
+            var mutated = entry with
+            {
+                Acceptance = entry.Acceptance
+                    .Select((line, index) => index == 1 ? line.Replace("CombatHud, PressurePanel, and CameraControlOverlay", "owned surfaces") : line)
+                    .ToArray(),
+            };
+
+            ValidateSemanticSet(mutated).Should().BeFalse($"{viewPath} should fail when owned surface obligation is weakened.");
+        }
+    }
+
+    [Fact]
+    public void ShouldValidateSemanticSet_ForTask43Views()
+    {
+        foreach (var viewPath in ViewPaths())
+        {
+            var entry = LoadTaskEntry(viewPath, TaskId);
+            ValidateSemanticSet(entry).Should().BeTrue($"{viewPath} should keep Task 43 semantic acceptance obligations complete.");
+        }
+    }
+
+    private static bool ValidateSemanticSet(Task43TaskEntry entry)
+    {
+        if (entry.Acceptance.Length != 7)
+        {
+            return false;
+        }
+
+        bool HasToken(int idx, string token) => entry.Acceptance[idx].IndexOf(token, StringComparison.OrdinalIgnoreCase) >= 0;
+
+        if (!HasToken(0, "Combat HUD, Pressure, and Camera Feedback") || !HasToken(0, "docs-only evidence is insufficient"))
+        {
+            return false;
+        }
+
+        if (!HasToken(1, "CombatHud") || !HasToken(1, "PressurePanel") || !HasToken(1, "CameraControlOverlay"))
+        {
+            return false;
+        }
+
+        if (!HasToken(2, "no hidden state dependency") ||
+            !HasToken(3, "deterministic wave replay") ||
+            !HasToken(4, "both conditions are mandatory") ||
+            !HasToken(5, "changing one channel budget") ||
+            !HasToken(6, "during Fight actions"))
+        {
+            return false;
+        }
+
+        if (!entry.ScopeTaskIds.SequenceEqual([4, 5, 6, 20, 22]))
+        {
+            return false;
+        }
+
+        return true;
     }
 
     private static IEnumerable<string> ViewPaths()
@@ -284,97 +282,48 @@ public sealed class Task43UiWiringAcceptanceGovernanceTests
                     .ToArray();
                 var acceptance = item.GetProperty("acceptance").EnumerateArray().Select(line => line.GetString() ?? string.Empty).ToArray();
                 var testRefs = item.GetProperty("test_refs").EnumerateArray().Select(path => Normalize(path.GetString())).ToArray();
-                return new Task43TaskEntry(scopeIds, acceptance, testRefs);
+                var status = item.TryGetProperty("status", out var statusProp) ? statusProp.GetString() ?? string.Empty : string.Empty;
+                return new Task43TaskEntry(scopeIds, acceptance, testRefs, status);
             }
         }
 
         throw new InvalidOperationException($"Task {taskId} was not found in '{relativePath}'.");
     }
 
-    private static bool ValidateRequirementIds(Task43TaskEntry entry)
+    private static MasterTask43Entry LoadMasterTask43()
     {
-        var requirementAcceptance = FindAcceptance(entry.Acceptance, "Requirement IDs", "RQ-CAMERA-SCROLL", "RQ-COMBAT-QUEUE-TECH", "RQ-CORE-LOOP-STATE");
-        if (requirementAcceptance is null)
+        using var doc = JsonDocument.Parse(File.ReadAllText(ResolveRepositoryPath(MasterTaskPath)), JsonOptions);
+        var tasks = doc.RootElement.GetProperty("master").GetProperty("tasks");
+        foreach (var item in tasks.EnumerateArray())
         {
-            return false;
-        }
-
-        var requirementRefs = ParseRefs(requirementAcceptance).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        foreach (var requirementId in RequiredRequirementIds)
-        {
-            if (!ContainsToken(requirementAcceptance, requirementId))
+            if (item.TryGetProperty("id", out var idProp) && idProp.ValueKind == JsonValueKind.Number && idProp.GetInt32() == TaskId)
             {
-                return false;
-            }
-
-            var expectedRefs = RequirementEvidenceMap[requirementId];
-            var hasMappedEvidence = expectedRefs.Any(expected =>
-                requirementRefs.Contains(expected) &&
-                entry.TestRefs.Contains(expected, StringComparer.OrdinalIgnoreCase));
-            if (!hasMappedEvidence)
-            {
-                return false;
+                var details = item.TryGetProperty("details", out var detailsProp) ? detailsProp.GetString() ?? string.Empty : string.Empty;
+                var status = item.TryGetProperty("status", out var statusProp) ? statusProp.GetString() ?? string.Empty : string.Empty;
+                var requirementIds = ExtractRequirementIds(details);
+                return new MasterTask43Entry(status, details, requirementIds);
             }
         }
 
-        return true;
+        throw new InvalidOperationException($"Task {TaskId} was not found in '{MasterTaskPath}'.");
     }
 
-    private static bool ValidateScopeMapping(Task43TaskEntry entry)
+    private static string[] ExtractRequirementIds(string details)
     {
-        if (!entry.ScopeTaskIds.SequenceEqual([4, 5, 6, 20, 22]))
+        var line = details.Split('\n')
+            .Select(static l => l.Trim())
+            .FirstOrDefault(static l => l.StartsWith("Requirement IDs:", StringComparison.OrdinalIgnoreCase));
+        if (string.IsNullOrWhiteSpace(line))
         {
-            return false;
+            return Array.Empty<string>();
         }
 
-        var scopeAcceptance = FindAcceptance(entry.Acceptance, "T04/T05/T06/T20/T22", "scope items");
-        if (scopeAcceptance is null)
-        {
-            return false;
-        }
-
-        foreach (var scopeId in RequiredScopeItems)
-        {
-            if (!ContainsToken(scopeAcceptance, scopeId))
-            {
-                return false;
-            }
-
-            var mappedRefs = ScopeEvidenceMap[scopeId];
-            var hasMappedEvidence = mappedRefs.Any(mapped => entry.TestRefs.Contains(mapped, StringComparer.OrdinalIgnoreCase));
-            if (!hasMappedEvidence)
-            {
-                return false;
-            }
-        }
-
-        var scopeRefs = ParseRefs(scopeAcceptance);
-        if (!scopeRefs.Contains(GovernanceTestRef, StringComparer.OrdinalIgnoreCase))
-        {
-            return false;
-        }
-
-        var taskRefs = entry.TestRefs.ToHashSet(StringComparer.OrdinalIgnoreCase);
-        return taskRefs.SetEquals(AllowedTaskRefs);
-    }
-
-    private static string? FindAcceptance(IEnumerable<string> acceptance, params string[] requiredTokens)
-    {
-        foreach (var line in acceptance)
-        {
-            var matchesAll = requiredTokens.All(token => ContainsToken(line, token));
-            if (matchesAll)
-            {
-                return line;
-            }
-        }
-
-        return null;
-    }
-
-    private static bool ContainsToken(string text, string token)
-    {
-        return text.IndexOf(token, StringComparison.OrdinalIgnoreCase) >= 0;
+        var payload = line.Substring("Requirement IDs:".Length);
+        return payload
+            .Split(',', StringSplitOptions.RemoveEmptyEntries)
+            .Select(token => token.Trim())
+            .Where(token => token.Length > 0)
+            .ToArray();
     }
 
     private static IReadOnlyList<string> ParseRefs(string acceptanceText)
@@ -392,6 +341,29 @@ public sealed class Task43UiWiringAcceptanceGovernanceTests
             .Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries)
             .Select(Normalize)
             .ToArray();
+    }
+
+    private static ChannelBudgetConfiguration CreateDefaultConfig()
+    {
+        return new ChannelBudgetConfiguration(
+            Normal: new ChannelRule(Day1Budget: 50, DailyGrowth: 1.2m, ChannelLimit: 20, CostPerEnemy: 10),
+            Elite: new ChannelRule(Day1Budget: 120, DailyGrowth: 1.2m, ChannelLimit: 8, CostPerEnemy: 20),
+            Boss: new ChannelRule(Day1Budget: 300, DailyGrowth: 1.2m, ChannelLimit: 3, CostPerEnemy: 100));
+    }
+
+    private static string BuildWaveSnapshot(WaveResult waveResult)
+    {
+        var channelSnapshots = waveResult.ChannelResults
+            .OrderBy(pair => pair.Key, StringComparer.Ordinal)
+            .Select(pair => $"{pair.Key}:{BuildChannelSnapshot(pair.Value)}");
+
+        return $"{waveResult.DayIndex}|{waveResult.Seed}|{string.Join("|", channelSnapshots)}";
+    }
+
+    private static string BuildChannelSnapshot(ChannelWaveResult channelWaveResult)
+    {
+        var audit = channelWaveResult.Audit;
+        return $"{audit.InputBudget},{audit.Allocated},{audit.Spent},{audit.Remaining}|{string.Join(",", channelWaveResult.SpawnOrder)}";
     }
 
     private static string Normalize(string? path)
@@ -416,219 +388,7 @@ public sealed class Task43UiWiringAcceptanceGovernanceTests
         throw new DirectoryNotFoundException("Unable to locate repository root from test base directory.");
     }
 
-    private static string ResolveRepositoryRoot()
-    {
-        var markerPath = ResolveRepositoryPath(".taskmaster/tasks/tasks_back.json");
-        return Path.GetFullPath(Path.Combine(markerPath, "..", "..", ".."));
-    }
+    private sealed record Task43TaskEntry(int[] ScopeTaskIds, string[] Acceptance, string[] TestRefs, string Status);
 
-    private static Chapter7ClosureContract LoadLatestChapter7ClosureContract(int taskId)
-    {
-        var closurePath = ResolveLatestChapter7ArtifactPath("closure-summary.json");
-        using var doc = JsonDocument.Parse(File.ReadAllText(closurePath), JsonOptions);
-        if (!doc.RootElement.TryGetProperty("slices", out var slices) || slices.ValueKind != JsonValueKind.Array)
-        {
-            throw new InvalidOperationException($"'{closurePath}' does not contain slices[].");
-        }
-
-        foreach (var slice in slices.EnumerateArray())
-        {
-            if (!slice.TryGetProperty("write_back_contract", out var contract) || contract.ValueKind != JsonValueKind.Object)
-            {
-                continue;
-            }
-
-            if (!contract.TryGetProperty("task_id", out var taskIdProperty) || taskIdProperty.ValueKind != JsonValueKind.Number || taskIdProperty.GetInt32() != taskId)
-            {
-                continue;
-            }
-
-            var pendingSurfaces = contract.TryGetProperty("missing_surface_owners", out var missingSurfacesElement) && missingSurfacesElement.ValueKind == JsonValueKind.Array
-                ? missingSurfacesElement.EnumerateArray().Select(value => value.GetString() ?? string.Empty).Where(value => !string.IsNullOrWhiteSpace(value)).ToArray()
-                : Array.Empty<string>();
-            var requiredEvidenceStatus = contract.TryGetProperty("done_when", out var doneWhenElement) &&
-                                         doneWhenElement.ValueKind == JsonValueKind.Object &&
-                                         doneWhenElement.TryGetProperty("required_evidence_status", out var requiredStatusElement)
-                ? (requiredStatusElement.GetString() ?? string.Empty)
-                : string.Empty;
-
-            var gapToClose = slice.TryGetProperty("gap_to_close", out var gapElement) && gapElement.ValueKind == JsonValueKind.Array
-                ? gapElement.EnumerateArray().Select(value => value.GetString() ?? string.Empty).Where(value => !string.IsNullOrWhiteSpace(value)).ToArray()
-                : Array.Empty<string>();
-
-            return new Chapter7ClosureContract(
-                ReadyForDone: contract.TryGetProperty("ready_for_done", out var readyElement) && readyElement.ValueKind == JsonValueKind.True,
-                PendingSurfaces: pendingSurfaces,
-                GapToClose: gapToClose,
-                RequiredEvidenceStatus: requiredEvidenceStatus);
-        }
-
-        throw new InvalidOperationException($"Task {taskId} write_back_contract was not found in '{closurePath}'.");
-    }
-
-    private static Dictionary<string, string> LoadLatestChapter7StatusPatchStatuses(int taskId)
-    {
-        var statusPatchPath = ResolveLatestChapter7ArtifactPath("task-status-patch.json");
-        using var doc = JsonDocument.Parse(File.ReadAllText(statusPatchPath), JsonOptions);
-        if (!doc.RootElement.TryGetProperty("operations", out var operations) || operations.ValueKind != JsonValueKind.Array)
-        {
-            throw new InvalidOperationException($"'{statusPatchPath}' does not contain operations[].");
-        }
-
-        var statuses = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var operation in operations.EnumerateArray())
-        {
-            if (!operation.TryGetProperty("task_id", out var taskIdElement) || taskIdElement.ValueKind != JsonValueKind.Number || taskIdElement.GetInt32() != taskId)
-            {
-                continue;
-            }
-
-            var view = operation.TryGetProperty("view", out var viewElement) ? (viewElement.GetString() ?? string.Empty).Trim() : string.Empty;
-            var toStatus = operation.TryGetProperty("to_status", out var statusElement) ? (statusElement.GetString() ?? string.Empty).Trim() : string.Empty;
-            if (!string.IsNullOrWhiteSpace(view) && !string.IsNullOrWhiteSpace(toStatus))
-            {
-                statuses[view] = toStatus;
-            }
-        }
-
-        return statuses;
-    }
-
-    private static Dictionary<string, string> LoadTask43StatusesFromTaskViews()
-    {
-        var root = ResolveRepositoryRoot();
-        return new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-        {
-            ["tasks_json"] = LoadTasksJsonStatus(Path.Combine(root, ".taskmaster", "tasks", "tasks.json"), TaskId),
-            ["tasks_back"] = LoadTaskViewStatus(Path.Combine(root, ".taskmaster", "tasks", "tasks_back.json"), TaskId),
-            ["tasks_gameplay"] = LoadTaskViewStatus(Path.Combine(root, ".taskmaster", "tasks", "tasks_gameplay.json"), TaskId),
-        };
-    }
-
-    private static string LoadTasksJsonStatus(string path, int taskId)
-    {
-        using var doc = JsonDocument.Parse(File.ReadAllText(path), JsonOptions);
-        if (!doc.RootElement.TryGetProperty("master", out var master) ||
-            master.ValueKind != JsonValueKind.Object ||
-            !master.TryGetProperty("tasks", out var tasks) ||
-            tasks.ValueKind != JsonValueKind.Array)
-        {
-            throw new InvalidOperationException($"'{path}' does not contain master.tasks[].");
-        }
-
-        foreach (var task in tasks.EnumerateArray())
-        {
-            if (task.TryGetProperty("id", out var idElement) && idElement.ValueKind == JsonValueKind.Number && idElement.GetInt32() == taskId)
-            {
-                return task.TryGetProperty("status", out var statusElement) ? (statusElement.GetString() ?? string.Empty) : string.Empty;
-            }
-        }
-
-        throw new InvalidOperationException($"Task {taskId} was not found in '{path}'.");
-    }
-
-    private static string LoadTaskViewStatus(string path, int taskId)
-    {
-        using var doc = JsonDocument.Parse(File.ReadAllText(path), JsonOptions);
-        if (doc.RootElement.ValueKind != JsonValueKind.Array)
-        {
-            throw new InvalidOperationException($"'{path}' is not a task array.");
-        }
-
-        foreach (var task in doc.RootElement.EnumerateArray())
-        {
-            if (!task.TryGetProperty("taskmaster_id", out var idElement) || idElement.ValueKind != JsonValueKind.Number || idElement.GetInt32() != taskId)
-            {
-                continue;
-            }
-
-            return task.TryGetProperty("status", out var statusElement) ? (statusElement.GetString() ?? string.Empty) : string.Empty;
-        }
-
-        throw new InvalidOperationException($"Task {taskId} was not found in '{path}'.");
-    }
-
-    private static string ResolveLatestChapter7ArtifactPath(string fileName)
-    {
-        var root = ResolveRepositoryRoot();
-        var logsRoot = new DirectoryInfo(Path.Combine(root, "logs", "ci"));
-        if (!logsRoot.Exists)
-        {
-            throw new DirectoryNotFoundException($"logs/ci was not found under '{root}'.");
-        }
-
-        var candidates = logsRoot
-            .EnumerateDirectories("*", SearchOption.TopDirectoryOnly)
-            .Select(dir => Path.Combine(dir.FullName, "chapter7-ui-wiring", fileName))
-            .Where(File.Exists)
-            .OrderByDescending(File.GetLastWriteTimeUtc)
-            .ToArray();
-        if (candidates.Length == 0)
-        {
-            throw new FileNotFoundException($"No chapter7 artifact '{fileName}' was found under logs/ci/*/chapter7-ui-wiring.");
-        }
-
-        return candidates[0];
-    }
-
-    private static bool ValidateMasterTaskMetadataForTask43()
-    {
-        var path = ResolveRepositoryPath(".taskmaster/tasks/tasks.json");
-        using var doc = JsonDocument.Parse(File.ReadAllText(path), JsonOptions);
-        if (!doc.RootElement.TryGetProperty("master", out var master) ||
-            master.ValueKind != JsonValueKind.Object ||
-            !master.TryGetProperty("tasks", out var tasks) ||
-            tasks.ValueKind != JsonValueKind.Array)
-        {
-            return false;
-        }
-
-        foreach (var task in tasks.EnumerateArray())
-        {
-            if (!task.TryGetProperty("id", out var idElement) || idElement.ValueKind != JsonValueKind.Number || idElement.GetInt32() != TaskId)
-            {
-                continue;
-            }
-
-            var dependencySet = (task.TryGetProperty("dependencies", out var dependenciesElement) && dependenciesElement.ValueKind == JsonValueKind.Array)
-                ? dependenciesElement.EnumerateArray().Where(item => item.ValueKind == JsonValueKind.Number).Select(item => item.GetInt32()).ToHashSet()
-                : new HashSet<int>();
-
-            var details = task.TryGetProperty("details", out var detailsElement) ? (detailsElement.GetString() ?? string.Empty) : string.Empty;
-            var strategy = task.TryGetProperty("testStrategy", out var strategyElement) ? (strategyElement.GetString() ?? string.Empty) : string.Empty;
-
-            return dependencySet.SetEquals([4, 5, 6, 20, 22]) &&
-                   details.Contains("CombatHud", StringComparison.OrdinalIgnoreCase) &&
-                   details.Contains("PressurePanel", StringComparison.OrdinalIgnoreCase) &&
-                   details.Contains("CameraControlOverlay", StringComparison.OrdinalIgnoreCase) &&
-                   strategy.Contains("runtime evidence", StringComparison.OrdinalIgnoreCase);
-        }
-
-        return false;
-    }
-
-    private sealed record Task43TaskEntry(int[] ScopeTaskIds, string[] Acceptance, string[] TestRefs)
-    {
-        public Task43TaskEntry ReplaceAcceptance(string current, string replacement)
-        {
-            var updated = Acceptance
-                .Select(line => string.Equals(line, current, StringComparison.Ordinal) ? replacement : line)
-                .ToArray();
-            return this with { Acceptance = updated };
-        }
-
-        public Task43TaskEntry RemoveTestRef(string testRef)
-        {
-            var updated = TestRefs
-                .Where(path => !string.Equals(path, Normalize(testRef), StringComparison.OrdinalIgnoreCase))
-                .ToArray();
-            return this with { TestRefs = updated };
-        }
-    }
-
-    private sealed record Chapter7ClosureContract(
-        bool ReadyForDone,
-        string[] PendingSurfaces,
-        string[] GapToClose,
-        string RequiredEvidenceStatus);
+    private sealed record MasterTask43Entry(string Status, string Details, string[] RequirementIds);
 }

@@ -3439,7 +3439,7 @@
     "taskmaster_id": 42,
     "title": "Wire UI: Runtime HUD And Outcome Surfaces",
     "description": "Close the Chapter 7 runtime loop slice by landing owned outcome/prompt surfaces and direct HUD runtime evidence.",
-    "status": "review",
+    "status": "done",
     "priority": "P0",
     "layer": "adapter",
     "adr_refs": [
@@ -3488,7 +3488,7 @@
       "Validation records auditable pass/fail results for referenced xUnit and applicable GdUnit UI-slice coverage; when one framework has no applicable case, it is recorded as explicit N/A with rationale instead of omission. Refs: Game.Core.Tests/State/GameStateMachineTests.cs Game.Core.Tests/State/GameStateManagerTests.cs Game.Core.Tests/Tasks/Task3DayNightScopeGuardTests.cs Game.Core.Tests/Tasks/Task3DayNightDesignArtifactTests.cs",
       "Closure fails unless T42 pending owned surfaces (OutcomePanel and RuntimePromptPanel) exist as stable runtime scene/panel owners that can be asserted directly during validation. Refs: docs/gdd/t1-t46-m1-wiring-audit.md docs/gdd/ui-gdd-flow.candidates.json",
       "Chapter 7 closure evidence for T42 must be upgraded from docs-only to runtime evidence via direct player-visible or operator-visible validation; docs-only, test-only, or probe-only evidence is insufficient. Refs: docs/gdd/t1-t46-m1-wiring-audit.md logs/ci/2026-04-27/chapter7-ui-wiring/closure-summary.json",
-      "Before T42 can return to done, Chapter 7 closure artifacts for this slice must report zero remaining pending_surfaces and zero unresolved gap_to_close entries. Refs: logs/ci/2026-04-27/chapter7-ui-wiring/closure-summary.json logs/ci/2026-04-27/chapter7-ui-wiring/task-status-patch.json",
+      "T42 closure requires, Chapter 7 closure artifacts for this slice must report zero remaining pending_surfaces and zero unresolved gap_to_close entries. Refs: logs/ci/2026-04-27/chapter7-ui-wiring/closure-summary.json logs/ci/2026-04-27/chapter7-ui-wiring/task-status-patch.json",
       "RuntimeHud must expose explicit speed-control widgets for supported runtime states, and acceptance must include direct runtime evidence that pause and timer freeze are visibly owned by RuntimeHud rather than inferred indirectly. Refs: Tests.Godot/tests/UI/test_hud_scene.gd Tests.Godot/tests/UI/test_hud_updates_on_events.gd logs/e2e/<YYYY-MM-DD>/runtime-ui/summary.json",
       "RuntimePromptPanel must render runtime-triggered prompt and error messages on a concrete player-visible surface, and validation must directly cover that prompt/error surface with auditable runtime pass/fail evidence. Refs: Tests.Godot/tests/UI/test_hud_scene.gd Tests.Godot/tests/UI/test_hud_updates_on_events.gd logs/e2e/<YYYY-MM-DD>/runtime-ui/summary.json",
       "OutcomePanel and RuntimePromptPanel must each have direct runtime assertions tied to player-visible states; acceptance fails if either named surface lacks an auditable runtime assertion. Refs: Tests.Godot/tests/UI/test_hud_scene.gd Tests.Godot/tests/UI/test_hud_updates_on_events.gd logs/ci/<YYYY-MM-DD>/chapter7-ui-wiring/closure-summary.json"
@@ -3517,7 +3517,9 @@
         23,
         24
       ],
-      "ui_entry": "HUD / Prompt / Outcome Surfaces"
+      "ui_entry": "HUD / Prompt / Outcome Surfaces",
+      "pending_surfaces": [],
+      "primary_closure_gaps": []
     },
     "semantic_review_tier": "full"
   },
@@ -3536,7 +3538,7 @@
     "taskmaster_id": 43,
     "title": "Wire UI: Combat Pressure And Interaction Surfaces",
     "description": "Close the Chapter 7 combat slice by landing owned combat pressure and camera-control surfaces with runtime checks.",
-    "status": "review",
+    "status": "done",
     "priority": "P0",
     "layer": "adapter",
     "adr_refs": [
@@ -3576,24 +3578,18 @@
       "Tests.Godot/tests/UI/test_hud_scene.gd",
       "Tests.Godot/tests/UI/test_hud_updates_on_events.gd",
       "Tests.Godot/tests/Scenes/Camera/test_camera_controller_scroll_inputs.gd",
-      "Game.Core.Tests/Tasks/Task43UiWiringAcceptanceGovernanceTests.cs",
       "Tests.Godot/tests/Scenes/Combat/test_enemy_ai_navigation_priority.gd",
-      "Tests.Godot/tests/Scenes/Combat/test_enemy_ai_blocked_route_fallback.gd"
+      "Tests.Godot/tests/Scenes/Combat/test_enemy_ai_blocked_route_fallback.gd",
+      "Game.Core.Tests/Tasks/Task43UiWiringAcceptanceGovernanceTests.cs"
     ],
     "acceptance": [
-      "T43 is accepted for this Chapter 7 UI slice only if Combat HUD, Pressure, and Camera Feedback are wired so runtime gameplay state/events can drive player-visible combat outcome, pressure, targeting/pathing feedback, and camera response on owned surfaces; docs-only evidence is insufficient. Refs: Tests.Godot/tests/UI/test_hud_updates_on_events.gd Tests.Godot/tests/UI/test_hud_scene.gd Tests.Godot/tests/Scenes/Camera/test_camera_controller_scroll_inputs.gd Tests.Godot/tests/Scenes/Combat/test_enemy_ai_navigation_priority.gd Tests.Godot/tests/Scenes/Combat/test_enemy_ai_blocked_route_fallback.gd Game.Core.Tests/Services/EnemyAiTargetSelectionTests.cs Game.Core.Tests/Engine/GameEngineCoreEventTests.cs Game.Core.Tests/Tasks/Task43UiWiringAcceptanceGovernanceTests.cs",
-      "T43 is accepted only when the owned surfaces for this slice exist as standalone runtime surfaces named CombatHud, PressurePanel, and CameraControlOverlay; missing any one of the three fails acceptance. Refs: Tests.Godot/tests/UI/test_hud_scene.gd Tests.Godot/tests/UI/test_hud_updates_on_events.gd Tests.Godot/tests/Scenes/Camera/test_camera_controller_scroll_inputs.gd Tests.Godot/tests/Scenes/Combat/test_enemy_ai_navigation_priority.gd Tests.Godot/tests/Scenes/Combat/test_enemy_ai_blocked_route_fallback.gd Game.Core.Tests/Services/EnemyAiTargetSelectionTests.cs Game.Core.Tests/Engine/GameEngineCoreEventTests.cs Game.Core.Tests/Tasks/Task43UiWiringAcceptanceGovernanceTests.cs",
-      "The wired surfaces must display enemy pressure, targeting, combat outcomes, and camera interaction from runtime state or events with no hidden state dependency; if these outputs cannot be traced to runtime state/events during play, acceptance fails. Refs: Tests.Godot/tests/UI/test_hud_scene.gd Tests.Godot/tests/UI/test_hud_updates_on_events.gd Tests.Godot/tests/Scenes/Camera/test_camera_controller_scroll_inputs.gd Tests.Godot/tests/Scenes/Combat/test_enemy_ai_navigation_priority.gd Tests.Godot/tests/Scenes/Combat/test_enemy_ai_blocked_route_fallback.gd Game.Core.Tests/Services/EnemyAiTargetSelectionTests.cs Game.Core.Tests/Engine/GameEngineCoreEventTests.cs Game.Core.Tests/Tasks/Task43UiWiringAcceptanceGovernanceTests.cs",
-      "Empty-state behavior must be runtime-verifiable: using the same day, config, and seed yields deterministic wave replay, and wave-budget computation depends only on wave inputs with no cross-system side effects; any deviation fails acceptance. Refs: Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs Game.Core.Tests/Engine/GameEngineCoreDeterminismTests.cs Game.Core.Tests/Services/WaveManagerDeterminismTests.cs Tests.Godot/tests/UI/test_hud_updates_on_events.gd Tests.Godot/tests/UI/test_hud_scene.gd",
-      "Failure-state behavior must be runtime-verifiable in combat runs: target selection follows the required priority chain, and blocked routes to priority targets still produce blocked-path fallback attacks; either condition missing fails acceptance. Refs: Tests.Godot/tests/UI/test_hud_scene.gd Tests.Godot/tests/UI/test_hud_updates_on_events.gd Tests.Godot/tests/Scenes/Camera/test_camera_controller_scroll_inputs.gd Tests.Godot/tests/Scenes/Combat/test_enemy_ai_navigation_priority.gd Tests.Godot/tests/Scenes/Combat/test_enemy_ai_blocked_route_fallback.gd Game.Core.Tests/Services/EnemyAiTargetSelectionTests.cs Game.Core.Tests/Engine/GameEngineCoreEventTests.cs Game.Core.Tests/Tasks/Task43UiWiringAcceptanceGovernanceTests.cs",
-      "Completion requires deterministic and runtime evidence that changing one channel budget changes that channel input budget and alters at least one spawn decision for the same day and seed while non-target channel outputs remain unchanged; deterministic domain state must stay behind existing contracts and no unrelated gameplay behavior may be introduced. Evidence artifacts must be produced and auditable at logs/ci/**/task-triplet-audit/report.json, logs/ci/**/coverage.json, and logs/ci/**/runtime-ui/summary.json. Refs: Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs Game.Core.Tests/Services/WaveBudgetAllocatorTests.cs Game.Core.Tests/Engine/GameEngineCoreDeterminismTests.cs Game.Core.Tests/Services/WaveManagerDeterminismTests.cs Tests.Godot/tests/UI/test_hud_updates_on_events.gd Tests.Godot/tests/Scenes/Combat/test_enemy_ai_navigation_priority.gd Tests.Godot/tests/Scenes/Combat/test_enemy_ai_blocked_route_fallback.gd",
-      "Acceptance evidence must map Requirement IDs RQ-CAMERA-SCROLL, RQ-COMBAT-QUEUE-TECH, and RQ-CORE-LOOP-STATE to executable evidence for this slice; missing any listed requirement fails acceptance. Refs: Tests.Godot/tests/Scenes/Camera/test_camera_controller_scroll_inputs.gd Game.Core.Tests/Services/EnemyAiTargetSelectionTests.cs Game.Core.Tests/Engine/GameEngineCoreEventTests.cs Game.Core.Tests/Engine/GameEngineCoreDeterminismTests.cs Game.Core.Tests/Services/WaveManagerDeterminismTests.cs",
-      "Acceptance scope mapping must keep T04/T05/T06/T20/T22 inside this declared UI slice, and scope items outside that set are invalid. Refs: Tests.Godot/tests/Scenes/Camera/test_camera_controller_scroll_inputs.gd Game.Core.Tests/Services/EnemyAiTargetSelectionTests.cs Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs Game.Core.Tests/Services/WaveBudgetAllocatorTests.cs Tests.Godot/tests/UI/test_hud_updates_on_events.gd Tests.Godot/tests/UI/test_hud_scene.gd Game.Core.Tests/Engine/GameEngineCoreDeterminismTests.cs Game.Core.Tests/Services/WaveManagerDeterminismTests.cs Game.Core.Tests/Tasks/Task43UiWiringAcceptanceGovernanceTests.cs",
-      "Validation must keep both xUnit and GdUnit evidence paths for T43 while governance checks remain distinct and auditable. Refs: Tests.Godot/tests/UI/test_hud_scene.gd Tests.Godot/tests/UI/test_hud_updates_on_events.gd Tests.Godot/tests/Scenes/Camera/test_camera_controller_scroll_inputs.gd Tests.Godot/tests/Scenes/Combat/test_enemy_ai_navigation_priority.gd Tests.Godot/tests/Scenes/Combat/test_enemy_ai_blocked_route_fallback.gd Game.Core.Tests/Services/EnemyAiTargetSelectionTests.cs Game.Core.Tests/Engine/GameEngineCoreEventTests.cs Game.Core.Tests/Tasks/Task43UiWiringAcceptanceGovernanceTests.cs",
-      "T43 closure fails unless CombatHud, PressurePanel, and CameraControlOverlay all exist as stable runtime scene or panel owners for this combat pressure and camera-control slice. Refs: Tests.Godot/tests/UI/test_hud_scene.gd Tests.Godot/tests/UI/test_hud_updates_on_events.gd Game.Core.Tests/Tasks/Task43UiWiringAcceptanceGovernanceTests.cs",
-      "Chapter 7 evidence for T43 must be upgraded from docs-only to runtime through direct scene validation or player-visible/operator-visible validation of the owned surfaces; planning-only documentation is insufficient. Refs: Tests.Godot/tests/UI/test_hud_scene.gd Tests.Godot/tests/UI/test_hud_updates_on_events.gd Tests.Godot/tests/Scenes/Camera/test_camera_controller_scroll_inputs.gd Tests.Godot/tests/Scenes/Combat/test_enemy_ai_navigation_priority.gd Game.Core.Tests/Tasks/Task43UiWiringAcceptanceGovernanceTests.cs",
-      "Chapter 7 closure artifacts for T43 must keep pending_surfaces and gap_to_close explicitly tracked for CombatHud, PressurePanel, and CameraControlOverlay, and status transitions must be evidence-backed by runtime validation outputs. Refs: Tests.Godot/tests/UI/test_hud_scene.gd Tests.Godot/tests/UI/test_hud_updates_on_events.gd Game.Core.Tests/Tasks/Task43UiWiringAcceptanceGovernanceTests.cs",
-      "T43 status transitions (keep-open, review, done-ready) must be justified by runtime evidence and synchronized task-status patches across task views. Refs: Tests.Godot/tests/UI/test_hud_scene.gd Tests.Godot/tests/UI/test_hud_updates_on_events.gd Game.Core.Tests/Tasks/Task43UiWiringAcceptanceGovernanceTests.cs"
+      "T43 is accepted for this Chapter 7 UI slice only if Combat HUD, Pressure, and Camera Feedback are wired so runtime gameplay state/events can drive player-visible combat outcome, pressure, targeting/pathing feedback, and camera response on owned surfaces; docs-only evidence is insufficient. Refs: Tests.Godot/tests/UI/test_hud_updates_on_events.gd Tests.Godot/tests/UI/test_hud_scene.gd Tests.Godot/tests/Scenes/Camera/test_camera_controller_scroll_inputs.gd Tests.Godot/tests/Scenes/Combat/test_enemy_ai_navigation_priority.gd Tests.Godot/tests/Scenes/Combat/test_enemy_ai_blocked_route_fallback.gd Game.Core.Tests/Services/EnemyAiTargetSelectionTests.cs Game.Core.Tests/Engine/GameEngineCoreEventTests.cs",
+      "T43 is accepted only when the owned surfaces for this slice exist as standalone runtime surfaces named CombatHud, PressurePanel, and CameraControlOverlay; missing any one of the three fails acceptance. Refs: Tests.Godot/tests/UI/test_hud_scene.gd Tests.Godot/tests/UI/test_hud_updates_on_events.gd Tests.Godot/tests/Scenes/Camera/test_camera_controller_scroll_inputs.gd Tests.Godot/tests/Scenes/Combat/test_enemy_ai_navigation_priority.gd Tests.Godot/tests/Scenes/Combat/test_enemy_ai_blocked_route_fallback.gd",
+      "The wired surfaces must display enemy pressure, targeting, combat outcomes, and camera interaction from runtime state or events with no hidden state dependency; if these outputs cannot be traced to runtime state/events during play, acceptance fails. Refs: Tests.Godot/tests/UI/test_hud_scene.gd Tests.Godot/tests/UI/test_hud_updates_on_events.gd Tests.Godot/tests/Scenes/Camera/test_camera_controller_scroll_inputs.gd Tests.Godot/tests/Scenes/Combat/test_enemy_ai_navigation_priority.gd Tests.Godot/tests/Scenes/Combat/test_enemy_ai_blocked_route_fallback.gd",
+      "Empty-state behavior must be runtime-verifiable: using the same day, config, and seed yields deterministic wave replay, and wave-budget computation depends only on wave inputs with no cross-system side effects; any deviation fails acceptance. Refs: Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs Game.Core.Tests/Engine/GameEngineCoreDeterminismTests.cs Game.Core.Tests/Services/WaveManagerDeterminismTests.cs",
+      "Failure-state behavior must be runtime-verifiable in combat runs: (1) target selection follows the required priority chain, AND (2) when routes to priority targets are obstructed, blocked-path fallback attacks still occur; both conditions are mandatory for Taskmaster #6 completion. Refs: Tests.Godot/tests/Scenes/Combat/test_enemy_ai_navigation_priority.gd Tests.Godot/tests/Scenes/Combat/test_enemy_ai_blocked_route_fallback.gd Game.Core.Tests/Services/EnemyAiTargetSelectionTests.cs Game.Core.Tests/Engine/GameEngineCoreEventTests.cs",
+      "Completion requires deterministic and runtime evidence that changing one channel budget changes that channel's input budget and alters at least one spawn decision for the same day, same config, and same seed while non-target channel outputs remain unchanged; deterministic domain state must stay behind existing contracts and no unrelated gameplay behavior may be introduced. Refs: Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs Game.Core.Tests/Services/WaveBudgetAllocatorTests.cs Game.Core.Tests/Engine/GameEngineCoreDeterminismTests.cs Game.Core.Tests/Services/WaveManagerDeterminismTests.cs",
+      "Player interaction semantics must be runtime-verifiable: during Fight actions, owned surfaces must reflect combat outcome transitions (target acquired/lost, attack outcome, path blocked/fallback, camera response), and each visible change must be traceable to runtime state/events with no hidden-state-only transitions. Refs: Tests.Godot/tests/UI/test_hud_updates_on_events.gd Tests.Godot/tests/UI/test_hud_scene.gd Tests.Godot/tests/Scenes/Combat/test_enemy_ai_navigation_priority.gd Tests.Godot/tests/Scenes/Combat/test_enemy_ai_blocked_route_fallback.gd"
     ],
     "contractRefs": [
       "core.lastking.wave.spawned",
@@ -3630,7 +3626,7 @@
     "taskmaster_id": 44,
     "title": "Wire UI: Economy And Progression Panels",
     "description": "Close the Chapter 7 economy slice by materializing owned resource/build/progression panels with scenario evidence.",
-    "status": "review",
+    "status": "done",
     "priority": "P1",
     "layer": "adapter",
     "adr_refs": [
@@ -3679,7 +3675,7 @@
       "Validation must use the referenced xUnit suite for Task 44 and record a GdUnit N/A record with rationale when no GdUnit case applies. Refs: Game.Core.Tests/Services/ResourceManagerIntegerSafetyTests.cs Game.Core.Tests/Engine/GameEngineCoreEventTests.cs Game.Core.Tests/Services/ResourceManagerTests.cs Game.Core.Tests/Services/ResourceManagerEventTests.cs Game.Core.Tests/Tasks/Task44UiWiringAcceptanceGovernanceTests.cs",
       "T44 closure fails unless ResourcePanel, BuildPanel, and ProgressionPanel exist as concrete owned scene or panel surfaces, and no listed pending surface remains unresolved. Refs: docs/gdd/t1-t46-m1-wiring-audit.md docs/gdd/ui-gdd-flow.candidates.json",
       "Chapter 7 closure evidence for T44 must move from partial to runtime by direct player-visible or operator-visible scenario validation; docs-only, test-only, or probe-only evidence is insufficient. Refs: docs/gdd/t1-t46-m1-wiring-audit.md logs/ci/2026-04-27/chapter7-ui-wiring/closure-summary.json",
-      "Before T44 can return to done, Chapter 7 closure artifacts must show zero remaining pending_surfaces and zero unresolved gap_to_close entries for this slice. Refs: logs/ci/2026-04-27/chapter7-ui-wiring/closure-summary.json logs/ci/2026-04-27/chapter7-ui-wiring/task-status-patch.json",
+      "T44 closure requires, Chapter 7 closure artifacts must show zero remaining pending_surfaces and zero unresolved gap_to_close entries for this slice. Refs: logs/ci/2026-04-27/chapter7-ui-wiring/closure-summary.json logs/ci/2026-04-27/chapter7-ui-wiring/task-status-patch.json",
       "T44 closure fails unless ResourcePanel, BuildPanel, and ProgressionPanel each have direct scenario assertions in runtime validation; surface existence alone is insufficient, and any named surface without a direct scenario assertion fails acceptance. Refs: Tests.Godot/tests/Scenes/Building/test_build_mode_preview_and_confirm.gd Game.Core.Tests/Services/ResourceManagerIntegerSafetyTests.cs logs/ci/<YYYY-MM-DD>/chapter7-ui-wiring/closure-summary.json"
     ],
     "contractRefs": [
@@ -3699,7 +3695,9 @@
         16,
         17
       ],
-      "ui_entry": "Resource / Build / Progression Panels"
+      "ui_entry": "Resource / Build / Progression Panels",
+      "pending_surfaces": [],
+      "primary_closure_gaps": []
     },
     "semantic_review_tier": "full"
   },

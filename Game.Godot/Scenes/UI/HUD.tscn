@@ -197,3 +197,83 @@ layout_mode = 2
 layout_mode = 2
 autowrap_mode = 3
 text = "Metadata: n/a"
+
+[node name="OutcomePanel" type="PanelContainer" parent="FeedbackLayer"]
+layout_mode = 1
+anchors_preset = 0
+offset_left = 396.0
+offset_top = 340.0
+offset_right = 772.0
+offset_bottom = 398.0
+
+[node name="VBox" type="VBoxContainer" parent="FeedbackLayer/OutcomePanel"]
+layout_mode = 2
+
+[node name="OutcomeLabel" type="Label" parent="FeedbackLayer/OutcomePanel/VBox"]
+layout_mode = 2
+autowrap_mode = 3
+text = "Outcome: n/a"
+
+[node name="RuntimePromptPanel" type="PanelContainer" parent="FeedbackLayer"]
+layout_mode = 1
+anchors_preset = 0
+offset_left = 396.0
+offset_top = 406.0
+offset_right = 772.0
+offset_bottom = 466.0
+
+[node name="VBox" type="VBoxContainer" parent="FeedbackLayer/RuntimePromptPanel"]
+layout_mode = 2
+
+[node name="RuntimePromptLabel" type="Label" parent="FeedbackLayer/RuntimePromptPanel/VBox"]
+layout_mode = 2
+autowrap_mode = 3
+text = "Prompt: n/a"
+
+[node name="ResourcePanel" type="PanelContainer" parent="FeedbackLayer"]
+layout_mode = 1
+anchors_preset = 0
+offset_left = 780.0
+offset_top = 48.0
+offset_right = 1188.0
+offset_bottom = 132.0
+
+[node name="VBox" type="VBoxContainer" parent="FeedbackLayer/ResourcePanel"]
+layout_mode = 2
+
+[node name="ResourceSummaryLabel" type="Label" parent="FeedbackLayer/ResourcePanel/VBox"]
+layout_mode = 2
+autowrap_mode = 3
+text = "Resources: gold=n/a iron=n/a pop=n/a"
+
+[node name="BuildPanel" type="PanelContainer" parent="FeedbackLayer"]
+layout_mode = 1
+anchors_preset = 0
+offset_left = 780.0
+offset_top = 140.0
+offset_right = 1188.0
+offset_bottom = 224.0
+
+[node name="VBox" type="VBoxContainer" parent="FeedbackLayer/BuildPanel"]
+layout_mode = 2
+
+[node name="BuildSummaryLabel" type="Label" parent="FeedbackLayer/BuildPanel/VBox"]
+layout_mode = 2
+autowrap_mode = 3
+text = "Build: tax=n/a total_gold=n/a"
+
+[node name="ProgressionPanel" type="PanelContainer" parent="FeedbackLayer"]
+layout_mode = 1
+anchors_preset = 0
+offset_left = 780.0
+offset_top = 232.0
+offset_right = 1188.0
+offset_bottom = 316.0
+
+[node name="VBox" type="VBoxContainer" parent="FeedbackLayer/ProgressionPanel"]
+layout_mode = 2
+
+[node name="ProgressionSummaryLabel" type="Label" parent="FeedbackLayer/ProgressionPanel/VBox"]
+layout_mode = 2
+autowrap_mode = 3
+text = "Progression: tech=n/a reward=n/a"

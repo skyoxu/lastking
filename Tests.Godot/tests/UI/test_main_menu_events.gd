@@ -8,6 +8,35 @@ const BOOT_READY_OVERRIDE_ENV := "LASTKING_BOOT_READY_OVERRIDE"
 func _continue_state_path() -> String:
     return ProjectSettings.globalize_path("user://continue_state.json")
 
+func _latest_chapter7_closure_summary_path() -> String:
+    var logs_ci_root := ProjectSettings.globalize_path("res://../logs/ci")
+    var ci_dir := DirAccess.open(logs_ci_root)
+    if ci_dir == null:
+        return ""
+
+    var latest_date := ""
+    ci_dir.list_dir_begin()
+    while true:
+        var dir_name := ci_dir.get_next()
+        if dir_name == "":
+            break
+        if dir_name.begins_with("."):
+            continue
+        if not ci_dir.current_is_dir():
+            continue
+        if dir_name.length() != 10:
+            continue
+        var candidate := logs_ci_root.path_join(dir_name).path_join("chapter7-ui-wiring").path_join("closure-summary.json")
+        if not FileAccess.file_exists(candidate):
+            continue
+        if dir_name > latest_date:
+            latest_date = dir_name
+    ci_dir.list_dir_end()
+
+    if latest_date == "":
+        return ""
+    return logs_ci_root.path_join(latest_date).path_join("chapter7-ui-wiring").path_join("closure-summary.json")
+
 func _remove_continue_snapshot_if_exists() -> void:
     var path := _continue_state_path()
     if FileAccess.file_exists(path):
@@ -242,7 +271,7 @@ func test_main_menu_boot_panel_is_runtime_visible_owned_surface() -> void:
 
 # ACC:T41.12
 func test_main_menu_chapter7_closure_for_task41_reports_runtime_no_pending_surfaces() -> void:
-    var summary_path := ProjectSettings.globalize_path("res://../logs/ci/2026-04-28/chapter7-ui-wiring/closure-summary.json")
+    var summary_path := _latest_chapter7_closure_summary_path()
     if not FileAccess.file_exists(summary_path):
         push_error("chapter7 closure summary not found: " + summary_path)
         assert_bool(false).is_true()
@@ -259,6 +288,7 @@ func test_main_menu_chapter7_closure_for_task41_reports_runtime_no_pending_surfa
             target_slice = slice
             break
     assert_bool(target_slice.size() > 0).is_true()
+    assert_str(str(target_slice.get("evidence_status", ""))).is_equal("runtime")
     var surface_status = target_slice.get("surface_status", {})
     var pending_surfaces = surface_status.get("pending_surfaces", [])
     var gaps = target_slice.get("gap_to_close", [])

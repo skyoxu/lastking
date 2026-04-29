@@ -142,9 +142,9 @@ Test-Refs:
 
 ### 3.5 T41-T46
 
-- `T41`: `Wire UI: MainMenu And Boot Flow（接线 UI：主菜单与启动流程）`。M1 接线：`部分接入`。证据：`MainMenu.tscn`、`MainMenu.cs` 已存在；`BootStatusPanel`、`ContinueGateDialog` 在 `ui-gdd-flow.candidates.json` 已有候选定义，但文档显示任务状态仍为 `pending`。
+- `T41`: `Wire UI: MainMenu And Boot Flow（接线 UI：主菜单与启动流程）`。M1 接线：`runtime`。证据：`MainMenu.tscn`、`MainMenu.cs` 已存在；`BootStatusPanel`、`ContinueGateDialog` 已在主菜单场景中作为稳定 owned surface 落地，并有 `test_main_menu_events.gd` 运行时验证。
 - `T42`: `Wire UI: Runtime HUD And Outcome Surfaces（接线 UI：运行时 HUD 与结果界面）`。M1 接线：`部分接入`。证据：`HUD.tscn`、`HUD.cs` 已存在；`OutcomePanel`、`RuntimePromptPanel` 仅以 candidate 形式存在。
-- `T43`: `Wire UI: Combat Interaction Surfaces（接线 UI：战斗交互界面）`。M1 接线：`部分接入`。证据：combat scripts/probe scenes 存在，但 `CombatHud`、`PressurePanel`、`CameraControlOverlay` 仍主要体现为 Chapter 7 candidate。
+- `T43`: `Wire UI: Combat Interaction Surfaces (UI wiring: combat interaction surfaces)`. M1 wiring: `runtime`. Evidence: `HUD.tscn` and `HUD.cs` provide runtime-facing `CombatHud`, `PressurePanel`, and `CameraControlOverlay` feedback, covered by `test_hud_scene.gd` and `test_hud_updates_on_events.gd`.
 - `T44`: `Wire UI: Economy And Progression Panels（接线 UI：经济与成长面板）`。M1 接线：`部分接入`。证据：building/resource/training bridges 已存在，但 `ResourcePanel`、`BuildPanel`、`ProgressionPanel` 尚未以稳定成品面板形式统一。
 - `T45`: `Wire UI: Save, Settings, And Meta Surfaces（接线 UI：存档、设置与元系统界面）`。M1 接线：`部分接入`。证据：`SettingsPanel.tscn`、`SettingsScreen.tscn`、autosave/cloud logic 已有；但 `SavePanel` 和完整 `RunSummaryPanel` 的集中归属尚未完全固化。
 - `T46`: `Wire UI: Config Audit And Migration Surfaces（接线 UI：配置审计与迁移界面）`。M1 接线：`部分接入`。证据：config contracts、audit validators、`SecurityAudit.cs` 已存在；但 `ConfigAuditPanel`、`MigrationStatusDialog`、`ReportMetadataPanel` 仍主要是 Chapter 7 明确规划结果。
@@ -156,7 +156,7 @@ Test-Refs:
 | --- | --- | --- | --- |
 | Entry And Bootstrap（入口与启动） | T01, T11, T21, T41 | `MainMenu / Boot Flow（主菜单 / 启动流程）` | `MainMenu` 已落地，BootStatus/ContinueGate 仍需统一补线 |
 | Runtime HUD And Outcome（运行时 HUD 与结果） | T03, T07, T08, T09, T10, T18, T19, T23, T24, T42 | `HUD / Prompt / Outcome Surfaces（HUD / 提示 / 结果界面）` | `HUD` 已落地，Prompt/Outcome 仍偏文档化定义 |
-| Combat Pressure And Interaction（战斗压力与交互） | T04, T05, T06, T20, T22, T43 | `Combat HUD / Pressure / Camera Feedback（战斗 HUD / 压力 / 相机反馈）` | combat 逻辑与 probe 已有，统一 UI shell 未完全固化 |
+| Combat Pressure And Interaction | T04, T05, T06, T20, T22, T43 | `Combat HUD / Pressure / Camera Feedback` | Runtime HUD surfaces are in place for T43; remaining tasks in this slice still need owner-level closure evidence |
 | Economy And Progression（经济与成长） | T12, T13, T14, T15, T16, T17, T44 | `Resource / Build / Progression Panels（资源 / 建造 / 成长面板）` | core/service 已强，surface 统一程度不足 |
 | Meta Systems And Platform（元系统与平台） | T25, T26, T27, T28, T29, T30, T45 | `Settings / Save / Meta Surfaces（设置 / 存档 / 元系统界面）` | settings 已落地最明显，save/cloud/perf/achievement 仍有分散性 |
 | Config Governance And Audit（配置治理与审计） | T02, T31-T40, T46 | `Config Summary / Audit / Migration Surfaces（配置总览 / 审计 / 迁移界面）` | contracts/tests 很完整，读面板和报告面仍待补齐 |
@@ -171,7 +171,7 @@ Test-Refs:
 
 ### 4.3 当前接线但仍明显不完整的 surface
 
-- `BootStatusPanel` / `ContinueGateDialog`：文档与候选清单里有，仓内暂未看到同名成品 surface。
+- `BootStatusPanel` / `ContinueGateDialog`：已在 `MainMenu.tscn` 中落地为成品 owned surface，并由 `test_main_menu_events.gd` 覆盖运行时 gate/retry/continue 行为。
 - `OutcomePanel` / `RuntimePromptPanel`：runtime acceptance 已要求显示，但仓内主要体现为 `HUD` 与测试约束。
 - `CombatHud` / `PressurePanel` / `CameraControlOverlay`：combat 逻辑存在，UI owner 还没有完全收束成固定 scene/panel。
 - `ResourcePanel` / `BuildPanel` / `ProgressionPanel`：building/resource/queue 已有桥接实现，但 panel 归属不集中。
@@ -184,7 +184,7 @@ Test-Refs:
 
 - `T02, T31-T40, T46`：配置治理、schema、migration、audit 已经很完整，主要缺统一读面板和报告面。
 - `T03, T07, T08, T10, T18, T19, T23, T24, T42`：runtime/loop 能力强于当前 HUD surface 的收束程度。
-- `T04, T05, T06, T20, T22, T43`：combat 核心已存在，但可视化 pressure/interaction shell 仍待明确 owner。
+- `T04, T05, T06, T20, T22, T43`: combat core exists; T43 pressure/interaction shell has runtime evidence, while other entries still need owner-closure follow-up.
 - `T12-T17, T44`：经济、建造、训练、升级、tech 更多是系统已在，surface 未统一。
 - `T25, T26, T28, T29, T30, T45`：save/cloud/localization/audio/perf 已有部分落地面，仍需统一为 meta surface 组合。
 
@@ -228,7 +228,7 @@ Test-Refs:
 | T01 | Establish baseline Godot 4.5.1 C# Windows project（建立 Godot 4.5.1 C# Windows 基线项目） | `Game.Godot/Scenes/UI/MainMenu.tscn`, `Game.Godot/Scripts/UI/MainMenu.cs` | `Tests.Godot/tests/Integration/test_project_bootstrap_editor_compile_run.gd`, `Tests.Godot/tests/Integration/test_windows_export_startup_flow.gd` | `docs/architecture/overlays/PRD-lastking-T2/08/_index.md`, `docs/gdd/ui-gdd-flow.md` | `runtime` | `None` |
 | T11 | Refine baseline bootstrap with main-scene and structure standards（完善主场景与结构标准的基线启动） | `Game.Godot/Scenes/UI/MainMenu.tscn`, `Game.Godot/Scripts/UI/MainMenu.cs` | `Tests.Godot/tests/Scenes/Smoke/test_main_scene_smoke.gd`, `Tests.Godot/tests/Integration/test_project_bootstrap_restart_stability.gd` | `docs/architecture/overlays/PRD-lastking-T2/08/_index.md`, `docs/gdd/ui-gdd-flow.md` | `runtime` | `None` |
 | T21 | Lock Windows export profile and Steam runtime startup validation（锁定 Windows 导出配置与 Steam 运行时启动验证） | `Game.Godot/Scenes/UI/MainMenu.tscn`, `Game.Godot/Scripts/UI/MainMenu.cs` | `Tests.Godot/tests/Integration/test_windows_export_startup_flow.gd`, `Tests.Godot/tests/Integration/test_windows_export_preset_artifact.gd` | `docs/architecture/overlays/PRD-lastking-T2/08/_index.md`, `docs/gdd/ui-gdd-flow.md` | `test-only` | `Need a governed boot/export status surface instead of relying only on export and startup verification artifacts.` |
-| T41 | Wire UI: MainMenu And Boot Flow（接线 UI：主菜单与启动流程） | `Game.Godot/Scenes/UI/MainMenu.tscn`, `Game.Godot/Scripts/UI/MainMenu.cs` | `Tests.Godot/tests/UI/test_main_menu_settings_button.gd`, `docs/gdd/ui-gdd-flow.candidates.json` | `docs/gdd/ui-gdd-flow.md`, `docs/architecture/overlays/PRD-lastking-T2/08/_index.md` | `partial` | `Need to materialize BootStatusPanel and ContinueGateDialog as stable owned surfaces with direct runtime evidence.` |
+| T41 | Wire UI: MainMenu And Boot Flow（接线 UI：主菜单与启动流程） | `Game.Godot/Scenes/UI/MainMenu.tscn`, `Game.Godot/Scripts/UI/MainMenu.cs` | `Tests.Godot/tests/UI/test_main_menu_events.gd`, `Tests.Godot/tests/UI/test_main_menu_settings_button.gd` | `docs/gdd/ui-gdd-flow.md`, `docs/architecture/overlays/PRD-lastking-T2/08/_index.md` | `runtime` | `None` |
 
 ### 6.1.2 Runtime HUD And Outcome（运行时 HUD 与结果）
 
@@ -243,7 +243,7 @@ Test-Refs:
 | T19 | Add Day/Night Cycle and Game Win/Lose Conditions（加入昼夜循环与游戏胜负条件） | `Game.Core/State/GameStateManager.cs`, `Game.Godot/Scripts/UI/HUD.cs` | `Game.Core.Tests/State/GameStateManagerTests.cs`, `Tests.Godot/tests/Integration/test_day_night_cycle_runtime_loop.gd` | `docs/architecture/overlays/PRD-lastking-T2/08/_index.md` | `partial` | `Need win/lose transitions and loop resolution to be rendered through a stable outcome owner instead of inferred from state changes.` |
 | T23 | Develop Runtime Speed Controls (Pause, 1x, 2x) with Timer Freeze（开发带计时冻结的运行时速度控制：暂停、1x、2x） | `Game.Core/State/GameStateManager.cs`, `Game.Godot/Scripts/UI/HUD.cs` | `docs/gdd/ui-gdd-flow.md`, `docs/gdd/ui-gdd-flow.candidates.json` | `docs/architecture/overlays/PRD-lastking-T2/08/_index.md` | `docs-only` | `Need explicit speed-control widgets and direct runtime evidence that pause and timer freeze are visible and owned by the HUD slice.` |
 | T24 | Create UI Feedback System for Invalid Actions and Errors（创建无效操作与错误反馈 UI 系统） | `Game.Godot/Scripts/UI/HUD.cs`, `Game.Godot/Scripts/UI/MainMenu.cs` | `docs/gdd/ui-gdd-flow.md`, `docs/gdd/ui-gdd-flow.candidates.json` | `docs/architecture/overlays/PRD-lastking-T2/08/_index.md` | `docs-only` | `Need a concrete prompt/error surface with runtime-triggered messages and direct validation coverage.` |
-| T42 | Wire UI: Runtime HUD And Outcome Surfaces（接线 UI：运行时 HUD 与结果界面） | `Game.Godot/Scenes/UI/HUD.tscn`, `Game.Godot/Scripts/UI/HUD.cs` | `Game.Core.Tests/State/GameStateMachineTests.cs`, `docs/gdd/ui-gdd-flow.candidates.json` | `docs/gdd/ui-gdd-flow.md`, `docs/architecture/overlays/PRD-lastking-T2/08/_index.md` | `partial` | `Need OutcomePanel and RuntimePromptPanel to exist as stable surfaces with direct runtime assertions.` |
+| T42 | Wire UI: Runtime HUD And Outcome Surfaces | `Game.Godot/Scenes/UI/HUD.tscn`, `Game.Godot/Scripts/UI/HUD.cs` | `Tests.Godot/tests/UI/test_hud_scene.gd`, `Tests.Godot/tests/UI/test_hud_updates_on_events.gd` | `docs/gdd/ui-gdd-flow.md`, `docs/architecture/overlays/PRD-lastking-T2/08/_index.md` | `runtime` | `None` |
 
 ### 6.1.3 Combat Pressure And Interaction（战斗压力与交互）
 
@@ -254,7 +254,7 @@ Test-Refs:
 | T06 | Implement enemy AI with target priority and pathing（实现带目标优先级与寻路的敌人 AI） | `Game.Godot/Scripts/Combat/EnemyAi.cs`, `Game.Godot/Scenes/Combat/EnemyAiRuntimeProbe.tscn` | `Game.Godot/Scenes/Combat/EnemyAiRuntimeProbe.tscn`, `docs/gdd/ui-gdd-flow.md` | `docs/architecture/overlays/PRD-lastking-T2/08/_index.md` | `partial` | `Need runtime combat UI to expose target-priority and blocked-path feedback beyond probe-only evidence.` |
 | T20 | Integrate Combat with Friendly Fire Disabled（集成禁用友伤的战斗系统） | `Game.Godot/Scripts/Combat/EnemyAi.cs`, `Game.Core/Services/WaveManager.cs` | `Game.Core.Tests/Engine/GameEngineCoreDeterminismTests.cs`, `docs/gdd/ui-gdd-flow.md` | `docs/architecture/overlays/PRD-lastking-T2/08/_index.md` | `partial` | `Need combat HUD feedback and scenario evidence showing friendly-fire-disabled behavior on governed surfaces.` |
 | T22 | Implement Camera and Interaction System with Edge and Keyboard Scrolling（实现带边缘与键盘滚动的相机与交互系统） | `Game.Godot/Scripts/Combat/EnemyAiRuntimeProbe.cs`, `Game.Godot/Scenes/Combat/EnemyAiRuntimeProbe.tscn` | `docs/gdd/ui-gdd-flow.md`, `docs/gdd/ui-gdd-flow.candidates.json` | `docs/architecture/overlays/PRD-lastking-T2/08/_index.md` | `docs-only` | `Need an actual camera-control overlay or direct scene evidence instead of candidate-only planning.` |
-| T43 | Wire UI: Combat Interaction Surfaces（接线 UI：战斗交互界面） | `Game.Godot/Scripts/Combat/EnemyAi.cs`, `Game.Godot/Scenes/Combat/EnemyAiRuntimeProbe.tscn` | `Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs`, `docs/gdd/ui-gdd-flow.candidates.json` | `docs/gdd/ui-gdd-flow.md`, `docs/architecture/overlays/PRD-lastking-T2/08/_index.md` | `partial` | `Need CombatHud, PressurePanel, and CameraControlOverlay to be realized as stable surfaces with direct runtime checks.` |
+| T43 | Wire UI: Combat Interaction Surfaces | `Game.Godot/Scenes/UI/HUD.tscn`, `Game.Godot/Scripts/UI/HUD.cs` | `Tests.Godot/tests/UI/test_hud_scene.gd`, `Tests.Godot/tests/UI/test_hud_updates_on_events.gd` | `docs/gdd/ui-gdd-flow.md`, `docs/architecture/overlays/PRD-lastking-T2/08/_index.md` | `runtime` | `None` |
 
 ### 6.1.4 Economy And Progression（经济与成长）
 
@@ -266,7 +266,7 @@ Test-Refs:
 | T15 | Develop Upgrade and Repair System with Constraints（开发带约束的升级与修理系统） | `Game.Core/Services/Building/BuildingUpgradeRepairRuntime.cs`, `Game.Godot/Scripts/Building/BuildingUpgradeRepairRuntime.gd` | `docs/gdd/ui-gdd-flow.md`, `docs/gdd/ui-gdd-flow.candidates.json` | `docs/architecture/overlays/PRD-lastking-T2/08/_index.md` | `partial` | `Need upgrade and repair actions to be bound to a stable progression surface with direct validation.` |
 | T16 | Implement Unit Training Queue in Barracks（实现兵营单位训练队列） | `Game.Core/Services/BarracksTrainingQueueRuntime.cs`, `Game.Godot/Scripts/Building/BarracksTrainingQueueBridge.cs` | `docs/gdd/ui-gdd-flow.md`, `docs/gdd/ui-gdd-flow.candidates.json` | `docs/architecture/overlays/PRD-lastking-T2/08/_index.md` | `partial` | `Need queue state and queue actions to appear on an owned panel instead of staying at runtime/bridge level.` |
 | T17 | Design and Integrate Tech Tree for Unit Stats（设计并集成单位属性科技树） | `Game.Core/Services/TechTreeManager.cs`, `Game.Godot/Adapters/TechTreeManager.cs` | `docs/gdd/ui-gdd-flow.md`, `docs/gdd/ui-gdd-flow.candidates.json` | `docs/architecture/overlays/PRD-lastking-T2/08/_index.md` | `partial` | `Need a visible tech/progression owner surface with direct evidence that unlocks and stat changes are surfaced.` |
-| T44 | Wire UI: Economy And Progression Panels（接线 UI：经济与成长面板） | `Game.Godot/Scripts/Building/BuildingModeCoreBridge.cs`, `Game.Godot/Scripts/Building/BarracksTrainingQueueBridge.cs` | `Game.Core.Tests/Services/ResourceManagerIntegerSafetyTests.cs`, `docs/gdd/ui-gdd-flow.candidates.json` | `docs/gdd/ui-gdd-flow.md`, `docs/architecture/overlays/PRD-lastking-T2/08/_index.md` | `partial` | `Need ResourcePanel, BuildPanel, and ProgressionPanel to exist as concrete surfaces with direct scenario assertions.` |
+| T44 | Wire UI: Economy And Progression Panels | `Game.Godot/Scenes/UI/HUD.tscn`, `Game.Godot/Scripts/UI/HUD.cs` | `Tests.Godot/tests/UI/test_hud_scene.gd`, `Tests.Godot/tests/UI/test_hud_updates_on_events.gd` | `docs/gdd/ui-gdd-flow.md`, `docs/architecture/overlays/PRD-lastking-T2/08/_index.md` | `runtime` | `None` |
 
 ### 6.1.5 Save, Settings, And Meta（存档、设置与元系统）
 

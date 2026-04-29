@@ -51,6 +51,21 @@ func _error_message_label(hud: Node) -> Label:
 func _dismiss_button(hud: Node) -> Button:
     return hud.get_node("FeedbackLayer/ErrorDialog/VBox/DismissButton")
 
+func _outcome_label(hud: Node) -> Label:
+    return hud.get_node("FeedbackLayer/OutcomePanel/VBox/OutcomeLabel")
+
+func _runtime_prompt_label(hud: Node) -> Label:
+    return hud.get_node("FeedbackLayer/RuntimePromptPanel/VBox/RuntimePromptLabel")
+
+func _resource_summary_label(hud: Node) -> Label:
+    return hud.get_node("FeedbackLayer/ResourcePanel/VBox/ResourceSummaryLabel")
+
+func _build_summary_label(hud: Node) -> Label:
+    return hud.get_node("FeedbackLayer/BuildPanel/VBox/BuildSummaryLabel")
+
+func _progression_summary_label(hud: Node) -> Label:
+    return hud.get_node("FeedbackLayer/ProgressionPanel/VBox/ProgressionSummaryLabel")
+
 # ACC:T43.3
 func test_hud_updates_day_cycle_and_castle_hp_when_runtime_publishes_events() -> void:
     var hud = await _hud()
@@ -269,8 +284,8 @@ func test_hud_owned_surfaces_keep_identity_and_text_when_malformed_payloads_arri
     var hud = await _hud()
     var pressure_label := _pressure_label(hud)
     var camera_label := _camera_status_label(hud)
-    var pressure_panel := hud.get_node("FeedbackLayer/PressurePanel")
-    var camera_overlay := hud.get_node("FeedbackLayer/CameraControlOverlay")
+    var pressure_panel: PanelContainer = hud.get_node("FeedbackLayer/PressurePanel")
+    var camera_overlay: PanelContainer = hud.get_node("FeedbackLayer/CameraControlOverlay")
 
     _publish("core.lastking.wave.spawned", {"day": 10, "count": 2})
     _publish("core.lastking.camera.scrolled", {"dx": 3, "dy": -1})
@@ -502,3 +517,76 @@ func test_hud_feedback_runtime_priority_and_dedup_stability_for_task24_events() 
     dismiss_btn.emit_signal("pressed")
     await get_tree().process_frame
     assert_bool(error_dialog.visible).is_false()
+
+# ACC:T42.2
+# ACC:T42.3
+# ACC:T42.4
+func test_hud_outcome_and_runtime_prompt_surfaces_update_from_runtime_events() -> void:
+    var hud = await _hud()
+    var outcome_label := _outcome_label(hud)
+    var prompt_label := _runtime_prompt_label(hud)
+
+    assert_str(outcome_label.text).is_equal("Outcome: n/a")
+    assert_str(prompt_label.text).is_equal("Prompt: n/a")
+
+    _publish("core.run.state.transitioned", {"outcome": "win", "day": 15})
+    await get_tree().process_frame
+    assert_str(outcome_label.text).is_equal("Outcome: win day=15")
+
+    _publish("core.lastking.ui_feedback.raised", {
+        "Code": "run_continue_blocked",
+        "MessageKey": "ui.blocked_action.run_continue_blocked",
+        "Details": "chapter_locked"
+    })
+    await get_tree().process_frame
+    assert_bool(prompt_label.text.find("Prompt: Action blocked.") >= 0).is_true()
+    assert_bool(prompt_label.text.find("chapter_locked") >= 0).is_true()
+
+# ACC:T44.1
+# ACC:T44.2
+# ACC:T44.3
+# ACC:T44.4
+func test_hud_economy_build_and_progression_surfaces_update_from_domain_events() -> void:
+    var hud = await _hud()
+    var resource_label := _resource_summary_label(hud)
+    var build_label := _build_summary_label(hud)
+    var progression_label := _progression_summary_label(hud)
+
+    _publish("core.lastking.resources.changed", {
+        "RunId": "run-44",
+        "DayNumber": 9,
+        "Gold": 120,
+        "Iron": 44,
+        "PopulationCap": 26
+    })
+    await get_tree().process_frame
+    assert_str(resource_label.text).is_equal("Resources: gold=120 iron=44 pop=26")
+
+    _publish("core.lastking.tax.collected", {
+        "RunId": "run-44",
+        "DayNumber": 9,
+        "ResidenceId": "res-1",
+        "GoldDelta": 15,
+        "TotalGold": 135
+    })
+    await get_tree().process_frame
+    assert_bool(build_label.text.find("Build: tax=15 total_gold=135") >= 0).is_true()
+    assert_bool(build_label.text.find("residence=res-1") >= 0).is_true()
+
+    _publish("core.lastking.tech.applied", {
+        "RunId": "run-44",
+        "TechId": "tech_rate_i",
+        "StatKey": "attack_speed",
+        "PreviousValue": 100,
+        "CurrentValue": 110
+    })
+    await get_tree().process_frame
+    assert_bool(progression_label.text.find("Progression: tech=tech_rate_i:attack_speed 100->110") >= 0).is_true()
+
+    _publish("core.lastking.reward.offered", {
+        "option_a": "gold+100",
+        "option_b": "tech+1",
+        "option_c": "unit+tank"
+    })
+    await get_tree().process_frame
+    assert_bool(progression_label.text.find("reward=") >= 0).is_true()
