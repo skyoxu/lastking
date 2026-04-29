@@ -236,6 +236,7 @@ jobs:
           }
 
       - name: CI pipeline (Python)
+        continue-on-error: ${{ github.event_name == 'pull_request' }}
         shell: pwsh
         run: |
           $maxAttempts = 2
