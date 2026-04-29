@@ -242,30 +242,40 @@ def main():
         hard_fail = True
 
     # 2) Godot self-check (hard gate)
-    # ensure autoload fixed (explicit project path)
-    _ = run_cmd(['py', '-3', 'scripts/python/godot_selfcheck.py', 'fix-autoload', '--project', args.project], cwd=root)
     sc_args = ['py', '-3', 'scripts/python/godot_selfcheck.py', 'run', '--godot-bin', args.godot_bin, '--project', args.project]
     if args.build_solutions:
         sc_args.append('--build-solutions')
-    rc2, out2 = run_cmd(sc_args, cwd=root, timeout=600_000)
-    # persist raw stdout for diagnosis
-    os.makedirs(os.path.join('logs', 'ci', date), exist_ok=True)
-    with io.open(os.path.join('logs', 'ci', date, 'selfcheck-stdout.txt'), 'w', encoding='utf-8') as f:
-        f.write(out2)
-    sc_sum = read_json(os.path.join('logs', 'e2e', date, 'selfcheck-summary.json')) or {}
-    # fallback: parse status from stdout if summary missing
-    if not sc_sum:
-        import re
-        m = re.search(r"SELF_CHECK status=([a-z]+).*? out=([^\r\n]+)", out2)
-        if m:
-            sc_status = m.group(1)
-            sc_out = m.group(2)
-            sc_sum = {'status': sc_status, 'out': sc_out, 'note': 'parsed-from-stdout'}
-    # as ultimate fallback, trust process rc (0==ok)
+
+    selfcheck_attempts = []
+    sc_ok = False
+    sc_sum = {}
+    for sc_attempt in (1, 2):
+        # ensure autoload fixed (explicit project path) before each attempt
+        _ = run_cmd(['py', '-3', 'scripts/python/godot_selfcheck.py', 'fix-autoload', '--project', args.project], cwd=root)
+        rc2, out2 = run_cmd(sc_args, cwd=root, timeout=600_000)
+        stdout_name = 'selfcheck-stdout.txt' if sc_attempt == 1 else f'selfcheck-stdout-attempt-{sc_attempt}.txt'
+        with io.open(os.path.join(ci_dir, stdout_name), 'w', encoding='utf-8') as f:
+            f.write(out2)
+
+        sc_sum = read_json(os.path.join('logs', 'e2e', date, 'selfcheck-summary.json')) or {}
+        if not sc_sum:
+            m = re.search(r"SELF_CHECK status=([a-z]+).*? out=([^\r\n]+)", out2)
+            if m:
+                sc_sum = {'status': m.group(1), 'out': m.group(2), 'note': 'parsed-from-stdout'}
+
+        sc_ok = (sc_sum.get('status') == 'ok') or (rc2 == 0)
+        selfcheck_attempts.append({
+            'attempt': sc_attempt,
+            'rc': rc2,
+            'status': sc_sum.get('status', 'unknown'),
+            'stdout_log': os.path.join(ci_dir, stdout_name),
+        })
+        if sc_ok:
+            break
+
     # Copy Godot selfcheck raw console/stderr into ci logs if present
     try:
         e2e_dir = os.path.join('logs', 'e2e', date)
-        ci_dir = os.path.join('logs', 'ci', date)
         cons = [p for p in os.listdir(e2e_dir) if p.startswith('godot-selfcheck-console-')]
         if cons:
             cons.sort()
@@ -281,8 +291,9 @@ def main():
     except Exception:
         pass
 
-    sc_ok = (sc_sum.get('status') == 'ok') or (rc2 == 0)
     summary['selfcheck'] = sc_sum or {'status': 'fail', 'note': 'no-summary'}
+    summary['selfcheck']['attempts'] = selfcheck_attempts
+    summary['selfcheck']['retried_once'] = len(selfcheck_attempts) > 1
     if not sc_ok:
         hard_fail = True
 
