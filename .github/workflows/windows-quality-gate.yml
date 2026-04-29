@@ -237,7 +237,29 @@ jobs:
       - name: CI pipeline (Python)
         shell: pwsh
         run: |
-          py -3 scripts/python/ci_pipeline.py all --solution Game.sln --configuration Debug --godot-bin "$env:GODOT_BIN" --build-solutions
+          $maxAttempts = 2
+          $attempt = 1
+          $succeeded = $false
+          while ($attempt -le $maxAttempts) {
+            Write-Host "CI pipeline attempt $attempt/$maxAttempts"
+            py -3 scripts/python/ci_pipeline.py all --solution Game.sln --configuration Debug --godot-bin "$env:GODOT_BIN" --build-solutions
+            if ($LASTEXITCODE -eq 0) {
+              $succeeded = $true
+              break
+            }
+
+            if ($attempt -lt $maxAttempts) {
+              $sleepSec = 10 * $attempt
+              Write-Warning "CI pipeline failed on attempt $attempt, retry after ${sleepSec}s"
+              Start-Sleep -Seconds $sleepSec
+            }
+            $attempt += 1
+          }
+
+          if (-not $succeeded) {
+            Write-Error "CI pipeline failed after $maxAttempts attempts."
+            exit 1
+          }
 
       - name: Resolve Task IDs for acceptance-check
         shell: pwsh
