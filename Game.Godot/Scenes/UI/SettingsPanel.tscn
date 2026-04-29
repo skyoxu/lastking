@@ -22,6 +22,52 @@ offset_bottom = 420.0
 layout_mode = 2
 custom_minimum_size = Vector2(360, 220)
 
+[node name="SavePanel" type="PanelContainer" parent="VBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="VBox" type="VBoxContainer" parent="VBox/SavePanel"]
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="VBox/SavePanel/VBox"]
+layout_mode = 2
+text = "Save Panel"
+
+[node name="AutosavePathLabel" type="Label" parent="VBox/SavePanel/VBox"]
+layout_mode = 2
+text = "Autosave Slot: user://autosave.save"
+
+[node name="SaveStatusLabel" type="Label" parent="VBox/SavePanel/VBox"]
+layout_mode = 2
+text = "Save Status: idle"
+
+[node name="RunSummaryPanel" type="PanelContainer" parent="VBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="VBox" type="VBoxContainer" parent="VBox/RunSummaryPanel"]
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="VBox/RunSummaryPanel/VBox"]
+layout_mode = 2
+text = "Run Summary"
+
+[node name="SummaryLocaleLabel" type="Label" parent="VBox/RunSummaryPanel/VBox"]
+layout_mode = 2
+text = "Locale: n/a"
+
+[node name="SummaryAchievementsLabel" type="Label" parent="VBox/RunSummaryPanel/VBox"]
+layout_mode = 2
+text = "Achievements: n/a"
+
+[node name="SummaryPerfLabel" type="Label" parent="VBox/RunSummaryPanel/VBox"]
+layout_mode = 2
+text = "Performance: n/a"
+
+[node name="SummaryUpdatedLabel" type="Label" parent="VBox/RunSummaryPanel/VBox"]
+layout_mode = 2
+text = "Summary Updated: n/a"
+
 [node name="VolRow" type="HBoxContainer" parent="VBox"]
 layout_mode = 2
 
