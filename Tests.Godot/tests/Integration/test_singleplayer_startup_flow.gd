@@ -31,7 +31,7 @@ func _trigger_play(main: Node) -> void:
     button.emit_signal("pressed")
 
 func _screen_root(main: Node) -> Node:
-    return main.get_node("ScreenRoot")
+    return main.get_node("RuntimeUi/ScreenRoot")
 
 func _screen_root_contains_start_screen(screen_root: Node) -> bool:
     for child in screen_root.get_children():

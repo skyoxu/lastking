@@ -87,7 +87,7 @@ func _run() -> void:
             if typeof(main) == TYPE_OBJECT:
                 var has_menu := main.get_node_or_null("MainMenu") != null
                 var has_hud := main.get_node_or_null("HUD") != null
-                var has_settings := main.get_node_or_null("SettingsPanel") != null
+                var has_settings := main.get_node_or_null("RuntimeUi/SettingsPanel") != null
                 var has_nav := main.get_node_or_null("ScreenNavigator") != null
                 result["ui"]["mainMenu"] = has_menu
                 result["ui"]["hud"] = has_hud

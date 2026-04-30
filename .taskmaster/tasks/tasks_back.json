@@ -3827,7 +3827,7 @@
     "taskmaster_id": 46,
     "title": "Wire UI: Config Audit And Migration Surfaces",
     "description": "Close the Chapter 7 governance slice by landing owned audit/migration/report surfaces with direct validation.",
-    "status": "review",
+    "status": "done",
     "priority": "P1",
     "layer": "core",
     "adr_refs": [

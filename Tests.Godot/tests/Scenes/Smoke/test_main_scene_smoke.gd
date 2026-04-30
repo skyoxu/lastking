@@ -213,7 +213,7 @@ func test_main_scene_csharp_bindings_can_be_invoked_without_runtime_errors() -> 
     assert_bool(demo.has_method("AddScore")).is_true()
     assert_bool(demo.has_method("ApplyDamage")).is_true()
     assert_bool(demo.has_method("StartGame")).is_true()
-    var output_label: Label = scene.get_node_or_null("VBox/Output") as Label
+    var output_label: Label = scene.get_node_or_null("RuntimeUi/VBox/Output") as Label
     assert_object(output_label).is_not_null()
 
     scene.call("_on_add_score")

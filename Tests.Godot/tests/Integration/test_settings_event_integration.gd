@@ -18,7 +18,7 @@ func test_settings_panel_opens_on_ui_event() -> void:
     var main = await _load_main()
     var bus = get_node_or_null("/root/EventBus")
     assert_object(bus).is_not_null()
-    var panel = main.get_node("SettingsPanel")
+    var panel = main.get_node("RuntimeUi/SettingsPanel")
     if panel.visible:
         panel.visible = false
     bus.PublishSimple("ui.menu.settings", "ut", "{}")
