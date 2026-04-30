@@ -43,12 +43,15 @@ func test_task42_scope_item_mapping_is_explicit_and_complete() -> void:
 	var back_path := "res://../.taskmaster/tasks/tasks_back.json"
 	var gameplay_path := "res://../.taskmaster/tasks/tasks_gameplay.json"
 	var tasks_path := "res://../.taskmaster/tasks/tasks.json"
-	var back_view := _load_json(back_path)
-	var gameplay_view := _load_json(gameplay_path)
-	var tasks_view := _load_json(tasks_path)
-	assert_bool(back_view is Array).is_true()
-	assert_bool(gameplay_view is Array).is_true()
-	assert_bool(tasks_view is Dictionary).is_true()
+	var back_view_raw: Variant = _load_json(back_path)
+	var gameplay_view_raw: Variant = _load_json(gameplay_path)
+	var tasks_view_raw: Variant = _load_json(tasks_path)
+	assert_bool(back_view_raw is Array).is_true()
+	assert_bool(gameplay_view_raw is Array).is_true()
+	assert_bool(tasks_view_raw is Dictionary).is_true()
+	var back_view: Array = back_view_raw
+	var gameplay_view: Array = gameplay_view_raw
+	var tasks_view: Dictionary = tasks_view_raw
 
 	var back_entry := _find_task_entry(back_view, 42)
 	var gameplay_entry := _find_task_entry(gameplay_view, 42)

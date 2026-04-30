@@ -124,7 +124,7 @@ func test_sync_flow_covers_cloud_sync_ownership_check_allow_and_reject_branches(
 # acceptance: ACC:T26.20
 func test_ownership_mismatch_aborts_sync_and_keeps_local_save_unchanged() -> void:
     var bridge := _new_bridge("task26-acc20", "STEAM_REMOTE_STORAGE_REAL", true, "steam_777")
-    var seed = bridge.call(
+    var seed: Dictionary = bridge.call(
         "SaveWithCloudSync",
         "auto:steam_777",
         "steam_777",
@@ -134,7 +134,7 @@ func test_ownership_mismatch_aborts_sync_and_keeps_local_save_unchanged() -> voi
     assert_that(bool(seed.get("ok", false))).is_true()
     var before_state := _snapshot_text(bridge)
 
-    var result = bridge.call(
+    var result: Dictionary = bridge.call(
         "SaveWithCloudSync",
         "auto:steam_777",
         "steam_other",
@@ -429,7 +429,7 @@ func test_regression_chain_covers_upload_download_conflict_and_failure_recovery_
 # acceptance: ACC:T26.15
 func test_load_rejects_owner_mismatch_and_keeps_state_unchanged() -> void:
     var bridge := _new_bridge("task26-load-owner-mismatch", "STEAM_REMOTE_STORAGE_REAL", true, "steam_owner")
-    var seed = bridge.call(
+    var seed: Dictionary = bridge.call(
         "SaveWithCloudSync",
         "auto:steam_owner_slot",
         "steam_owner",
@@ -439,7 +439,7 @@ func test_load_rejects_owner_mismatch_and_keeps_state_unchanged() -> void:
     assert_that(bool(seed.get("ok", false))).is_true()
     var before_state := _snapshot_text(bridge)
 
-    var load_result = bridge.call("LoadWithCloudSync", "auto:steam_owner_slot", "steam_intruder", true) as Dictionary
+    var load_result: Dictionary = bridge.call("LoadWithCloudSync", "auto:steam_owner_slot", "steam_intruder", true) as Dictionary
     var after_state := _snapshot_text(bridge)
 
     assert_that(bool(load_result.get("ok", true))).is_false()
