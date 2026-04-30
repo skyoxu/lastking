@@ -1,6 +1,6 @@
 ﻿extends Control
 
-@onready var _label: Label = $VBox/Output
+@onready var _label: Label = $RuntimeUi/VBox/Output
 var _score: int = 0
 var _hp: int = 100
 
@@ -13,13 +13,13 @@ func _ready() -> void:
             print("[DB] open failed: ", str(db.LastError))
         else:
             print("[DB] opened at user://data/game.db")
-    $VBox/PublishBtn.pressed.connect(_on_publish)
-    $VBox/SaveLoadBtn.pressed.connect(_on_save_load)
-    $VBox/LogBtn.pressed.connect(_on_log)
-    if has_node("VBox/AddScoreBtn"):
-        $VBox/AddScoreBtn.pressed.connect(_on_add_score)
-    if has_node("VBox/LoseHpBtn"):
-        $VBox/LoseHpBtn.pressed.connect(_on_lose_hp)
+    $RuntimeUi/VBox/PublishBtn.pressed.connect(_on_publish)
+    $RuntimeUi/VBox/SaveLoadBtn.pressed.connect(_on_save_load)
+    $RuntimeUi/VBox/LogBtn.pressed.connect(_on_log)
+    if has_node("RuntimeUi/VBox/AddScoreBtn"):
+        $RuntimeUi/VBox/AddScoreBtn.pressed.connect(_on_add_score)
+    if has_node("RuntimeUi/VBox/LoseHpBtn"):
+        $RuntimeUi/VBox/LoseHpBtn.pressed.connect(_on_lose_hp)
     # Listen to UI menu events to start/quit game
     var bus = get_node_or_null("/root/EventBus")
     if bus != null:
@@ -105,7 +105,7 @@ func _on_domain_event(type: String, _source: String, _data_json: String, _id: St
             if ResourceLoader.exists("res://Game.Godot/Scenes/Screens/StartScreen.tscn"):
                 nav.SwitchTo("res://Game.Godot/Scenes/Screens/StartScreen.tscn")
     elif type == "ui.menu.settings":
-        var sp = get_node_or_null("/root/Main/SettingsPanel")
+        var sp = get_node_or_null("/root/Main/RuntimeUi/SettingsPanel")
         if sp != null and sp.has_method("ShowPanel"):
             sp.ShowPanel()
     elif type == "ui.menu.quit":

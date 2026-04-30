@@ -16,7 +16,7 @@ func test_navigate_start_to_settings_and_back() -> void:
     var ok = nav.SwitchTo("res://Game.Godot/Scenes/Screens/SettingsScreen.tscn")
     assert_bool(ok).is_true()
     await get_tree().process_frame
-    var root = main.get_node("ScreenRoot")
+    var root = main.get_node("RuntimeUi/ScreenRoot")
     var current = root.get_child(0)
     assert_object(current).is_not_null()
     assert_str(current.name).is_equal("SettingsScreen")

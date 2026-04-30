@@ -48,11 +48,13 @@ script = ExtResource("14_cam")
 CameraPath = NodePath("../WorldRoot/Camera2D")
 ProcessInputInReady = false
 
-[node name="HUD" parent="." instance=ExtResource("2")]
+[node name="RuntimeUi" type="CanvasLayer" parent="."]
 
-[node name="MainMenu" parent="." instance=ExtResource("3")]
+[node name="HUD" parent="RuntimeUi" instance=ExtResource("2")]
 
-[node name="ScreenRoot" type="Control" parent="."]
+[node name="MainMenu" parent="RuntimeUi" instance=ExtResource("3")]
+
+[node name="ScreenRoot" type="Control" parent="RuntimeUi"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -62,10 +64,11 @@ grow_vertical = 2
 
 [node name="ScreenNavigator" type="Node" parent="."]
 script = ExtResource("13")
-ScreenRootPath = NodePath("../ScreenRoot")
+ScreenRootPath = NodePath("../RuntimeUi/ScreenRoot")
+OverlaysPath = NodePath("../RuntimeUi/Overlays")
 
 
-[node name="Overlays" type="Control" parent="."]
+[node name="Overlays" type="Control" parent="RuntimeUi"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -79,7 +82,7 @@ mouse_filter = 1
 
 
 
-[node name="SettingsPanel" parent="." instance=ExtResource("7")]
+[node name="SettingsPanel" parent="RuntimeUi" instance=ExtResource("7")]
 
 [node name="AudioManager" type="Node" parent="."]
 script = ExtResource("15_audio")
@@ -88,34 +91,35 @@ script = ExtResource("15_audio")
 
 [node name="SfxPlayer" type="AudioStreamPlayer" parent="AudioManager"]
 
-[node name="VBox" type="VBoxContainer" parent="."]
+[node name="VBox" type="VBoxContainer" parent="RuntimeUi"]
+visible = false
 layout_mode = 2
 offset_left = 20.0
 offset_top = 20.0
 offset_right = 420.0
 offset_bottom = 260.0
 
-[node name="PublishBtn" type="Button" parent="VBox"]
+[node name="PublishBtn" type="Button" parent="RuntimeUi/VBox"]
 layout_mode = 2
 text = "Publish Event"
 
-[node name="SaveLoadBtn" type="Button" parent="VBox"]
+[node name="SaveLoadBtn" type="Button" parent="RuntimeUi/VBox"]
 layout_mode = 2
 text = "Save + Load (DataStore)"
 
-[node name="LogBtn" type="Button" parent="VBox"]
+[node name="LogBtn" type="Button" parent="RuntimeUi/VBox"]
 layout_mode = 2
 text = "Print Log"
 
-[node name="Output" type="Label" parent="VBox"]
+[node name="Output" type="Label" parent="RuntimeUi/VBox"]
 layout_mode = 2
 text = "Ready"
 
-[node name="AddScoreBtn" type="Button" parent="VBox"]
+[node name="AddScoreBtn" type="Button" parent="RuntimeUi/VBox"]
 layout_mode = 2
 text = "+10 Score"
 
-[node name="LoseHpBtn" type="Button" parent="VBox"]
+[node name="LoseHpBtn" type="Button" parent="RuntimeUi/VBox"]
 layout_mode = 2
 text = "-5 HP"
 

@@ -7,7 +7,7 @@ func _load_main() -> Node:
     return main
 
 func _overlays(main: Node) -> Node:
-    return main.get_node("Overlays")
+    return main.get_node("RuntimeUi/Overlays")
 
 func _navigator(main: Node):
     return main.get_node_or_null("ScreenNavigator")

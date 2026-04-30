@@ -32,7 +32,7 @@ func _on_evt(type, _source, _data_json, _id, _spec, _ct, _ts) -> void:
     _got = true
 
 func _trigger_play(main: Node) -> void:
-    var menu := main.get_node_or_null("MainMenu")
+    var menu := main.get_node_or_null("RuntimeUi/MainMenu")
     assert_object(menu).is_not_null()
     var btn := menu.get_node("VBox/BtnPlay")
     btn.emit_signal("pressed")
@@ -51,8 +51,8 @@ func test_main_scene_glue_publishes_on_menu_start() -> void:
     add_child(auto_free(main))
     await get_tree().process_frame
     assert_bool(String(main.scene_file_path) == configured_main_scene).is_true()
-    assert_object(main.get_node_or_null("ScreenRoot")).is_not_null()
-    var menu := main.get_node_or_null("MainMenu")
+    assert_object(main.get_node_or_null("RuntimeUi/ScreenRoot")).is_not_null()
+    var menu := main.get_node_or_null("RuntimeUi/MainMenu")
     assert_object(menu).is_not_null()
     assert_bool(String(menu.get_script().resource_path) == "res://Game.Godot/Scripts/UI/MainMenu.cs").is_true()
     _trigger_play(main)
@@ -88,7 +88,7 @@ func test_main_scene_glue_fails_when_menu_script_binding_is_removed() -> void:
     _got = false
     _etype = ""
     var broken = preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
-    var menu := broken.get_node_or_null("MainMenu")
+    var menu := broken.get_node_or_null("RuntimeUi/MainMenu")
     assert_object(menu).is_not_null()
     menu.set_script(null)
     add_child(auto_free(broken))

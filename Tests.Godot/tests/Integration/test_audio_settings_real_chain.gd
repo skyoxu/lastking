@@ -20,7 +20,7 @@ func _load_main() -> Node:
 
 
 func _settings_panel(main: Node) -> Node:
-    return main.get_node("SettingsPanel")
+    return main.get_node("RuntimeUi/SettingsPanel")
 
 
 func _music_slider(panel: Node) -> HSlider:
