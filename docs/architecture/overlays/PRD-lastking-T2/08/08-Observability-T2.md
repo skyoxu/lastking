@@ -57,6 +57,11 @@ Test-Refs:
 | `T29` audio settings | `logs/e2e/<YYYY-MM-DD>/settings/summary.json` | `channel`, `value`, `applied`, `persisted` |
 | `T30` performance | `logs/perf/<YYYY-MM-DD>/summary.json` | `avg_fps`, `fps_1pct_low`, `samples`, `gate` |
 | `T31-T40` config governance | `logs/ci/<YYYY-MM-DD>/config-governance/report.json` | `config_hash`, `schema_version`, `fallback_used`, `status` |
+| `T47` shared target query | `logs/e2e/<YYYY-MM-DD>/combat-loop/summary.json`, `logs/ci/<YYYY-MM-DD>/task-47-49-contract-audit/report.json` | `query_mode`, `target_type`, `distance_bucket`, `blocked`, `resolver_status` |
+| `T48-T49` deployment and tower fire activation | `logs/e2e/<YYYY-MM-DD>/combat-loop/summary.json` | `actor_type`, `spawn_lane`, `entered_registry`, `attack_started`, `status` |
+| `T50-T51` projectile and AoE resolution | `logs/e2e/<YYYY-MM-DD>/combat-loop/summary.json`, `logs/ci/<YYYY-MM-DD>/task-50-51-balance-audit/report.json` | `projectile_id`, `travel_ms`, `hit_result`, `damage_radius`, `pressure_class` |
+| `T52` cleanup and pooling | `logs/perf/<YYYY-MM-DD>/combat-cleanup-summary.json` | `freed_nodes`, `remaining_live_nodes`, `subscription_leaks`, `peak_entities`, `gate` |
+| `T53` after-action summary | `logs/e2e/<YYYY-MM-DD>/combat-loop/after-action-summary.json` | `run_outcome`, `failure_reason`, `castle_hp_end`, `resource_snapshot`, `recommended_next_step` |
 
 | `T41` Chapter 7 entry wiring | `logs/ci/<YYYY-MM-DD>/chapter7-ui-wiring/summary.json`, `logs/ci/<YYYY-MM-DD>/chapter7-ui-wiring/closure-summary.json` | `candidate_sidecar`, `steps`, `status`, `artifact_manifest`, `evidence_status`, `pending_surfaces`, `gap_to_close` |
 | `T42` Chapter 7 HUD/outcome wiring | `logs/e2e/<YYYY-MM-DD>/runtime-ui/summary.json`, `logs/ci/<YYYY-MM-DD>/chapter7-ui-wiring/closure-summary.json` | `screen_group`, `empty_state`, `failure_state`, `completion_result`, `evidence_status`, `pending_surfaces`, `gap_to_close` |

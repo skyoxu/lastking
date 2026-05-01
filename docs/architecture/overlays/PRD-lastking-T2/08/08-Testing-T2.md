@@ -50,6 +50,9 @@ Test-Refs:
 | RQ-CH7-ECONOMY-WIRING | 44 | `Game.Core.Tests/Services/ResourceManagerIntegerSafetyTests.cs`, `Tests.Godot/tests/Scenes/Building/test_build_mode_preview_and_confirm.gd` | `logs/unit/<YYYY-MM-DD>/coverage.json`, `logs/ci/<YYYY-MM-DD>/chapter7-ui-wiring/closure-summary.json` |
 | RQ-CH7-META-WIRING | 45 | `Tests.Godot/tests/Adapters/Save/test_save_manager_daystart_autosave.gd`, `Tests.Godot/tests/UI/test_hud_scene.gd` | `logs/e2e/<YYYY-MM-DD>/settings/summary.json`, `logs/ci/<YYYY-MM-DD>/chapter7-ui-wiring/closure-summary.json` |
 | RQ-CH7-CONFIG-AUDIT-WIRING | 46 | `Tests.Godot/tests/Adapters/Config/test_settings_persistence.gd`, `Game.Core.Tests/Domain/GameConfigTests.cs` | `logs/ci/<YYYY-MM-DD>/config-governance/report.json`, `logs/ci/<YYYY-MM-DD>/chapter7-ui-wiring/closure-summary.json` |
+| RQ-COMBAT-TARGETING-DEPLOYMENT | 47-49 | `Game.Core.Tests/Services/EnemyAiTargetingServiceTests.cs`, `Game.Core.Tests/Services/BarracksTrainingQueueTests.cs`, `Tests.Godot/tests/Scenes/Building/test_build_mode_preview_and_confirm.gd` | `logs/e2e/<YYYY-MM-DD>/combat-loop/summary.json`, `logs/ci/<YYYY-MM-DD>/task-47-49-contract-audit/report.json` |
+| RQ-COMBAT-PROJECTILE-AOE | 50-51 | `Game.Core.Tests/Services/CombatServiceTests.cs`, `Game.Core.Tests/Domain/GameConfigTests.cs`, `Tests.Godot/tests/UI/test_hud_updates_on_events.gd` | `logs/e2e/<YYYY-MM-DD>/combat-loop/summary.json`, `logs/ci/<YYYY-MM-DD>/task-50-51-balance-audit/report.json` |
+| RQ-COMBAT-CLEANUP-AFTERACTION | 52-53 | `Game.Core.Tests/Services/CombatSystemTests.cs`, `Tests.Godot/tests/UI/test_hud_scene.gd`, `Tests.Godot/tests/Integration/test_backup_restore_savegame.gd` | `logs/perf/<YYYY-MM-DD>/combat-cleanup-summary.json`, `logs/e2e/<YYYY-MM-DD>/combat-loop/after-action-summary.json` |
 
 ## Task-to-Test Focus (P0)
 

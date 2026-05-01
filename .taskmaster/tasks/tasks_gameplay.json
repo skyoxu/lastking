@@ -3920,5 +3920,547 @@
       "GdUnit4: verify settings/config UI flow emits expected audit and migration feedback.",
       "Acceptance refs/anchors gate: keep Task 46 refs and anchors synchronized before review pipeline."
     ]
+  },
+  {
+    "id": "GM-0147",
+    "story_id": "PRD-LASTKING-v1.2",
+    "owner": "gameplay",
+    "depends_on": [
+      "GM-0106",
+      "GM-0113"
+    ],
+    "taskmaster_exported": true,
+    "taskmaster_id": 47,
+    "title": "Combat Entity Registry And Shared Target Query",
+    "description": "Create a single deterministic combat-entity registry and shared target query for enemy AI, towers, and future player combat units.",
+    "status": "pending",
+    "priority": "P1",
+    "layer": "core",
+    "adr_refs": [
+      "ADR-0018",
+      "ADR-0021",
+      "ADR-0022",
+      "ADR-0031"
+    ],
+    "chapter_refs": [
+      "CH01",
+      "CH04",
+      "CH05",
+      "CH06",
+      "CH07",
+      "CH10"
+    ],
+    "overlay_refs": [
+      "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
+    ],
+    "labels": [
+      "prd",
+      "lastking",
+      "taskmaster-view",
+      "core",
+      "combat"
+    ],
+    "test_refs": [
+      "Game.Core.Tests/Services/EnemyAiTargetingServiceTests.cs",
+      "Game.Core.Tests/Services/EnemyAiRetargetingServiceTests.cs",
+      "Game.Core.Tests/Services/EnemyAiDecisionDeterminismTests.cs",
+      "Tests.Godot/tests/Scenes/Combat/test_enemy_ai_navigation_priority.gd",
+      "Tests.Godot/tests/Scenes/Combat/test_enemy_ai_retarget_unreachable_target.gd",
+      "Tests.Godot/tests/Scenes/Combat/test_enemy_ai_blocked_route_fallback.gd",
+      "Tests.Godot/tests/Integration/test_enemy_ai_target_selection_determinism.gd"
+    ],
+    "acceptance": [
+      "Enemy AI, defense towers, future player combat units, and castle-relevant fallback targets all resolve target acquisition through the same combat entity registry and the same CombatTargetQuery, and this item fails if any participant still uses a separate targeting rule path. Refs: Game.Core.Tests/Services/EnemyAiTargetingServiceTests.cs Game.Core.Tests/Services/EnemyAiRetargetingServiceTests.cs Tests.Godot/tests/Integration/test_enemy_ai_target_selection_determinism.gd",
+      "For the same registry snapshot and fixed seed, the shared query returns the same target ordering and retarget result on every rerun, and if the preferred target is unreachable it applies the same blocked-route fallback behavior for every caller instead of diverging by surface. Refs: Game.Core.Tests/Services/EnemyAiDecisionDeterminismTests.cs Tests.Godot/tests/Scenes/Combat/test_enemy_ai_navigation_priority.gd Tests.Godot/tests/Scenes/Combat/test_enemy_ai_blocked_route_fallback.gd Tests.Godot/tests/Scenes/Combat/test_enemy_ai_retarget_unreachable_target.gd",
+      "Deterministic targeting and ownership filtering are evaluated in Game.Core over Godot-free target data, while Game.Godot is limited to registering typed scene actors and lifecycle events; this item fails if the shared query contract requires Godot runtime types. Refs: Game.Core.Tests/Services/EnemyAiTargetingServiceTests.cs Game.Core.Tests/Services/EnemyAiRetargetingServiceTests.cs",
+      "Runtime-facing consumers use the same shared query output that combat resolution uses, including a stable no-target result when no eligible target exists, so visible targeting and resolved attacks stay aligned and do not phantom-retarget. Refs: Tests.Godot/tests/Integration/test_enemy_ai_target_selection_determinism.gd Tests.Godot/tests/Scenes/Combat/test_enemy_ai_navigation_priority.gd",
+      "Task 47 is accepted only if the referenced xUnit coverage for shared-query determinism and the referenced GdUnit runtime coverage for target selection or blocked-route fallback both pass on the Windows Godot plus C# baseline; missing either framework fails this item. Refs: Game.Core.Tests/Services/EnemyAiTargetingServiceTests.cs Tests.Godot/tests/Scenes/Combat/test_enemy_ai_blocked_route_fallback.gd",
+      "Ownership allow-or-deny decisions come from the shared Game.Core query contract for enemy, tower, and future player-unit callers, and Game.Godot adapters only submit typed registration and lifecycle inputs; acceptance fails if scene-specific scripts implement or override that ownership filtering. Refs: Game.Core.Tests/Services/EnemyAiTargetingServiceTests.cs Game.Core.Tests/Services/EnemyAiRetargetingServiceTests.cs",
+      "When the registry contains no eligible hostile or friendly combat target, CombatTargetQuery returns the same stable no-target result on repeat evaluation, and it must not emit a transient fallback target or phantom retarget. Refs: Game.Core.Tests/Services/EnemyAiDecisionDeterminismTests.cs Tests.Godot/tests/Integration/test_enemy_ai_target_selection_determinism.gd"
+    ],
+    "contractRefs": [
+      "core.lastking.wave.spawned",
+      "core.lastking.castle.hp_changed",
+      "core.lastking.ui_feedback.raised"
+    ],
+    "semantic_review_tier": "full",
+    "test_strategy": [
+      "xUnit: lock deterministic combat-entity registration and target query ordering in Game.Core tests.",
+      "GdUnit4: verify runtime target selection, retargeting, and blocked-route fallback scenes on the Windows Godot baseline.",
+      "Acceptance refs/anchors gate: keep Task 47 combat query refs synchronized before review pipeline."
+    ]
+  },
+  {
+    "id": "GM-0148",
+    "story_id": "PRD-LASTKING-v1.2",
+    "owner": "gameplay",
+    "depends_on": [
+      "GM-0113",
+      "GM-0120",
+      "GM-0123",
+      "GM-0143",
+      "GM-0147"
+    ],
+    "taskmaster_exported": true,
+    "taskmaster_id": 48,
+    "title": "Activate MgTower Auto Attack Runtime",
+    "description": "Turn placed MG towers from passive build results into deterministic auto-attack defenders driven by runtime combat state.",
+    "status": "pending",
+    "priority": "P1",
+    "layer": "adapter",
+    "adr_refs": [
+      "ADR-0018",
+      "ADR-0021",
+      "ADR-0022",
+      "ADR-0031"
+    ],
+    "chapter_refs": [
+      "CH01",
+      "CH04",
+      "CH05",
+      "CH06",
+      "CH07",
+      "CH10"
+    ],
+    "overlay_refs": [
+      "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
+    ],
+    "labels": [
+      "prd",
+      "lastking",
+      "taskmaster-view",
+      "adapter",
+      "combat"
+    ],
+    "test_refs": [
+      "Game.Core.Tests/Services/CombatServiceTests.cs",
+      "Tests.Godot/tests/Integration/test_combat_friendly_fire_disabled.gd",
+      "Tests.Godot/tests/UI/test_hud_updates_on_events.gd",
+      "Tests.Godot/tests/UI/test_hud_scene.gd",
+      "Tests.Godot/tests/UI/test_hud_building_type_switch_preview.gd",
+      "Tests.Godot/tests/UI/test_speed_controls_buttons_apply_speed.gd",
+      "Game.Core.Tests/Services/BuildingPlacementValidationTests.cs"
+    ],
+    "acceptance": [
+      "Once a valid MG tower placement enters runtime combat, it automatically uses the shared hostile-target query to acquire an in-range hostile and fire without extra player input; when no hostile is in range, it remains armed and idle, and acceptance fails if an eligible hostile is present but the tower does not begin attacking. Refs: Game.Core.Tests/Services/CombatServiceTests.cs Tests.Godot/tests/UI/test_hud_scene.gd Tests.Godot/tests/UI/test_hud_building_type_switch_preview.gd",
+      "MG tower attacks apply only to hostile targets and do not damage player-owned buildings or units, preserving the existing friendly-fire safety contract. Refs: Game.Core.Tests/Services/CombatServiceTests.cs Tests.Godot/tests/Integration/test_combat_friendly_fire_disabled.gd",
+      "MG tower target acquisition, attack cadence, and damage dispatch start from runtime combat state through the shared combat flow and stay deterministic while the same armed state and target conditions are maintained; acceptance fails if the tower appears active but acquisition, cadence, or damage resolution never starts. Refs: Game.Core.Tests/Services/CombatServiceTests.cs Game.Core.Tests/Services/BuildingPlacementValidationTests.cs",
+      "Runtime HUD or scene feedback reflects actual MG tower combat state by making armed-idle periods and attack outcomes visible when the tower acquires, fires on, or stops engaging runtime enemies. Refs: Tests.Godot/tests/UI/test_hud_updates_on_events.gd Tests.Godot/tests/UI/test_hud_scene.gd Tests.Godot/tests/UI/test_speed_controls_buttons_apply_speed.gd",
+      "Task 48 validation includes the referenced xUnit coverage for deterministic cadence, hostile-only targeting, and friendly-fire protection, plus the referenced GdUnit coverage for runtime engagement and visible combat feedback on the Windows Godot plus C# baseline; if either framework coverage is missing, acceptance fails. Refs: Game.Core.Tests/Services/CombatServiceTests.cs Tests.Godot/tests/Integration/test_combat_friendly_fire_disabled.gd",
+      "For the same runtime combat state and target conditions, MG tower firing cadence remains deterministic and is driven by runtime combat or building combat data rather than ad hoc scene behavior. Refs: Game.Core.Tests/Services/CombatServiceTests.cs Game.Core.Tests/Services/BuildingPlacementValidationTests.cs",
+      "When no hostile target is inside MG tower range, the tower stays armed and idle and does not emit false fire, hit, or damage feedback events. Refs: Tests.Godot/tests/UI/test_hud_updates_on_events.gd Tests.Godot/tests/UI/test_hud_scene.gd",
+      "MG tower combat outcomes are resolved through the existing combat services, while Godot-side runtime behavior is limited to activation and combat feedback binding; acceptance fails if scene-side logic can make the tower appear active without shared-query attack resolution and combat-service damage dispatch occurring. Refs: Game.Core.Tests/Services/CombatServiceTests.cs Tests.Godot/tests/UI/test_hud_updates_on_events.gd"
+    ],
+    "contractRefs": [
+      "core.lastking.castle.hp_changed",
+      "core.lastking.wave.spawned",
+      "core.lastking.ui_feedback.raised"
+    ],
+    "semantic_review_tier": "full",
+    "test_strategy": [
+      "xUnit: validate MG tower attack cadence, hostile-only filtering, and deterministic damage dispatch in Game.Core tests.",
+      "GdUnit4: verify placed MG towers auto-acquire targets, emit combat feedback, and preserve friendly-fire disablement in runtime scenes.",
+      "Acceptance refs/anchors gate: keep Task 48 tower-combat refs synchronized before review pipeline."
+    ]
+  },
+  {
+    "id": "GM-0149",
+    "story_id": "PRD-LASTKING-v1.2",
+    "owner": "gameplay",
+    "depends_on": [
+      "GM-0116",
+      "GM-0117",
+      "GM-0144",
+      "GM-0147"
+    ],
+    "taskmaster_exported": true,
+    "taskmaster_id": 49,
+    "title": "Spawn Barracks Units Into Battlefield Runtime",
+    "description": "Promote barracks queue completion into live battlefield unit spawning with stats, ownership, and HUD state synchronized to existing tech and resource contracts.",
+    "status": "pending",
+    "priority": "P1",
+    "layer": "adapter",
+    "adr_refs": [
+      "ADR-0018",
+      "ADR-0021",
+      "ADR-0022"
+    ],
+    "chapter_refs": [
+      "CH01",
+      "CH04",
+      "CH05",
+      "CH06",
+      "CH07"
+    ],
+    "overlay_refs": [
+      "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
+    ],
+    "labels": [
+      "prd",
+      "lastking",
+      "taskmaster-view",
+      "adapter",
+      "combat"
+    ],
+    "test_refs": [
+      "Game.Core.Tests/Services/BarracksTrainingQueueTests.cs",
+      "Game.Core.Tests/Services/BarracksUnitStatApplicationTests.cs",
+      "Game.Core.Tests/State/TechRuntimeSnapshotTests.cs",
+      "Tests.Godot/tests/Integration/test_barracks_training_queue_flow.gd",
+      "Tests.Godot/tests/Integration/test_barracks_tech_snapshot_flow.gd",
+      "Tests.Godot/tests/Integration/test_barracks_techtree_stats.gd",
+      "Tests.Godot/tests/UI/test_hud_updates_on_events.gd"
+    ],
+    "acceptance": [
+      "No battlefield unit is spawned before a barracks job reaches deterministic completion, and each completed job results in a deployed battlefield combat unit rather than ending as queue-only bookkeeping. Refs: Game.Core.Tests/Services/BarracksTrainingQueueTests.cs Tests.Godot/tests/Integration/test_barracks_training_queue_flow.gd",
+      "The deployed unit uses the tech-modified stat snapshot captured for the completed barracks job, and the unit's runtime combat stats match that deterministic completion snapshot. Refs: Game.Core.Tests/Services/BarracksUnitStatApplicationTests.cs Game.Core.Tests/State/TechRuntimeSnapshotTests.cs Tests.Godot/tests/Integration/test_barracks_tech_snapshot_flow.gd Tests.Godot/tests/Integration/test_barracks_techtree_stats.gd",
+      "Resource deductions, refunds, and barracks queue-state transitions remain deterministic across deployment, cancellation, and tech-change flows, and unit deployment stays consistent with the existing resource contracts. Refs: Game.Core.Tests/Services/BarracksTrainingQueueTests.cs Tests.Godot/tests/Integration/test_barracks_training_queue_flow.gd",
+      "Game.Godot instantiates and owner-binds battlefield actors only after deterministic completion is produced by Game.Core, and queue progression plus stat application are not recalculated outside the core path. Refs: Game.Core.Tests/Services/BarracksTrainingQueueTests.cs Game.Core.Tests/State/TechRuntimeSnapshotTests.cs",
+      "HUD or equivalent runtime feedback updates from actual completion and deployment events so the player can observe that the trained unit entered the battlefield. Refs: Tests.Godot/tests/UI/test_hud_updates_on_events.gd Tests.Godot/tests/Integration/test_barracks_training_queue_flow.gd",
+      "Acceptance requires the referenced xUnit coverage for queue completion, resource accounting, and tech-stat snapshot behavior, and the referenced GdUnit coverage for battlefield spawning and HUD confirmation on the Windows Godot plus C# baseline. Refs: Game.Core.Tests/Services/BarracksTrainingQueueTests.cs Tests.Godot/tests/Integration/test_barracks_techtree_stats.gd",
+      "Each completed barracks job registers its deployed unit into the active battle loop, and acceptance fails if a spawned actor does not participate in runtime combat. Refs: Game.Core.Tests/Services/BarracksTrainingQueueTests.cs Tests.Godot/tests/Integration/test_barracks_training_queue_flow.gd",
+      "Each deployed unit is bound to the correct owner or faction at spawn time, and acceptance fails if ownership is missing or assigned incorrectly after deployment. Refs: Game.Core.Tests/Services/BarracksTrainingQueueTests.cs Tests.Godot/tests/Integration/test_barracks_training_queue_flow.gd",
+      "Queue progression, resource accounting, and stat application are produced by Game.Core, and Game.Godot bridges do not recompute barracks training completion results outside the deterministic core contracts. Refs: Game.Core.Tests/Services/BarracksTrainingQueueTests.cs Game.Core.Tests/State/TechRuntimeSnapshotTests.cs"
+    ],
+    "contractRefs": [
+      "core.lastking.resources.changed",
+      "core.lastking.tech.applied",
+      "core.lastking.ui_feedback.raised"
+    ],
+    "semantic_review_tier": "full",
+    "test_strategy": [
+      "xUnit: validate barracks queue completion, unit stat application, and deterministic resource and tech snapshot handoff in Game.Core tests.",
+      "GdUnit4: verify trained units spawn into battlefield runtime and HUD surfaces reflect deployment state.",
+      "Acceptance refs/anchors gate: keep Task 49 barracks-runtime refs synchronized before review pipeline."
+    ]
+  },
+  {
+    "id": "GM-0150",
+    "story_id": "PRD-LASTKING-v1.2",
+    "owner": "gameplay",
+    "depends_on": [
+      "GM-0120",
+      "GM-0132",
+      "GM-0134",
+      "GM-0147",
+      "GM-0148"
+    ],
+    "taskmaster_exported": true,
+    "taskmaster_id": 50,
+    "title": "Projectile Runtime For Towers And Ranged Enemies",
+    "description": "Add a reusable projectile runtime so towers and ranged enemies share travel speed, impact, timeout, and damage-resolution rules.",
+    "status": "pending",
+    "priority": "P1",
+    "layer": "adapter",
+    "adr_refs": [
+      "ADR-0018",
+      "ADR-0021",
+      "ADR-0022",
+      "ADR-0031"
+    ],
+    "chapter_refs": [
+      "CH01",
+      "CH04",
+      "CH05",
+      "CH06",
+      "CH07",
+      "CH10"
+    ],
+    "overlay_refs": [
+      "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
+    ],
+    "labels": [
+      "prd",
+      "lastking",
+      "taskmaster-view",
+      "adapter",
+      "combat"
+    ],
+    "test_refs": [
+      "Game.Core.Tests/Services/CombatServiceTests.cs",
+      "Game.Core.Tests/Domain/GameConfigTests.cs",
+      "Tests.Godot/tests/Integration/test_combat_friendly_fire_disabled.gd",
+      "Tests.Godot/tests/Scenes/Combat/test_enemy_ai_navigation_priority.gd",
+      "Tests.Godot/tests/UI/test_hud_updates_on_events.gd",
+      "Tests.Godot/tests/Integration/test_balance_runtime_config_reload.gd"
+    ],
+    "acceptance": [
+      "Towers and ranged enemies both resolve projectile spawn, travel, impact, timeout, and cleanup through one shared projectile runtime, and a ranged attack with no valid firing solution creates no projectile and resolves no impact. Refs: Game.Core.Tests/Services/CombatServiceTests.cs Tests.Godot/tests/Scenes/Combat/test_enemy_ai_navigation_priority.gd",
+      "Projectile travel speed, timeout duration, and impact behavior are read from shared combat/config data rather than scene-specific constants, so changing the runtime config changes tower and ranged-enemy projectile behavior in the same way. Refs: Game.Core.Tests/Domain/GameConfigTests.cs Tests.Godot/tests/Integration/test_balance_runtime_config_reload.gd",
+      "After projectile travel is introduced, projectile hit validation and damage dispatch remain deterministic and continue to enforce the Task 20 friendly-fire-disabled rule for player-owned attacks. Refs: Game.Core.Tests/Services/CombatServiceTests.cs Tests.Godot/tests/Integration/test_combat_friendly_fire_disabled.gd",
+      "Game.Godot presents projectile launch, visible flight, impact, and cleanup only for combat outcomes that actually resolve, and timed-out or invalid projectiles are removed deterministically instead of persisting. Refs: Tests.Godot/tests/UI/test_hud_updates_on_events.gd Tests.Godot/tests/Scenes/Combat/test_enemy_ai_navigation_priority.gd",
+      "Task 50 is accepted only when xUnit verifies shared projectile travel, impact, timeout, and damage-filtering rules and GdUnit verifies tower and ranged-enemy projectile behavior on the Windows Godot plus C# baseline. Refs: Game.Core.Tests/Services/CombatServiceTests.cs Tests.Godot/tests/Integration/test_combat_friendly_fire_disabled.gd",
+      "Projectile ownership, hit validation, and damage dispatch for both tower and ranged-enemy projectiles stay in shared combat logic and produce deterministic results for the same combat inputs. Refs: Game.Core.Tests/Services/CombatServiceTests.cs Tests.Godot/tests/Integration/test_combat_friendly_fire_disabled.gd",
+      "Game.Godot is responsible only for projectile scene presentation and collision plumbing, and projectile hit or miss outcomes are not decided by Godot-side presentation code. Refs: Game.Core.Tests/Services/CombatServiceTests.cs Tests.Godot/tests/UI/test_hud_updates_on_events.gd",
+      "When a ranged attack has no valid firing solution, the runtime creates no projectile instance and emits no impact, timeout, or damage resolution for that attack. Refs: Game.Core.Tests/Services/CombatServiceTests.cs Tests.Godot/tests/Scenes/Combat/test_enemy_ai_navigation_priority.gd"
+    ],
+    "contractRefs": [
+      "core.lastking.castle.hp_changed",
+      "core.lastking.wave.spawned"
+    ],
+    "semantic_review_tier": "full",
+    "test_strategy": [
+      "xUnit: validate projectile travel, impact, timeout, and combat-resolution rules in Game.Core tests.",
+      "GdUnit4: verify towers and ranged enemies share reusable projectile runtime behavior in integration scenes.",
+      "Acceptance refs/anchors gate: keep Task 50 projectile-runtime refs synchronized before review pipeline."
+    ]
+  },
+  {
+    "id": "GM-0151",
+    "story_id": "PRD-LASTKING-v1.2",
+    "owner": "gameplay",
+    "depends_on": [
+      "GM-0120",
+      "GM-0135",
+      "GM-0143",
+      "GM-0150"
+    ],
+    "taskmaster_exported": true,
+    "taskmaster_id": 51,
+    "title": "Area Damage Resolver And Elite Pressure Slice",
+    "description": "Add deterministic area-damage resolution and elite-pressure differentiation so combat pressure is not limited to flat single-target exchanges.",
+    "status": "pending",
+    "priority": "P2",
+    "layer": "core",
+    "adr_refs": [
+      "ADR-0021",
+      "ADR-0022",
+      "ADR-0031",
+      "ADR-0032"
+    ],
+    "chapter_refs": [
+      "CH04",
+      "CH05",
+      "CH06",
+      "CH07",
+      "CH10"
+    ],
+    "overlay_refs": [
+      "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
+    ],
+    "labels": [
+      "prd",
+      "lastking",
+      "taskmaster-view",
+      "core",
+      "combat"
+    ],
+    "test_refs": [
+      "Game.Core.Tests/Services/CombatServiceTests.cs",
+      "Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs",
+      "Game.Core.Tests/Domain/GameConfigTests.cs",
+      "Tests.Godot/tests/Integration/test_combat_friendly_fire_disabled.gd",
+      "Tests.Godot/tests/Scenes/Combat/test_enemy_ai_blocked_route_fallback.gd",
+      "Tests.Godot/tests/UI/test_hud_updates_on_events.gd"
+    ],
+    "acceptance": [
+      "Given identical combat inputs, an AoE-capable hit resolves through deterministic core rules with config-backed radius, clamp, and falloff, and when no AoE-capable source is active the same flow resolves as single-target damage only. Refs: Game.Core.Tests/Services/CombatServiceTests.cs Game.Core.Tests/Domain/GameConfigTests.cs",
+      "Elite and boss enemies produce higher normalized runtime pressure and materially different combat outcomes than normal enemies, so wave pressure and encounter behavior remain distinguishable instead of collapsing into uniform fodder exchanges. Refs: Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs Tests.Godot/tests/UI/test_hud_updates_on_events.gd",
+      "With friendly fire disabled, splash resolution applies damage only to valid hostile targets selected by the shared combat rules and leaves non-hostile or otherwise invalid targets unchanged. Refs: Game.Core.Tests/Services/CombatServiceTests.cs Tests.Godot/tests/Integration/test_combat_friendly_fire_disabled.gd",
+      "Elite and boss pressure values are derived from enemy config together with pressure-normalization config, and acceptance fails if runtime pressure differentiation is not produced from those config-backed inputs. Refs: Game.Core.Tests/Domain/GameConfigTests.cs Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs",
+      "Runtime scenes expose resolved splash results and elite-pressure differences during clustered or blocked-route combat, so the player can observe the combat and pressure outcome directly rather than infer hidden or ambiguous behavior. Refs: Tests.Godot/tests/Scenes/Combat/test_enemy_ai_blocked_route_fallback.gd Tests.Godot/tests/UI/test_hud_updates_on_events.gd",
+      "Task 51 is accepted only when the Windows Godot plus C# baseline has xUnit coverage for deterministic AoE radius, clamp, falloff, and pressure normalization rules, plus GdUnit coverage for observable runtime elite-pressure and splash outcomes. Refs: Game.Core.Tests/Services/CombatServiceTests.cs Tests.Godot/tests/Scenes/Combat/test_enemy_ai_blocked_route_fallback.gd",
+      "Scene adapters only forward hit data and present returned results; acceptance fails if AoE or elite-pressure resolution occurs outside deterministic core services. Refs: Game.Core.Tests/Services/CombatServiceTests.cs Tests.Godot/tests/UI/test_hud_updates_on_events.gd",
+      "When no AoE-capable source and no elite-pressure trigger are active, combat remains in the baseline state with single-target damage only and baseline pressure readouts only. Refs: Game.Core.Tests/Services/CombatServiceTests.cs Game.Core.Tests/Domain/GameConfigTests.cs",
+      "AoE-capable attacks resolve config-backed falloff inside deterministic core combat rules, and acceptance fails if falloff is omitted, treated as optional, or resolved outside core services. Refs: Game.Core.Tests/Services/CombatServiceTests.cs Game.Core.Tests/Domain/GameConfigTests.cs",
+      "When enemies cluster or routes are blocked, splash resolution changes observable hit distribution, kill efficiency, or exposure risk relative to single-target attacks; acceptance fails if splash only adds feedback without creating a gameplay-relevant spacing or risk-management difference. Refs: Tests.Godot/tests/Scenes/Combat/test_enemy_ai_blocked_route_fallback.gd Tests.Godot/tests/UI/test_hud_updates_on_events.gd",
+      "GdUnit verifies that elite-pressure slices and splash outcomes remain observable and deterministic across repeated runtime-scene executions with identical inputs; acceptance fails if the same scene inputs produce drifting pressure readouts or inconsistent splash results. Refs: Tests.Godot/tests/Scenes/Combat/test_enemy_ai_blocked_route_fallback.gd Tests.Godot/tests/UI/test_hud_updates_on_events.gd"
+    ],
+    "contractRefs": [
+      "core.lastking.wave.spawned",
+      "core.lastking.castle.hp_changed"
+    ],
+    "semantic_review_tier": "full",
+    "test_strategy": [
+      "xUnit: validate AoE radius, clamp, and elite-pressure normalization rules in Game.Core tests.",
+      "GdUnit4: verify elite or boss pressure slices and AoE combat outcomes remain observable and deterministic in runtime scenes.",
+      "Acceptance refs/anchors gate: keep Task 51 elite-pressure refs synchronized before review pipeline."
+    ]
+  },
+  {
+    "id": "GM-0152",
+    "story_id": "PRD-LASTKING-v1.2",
+    "owner": "gameplay",
+    "depends_on": [
+      "GM-0130",
+      "GM-0147",
+      "GM-0148",
+      "GM-0149",
+      "GM-0150",
+      "GM-0151"
+    ],
+    "taskmaster_exported": true,
+    "taskmaster_id": 52,
+    "title": "Combat Lifecycle And Pooling Hardening",
+    "description": "Stabilize combat object lifecycle, cleanup, and pooling so repeated waves do not leak nodes, references, or performance budget.",
+    "status": "pending",
+    "priority": "P1",
+    "layer": "adapter",
+    "adr_refs": [
+      "ADR-0018",
+      "ADR-0021",
+      "ADR-0022",
+      "ADR-0032"
+    ],
+    "chapter_refs": [
+      "CH01",
+      "CH04",
+      "CH05",
+      "CH06",
+      "CH07"
+    ],
+    "overlay_refs": [
+      "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
+    ],
+    "labels": [
+      "prd",
+      "lastking",
+      "taskmaster-view",
+      "adapter",
+      "combat"
+    ],
+    "test_refs": [
+      "Game.Core.Tests/Services/FrameTimeHotspotRankingTests.cs",
+      "Game.Core.Tests/Services/PerformanceBaselineVarianceTests.cs",
+      "Tests.Godot/tests/Integration/test_perf_stress_endurance_presets.gd",
+      "Tests.Godot/tests/Integration/test_perf_gate_thresholds_fixed_seed.gd",
+      "Tests.Godot/tests/Integration/test_combat_friendly_fire_disabled.gd",
+      "Tests.Godot/tests/Integration/test_enemy_ai_blocked_map_fallback_timeout.gd"
+    ],
+    "acceptance": [
+      "During repeated spawn, death, and timeout churn, every dead actor, spent projectile, and timed-out transient combat effect is retired on the first cleanup pass, later cleanup sweeps are no-ops, and acceptance fails if any orphaned runtime actor remains live after retirement. Refs: Tests.Godot/tests/Integration/test_perf_stress_endurance_presets.gd Tests.Godot/tests/Integration/test_enemy_ai_blocked_map_fallback_timeout.gd",
+      "Across repeated combat churn, cleanup and pooling release stale lifecycle references, including shared registry handoff points, so reused runtime objects do not restore prior targets, keep retired links, or produce duplicate impacts. Refs: Game.Core.Tests/Services/PerformanceBaselineVarianceTests.cs Tests.Godot/tests/Integration/test_combat_friendly_fire_disabled.gd",
+      "Across repeated combat churn, the hardened lifecycle path stays within the declared performance gates, and acceptance fails if cleanup or pooling changes introduce avoidable frame-time or endurance regressions. Refs: Game.Core.Tests/Services/FrameTimeHotspotRankingTests.cs Tests.Godot/tests/Integration/test_perf_stress_endurance_presets.gd Tests.Godot/tests/Integration/test_perf_gate_thresholds_fixed_seed.gd",
+      "Blocked-map, death, and timeout scenarios retire the affected actors and transient effects and clear stale runtime references, and acceptance fails if the retirement pass leaves stuck combat state, registry leftovers, or live runtime remnants. Refs: Tests.Godot/tests/Integration/test_enemy_ai_blocked_map_fallback_timeout.gd Tests.Godot/tests/Integration/test_perf_gate_thresholds_fixed_seed.gd",
+      "Task 52 is accepted only when xUnit verifies shared lifecycle cleanup and stale-reference release rules and GdUnit verifies repeated wave churn behavior on the Windows Godot plus C# baseline; missing either test layer fails acceptance. Refs: Game.Core.Tests/Services/FrameTimeHotspotRankingTests.cs Tests.Godot/tests/Integration/test_perf_stress_endurance_presets.gd",
+      "Deterministic retirement rules for units, enemies, projectiles, and transient combat effects are defined in shared services, and acceptance fails if those rules exist only in adapters or node-local code. Refs: Game.Core.Tests/Services/PerformanceBaselineVarianceTests.cs Game.Core.Tests/Services/FrameTimeHotspotRankingTests.cs",
+      "Adapters choose whether each retired runtime node is freed immediately or returned to a safe pool, and acceptance fails if shared services directly own node-free or pool-management behavior. Refs: Tests.Godot/tests/Integration/test_perf_stress_endurance_presets.gd Tests.Godot/tests/Integration/test_enemy_ai_blocked_map_fallback_timeout.gd",
+      "When no spent projectile, dead actor, or timed-out combat effect is pending cleanup, running the lifecycle sweep leaves combat state unchanged and performs no additional retirement work. Refs: Game.Core.Tests/Services/PerformanceBaselineVarianceTests.cs Tests.Godot/tests/Integration/test_perf_gate_thresholds_fixed_seed.gd",
+      "Every retirement path routes retired runtime nodes through the adapter-owned queue_free or QueueFree path or a safe pool return path, and acceptance fails if any path bypasses that routing. Refs: Tests.Godot/tests/Integration/test_perf_stress_endurance_presets.gd Tests.Godot/tests/Integration/test_enemy_ai_blocked_map_fallback_timeout.gd",
+      "Lifecycle hardening integrates with the shared registry lifecycle path from Task 47, and acceptance fails if retirement bypasses registry release sequencing or leaves registry-held stale references after cleanup. Refs: Game.Core.Tests/Services/PerformanceBaselineVarianceTests.cs Tests.Godot/tests/Integration/test_enemy_ai_blocked_map_fallback_timeout.gd"
+    ],
+    "contractRefs": [
+      "core.lastking.perf.sampled",
+      "core.lastking.castle.hp_changed",
+      "core.lastking.wave.spawned"
+    ],
+    "semantic_review_tier": "full",
+    "test_strategy": [
+      "xUnit: validate lifecycle cleanup, stale-reference release, and deterministic actor retirement in Game.Core tests.",
+      "GdUnit4: verify repeated spawn, death, projectile, and timeout churn stay within runtime cleanup and performance expectations.",
+      "Acceptance refs/anchors gate: keep Task 52 lifecycle-hardening refs synchronized before review pipeline."
+    ]
+  },
+  {
+    "id": "GM-0153",
+    "story_id": "PRD-LASTKING-v1.2",
+    "owner": "gameplay",
+    "depends_on": [
+      "GM-0118",
+      "GM-0139",
+      "GM-0142",
+      "GM-0143",
+      "GM-0144",
+      "GM-0146",
+      "GM-0149",
+      "GM-0152"
+    ],
+    "taskmaster_exported": true,
+    "taskmaster_id": 53,
+    "title": "Battle After Action Summary And Guidance",
+    "description": "Extend the HUD with battle-end summary and next-step guidance so the player can understand why a battle succeeded or failed and what to build or train next.",
+    "status": "pending",
+    "priority": "P2",
+    "layer": "adapter",
+    "adr_refs": [
+      "ADR-0018",
+      "ADR-0022",
+      "ADR-0032"
+    ],
+    "chapter_refs": [
+      "CH01",
+      "CH04",
+      "CH05",
+      "CH06",
+      "CH07"
+    ],
+    "overlay_refs": [
+      "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md",
+      "docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md"
+    ],
+    "labels": [
+      "prd",
+      "lastking",
+      "taskmaster-view",
+      "adapter",
+      "combat"
+    ],
+    "test_refs": [
+      "Tests.Godot/tests/UI/test_hud_scene.gd",
+      "Tests.Godot/tests/UI/test_hud_updates_on_events.gd",
+      "Tests.Godot/tests/UI/test_game_manager_transition_and_terminal_prompts.gd",
+      "Tests.Godot/tests/Integration/test_day_night_cycle_and_win_lose_outcomes.gd",
+      "Tests.Godot/tests/UI/test_hud_config_audit_surfaces.gd",
+      "Game.Core.Tests/Tasks/Task43UiWiringAcceptanceGovernanceTests.cs",
+      "Game.Core.Tests/Tasks/Task44UiWiringAcceptanceGovernanceTests.cs",
+      "Game.Core.Tests/Tasks/Task46UiWiringAcceptanceGovernanceTests.cs"
+    ],
+    "acceptance": [
+      "When a battle ends in either success or failure, the HUD displays a player-facing after-action summary on HUD-owned surfaces that explains the main causes of the outcome, including losses, pressure spikes, and one recommended next build, training, or economy action; acceptance fails if the player must inspect logs or hidden debug panels to understand the result. Refs: Tests.Godot/tests/UI/test_hud_scene.gd Tests.Godot/tests/UI/test_game_manager_transition_and_terminal_prompts.gd Tests.Godot/tests/Integration/test_day_night_cycle_and_win_lose_outcomes.gd",
+      "The battle-end summary is computed from existing typed runtime contracts for waves, castle HP, tech, resources, and rewards and remains traceable to those inputs; acceptance fails if the task introduces a separate hidden combat report state store instead of reusing those contracts. Refs: Tests.Godot/tests/UI/test_hud_updates_on_events.gd Game.Core.Tests/Tasks/Task43UiWiringAcceptanceGovernanceTests.cs Game.Core.Tests/Tasks/Task44UiWiringAcceptanceGovernanceTests.cs Game.Core.Tests/Tasks/Task46UiWiringAcceptanceGovernanceTests.cs",
+      "Before any battle outcome is available, the HUD after-action surfaces remain hidden or show a neutral waiting state; after either a win or a loss, the HUD shows a readable outcome summary plus actionable next-step guidance for build, training, or economy decisions. Refs: Tests.Godot/tests/Integration/test_day_night_cycle_and_win_lose_outcomes.gd Tests.Godot/tests/UI/test_game_manager_transition_and_terminal_prompts.gd",
+      "Given the same battle-end inputs, the HUD produces the same outcome summary and guidance on every run, and that information appears on HUD-owned presentation surfaces rather than ad hoc debug overlays. Refs: Tests.Godot/tests/UI/test_hud_scene.gd Tests.Godot/tests/UI/test_hud_updates_on_events.gd Tests.Godot/tests/UI/test_hud_config_audit_surfaces.gd",
+      "Task 53 is accepted only if xUnit verifies contract-fed summary inputs and deterministic recommendation rules, and GdUnit verifies win and loss summary rendering plus next-step guidance on the Windows Godot plus C# baseline; omission of either test layer fails acceptance. Refs: Game.Core.Tests/Tasks/Task43UiWiringAcceptanceGovernanceTests.cs Tests.Godot/tests/Integration/test_day_night_cycle_and_win_lose_outcomes.gd",
+      "Battle after-action presentation remains owned by HUD surfaces, and acceptance fails if the task adds any hidden combat-tracking state machine beyond aggregation of the existing typed runtime contracts. Refs: Tests.Godot/tests/UI/test_hud_scene.gd Tests.Godot/tests/UI/test_hud_config_audit_surfaces.gd",
+      "Before any completed battle outcome exists, the HUD after-action summary surface stays hidden or neutral and must not show stale summaries or misleading next-step guidance from earlier battles. Refs: Tests.Godot/tests/Integration/test_day_night_cycle_and_win_lose_outcomes.gd Tests.Godot/tests/UI/test_game_manager_transition_and_terminal_prompts.gd",
+      "xUnit must verify that the same wave, castle HP, tech, resource, and reward end-state inputs always produce the same summary and next-step guidance through the contract-fed recommendation rules. Refs: Game.Core.Tests/Tasks/Task43UiWiringAcceptanceGovernanceTests.cs Game.Core.Tests/Tasks/Task44UiWiringAcceptanceGovernanceTests.cs Game.Core.Tests/Tasks/Task46UiWiringAcceptanceGovernanceTests.cs"
+    ],
+    "contractRefs": [
+      "core.lastking.wave.spawned",
+      "core.lastking.castle.hp_changed",
+      "core.lastking.tech.applied",
+      "core.lastking.resources.changed",
+      "core.lastking.reward.offered"
+    ],
+    "semantic_review_tier": "full",
+    "test_strategy": [
+      "xUnit: validate after-action summary inputs remain traceable to existing typed combat, economy, and reward contracts.",
+      "GdUnit4: verify HUD win or loss summaries and next-step guidance render deterministically from runtime end-state data.",
+      "Acceptance refs/anchors gate: keep Task 53 summary-guidance refs synchronized before review pipeline."
+    ]
   }
 ]
