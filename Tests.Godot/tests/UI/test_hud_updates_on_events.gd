@@ -97,6 +97,7 @@ func test_hud_updates_day_cycle_and_castle_hp_when_runtime_publishes_events() ->
     assert_str(hp_label.text).is_equal("HP: 42")
 
 # ACC:T43.3
+# ACC:T48.4
 func test_hud_renders_runtime_combat_outcome_and_feedback_messages() -> void:
     var hud = await _hud()
     var feedback_label := _feedback_label(hud)
@@ -153,6 +154,7 @@ func test_hud_keeps_feedback_state_stable_when_unrelated_events_are_published() 
 
 # ACC:T43.2
 # ACC:T43.3
+# ACC:T48.7
 func test_hud_feedback_surfaces_stay_hidden_without_relevant_feedback_events() -> void:
     var hud = await _hud()
     var feedback_label := _feedback_label(hud)
@@ -213,6 +215,7 @@ func test_hud_combat_pressure_and_camera_overlay_exist_and_update_from_runtime_e
     assert_str(camera_label.text).is_equal("Camera: dx=6 dy=-2")
 
 # ACC:T43.5
+# ACC:T48.8
 func test_hud_surfaces_render_targeting_and_blocked_pathing_feedback_from_runtime_decision_chain() -> void:
     var hud = await _hud()
     var feedback_label := _feedback_label(hud)

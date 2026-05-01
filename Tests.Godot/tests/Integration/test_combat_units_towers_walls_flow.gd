@@ -56,6 +56,8 @@ func _run_combat_round(enemy_ai: Node, events: Array[Dictionary], entities: Dict
 
 
 # ACC:T20.6
+# ACC:T48.2
+# ACC:T48.8
 # Towers should damage enemies only and must not damage same-team units or walls.
 func test_tower_damages_enemy_but_not_allied_unit_or_wall() -> void:
     var enemy_ai := EnemyAiScript.new()

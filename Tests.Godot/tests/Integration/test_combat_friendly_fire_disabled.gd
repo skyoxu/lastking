@@ -42,6 +42,7 @@ func _simulate_runtime_hits(probe: Node, attack_mask: int, targets: Array) -> Di
 	}
 
 # acceptance: ACC:T6.2
+# ACC:T48.5
 func test_player_attack_collision_mask_excludes_player_and_friendly_layers() -> void:
 	var probe := _new_probe()
 	var player_attack_hitbox := _new_player_attack_hitbox()

@@ -117,6 +117,8 @@ public sealed class BuildingPlacementValidationTests
     }
 
     // ACC:T13.17
+    // ACC:T48.3
+    // ACC:T48.6
     [Fact]
     public void ShouldRejectPlacementAtomically_WhenAnyRequiredFootprintCellIsInvalid()
     {

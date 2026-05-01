@@ -141,6 +141,7 @@ public class CombatServiceTests
     // ACC:T20.11
     // ACC:T20.12
     // ACC:T20.13
+    // ACC:T48.2
     [Fact]
     public void ShouldRefuseFriendlyFireAndResolveZeroDamage_WhenAttackerAndTargetShareTeam()
     {
@@ -157,6 +158,7 @@ public class CombatServiceTests
     }
 
     // ACC:T20.14
+    // ACC:T48.8
     [Fact]
     public void ShouldAllowDamageCommit_WhenAttackerAndTargetTeamsDiffer()
     {
@@ -251,5 +253,43 @@ public class CombatServiceTests
         payload.GetProperty("Tick").GetInt32().Should().Be(12);
         payload.GetProperty("Sequence").GetInt32().Should().Be(2);
         payload.GetProperty("Outcome").GetString().Should().Be("target_selected");
+    }
+
+    // ACC:T48.1
+    // ACC:T48.3
+    // ACC:T48.6
+    [Fact]
+    public void ShouldSelectReachableHostileAndApplyDeterministicDamage_WhenMgTowerAttackRuns()
+    {
+        var selector = new EnemyAiTargetSelector();
+        var candidates = new[]
+        {
+            EnemyAiTargetCandidate.Reachable("enemy_unit_1", EnemyTargetClass.Unit, 2),
+            EnemyAiTargetCandidate.Reachable("enemy_castle_1", EnemyTargetClass.Castle, 6),
+            EnemyAiTargetCandidate.Reachable("enemy_tower_1", EnemyTargetClass.ArmedDefense, 8)
+        };
+
+        var firstDecision = selector.SelectTarget(candidates);
+        var secondDecision = selector.SelectTarget(candidates);
+        firstDecision.Should().Be(secondDecision, "same runtime inputs must keep tower targeting deterministic");
+        firstDecision.TargetId.Should().Be("enemy_unit_1");
+        firstDecision.IsFallbackAttack.Should().BeFalse();
+
+        var bus = new CapturingEventBus();
+        var player = new Player(maxHealth: 90);
+        var svc = new CombatService(bus);
+        var resolution = svc.ResolveAndApplyAttack(
+            player: player,
+            damage: new Damage(15, DamageType.Physical),
+            attackerId: "mg_tower_blue_01",
+            attackerTeam: 1,
+            targetId: "enemy_unit_1",
+            targetTeam: 2);
+
+        resolution.CanCommitDamage.Should().BeTrue();
+        resolution.Outcome.Should().Be("damage_applied");
+        player.Health.Current.Should().Be(75);
+        bus.Events.Should().ContainSingle();
+        bus.Events[0].Type.Should().Be("player.damaged");
     }
 }
