@@ -1,65 +1,26 @@
 # Decision Log
 
+- Title: T47-T53 Chapter4 overlay and contract-delta governance
 - Date: 2026-05-01
 - Status: accepted
-- Task ID: 47
-- Related Tasks: T47-T53
-- Title: T47-T53 Chapter4 overlay and contract-delta governance
+- Supersedes: n/a because this is the first governance decision log for T47-T53 Chapter4 in this repository
+- Superseded by: n/a because no newer governance decision has replaced this log yet
+- Branch: task/T46
+- Git Head: c5445e3
+- Why now: T47-T53 entered Chapter5 execution and needed explicit Chapter4 governance to avoid overlay drift and premature contract proliferation
+- Context: Chapter4 requires deterministic overlay and contract governance before implementation continuation for T47-T53
+- Decision: keep PRD-lastking-T2 overlay family, apply incremental updates only in existing 08 pages, and enforce contracts reuse-first with deferred promotion of candidates
+- Consequences: alignment across task views, overlays, and contracts is preserved while reducing architecture drift risk
+- Recovery impact: recovery and rerun routing can resolve one authoritative overlay family and avoid ambiguous contract creation paths
+- Validation: validate_overlay_execution, check_tasks_all_refs, and validate_task_master_triplet all passed on 2026-05-01
+- Related ADRs: `docs/adr/ADR-0010-delivery-profile-security-baseline.md`, `docs/adr/ADR-0011-overlay-execution-governance-and-task-triplet-linkage.md`, `docs/adr/ADR-0019-run-protocol-recovery-order-and-stop-loss.md`, `docs/adr/ADR-0025-recovery-docs-and-run-evidence-governance.md`
+- Related execution plans: `execution-plans/2026-05-01-task-47-combat-entity-registry-and-shared-target-query-acceptance-test-generation-plan.md`, `execution-plans/2026-05-01-task-48-activate-mgtower-auto-attack-runtime-acceptance-test-generation-plan.md`, `execution-plans/2026-05-01-task-49-spawn-barracks-units-into-battlefield-runtime-acceptance-test-generation-plan.md`, `execution-plans/2026-05-01-task-50-projectile-runtime-for-towers-and-ranged-enemies-acceptance-test-generation-plan.md`, `execution-plans/2026-05-01-task-51-area-damage-resolver-and-elite-pressure-slice-acceptance-test-generation-plan.md`, `execution-plans/2026-05-01-task-52-combat-lifecycle-and-pooling-hardening-acceptance-test-generation-plan.md`, `execution-plans/2026-05-01-task-53-battle-after-action-summary-and-guidance-acceptance-test-generation-plan.md`
+- Related task id(s): 47,48,49,50,51,52,53
+- Related run id: 25201721244
+- Related latest.json: `logs/ci/2026-05-01/single-task-light-lane-t47-t53-rerun2/latest.json`
+- Related pipeline artifacts: `logs/ci/2026-05-01/single-task-light-lane-t47-t53-rerun2/`, `logs/ci/2026-05-01/single-task-light-lane-t51-t52-rerun3/`
 
-## Why Now
+## Notes
 
-T47-T53 entered workflow Chapter 5 light-lane execution and repeatedly hit deterministic acceptance/obligation gate failures before stable semantic convergence. Chapter 4 governance needed to be made explicit so implementation can continue without architecture drift or contract duplication.
-
-## Context
-
-- Repository: `lastking`
-- Governing workflow section: `workflow.md` Chapter 4 (`4.1` to `4.4`)
-- Current overlay family: `docs/architecture/overlays/PRD-lastking-T2/08/**`
-- Existing contract SSoT: `Game.Core/Contracts/**`
-- Recent artifacts confirmed:
-  - `logs/ci/2026-05-01/single-task-light-lane-t47-t53-rerun2/summary.json`
-  - `logs/ci/2026-05-01/single-task-light-lane-t51-t52-rerun3/summary.json`
-  - `logs/ci/2026-05-01/overlay-lint/report.json`
-
-## Decision
-
-1. Keep using the existing overlay family `PRD-lastking-T2/08` for T47-T53. Do not create a new overlay family.
-2. Apply limited Chapter 4 updates by extending existing pages only:
-   - `08-Feature-Slice-T2-Core-Loop.md`
-   - `08-Contracts-T2.md`
-   - `08-Testing-T2.md`
-   - `08-Observability-T2.md`
-   - `ACCEPTANCE_CHECKLIST.md`
-3. For contracts, enforce reuse-first policy. Do not create new `Game.Core/Contracts/**` files unless implementation proves existing contracts cannot represent required cross-layer semantics.
-4. Keep candidate contract deltas as documented overlay intent (interface/DTO/event candidates), not immediate code artifacts.
-
-## Consequences
-
-- Positive:
-  - Prevents architecture drift between Taskmaster views, GDD intent, and runtime contracts.
-  - Keeps contract surface minimal and auditable.
-  - Enables narrow reruns in Chapter 5 by removing deterministic semantic gaps first.
-- Tradeoff:
-  - Some task-level implementation may require an additional explicit contract-creation step later.
-
-## Recovery Impact
-
-- Recovery tools can rely on a single overlay family and stable refs for T47-T53.
-- When Chapter 6 or Chapter 7 resumes these tasks, state inspection no longer needs to guess which overlay family is authoritative.
-- If Needs Fix persists, follow overlay-declared contract candidates first, then promote to real contract files only with evidence.
-
-## Validation
-
-- `py -3 scripts/python/validate_overlay_execution.py --prd-id PRD-lastking-T2` -> pass
-- `py -3 scripts/python/check_tasks_all_refs.py` -> pass
-- `py -3 scripts/python/validate_task_master_triplet.py` -> pass
-- `T47-T53` Chapter 5 convergence evidence exists in:
-  - `logs/ci/2026-05-01/single-task-light-lane-t47-t53-rerun2/summary.json`
-  - `logs/ci/2026-05-01/single-task-light-lane-t51-t52-rerun3/summary.json`
-
-## Links
-
-- workflow: `workflow.md` (Chapter 4)
-- overlay root: `docs/architecture/overlays/PRD-lastking-T2/08/_index.md`
-- contract inventory: `docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md`
-
+- Overlay family remains `docs/architecture/overlays/PRD-lastking-T2/08/**`.
+- Contract code creation stays deferred until implementation evidence proves reuse is insufficient.
