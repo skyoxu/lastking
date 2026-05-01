@@ -19,6 +19,13 @@ func _bridge() -> Node:
     await get_tree().process_frame
     return bridge
 
+func _barracks_bridge() -> Node:
+    var bridge = preload("res://Game.Godot/Scripts/Building/BarracksTrainingQueueBridge.cs").new()
+    add_child(auto_free(bridge))
+    bridge.call("ResetRuntime", 240, 120, 3)
+    await get_tree().process_frame
+    return bridge
+
 func _enemy_ai_probe() -> Node:
     var packed_scene: PackedScene = load("res://Game.Godot/Scenes/Combat/EnemyAiRuntimeProbe.tscn")
     var probe: Node = packed_scene.instantiate()
@@ -549,6 +556,46 @@ func test_hud_outcome_and_runtime_prompt_surfaces_update_from_runtime_events() -
 # ACC:T44.2
 # ACC:T44.3
 # ACC:T44.4
+# ACC:T49.5
+func test_hud_barracks_deployment_outcome_feedback_tracks_success_and_failure_with_active_presence() -> void:
+    var hud = await _hud()
+    var feedback_label := _feedback_label(hud)
+    var barracks = await _barracks_bridge()
+
+    barracks.call("EnqueueUpfront", "spearman", 1, 20, 5)
+    var success_done: Dictionary = barracks.call("Tick", 1)
+    assert_array(success_done.get("completed_units", [])).is_equal(["spearman"])
+    assert_array(success_done.get("failed_deployments", [])).is_empty()
+    assert_int(int(barracks.call("GetActiveBattleUnitCountForTest"))).is_equal(1)
+
+    _publish("core.lastking.ui_feedback.raised", {
+        "Code": "run_win",
+        "MessageKey": "ui.run.win.day15",
+        "Details": "barracks_deploy_success active_units=1"
+    })
+    await get_tree().process_frame
+    assert_bool(feedback_label.visible).is_true()
+    assert_bool(feedback_label.text.find("Victory!") >= 0).is_true()
+    assert_bool(feedback_label.text.find("active_units=1") >= 0).is_true()
+
+    var active_before_failed := int(barracks.call("GetActiveBattleUnitCountForTest"))
+    barracks.call("EnqueueUpfront", "spearman", 1, 20, 5)
+    barracks.call("SetNextDeploymentOwnershipInvalidForTest", true)
+    var failed_done: Dictionary = barracks.call("Tick", 1)
+    assert_array(failed_done.get("completed_units", [])).is_empty()
+    assert_array(failed_done.get("failed_deployments", [])).is_equal(["spearman"])
+    assert_int(int(barracks.call("GetActiveBattleUnitCountForTest"))).is_equal(active_before_failed)
+
+    _publish("core.lastking.ui_feedback.raised", {
+        "Code": "run_continue_blocked",
+        "MessageKey": "ui.blocked_action.run_continue_blocked",
+        "Details": "barracks_deploy_failed active_units=%d failed=spearman" % active_before_failed
+    })
+    await get_tree().process_frame
+    assert_bool(feedback_label.visible).is_true()
+    assert_bool(feedback_label.text.find("Action blocked") >= 0).is_true()
+    assert_bool(feedback_label.text.find("failed=spearman") >= 0).is_true()
+
 func test_hud_economy_build_and_progression_surfaces_update_from_domain_events() -> void:
     var hud = await _hud()
     var resource_label := _resource_summary_label(hud)

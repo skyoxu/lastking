@@ -11,6 +11,8 @@ namespace Game.Godot.Scripts.Building;
 public partial class BarracksTrainingQueueBridge : Node
 {
     private const string DefaultUnitType = "spearman";
+    private const string DefaultOwnerId = "player-1";
+    private const string DefaultFactionId = "player";
 
     private static readonly IReadOnlyDictionary<string, double> BaselineStats = new System.Collections.Generic.Dictionary<string, double>(StringComparer.Ordinal)
     {
@@ -32,10 +34,23 @@ public partial class BarracksTrainingQueueBridge : Node
     [Signal]
     public delegate void QueueCompletedEventHandler(string unitType, int queueLength, int gold, int iron);
 
+    private sealed class DeployedUnitState
+    {
+        public required int UnitId { get; init; }
+        public required string UnitType { get; init; }
+        public required string OwnerId { get; set; }
+        public required string FactionId { get; set; }
+        public bool ActiveBattleLoopRegistered { get; set; }
+        public int CombatTicksParticipated { get; set; }
+    }
+
     private ResourceManager resources = new(eventBus: null, runId: "barracks-ut", dayNumber: 1);
     private BarracksTrainingQueueRuntime runtime = new(capacity: 3);
     private System.Collections.Generic.Dictionary<string, double> statMultipliers = CreateDefaultStatMultipliers();
     private long deterministicSeed;
+    private readonly List<DeployedUnitState> deployedUnits = [];
+    private int nextDeployedUnitId = 1;
+    private bool forceInvalidOwnershipOnNextDeployment;
 
     public void ResetRuntime(int gold = ResourceManager.InitialGold, int iron = ResourceManager.InitialIron, int capacity = 3)
     {
@@ -44,6 +59,9 @@ public partial class BarracksTrainingQueueBridge : Node
         _ = resources.TryImportSnapshot($"{{\"gold\":{gold},\"iron\":{iron},\"populationCap\":50}}");
         statMultipliers = CreateDefaultStatMultipliers();
         deterministicSeed = 0L;
+        deployedUnits.Clear();
+        nextDeployedUnitId = 1;
+        forceInvalidOwnershipOnNextDeployment = false;
     }
 
     public int GetQueueLength() => runtime.Count;
@@ -164,14 +182,22 @@ public partial class BarracksTrainingQueueBridge : Node
 
         var applied = 0;
         var completed = new List<string>();
+        var failedDeployments = new List<string>();
         for (var index = 0; index < ticks; index++)
         {
             var step = runtime.Advance(1, resources);
             applied += step.TicksApplied;
             foreach (var unitType in step.CompletedUnits)
             {
-                completed.Add(unitType);
-                EmitSignal(SignalName.QueueCompleted, unitType, step.QueueLength, step.GoldAfter, step.IronAfter);
+                if (RegisterDeployedUnit(unitType))
+                {
+                    completed.Add(unitType);
+                    EmitSignal(SignalName.QueueCompleted, unitType, step.QueueLength, step.GoldAfter, step.IronAfter);
+                }
+                else
+                {
+                    failedDeployments.Add(unitType);
+                }
             }
 
             if (step.TicksApplied == 0)
@@ -187,6 +213,111 @@ public partial class BarracksTrainingQueueBridge : Node
             ["gold"] = resources.Gold,
             ["iron"] = resources.Iron,
             ["completed_units"] = ToArray(completed),
+            ["failed_deployments"] = ToArray(failedDeployments),
+        };
+    }
+
+#if DEBUG
+    public GArray GetDeployedUnitsForTest()
+    {
+        var result = new GArray();
+        foreach (var item in deployedUnits)
+        {
+            result.Add(new GDictionary
+            {
+                ["unit_id"] = item.UnitId,
+                ["unit_type"] = item.UnitType,
+                ["owner_id"] = item.OwnerId,
+                ["faction_id"] = item.FactionId,
+                ["active_battle_loop_registered"] = item.ActiveBattleLoopRegistered,
+                ["combat_ticks_participated"] = item.CombatTicksParticipated,
+            });
+        }
+
+        return result;
+    }
+
+    public int GetActiveBattleUnitCountForTest()
+    {
+        var count = 0;
+        foreach (var item in deployedUnits)
+        {
+            if (item.ActiveBattleLoopRegistered)
+            {
+                count += 1;
+            }
+        }
+
+        return count;
+    }
+
+    public GDictionary SimulateBattleLoopTickForTest(int ticks = 1)
+    {
+        if (ticks <= 0)
+        {
+            return new GDictionary
+            {
+                ["ticks_applied"] = 0,
+                ["participants"] = 0,
+                ["participant_unit_ids"] = new GArray(),
+            };
+        }
+
+        var participantIds = new GArray();
+        for (var index = 0; index < ticks; index++)
+        {
+            foreach (var item in deployedUnits)
+            {
+                if (!item.ActiveBattleLoopRegistered)
+                {
+                    continue;
+                }
+
+                item.CombatTicksParticipated += 1;
+                if (!participantIds.Contains(item.UnitId))
+                {
+                    participantIds.Add(item.UnitId);
+                }
+            }
+        }
+
+        return new GDictionary
+        {
+            ["ticks_applied"] = ticks,
+            ["participants"] = participantIds.Count,
+            ["participant_unit_ids"] = participantIds,
+        };
+    }
+
+    public GDictionary ForceUnsetOwnershipForTest(int unitId)
+    {
+        var unit = deployedUnits.Find(item => item.UnitId == unitId);
+        if (unit is null)
+        {
+            return new GDictionary
+            {
+                ["accepted"] = false,
+                ["reason"] = "unit_not_found",
+            };
+        }
+
+        unit.OwnerId = string.Empty;
+        unit.FactionId = string.Empty;
+        unit.ActiveBattleLoopRegistered = false;
+        return new GDictionary
+        {
+            ["accepted"] = true,
+            ["unit_id"] = unitId,
+        };
+    }
+
+    public GDictionary SetNextDeploymentOwnershipInvalidForTest(bool enabled = true)
+    {
+        forceInvalidOwnershipOnNextDeployment = enabled;
+        return new GDictionary
+        {
+            ["accepted"] = true,
+            ["enabled"] = forceInvalidOwnershipOnNextDeployment,
         };
     }
 
@@ -293,6 +424,7 @@ public partial class BarracksTrainingQueueBridge : Node
         snapshot["deterministic_seed"] = deterministicSeed;
         return snapshot;
     }
+#endif
 
     private static System.Collections.Generic.Dictionary<string, double> CreateDefaultStatMultipliers()
     {
@@ -352,6 +484,35 @@ public partial class BarracksTrainingQueueBridge : Node
             ["accepted"] = false,
             ["reason"] = reason,
         };
+    }
+
+    private bool RegisterDeployedUnit(string unitType)
+    {
+        var ownerId = DefaultOwnerId;
+        var factionId = DefaultFactionId;
+        if (forceInvalidOwnershipOnNextDeployment)
+        {
+            ownerId = string.Empty;
+            factionId = string.Empty;
+            forceInvalidOwnershipOnNextDeployment = false;
+        }
+
+        if (string.IsNullOrWhiteSpace(ownerId) || string.IsNullOrWhiteSpace(factionId))
+        {
+            return false;
+        }
+
+        var item = new DeployedUnitState
+        {
+            UnitId = nextDeployedUnitId++,
+            UnitType = unitType,
+            OwnerId = ownerId,
+            FactionId = factionId,
+            ActiveBattleLoopRegistered = true,
+            CombatTicksParticipated = 0,
+        };
+        deployedUnits.Add(item);
+        return true;
     }
 
     private double GetMultiplier(string stat)

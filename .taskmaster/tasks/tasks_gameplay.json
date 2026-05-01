@@ -4086,7 +4086,7 @@
     "taskmaster_exported": true,
     "taskmaster_id": 49,
     "title": "Spawn Barracks Units Into Battlefield Runtime",
-    "description": "Promote barracks queue completion into live battlefield unit spawning with stats, ownership, and HUD state synchronized to existing tech and resource contracts.",
+    "description": "Promote barracks queue completion into live battlefield unit spawning with stats and ownership, while runtime-visible HUD outcome state stays synchronized via existing tech/resource contracts.",
     "status": "pending",
     "priority": "P1",
     "layer": "adapter",
@@ -4119,9 +4119,9 @@
     ],
     "test_refs": [
       "Game.Core.Tests/Services/BarracksTrainingQueueTests.cs",
+      "Tests.Godot/tests/Integration/test_barracks_training_queue_flow.gd",
       "Game.Core.Tests/Services/BarracksUnitStatApplicationTests.cs",
       "Game.Core.Tests/State/TechRuntimeSnapshotTests.cs",
-      "Tests.Godot/tests/Integration/test_barracks_training_queue_flow.gd",
       "Tests.Godot/tests/Integration/test_barracks_tech_snapshot_flow.gd",
       "Tests.Godot/tests/Integration/test_barracks_techtree_stats.gd",
       "Tests.Godot/tests/UI/test_hud_updates_on_events.gd"
@@ -4130,12 +4130,12 @@
       "No battlefield unit is spawned before a barracks job reaches deterministic completion, and each completed job results in a deployed battlefield combat unit rather than ending as queue-only bookkeeping. Refs: Game.Core.Tests/Services/BarracksTrainingQueueTests.cs Tests.Godot/tests/Integration/test_barracks_training_queue_flow.gd",
       "The deployed unit uses the tech-modified stat snapshot captured for the completed barracks job, and the unit's runtime combat stats match that deterministic completion snapshot. Refs: Game.Core.Tests/Services/BarracksUnitStatApplicationTests.cs Game.Core.Tests/State/TechRuntimeSnapshotTests.cs Tests.Godot/tests/Integration/test_barracks_tech_snapshot_flow.gd Tests.Godot/tests/Integration/test_barracks_techtree_stats.gd",
       "Resource deductions, refunds, and barracks queue-state transitions remain deterministic across deployment, cancellation, and tech-change flows, and unit deployment stays consistent with the existing resource contracts. Refs: Game.Core.Tests/Services/BarracksTrainingQueueTests.cs Tests.Godot/tests/Integration/test_barracks_training_queue_flow.gd",
-      "Game.Godot instantiates and owner-binds battlefield actors only after deterministic completion is produced by Game.Core, and queue progression plus stat application are not recalculated outside the core path. Refs: Game.Core.Tests/Services/BarracksTrainingQueueTests.cs Game.Core.Tests/State/TechRuntimeSnapshotTests.cs",
-      "HUD or equivalent runtime feedback updates from actual completion and deployment events so the player can observe that the trained unit entered the battlefield. Refs: Tests.Godot/tests/UI/test_hud_updates_on_events.gd Tests.Godot/tests/Integration/test_barracks_training_queue_flow.gd",
-      "Acceptance requires the referenced xUnit coverage for queue completion, resource accounting, and tech-stat snapshot behavior, and the referenced GdUnit coverage for battlefield spawning and HUD confirmation on the Windows Godot plus C# baseline. Refs: Game.Core.Tests/Services/BarracksTrainingQueueTests.cs Tests.Godot/tests/Integration/test_barracks_techtree_stats.gd",
+      "Queue progression, resource accounting, and stat application are produced only by Game.Core deterministic contracts; Game.Godot may instantiate and owner-bind actors from completion outputs only and must not recompute barracks completion semantics. Refs: Game.Core.Tests/Services/BarracksTrainingQueueTests.cs Tests.Godot/tests/Integration/test_barracks_training_queue_flow.gd Game.Core.Tests/State/TechRuntimeSnapshotTests.cs",
+      "HUD-visible barracks outcome state must stay synchronized with existing tech/resource runtime contracts: successful completion surfaces deployment feedback with active unit presence, while failed deployment surfaces failure feedback without adding an active unit entry. Refs: Tests.Godot/tests/Integration/test_barracks_training_queue_flow.gd Tests.Godot/tests/UI/test_hud_updates_on_events.gd",
+      "Queue completion outputs stay semantically equivalent across Core and Godot boundaries: completion payload fields (owner binding, deployment outcome, and resource trace) are consumed by bridge/runtime without recomputation or field substitution. Refs: Game.Core.Tests/Services/BarracksTrainingQueueTests.cs Tests.Godot/tests/Integration/test_barracks_training_queue_flow.gd",
       "Each completed barracks job registers its deployed unit into the active battle loop, and acceptance fails if a spawned actor does not participate in runtime combat. Refs: Game.Core.Tests/Services/BarracksTrainingQueueTests.cs Tests.Godot/tests/Integration/test_barracks_training_queue_flow.gd",
       "Each deployed unit is bound to the correct owner or faction at spawn time, and acceptance fails if ownership is missing or assigned incorrectly after deployment. Refs: Game.Core.Tests/Services/BarracksTrainingQueueTests.cs Tests.Godot/tests/Integration/test_barracks_training_queue_flow.gd",
-      "Queue progression, resource accounting, and stat application are produced by Game.Core, and Game.Godot bridges do not recompute barracks training completion results outside the deterministic core contracts. Refs: Game.Core.Tests/Services/BarracksTrainingQueueTests.cs Game.Core.Tests/State/TechRuntimeSnapshotTests.cs"
+      "When a barracks job reaches deterministic completion, deployment outcome is atomic at the registration boundary: completed_units is emitted only when an owner-bound combat unit is registered into the active battle loop; otherwise failed_deployments records the failure and no active battle unit is registered. Queue and resource accounting continue to follow deterministic core completion contracts. Refs: Game.Core.Tests/Services/BarracksTrainingQueueTests.cs Tests.Godot/tests/Integration/test_barracks_training_queue_flow.gd"
     ],
     "contractRefs": [
       "core.lastking.resources.changed",

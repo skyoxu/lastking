@@ -1,0 +1,21 @@
+# Task 49 Chapter6 residual followup
+
+- Title: Task 49 Chapter6 residual followup
+- Status: blocked
+- Branch: task/T49
+- Git Head: 62e26017636d5d4a12e0e1e450edfc73bf0fc463
+- Goal: Close remaining Task49 reviewer Needs Fix findings and clear chapter6 stop-loss without reopening wasteful full reruns.
+- Scope: Task49 task-view acceptance semantics + targeted reviewer evidence refresh.
+- Current step: Paused at chapter6 inspect-first due to recent_failure_summary stop-loss after repeated review-needs-fix family.
+- Last completed step: n/a (new execution plan scaffold; no completed step recorded yet)
+- Stop-loss: blocked_by=recent_failure_summary; forbidden full 6.7 rerun until root-cause delta is demonstrated in evidence.
+- Next action: 1) curate targeted evidence package for code/security reviewers using current diffs and updated acceptance semantics; 2) run recommended inspect path; 3) only rerun reviewer lane after proving non-repetitive delta.
+- Recovery command: `py -3 scripts/sc/run_review_pipeline.py --task-id 49 --resume`
+- Open questions: none recorded yet
+- Exit criteria: resume-task/chapter6-route no longer report blocked_by=recent_failure_summary, and review-needs-fix family is either resolved or explicitly downgraded/recorded.
+- Related ADRs: none yet
+- Related decision logs: `decision-logs/2026-05-01-task-49-chapter6-residual-needs-fix.md`
+- Related task id(s): `49`
+- Related run id: `395df14a52974203a61dd3a7f5279924`
+- Related latest.json: `logs/ci/2026-05-01/sc-review-pipeline-task-49/latest.json`
+- Related pipeline artifacts: `logs/ci/2026-05-01/sc-review-pipeline-task-49-395df14a52974203a61dd3a7f5279924`

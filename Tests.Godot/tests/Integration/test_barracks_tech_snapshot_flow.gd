@@ -20,6 +20,7 @@ func _as_float(value: Variant, fallback: float = -1.0) -> float:
 	return fallback
 
 # ACC:T17.22
+# ACC:T49.2
 # acceptance: tech effects propagate through runtime snapshots for barracks stat computation,
 # and the next snapshot after unlock state change reflects new multipliers.
 func test_next_snapshot_reflects_unlock_state_change_for_barracks_stats() -> void:

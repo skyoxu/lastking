@@ -11,6 +11,7 @@ namespace Game.Core.Tests.Services;
 public class BarracksUnitStatApplicationTests
 {
     // ACC:T17.12
+    // ACC:T49.2
     [Fact]
     public void ShouldProduceIdenticalMultipliersAndBarracksStats_WhenEvaluatingSameConfigAndUnlockStateRepeatedly()
     {
