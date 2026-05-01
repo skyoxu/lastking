@@ -48,6 +48,8 @@ func _candidate_from_navigation(id: String, target_class: String, start: Vector2
 
 # ACC:T6.4
 # ACC:T6.20
+# ACC:T47.2
+# ACC:T47.4
 func test_selects_highest_reachable_target_in_strict_priority_order() -> void:
 	var probe := _new_probe()
 	_add_navigation_region(PackedVector2Array([Vector2(0, 0), Vector2(8, 0), Vector2(8, 8), Vector2(0, 8)]))

@@ -8,6 +8,7 @@ namespace Game.Core.Tests.Services;
 
 public sealed class EnemyAiDecisionDeterminismTests
 {
+    // ACC:T47.2
     // ACC:T6.3
     [Fact]
     public void ShouldMatchApprovedBaseline_WhenInitialStateAndSeedAreUnchanged()

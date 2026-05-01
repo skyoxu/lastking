@@ -20,6 +20,8 @@ func _decision_trace(probe: Node, candidates: Array, fixed_seed: int, steps: int
 
 # acceptance: ACC:T6.17
 # acceptance: ACC:T6.3
+# acceptance: ACC:T47.1
+# acceptance: ACC:T47.4
 func test_target_selection_is_deterministic_for_equal_cost_ties_with_fixed_seed() -> void:
 	var probe := _new_probe()
 	var candidates: Array = [
@@ -59,3 +61,18 @@ func test_blocked_targets_emit_deterministic_fallback_trace() -> void:
 	var second_trace: Array = _decision_trace(probe, candidates, FIXED_SEED, 6)
 	assert_str(JSON.stringify(second_trace)).is_equal(JSON.stringify(first_trace))
 	assert_bool(String(first_trace[0]).begins_with("fallback:")).is_true()
+
+# acceptance: ACC:T47.7
+func test_returns_stable_no_target_when_all_candidates_are_ineligible() -> void:
+	var probe := _new_probe()
+	var candidates: Array = [
+		{"id": "blocked_a", "class": "unit", "reachable": false, "blocked": true, "path_points": 0, "distance": 1, "blocks_route_to_higher_priority": false},
+		{"id": "blocked_b", "class": "armed_defense", "reachable": false, "blocked": true, "path_points": 0, "distance": 2, "blocks_route_to_higher_priority": false}
+	]
+
+	var first := _select_target_with_probe(probe, candidates)
+	var second := _select_target_with_probe(probe, candidates)
+	assert_str(String(first.get("target_id", ""))).is_equal("")
+	assert_str(String(second.get("target_id", ""))).is_equal("")
+	assert_bool(bool(first.get("is_fallback_attack", false))).is_false()
+	assert_bool(bool(second.get("is_fallback_attack", false))).is_false()

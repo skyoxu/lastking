@@ -6,6 +6,8 @@ namespace Game.Core.Tests.Services;
 
 public sealed class EnemyAiRetargetingServiceTests
 {
+    // ACC:T47.1
+    // ACC:T47.6
     // ACC:T6.18
     [Fact]
     public void ShouldSwitchToNextReachableTarget_WhenCurrentTargetBecomesUnreachable()
@@ -42,6 +44,8 @@ public sealed class EnemyAiRetargetingServiceTests
         selected!.TargetId.Should().Be("healer");
     }
 
+    // ACC:T47.3
+    // ACC:T47.7
     [Fact]
     public void ShouldReturnNull_WhenNoReachableTargetsExist()
     {

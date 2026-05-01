@@ -25,6 +25,8 @@ func _new_probe() -> Node:
 	return probe
 
 # acceptance: ACC:T6.1
+# acceptance: ACC:T47.2
+# acceptance: ACC:T47.5
 func test_blocked_route_uses_fallback_even_with_higher_priority_targets() -> void:
 	var probe := _new_probe()
 	var candidates := [

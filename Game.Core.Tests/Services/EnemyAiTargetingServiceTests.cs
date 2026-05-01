@@ -7,6 +7,8 @@ namespace Game.Core.Tests.Services;
 
 public class EnemyAiTargetingServiceTests
 {
+    // ACC:T47.1
+    // ACC:T47.5
     [Fact]
     public void ShouldSelectLowestPathCost_WhenCandidatesSharePriority()
     {
@@ -43,6 +45,8 @@ public class EnemyAiTargetingServiceTests
         results[0].Should().BeOneOf("alpha", "bravo");
     }
 
+    // ACC:T47.3
+    // ACC:T47.6
     [Fact]
     public void ShouldIgnoreUnreachableCandidates_WhenSelectingTarget()
     {
@@ -57,5 +61,23 @@ public class EnemyAiTargetingServiceTests
         var selected = sut.SelectTargetId(candidates, seed: 99);
 
         selected.Should().Be("bravo");
+    }
+
+    // ACC:T47.7
+    [Fact]
+    public void ShouldReturnStableNoTarget_WhenNoReachableCandidatesExist()
+    {
+        var sut = new EnemyAiTargetingService();
+        var candidates = new[]
+        {
+            new EnemyAiPriorityCandidate("alpha", Priority: 5, PathCost: -1),
+            new EnemyAiPriorityCandidate("bravo", Priority: 4, PathCost: -1)
+        };
+
+        var first = sut.SelectTargetId(candidates, seed: 11);
+        var second = sut.SelectTargetId(candidates, seed: 999);
+
+        first.Should().BeEmpty();
+        second.Should().BeEmpty();
     }
 }

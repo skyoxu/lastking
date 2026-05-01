@@ -3970,11 +3970,11 @@
     "test_refs": [
       "Game.Core.Tests/Services/EnemyAiTargetingServiceTests.cs",
       "Game.Core.Tests/Services/EnemyAiRetargetingServiceTests.cs",
+      "Tests.Godot/tests/Integration/test_enemy_ai_target_selection_determinism.gd",
       "Game.Core.Tests/Services/EnemyAiDecisionDeterminismTests.cs",
       "Tests.Godot/tests/Scenes/Combat/test_enemy_ai_navigation_priority.gd",
-      "Tests.Godot/tests/Scenes/Combat/test_enemy_ai_retarget_unreachable_target.gd",
       "Tests.Godot/tests/Scenes/Combat/test_enemy_ai_blocked_route_fallback.gd",
-      "Tests.Godot/tests/Integration/test_enemy_ai_target_selection_determinism.gd"
+      "Tests.Godot/tests/Scenes/Combat/test_enemy_ai_retarget_unreachable_target.gd"
     ],
     "acceptance": [
       "Enemy AI, defense towers, future player combat units, and castle-relevant fallback targets all resolve target acquisition through the same combat entity registry and the same CombatTargetQuery, and this item fails if any participant still uses a separate targeting rule path. Refs: Game.Core.Tests/Services/EnemyAiTargetingServiceTests.cs Game.Core.Tests/Services/EnemyAiRetargetingServiceTests.cs Tests.Godot/tests/Integration/test_enemy_ai_target_selection_determinism.gd",
