@@ -68,3 +68,13 @@ Test-Refs:
 - Each task must be generated from one `docs/gdd/ui-gdd-flow.candidates.json` candidate and preserve `ui_entry`, `player_action`, `system_response`, `empty_state`, `failure_state`, `completion_result`, and `suggested_standalone_surfaces`.
 - Each acceptance item must keep concrete test refs and auditable artifact refs instead of relying on logs-only evidence.
 - `T41-T46` must reuse presentation-safe existing contracts; only add a new domain event, DTO, or interface when `workflow.md` and `Game.Core/Contracts/DomainEvent.cs` plus `Game.Core/Contracts/EventTypes.cs` cannot represent the required signal.
+
+## Combat Loop Closure Acceptance (`T47-T53`)
+
+- `T47-T53` must trace to `docs/gdd/combat-loop-gdd.md` and `docs/gdd/combat-loop-task-candidates.md`, and the resulting task records must keep refs back to this overlay family.
+- `T47-T53` 必须优先复用现有 `Game.Core/Contracts/Lastking/WaveSpawned.cs`, `Game.Core/Contracts/Lastking/CastleHpChanged.cs`, `Game.Core/Contracts/Lastking/ResourcesChanged.cs`, `Game.Core/Contracts/Lastking/TechApplied.cs`, `Game.Core/Contracts/Lastking/RewardOffered.cs`, `Game.Core/Contracts/Lastking/UiFeedbackRaised.cs`, `Game.Core/Contracts/Lastking/PerfSampled.cs`，以及 `Game.Core/Contracts/DomainEvent.cs` 和 `Game.Core/Contracts/EventTypes.cs`；只有现有 contracts 无法表达跨层共享语义时，才允许新增 event、DTO 或 interface skeleton。
+- Battle loop evidence 不得仅靠 logs-only；至少要同时具备可执行测试引用和可机读工件引用，以证明索敌、出兵、命中、AoE、清理、战后总结真正接入 runtime。
+- `T47-T49` 的验收必须证明敌方、塔、防御单位、兵营产出单位共享同一目标解释和战场登记口径，避免出现“看得见生成、打不到目标”或“只在 UI 扣资源不入场”。
+- `T50-T51` 的验收必须证明 projectile/AoE 的速度、命中、范围和伤害来源可回链到 config/schema，而不是写死在场景或视觉特效里。
+- `T52` 的验收必须证明死亡清理与对象回收在长局中保持稳定，不能以短时手玩无崩溃替代 churn/perf 证据。
+- `T53` 的验收必须证明玩家可以在战后直接读到结果、损耗和下一步建议，避免只把失败原因留在开发日志或调试面板。

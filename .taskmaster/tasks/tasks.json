@@ -2860,13 +2860,230 @@
           "CH07",
           "CH10"
         ]
+      },
+      {
+        "id": 47,
+        "title": "Combat Entity Registry And Shared Target Query",
+        "description": "Create a single deterministic combat-entity registry and shared target query for enemy AI, towers, and future player combat units.",
+        "details": "Combat Loop Candidate: Combat Entity Registry And Shared Target Query\nSource: docs/gdd/combat-loop-task-candidates.md\nScope: unify hostile, friendly, and castle-relevant combat actors behind one registry and CombatTargetQuery.\nPlayer outcome: towers, enemies, and future player combat units resolve targets from the same typed snapshot, so visible targeting and resolved attacks do not drift.\nSystem boundary: keep deterministic query logic and ownership filtering in Game.Core, while Game.Godot only registers scene actors and lifecycle hooks.\nImplementation anchors: Game.Godot/Scripts/Combat/EnemyAi.cs; Game.Core/Services/EnemyAiTargetSelector.cs; Game.Core/Domain/Building/BuildingCatalog.cs; Game.Core/Domain/Building/BuildingTypeIds.cs.\nCompletion result: one shared combat registry and target query govern target acquisition, retargeting, and blocked-route fallback without duplicate per-surface targeting rules.\nState semantics:\n- Empty state: registry has no eligible hostile or friendly combat target, so query returns a stable no-target result without phantom retargeting.\n- Failure state: actor registration, ownership filtering, or blocked-route fallback diverges across enemy, tower, and player-unit callers, and the task fails until one shared query contract resolves the mismatch.\n- Completion result: one shared combat registry and target query govern acquisition, retargeting, and blocked-route fallback across all combat participants.",
+        "testStrategy": "Use xUnit to lock query ordering, ownership filtering, and fixed-seed retarget determinism; use GdUnit to verify runtime target selection and blocked-route fallback scenes; keep HUD consumers aligned to the same query outputs.",
+        "priority": "high",
+        "dependencies": [
+          6,
+          13
+        ],
+        "status": "pending",
+        "subtasks": [],
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+        "adrRefs": [
+          "ADR-0018",
+          "ADR-0021",
+          "ADR-0022",
+          "ADR-0031"
+        ],
+        "archRefs": [
+          "CH01",
+          "CH04",
+          "CH05",
+          "CH06",
+          "CH07",
+          "CH10"
+        ]
+      },
+      {
+        "id": 48,
+        "title": "Activate MgTower Auto Attack Runtime",
+        "description": "Turn placed MG towers from passive build results into deterministic auto-attack defenders driven by runtime combat state.",
+        "details": "Combat Loop Candidate: Activate MgTower Auto Attack Runtime\nSource: docs/gdd/combat-loop-task-candidates.md\nScope: arm MG tower placements with shared target-query inputs, runtime attack cadence, and visible combat feedback.\nPlayer outcome: an armed defense building starts firing on approaching enemies without extra interaction once placed and powered by the current combat state.\nSystem boundary: keep attack resolution in existing combat services and use Godot bridges only for scene activation, VFX, and HUD feedback binding.\nImplementation anchors: Game.Core/Domain/Building/BuildingCatalog.cs; Game.Godot/Scripts/Building/BuildingModeCoreBridge.cs; Game.Core/Services/CombatService.cs; Game.Godot/Scripts/UI/HUD.cs.\nCompletion result: MG towers auto-acquire hostile targets through the shared query, attack at deterministic cadence, and preserve friendly-fire safety.\nState semantics:\n- Empty state: MG tower is placed but no hostile target is inside range, so it stays armed and idle without fake fire events.\n- Failure state: tower appears active in UI or scene but attack cadence, target acquisition, or damage dispatch does not start through the shared combat query.\n- Completion result: MG tower auto-acquires hostile targets through the shared query, attacks at deterministic cadence, and preserves friendly-fire safety.",
+        "testStrategy": "Validate tower attack cadence, hostile-only targeting, and friendly-fire protection with xUnit; then use GdUnit to confirm armed defense buildings engage runtime enemies and emit visible combat feedback.",
+        "priority": "high",
+        "dependencies": [
+          13,
+          20,
+          23,
+          43,
+          47
+        ],
+        "status": "pending",
+        "subtasks": [],
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+        "adrRefs": [
+          "ADR-0018",
+          "ADR-0021",
+          "ADR-0022",
+          "ADR-0031"
+        ],
+        "archRefs": [
+          "CH01",
+          "CH04",
+          "CH05",
+          "CH06",
+          "CH07",
+          "CH10"
+        ]
+      },
+      {
+        "id": 49,
+        "title": "Spawn Barracks Units Into Battlefield Runtime",
+        "description": "Promote barracks queue completion into live battlefield unit spawning with stats, ownership, and HUD state synchronized to existing tech and resource contracts.",
+        "details": "Combat Loop Candidate: Spawn Barracks Units Into Battlefield Runtime\nSource: docs/gdd/combat-loop-task-candidates.md\nScope: connect completed barracks training to actual battlefield unit instantiation, ownership binding, and tech-stat application.\nPlayer outcome: training a unit is no longer queue-only bookkeeping; completed training produces a fielded combat unit that participates in the battle loop.\nSystem boundary: keep queue progression, cost accounting, and stat application in Game.Core, while Game.Godot bridges instantiate and bind scene actors only after deterministic completion.\nImplementation anchors: Game.Core/Services/BarracksTrainingQueueRuntime.cs; Game.Godot/Scripts/Building/BarracksTrainingQueueBridge.cs; Game.Core/Contracts/Lastking/TechApplied.cs; Game.Core/Contracts/Lastking/ResourcesChanged.cs.\nCompletion result: completed barracks jobs deploy battlefield units with current tech-modified stats and deterministic resource traces.\nState semantics:\n- Empty state: barracks queue may progress with no completed job, and no battlefield unit is spawned before deterministic completion.\n- Failure state: training completion only updates queue or resources, but no owned combat unit is instantiated, registered, or stat-bound for runtime battle participation.\n- Completion result: completed barracks jobs deploy battlefield units with current tech-modified stats and deterministic resource traces.",
+        "testStrategy": "Use xUnit to lock queue completion, resource accounting, and tech-stat snapshot application; use GdUnit to verify trained units appear in the battlefield and HUD surfaces acknowledge deployment.",
+        "priority": "high",
+        "dependencies": [
+          16,
+          17,
+          44,
+          47
+        ],
+        "status": "pending",
+        "subtasks": [],
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+        "adrRefs": [
+          "ADR-0018",
+          "ADR-0021",
+          "ADR-0022"
+        ],
+        "archRefs": [
+          "CH01",
+          "CH04",
+          "CH05",
+          "CH06",
+          "CH07"
+        ]
+      },
+      {
+        "id": 50,
+        "title": "Projectile Runtime For Towers And Ranged Enemies",
+        "description": "Add a reusable projectile runtime so towers and ranged enemies share travel speed, impact, timeout, and damage-resolution rules.",
+        "details": "Combat Loop Candidate: Projectile Runtime For Towers And Ranged Enemies\nSource: docs/gdd/combat-loop-task-candidates.md\nScope: introduce one reusable projectile runtime for defense towers and ranged hostiles, including travel speed, impact timing, and deterministic cleanup.\nPlayer outcome: combat reads as a complete battle loop because ranged attacks have visible travel and impact instead of instant invisible damage only.\nSystem boundary: keep projectile ownership, hit validation, and damage dispatch deterministic in shared combat logic, while Game.Godot handles scene presentation and collision plumbing.\nImplementation anchors: Game.Core/Services/CombatService.cs; Game.Core/Contracts/Config/enemy-config.schema.json; Game.Core/Contracts/Config/spawn-config.schema.json; Tests.Godot/tests/Integration/test_combat_friendly_fire_disabled.gd.\nCompletion result: towers and ranged enemies reuse one projectile runtime with config-driven speed, timeout, and impact rules.\nState semantics:\n- Empty state: ranged attack has no valid firing solution, so no projectile instance is created and no impact is resolved.\n- Failure state: projectile visuals appear without deterministic travel, hit validation, timeout cleanup, or shared damage dispatch.\n- Completion result: towers and ranged enemies reuse one projectile runtime with config-driven speed, timeout, and impact rules.",
+        "testStrategy": "Use xUnit to lock projectile travel, impact, timeout, and damage filtering rules; use GdUnit to verify reusable projectile scenes for towers and ranged enemies under deterministic combat runs.",
+        "priority": "high",
+        "dependencies": [
+          20,
+          32,
+          34,
+          47,
+          48
+        ],
+        "status": "pending",
+        "subtasks": [],
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+        "adrRefs": [
+          "ADR-0018",
+          "ADR-0021",
+          "ADR-0022",
+          "ADR-0031"
+        ],
+        "archRefs": [
+          "CH01",
+          "CH04",
+          "CH05",
+          "CH06",
+          "CH07",
+          "CH10"
+        ]
+      },
+      {
+        "id": 51,
+        "title": "Area Damage Resolver And Elite Pressure Slice",
+        "description": "Add deterministic area-damage resolution and elite-pressure differentiation so combat pressure is not limited to flat single-target exchanges.",
+        "details": "Combat Loop Candidate: Area Damage Resolver And Elite Pressure Slice\nSource: docs/gdd/combat-loop-task-candidates.md\nScope: implement AoE damage rules plus elite or boss pressure differentiation driven by existing combat and pressure configuration.\nPlayer outcome: elite and boss enemies feel materially different from normal fodder, and splash attacks create meaningful spacing or risk-management gameplay.\nSystem boundary: keep AoE radius, clamp, falloff, and pressure normalization in deterministic core services; scene adapters only forward hits and display outcomes.\nImplementation anchors: Game.Core/Services/CombatService.cs; Game.Core/Contracts/Config/enemy-config.schema.json; Game.Core/Contracts/Config/pressure-normalization.config.schema.json; Game.Core/Contracts/Lastking/WaveSpawned.cs.\nCompletion result: AoE and elite-pressure rules are reusable, deterministic, and visible through runtime wave pressure and combat outcomes.\nState semantics:\n- Empty state: no AoE-capable source or elite-pressure trigger is active, so only single-target damage and baseline pressure readouts apply.\n- Failure state: splash radius, elite pressure, or boss differentiation is visible but not resolved by deterministic core rules or config-backed normalization.\n- Completion result: AoE and elite-pressure rules are reusable, deterministic, and visible through runtime wave pressure and combat outcomes.",
+        "testStrategy": "Use xUnit to lock AoE radius, clamp, and pressure normalization rules; use GdUnit to verify elite-pressure slices and splash outcomes remain observable and deterministic in runtime scenes.",
+        "priority": "medium",
+        "dependencies": [
+          20,
+          35,
+          43,
+          50
+        ],
+        "status": "pending",
+        "subtasks": [],
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+        "adrRefs": [
+          "ADR-0021",
+          "ADR-0022",
+          "ADR-0031",
+          "ADR-0032"
+        ],
+        "archRefs": [
+          "CH04",
+          "CH05",
+          "CH06",
+          "CH07",
+          "CH10"
+        ]
+      },
+      {
+        "id": 52,
+        "title": "Combat Lifecycle And Pooling Hardening",
+        "description": "Stabilize combat object lifecycle, cleanup, and pooling so repeated waves do not leak nodes, references, or performance budget.",
+        "details": "Combat Loop Candidate: Combat Lifecycle And Pooling Hardening\nSource: docs/gdd/combat-loop-task-candidates.md\nScope: harden cleanup, retirement, pooling, and stale-reference release for units, enemies, projectiles, and transient combat effects.\nPlayer outcome: long battles stay responsive and readable because dead actors, spent projectiles, and timed-out effects leave the field cleanly instead of accumulating hidden runtime cost.\nSystem boundary: deterministic retirement rules live in shared services, while adapters decide whether a node is freed immediately or returned to a safe pool.\nImplementation anchors: queue_free or QueueFree call sites; Task 30 performance gates; Task 47 shared registry lifecycle integration.\nCompletion result: repeated spawn, death, and timeout churn preserve deterministic combat state and stay within performance expectations without orphaned runtime actors.\nState semantics:\n- Empty state: no spent projectile, dead actor, or timed-out combat effect remains pending cleanup, so lifecycle sweep is a stable no-op.\n- Failure state: dead actors, stale references, or timed-out effects remain live after retirement, causing orphaned runtime state or avoidable performance churn.\n- Completion result: repeated spawn, death, and timeout churn preserve deterministic combat state and stay within performance expectations without orphaned runtime actors.",
+        "testStrategy": "Use xUnit to lock lifecycle cleanup and stale-reference release rules; use GdUnit plus performance integration tests to verify repeated wave churn does not leak actors or break cleanup timing.",
+        "priority": "high",
+        "dependencies": [
+          30,
+          47,
+          48,
+          49,
+          50,
+          51
+        ],
+        "status": "pending",
+        "subtasks": [],
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+        "adrRefs": [
+          "ADR-0018",
+          "ADR-0021",
+          "ADR-0022",
+          "ADR-0032"
+        ],
+        "archRefs": [
+          "CH01",
+          "CH04",
+          "CH05",
+          "CH06",
+          "CH07"
+        ]
+      },
+      {
+        "id": 53,
+        "title": "Battle After Action Summary And Guidance",
+        "description": "Extend the HUD with battle-end summary and next-step guidance so the player can understand why a battle succeeded or failed and what to build or train next.",
+        "details": "Combat Loop Candidate: Battle After Action Summary And Guidance\nSource: docs/gdd/combat-loop-task-candidates.md\nScope: add a player-facing after-action summary that reuses existing wave, castle, tech, resource, and reward contracts instead of inventing a separate report-only state store.\nPlayer outcome: after each battle or loss, the player gets a readable explanation of pressure spikes, losses, and suggested next actions for build, training, or economy decisions.\nSystem boundary: summary computation may aggregate existing typed contracts, but the HUD remains the owner of presentation and the task must not fork a new hidden combat-tracking state machine.\nImplementation anchors: Game.Godot/Scripts/UI/HUD.cs; Game.Godot/Scenes/UI/HUD.tscn; docs/gdd/ui-gdd-flow.md; Game.Core/Contracts/Lastking/WaveSpawned.cs; Game.Core/Contracts/Lastking/CastleHpChanged.cs; Game.Core/Contracts/Lastking/TechApplied.cs; Game.Core/Contracts/Lastking/ResourcesChanged.cs.\nCompletion result: battle-end HUD summary and guidance remain traceable to existing typed runtime contracts and support deterministic player learning after success or failure.\nState semantics:\n- Empty state: no completed battle outcome is available yet, so HUD summary surfaces remain hidden or show a neutral waiting state.\n- Failure state: battle ends or fails, but the player cannot read losses, pressure spikes, or suggested next actions from runtime-owned summary surfaces.\n- Completion result: battle-end HUD summary and guidance remain traceable to existing typed runtime contracts and support deterministic player learning after success or failure.",
+        "testStrategy": "Use xUnit to lock contract-fed summary inputs and deterministic recommendation rules; use GdUnit to verify HUD win or loss summaries and next-step guidance render correctly from runtime end-state data.",
+        "priority": "medium",
+        "dependencies": [
+          18,
+          39,
+          42,
+          43,
+          44,
+          46,
+          49,
+          52
+        ],
+        "status": "pending",
+        "subtasks": [],
+        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
+        "adrRefs": [
+          "ADR-0018",
+          "ADR-0022",
+          "ADR-0032"
+        ],
+        "archRefs": [
+          "CH01",
+          "CH04",
+          "CH05",
+          "CH06",
+          "CH07"
+        ]
       }
     ],
     "metadata": {
       "version": "1.0.0",
-      "lastModified": "2026-02-11T20:30:07",
-      "taskCount": 40,
-      "completedCount": 0,
+      "lastModified": "2026-04-30T23:42:54",
+      "taskCount": 53,
+      "completedCount": 46,
       "tags": [
         "master"
       ],

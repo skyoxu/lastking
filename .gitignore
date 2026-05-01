@@ -119,5 +119,32 @@ node_modules/
 # Local temporary workspace
 .tmp/
 
-# BMAD workspace (local-only, never track new files)
-_bmad/
+# BMAD workspace: track config only, keep the rest local-only
+_bmad/**
+!_bmad/_config/
+_bmad/_config/**
+!_bmad/_config/*.csv
+!_bmad/_config/*.yaml
+!_bmad/_config/agents/
+!_bmad/_config/agents/*.yaml
+!_bmad/core/
+_bmad/core/**
+!_bmad/core/config.yaml
+!_bmad/bmb/
+_bmad/bmb/**
+!_bmad/bmb/config.yaml
+!_bmad/bmgd/
+_bmad/bmgd/**
+!_bmad/bmgd/config.yaml
+!_bmad/bmm/
+_bmad/bmm/**
+!_bmad/bmm/config.yaml
+!_bmad/bmm/sub-modules/
+!_bmad/bmm/sub-modules/claude-code/
+_bmad/bmm/sub-modules/claude-code/**
+!_bmad/bmm/sub-modules/claude-code/config.yaml
+!_bmad/bmm/sub-modules/claude-code/injections.yaml
+
+# BMAD skill wrappers are local-only
+.agents/skills/README.md
+.agents/skills/bmad-*/

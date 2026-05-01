@@ -240,3 +240,19 @@ Test-Refs:
 | `T46` | Config Audit And Migration Surfaces | `Game.Core/Contracts/Lastking/ConfigLoaded.cs`, `Game.Core/Contracts/Config/config-change-audit.schema.json`, `Game.Core/Contracts/Config/enemy-config.schema.json`, `Game.Core/Contracts/Config/difficulty-config.schema.json` |
 
 Contract update rule: only add a new contract if a Chapter 7 implementation needs a new domain event or DTO that cannot be represented by the listed contracts. UI scene classes, panel view models, and presentation-only state do not belong under `Game.Core/Contracts/DomainEvent.cs` and `Game.Core/Contracts/EventTypes.cs`.
+
+## Combat Loop Contract Reuse And Delta (`T47-T53`)
+
+`T47-T53` 必须先复用现有 `Game.Core/Contracts/DomainEvent.cs`、`Game.Core/Contracts/EventTypes.cs`，以及 `Game.Core/Contracts/Lastking/WaveSpawned.cs`, `Game.Core/Contracts/Lastking/CastleHpChanged.cs`, `Game.Core/Contracts/Lastking/ResourcesChanged.cs`, `Game.Core/Contracts/Lastking/TechApplied.cs`, `Game.Core/Contracts/Lastking/RewardOffered.cs`, `Game.Core/Contracts/Lastking/UiFeedbackRaised.cs`, `Game.Core/Contracts/Lastking/PerfSampled.cs` 这些 typed payload。只有在既有 contract 无法稳定表达跨层战斗语义时，才允许新增 interface、DTO 或 event skeleton；场景节点、UI 面板状态和仅展示用途数据不得直接进入 core contracts。
+
+| Task IDs | Combat Slice | Must Reuse First | Candidate Delta Only If Existing Contracts Are Insufficient |
+| --- | --- | --- | --- |
+| `T47` | Shared combat registry and target query | `Game.Core/Contracts/Lastking/WaveSpawned.cs`, `Game.Core/Contracts/Lastking/CastleHpChanged.cs`, `Game.Core/Contracts/DomainEvent.cs` | `ICombatTargetQuery`, `CombatTargetSnapshotDto`, `CombatEntityHandle` skeletons |
+| `T48` | MgTower auto attack activation | `Game.Core/Contracts/Lastking/UiFeedbackRaised.cs`, `Game.Core/Contracts/Lastking/ResourcesChanged.cs`, `Game.Core/Contracts/Lastking/WaveSpawned.cs` | Prefer no new contract; only add a tower fire snapshot DTO if runtime evidence cannot be derived from existing combat/result signals |
+| `T49` | Barracks unit deployment handoff | `Game.Core/Contracts/Lastking/TechApplied.cs`, `Game.Core/Contracts/Lastking/ResourcesChanged.cs`, `Game.Core/Contracts/DomainEvent.cs` | `BarracksUnitDeployed`, `UnitDeploymentRequestDto`, `DeployLaneHintDto` skeletons |
+| `T50` | Projectile runtime for towers and ranged enemies | `Game.Core/Contracts/Lastking/WaveSpawned.cs`, `Game.Core/Contracts/Lastking/UiFeedbackRaised.cs`, `Game.Core/Contracts/Config/enemy-config.schema.json`, `Game.Core/Contracts/Config/spawn-config.schema.json` | `ProjectileFired`, `ProjectileResolvedDto`, `CombatHitSnapshotDto` skeletons |
+| `T51` | AoE resolver and elite pressure slice | `Game.Core/Contracts/Lastking/WaveSpawned.cs`, `Game.Core/Contracts/Lastking/CastleHpChanged.cs`, `Game.Core/Contracts/Config/pressure-normalization.config.schema.json` | `AreaDamageResolvedDto`, `ElitePressureSampleDto`, `CombatDamageEnvelope` skeletons |
+| `T52` | Lifecycle cleanup and pooling hardening | `Game.Core/Contracts/Lastking/PerfSampled.cs`, `Game.Core/Contracts/Lastking/UiFeedbackRaised.cs` | Prefer no new contract; only add a cleanup audit DTO if object churn evidence cannot stay in perf/report artifacts |
+| `T53` | After-action summary and player guidance | `Game.Core/Contracts/Lastking/RewardOffered.cs`, `Game.Core/Contracts/Lastking/CastleHpChanged.cs`, `Game.Core/Contracts/Lastking/UiFeedbackRaised.cs` | `BattleSummaryDto`, `BattleFailureReasonDto`, `RecommendedFollowupActionDto` skeletons |
+
+Contract delta rule: `T47-T53` 的新增 skeleton 只应覆盖跨层共享语义，不应用来承载场景树引用、`NodePath`、UI 文本或临时调试字段。若 `workflow.md` 第 4.3/4.4 的 contract baseline 校验仍可由既有 contracts 通过，则优先保持“文档声明候选、不立即落地代码文件”的状态。

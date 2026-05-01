@@ -156,6 +156,7 @@ Test-Refs:
 - Taskmaster IDs 11-20: economy/building/combat systems.
 - Taskmaster IDs 21-30: runtime UX/save/performance envelope.
 - Taskmaster IDs 31-40: config contracts and governance.
+- Taskmaster IDs 47-53: combat loop closure and battle readability.
 
 ## Execution Slices (P0)
 
@@ -221,6 +222,23 @@ Test-Refs:
 | `T44` | `done` | `runtime` | 0 | `None` | None |
 | `T45` | `review` | `partial` | 3 | `SettingsMenu, SavePanel, RunSummaryPanel` | Need a governed achievements/readout surface so unlock evidence is not limited to tests and adapters. / Need an operator-facing performance status surface if this capability must be treated as a governed visible panel rather than a gate-only artifact. / Need SavePanel and RunSummaryPanel to be stabilized as owned surfaces alongside the already-real settings UI. |
 | `T46` | `review` | `partial` | 3 | `ConfigAuditPanel, MigrationStatusDialog, ReportMetadataPanel` | Need a governed read surface that exposes config-contract workspace presence and ownership rather than only file-system evidence. / Need enemy config validation results to be visible through an owned audit surface instead of schema and resolver evidence alone. / Need difficulty lock/version outcomes to surface on a governed config read panel rather than only in contracts and tests. / Need spawn composition validation and loaded values to appear on an audit surface instead of staying in schema and integration evidence. / Need range-check verdicts and active normalization values to be exposed on a config audit surface. / Need sample-config coverage and selection evidence to be surfaced as governed artifacts instead of static sample files only. / Need gameplay-facing or operator-facing panels that show which active config snapshot is governing runtime behavior. / Need report metadata to be surfaced through a stable report/audit panel instead of reader-validator evidence only. / Need migration failure and force-migration status to be owned by a visible migration dialog or audit panel. / Need ConfigAuditPanel, MigrationStatusDialog, and ReportMetadataPanel to exist as stable owned surfaces with direct runtime validation. |
+
+### Slice E - Combat Loop Closure (`T47-T53`)
+
+- Scope: 在 `T13/T16/T17/T20/T42-T46` 已有基础上，把战斗闭环补到可玩层，包括统一索敌查询、机枪塔自动攻击、兵营单位入场、投射物命中、范围伤害、战斗生命周期回收、战后总结与引导。
+- Key tasks: `T47`, `T48`, `T49`, `T50`, `T51`, `T52`, `T53`.
+- Source GDD refs:
+  - `docs/gdd/combat-loop-gdd.md`
+  - `docs/gdd/combat-loop-task-candidates.md`
+- Contract anchor:
+  - Reuse first: `Game.Core/Contracts/Lastking/WaveSpawned.cs`, `Game.Core/Contracts/Lastking/CastleHpChanged.cs`, `Game.Core/Contracts/Lastking/ResourcesChanged.cs`, `Game.Core/Contracts/Lastking/TechApplied.cs`, `Game.Core/Contracts/Lastking/UiFeedbackRaised.cs`, `Game.Core/Contracts/Lastking/PerfSampled.cs`.
+  - Candidate delta only if reuse is insufficient: shared target-query interface/DTO, deploy handoff DTO/event, projectile snapshot DTO, after-action summary DTO.
+- Failure focus:
+  - 索敌口径分裂，导致敌我双方对同一目标优先级解释不一致；
+  - 训练完成后只扣资源不落地战场单位，或落地后不纳入统一 combat registry；
+  - 投射物或 AoE 只做视觉不做命中结算，或伤害范围与 config/schema 不一致；
+  - 单位死亡后未及时 `queue_free/QueueFree`、未退订事件或未回收节点，导致对象残留与性能劣化；
+  - 战后总结仅有日志无 UI 或可读摘要，玩家无法理解失败原因与下一轮建议。
 
 #### Closure Exit Criteria
 
