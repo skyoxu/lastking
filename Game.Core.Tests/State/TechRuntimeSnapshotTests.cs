@@ -36,6 +36,7 @@ public class TechRuntimeSnapshotTests
             "the next runtime snapshot must reflect newly unlocked tech multipliers for barracks stat computation.");
     }
 
+    // ACC:T49.4
     [Fact]
     public void ShouldKeepPreviouslyProducedSnapshotUnchanged_WhenUnlockStateChanges()
     {

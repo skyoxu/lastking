@@ -52,6 +52,7 @@ public class BarracksTrainingQueueTests
     }
 
     // ACC:T16.5
+    // ACC:T49.3
     [Fact]
     public void ShouldApplyRequestTimeDeductionRules_WhenEnqueueAcceptedOrRejected()
     {
@@ -75,6 +76,8 @@ public class BarracksTrainingQueueTests
     }
 
     // ACC:T16.6
+    // ACC:T49.1
+    // ACC:T49.4
     [Fact]
     public void ShouldEmitExactlyOneCompletionPerHeadJob_WhenQueueAdvancesInFifoOrder()
     {

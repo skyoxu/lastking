@@ -1,0 +1,21 @@
+# Task 49 Chapter6 residual needs-fix
+
+- Title: Task 49 Chapter6 residual needs-fix
+- Date: 2026-05-01
+- Status: accepted
+- Supersedes: none
+- Superseded by: none
+- Branch: task/T49
+- Git Head: 62e26017636d5d4a12e0e1e450edfc73bf0fc463
+- Why now: Chapter 6 recovery is blocked by recent_failure_summary after repeated review-needs-fix families; unresolved Needs Fix must be recorded before closing this loop.
+- Context: run_id=395df14a52974203a61dd3a7f5279924, reason=pipeline_clean, failure_kind=review-needs-fix, blocked_by=recent_failure_summary, preferred_lane=inspect-first.
+- Decision: Record unresolved reviewer findings as residual and stop rerunning full pipeline in this turn. Keep deterministic green evidence, keep acceptance/task-view updates, and route next pass through targeted review evidence refresh before any new rerun.
+- Consequences: Task is not complete yet. Remaining findings stay tracked with explicit evidence paths and next commands.
+- Recovery impact: Do not pay additional 6.7/6.8 cost while recent_failure_summary stop-loss remains active for the same failure family.
+- Validation: Evidence: logs/ci/2026-05-01/sc-review-pipeline-task-49-395df14a52974203a61dd3a7f5279924/{summary.json,repair-guide.json,agent-review.json}; logs/ci/2026-05-01/sc-llm-review-task-49/{review-code-reviewer.md,review-security-auditor.md}; logs/ci/2026-05-01/manual-inspect-task49.json
+- Related ADRs: none yet
+- Related execution plans: none yet
+- Related task id(s): `49`
+- Related run id: `395df14a52974203a61dd3a7f5279924`
+- Related latest.json: `logs/ci/2026-05-01/sc-review-pipeline-task-49/latest.json`
+- Related pipeline artifacts: `logs/ci/2026-05-01/sc-review-pipeline-task-49-395df14a52974203a61dd3a7f5279924`

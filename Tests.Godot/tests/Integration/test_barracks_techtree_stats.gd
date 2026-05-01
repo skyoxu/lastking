@@ -44,6 +44,7 @@ func _assert_stat_matches_multiplier(
     assert_float(delta).is_less_equal(0.0001)
 
 # ACC:T17.7
+# ACC:T49.6
 # acceptance: unlocked tech nodes scale barracks-trained stats as baseline x current multipliers.
 func test_unlocked_tech_nodes_scale_barracks_stats_by_current_multipliers() -> void:
     var bridge = _new_bridge()
