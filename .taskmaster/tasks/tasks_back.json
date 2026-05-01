@@ -4046,12 +4046,12 @@
     ],
     "test_refs": [
       "Game.Core.Tests/Services/CombatServiceTests.cs",
-      "Tests.Godot/tests/Integration/test_combat_friendly_fire_disabled.gd",
-      "Tests.Godot/tests/UI/test_hud_updates_on_events.gd",
       "Tests.Godot/tests/UI/test_hud_scene.gd",
       "Tests.Godot/tests/UI/test_hud_building_type_switch_preview.gd",
-      "Tests.Godot/tests/UI/test_speed_controls_buttons_apply_speed.gd",
-      "Game.Core.Tests/Services/BuildingPlacementValidationTests.cs"
+      "Tests.Godot/tests/Integration/test_combat_friendly_fire_disabled.gd",
+      "Game.Core.Tests/Services/BuildingPlacementValidationTests.cs",
+      "Tests.Godot/tests/UI/test_hud_updates_on_events.gd",
+      "Tests.Godot/tests/UI/test_speed_controls_buttons_apply_speed.gd"
     ],
     "acceptance": [
       "Once a valid MG tower placement enters runtime combat, it automatically uses the shared hostile-target query to acquire an in-range hostile and fire without extra player input; when no hostile is in range, it remains armed and idle, and acceptance fails if an eligible hostile is present but the tower does not begin attacking. Refs: Game.Core.Tests/Services/CombatServiceTests.cs Tests.Godot/tests/UI/test_hud_scene.gd Tests.Godot/tests/UI/test_hud_building_type_switch_preview.gd",

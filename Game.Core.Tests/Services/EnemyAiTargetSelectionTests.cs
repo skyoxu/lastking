@@ -169,6 +169,7 @@ public class EnemyAiTargetSelectionTests
         recoveredDecision.TargetId.Should().Be("unit-1");
     }
 
+    // ACC:T48.7
     [Fact]
     public void ShouldStayIdle_WhenOnlyBlockersExistWithoutBlockedHigherPriorityTargets()
     {
