@@ -9,6 +9,9 @@ namespace Game.Core.Tests.Services;
 
 public sealed class FrameTimeHotspotRankingTests
 {
+    // ACC:T52.3
+    // ACC:T52.5
+    // ACC:T52.6
     // ACC:T30.5
     // ACC:T45.3
     [Fact]

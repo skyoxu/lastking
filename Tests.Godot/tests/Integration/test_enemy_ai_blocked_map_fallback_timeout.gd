@@ -29,6 +29,9 @@ func _count_diagnostics_for_enemy(diagnostics: Array, enemy_index: int, token: S
 	return count
 
 # acceptance: ACC:T6.19
+# ACC:T52.1
+# ACC:T52.4
+# ACC:T52.7
 func test_blocked_map_fallback_attack_completes_within_timeout_and_emits_diagnostics() -> void:
 	var probe := _new_probe()
 	_add_navigation_region(PackedVector2Array([Vector2(0, 0), Vector2(8, 0), Vector2(8, 8), Vector2(0, 8)]))
@@ -51,6 +54,7 @@ func test_blocked_map_fallback_attack_completes_within_timeout_and_emits_diagnos
 		assert_int(_count_diagnostics_for_enemy(diagnostics, enemy_index, "fallback_decision_0")).is_equal(1)
 		assert_int(_count_diagnostics_for_enemy(diagnostics, enemy_index, "fallback_decision_1")).is_equal(1)
 
+# ACC:T52.10
 func test_blocked_map_fallback_reports_deadlock_when_timeout_prevents_attack() -> void:
 	var probe := _new_probe()
 	_add_navigation_region(PackedVector2Array([Vector2(0, 0), Vector2(2, 0), Vector2(2, 8), Vector2(0, 8)]))
@@ -74,6 +78,7 @@ func test_blocked_map_fallback_reports_deadlock_when_timeout_prevents_attack() -
 		assert_int(_count_diagnostics_for_enemy(diagnostics, enemy_index, "fallback_decision_1")).is_equal(1)
 		assert_int(_count_diagnostics_for_enemy(diagnostics, enemy_index, "deadlock")).is_equal(1)
 
+# ACC:T52.9
 func test_blocked_map_fallback_simulation_is_deterministic_for_same_inputs() -> void:
 	var probe := _new_probe()
 	_add_navigation_region(PackedVector2Array([Vector2(0, 0), Vector2(8, 0), Vector2(8, 8), Vector2(0, 8)]))

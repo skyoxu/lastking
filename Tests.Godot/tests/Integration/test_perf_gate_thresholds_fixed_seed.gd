@@ -28,6 +28,9 @@ func _evaluate_perf_gate_verdict(report: Dictionary) -> String:
 	return String(result.get("verdict", "FAIL"))
 
 # acceptance: ACC:T30.9
+# ACC:T52.3
+# ACC:T52.4
+# ACC:T52.8
 func test_perf_gate_passes_when_fixed_seed_headless_and_playable_runs_hit_floor_values() -> void:
 	var report: Dictionary = {
 		"platform": "windows",
