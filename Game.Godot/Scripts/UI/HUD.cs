@@ -3,7 +3,9 @@ using System.Text.Json;
 using System.Collections.Generic;
 using System.Linq;
 using Game.Core.Contracts;
+using Game.Core.Contracts.Lastking;
 using Game.Godot.Adapters;
+using Game.Core.Services;
 using Godot;
 
 namespace Game.Godot.Scripts.UI;
@@ -13,6 +15,7 @@ public partial class HUD : Control
     private static readonly JsonDocumentOptions EventJsonOptions = new() { MaxDepth = 16 };
     private const double DefaultDayDurationSeconds = 240d;
     private const double DefaultNightDurationSeconds = 120d;
+    private readonly HudAfterActionComposer _afterActionComposer = new();
 
     private EventBusAdapter? _bus;
     private Label _day = default!;
@@ -75,6 +78,12 @@ public partial class HUD : Control
     private double _phaseDurationSeconds = DefaultDayDurationSeconds;
     private double _phaseElapsedSeconds;
     private bool _phaseCountdownEnabled = true;
+    private CastleHpChanged? _lastCastleHpChanged;
+    private WaveSpawned? _lastWaveSpawned;
+    private ResourcesChanged? _lastResourcesChanged;
+    private TaxCollected? _lastTaxCollected;
+    private TechApplied? _lastTechApplied;
+    private RewardOffered? _lastRewardOffered;
 
     public override void _Ready()
     {
@@ -253,6 +262,15 @@ public partial class HUD : Control
             {
                 _health.Text = $"HP: {hp.Value}";
                 UpdatePressureLabelFromHp(hp.Value);
+                var hpRunId = ReadString(doc.RootElement, "RunId", "run_id") ?? "runtime";
+                var hpDay = ReadInt(doc.RootElement, "DayNumber", "day", "Day") ?? _currentDay;
+                var previousHp = ReadInt(doc.RootElement, "previous_hp", "PreviousHp") ?? hp.Value;
+                _lastCastleHpChanged = new CastleHpChanged(
+                    hpRunId,
+                    hpDay,
+                    previousHp,
+                    hp.Value,
+                    DateTimeOffset.UtcNow);
             }
 
             if (type == EventTypes.LastkingRewardOffered)
@@ -337,6 +355,15 @@ public partial class HUD : Control
 
     private void HandleRewardOfferedEvent(JsonElement payload)
     {
+        _lastRewardOffered = new RewardOffered(
+            ReadString(payload, "RunId", "run_id") ?? "runtime",
+            ReadInt(payload, "DayNumber", "day", "Day") ?? _currentDay,
+            ReadBool(payload, "is_elite_night", "IsEliteNight"),
+            ReadBool(payload, "is_boss_night", "IsBossNight"),
+            ReadString(payload, "option_a", "OptionA") ?? string.Empty,
+            ReadString(payload, "option_b", "OptionB") ?? string.Empty,
+            ReadString(payload, "option_c", "OptionC") ?? string.Empty,
+            DateTimeOffset.UtcNow);
         var optionA = ReadString(payload, "option_a", "OptionA");
         var optionB = ReadString(payload, "option_b", "OptionB");
         var optionC = ReadString(payload, "option_c", "OptionC");
@@ -351,13 +378,33 @@ public partial class HUD : Control
     {
         var outcome = ReadString(payload, "outcome", "Outcome") ?? string.Empty;
         var day = ReadInt(payload, "day", "Day");
+        var isTerminalOutcome =
+            string.Equals(outcome, "win", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(outcome, "loss", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(outcome, "lose", StringComparison.OrdinalIgnoreCase);
+        var isNonTerminalOutcome = !isTerminalOutcome;
+        if (isNonTerminalOutcome)
+        {
+            _outcomeLabel.Text = "Outcome: n/a";
+            _runtimePromptLabel.Text = "Prompt: n/a";
+            return;
+        }
+
+        var presentation = _afterActionComposer.Compose(new HudAfterActionInputs(
+            Outcome: outcome,
+            DayNumber: day,
+            CastleHp: _lastCastleHpChanged,
+            Wave: _lastWaveSpawned,
+            Resources: _lastResourcesChanged,
+            Tax: _lastTaxCollected,
+            Tech: _lastTechApplied,
+            Reward: _lastRewardOffered));
+        _outcomeLabel.Text = presentation.OutcomeText;
+        _runtimePromptLabel.Text = presentation.PromptText;
         var details = day.HasValue ? $"day={day.Value}" : string.Empty;
         if (string.Equals(outcome, "win", StringComparison.OrdinalIgnoreCase))
         {
             ShowTemporaryFeedback("ui.run.win.day15", details, code: "run_win", priority: 2);
-            _outcomeLabel.Text = string.IsNullOrWhiteSpace(details)
-                ? "Outcome: win"
-                : $"Outcome: win {details}";
             return;
         }
 
@@ -365,17 +412,7 @@ public partial class HUD : Control
             string.Equals(outcome, "lose", StringComparison.OrdinalIgnoreCase))
         {
             ShowTemporaryFeedback("ui.run.lose.castle_fall", details, code: "run_lose", priority: 2);
-            _outcomeLabel.Text = string.IsNullOrWhiteSpace(details)
-                ? "Outcome: loss"
-                : $"Outcome: loss {details}";
             return;
-        }
-
-        if (!string.IsNullOrWhiteSpace(outcome))
-        {
-            _outcomeLabel.Text = string.IsNullOrWhiteSpace(details)
-                ? $"Outcome: {outcome}"
-                : $"Outcome: {outcome} {details}";
         }
     }
 
@@ -383,6 +420,14 @@ public partial class HUD : Control
     {
         var count = ReadInt(payload, "count", "Count", "spawn_count", "SpawnCount");
         var day = ReadInt(payload, "day", "Day");
+        _lastWaveSpawned = new WaveSpawned(
+            ReadString(payload, "RunId", "run_id") ?? "runtime",
+            day ?? _currentDay,
+            ReadInt(payload, "NightNumber", "night", "Night") ?? 0,
+            ReadString(payload, "LaneId", "lane_id", "lane") ?? "unknown",
+            count ?? 0,
+            ReadInt(payload, "WaveBudget", "wave_budget", "budget") ?? 0,
+            DateTimeOffset.UtcNow);
         if (count.HasValue && day.HasValue)
         {
             _pressureLabel.Text = $"Pressure: day={day.Value} spawned={count.Value}";
@@ -417,6 +462,13 @@ public partial class HUD : Control
         var gold = ReadInt(payload, "gold", "Gold");
         var iron = ReadInt(payload, "iron", "Iron");
         var popCap = ReadInt(payload, "population_cap", "PopulationCap");
+        _lastResourcesChanged = new ResourcesChanged(
+            ReadString(payload, "RunId", "run_id") ?? "runtime",
+            ReadInt(payload, "DayNumber", "day", "Day") ?? _currentDay,
+            gold ?? 0,
+            iron ?? 0,
+            popCap ?? 0,
+            DateTimeOffset.UtcNow);
         if (gold.HasValue || iron.HasValue || popCap.HasValue)
         {
             _resourceSummaryLabel.Text =
@@ -429,6 +481,13 @@ public partial class HUD : Control
         var taxDelta = ReadInt(payload, "gold_delta", "GoldDelta");
         var totalGold = ReadInt(payload, "total_gold", "TotalGold", "gold_after", "GoldAfter");
         var residenceId = ReadString(payload, "residence_id", "ResidenceId");
+        _lastTaxCollected = new TaxCollected(
+            ReadString(payload, "RunId", "run_id") ?? "runtime",
+            ReadInt(payload, "DayNumber", "day", "Day") ?? _currentDay,
+            residenceId ?? string.Empty,
+            taxDelta ?? 0,
+            totalGold ?? 0,
+            DateTimeOffset.UtcNow);
         var details = !string.IsNullOrWhiteSpace(residenceId) ? $"residence={residenceId}" : "residence=n/a";
         _buildSummaryLabel.Text =
             $"Build: tax={DisplayInt(taxDelta)} total_gold={DisplayInt(totalGold)} {details}";
@@ -440,6 +499,13 @@ public partial class HUD : Control
         var statKey = ReadString(payload, "stat_key", "StatKey");
         var previous = ReadInt(payload, "previous_value", "PreviousValue");
         var current = ReadInt(payload, "current_value", "CurrentValue");
+        _lastTechApplied = new TechApplied(
+            ReadString(payload, "RunId", "run_id") ?? "runtime",
+            techId ?? string.Empty,
+            statKey ?? string.Empty,
+            previous ?? 0,
+            current ?? 0,
+            DateTimeOffset.UtcNow);
         var techText = !string.IsNullOrWhiteSpace(techId) ? techId : "n/a";
         var statText = !string.IsNullOrWhiteSpace(statKey) ? statKey : "n/a";
         _progressionSummaryLabel.Text =
@@ -681,6 +747,35 @@ public partial class HUD : Control
         }
 
         return null;
+    }
+
+    private static bool ReadBool(JsonElement element, params string[] keys)
+    {
+        foreach (var key in keys)
+        {
+            if (!element.TryGetProperty(key, out var valueElement))
+            {
+                continue;
+            }
+
+            if (valueElement.ValueKind == JsonValueKind.True)
+            {
+                return true;
+            }
+
+            if (valueElement.ValueKind == JsonValueKind.False)
+            {
+                return false;
+            }
+
+            if (valueElement.ValueKind == JsonValueKind.String &&
+                bool.TryParse(valueElement.GetString(), out var parsed))
+            {
+                return parsed;
+            }
+        }
+
+        return false;
     }
 
     private void RenderDay()

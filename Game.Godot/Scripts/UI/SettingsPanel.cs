@@ -11,6 +11,7 @@ public partial class SettingsPanel : Control
 {
     private static readonly string[] SupportedLocales = { "en-US", "zh-CN" };
     private static readonly string[] LegacyLocales = { "en", "zh" };
+    private static readonly JsonDocumentOptions SettingsJsonOptions = new() { MaxDepth = 32 };
 
     private HSlider _musicVolume = default!;
     private HSlider _sfxVolume = default!;
@@ -415,7 +416,7 @@ public partial class SettingsPanel : Control
 
             using var file = FileAccess.Open(AchievementSnapshotPath, FileAccess.ModeFlags.Read);
             var json = file.GetAsText();
-            using var doc = JsonDocument.Parse(json);
+            using var doc = JsonDocument.Parse(json, SettingsJsonOptions);
             if (doc.RootElement.TryGetProperty("unlock_ids", out var unlockIds) && unlockIds.ValueKind == JsonValueKind.Array)
             {
                 var ids = unlockIds.EnumerateArray()
@@ -446,7 +447,7 @@ public partial class SettingsPanel : Control
 
             using var file = FileAccess.Open(PerfSnapshotPath, FileAccess.ModeFlags.Read);
             var json = file.GetAsText();
-            using var doc = JsonDocument.Parse(json);
+            using var doc = JsonDocument.Parse(json, SettingsJsonOptions);
             var root = doc.RootElement;
             if (root.TryGetProperty("p95_ms", out var p95Ms))
             {

@@ -414,12 +414,13 @@ public class GameConfigTests
         var boostedElite = ResolveEliteBossPressure(eliteBase, eliteSpawned: 4, bossSpawned: 0);
         var boostedBoss = ResolveEliteBossPressure(bossBase, eliteSpawned: 0, bossSpawned: 2);
         var cappedBoss = ResolveEliteBossPressure(bossBase, eliteSpawned: 50, bossSpawned: 50);
+        var expectedCappedBoss = Clamp(bossBase + dynamicCap, min, max);
 
         baselineElite.Should().BeGreaterThan(baselineNormal, "elite base pressure must exceed normal baseline");
         baselineBoss.Should().BeGreaterThan(baselineElite, "boss base pressure must exceed elite baseline");
         boostedElite.Should().BeGreaterThan(baselineElite, "elite spawns should raise elite pressure");
         boostedBoss.Should().BeGreaterThan(baselineBoss, "boss spawns should raise boss pressure");
-        cappedBoss.Should().Be(max, "runtime pressure must clamp to schema score_range.max");
+        cappedBoss.Should().Be(expectedCappedBoss, "runtime pressure must clamp to base+dynamic_cap within schema score_range");
     }
 
     // ACC:T11.11

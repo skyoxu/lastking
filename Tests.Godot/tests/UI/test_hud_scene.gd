@@ -71,6 +71,7 @@ func test_hud_renders_perf_and_platform_status_feedback_from_runtime_events() ->
     assert_bool(feedback_label.text.find("platform=windows") >= 0).is_true()
 
 # ACC:T43.2
+# ACC:T53.6
 func test_hud_scene_exposes_task43_owned_surfaces_with_player_visible_defaults() -> void:
     var scene := preload("res://Game.Godot/Scenes/UI/HUD.tscn").instantiate()
     add_child(auto_free(scene))

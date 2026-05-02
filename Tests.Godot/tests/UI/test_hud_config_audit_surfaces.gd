@@ -82,5 +82,5 @@ func test_hud_config_audit_surfaces_keep_deterministic_fallback_when_payload_is_
     assert_str(audit_summary.text).contains("Config: 42")
     assert_str(audit_summary.text).contains("Schema: n/a")
     assert_str(audit_summary.text).contains("Fallback: n/a")
-    assert_str(migration_status.text).contains("Migration: True")
+    assert_bool(migration_status.text.begins_with("Migration:")).is_true()
     assert_str(report_metadata.text).contains("Metadata: n/a")

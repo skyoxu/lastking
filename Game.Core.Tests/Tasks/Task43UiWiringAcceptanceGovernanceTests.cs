@@ -18,7 +18,7 @@ public sealed class Task43UiWiringAcceptanceGovernanceTests
     private static readonly Regex RefsRegex = new(@"\bRefs\s*:\s*(.+)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     [Fact]
-    public void ShouldKeepSevenAcceptanceItems_ForTask43InBackAndGameplayViews()
+    public void ShouldKeepSevenAcceptanceItems_WhenTask43BackAndGameplayViewsAreChecked()
     {
         foreach (var viewPath in ViewPaths())
         {
@@ -40,7 +40,7 @@ public sealed class Task43UiWiringAcceptanceGovernanceTests
     }
 
     [Fact]
-    public void ShouldKeepRuntimeSurfaceEvidenceRefs_ForTask43SemanticItems()
+    public void ShouldKeepRuntimeSurfaceEvidenceRefs_WhenTask43SemanticItemsAreChecked()
     {
         foreach (var viewPath in ViewPaths())
         {
@@ -72,7 +72,7 @@ public sealed class Task43UiWiringAcceptanceGovernanceTests
     }
 
     [Fact]
-    public void ShouldKeepDeterminismAndBudgetEvidenceRefs_ForTask43SemanticItems()
+    public void ShouldKeepDeterminismAndBudgetEvidenceRefs_WhenTask43SemanticItemsAreChecked()
     {
         foreach (var viewPath in ViewPaths())
         {
@@ -97,7 +97,7 @@ public sealed class Task43UiWiringAcceptanceGovernanceTests
     }
 
     [Fact]
-    public void ShouldKeepRequirementAndScopeGovernance_ForTask43()
+    public void ShouldKeepRequirementAndScopeGovernance_WhenTask43IsChecked()
     {
         var master = LoadMasterTask43();
         master.RequirementIds.Should().BeEquivalentTo(
@@ -112,7 +112,7 @@ public sealed class Task43UiWiringAcceptanceGovernanceTests
     }
 
     [Fact]
-    public void ShouldKeepCrossViewClosureStateConsistent_ForTask43Done()
+    public void ShouldKeepCrossViewClosureStateConsistent_WhenTask43IsDone()
     {
         var master = LoadMasterTask43();
         master.Status.Should().Be("done");
@@ -129,8 +129,9 @@ public sealed class Task43UiWiringAcceptanceGovernanceTests
         }
     }
 
+    // ACC:T53.5
     [Fact]
-    public void ShouldKeepDualFrameworkEvidenceRefs_ForTask43()
+    public void ShouldKeepDualFrameworkEvidenceRefs_WhenTask43IsChecked()
     {
         foreach (var viewPath in ViewPaths())
         {
@@ -148,7 +149,7 @@ public sealed class Task43UiWiringAcceptanceGovernanceTests
     }
 
     [Fact]
-    public void ShouldProveDeterministicReplayBehavior_ForTask43Semantics()
+    public void ShouldProveDeterministicReplayBehavior_WhenTask43SemanticsAreApplied()
     {
         var sut = new WaveManager();
         var config = CreateDefaultConfig();
@@ -162,7 +163,7 @@ public sealed class Task43UiWiringAcceptanceGovernanceTests
     }
 
     [Fact]
-    public void ShouldProveSingleChannelBudgetIsolation_ForTask43Semantics()
+    public void ShouldProveSingleChannelBudgetIsolation_WhenTask43SemanticsAreApplied()
     {
         var sut = new WaveManager();
         var baselineConfig = CreateDefaultConfig();
@@ -180,7 +181,7 @@ public sealed class Task43UiWiringAcceptanceGovernanceTests
     }
 
     [Fact]
-    public void ShouldProveBlockedPathFallbackSelection_ForTask43Semantics()
+    public void ShouldProveBlockedPathFallbackSelection_WhenTask43SemanticsAreApplied()
     {
         var selector = new EnemyAiTargetSelector();
         var candidates = new[]
@@ -216,7 +217,7 @@ public sealed class Task43UiWiringAcceptanceGovernanceTests
     }
 
     [Fact]
-    public void ShouldValidateSemanticSet_ForTask43Views()
+    public void ShouldValidateSemanticSet_WhenTask43ViewsAreChecked()
     {
         foreach (var viewPath in ViewPaths())
         {
