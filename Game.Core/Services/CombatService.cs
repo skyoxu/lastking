@@ -1,5 +1,7 @@
 using Game.Core.Domain;
 using Game.Core.Domain.ValueObjects;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Game.Core.Services;
 
@@ -181,6 +183,113 @@ public class CombatService
             RuntimeProfile: runtimeProfile);
     }
 
+    public IReadOnlyList<AreaDamageResolution> ResolveAreaDamage(
+        Damage damage,
+        int attackerTeamId,
+        IReadOnlyCollection<AreaTargetCandidate> targets,
+        AreaDamageConfig config,
+        bool areaCapableSourceActive,
+        CombatConfig? combatConfig = null)
+    {
+        ArgumentNullException.ThrowIfNull(targets);
+
+        var orderedTargets = targets
+            .OrderBy(target => target.DistanceFromImpact)
+            .ThenBy(target => target.TargetId, StringComparer.Ordinal)
+            .ToList();
+        var results = new List<AreaDamageResolution>(orderedTargets.Count);
+        var safeMinResolvedDamage = Math.Max(0, config.MinResolvedDamage);
+        var safeMaxResolvedDamage = Math.Max(safeMinResolvedDamage, config.MaxResolvedDamage);
+
+        if (!areaCapableSourceActive)
+        {
+            var singleTarget = orderedTargets
+                .Where(target => target.IsDamageable && target.TeamId != attackerTeamId)
+                .Cast<AreaTargetCandidate?>()
+                .FirstOrDefault();
+            if (!singleTarget.HasValue)
+            {
+                return results;
+            }
+
+            var target = singleTarget.Value;
+            var clampedAmount = Math.Clamp(Math.Max(0, damage.EffectiveAmount), safeMinResolvedDamage, safeMaxResolvedDamage);
+            var clampedDamage = new Damage(
+                Amount: clampedAmount,
+                Type: damage.Type,
+                IsCritical: damage.IsCritical);
+            var singleResolution = ResolveAttack(
+                clampedDamage,
+                attackerTeamId,
+                target.TeamId,
+                combatConfig);
+            results.Add(new AreaDamageResolution(
+                TargetId: target.TargetId,
+                DistanceFromImpact: target.DistanceFromImpact,
+                AreaApplied: false,
+                DamageCommitted: singleResolution.CanCommitDamage && singleResolution.ResolvedDamage > 0,
+                ResolvedDamage: singleResolution.ResolvedDamage,
+                Outcome: singleResolution.Outcome));
+            return results;
+        }
+
+        var safeRadius = Math.Max(0m, config.Radius);
+        var safeFalloffPerUnit = Math.Max(0m, config.FalloffPerUnit);
+        var safeMinFalloffScale = Math.Clamp(config.MinFalloffScale, 0m, 1m);
+
+        foreach (var target in orderedTargets)
+        {
+            if (!target.IsDamageable)
+            {
+                results.Add(new AreaDamageResolution(
+                    TargetId: target.TargetId,
+                    DistanceFromImpact: target.DistanceFromImpact,
+                    AreaApplied: true,
+                    DamageCommitted: false,
+                    ResolvedDamage: 0,
+                    Outcome: "invalid_target"));
+                continue;
+            }
+
+            if (target.DistanceFromImpact > safeRadius)
+            {
+                results.Add(new AreaDamageResolution(
+                    TargetId: target.TargetId,
+                    DistanceFromImpact: target.DistanceFromImpact,
+                    AreaApplied: true,
+                    DamageCommitted: false,
+                    ResolvedDamage: 0,
+                    Outcome: "out_of_radius"));
+                continue;
+            }
+
+            var rawScale = 1m - (target.DistanceFromImpact * safeFalloffPerUnit);
+            var clampedScale = Math.Clamp(rawScale, safeMinFalloffScale, 1m);
+            var scaledAmount = (int)Math.Round(Math.Max(0m, damage.EffectiveAmount * clampedScale));
+            var clampedAmount = Math.Clamp(scaledAmount, safeMinResolvedDamage, safeMaxResolvedDamage);
+            var scaledDamage = new Damage(
+                Amount: clampedAmount,
+                Type: damage.Type,
+                IsCritical: damage.IsCritical);
+
+            var resolution = ResolveAttack(
+                scaledDamage,
+                attackerTeamId,
+                target.TeamId,
+                combatConfig);
+            var committed = resolution.CanCommitDamage && resolution.ResolvedDamage > 0;
+            results.Add(new AreaDamageResolution(
+                TargetId: target.TargetId,
+                DistanceFromImpact: target.DistanceFromImpact,
+                AreaApplied: true,
+                DamageCommitted: committed,
+                ResolvedDamage: resolution.ResolvedDamage,
+                Outcome: resolution.Outcome));
+        }
+
+        return results;
+    }
+
     public void RecordTargetPickDiagnostic(
         string targetId,
         string targetClass,
@@ -293,3 +402,24 @@ public readonly record struct ProjectileAttackResolution(
     int ResolvedDamage,
     string Outcome,
     ProjectileRuntimeProfile RuntimeProfile);
+
+public readonly record struct AreaTargetCandidate(
+    string TargetId,
+    int TeamId,
+    decimal DistanceFromImpact,
+    bool IsDamageable = true);
+
+public readonly record struct AreaDamageConfig(
+    decimal Radius,
+    decimal FalloffPerUnit,
+    decimal MinFalloffScale,
+    int MinResolvedDamage,
+    int MaxResolvedDamage);
+
+public readonly record struct AreaDamageResolution(
+    string TargetId,
+    decimal DistanceFromImpact,
+    bool AreaApplied,
+    bool DamageCommitted,
+    int ResolvedDamage,
+    string Outcome);

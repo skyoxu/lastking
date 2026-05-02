@@ -144,6 +144,7 @@ public class CombatServiceTests
     // ACC:T48.2
     // ACC:T50.3
     // ACC:T50.6
+    // ACC:T51.3
     [Fact]
     public void ShouldRefuseFriendlyFireAndResolveZeroDamage_WhenAttackerAndTargetShareTeam()
     {
@@ -263,6 +264,7 @@ public class CombatServiceTests
     // ACC:T48.6
     // ACC:T50.1
     // ACC:T50.8
+    // ACC:T51.1
     [Fact]
     public void ShouldSelectReachableHostileAndApplyDeterministicDamage_WhenMgTowerAttackRuns()
     {
@@ -300,6 +302,7 @@ public class CombatServiceTests
 
     // ACC:T50.1
     // ACC:T50.6
+    // ACC:T51.9
     [Fact]
     public void ShouldShareProjectileRuntimeForTowerAndRangedEnemy_WhenInputsMatch()
     {
@@ -344,8 +347,76 @@ public class CombatServiceTests
         ranged.RuntimeProfile.Should().Be(tower.RuntimeProfile);
     }
 
+    // ACC:T51.1
+    // ACC:T51.8
+    // ACC:T51.9
+    [Fact]
+    public void ShouldKeepProjectileResolutionDeterministicAndClampScaledDamage_WhenRuntimeImpactScaleVaries()
+    {
+        var svc = new CombatService();
+        var attackerTeamId = 1;
+        var targetTeamId = 2;
+
+        var baselineRuntime = new ProjectileRuntimeProfile(
+            TravelSpeedPerTick: 4,
+            TimeoutTicks: 8,
+            ImpactScale: 1.0m);
+        var reducedRuntime = new ProjectileRuntimeProfile(
+            TravelSpeedPerTick: 4,
+            TimeoutTicks: 8,
+            ImpactScale: 0.5m);
+        var negativeScaleRuntime = new ProjectileRuntimeProfile(
+            TravelSpeedPerTick: 4,
+            TimeoutTicks: 8,
+            ImpactScale: -0.5m);
+
+        var baselineOne = svc.ResolveProjectileAttack(
+            ownerKind: ProjectileOwnerKind.Tower,
+            hasFiringSolution: true,
+            shouldImpact: true,
+            travelTicks: 3,
+            damage: new Damage(20, DamageType.Physical),
+            attackerTeamId: attackerTeamId,
+            targetTeamId: targetTeamId,
+            runtimeProfile: baselineRuntime);
+        var baselineTwo = svc.ResolveProjectileAttack(
+            ownerKind: ProjectileOwnerKind.Tower,
+            hasFiringSolution: true,
+            shouldImpact: true,
+            travelTicks: 3,
+            damage: new Damage(20, DamageType.Physical),
+            attackerTeamId: attackerTeamId,
+            targetTeamId: targetTeamId,
+            runtimeProfile: baselineRuntime);
+        var reduced = svc.ResolveProjectileAttack(
+            ownerKind: ProjectileOwnerKind.Tower,
+            hasFiringSolution: true,
+            shouldImpact: true,
+            travelTicks: 3,
+            damage: new Damage(20, DamageType.Physical),
+            attackerTeamId: attackerTeamId,
+            targetTeamId: targetTeamId,
+            runtimeProfile: reducedRuntime);
+        var negativeScale = svc.ResolveProjectileAttack(
+            ownerKind: ProjectileOwnerKind.Tower,
+            hasFiringSolution: true,
+            shouldImpact: true,
+            travelTicks: 3,
+            damage: new Damage(20, DamageType.Physical),
+            attackerTeamId: attackerTeamId,
+            targetTeamId: targetTeamId,
+            runtimeProfile: negativeScaleRuntime);
+
+        baselineOne.Should().Be(baselineTwo, "same runtime inputs should keep deterministic projectile resolution");
+        baselineOne.ResolvedDamage.Should().Be(20);
+        reduced.ResolvedDamage.Should().Be(10, "impact scale should apply deterministic falloff");
+        negativeScale.ResolvedDamage.Should().Be(0, "negative scale should clamp to zero damage");
+        negativeScale.DamageCommitted.Should().BeFalse();
+    }
+
     // ACC:T50.1
     // ACC:T50.8
+    // ACC:T51.8
     [Fact]
     public void ShouldCreateNoProjectileAndEmitNoEvents_WhenNoFiringSolution()
     {
@@ -407,6 +478,8 @@ public class CombatServiceTests
     }
 
     // ACC:T50.3
+    // ACC:T51.6
+    // ACC:T51.7
     [Fact]
     public void ShouldKeepFriendlyFireDisabled_WhenProjectileImpactsFriendlyTarget()
     {
@@ -432,5 +505,104 @@ public class CombatServiceTests
         result.DamageCommitted.Should().BeFalse();
         result.ResolvedDamage.Should().Be(0);
         result.Outcome.Should().Be("friendly_fire_refused");
+    }
+
+    // ACC:T51.1
+    // ACC:T51.3
+    // ACC:T51.8
+    // ACC:T51.9
+    [Fact]
+    public void ShouldResolveAreaDamageWithRadiusFalloffClampAndSingleTargetFallback_WhenTask51CombatRulesApply()
+    {
+        var svc = new CombatService();
+        var config = new AreaDamageConfig(
+            Radius: 3m,
+            FalloffPerUnit: 0.25m,
+            MinFalloffScale: 0.4m,
+            MinResolvedDamage: 5,
+            MaxResolvedDamage: 12);
+        var targets = new[]
+        {
+            new AreaTargetCandidate("enemy_near", TeamId: 2, DistanceFromImpact: 0m, IsDamageable: true),
+            new AreaTargetCandidate("enemy_mid", TeamId: 2, DistanceFromImpact: 2m, IsDamageable: true),
+            new AreaTargetCandidate("enemy_far", TeamId: 2, DistanceFromImpact: 4m, IsDamageable: true),
+            new AreaTargetCandidate("friendly", TeamId: 1, DistanceFromImpact: 1m, IsDamageable: true),
+            new AreaTargetCandidate("invalid", TeamId: 2, DistanceFromImpact: 1m, IsDamageable: false)
+        };
+
+        var aoeResults = svc.ResolveAreaDamage(
+            damage: new Damage(20, DamageType.Physical),
+            attackerTeamId: 1,
+            targets: targets,
+            config: config,
+            areaCapableSourceActive: true);
+        var aoeRepeat = svc.ResolveAreaDamage(
+            damage: new Damage(20, DamageType.Physical),
+            attackerTeamId: 1,
+            targets: targets,
+            config: config,
+            areaCapableSourceActive: true);
+        var fallbackResults = svc.ResolveAreaDamage(
+            damage: new Damage(20, DamageType.Physical),
+            attackerTeamId: 1,
+            targets: targets,
+            config: config,
+            areaCapableSourceActive: false);
+
+        aoeResults.Should().BeEquivalentTo(aoeRepeat, options => options.WithStrictOrdering(),
+            "same area inputs should stay deterministic");
+
+        aoeResults.Should().ContainSingle(item => item.TargetId == "enemy_near")
+            .Which.ResolvedDamage.Should().Be(12, "near target should clamp to max");
+        aoeResults.Should().ContainSingle(item => item.TargetId == "enemy_mid")
+            .Which.ResolvedDamage.Should().Be(10, "mid target should apply deterministic falloff");
+        aoeResults.Should().ContainSingle(item => item.TargetId == "enemy_far")
+            .Which.Outcome.Should().Be("out_of_radius");
+        aoeResults.Should().ContainSingle(item => item.TargetId == "friendly")
+            .Which.Outcome.Should().Be("friendly_fire_refused");
+        aoeResults.Should().ContainSingle(item => item.TargetId == "invalid")
+            .Which.Outcome.Should().Be("invalid_target");
+
+        fallbackResults.Should().ContainSingle("single-target fallback should only hit one valid hostile target");
+        fallbackResults[0].AreaApplied.Should().BeFalse();
+        fallbackResults[0].TargetId.Should().Be("enemy_near");
+        fallbackResults[0].ResolvedDamage.Should().Be(12, "fallback should reuse same min/max clamp contract");
+        fallbackResults[0].Outcome.Should().Be("damage_applied");
+    }
+
+    // ACC:T51.1
+    // ACC:T51.8
+    [Fact]
+    public void ShouldKeepFallbackEquivalentToDistanceZeroAoeResolution_WhenSameTargetAndConfigAreUsed()
+    {
+        var svc = new CombatService();
+        var config = new AreaDamageConfig(
+            Radius: 3m,
+            FalloffPerUnit: 0.25m,
+            MinFalloffScale: 0.4m,
+            MinResolvedDamage: 5,
+            MaxResolvedDamage: 12);
+        var target = new AreaTargetCandidate("enemy_near", TeamId: 2, DistanceFromImpact: 0m, IsDamageable: true);
+        var targets = new[] { target };
+
+        var aoe = svc.ResolveAreaDamage(
+            damage: new Damage(20, DamageType.Physical),
+            attackerTeamId: 1,
+            targets: targets,
+            config: config,
+            areaCapableSourceActive: true);
+        var fallback = svc.ResolveAreaDamage(
+            damage: new Damage(20, DamageType.Physical),
+            attackerTeamId: 1,
+            targets: targets,
+            config: config,
+            areaCapableSourceActive: false);
+
+        aoe.Should().ContainSingle();
+        fallback.Should().ContainSingle();
+        aoe[0].ResolvedDamage.Should().Be(fallback[0].ResolvedDamage);
+        aoe[0].DamageCommitted.Should().Be(fallback[0].DamageCommitted);
+        aoe[0].Outcome.Should().Be(fallback[0].Outcome);
+        aoe[0].ResolvedDamage.Should().Be(12);
     }
 }

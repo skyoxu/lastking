@@ -112,8 +112,12 @@ public class GameConfigTests
     }
 
     // ACC:T50.2
+    // ACC:T51.1
+    // ACC:T51.4
+    // ACC:T51.8
+    // ACC:T51.9
     [Fact]
-    public void ShouldDriveSharedProjectileRuntimeFromConfigSnapshot_ForTowerAndRangedEnemy()
+    public void ShouldDriveSharedProjectileRuntimeFromConfigSnapshot_WhenTowerAndRangedEnemyResolveProfiles()
     {
         var manager = new ConfigManager();
         const string baselineJson = """
@@ -329,6 +333,7 @@ public class GameConfigTests
     }
 
     // ACC:T35.1
+    // ACC:T51.4
     [Fact]
     public void ShouldExposePressureNormalizationSchemaContractKeywords_WhenInspectingTask35SchemaFile()
     {
@@ -346,6 +351,75 @@ public class GameConfigTests
         required.Should().Contain(new[] { "baseline", "min_pressure", "max_pressure", "normalization_factors" });
         properties.GetProperty("baseline").GetProperty("minimum").GetDouble().Should().Be(0d);
         root.GetProperty("x-range-check").GetString().Should().Be("min_pressure < max_pressure");
+    }
+
+    // ACC:T51.4
+    [Fact]
+    public void ShouldDeclareEliteAndBossPressureComponentMultipliers_WhenInspectingCorePressureNormalizationSchema()
+    {
+        var schemaPath = Path.Combine(
+            EnemyConfigSchemaTestSupport.ResolveRepoRoot().FullName,
+            "Game.Core",
+            "Contracts",
+            "Config",
+            "pressure-normalization.config.schema.json");
+        var schemaJson = File.ReadAllText(schemaPath);
+        using var schemaDocument = JsonDocument.Parse(schemaJson);
+        var properties = schemaDocument.RootElement.GetProperty("properties");
+        var component = properties.GetProperty("elite_boss_component").GetProperty("properties");
+
+        component.GetProperty("elite_multiplier").GetProperty("const").GetInt32().Should().Be(2);
+        component.GetProperty("boss_multiplier").GetProperty("const").GetInt32().Should().Be(10);
+        component.GetProperty("dynamic_cap").GetProperty("const").GetInt32().Should().Be(20);
+    }
+
+    // ACC:T51.2
+    // ACC:T51.4
+    [Fact]
+    public void ShouldDeriveEliteAndBossRuntimePressureFromNormalizationConfig_WhenUsingSchemaLockedFormulaChain()
+    {
+        var samplePath = Path.Combine(
+            EnemyConfigSchemaTestSupport.ResolveRepoRoot().FullName,
+            "Game.Core",
+            "Contracts",
+            "Config",
+            "pressure-normalization.config.sample.json");
+        using var sample = JsonDocument.Parse(File.ReadAllText(samplePath));
+        var root = sample.RootElement;
+        var baseByNight = root.GetProperty("base_by_night");
+        var component = root.GetProperty("elite_boss_component");
+        var scoreRange = root.GetProperty("score_range");
+
+        var min = scoreRange.GetProperty("min").GetInt32();
+        var max = scoreRange.GetProperty("max").GetInt32();
+        var dynamicCap = component.GetProperty("dynamic_cap").GetInt32();
+        var eliteMultiplier = component.GetProperty("elite_multiplier").GetInt32();
+        var bossMultiplier = component.GetProperty("boss_multiplier").GetInt32();
+
+        static int Clamp(int value, int min, int max) => value < min ? min : (value > max ? max : value);
+
+        int ResolveEliteBossPressure(int baseScore, int eliteSpawned, int bossSpawned)
+        {
+            var dynamicDelta = Math.Min(dynamicCap, (eliteSpawned * eliteMultiplier) + (bossSpawned * bossMultiplier));
+            return Clamp(baseScore + dynamicDelta, min, max);
+        }
+
+        var normalBase = baseByNight.GetProperty("normal").GetInt32();
+        var eliteBase = baseByNight.GetProperty("elite").GetInt32();
+        var bossBase = baseByNight.GetProperty("boss").GetInt32();
+
+        var baselineNormal = ResolveEliteBossPressure(normalBase, eliteSpawned: 0, bossSpawned: 0);
+        var baselineElite = ResolveEliteBossPressure(eliteBase, eliteSpawned: 0, bossSpawned: 0);
+        var baselineBoss = ResolveEliteBossPressure(bossBase, eliteSpawned: 0, bossSpawned: 0);
+        var boostedElite = ResolveEliteBossPressure(eliteBase, eliteSpawned: 4, bossSpawned: 0);
+        var boostedBoss = ResolveEliteBossPressure(bossBase, eliteSpawned: 0, bossSpawned: 2);
+        var cappedBoss = ResolveEliteBossPressure(bossBase, eliteSpawned: 50, bossSpawned: 50);
+
+        baselineElite.Should().BeGreaterThan(baselineNormal, "elite base pressure must exceed normal baseline");
+        baselineBoss.Should().BeGreaterThan(baselineElite, "boss base pressure must exceed elite baseline");
+        boostedElite.Should().BeGreaterThan(baselineElite, "elite spawns should raise elite pressure");
+        boostedBoss.Should().BeGreaterThan(baselineBoss, "boss spawns should raise boss pressure");
+        cappedBoss.Should().Be(max, "runtime pressure must clamp to schema score_range.max");
     }
 
     // ACC:T11.11

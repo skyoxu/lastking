@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text.Json;
 using FluentAssertions;
 using Game.Core.Services;
 using Xunit;
@@ -187,6 +189,9 @@ public sealed class WaveManagerBudgetChannelTests
     }
 
     // ACC:T4.17
+    // ACC:T51.2
+    // ACC:T51.4
+    // ACC:T51.11
     [Fact]
     public void ShouldTakeEliteInputBudgetFromEliteConfiguration_WhenDay1IsGenerated()
     {
@@ -205,9 +210,13 @@ public sealed class WaveManagerBudgetChannelTests
         result.ChannelResults[EliteChannel].Audit.InputBudget.Should().Be(260);
         result.ChannelResults[NormalChannel].Audit.InputBudget.Should().Be(50);
         result.ChannelResults[BossChannel].Audit.InputBudget.Should().Be(300);
+        result.ChannelResults[EliteChannel].Audit.InputBudget.Should().BeGreaterThan(result.ChannelResults[NormalChannel].Audit.InputBudget);
     }
 
     // ACC:T4.18
+    // ACC:T51.2
+    // ACC:T51.4
+    // ACC:T51.11
     [Fact]
     public void ShouldTakeBossInputBudgetFromBossConfiguration_WhenDay1IsGenerated()
     {
@@ -226,6 +235,8 @@ public sealed class WaveManagerBudgetChannelTests
         result.ChannelResults[BossChannel].Audit.InputBudget.Should().Be(640);
         result.ChannelResults[NormalChannel].Audit.InputBudget.Should().Be(50);
         result.ChannelResults[EliteChannel].Audit.InputBudget.Should().Be(120);
+        result.ChannelResults[BossChannel].Audit.InputBudget.Should().BeGreaterThan(result.ChannelResults[EliteChannel].Audit.InputBudget);
+        result.ChannelResults[EliteChannel].Audit.InputBudget.Should().BeGreaterThan(result.ChannelResults[NormalChannel].Audit.InputBudget);
     }
 
     // ACC:T4.16
@@ -287,6 +298,59 @@ public sealed class WaveManagerBudgetChannelTests
 
         act.Should().Throw<ArgumentOutOfRangeException>();
         config.Should().Be(beforeConfig);
+    }
+
+    // ACC:T51.2
+    // ACC:T51.4
+    [Fact]
+    public void ShouldDeriveRuntimePressureOrderingFromWaveOutputsAndNormalizationConfig_WhenEliteBossSlicesAreCompared()
+    {
+        var sut = new WaveManager();
+        var config = CreateDefaultConfig();
+        var wave = sut.Generate(dayIndex: 1, channelBudgetConfiguration: config, seed: 5101);
+
+        var samplePath = Path.Combine(
+            EnemyConfigSchemaTestSupport.ResolveRepoRoot().FullName,
+            "Game.Core",
+            "Contracts",
+            "Config",
+            "pressure-normalization.config.sample.json");
+        using var sample = JsonDocument.Parse(File.ReadAllText(samplePath));
+        var root = sample.RootElement;
+        var baseByNight = root.GetProperty("base_by_night");
+        var component = root.GetProperty("elite_boss_component");
+        var scoreRange = root.GetProperty("score_range");
+
+        var min = scoreRange.GetProperty("min").GetInt32();
+        var max = scoreRange.GetProperty("max").GetInt32();
+        var cap = component.GetProperty("dynamic_cap").GetInt32();
+        var eliteMultiplier = component.GetProperty("elite_multiplier").GetInt32();
+        var bossMultiplier = component.GetProperty("boss_multiplier").GetInt32();
+
+        static int Clamp(int value, int min, int max) => value < min ? min : (value > max ? max : value);
+        int ResolvePressure(int baseScore, int eliteSpawned, int bossSpawned)
+        {
+            var dynamicDelta = Math.Min(cap, (eliteSpawned * eliteMultiplier) + (bossSpawned * bossMultiplier));
+            return Clamp(baseScore + dynamicDelta, min, max);
+        }
+
+        var normalPressure = ResolvePressure(
+            baseScore: baseByNight.GetProperty("normal").GetInt32(),
+            eliteSpawned: 0,
+            bossSpawned: 0);
+        var elitePressure = ResolvePressure(
+            baseScore: baseByNight.GetProperty("elite").GetInt32(),
+            eliteSpawned: wave.ChannelResults[EliteChannel].SpawnOrder.Count,
+            bossSpawned: 0);
+        var bossPressure = ResolvePressure(
+            baseScore: baseByNight.GetProperty("boss").GetInt32(),
+            eliteSpawned: 0,
+            bossSpawned: wave.ChannelResults[BossChannel].SpawnOrder.Count);
+
+        normalPressure.Should().BeGreaterOrEqualTo(min);
+        bossPressure.Should().BeLessOrEqualTo(max);
+        elitePressure.Should().BeGreaterThan(normalPressure, "elite runtime slice should stay above normal baseline");
+        bossPressure.Should().BeGreaterThan(elitePressure, "boss runtime slice should stay above elite runtime slice");
     }
 
     private static ChannelBudgetConfiguration CreateDefaultConfig()
