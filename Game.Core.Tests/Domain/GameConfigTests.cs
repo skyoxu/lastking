@@ -41,6 +41,7 @@ public class GameConfigTests
     // ACC:T31.9
     // ACC:T38.15
     // ACC:T46.2
+    // ACC:T50.2
     [Fact]
     public void ShouldResolveRuntimeTuningFromConfigManagerSnapshot_WhenOnlyConfigPayloadChanges()
     {
@@ -108,6 +109,65 @@ public class GameConfigTests
         promotedEnemy.Health.Should().Be(24m);
         promotedEnemy.Damage.Should().Be(7m);
         promotedEnemy.Speed.Should().Be(1.9m);
+    }
+
+    // ACC:T50.2
+    [Fact]
+    public void ShouldDriveSharedProjectileRuntimeFromConfigSnapshot_ForTowerAndRangedEnemy()
+    {
+        var manager = new ConfigManager();
+        const string baselineJson = """
+                                    {
+                                      "time": { "day_seconds": 240, "night_seconds": 120 },
+                                      "waves": { "normal": { "day1_budget": 50, "daily_growth": 1.2 } },
+                                      "channels": { "elite": "elite", "boss": "boss" },
+                                      "spawn": {
+                                        "cadence_seconds": 10,
+                                        "profiles": {
+                                          "regular": { "cadence_seconds": 8 },
+                                          "boss": { "cadence_seconds": 4 }
+                                        }
+                                      },
+                                      "boss": { "count": 2 }
+                                    }
+                                    """;
+        const string promotedJson = """
+                                    {
+                                      "time": { "day_seconds": 240, "night_seconds": 120 },
+                                      "waves": { "normal": { "day1_budget": 50, "daily_growth": 1.2 } },
+                                      "channels": { "elite": "elite", "boss": "boss" },
+                                      "spawn": {
+                                        "cadence_seconds": 6,
+                                        "profiles": {
+                                          "regular": { "cadence_seconds": 5 },
+                                          "boss": { "cadence_seconds": 3 }
+                                        }
+                                      },
+                                      "boss": { "count": 2 }
+                                    }
+                                    """;
+
+        manager.LoadInitialFromJson(baselineJson, "res://Config/t50-baseline.json").Accepted.Should().BeTrue();
+        var baselineTower = ProjectileRuntimeProfile.FromSnapshot(manager.Snapshot, ProjectileOwnerKind.Tower);
+        var baselineRanged = ProjectileRuntimeProfile.FromSnapshot(manager.Snapshot, ProjectileOwnerKind.RangedEnemy);
+
+        baselineTower.TravelSpeedPerTick.Should().Be(10);
+        baselineTower.TimeoutTicks.Should().Be(8);
+        baselineRanged.TravelSpeedPerTick.Should().Be(10);
+        baselineRanged.TimeoutTicks.Should().Be(8);
+        baselineTower.ImpactScale.Should().Be(1.0m);
+        baselineRanged.ImpactScale.Should().Be(1.0m);
+
+        manager.ReloadFromJson(promotedJson, "res://Config/t50-promoted.json").Accepted.Should().BeTrue();
+        var promotedTower = ProjectileRuntimeProfile.FromSnapshot(manager.Snapshot, ProjectileOwnerKind.Tower);
+        var promotedRanged = ProjectileRuntimeProfile.FromSnapshot(manager.Snapshot, ProjectileOwnerKind.RangedEnemy);
+
+        promotedTower.TravelSpeedPerTick.Should().Be(6);
+        promotedTower.TimeoutTicks.Should().Be(5);
+        promotedRanged.TravelSpeedPerTick.Should().Be(6);
+        promotedRanged.TimeoutTicks.Should().Be(5);
+        promotedTower.ImpactScale.Should().Be(1.0m);
+        promotedRanged.ImpactScale.Should().Be(1.0m);
     }
 
     // ACC:T38.16

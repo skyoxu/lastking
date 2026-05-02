@@ -4200,11 +4200,11 @@
     ],
     "test_refs": [
       "Game.Core.Tests/Services/CombatServiceTests.cs",
-      "Game.Core.Tests/Domain/GameConfigTests.cs",
-      "Tests.Godot/tests/Integration/test_combat_friendly_fire_disabled.gd",
       "Tests.Godot/tests/Scenes/Combat/test_enemy_ai_navigation_priority.gd",
-      "Tests.Godot/tests/UI/test_hud_updates_on_events.gd",
-      "Tests.Godot/tests/Integration/test_balance_runtime_config_reload.gd"
+      "Game.Core.Tests/Domain/GameConfigTests.cs",
+      "Tests.Godot/tests/Integration/test_balance_runtime_config_reload.gd",
+      "Tests.Godot/tests/Integration/test_combat_friendly_fire_disabled.gd",
+      "Tests.Godot/tests/UI/test_hud_updates_on_events.gd"
     ],
     "acceptance": [
       "Towers and ranged enemies both resolve projectile spawn, travel, impact, timeout, and cleanup through one shared projectile runtime, and a ranged attack with no valid firing solution creates no projectile and resolves no impact. Refs: Game.Core.Tests/Services/CombatServiceTests.cs Tests.Godot/tests/Scenes/Combat/test_enemy_ai_navigation_priority.gd",

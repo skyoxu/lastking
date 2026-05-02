@@ -1,5 +1,6 @@
 using Godot;
 using Godot.Collections;
+using Game.Core.Domain.ValueObjects;
 using Game.Core.Services;
 using GodotArray = Godot.Collections.Array;
 
@@ -32,5 +33,40 @@ public partial class EnemyAiRuntimeProbe : EnemyAi
             attackReadyTick,
             origin,
             destination);
+    }
+
+    public Dictionary SimulateProjectileRuntime(
+        bool hasFiringSolution,
+        bool shouldImpact,
+        int travelTicks,
+        int attackerTeamId,
+        int targetTeamId)
+    {
+        var service = new CombatService();
+        var runtime = ProjectileRuntimeProfile.FromSnapshot(
+            BalanceSnapshot.Default,
+            ProjectileOwnerKind.RangedEnemy);
+        var resolution = service.ResolveProjectileAttack(
+            ownerKind: ProjectileOwnerKind.RangedEnemy,
+            hasFiringSolution: hasFiringSolution,
+            shouldImpact: shouldImpact,
+            travelTicks: travelTicks,
+            damage: new Damage(10, DamageType.Physical),
+            attackerTeamId: attackerTeamId,
+            targetTeamId: targetTeamId,
+            runtimeProfile: runtime);
+
+        return new Dictionary
+        {
+            ["projectile_created"] = resolution.ProjectileCreated,
+            ["impact_resolved"] = resolution.ImpactResolved,
+            ["timed_out"] = resolution.TimedOut,
+            ["cleaned_up"] = resolution.CleanedUp,
+            ["damage_committed"] = resolution.DamageCommitted,
+            ["resolved_damage"] = resolution.ResolvedDamage,
+            ["outcome"] = resolution.Outcome,
+            ["travel_speed_per_tick"] = resolution.RuntimeProfile.TravelSpeedPerTick,
+            ["timeout_ticks"] = resolution.RuntimeProfile.TimeoutTicks
+        };
     }
 }

@@ -142,6 +142,8 @@ public class CombatServiceTests
     // ACC:T20.12
     // ACC:T20.13
     // ACC:T48.2
+    // ACC:T50.3
+    // ACC:T50.6
     [Fact]
     public void ShouldRefuseFriendlyFireAndResolveZeroDamage_WhenAttackerAndTargetShareTeam()
     {
@@ -179,6 +181,7 @@ public class CombatServiceTests
 
     // ACC:T20.15
     // ACC:T20.19
+    // ACC:T50.5
     [Theory]
     [InlineData(1, 1)]
     [InlineData(3, 3)]
@@ -258,6 +261,8 @@ public class CombatServiceTests
     // ACC:T48.1
     // ACC:T48.3
     // ACC:T48.6
+    // ACC:T50.1
+    // ACC:T50.8
     [Fact]
     public void ShouldSelectReachableHostileAndApplyDeterministicDamage_WhenMgTowerAttackRuns()
     {
@@ -291,5 +296,141 @@ public class CombatServiceTests
         player.Health.Current.Should().Be(75);
         bus.Events.Should().ContainSingle();
         bus.Events[0].Type.Should().Be("player.damaged");
+    }
+
+    // ACC:T50.1
+    // ACC:T50.6
+    [Fact]
+    public void ShouldShareProjectileRuntimeForTowerAndRangedEnemy_WhenInputsMatch()
+    {
+        var svc = new CombatService();
+        var runtime = new ProjectileRuntimeProfile(
+            TravelSpeedPerTick: 3,
+            TimeoutTicks: 8,
+            ImpactScale: 1.0m);
+
+        var tower = svc.ResolveProjectileAttack(
+            ownerKind: ProjectileOwnerKind.Tower,
+            hasFiringSolution: true,
+            shouldImpact: true,
+            travelTicks: 3,
+            damage: new Damage(20, DamageType.Physical),
+            attackerTeamId: 1,
+            targetTeamId: 2,
+            runtimeProfile: runtime);
+        var ranged = svc.ResolveProjectileAttack(
+            ownerKind: ProjectileOwnerKind.RangedEnemy,
+            hasFiringSolution: true,
+            shouldImpact: true,
+            travelTicks: 3,
+            damage: new Damage(20, DamageType.Physical),
+            attackerTeamId: 1,
+            targetTeamId: 2,
+            runtimeProfile: runtime);
+
+        tower.ProjectileCreated.Should().BeTrue();
+        tower.ImpactResolved.Should().BeTrue();
+        tower.TimedOut.Should().BeFalse();
+        tower.CleanedUp.Should().BeTrue();
+        tower.ResolvedDamage.Should().Be(20);
+        tower.Outcome.Should().Be("damage_applied");
+
+        ranged.ProjectileCreated.Should().BeTrue();
+        ranged.ImpactResolved.Should().BeTrue();
+        ranged.TimedOut.Should().BeFalse();
+        ranged.CleanedUp.Should().BeTrue();
+        ranged.ResolvedDamage.Should().Be(20);
+        ranged.Outcome.Should().Be("damage_applied");
+        ranged.RuntimeProfile.Should().Be(tower.RuntimeProfile);
+    }
+
+    // ACC:T50.1
+    // ACC:T50.8
+    [Fact]
+    public void ShouldCreateNoProjectileAndEmitNoEvents_WhenNoFiringSolution()
+    {
+        var bus = new CapturingEventBus();
+        var svc = new CombatService(bus);
+        var runtime = new ProjectileRuntimeProfile(
+            TravelSpeedPerTick: 2,
+            TimeoutTicks: 5,
+            ImpactScale: 1.0m);
+
+        var result = svc.ResolveProjectileAttack(
+            ownerKind: ProjectileOwnerKind.RangedEnemy,
+            hasFiringSolution: false,
+            shouldImpact: false,
+            travelTicks: 0,
+            damage: new Damage(15, DamageType.Physical),
+            attackerTeamId: 2,
+            targetTeamId: 1,
+            runtimeProfile: runtime);
+
+        result.ProjectileCreated.Should().BeFalse();
+        result.ImpactResolved.Should().BeFalse();
+        result.TimedOut.Should().BeFalse();
+        result.CleanedUp.Should().BeFalse();
+        result.DamageCommitted.Should().BeFalse();
+        result.ResolvedDamage.Should().Be(0);
+        result.Outcome.Should().Be("no_firing_solution");
+        bus.Events.Should().BeEmpty();
+    }
+
+    // ACC:T50.1
+    // ACC:T50.4
+    [Fact]
+    public void ShouldMarkProjectileAsTimedOutAndCleanedUp_WhenTravelExceedsTimeout()
+    {
+        var svc = new CombatService();
+        var runtime = new ProjectileRuntimeProfile(
+            TravelSpeedPerTick: 1,
+            TimeoutTicks: 2,
+            ImpactScale: 1.0m);
+
+        var result = svc.ResolveProjectileAttack(
+            ownerKind: ProjectileOwnerKind.Tower,
+            hasFiringSolution: true,
+            shouldImpact: false,
+            travelTicks: 2,
+            damage: new Damage(9, DamageType.Physical),
+            attackerTeamId: 1,
+            targetTeamId: 2,
+            runtimeProfile: runtime);
+
+        result.ProjectileCreated.Should().BeTrue();
+        result.ImpactResolved.Should().BeFalse();
+        result.TimedOut.Should().BeTrue();
+        result.CleanedUp.Should().BeTrue();
+        result.DamageCommitted.Should().BeFalse();
+        result.ResolvedDamage.Should().Be(0);
+        result.Outcome.Should().Be("projectile_timeout");
+    }
+
+    // ACC:T50.3
+    [Fact]
+    public void ShouldKeepFriendlyFireDisabled_WhenProjectileImpactsFriendlyTarget()
+    {
+        var svc = new CombatService();
+        var runtime = new ProjectileRuntimeProfile(
+            TravelSpeedPerTick: 3,
+            TimeoutTicks: 6,
+            ImpactScale: 1.0m);
+
+        var result = svc.ResolveProjectileAttack(
+            ownerKind: ProjectileOwnerKind.Tower,
+            hasFiringSolution: true,
+            shouldImpact: true,
+            travelTicks: 2,
+            damage: new Damage(30, DamageType.Physical),
+            attackerTeamId: 7,
+            targetTeamId: 7,
+            runtimeProfile: runtime);
+
+        result.ProjectileCreated.Should().BeTrue();
+        result.ImpactResolved.Should().BeTrue();
+        result.CleanedUp.Should().BeTrue();
+        result.DamageCommitted.Should().BeFalse();
+        result.ResolvedDamage.Should().Be(0);
+        result.Outcome.Should().Be("friendly_fire_refused");
     }
 }
