@@ -55,6 +55,7 @@ func test_player_attack_collision_mask_excludes_player_and_friendly_layers() -> 
 
 # acceptance: ACC:T6.9
 # acceptance: ACC:T6.12
+# acceptance: ACC:T51.3
 func test_full_player_attack_run_keeps_friendly_and_player_damage_zero() -> void:
 	var probe := _new_probe()
 	var player_attack_hitbox := _new_player_attack_hitbox()
@@ -112,3 +113,30 @@ func test_wrong_collision_mask_allows_friendly_or_player_hits() -> void:
 	assert_int(int(summary["enemy_damage_events"])).is_equal(1)
 	assert_int(int(summary["friendly_damage_events"])).is_equal(1)
 	assert_int(int(summary["player_damage_events"])).is_equal(1)
+
+# acceptance: ACC:T51.3
+func test_aoe_resolution_damages_only_valid_hostiles_and_keeps_non_hostiles_or_invalid_targets_unchanged() -> void:
+	var probe := _new_probe()
+	var targets := [
+		{"id": "enemy_near", "team_id": 2, "distance": 0.0, "damageable": true},
+		{"id": "enemy_mid", "team_id": 2, "distance": 2.0, "damageable": true},
+		{"id": "enemy_far", "team_id": 2, "distance": 4.0, "damageable": true},
+		{"id": "friendly", "team_id": 1, "distance": 1.0, "damageable": true},
+		{"id": "invalid_enemy", "team_id": 2, "distance": 1.0, "damageable": false},
+		{"id": "player_proxy", "team_id": 1, "distance": 0.5, "damageable": true}
+	]
+	var aoe: Dictionary = probe.call("SimulateAreaDamageRuntime", targets, true, 1, 20, 3.0, 0.25, 0.4, 5, 12)
+	var results: Array = aoe.get("results", [])
+	var by_id := {}
+	for item in results:
+		by_id[str(item.get("target_id", ""))] = item
+
+	assert_int(int(aoe.get("committed_count", -1))).is_equal(2)
+	assert_int(int(aoe.get("out_of_radius_count", -1))).is_equal(1)
+
+	assert_int(int(Dictionary(by_id["enemy_near"]).get("resolved_damage", -1))).is_equal(12)
+	assert_int(int(Dictionary(by_id["enemy_mid"]).get("resolved_damage", -1))).is_equal(10)
+	assert_str(str(Dictionary(by_id["enemy_far"]).get("outcome", ""))).is_equal("out_of_radius")
+	assert_str(str(Dictionary(by_id["friendly"]).get("outcome", ""))).is_equal("friendly_fire_refused")
+	assert_str(str(Dictionary(by_id["player_proxy"]).get("outcome", ""))).is_equal("friendly_fire_refused")
+	assert_str(str(Dictionary(by_id["invalid_enemy"]).get("outcome", ""))).is_equal("invalid_target")

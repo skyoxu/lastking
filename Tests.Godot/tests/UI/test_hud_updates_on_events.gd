@@ -198,6 +198,8 @@ func test_hud_maps_blocked_path_fallback_outcome_to_declared_feedback_surface() 
 
 # ACC:T43.2
 # ACC:T43.3
+# ACC:T51.2
+# ACC:T51.11
 func test_hud_combat_pressure_and_camera_overlay_exist_and_update_from_runtime_events() -> void:
     var hud = await _hud()
     var pressure_label := _pressure_label(hud)
@@ -225,6 +227,9 @@ func test_hud_combat_pressure_and_camera_overlay_exist_and_update_from_runtime_e
 # ACC:T43.5
 # ACC:T48.8
 # ACC:T50.7
+# ACC:T51.5
+# ACC:T51.7
+# ACC:T51.10
 func test_hud_surfaces_render_targeting_and_blocked_pathing_feedback_from_runtime_decision_chain() -> void:
     var hud = await _hud()
     var feedback_label := _feedback_label(hud)
@@ -366,6 +371,30 @@ func test_hud_failure_events_show_feedback_without_mutating_non_target_runtime_s
     assert_str(hp_label.text).is_equal(hp_before)
     assert_str(pressure_label.text).is_equal(pressure_before)
     assert_str(camera_label.text).is_equal(camera_before)
+
+# ACC:T51.7
+func test_hud_feedback_only_events_do_not_create_pressure_differentiation_without_core_pressure_payload() -> void:
+    var hud = await _hud()
+    var pressure_label := _pressure_label(hud)
+    assert_str(pressure_label.text).is_equal("Pressure: n/a")
+
+    _publish("core.lastking.ui_feedback.raised", {
+        "Code": "target_path_blocked_fallback",
+        "MessageKey": "ui.combat.target_path_blocked_fallback",
+        "Details": "elite_hint_only"
+    })
+    _publish("core.lastking.ui_feedback.raised", {
+        "Code": "target_path_blocked_fallback",
+        "MessageKey": "ui.combat.target_path_blocked_fallback",
+        "Details": "boss_hint_only"
+    })
+    await get_tree().process_frame
+
+    assert_str(pressure_label.text).is_equal("Pressure: n/a")
+
+    _publish("core.lastking.wave.spawned", {"day": 11, "count": 6})
+    await get_tree().process_frame
+    assert_str(pressure_label.text).is_equal("Pressure: day=11 spawned=6")
 
 # ACC:T9.2
 # ACC:T9.5

@@ -4274,24 +4274,24 @@
     ],
     "test_refs": [
       "Game.Core.Tests/Services/CombatServiceTests.cs",
-      "Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs",
       "Game.Core.Tests/Domain/GameConfigTests.cs",
+      "Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs",
+      "Tests.Godot/tests/UI/test_hud_updates_on_events.gd",
       "Tests.Godot/tests/Integration/test_combat_friendly_fire_disabled.gd",
-      "Tests.Godot/tests/Scenes/Combat/test_enemy_ai_blocked_route_fallback.gd",
-      "Tests.Godot/tests/UI/test_hud_updates_on_events.gd"
+      "Tests.Godot/tests/Scenes/Combat/test_enemy_ai_blocked_route_fallback.gd"
     ],
     "acceptance": [
-      "Given identical combat inputs, an AoE-capable hit resolves through deterministic core rules with config-backed radius, clamp, and falloff, and when no AoE-capable source is active the same flow resolves as single-target damage only. Refs: Game.Core.Tests/Services/CombatServiceTests.cs Game.Core.Tests/Domain/GameConfigTests.cs",
+      "Given identical combat inputs, an AoE-capable hit resolves in deterministic core services using config-backed radius, clamp, and mandatory falloff, and when no AoE-capable source is active the same flow resolves as single-target damage only. Acceptance fails if any AoE rule is skipped, optionalized, or resolved outside core. Refs: Game.Core.Tests/Services/CombatServiceTests.cs Game.Core.Tests/Domain/GameConfigTests.cs",
       "Elite and boss enemies produce higher normalized runtime pressure and materially different combat outcomes than normal enemies, so wave pressure and encounter behavior remain distinguishable instead of collapsing into uniform fodder exchanges. Refs: Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs Tests.Godot/tests/UI/test_hud_updates_on_events.gd",
       "With friendly fire disabled, splash resolution applies damage only to valid hostile targets selected by the shared combat rules and leaves non-hostile or otherwise invalid targets unchanged. Refs: Game.Core.Tests/Services/CombatServiceTests.cs Tests.Godot/tests/Integration/test_combat_friendly_fire_disabled.gd",
       "Elite and boss pressure values are derived from enemy config together with pressure-normalization config, and acceptance fails if runtime pressure differentiation is not produced from those config-backed inputs. Refs: Game.Core.Tests/Domain/GameConfigTests.cs Game.Core.Tests/Services/WaveManagerBudgetChannelTests.cs",
       "Runtime scenes expose resolved splash results and elite-pressure differences during clustered or blocked-route combat, so the player can observe the combat and pressure outcome directly rather than infer hidden or ambiguous behavior. Refs: Tests.Godot/tests/Scenes/Combat/test_enemy_ai_blocked_route_fallback.gd Tests.Godot/tests/UI/test_hud_updates_on_events.gd",
-      "Task 51 is accepted only when the Windows Godot plus C# baseline has xUnit coverage for deterministic AoE radius, clamp, falloff, and pressure normalization rules, plus GdUnit coverage for observable runtime elite-pressure and splash outcomes. Refs: Game.Core.Tests/Services/CombatServiceTests.cs Tests.Godot/tests/Scenes/Combat/test_enemy_ai_blocked_route_fallback.gd",
+      "With identical inputs and config, core-resolved splash damage outputs and runtime wave-pressure outputs stay source-consistent across repeated runs; acceptance fails if pressure or UI differentiation appears without matching deterministic core combat resolution. Refs: Game.Core.Tests/Services/CombatServiceTests.cs Tests.Godot/tests/Scenes/Combat/test_enemy_ai_blocked_route_fallback.gd Tests.Godot/tests/UI/test_hud_updates_on_events.gd",
       "Scene adapters only forward hit data and present returned results; acceptance fails if AoE or elite-pressure resolution occurs outside deterministic core services. Refs: Game.Core.Tests/Services/CombatServiceTests.cs Tests.Godot/tests/UI/test_hud_updates_on_events.gd",
       "When no AoE-capable source and no elite-pressure trigger are active, combat remains in the baseline state with single-target damage only and baseline pressure readouts only. Refs: Game.Core.Tests/Services/CombatServiceTests.cs Game.Core.Tests/Domain/GameConfigTests.cs",
-      "AoE-capable attacks resolve config-backed falloff inside deterministic core combat rules, and acceptance fails if falloff is omitted, treated as optional, or resolved outside core services. Refs: Game.Core.Tests/Services/CombatServiceTests.cs Game.Core.Tests/Domain/GameConfigTests.cs",
+      "When AoE or elite/boss differentiation is configured as visible, acceptance fails if runtime scenes show differentiation that is not backed by deterministic core-resolved combat and pressure outputs (no UI-only or adapter-only differentiation). Refs: Game.Core.Tests/Services/CombatServiceTests.cs Tests.Godot/tests/UI/test_hud_updates_on_events.gd",
       "When enemies cluster or routes are blocked, splash resolution changes observable hit distribution, kill efficiency, or exposure risk relative to single-target attacks; acceptance fails if splash only adds feedback without creating a gameplay-relevant spacing or risk-management difference. Refs: Tests.Godot/tests/Scenes/Combat/test_enemy_ai_blocked_route_fallback.gd Tests.Godot/tests/UI/test_hud_updates_on_events.gd",
-      "GdUnit verifies that elite-pressure slices and splash outcomes remain observable and deterministic across repeated runtime-scene executions with identical inputs; acceptance fails if the same scene inputs produce drifting pressure readouts or inconsistent splash results. Refs: Tests.Godot/tests/Scenes/Combat/test_enemy_ai_blocked_route_fallback.gd Tests.Godot/tests/UI/test_hud_updates_on_events.gd"
+      "GdUnit verifies that elite-pressure slices and splash outcomes remain observable and deterministic across repeated runtime-scene executions with identical inputs; acceptance fails if the same scene inputs produce drifting pressure readouts, inconsistent splash results, or divergent pressure-versus-combat conclusions. Refs: Tests.Godot/tests/Scenes/Combat/test_enemy_ai_blocked_route_fallback.gd Tests.Godot/tests/UI/test_hud_updates_on_events.gd"
     ],
     "contractRefs": [
       "core.lastking.wave.spawned",
