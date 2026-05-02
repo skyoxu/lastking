@@ -3,8 +3,13 @@ extends "res://addons/gdUnit4/src/GdUnitTestSuite.gd"
 const REQUIRED_SCENARIOS: PackedStringArray = ["worst_case_wave_mix", "ui_heavy"]
 const REQUIRED_METRICS: PackedStringArray = ["memory_growth", "stutter_spikes"]
 
+# ACC:T52.3
+# ACC:T52.5
+# ACC:T52.7
+# ACC:T52.9
 # acceptance: ACC:T30.7
 # Red-first: current launch report stub lacks a required stutter trace in a UI-heavy case.
+# ACC:T52.1
 func test_launch_preset_report_covers_worst_case_and_ui_heavy_with_verdict_or_explicit_failure_trace() -> void:
 	var report: Dictionary = _build_current_launch_report_stub()
 	var issues: Array[String] = _validate_launch_report(report)

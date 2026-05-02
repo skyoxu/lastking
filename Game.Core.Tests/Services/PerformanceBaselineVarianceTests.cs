@@ -6,6 +6,10 @@ namespace Game.Core.Tests.Services;
 
 public sealed class PerformanceBaselineVarianceTests
 {
+    // ACC:T52.2
+    // ACC:T52.6
+    // ACC:T52.8
+    // ACC:T52.10
     // ACC:T30.4
     [Fact]
     public void ShouldRejectBaseline_WhenRepeatRunsExceedDeclaredVarianceWindow()
