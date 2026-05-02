@@ -146,3 +146,25 @@ func test_pathfinding_does_not_traverse_blocked_cells_and_uses_fallback_when_no_
 	var selected: Dictionary = probe.call("SelectTarget", fallback_candidates)
 	assert_str(str(selected.get("target_id", ""))).is_equal("blocker_near")
 	assert_bool(bool(selected.get("is_fallback_attack", false))).is_true()
+
+# ACC:T50.4
+# ACC:T50.7
+# ACC:T50.8
+func test_projectile_runtime_does_not_create_or_resolve_when_no_firing_solution() -> void:
+	var probe := _new_probe()
+	var no_solution: Dictionary = probe.call(
+		"SimulateProjectileRuntime",
+		false,
+		false,
+		0,
+		2,
+		1
+	)
+
+	assert_bool(bool(no_solution.get("projectile_created", true))).is_false()
+	assert_bool(bool(no_solution.get("impact_resolved", true))).is_false()
+	assert_bool(bool(no_solution.get("timed_out", true))).is_false()
+	assert_bool(bool(no_solution.get("cleaned_up", true))).is_false()
+	assert_bool(bool(no_solution.get("damage_committed", true))).is_false()
+	assert_int(int(no_solution.get("resolved_damage", -1))).is_equal(0)
+	assert_str(str(no_solution.get("outcome", ""))).is_equal("no_firing_solution")
