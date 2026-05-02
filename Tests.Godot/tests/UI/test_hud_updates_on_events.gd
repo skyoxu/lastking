@@ -200,6 +200,7 @@ func test_hud_maps_blocked_path_fallback_outcome_to_declared_feedback_surface() 
 # ACC:T43.3
 # ACC:T51.2
 # ACC:T51.11
+# ACC:T53.2
 func test_hud_combat_pressure_and_camera_overlay_exist_and_update_from_runtime_events() -> void:
     var hud = await _hud()
     var pressure_label := _pressure_label(hud)
@@ -562,6 +563,9 @@ func test_hud_feedback_runtime_priority_and_dedup_stability_for_task24_events() 
 # ACC:T42.2
 # ACC:T42.3
 # ACC:T42.4
+# ACC:T53.1
+# ACC:T53.3
+# ACC:T53.7
 func test_hud_outcome_and_runtime_prompt_surfaces_update_from_runtime_events() -> void:
     var hud = await _hud()
     var outcome_label := _outcome_label(hud)
@@ -583,11 +587,35 @@ func test_hud_outcome_and_runtime_prompt_surfaces_update_from_runtime_events() -
     assert_bool(prompt_label.text.find("Prompt: Action blocked.") >= 0).is_true()
     assert_bool(prompt_label.text.find("chapter_locked") >= 0).is_true()
 
+# ACC:T53.7
+func test_hud_after_action_surfaces_clear_stale_summary_and_prompt_for_new_non_terminal_state() -> void:
+    var hud = await _hud()
+    var outcome_label := _outcome_label(hud)
+    var prompt_label := _runtime_prompt_label(hud)
+
+    _publish("core.run.state.transitioned", {"outcome": "win", "day": 15})
+    _publish("core.lastking.ui_feedback.raised", {
+        "Code": "run_continue_blocked",
+        "MessageKey": "ui.blocked_action.run_continue_blocked",
+        "Details": "chapter_locked"
+    })
+    await get_tree().process_frame
+    assert_str(outcome_label.text).is_equal("Outcome: win day=15")
+    assert_bool(prompt_label.text.find("chapter_locked") >= 0).is_true()
+
+    _publish("core.run.state.transitioned", {"outcome": "NONE", "day": 1})
+    _publish("core.score.updated", {"value": 1})
+    await get_tree().process_frame
+
+    assert_str(outcome_label.text).is_equal("Outcome: n/a")
+    assert_str(prompt_label.text).is_equal("Prompt: n/a")
+
 # ACC:T44.1
 # ACC:T44.2
 # ACC:T44.3
 # ACC:T44.4
 # ACC:T49.5
+# ACC:T53.5
 func test_hud_barracks_deployment_outcome_feedback_tracks_success_and_failure_with_active_presence() -> void:
     var hud = await _hud()
     var feedback_label := _feedback_label(hud)
@@ -627,6 +655,9 @@ func test_hud_barracks_deployment_outcome_feedback_tracks_success_and_failure_wi
     assert_bool(feedback_label.text.find("Action blocked") >= 0).is_true()
     assert_bool(feedback_label.text.find("failed=spearman") >= 0).is_true()
 
+# ACC:T53.2
+# ACC:T53.4
+# ACC:T53.8
 func test_hud_economy_build_and_progression_surfaces_update_from_domain_events() -> void:
     var hud = await _hud()
     var resource_label := _resource_summary_label(hud)
@@ -671,3 +702,87 @@ func test_hud_economy_build_and_progression_surfaces_update_from_domain_events()
     })
     await get_tree().process_frame
     assert_bool(progression_label.text.find("reward=") >= 0).is_true()
+
+# ACC:T53.4
+func test_hud_after_action_labels_are_deterministic_for_identical_terminal_inputs() -> void:
+    var hud = await _hud()
+    var outcome_label := _outcome_label(hud)
+    var prompt_label := _runtime_prompt_label(hud)
+
+    var hp_payload := {"Day": 9, "PreviousHp": 100, "CurrentHp": 42}
+    var wave_payload := {"day": 9, "count": 6}
+    var resources_payload := {
+        "RunId": "run-53-deterministic",
+        "DayNumber": 9,
+        "Gold": 120,
+        "Iron": 44,
+        "PopulationCap": 26
+    }
+    var outcome_payload := {"outcome": "win", "day": 9}
+
+    _publish("core.lastking.castle.hp_changed", hp_payload)
+    _publish("core.lastking.wave.spawned", wave_payload)
+    _publish("core.lastking.resources.changed", resources_payload)
+    _publish("core.run.state.transitioned", outcome_payload)
+    await get_tree().process_frame
+    var first_outcome := outcome_label.text
+    var first_prompt := prompt_label.text
+
+    _publish("core.run.state.transitioned", {"outcome": "NONE", "day": 1})
+    await get_tree().process_frame
+    assert_str(outcome_label.text).is_equal("Outcome: n/a")
+    assert_str(prompt_label.text).is_equal("Prompt: n/a")
+
+    _publish("core.lastking.castle.hp_changed", hp_payload)
+    _publish("core.lastking.wave.spawned", wave_payload)
+    _publish("core.lastking.resources.changed", resources_payload)
+    _publish("core.run.state.transitioned", outcome_payload)
+    await get_tree().process_frame
+
+    assert_str(outcome_label.text).is_equal(first_outcome)
+    assert_str(prompt_label.text).is_equal(first_prompt)
+
+# ACC:T53.1
+# ACC:T53.3
+func test_hud_after_action_prompt_should_offer_actionable_guidance_from_contract_inputs() -> void:
+    var hud = await _hud()
+    var prompt_label := _runtime_prompt_label(hud)
+
+    _publish("core.lastking.castle.hp_changed", {"Day": 9, "PreviousHp": 100, "CurrentHp": 42})
+    _publish("core.lastking.wave.spawned", {"day": 9, "count": 6})
+    _publish("core.lastking.resources.changed", {
+        "RunId": "run-53-a",
+        "DayNumber": 9,
+        "Gold": 120,
+        "Iron": 44,
+        "PopulationCap": 26
+    })
+    _publish("core.run.state.transitioned", {"outcome": "win", "day": 9})
+    await get_tree().process_frame
+    assert_str(prompt_label.text).contains("reinforce frontline")
+
+    _publish("core.lastking.castle.hp_changed", {"Day": 10, "PreviousHp": 100, "CurrentHp": 90})
+    _publish("core.lastking.wave.spawned", {"day": 10, "count": 2})
+    _publish("core.lastking.resources.changed", {
+        "RunId": "run-53-b",
+        "DayNumber": 10,
+        "Gold": 100,
+        "Iron": 35,
+        "PopulationCap": 24
+    })
+    _publish("core.run.state.transitioned", {"outcome": "win", "day": 10})
+    await get_tree().process_frame
+    assert_str(prompt_label.text).contains("increase income")
+
+    _publish("core.lastking.castle.hp_changed", {"Day": 11, "PreviousHp": 100, "CurrentHp": 90})
+    _publish("core.lastking.wave.spawned", {"day": 11, "count": 2})
+    _publish("core.lastking.resources.changed", {
+        "RunId": "run-53-c",
+        "DayNumber": 11,
+        "Gold": 180,
+        "Iron": 60,
+        "PopulationCap": 30
+    })
+    _publish("core.run.state.transitioned", {"outcome": "win", "day": 11})
+    await get_tree().process_frame
+    assert_str(prompt_label.text).contains("expand defenses")

@@ -22,6 +22,7 @@ func _feedback_label(hud: Node) -> Label:
 # acceptance: ACC:T19.1
 # acceptance: ACC:T42.3
 # acceptance: ACC:T42.10
+# ACC:T53.1
 func test_terminal_and_reward_runtime_events_should_drive_hud_feedback_surfaces() -> void:
 	var hud = await _hud()
 	var feedback_label := _feedback_label(hud)
@@ -61,6 +62,8 @@ func test_terminal_and_reward_runtime_events_should_drive_hud_feedback_surfaces(
 	assert_bool(feedback_label.text.find("Defeat.") >= 0).is_true()
 	assert_bool(feedback_label.text.find("day=8") >= 0).is_true()
 
+# ACC:T53.3
+# ACC:T53.7
 func test_terminal_feedback_should_ignore_non_terminal_outcome() -> void:
 	var hud = await _hud()
 	var feedback_label := _feedback_label(hud)
