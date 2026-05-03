@@ -43,13 +43,42 @@ public partial class ScreenNavigator : Node
         return true;
     }
 
+    public void ClearCurrentScreen()
+    {
+        if (_root == null)
+        {
+            return;
+        }
+
+        if (_current != null)
+        {
+            if (GodotObject.IsInstanceValid(_current))
+            {
+                if (_current.HasMethod("Exit")) _current.CallDeferred("Exit");
+                _current.QueueFree();
+            }
+            _current = null;
+        }
+
+        foreach (var child in _root.GetChildren())
+        {
+            if (child is Node node && GodotObject.IsInstanceValid(node))
+            {
+                node.QueueFree();
+            }
+        }
+    }
+
     private void DoSwitch(PackedScene packed)
     {
         // Call Exit on current if present, then remove
         if (_current != null)
         {
-            if (_current.HasMethod("Exit")) _current.CallDeferred("Exit");
-            _current.QueueFree();
+            if (GodotObject.IsInstanceValid(_current))
+            {
+                if (_current.HasMethod("Exit")) _current.CallDeferred("Exit");
+                _current.QueueFree();
+            }
             _current = null;
         }
         var inst = packed.Instantiate<Control>();

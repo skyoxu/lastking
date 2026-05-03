@@ -33,13 +33,13 @@ func _trigger_play(main: Node) -> void:
 func _screen_root(main: Node) -> Node:
     return main.get_node("RuntimeUi/ScreenRoot")
 
-func _screen_root_contains_start_screen(screen_root: Node) -> bool:
+func _screen_root_contains_battle_map_screen(screen_root: Node) -> bool:
     for child in screen_root.get_children():
         if child is Node:
             var script_value: Variant = child.get_script()
-            if script_value is Script and String(script_value.resource_path) == "res://Game.Godot/Scripts/Screens/StartScreen.cs":
+            if script_value is Script and String(script_value.resource_path) == "res://Game.Godot/Scripts/Screens/BattleMapScreen.gd":
                 return true
-            if String(child.name).findn("StartScreen") >= 0:
+            if String(child.name).findn("BattleMapScreen") >= 0:
                 return true
     return false
 
@@ -53,7 +53,7 @@ func _await_frames(count: int) -> void:
         await get_tree().process_frame
 
 # ACC:T11.18
-func test_real_main_scene_enters_start_screen_without_multiplayer_reconfiguration() -> void:
+func test_real_main_scene_enters_battle_map_screen_without_multiplayer_reconfiguration() -> void:
     var main := await _instantiate_main()
     var multiplayer_api := main.get_multiplayer()
     var screen_root := _screen_root(main)
@@ -68,11 +68,11 @@ func test_real_main_scene_enters_start_screen_without_multiplayer_reconfiguratio
     assert_bool(_event_types.has("ui.menu.start")).is_true()
     assert_str(_multiplayer_peer_class(multiplayer_api)).is_equal(peer_before)
     assert_int(screen_root.get_child_count()).is_greater_equal(1)
-    assert_bool(_screen_root_contains_start_screen(screen_root)).is_true()
+    assert_bool(_screen_root_contains_battle_map_screen(screen_root)).is_true()
     assert_bool(main.has_node("EngineDemo")).is_true()
     assert_bool(main.has_node("ScreenNavigator")).is_true()
 
-func test_repeated_menu_start_keeps_singleplayer_target_and_multiplayer_state_stable() -> void:
+func test_repeated_menu_start_keeps_battle_map_target_and_multiplayer_state_stable() -> void:
     var main := await _instantiate_main()
     var multiplayer_api := main.get_multiplayer()
     var screen_root := _screen_root(main)
@@ -86,4 +86,32 @@ func test_repeated_menu_start_keeps_singleplayer_target_and_multiplayer_state_st
     assert_bool(_event_types.has("ui.menu.start")).is_true()
     assert_str(_multiplayer_peer_class(multiplayer_api)).is_equal(peer_before)
     assert_int(screen_root.get_child_count()).is_greater_equal(1)
-    assert_bool(_screen_root_contains_start_screen(screen_root)).is_true()
+    assert_bool(_screen_root_contains_battle_map_screen(screen_root)).is_true()
+
+func test_battle_map_screen_allows_minimum_combat_loop_after_play() -> void:
+    var main := await _instantiate_main()
+    _trigger_play(main)
+    await _await_frames(5)
+
+    var screen_root := _screen_root(main)
+    var screen := screen_root.get_child(0)
+    assert_object(screen).is_not_null()
+    assert_bool(String(screen.name).findn("BattleMapScreen") >= 0).is_true()
+
+    var build_btn := screen.get_node("Margin/VBox/Controls/BuildBtn")
+    var wave_btn := screen.get_node("Margin/VBox/Controls/WaveBtn")
+    var exchange_btn := screen.get_node("Margin/VBox/Controls/ExchangeBtn")
+    var cleanup_btn := screen.get_node("Margin/VBox/Controls/CleanupBtn")
+    var finish_btn := screen.get_node("Margin/VBox/Controls/FinishBtn")
+    var summary := screen.get_node("Margin/VBox/Summary")
+
+    build_btn.emit_signal("pressed")
+    wave_btn.emit_signal("pressed")
+    exchange_btn.emit_signal("pressed")
+    cleanup_btn.emit_signal("pressed")
+    finish_btn.emit_signal("pressed")
+    await _await_frames(2)
+
+    assert_str(summary.text).contains("Castle HP:")
+    assert_str(summary.text).contains("Enemy Units Spawned:")
+    assert_str(summary.text).contains("Dead Units Retired:")

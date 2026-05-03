@@ -4,8 +4,8 @@ namespace Game.Godot.Scripts.Audio;
 
 public partial class AudioManager : Node
 {
-    private AudioStreamPlayer _musicPlayer = default!;
-    private AudioStreamPlayer _sfxPlayer = default!;
+    private AudioStreamPlayer? _musicPlayer;
+    private AudioStreamPlayer? _sfxPlayer;
 
     private const string ConfigPath = "user://settings.cfg";
     private const string ConfigSection = "settings";
@@ -25,12 +25,30 @@ public partial class AudioManager : Node
 
     public void SetMusicVolume(float volume)
     {
-        _musicPlayer.VolumeDb = Mathf.LinearToDb(Mathf.Clamp(volume, 0f, 1f));
+        var db = Mathf.LinearToDb(Mathf.Clamp(volume, 0f, 1f));
+        if (_musicPlayer != null)
+        {
+            _musicPlayer.VolumeDb = db;
+            return;
+        }
+
+        var bus = AudioServer.GetBusIndex("Music");
+        if (bus < 0) bus = AudioServer.GetBusIndex("Master");
+        if (bus >= 0) AudioServer.SetBusVolumeDb(bus, db);
     }
 
     public void SetSfxVolume(float volume)
     {
-        _sfxPlayer.VolumeDb = Mathf.LinearToDb(Mathf.Clamp(volume, 0f, 1f));
+        var db = Mathf.LinearToDb(Mathf.Clamp(volume, 0f, 1f));
+        if (_sfxPlayer != null)
+        {
+            _sfxPlayer.VolumeDb = db;
+            return;
+        }
+
+        var bus = AudioServer.GetBusIndex("SFX");
+        if (bus < 0) bus = AudioServer.GetBusIndex("Master");
+        if (bus >= 0) AudioServer.SetBusVolumeDb(bus, db);
     }
 
     private static (float musicVolume, float sfxVolume) LoadSettings()

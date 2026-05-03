@@ -29,22 +29,22 @@ offset_bottom = 32.0
 
 [node name="DayLabel" type="Label" parent="TopBar/HBox"]
 layout_mode = 2
-text = "Day: 1"
+text = "hud.day: 1"
 
 [node name="CycleRemainingLabel" type="Label" parent="TopBar/HBox"]
 layout_mode = 2
-text = "Cycle Remaining: 240.0s"
+text = "hud.cycle_remaining: 240.0s"
 
 [node name="HealthLabel" type="Label" parent="TopBar/HBox"]
 layout_mode = 2
-text = "HP: 0"
+text = "hud.hp: 0"
 
 [node name="SpeedControls" type="HBoxContainer" parent="TopBar/HBox"]
 layout_mode = 2
 
 [node name="PauseButton" type="Button" parent="TopBar/HBox/SpeedControls"]
 layout_mode = 2
-text = "Pause"
+text = "hud.pause"
 
 [node name="OneXButton" type="Button" parent="TopBar/HBox/SpeedControls"]
 layout_mode = 2
@@ -63,6 +63,7 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="FeedbackLayer" type="Control" parent="."]
+visible = false
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -140,7 +141,7 @@ text = ""
 
 [node name="DismissButton" type="Button" parent="FeedbackLayer/ErrorDialog/VBox"]
 layout_mode = 2
-text = "Dismiss"
+text = "hud.dismiss"
 
 [node name="ConfigAuditPanel" type="PanelContainer" parent="FeedbackLayer"]
 layout_mode = 1
@@ -160,7 +161,7 @@ text = "Config: n/a | Schema: n/a | Fallback: n/a"
 
 [node name="RefreshButton" type="Button" parent="FeedbackLayer/ConfigAuditPanel/VBox"]
 layout_mode = 2
-text = "Refresh Audit"
+text = "hud.refresh_audit"
 
 [node name="MigrationStatusDialog" type="PanelContainer" parent="FeedbackLayer"]
 layout_mode = 1
@@ -180,7 +181,7 @@ text = "Migration: n/a"
 
 [node name="RetryButton" type="Button" parent="FeedbackLayer/MigrationStatusDialog/VBox"]
 layout_mode = 2
-text = "Retry Migration"
+text = "hud.retry_migration"
 
 [node name="ReportMetadataPanel" type="PanelContainer" parent="FeedbackLayer"]
 layout_mode = 1
