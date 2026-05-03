@@ -1,0 +1,137 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Game.Godot/Scripts/Screens/BattleMapScreen.gd" id="1"]
+[ext_resource type="Script" path="res://Game.Godot/Scripts/Combat/CombatExperienceRuntimeBridge.cs" id="2"]
+
+[node name="BattleMapScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.0784314, 0.117647, 0.109804, 1)
+
+[node name="Path" type="Line2D" parent="Background"]
+points = PackedVector2Array(120, 120, 260, 120, 420, 240, 640, 240, 840, 340, 1080, 340)
+width = 8.0
+default_color = Color(0.909804, 0.752941, 0.482353, 1)
+
+[node name="PlayerCastle" type="ColorRect" parent="Background"]
+offset_left = 56.0
+offset_top = 88.0
+offset_right = 116.0
+offset_bottom = 152.0
+color = Color(0.321569, 0.584314, 0.894118, 1)
+
+[node name="EnemySpawnA" type="ColorRect" parent="Background"]
+offset_left = 1040.0
+offset_top = 300.0
+offset_right = 1070.0
+offset_bottom = 330.0
+color = Color(0.847059, 0.286275, 0.286275, 1)
+
+[node name="EnemySpawnB" type="ColorRect" parent="Background"]
+offset_left = 1110.0
+offset_top = 360.0
+offset_right = 1140.0
+offset_bottom = 390.0
+color = Color(0.847059, 0.286275, 0.286275, 1)
+
+[node name="BuildSlotA" type="ColorRect" parent="Background"]
+offset_left = 310.0
+offset_top = 170.0
+offset_right = 340.0
+offset_bottom = 200.0
+color = Color(0.419608, 0.698039, 0.388235, 1)
+
+[node name="BuildSlotB" type="ColorRect" parent="Background"]
+offset_left = 520.0
+offset_top = 200.0
+offset_right = 550.0
+offset_bottom = 230.0
+color = Color(0.419608, 0.698039, 0.388235, 1)
+
+[node name="Margin" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 24
+
+[node name="VBox" type="VBoxContainer" parent="Margin"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="Margin/VBox"]
+layout_mode = 2
+text = "Battle Map Screen"
+
+[node name="Status" type="Label" parent="Margin/VBox"]
+layout_mode = 2
+text = "Status"
+
+[node name="Controls" type="HBoxContainer" parent="Margin/VBox"]
+layout_mode = 2
+
+[node name="BuildBtn" type="Button" parent="Margin/VBox/Controls"]
+layout_mode = 2
+text = "Build Setup"
+
+[node name="WaveBtn" type="Button" parent="Margin/VBox/Controls"]
+layout_mode = 2
+text = "Spawn Wave"
+
+[node name="AutoWaveBtn" type="Button" parent="Margin/VBox/Controls"]
+layout_mode = 2
+text = "Toggle Auto Wave"
+
+[node name="ExchangeBtn" type="Button" parent="Margin/VBox/Controls"]
+layout_mode = 2
+text = "Resolve Exchange"
+
+[node name="CleanupBtn" type="Button" parent="Margin/VBox/Controls"]
+layout_mode = 2
+text = "Cleanup Dead"
+
+[node name="FinishBtn" type="Button" parent="Margin/VBox/Controls"]
+layout_mode = 2
+text = "Finish Battle"
+
+[node name="BackBtn" type="Button" parent="Margin/VBox/Controls"]
+layout_mode = 2
+text = "Back Menu"
+
+[node name="Summary" type="Label" parent="Margin/VBox"]
+layout_mode = 2
+autowrap_mode = 3
+text = "Summary"
+
+[node name="Legend" type="Label" parent="Margin/VBox"]
+layout_mode = 2
+autowrap_mode = 3
+text = "Legend"
+
+[node name="MetricsHelp" type="Label" parent="Margin/VBox"]
+layout_mode = 2
+autowrap_mode = 3
+text = "Metrics Help"
+
+[node name="CombatExperienceRuntimeBridge" type="Node" parent="."]
+script = ExtResource("2")
+
+[node name="WaveTimer" type="Timer" parent="."]
+wait_time = 4.0

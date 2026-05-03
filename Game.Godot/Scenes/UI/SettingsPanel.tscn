@@ -31,7 +31,7 @@ layout_mode = 2
 
 [node name="TitleLabel" type="Label" parent="VBox/SavePanel/VBox"]
 layout_mode = 2
-text = "Save Panel"
+text = "settings.save_panel"
 
 [node name="AutosavePathLabel" type="Label" parent="VBox/SavePanel/VBox"]
 layout_mode = 2
@@ -50,7 +50,7 @@ layout_mode = 2
 
 [node name="TitleLabel" type="Label" parent="VBox/RunSummaryPanel/VBox"]
 layout_mode = 2
-text = "Run Summary"
+text = "settings.run_summary"
 
 [node name="SummaryLocaleLabel" type="Label" parent="VBox/RunSummaryPanel/VBox"]
 layout_mode = 2
@@ -73,7 +73,7 @@ layout_mode = 2
 
 [node name="VolLabel" type="Label" parent="VBox/VolRow"]
 layout_mode = 2
-text = "Music Volume"
+text = "settings.music_volume"
 
 [node name="VolSlider" type="HSlider" parent="VBox/VolRow"]
 layout_mode = 2
@@ -87,7 +87,7 @@ layout_mode = 2
 
 [node name="SfxLabel" type="Label" parent="VBox/SfxRow"]
 layout_mode = 2
-text = "SFX Volume"
+text = "settings.sfx_volume"
 
 [node name="SfxSlider" type="HSlider" parent="VBox/SfxRow"]
 layout_mode = 2
@@ -101,7 +101,7 @@ layout_mode = 2
 
 [node name="GraphicsLabel" type="Label" parent="VBox/GraphicsRow"]
 layout_mode = 2
-text = "Graphics"
+text = "settings.graphics"
 
 [node name="GraphicsOpt" type="OptionButton" parent="VBox/GraphicsRow"]
 layout_mode = 2
@@ -112,7 +112,7 @@ layout_mode = 2
 
 [node name="LangLabel" type="Label" parent="VBox/LangRow"]
 layout_mode = 2
-text = "Language"
+text = "settings.language"
 
 [node name="LangOpt" type="OptionButton" parent="VBox/LangRow"]
 layout_mode = 2
@@ -123,12 +123,12 @@ layout_mode = 2
 
 [node name="SaveBtn" type="Button" parent="VBox/Buttons"]
 layout_mode = 2
-text = "Save"
+text = "settings.save"
 
 [node name="LoadBtn" type="Button" parent="VBox/Buttons"]
 layout_mode = 2
-text = "Load"
+text = "settings.load"
 
 [node name="CloseBtn" type="Button" parent="VBox/Buttons"]
 layout_mode = 2
-text = "Close"
+text = "settings.close"

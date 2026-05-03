@@ -26,6 +26,14 @@ public partial class SettingsPanel : Control
     private Label _summaryAchievementsLabel = default!;
     private Label _summaryPerfLabel = default!;
     private Label _summaryUpdatedLabel = default!;
+    private Label _savePanelTitleLabel = default!;
+    private Label _runSummaryTitleLabel = default!;
+    private Label _volLabel = default!;
+    private Label _sfxLabel = default!;
+    private Label _graphicsLabel = default!;
+    private Label _langLabel = default!;
+    private GodotObject? _i18n;
+    private string _localizedLocale = "en-US";
 
     private const string UserId = "default";
     private const string ConfigPath = "user://settings.cfg";
@@ -53,7 +61,14 @@ public partial class SettingsPanel : Control
         _summaryAchievementsLabel = GetNode<Label>("VBox/RunSummaryPanel/VBox/SummaryAchievementsLabel");
         _summaryPerfLabel = GetNode<Label>("VBox/RunSummaryPanel/VBox/SummaryPerfLabel");
         _summaryUpdatedLabel = GetNode<Label>("VBox/RunSummaryPanel/VBox/SummaryUpdatedLabel");
+        _savePanelTitleLabel = GetNode<Label>("VBox/SavePanel/VBox/TitleLabel");
+        _runSummaryTitleLabel = GetNode<Label>("VBox/RunSummaryPanel/VBox/TitleLabel");
+        _volLabel = GetNode<Label>("VBox/VolRow/VolLabel");
+        _sfxLabel = GetNode<Label>("VBox/SfxRow/SfxLabel");
+        _graphicsLabel = GetNode<Label>("VBox/GraphicsRow/GraphicsLabel");
+        _langLabel = GetNode<Label>("VBox/LangRow/LangLabel");
 
+        SetupLocalization();
         _save.Pressed += OnSave;
         _load.Pressed += OnLoad;
         _close.Pressed += () => Visible = false;
@@ -78,11 +93,28 @@ public partial class SettingsPanel : Control
         _graphics.ItemSelected += OnGraphicsChanged;
         _language.ItemSelected += OnLanguageChanged;
 
-        _autosavePathLabel.Text = $"Autosave Slot: {AutoSaveSlotPath}";
-        _saveStatusLabel.Text = "Save Status: idle";
+        _autosavePathLabel.Text = $"{T("settings.autosave_slot")}: {AutoSaveSlotPath}";
+        _saveStatusLabel.Text = $"{T("settings.save_status")}: {T("settings.idle")}";
         RefreshMetaSummary("panel_ready");
+        ApplyLocalizedStaticTexts();
+        OnLoad();
 
         Visible = false;
+    }
+
+    public override void _Process(double delta)
+    {
+        _ = delta;
+        var locale = NormalizeLocaleOrDefault(TranslationServer.GetLocale());
+        if (string.Equals(locale, _localizedLocale, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        _localizedLocale = locale;
+        _i18n?.Call("switch_locale", _localizedLocale);
+        ApplyLocalizedStaticTexts();
+        RefreshMetaSummary("locale_changed");
     }
 
     private SqliteDataStore? Db() => GetNodeOrNull<SqliteDataStore>("/root/SqlDb");
@@ -192,7 +224,7 @@ public partial class SettingsPanel : Control
         ApplySfxVolume(sfxVolume);
         ApplyLanguage(lang);
         RefreshMetaSummary("saved");
-        _saveStatusLabel.Text = $"Save Status: saved to {AutoSaveSlotPath}";
+        _saveStatusLabel.Text = $"{T("settings.save_status")}: {T("settings.saved_to")} {AutoSaveSlotPath}";
     }
 
     private void OnLoad()
@@ -208,7 +240,7 @@ public partial class SettingsPanel : Control
             if (!TryLoadFromConfig(out musicVolume, out sfxVolume, out gfx, out lang))
             {
                 RefreshMetaSummary("load_no_config");
-                _saveStatusLabel.Text = $"Save Status: no_config at {AutoSaveSlotPath}";
+                _saveStatusLabel.Text = $"{T("settings.save_status")}: {T("settings.no_config_at")} {AutoSaveSlotPath}";
                 return;
             }
         }
@@ -243,7 +275,7 @@ public partial class SettingsPanel : Control
             ApplyLanguage(normalized);
         }
         RefreshMetaSummary("loaded");
-        _saveStatusLabel.Text = $"Save Status: loaded from {AutoSaveSlotPath}";
+        _saveStatusLabel.Text = $"{T("settings.save_status")}: {T("settings.loaded_from")} {AutoSaveSlotPath}";
     }
 
     public void ShowPanel()
@@ -254,24 +286,39 @@ public partial class SettingsPanel : Control
 
     private void OnMusicVolumeChanged(double value)
     {
-        ApplyMusicVolume((float)value);
+        var vol = Mathf.Clamp((float)value, 0, 1);
+        ApplyMusicVolume(vol);
+        SaveCurrentSelections();
     }
 
     private void OnSfxVolumeChanged(double value)
     {
-        ApplySfxVolume((float)value);
+        var vol = Mathf.Clamp((float)value, 0, 1);
+        ApplySfxVolume(vol);
+        SaveCurrentSelections();
     }
 
     private void OnGraphicsChanged(long index)
     {
         var gfx = _graphics.GetItemText((int)index);
         ApplyGraphicsQuality(gfx);
+        SaveCurrentSelections();
     }
 
     private void OnLanguageChanged(long index)
     {
         var lang = _language.GetItemText((int)index);
         ApplyLanguage(lang);
+        SaveCurrentSelections();
+    }
+
+    private void SaveCurrentSelections()
+    {
+        var musicVolume = Mathf.Clamp((float)_musicVolume.Value, 0, 1);
+        var sfxVolume = Mathf.Clamp((float)_sfxVolume.Value, 0, 1);
+        var gfx = _graphics.GetItemText(_graphics.Selected);
+        var lang = _language.GetItemText(_language.Selected);
+        SaveToConfig(musicVolume, sfxVolume, gfx, lang);
     }
 
     private AudioManager? GetAudioManager() => GetNodeOrNull<AudioManager>("/root/Main/AudioManager");
@@ -320,7 +367,10 @@ public partial class SettingsPanel : Control
         }
 
         TranslationServer.SetLocale(normalized);
-        _summaryLocaleLabel.Text = $"Locale: {normalized}";
+        _i18n?.Call("switch_locale", normalized);
+        _localizedLocale = normalized;
+        ApplyLocalizedStaticTexts();
+        _summaryLocaleLabel.Text = $"{T("settings.locale")}: {normalized}";
     }
 
     private static bool IsSupportedLocale(string locale)
@@ -372,6 +422,45 @@ public partial class SettingsPanel : Control
         return locale;
     }
 
+    private void SetupLocalization()
+    {
+        var script = GD.Load<Script>("res://Game.Godot/Scripts/Localization/LocalizationManager.gd");
+        if (script == null)
+        {
+            return;
+        }
+
+        _i18n = (GodotObject)script.Call("new");
+        _i18n?.Call("configure_locale_resource", "en-US", "res://Game.Godot/Localization/en-US.json");
+        _i18n?.Call("configure_locale_resource", "zh-CN", "res://Game.Godot/Localization/zh-CN.json");
+        _localizedLocale = NormalizeLocaleOrDefault(TranslationServer.GetLocale());
+        _i18n?.Call("switch_locale", _localizedLocale);
+    }
+
+    private string T(string key)
+    {
+        if (_i18n == null || string.IsNullOrWhiteSpace(key))
+        {
+            return key;
+        }
+
+        var v = _i18n.Call("translate", key).AsString();
+        return string.IsNullOrWhiteSpace(v) ? key : v;
+    }
+
+    private void ApplyLocalizedStaticTexts()
+    {
+        _savePanelTitleLabel.Text = T("settings.save_panel");
+        _runSummaryTitleLabel.Text = T("settings.run_summary");
+        _volLabel.Text = T("settings.music_volume");
+        _sfxLabel.Text = T("settings.sfx_volume");
+        _graphicsLabel.Text = T("settings.graphics");
+        _langLabel.Text = T("settings.language");
+        _save.Text = T("settings.save");
+        _load.Text = T("settings.load");
+        _close.Text = T("settings.close");
+    }
+
     private void ApplyGraphicsQuality(string quality)
     {
         // Map: low -> no vsync, no MSAA; medium -> vsync on, 2x; high -> vsync on, 4x/8x
@@ -399,10 +488,10 @@ public partial class SettingsPanel : Control
 
     private void RefreshMetaSummary(string source)
     {
-        _summaryLocaleLabel.Text = $"Locale: {TranslationServer.GetLocale()}";
-        _summaryAchievementsLabel.Text = $"Achievements: {ReadAchievementsSummary()}";
-        _summaryPerfLabel.Text = $"Performance: {ReadPerformanceSummary()}";
-        _summaryUpdatedLabel.Text = $"Summary Updated: {source}";
+        _summaryLocaleLabel.Text = $"{T("settings.locale")}: {TranslationServer.GetLocale()}";
+        _summaryAchievementsLabel.Text = $"{T("settings.achievements")}: {ReadAchievementsSummary()}";
+        _summaryPerfLabel.Text = $"{T("settings.performance")}: {ReadPerformanceSummary()}";
+        _summaryUpdatedLabel.Text = $"{T("settings.summary_updated")}: {source}";
     }
 
     private static string ReadAchievementsSummary()

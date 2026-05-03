@@ -25,6 +25,9 @@ public partial class MainMenu : Control
     private Label _exportStatusLabel = default!;
     private bool _bootstrapReady;
     private string _bootstrapNotReadyReason = string.Empty;
+    private readonly Script _localizationScript = GD.Load<Script>("res://Game.Godot/Scripts/Localization/LocalizationManager.gd");
+    private GodotObject? _i18n;
+    private string _currentLocale = "en-US";
 
     public override void _Ready()
     {
@@ -38,15 +41,40 @@ public partial class MainMenu : Control
         _gateMessageLabel = GetNode<Label>("ContinueGateDialog/VBox/GateMessageLabel");
         _bootStatusLabel = GetNode<Label>("BootStatusPanel/VBox/BootStatusLabel");
         _exportStatusLabel = GetNode<Label>("BootStatusPanel/VBox/ExportStatusLabel");
+        SetupLocalization();
         RefreshBootstrapStatus();
         _continueGateDialog.Visible = false;
 
         _btnPlay.Pressed += OnPlayPressed;
+        _btnPlay.GuiInput += OnPlayGuiInput;
         _btnContinue.Pressed += OnContinuePressed;
         _btnSettings.Pressed += OnSettingsPressed;
         _btnQuit.Pressed += OnQuitPressed;
         _btnRetryBootstrap.Pressed += OnRetryBootstrapPressed;
         _btnDismissGate.Pressed += OnDismissGatePressed;
+    }
+
+    public override void _Process(double delta)
+    {
+        _ = delta;
+        var locale = NormalizeLocale(TranslationServer.GetLocale());
+        if (string.Equals(locale, _currentLocale, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        _currentLocale = locale;
+        _i18n?.Call("switch_locale", _currentLocale);
+        ApplyLocalizedStaticTexts();
+        UpdateBootStatus(_bootstrapReady, _bootstrapReady, _bootstrapNotReadyReason);
+    }
+
+    private void OnPlayGuiInput(InputEvent @event)
+    {
+        if (@event is InputEventMouseButton mouse && mouse.Pressed)
+        {
+            GD.Print($"[MainMenu] BtnPlay gui_input pressed: button={mouse.ButtonIndex}, position={mouse.Position}");
+        }
     }
 
     public void ShowMenu() => Visible = true;
@@ -72,7 +100,6 @@ public partial class MainMenu : Control
         }
 
         Publish("ui.menu.start", "ui");
-        HideMenu();
     }
 
     private void OnContinuePressed()
@@ -87,7 +114,7 @@ public partial class MainMenu : Control
         var (canContinue, continueReason) = HasContinueSnapshot();
         if (!canContinue)
         {
-            ShowContinueGate("No valid continue state found. Retry bootstrap or start a new run.");
+            ShowContinueGate(TranslateKey("menu.continue.missing_state"));
             Publish("ui.menu.continue_blocked", "ui", $"{{\"reason\":\"{continueReason}\"}}");
             return;
         }
@@ -130,18 +157,18 @@ public partial class MainMenu : Control
     private void ShowContinueGate(string reason)
     {
         _gateMessageLabel.Text = string.IsNullOrWhiteSpace(reason)
-            ? "Continue unavailable. Start a new run or retry bootstrap."
+            ? TranslateKey("menu.continue.unavailable")
             : reason;
         _continueGateDialog.Visible = true;
     }
 
     private void UpdateBootStatus(bool isReady, bool isExportReady, string reason)
     {
-        _bootStatusLabel.Text = isReady ? "Boot Status: Ready" : "Boot Status: Not Ready";
-        _exportStatusLabel.Text = isExportReady ? "Export Status: Ready" : "Export Status: Pending";
+        _bootStatusLabel.Text = isReady ? TranslateKey("menu.boot.ready") : TranslateKey("menu.boot.not_ready");
+        _exportStatusLabel.Text = isExportReady ? TranslateKey("menu.export.ready") : TranslateKey("menu.export.pending");
         if (!isReady && !string.IsNullOrWhiteSpace(reason))
         {
-            _bootStatusLabel.Text = $"Boot Status: Not Ready ({reason})";
+            _bootStatusLabel.Text = $"{TranslateKey("menu.boot.not_ready")} ({reason})";
         }
     }
 
@@ -210,8 +237,8 @@ public partial class MainMenu : Control
     private string BuildBootstrapNotReadyMessage()
     {
         return string.IsNullOrWhiteSpace(_bootstrapNotReadyReason)
-            ? "Startup is not ready. Resolve bootstrap requirements and retry."
-            : $"Startup is not ready: {_bootstrapNotReadyReason}. Resolve bootstrap requirements and retry.";
+            ? TranslateKey("menu.startup.not_ready")
+            : $"{TranslateKey("menu.startup.not_ready")}: {_bootstrapNotReadyReason}";
     }
 
     private (bool canContinue, string reason) HasContinueSnapshot()
@@ -245,6 +272,63 @@ public partial class MainMenu : Control
         {
             return (false, "invalid_continue_state");
         }
+    }
+
+    private void SetupLocalization()
+    {
+        if (_localizationScript == null)
+        {
+            return;
+        }
+
+        _i18n = (GodotObject)_localizationScript.Call("new");
+        _i18n?.Call("configure_locale_resource", "en-US", "res://Game.Godot/Localization/en-US.json");
+        _i18n?.Call("configure_locale_resource", "zh-CN", "res://Game.Godot/Localization/zh-CN.json");
+        _currentLocale = NormalizeLocale(TranslationServer.GetLocale());
+        _i18n?.Call("switch_locale", _currentLocale);
+        ApplyLocalizedStaticTexts();
+    }
+
+    private void ApplyLocalizedStaticTexts()
+    {
+        _btnPlay.Text = TranslateKey("menu.play");
+        _btnContinue.Text = TranslateKey("menu.continue");
+        _btnSettings.Text = TranslateKey("menu.settings");
+        _btnQuit.Text = TranslateKey("menu.quit");
+        _btnRetryBootstrap.Text = TranslateKey("menu.retry_bootstrap");
+        _btnDismissGate.Text = TranslateKey("menu.dismiss");
+    }
+
+    private string TranslateKey(string key)
+    {
+        if (_i18n == null || string.IsNullOrWhiteSpace(key))
+        {
+            return key;
+        }
+
+        var value = _i18n.Call("translate", key).AsString();
+        return string.IsNullOrWhiteSpace(value) ? key : value;
+    }
+
+    private static string NormalizeLocale(string locale)
+    {
+        if (string.IsNullOrWhiteSpace(locale))
+        {
+            return "en-US";
+        }
+
+        var normalized = locale.Trim().ToLowerInvariant();
+        if (normalized == "zh" || normalized.StartsWith("zh"))
+        {
+            return "zh-CN";
+        }
+
+        if (normalized == "en" || normalized.StartsWith("en"))
+        {
+            return "en-US";
+        }
+
+        return "en-US";
     }
 }
 

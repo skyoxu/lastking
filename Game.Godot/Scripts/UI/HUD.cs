@@ -51,6 +51,8 @@ public partial class HUD : Control
     private Button _pauseButton = default!;
     private Button _oneXButton = default!;
     private Button _twoXButton = default!;
+    private GodotObject? _i18n;
+    private string _localizedLocale = "en-US";
     private string _activeFeedbackCode = string.Empty;
     private string _activeFeedbackMessageKey = string.Empty;
     private bool _hasPendingErrorDialog;
@@ -121,9 +123,10 @@ public partial class HUD : Control
         _pauseButton = GetNode<Button>("TopBar/HBox/SpeedControls/PauseButton");
         _oneXButton = GetNode<Button>("TopBar/HBox/SpeedControls/OneXButton");
         _twoXButton = GetNode<Button>("TopBar/HBox/SpeedControls/TwoXButton");
+        SetupLocalization();
         RenderDay();
         RenderCycleRemaining();
-        _health.Text = "HP: 0";
+        _health.Text = $"{T("hud.hp")}: 0";
         _pauseButton.Pressed += OnPausePressed;
         _oneXButton.Pressed += OnOneXPressed;
         _twoXButton.Pressed += OnTwoXPressed;
@@ -131,9 +134,9 @@ public partial class HUD : Control
         _feedbackLabel.Visible = false;
         _feedbackLabel.Text = string.Empty;
         _pressurePanel.Visible = true;
-        _pressureLabel.Text = "Pressure: n/a";
+        _pressureLabel.Text = $"{T("hud.pressure")}: n/a";
         _cameraControlOverlay.Visible = true;
-        _cameraStatusLabel.Text = "Camera: idle";
+        _cameraStatusLabel.Text = $"{T("hud.camera")}: {T("hud.camera.idle")}";
         _errorDialog.Visible = false;
         _errorMessageLabel.Text = string.Empty;
         _configAuditPanel.Visible = true;
@@ -144,14 +147,14 @@ public partial class HUD : Control
         _resourcePanel.Visible = true;
         _buildPanel.Visible = true;
         _progressionPanel.Visible = true;
-        _configAuditSummaryLabel.Text = "Config: n/a | Schema: n/a | Fallback: n/a";
-        _migrationStatusLabel.Text = "Migration: n/a";
-        _reportMetadataLabel.Text = "Metadata: n/a";
-        _outcomeLabel.Text = "Outcome: n/a";
-        _runtimePromptLabel.Text = "Prompt: n/a";
-        _resourceSummaryLabel.Text = "Resources: gold=n/a iron=n/a pop=n/a";
-        _buildSummaryLabel.Text = "Build: tax=n/a total_gold=n/a";
-        _progressionSummaryLabel.Text = "Progression: tech=n/a reward=n/a";
+        _configAuditSummaryLabel.Text = $"{T("hud.config")}: n/a | {T("hud.schema")}: n/a | {T("hud.fallback")}: n/a";
+        _migrationStatusLabel.Text = $"{T("hud.migration")}: n/a";
+        _reportMetadataLabel.Text = $"{T("hud.metadata")}: n/a";
+        _outcomeLabel.Text = $"{T("hud.outcome")}: n/a";
+        _runtimePromptLabel.Text = $"{T("hud.prompt")}: n/a";
+        _resourceSummaryLabel.Text = $"{T("hud.resources")}: gold=n/a iron=n/a pop=n/a";
+        _buildSummaryLabel.Text = $"{T("hud.build")}: tax=n/a total_gold=n/a";
+        _progressionSummaryLabel.Text = $"{T("hud.progression")}: tech=n/a reward=n/a";
         _activeFeedbackCode = string.Empty;
         _activeFeedbackMessageKey = string.Empty;
         _hasPendingErrorDialog = false;
@@ -166,6 +169,16 @@ public partial class HUD : Control
 
     public override void _Process(double delta)
     {
+        var locale = NormalizeLocale(TranslationServer.GetLocale());
+        if (!string.Equals(locale, _localizedLocale, StringComparison.OrdinalIgnoreCase))
+        {
+            _localizedLocale = locale;
+            _i18n?.Call("switch_locale", _localizedLocale);
+            ApplyLocalizedStaticTexts();
+            RenderDay();
+            RenderCycleRemaining();
+        }
+
         if (!_phaseCountdownEnabled || delta <= 0d)
         {
             UpdateFeedbackVisibility();
@@ -260,7 +273,7 @@ public partial class HUD : Control
             var hp = ReadInt(doc.RootElement, "current_hp", "CurrentHp", "value", "health");
             if (hp.HasValue)
             {
-                _health.Text = $"HP: {hp.Value}";
+                _health.Text = $"{T("hud.hp")}: {hp.Value}";
                 UpdatePressureLabelFromHp(hp.Value);
                 var hpRunId = ReadString(doc.RootElement, "RunId", "run_id") ?? "runtime";
                 var hpDay = ReadInt(doc.RootElement, "DayNumber", "day", "Day") ?? _currentDay;
@@ -385,8 +398,8 @@ public partial class HUD : Control
         var isNonTerminalOutcome = !isTerminalOutcome;
         if (isNonTerminalOutcome)
         {
-            _outcomeLabel.Text = "Outcome: n/a";
-            _runtimePromptLabel.Text = "Prompt: n/a";
+            _outcomeLabel.Text = $"{T("hud.outcome")}: n/a";
+            _runtimePromptLabel.Text = $"{T("hud.prompt")}: n/a";
             return;
         }
 
@@ -430,13 +443,13 @@ public partial class HUD : Control
             DateTimeOffset.UtcNow);
         if (count.HasValue && day.HasValue)
         {
-            _pressureLabel.Text = $"Pressure: day={day.Value} spawned={count.Value}";
+            _pressureLabel.Text = $"{T("hud.pressure")}: day={day.Value} spawned={count.Value}";
             return;
         }
 
         if (count.HasValue)
         {
-            _pressureLabel.Text = $"Pressure: spawned={count.Value}";
+            _pressureLabel.Text = $"{T("hud.pressure")}: spawned={count.Value}";
         }
     }
 
@@ -446,14 +459,14 @@ public partial class HUD : Control
         var dy = ReadInt(payload, "dy", "Dy", "delta_y", "DeltaY");
         if (dx.HasValue && dy.HasValue)
         {
-            _cameraStatusLabel.Text = $"Camera: dx={dx.Value} dy={dy.Value}";
+            _cameraStatusLabel.Text = $"{T("hud.camera")}: dx={dx.Value} dy={dy.Value}";
             return;
         }
 
         var mode = ReadString(payload, "mode", "Mode");
         if (!string.IsNullOrWhiteSpace(mode))
         {
-            _cameraStatusLabel.Text = $"Camera: {mode}";
+            _cameraStatusLabel.Text = $"{T("hud.camera")}: {mode}";
         }
     }
 
@@ -472,7 +485,7 @@ public partial class HUD : Control
         if (gold.HasValue || iron.HasValue || popCap.HasValue)
         {
             _resourceSummaryLabel.Text =
-                $"Resources: gold={DisplayInt(gold)} iron={DisplayInt(iron)} pop={DisplayInt(popCap)}";
+                $"{T("hud.resources")}: gold={DisplayInt(gold)} iron={DisplayInt(iron)} pop={DisplayInt(popCap)}";
         }
     }
 
@@ -490,7 +503,7 @@ public partial class HUD : Control
             DateTimeOffset.UtcNow);
         var details = !string.IsNullOrWhiteSpace(residenceId) ? $"residence={residenceId}" : "residence=n/a";
         _buildSummaryLabel.Text =
-            $"Build: tax={DisplayInt(taxDelta)} total_gold={DisplayInt(totalGold)} {details}";
+            $"{T("hud.build")}: tax={DisplayInt(taxDelta)} total_gold={DisplayInt(totalGold)} {details}";
     }
 
     private void HandleTechAppliedEvent(JsonElement payload)
@@ -509,32 +522,32 @@ public partial class HUD : Control
         var techText = !string.IsNullOrWhiteSpace(techId) ? techId : "n/a";
         var statText = !string.IsNullOrWhiteSpace(statKey) ? statKey : "n/a";
         _progressionSummaryLabel.Text =
-            $"Progression: tech={techText}:{statText} {DisplayInt(previous)}->{DisplayInt(current)} reward=n/a";
+            $"{T("hud.progression")}: tech={techText}:{statText} {DisplayInt(previous)}->{DisplayInt(current)} reward=n/a";
     }
 
     private void RenderRuntimePrompt(string messageKey, string details, string fallbackCode)
     {
         var text = BuildFeedbackDisplayText(messageKey, details, fallbackCode);
         _runtimePromptLabel.Text = string.IsNullOrWhiteSpace(text)
-            ? "Prompt: n/a"
-            : $"Prompt: {text}";
+            ? $"{T("hud.prompt")}: n/a"
+            : $"{T("hud.prompt")}: {text}";
     }
 
     private void UpdatePressureLabelFromHp(int hp)
     {
         if (hp <= 20)
         {
-            _pressureLabel.Text = $"Pressure: critical (hp={hp})";
+            _pressureLabel.Text = $"{T("hud.pressure")}: critical (hp={hp})";
             return;
         }
 
         if (hp <= 60)
         {
-            _pressureLabel.Text = $"Pressure: high (hp={hp})";
+            _pressureLabel.Text = $"{T("hud.pressure")}: high (hp={hp})";
             return;
         }
 
-        _pressureLabel.Text = $"Pressure: stable (hp={hp})";
+        _pressureLabel.Text = $"{T("hud.pressure")}: stable (hp={hp})";
     }
 
     private void ShowTemporaryFeedback(string messageKey, string details, string code, int priority)
@@ -552,7 +565,7 @@ public partial class HUD : Control
 
         _activeFeedbackCode = code;
         _activeFeedbackMessageKey = messageKey;
-        _feedbackLabel.Text = BuildFeedbackDisplayText(messageKey, details, code);
+        _feedbackLabel.Text = TranslateFeedbackText(BuildFeedbackDisplayText(messageKey, details, code));
         _feedbackLabel.Visible = !string.IsNullOrWhiteSpace(_feedbackLabel.Text);
         _feedbackHideAtMs = Time.GetTicksMsec() + (DefaultFeedbackTimeoutSeconds * 1000f);
     }
@@ -566,7 +579,7 @@ public partial class HUD : Control
         _feedbackLabel.Text = string.Empty;
         _feedbackHideAtMs = 0f;
         _errorDialog.Visible = true;
-        _errorMessageLabel.Text = BuildFeedbackDisplayText(messageKey, details, code);
+        _errorMessageLabel.Text = TranslateFeedbackText(BuildFeedbackDisplayText(messageKey, details, code));
     }
 
     private void OnDismissFeedbackPressed()
@@ -655,24 +668,25 @@ public partial class HUD : Control
                messageKey.StartsWith("ui.load_failure.", StringComparison.OrdinalIgnoreCase);
     }
 
-    private static string BuildFeedbackDisplayText(string messageKey, string details, string fallbackCode)
+    private string BuildFeedbackDisplayText(string messageKey, string details, string fallbackCode)
     {
         var keyText = messageKey switch
         {
-            _ when messageKey.StartsWith("ui.invalid_action.", StringComparison.OrdinalIgnoreCase) => "Invalid action.",
-            _ when messageKey.StartsWith("ui.blocked_action.", StringComparison.OrdinalIgnoreCase) => "Action blocked.",
-            _ when messageKey.StartsWith("ui.load_failure.", StringComparison.OrdinalIgnoreCase) => "Load failed.",
-            _ when messageKey.StartsWith("ui.migration_failure.", StringComparison.OrdinalIgnoreCase) => "Migration failed.",
-            _ when messageKey.StartsWith("ui.reward.offer.", StringComparison.OrdinalIgnoreCase) => "Reward offered.",
-            _ when messageKey.StartsWith("ui.run.win.", StringComparison.OrdinalIgnoreCase) => "Victory!",
-            _ when messageKey.StartsWith("ui.run.lose.", StringComparison.OrdinalIgnoreCase) => "Defeat.",
+            _ when messageKey.StartsWith("ui.invalid_action.", StringComparison.OrdinalIgnoreCase) => "hud.feedback.invalid_action",
+            _ when messageKey.StartsWith("ui.blocked_action.", StringComparison.OrdinalIgnoreCase) => "hud.feedback.blocked_action",
+            _ when messageKey.StartsWith("ui.load_failure.", StringComparison.OrdinalIgnoreCase) => "hud.feedback.load_failed",
+            _ when messageKey.StartsWith("ui.migration_failure.", StringComparison.OrdinalIgnoreCase) => "hud.feedback.migration_failed",
+            _ when messageKey.StartsWith("ui.reward.offer.", StringComparison.OrdinalIgnoreCase) => "hud.feedback.reward_offered",
+            _ when messageKey.StartsWith("ui.run.win.", StringComparison.OrdinalIgnoreCase) => "hud.feedback.victory",
+            _ when messageKey.StartsWith("ui.run.lose.", StringComparison.OrdinalIgnoreCase) => "hud.feedback.defeat",
             _ => string.Empty,
         };
+        keyText = T(keyText);
 
         var detailText = details?.Trim() ?? string.Empty;
         if (string.IsNullOrWhiteSpace(keyText))
         {
-            keyText = "Feedback";
+            keyText = "hud.feedback.generic";
         }
 
         if (string.IsNullOrWhiteSpace(detailText))
@@ -691,6 +705,34 @@ public partial class HUD : Control
     private static string DisplayInt(int? value)
     {
         return value.HasValue ? value.Value.ToString() : "n/a";
+    }
+
+    private string TranslateFeedbackText(string textOrKey)
+    {
+        if (string.IsNullOrWhiteSpace(textOrKey))
+        {
+            return textOrKey;
+        }
+
+        if (textOrKey.StartsWith("hud.feedback.", StringComparison.OrdinalIgnoreCase))
+        {
+            return T(textOrKey);
+        }
+
+        var sep = textOrKey.IndexOf(' ');
+        if (sep <= 0)
+        {
+            return textOrKey;
+        }
+
+        var left = textOrKey.Substring(0, sep);
+        var right = textOrKey.Substring(sep + 1);
+        if (left.StartsWith("hud.feedback.", StringComparison.OrdinalIgnoreCase))
+        {
+            return $"{T(left)} {right}";
+        }
+
+        return textOrKey;
     }
 
     private void OnPausePressed()
@@ -780,13 +822,13 @@ public partial class HUD : Control
 
     private void RenderDay()
     {
-        _day.Text = $"Day: {_currentDay}";
+        _day.Text = $"{T("hud.day")}: {_currentDay}";
     }
 
     private void RenderCycleRemaining()
     {
         var remaining = Math.Max(0d, _phaseDurationSeconds - _phaseElapsedSeconds);
-        _cycleRemaining.Text = $"Cycle Remaining: {remaining:0.0}s";
+        _cycleRemaining.Text = $"{T("hud.cycle_remaining")}: {remaining:0.0}s";
     }
 
     public void SetDay(int day)
@@ -805,7 +847,7 @@ public partial class HUD : Control
 
     public void SetHealth(int hp)
     {
-        _health.Text = $"HP: {hp}";
+        _health.Text = $"{T("hud.hp")}: {hp}";
     }
 
     public void ApplyConfigAuditView(global::Godot.Collections.Dictionary payload)
@@ -817,11 +859,11 @@ public partial class HUD : Control
         var reasonCode = ReadDictionaryString(payload, "reason_code", "reasonCode");
         var reportMetadata = ReadDictionaryString(payload, "report_metadata", "reportMetadata");
 
-        _configAuditSummaryLabel.Text = $"Config: {activeConfig} | Schema: {schemaStatus} | Fallback: {fallbackPolicy}";
+        _configAuditSummaryLabel.Text = $"{T("hud.config")}: {activeConfig} | {T("hud.schema")}: {schemaStatus} | {T("hud.fallback")}: {fallbackPolicy}";
         _migrationStatusLabel.Text = string.IsNullOrWhiteSpace(reasonCode)
-            ? $"Migration: {migrationStatus}"
-            : $"Migration: {migrationStatus} ({reasonCode})";
-        _reportMetadataLabel.Text = $"Metadata: {reportMetadata}";
+            ? $"{T("hud.migration")}: {migrationStatus}"
+            : $"{T("hud.migration")}: {migrationStatus} ({reasonCode})";
+        _reportMetadataLabel.Text = $"{T("hud.metadata")}: {reportMetadata}";
 
         _configAuditPanel.Visible = true;
         _migrationStatusDialog.Visible = true;
@@ -860,5 +902,58 @@ public partial class HUD : Control
         }
 
         return "n/a";
+    }
+
+    private void SetupLocalization()
+    {
+        var script = GD.Load<Script>("res://Game.Godot/Scripts/Localization/LocalizationManager.gd");
+        if (script == null)
+        {
+            return;
+        }
+
+        _i18n = (GodotObject)script.Call("new");
+        _i18n?.Call("configure_locale_resource", "en-US", "res://Game.Godot/Localization/en-US.json");
+        _i18n?.Call("configure_locale_resource", "zh-CN", "res://Game.Godot/Localization/zh-CN.json");
+        _localizedLocale = NormalizeLocale(TranslationServer.GetLocale());
+        _i18n?.Call("switch_locale", _localizedLocale);
+        ApplyLocalizedStaticTexts();
+    }
+
+    private void ApplyLocalizedStaticTexts()
+    {
+        _pauseButton.Text = T("hud.pause");
+        _oneXButton.Text = T("hud.speed_1x");
+        _twoXButton.Text = T("hud.speed_2x");
+        _dismissButton.Text = T("hud.dismiss");
+        _configAuditRefreshButton.Text = T("hud.refresh_audit");
+        _migrationRetryButton.Text = T("hud.retry_migration");
+    }
+
+    private string T(string key)
+    {
+        if (_i18n == null || string.IsNullOrWhiteSpace(key))
+        {
+            return key;
+        }
+
+        var value = _i18n.Call("translate", key).AsString();
+        return string.IsNullOrWhiteSpace(value) ? key : value;
+    }
+
+    private static string NormalizeLocale(string locale)
+    {
+        if (string.IsNullOrWhiteSpace(locale))
+        {
+            return "en-US";
+        }
+
+        var normalized = locale.Trim().ToLowerInvariant();
+        if (normalized == "zh" || normalized.StartsWith("zh"))
+        {
+            return "zh-CN";
+        }
+
+        return "en-US";
     }
 }
