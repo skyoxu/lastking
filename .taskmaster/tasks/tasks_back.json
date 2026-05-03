@@ -1,4 +1,4 @@
-﻿[
+[
     {
         "id":  "NG-0001",
         "story_id":  "BACKLOG-LASTKING-M1",
@@ -166,7 +166,7 @@
                            "鏃ュ鏃堕暱蹇呴』鐢遍厤缃В鏋愬緱鍒帮紝涓旇繍琛屾椂瀹炴祴鍊煎繀椤讳负 Day=240 绉掋€丯ight=120 绉掋€?Refs: Game.Core.Tests/Services/ConfigManagerParsingTests.cs Tests.Godot/tests/Integration/test_balance_runtime_day_night_from_config.gd",
                            "鏅€氭尝娆￠绠楀繀椤荤敱閰嶇疆瑙ｆ瀽寰楀埌锛屼笖杩愯鏃跺€煎繀椤讳负 day1=50銆乨aily growth=120%锛?.2锛夈€?Refs: Game.Core.Tests/Services/WaveBudgetFromConfigTests.cs Tests.Godot/tests/Integration/test_balance_runtime_wave_budget_from_config.gd",
                            "鍒锋€妭濂忎笌 Boss 鏁伴噺蹇呴』鐢遍厤缃В鏋愬緱鍒帮紝涓旇繍琛屾椂鍊煎繀椤讳负 spawn cadence=10 绉掋€乥oss count=2銆?Refs: Game.Core.Tests/Services/SpawnScheduleFromConfigTests.cs Tests.Godot/tests/Integration/test_balance_runtime_spawn_and_boss_from_config.gd",
-                           "閰嶇疆蹇呴』鍖呭惈 elite 涓?boss channel 瀛楁锛屼笖杩愯鏃舵尝娆?鍒锋€€夎矾蹇呴』瀹為檯娑堣垂杩欎袱涓瓧娈点€?Refs: Game.Core.Tests/Services/WaveChannelSelectionTests.cs Tests.Godot/tests/Integration/test_balance_runtime_channel_selection_from_config.gd",
+                           "閰嶇疆蹇呴』鍖呭惈 elite 涓?boss channel 瀛楁锛屼笖杩愯鏃舵尝娆/鍒锋€€夎矾蹇呴』瀹為檯娑堣垂杩欎袱涓瓧娈点€?Refs: Game.Core.Tests/Services/WaveChannelSelectionTests.cs Tests.Godot/tests/Integration/test_balance_runtime_channel_selection_from_config.gd",
                            "淇敼閰嶇疆骞惰Е鍙戦噸杞藉悗锛屾父鎴忓唴鍙瀵熷埌鐨勫钩琛¤涓哄繀椤婚殢鏂板€煎彉鍖栵紱閰嶇疆鏈彉鍖栨椂閲嶈浇鍚庤涓哄繀椤讳繚鎸佷笉鍙樸€?Refs: Tests.Godot/tests/Adapters/Config/test_settings_persistence.gd",
                            "蹇呴』鎻愪緵鍙牳楠岃瘉鎹瘉鏄庡垪鍑虹殑骞宠　鍙傛暟鍦?gameplay 璺緞鍧囨潵鑷?ConfigManager 璇诲彇锛岃€岄潪纭紪鐮佸父閲忋€?Refs: Game.Core.Tests/Services/ConfigDrivenRuntimeLoopTests.cs Game.Core.Tests/Services/ConfigManagerAccessSurfaceTests.cs",
                            "鍦ㄤ笉鏀瑰姩浠ｇ爜鐨勫墠鎻愪笅锛屼粎鏇挎崲骞宠　閰嶇疆骞堕噸杞斤紝蹇呴』瀵艰嚧鏃ュ鍛ㄦ湡銆佹尝娆￠绠楀闀裤€佸埛鎬妭濂忓拰 Boss 鏁伴噺鐨勮繍琛岀粨鏋滃彂鐢熷彉鍖栥€?Refs: Game.Core.Tests/Services/ConfigReloadBehaviorTests.cs Tests.Godot/tests/Integration/test_balance_runtime_config_reload.gd",
@@ -246,14 +246,14 @@
                            "缁堝眬瑙﹀彂鍓嶏紝鐘舵€佹満浠呮毚闇?Day 涓?Night 涓や釜闈炵粓灞€鐘舵€侊紝骞朵笖鍙厑璁?Day\u003c-\u003eNight 鍚堟硶杩佺Щ锛涗换浣曞叾浠栬縼绉昏姹傚繀椤昏鎷掔粷涓旂姸鎬佷笉鍙樸€?Refs: Game.Core.Tests/State/GameStateMachineTests.cs",
                            "Day/Night phase durations must be configuration-driven (not hardcoded): default Day=4:00 and Night=2:00; transition is allowed only when the active phase reaches its configured threshold, and transition cannot be manually forced before threshold. Refs: Game.Core.Tests/State/GameStateManagerTests.cs",
                            "day 璁℃暟浠?1 鍒濆鍖栧苟鎸夐『搴忛€愭棩閫掑锛屼笉鍏佽璺冲彿鎴栧洖閫€锛屼笖涓嶅緱瓒呭嚭 1-15 鐨勯棴鍖洪棿銆?Refs: Game.Core.Tests/State/GameStateManagerTests.cs",
-                           "浣跨敤鐩稿悓鍥哄畾绉嶅瓙涓旇緭鍏?鏇存柊搴忓垪涓€鑷存椂锛屽娆¤繍琛屽繀椤讳骇鐢熷畬鍏ㄤ竴鑷寸殑闃舵椤哄簭銆侀殢鏈虹粨鏋滀笌闃舵杈圭晫妫€鏌ョ偣搴忓垪銆?Refs: Game.Core.Tests/State/GameStateManagerTests.cs",
+                           "浣跨敤鐩稿悓鍥哄畾绉嶅瓙涓旇緭鍏/鏇存柊搴忓垪涓€鑷存椂锛屽娆¤繍琛屽繀椤讳骇鐢熷畬鍏ㄤ竴鑷寸殑闃舵椤哄簭銆侀殢鏈虹粨鏋滀笌闃舵杈圭晫妫€鏌ョ偣搴忓垪銆?Refs: Game.Core.Tests/State/GameStateManagerTests.cs",
                            "浠呭湪 Day15 瀹屾垚鏃跺彂鍑轰笖浠呭彂鍑轰竴娆＄粓灞€鑳滃埄缁撴灉锛汥ay15 瀹屾垚鍓嶄笉寰楀彂鍑轰换浣曠粓灞€鎴栬儨鍒╃粨鏋溿€?Refs: Game.Core.Tests/State/GameStateManagerTests.cs",
                            "璁℃椂涓庤縼绉讳粎閫氳繃 Godot process-loop 鏇存柊椹卞姩锛屽湪 fixed-step 涓?variable-step 涓嬮兘蹇呴』淇濇寔鍗曡皟鎺ㄨ繘涓斾笌甯х巼鏃犲叧銆?Refs: Game.Core.Tests/State/GameStateManagerTests.cs",
                            "浠庤繍琛屾椂 Day1 鍚姩寮€濮嬶紝鎬昏€楁椂鍒?4:00 鏃堕娆″彂鐢?Day-\u003eNight锛屾€昏€楁椂鍒?6:00 鏃跺彂鐢?Night-\u003eDay2銆?Refs: Game.Core.Tests/State/GameStateManagerTests.cs",
                            "鑻?process-loop 鏇存柊鏈墽琛岋紝鍒欑疮璁℃椂闂淬€佸綋鍓嶉樁娈电姸鎬佷笌褰撳墠 day 鍊煎潎蹇呴』淇濇寔涓嶅彉銆?Refs: Game.Core.Tests/State/GameStateManagerTests.cs",
                            "Day15 瀹屾垚骞跺彂鍑虹粓灞€鑳滃埄鍚庯紝鍚庣画鏇存柊涓嶅緱灏?day 鎺ㄨ繘鍒?15 浠ヤ笂锛屼笖涓嶅緱鍐嶆鍙戝嚭缁堝眬鎴栬儨鍒╃粨鏋溿€?Refs: Game.Core.Tests/State/GameStateManagerTests.cs",
                            "浠讳竴闃舵鍦ㄦ湭杈惧埌閰嶇疆闃堝€煎墠锛岄樁娈电姸鎬佷笌 day 蹇呴』淇濇寔涓嶅彉锛涗粎鍦ㄦ椿鍔ㄦ洿鏂颁腑杈惧埌闃堝€兼椂鎵嶅厑璁稿彂鐢熻縼绉汇€?Refs: Game.Core.Tests/State/GameStateManagerTests.cs",
-                           "杩愯鏃?C# GameStateManager 瀹炰緥蹇呴』鍙娴嬪湴鎻愪緵褰撳墠闃舵鐘舵€侊紙Day/Night锛夈€佸綋鍓?day锛?-15锛変互鍙婁緵涓嬫父娑堣垂鐨勮縼绉?缁堝眬淇″彿銆?Refs: Game.Core.Tests/State/GameStateManagerTests.cs",
+                           "杩愯鏃?C# GameStateManager 瀹炰緥蹇呴』鍙娴嬪湴鎻愪緵褰撳墠闃舵鐘舵€侊紙Day/Night锛夈€佸綋鍓?day锛?-15锛変互鍙婁緵涓嬫父娑堣垂鐨勮縼绉/缁堝眬淇″彿銆?Refs: Game.Core.Tests/State/GameStateManagerTests.cs",
                            "A reviewed runtime state-machine design artifact must be linked, and its state diagram, transition rules, and downstream consumer mapping must stay consistent with runtime behavior. Refs: Game.Core.Tests/Tasks/Task3DayNightDesignArtifactTests.cs",
                            "At every Day\u003c-\u003eNight boundary, runtime must emit exactly one deterministic checkpoint event; no missing and no extra checkpoint events are allowed. Refs: Game.Core.Tests/State/GameStateManagerTests.cs",
                            "Replay validation must assert checkpoint-event count equals observed boundary-transition count for the same run input. Refs: Game.Core.Tests/State/GameStateManagerTests.cs",
@@ -2748,7 +2748,7 @@
                           "Game.Core.Tests/State/GameStateMachineTests.cs"
                       ],
         "acceptance":  [
-                           "Taskmaster #32 浜や粯缁撴灉蹇呴』瀹炵幇涓庝换鍔℃弿杩颁竴鑷寸殑鏁屼汉閰嶇疆 Schema 璇箟锛氳鐩栨晫浜虹被鍨?灞炴€?琛屼负瀛楁骞堕€氳繃鍙厤缃暟鎹┍鍔ㄥ钩琛°€?Refs: Game.Core.Tests/Services/EnemyConfigSchemaValidationTests.cs",
+                           "Taskmaster #32 浜や粯缁撴灉蹇呴』瀹炵幇涓庝换鍔℃弿杩颁竴鑷寸殑鏁屼汉閰嶇疆 Schema 璇箟锛氳鐩栨晫浜虹被鍨/灞炴€?琛屼负瀛楁骞堕€氳繃鍙厤缃暟鎹┍鍔ㄥ钩琛°€?Refs: Game.Core.Tests/Services/EnemyConfigSchemaValidationTests.cs",
                            "鍦?Windows Godot+C# 鍩虹嚎鐜涓紝寮曠敤鐨勮嚜鍔ㄥ寲娴嬭瘯蹇呴』鍏ㄩ儴閫氳繃銆?Refs: Game.Core.Tests/Services/EnemyConfigSchemaValidationTests.cs Game.Core.Tests/Services/EnemyConfigSampleFileValidationTests.cs",
                            "寮曞叆璇?Schema 鍚庯紝纭畾鎬фā鎷熶笌鏍稿績寰幆绾︽潫鐩稿叧鍥炲綊娴嬭瘯涓嶅緱澶辫触銆?Refs: Game.Core.Tests/Engine/GameEngineCoreEventTests.cs Game.Core.Tests/State/GameStateMachineTests.cs",
                            "蹇呴』瀛樺湪 config/schemas/enemy-config.schema.json锛屼笖澹版槑 \"$schema\": \"http://json-schema.org/draft-07/schema#\" 涓庨《灞?\"type\": \"object\"銆?Refs: Game.Core.Tests/Services/EnemyConfigSchemaValidationTests.cs",
@@ -2844,7 +2844,7 @@
                            "婊¤冻 O8锛歷ersion銆乨ifficulty_level銆乵odifiers 杩欎簺鍙厤缃瓧娈甸兘涓嶅緱琚崟鍊煎父閲忓寲锛涘 const/鍗曞€?enum 绾︽潫鐨勫弽渚嬫牎楠屽繀椤诲け璐ャ€?Refs: Game.Core.Tests/Domain/DifficultyConfigSchemaTests.cs",
                            "鍦?difficulty_level 涓?modifiers 鐩稿悓鏉′欢涓嬶紝鑷冲皯涓や釜鍚堟硶 version锛堝 1.0銆?.1锛夊簲琚帴鍙楋紝浠ラ獙璇佺増鏈瓧娈垫湭琚崟鍊奸攣姝汇€?Refs: Game.Core.Tests/Domain/DifficultyConfigSchemaTests.cs",
                            "鑻?version 琚敊璇害鏉熶负鍗曚竴甯搁噺锛堝 const 鎴栧崟鍊?enum锛夛紝娴嬭瘯蹇呴』鎶ュ憡澶辫触鑰岄潪閫氳繃銆?Refs: Game.Core.Tests/Domain/DifficultyConfigSchemaTests.cs",
-                           "瑕嗙洊瀛愪换鍔?1锛氶獙鏀堕渶鍚屾椂楠岃瘉闅惧害灞傜骇瀹氫箟锛坋asy銆乵edium銆乭ard锛夈€佽繍琛屽紑濮嬪悗鐨勯攣瀹氳涔夛紝浠ュ強鐢遍《灞傚繀濉?version 鎻愪緵鐨勮縼绉?鍥炴函鍏冩暟鎹€?Refs: Game.Core.Tests/Domain/DifficultyConfigSchemaTests.cs",
+                           "瑕嗙洊瀛愪换鍔?1锛氶獙鏀堕渶鍚屾椂楠岃瘉闅惧害灞傜骇瀹氫箟锛坋asy銆乵edium銆乭ard锛夈€佽繍琛屽紑濮嬪悗鐨勯攣瀹氳涔夛紝浠ュ強鐢遍《灞傚繀濉?version 鎻愪緵鐨勮縼绉/鍥炴函鍏冩暟鎹€?Refs: Game.Core.Tests/Domain/DifficultyConfigSchemaTests.cs",
                            "瑕嗙洊瀛愪换鍔?2锛氫弗鏍兼牎楠岄渶瀵归潪娉曞眰绾ф灇涓俱€佺己澶卞繀濉」銆乵odifiers 绫诲瀷涓嶅尮閰嶃€佷互鍙婂０鏄庢暟鍊艰竟鐣岃繚瑙勭粰鍑烘槑纭嫆缁濆師鍥犮€?Refs: Game.Core.Tests/Services/DifficultyConfigSchemaValidationTests.cs",
                            "瑕嗙洊瀛愪换鍔?3锛氬洖褰掑す鍏风殑閫氳繃/澶辫触缁撴灉鍦ㄩ噸澶嶆墽琛屼腑淇濇寔绋冲畾锛涘姞杞介潪娉曢毦搴﹂厤缃椂蹇呴』鎷掔粷婵€娲伙紝骞朵繚鎸佹渶鍚庝竴娆℃湁鏁堣繍琛岀姸鎬侊紙鎴栭璁惧畨鍏ㄩ粯璁ゅ€硷級銆?Refs: Game.Core.Tests/State/GameStateManagerTests.cs"
                        ],
@@ -3363,9 +3363,9 @@
                            "鍗曞厓娴嬭瘯蹇呴』鏄惧紡楠岃瘉锛氱増鏈笉鍖归厤澶勭悊涓嶄細婵€娲讳换浣曞吋瀹规ā寮忔垨鑷姩閫傞厤璺緞銆?Refs: Game.Core.Tests/Services/ConfigManagerVersionPolicyTests.cs",
                            "鐗堟湰澶勭悊蹇呴』閬靛惊鍞竴鐨?expectedVersion 鐩哥瓑鎬ц鍒欙細浠讳綍闈炵浉绛夌増鏈兘鎸夋嫆缁濆姞杞姐€侀粯璁ゅ洖閫€銆佽縼绉诲繀闇€鏃ュ織澶勭悊銆?Refs: Game.Core.Tests/Services/ConfigManagerVersionPolicyTests.cs Game.Core.Tests/Services/ConfigManagerMigrationLoggingTests.cs",
                            "O1 涔夊姟蹇呴』鍙祴璇曪細ConfigManager 鍦ㄧ‘瀹氶噰鐢ㄥ姞杞介厤缃垨榛樿鍥為€€鍓嶏紝蹇呴』鍏堟瘮杈?loaded config version 涓?expectedVersion銆?Refs: Game.Core.Tests/Services/ConfigManagerVersionPolicyTests.cs",
-                           "瀛愪换鍔?锛堝己鍒惰縼绉诲绾︼級蹇呴』鍙獙璇侊細瑙﹀彂鐭╅樀涓紝expectedVersion 鍖归厤鏃朵繚鐣欏姞杞介厤缃紱浠讳竴闈炵浉绛夌増鏈垨涓嶅彲鎭㈠杩佺Щ澶辫触鏃舵嫆缁濆姞杞介厤缃苟淇濇寔榛樿杩愯鐘舵€併€?Refs: Game.Core.Tests/Services/ConfigManagerTests.cs",
-                           "瀛愪换鍔?锛堣縼绉绘墽琛屽櫒锛夊繀椤诲彲楠岃瘉锛氳縼绉昏繃绋嬫寜纭畾鎬ч『搴忔墽琛屽苟杩涜閫愭涓ユ牸鏍￠獙锛涗笉鏀寔璺緞鎴栬嚧鍛芥楠ょ粨鏋滃繀椤荤‘瀹氭€ф敹鏁涗负鎷掔粷鍔犺浇骞跺洖閫€榛樿銆?Refs: Game.Core.Tests/Services/ConfigMigrationExecutorTests.cs",
-                           "瀛愪换鍔?锛堝洖褰掍笌澶辫触璺緞锛夊繀椤诲彲楠岃瘉锛氳嚜鍔ㄥ寲娴嬭瘯瑕嗙洊鐗堟湰涓嶅尮閰嶄笌鑷村懡杩佺Щ鍦烘櫙锛岃姹傝緭鍑鸿縼绉昏瘖鏂紝骞惰瘉鏄庤繍琛屾椂淇濇寔榛樿鐘舵€佷笖涓嶅瓨鍦ㄩ儴鍒嗘帴鍙楀姞杞介厤缃€?Refs: Game.Core.Tests/Services/ConfigManagerTests.cs Game.Core.Tests/Services/ConfigMigrationExecutorTests.cs",
+                           "瀛愪换鍔/锛堝己鍒惰縼绉诲绾︼級蹇呴』鍙獙璇侊細瑙﹀彂鐭╅樀涓紝expectedVersion 鍖归厤鏃朵繚鐣欏姞杞介厤缃紱浠讳竴闈炵浉绛夌増鏈垨涓嶅彲鎭㈠杩佺Щ澶辫触鏃舵嫆缁濆姞杞介厤缃苟淇濇寔榛樿杩愯鐘舵€併€?Refs: Game.Core.Tests/Services/ConfigManagerTests.cs",
+                           "瀛愪换鍔/锛堣縼绉绘墽琛屽櫒锛夊繀椤诲彲楠岃瘉锛氳縼绉昏繃绋嬫寜纭畾鎬ч『搴忔墽琛屽苟杩涜閫愭涓ユ牸鏍￠獙锛涗笉鏀寔璺緞鎴栬嚧鍛芥楠ょ粨鏋滃繀椤荤‘瀹氭€ф敹鏁涗负鎷掔粷鍔犺浇骞跺洖閫€榛樿銆?Refs: Game.Core.Tests/Services/ConfigMigrationExecutorTests.cs",
+                           "瀛愪换鍔/锛堝洖褰掍笌澶辫触璺緞锛夊繀椤诲彲楠岃瘉锛氳嚜鍔ㄥ寲娴嬭瘯瑕嗙洊鐗堟湰涓嶅尮閰嶄笌鑷村懡杩佺Щ鍦烘櫙锛岃姹傝緭鍑鸿縼绉昏瘖鏂紝骞惰瘉鏄庤繍琛屾椂淇濇寔榛樿鐘舵€佷笖涓嶅瓨鍦ㄩ儴鍒嗘帴鍙楀姞杞介厤缃€?Refs: Game.Core.Tests/Services/ConfigManagerTests.cs Game.Core.Tests/Services/ConfigMigrationExecutorTests.cs",
                            "Regression tests must assert deterministic migration step order and deterministic final result for identical inputs. Refs: Game.Core.Tests/Services/ConfigManagerMigrationLoggingTests.cs",
                            "Regression tests must assert rejection paths keep default runtime state unchanged and never allow partial acceptance. Refs: Game.Core.Tests/Services/ConfigManagerVersionPolicyTests.cs",
                            "Mutual-exclusive policy must be explicit: if config.version != expectedVersion, system must always refuse loaded config and force default fallback. Refs: Game.Core.Tests/Services/ConfigManagerVersionPolicyTests.cs",
