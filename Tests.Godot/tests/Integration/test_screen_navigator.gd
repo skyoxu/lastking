@@ -28,10 +28,18 @@ func test_switch_to_invalid_scene_returns_false() -> void:
     assert_object(nav).is_not_null()
     var overlays = _overlays(main)
     var before_children = overlays.get_child_count()
+    var before_nav = nav
+    var before_hud_count := _hud_count(main)
+    var before_screen_root := main.get_node("RuntimeUi/ScreenRoot")
+    var before_screen_root_children := before_screen_root.get_child_count()
     var ok = nav.SwitchTo("res://path/not_found.tscn")
     assert_bool(ok).is_false()
     await get_tree().process_frame
     assert_int(overlays.get_child_count()).is_equal(before_children)
+    assert_int(_hud_count(main)).is_equal(before_hud_count)
+    assert_that(_navigator(main)).is_equal(before_nav)
+    assert_that(main.get_node("RuntimeUi/ScreenRoot")).is_equal(before_screen_root)
+    assert_int(before_screen_root.get_child_count()).is_equal(before_screen_root_children)
 
 func test_fade_transition_blocks_input_and_cleans_up() -> void:
     var main = await _load_main()

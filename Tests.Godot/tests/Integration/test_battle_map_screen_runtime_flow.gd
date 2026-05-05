@@ -103,6 +103,12 @@ func test_1440x900_frame_keeps_three_player_visible_bands_simultaneously_visible
 	var title: Control = screen.get_node("Margin/VBox/Title")
 	var metrics_help: Control = screen.get_node("Margin/VBox/MetricsHelp")
 	var path: Line2D = screen.get_node("Background/Path")
+	var background_top_before := background.global_position.y
+	var background_height_before := background.size.y
+	var title_top_before := title.global_position.y
+	var title_height_before := title.size.y
+	var metrics_top_before := metrics_help.global_position.y
+	var metrics_height_before := metrics_help.size.y
 
 	assert_bool(_is_visible_inside_viewport(title, viewport)).is_true()
 	assert_bool(_is_visible_inside_viewport(background, viewport)).is_true()
@@ -114,6 +120,18 @@ func test_1440x900_frame_keeps_three_player_visible_bands_simultaneously_visible
 	var bottom_mid := metrics_help.global_position.y + metrics_help.size.y * 0.5
 	assert_float(title_mid).is_less(battlefield_mid)
 	assert_float(battlefield_mid).is_less(bottom_mid)
+
+	# Resize stability: top/bottom bands stay anchored and keep their heights.
+	screen.size = Vector2(1280.0, 720.0)
+	await _await_frames(2)
+	screen.size = Vector2(1440.0, 900.0)
+	await _await_frames(2)
+	assert_float(background.global_position.y).is_equal(background_top_before)
+	assert_float(background.size.y).is_equal(background_height_before)
+	assert_float(title.global_position.y).is_equal(title_top_before)
+	assert_float(title.size.y).is_equal(title_height_before)
+	assert_float(metrics_help.global_position.y).is_equal(metrics_top_before)
+	assert_float(metrics_help.size.y).is_equal(metrics_height_before)
 
 
 # ACC:T55.1
