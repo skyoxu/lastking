@@ -6,6 +6,24 @@ func _await_frames(count: int) -> void:
 		await get_tree().process_frame
 
 
+func _status_and_summary(screen: Node) -> Dictionary:
+	var status: Label = screen.get_node("Margin/VBox/Status")
+	var summary: Label = screen.get_node("Margin/VBox/Summary")
+	return {
+		"status": String(status.text),
+		"summary": String(summary.text),
+	}
+
+
+func _hud_count(main: Node) -> int:
+	var runtime_ui := main.get_node("RuntimeUi")
+	var count := 0
+	for child in runtime_ui.get_children():
+		if str(child.name) == "HUD":
+			count += 1
+	return count
+
+
 # ACC:T55.1
 func test_narrow_layout_keeps_header_footer_fixed_when_only_battlefield_moves() -> void:
 	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
@@ -60,6 +78,61 @@ func test_battle_map_screen_minimum_runtime_loop_is_player_visible() -> void:
 	assert_bool(String(summary.text).find("HP") >= 0 or String(summary.text).find("生命") >= 0).is_true()
 	assert_bool(String(summary.text).find("Friendly") >= 0 or String(summary.text).find("友军") >= 0).is_true()
 	assert_bool(String(summary.text).find("Enemy") >= 0 or String(summary.text).find("敌军") >= 0).is_true()
+
+
+# ACC:T55.3
+# ACC:T55.7
+func test_battle_map_terminal_summary_should_stay_stable_without_state_change() -> void:
+	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
+	add_child(auto_free(screen))
+	await _await_frames(2)
+
+	var build_btn: Button = screen.get_node("Margin/VBox/Controls/BuildBtn")
+	var wave_btn: Button = screen.get_node("Margin/VBox/Controls/WaveBtn")
+	var exchange_btn: Button = screen.get_node("Margin/VBox/Controls/ExchangeBtn")
+	var cleanup_btn: Button = screen.get_node("Margin/VBox/Controls/CleanupBtn")
+	var finish_btn: Button = screen.get_node("Margin/VBox/Controls/FinishBtn")
+
+	build_btn.emit_signal("pressed")
+	wave_btn.emit_signal("pressed")
+	exchange_btn.emit_signal("pressed")
+	cleanup_btn.emit_signal("pressed")
+	finish_btn.emit_signal("pressed")
+	await _await_frames(2)
+
+	var snapshot_before := _status_and_summary(screen)
+	assert_bool(String(snapshot_before["status"]).length() > 0).is_true()
+	assert_bool(String(snapshot_before["summary"]).length() > 0).is_true()
+
+	await _await_frames(5)
+	var snapshot_after := _status_and_summary(screen)
+	assert_that(snapshot_after).is_equal(snapshot_before)
+
+
+# ACC:T55.2
+# ACC:T55.4
+func test_battle_map_cycle_should_keep_hud_singleton_and_navigator_ownership() -> void:
+	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
+	add_child(auto_free(main))
+	await _await_frames(2)
+
+	var nav: Node = main.get_node("ScreenNavigator")
+	assert_object(nav).is_not_null()
+	nav.set("UseFadeTransition", false)
+	assert_int(_hud_count(main)).is_equal(1)
+
+	var ok_enter: bool = nav.call("SwitchTo", "res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn")
+	assert_bool(ok_enter).is_true()
+	await _await_frames(1)
+	assert_object(main.get_node_or_null("RuntimeUi/ScreenRoot/BattleMapScreen")).is_not_null()
+	assert_int(_hud_count(main)).is_equal(1)
+
+	nav.call("ClearCurrentScreen")
+	await _await_frames(1)
+	assert_object(main.get_node_or_null("RuntimeUi/ScreenRoot/BattleMapScreen")).is_null()
+	assert_int(_hud_count(main)).is_equal(1)
+	assert_object(main.get_node_or_null("ScreenNavigator")).is_not_null()
+
 
 # ACC:T55.7
 # ACC:T55.9

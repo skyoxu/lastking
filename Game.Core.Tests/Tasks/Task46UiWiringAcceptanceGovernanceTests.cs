@@ -282,6 +282,41 @@ public sealed class Task46UiWiringAcceptanceGovernanceTests
         }
     }
 
+    // ACC:T55.10
+    [Fact]
+    public void ShouldKeepTask55AcceptanceRefsAndGovernanceAnchorSynchronized_WhenTask55IsValidated()
+    {
+        foreach (var viewPath in ViewPaths())
+        {
+            var repoPath = ResolveRepositoryPath(viewPath);
+            var root = JsonNode.Parse(File.ReadAllText(repoPath))?.AsArray() ?? throw new InvalidOperationException($"Invalid task view: {viewPath}");
+            var task55 = root
+                .Select(node => node as JsonObject)
+                .FirstOrDefault(node => node?["taskmaster_id"]?.GetValue<int>() == 55);
+            task55.Should().NotBeNull($"{viewPath} must contain Task 55.");
+
+            var acceptance = task55!["acceptance"]?.AsArray().Select(item => item?.GetValue<string>() ?? string.Empty).ToArray() ?? Array.Empty<string>();
+            var testRefs = task55["test_refs"]?.AsArray().Select(item => Normalize(item?.GetValue<string>())).ToArray() ?? Array.Empty<string>();
+
+            acceptance.Should().Contain(line => line.Contains("Before review passes", StringComparison.OrdinalIgnoreCase));
+            testRefs.Should().Contain("Game.Core.Tests/Tasks/Task46UiWiringAcceptanceGovernanceTests.cs");
+
+            foreach (var line in acceptance)
+            {
+                var refs = ParseRefs(line);
+                if (refs.Count == 0)
+                {
+                    continue;
+                }
+
+                foreach (var reference in refs)
+                {
+                    testRefs.Should().Contain(reference, $"{viewPath} acceptance refs must stay synchronized for Task 55.");
+                }
+            }
+        }
+    }
+
     private static IEnumerable<string> ViewPaths()
     {
         yield return ".taskmaster/tasks/tasks_back.json";
