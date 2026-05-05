@@ -1,22 +1,25 @@
 # Task 55 Chapter 6 Residual Needs Fix
 
-- Title: Task 55 Chapter 6 residual needs-fix after fork and narrow-path attempt
+- Title: Task 55 Chapter 6 residual needs-fix after repeated fork review reruns
 - Date: 2026-05-05
 - Status: accepted
 - Supersedes: n/a
 - Superseded by: n/a
 - Branch: task/T55
-- Git Head: 001d597e8353dc1e54aa18f6d9dd47e695180456
-- Why now: Review pipeline fork run still produced reviewer Needs Fix (security-auditor), and the subsequent needs-fix-fast rerun was blocked by rerun_guard due dirty_worktree_unsafe_paths_ceiling.
-- Decision: Keep Task 55 in recovery state; do not force a full rerun while rerun_guard is active. Record evidence and continue with deterministic test-focused fixes first.
-- Consequences: Current code includes targeted ACC:T55.1/T55.2 test strengthening, but P1 closure is not yet re-verified by a successful chapter6 review closure run.
-- Recovery impact: Next run must resume from protocol recovery chain and clear rerun_guard conditions before attempting another 6.8 or final-pass closure.
+- Git Head: ece7b2138c5de39007438ff97018ab77586675c3
+- Why now: After multiple Chapter 6 fork reruns, review pipeline still reports `review-needs-fix` with repeated failure family and `chapter6-route` keeps returning `preferred_lane=inspect-first`, `blocked_by=recent_failure_summary`, `six_eight_worthwhile=no`.
+- Decision: Stop paying additional rerun cost in this session. Keep Task 55 in residual recovery state and require next cycle to resume from protocol recovery chain before any further reviewer rerun.
+- Consequences: Deterministic local targeted tests are green, but reviewer gate remains open; Task 55 is not closed yet.
+- Recovery impact: Next cycle must start from `resume-task --recommendation-only` and follow `chapter6-route`; only run allowed `fork/resume` commands when protocol fields permit.
 - Validation evidence:
-  - logs/ci/2026-05-05/sc-review-pipeline-task-55-f4adc475553b42edb75b5f3303810df1/agent-review.json
-  - logs/ci/2026-05-05/sc-review-pipeline-task-55-f4adc475553b42edb75b5f3303810df1/repair-guide.json
-  - logs/ci/2026-05-05/sc-review-pipeline-task-55-fb2d214defe44344870bd0309801e19e/summary.json
-  - logs/ci/2026-05-05/sc-review-pipeline-task-55-fb2d214defe44344870bd0309801e19e/run-events.jsonl
-  - logs/e2e/2026-05-05/gdunit-console.txt
+  - logs/ci/2026-05-05/sc-review-pipeline-task-55-3cda28f01c1d4e22bbadc9c59e12aeb1/summary.json
+  - logs/ci/2026-05-05/sc-review-pipeline-task-55-4dbb8565f04e4c62869c8b2f22840642/summary.json
+  - logs/ci/2026-05-05/sc-review-pipeline-task-55-90a978b210ad49e9a23307f229919c0b/summary.json
+  - logs/ci/2026-05-05/sc-review-pipeline-task-55-90a978b210ad49e9a23307f229919c0b/agent-review.md
+  - logs/ci/2026-05-05/sc-llm-review-task-55/review-code-reviewer.md
+  - logs/ci/2026-05-05/sc-llm-review-task-55/review-security-auditor.md
+  - logs/e2e/2026-05-05/gdunit-reports/run-summary.json
 - Related execution plans: execution-plans/2026-05-05-task-55-chapter6-needs-fix-followup.md
 - Related task id(s): T55
-- Related run ids: f4adc475553b42edb75b5f3303810df1, fb2d214defe44344870bd0309801e19e
+- Related run ids: 3cda28f01c1d4e22bbadc9c59e12aeb1, 4dbb8565f04e4c62869c8b2f22840642, 90a978b210ad49e9a23307f229919c0b
+- Related commits: 1c8c9c1, 6462303, ece7b21
