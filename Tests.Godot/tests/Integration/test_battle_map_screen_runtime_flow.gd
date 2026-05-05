@@ -167,6 +167,8 @@ func test_battle_map_runtime_summary_should_distinguish_empty_progressed_and_com
 	var empty_status := String(status_label.text)
 	var empty_summary := String(summary_label.text)
 	var empty_metrics := _bridge_summary_metrics(bridge)
+	assert_bool(empty_status.find("loaded") >= 0 or empty_status.find("加载") >= 0).is_true()
+	assert_bool(empty_status.find("finished") < 0 and empty_status.find("结束") < 0).is_true()
 	assert_bool(empty_status.length() > 0).is_true()
 	assert_bool(empty_summary.length() > 0).is_true()
 	assert_int(int(empty_metrics["friendly_units_deployed"])).is_equal(0)
@@ -176,6 +178,14 @@ func test_battle_map_runtime_summary_should_distinguish_empty_progressed_and_com
 	await _await_frames(3)
 	assert_str(status_label.text).is_equal(empty_status)
 	assert_str(summary_label.text).is_equal(empty_summary)
+
+	finish_btn.emit_signal("pressed")
+	await _await_frames(1)
+	var failure_status := String(status_label.text)
+	assert_bool(failure_status.find("cleanup") >= 0 or failure_status.find("清理") >= 0).is_true()
+	assert_bool(failure_status != empty_status).is_true()
+	await _await_frames(2)
+	assert_str(status_label.text).is_equal(failure_status)
 
 	wave_btn.emit_signal("pressed")
 	await _await_frames(1)
@@ -191,6 +201,7 @@ func test_battle_map_runtime_summary_should_distinguish_empty_progressed_and_com
 	assert_int(int(progressed_metrics["castle_hp"])).is_less(int(empty_metrics["castle_hp"]))
 	assert_int(int(progressed_metrics["friendly_units_deployed"])).is_equal(0)
 	assert_bool(progressed_status != empty_status).is_true()
+	assert_bool(progressed_status != failure_status).is_true()
 	assert_bool(progressed_summary != empty_summary).is_true()
 	await _await_frames(3)
 	assert_str(status_label.text).is_equal(progressed_status)
@@ -209,7 +220,10 @@ func test_battle_map_runtime_summary_should_distinguish_empty_progressed_and_com
 	assert_int(int(completion_metrics["friendly_units_deployed"])).is_greater_equal(1)
 	assert_int(int(completion_metrics["enemy_units_spawned"])).is_greater_equal(2)
 	assert_int(int(completion_metrics["combat_exchanges"])).is_greater_equal(1)
+	assert_bool(completion_status.find("finished") >= 0 or completion_status.find("结束") >= 0).is_true()
+	assert_bool(completion_status.find("cleanup") < 0 and completion_status.find("清理") < 0).is_true()
 	assert_bool(completion_status != progressed_status).is_true()
+	assert_bool(completion_status != failure_status).is_true()
 	assert_bool(completion_summary != progressed_summary).is_true()
 	assert_bool(completion_summary.find("HP") >= 0 or completion_summary.find("生命") >= 0).is_true()
 	assert_bool(completion_summary.find("Friendly") >= 0 or completion_summary.find("友军") >= 0).is_true()
@@ -291,12 +305,12 @@ func test_combat_bridge_single_source_updates_actor_snapshots_and_castle_hp() ->
 	else:
 		bridge.call("RunCompleteCombatExperienceForTest")
 
-	var before: Dictionary = {}
+	var summary_before: Dictionary = {}
 	if bridge.has_method("GetSummary"):
-		before = bridge.call("GetSummary")
+		summary_before = bridge.call("GetSummary")
 	else:
-		before = bridge.call("RunCompleteCombatExperienceForTest")
-	var before_hp := int(before.get("castle_hp", -1))
+		summary_before = bridge.call("RunCompleteCombatExperienceForTest")
+	var before_hp := int(summary_before.get("castle_hp", -1))
 	assert_int(before_hp).is_greater_equal(0)
 
 	if bridge.has_method("AdvanceSimulation"):
@@ -307,10 +321,10 @@ func test_combat_bridge_single_source_updates_actor_snapshots_and_castle_hp() ->
 		var snapshots: Array = bridge.call("GetActorSnapshots")
 		assert_int(snapshots.size()).is_greater_equal(1)
 
-	var after: Dictionary = {}
+	var summary_after: Dictionary = {}
 	if bridge.has_method("GetSummary"):
-		after = bridge.call("GetSummary")
+		summary_after = bridge.call("GetSummary")
 	else:
-		after = bridge.call("RunCompleteCombatExperienceForTest")
-	var after_hp := int(after.get("castle_hp", -1))
+		summary_after = bridge.call("RunCompleteCombatExperienceForTest")
+	var after_hp := int(summary_after.get("castle_hp", -1))
 	assert_int(after_hp).is_less_equal(before_hp)
