@@ -68,6 +68,28 @@ func test_narrow_layout_keeps_header_footer_fixed_when_only_battlefield_moves() 
 
 
 # ACC:T55.1
+func test_non_battlefield_layout_perturbation_should_not_shift_header_or_footer() -> void:
+	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
+	add_child(auto_free(screen))
+	await _await_frames(2)
+
+	screen.size = Vector2(540.0, 320.0)
+	await _await_frames(2)
+
+	var title: Control = screen.get_node("Margin/VBox/Title")
+	var metrics_help: Control = screen.get_node("Margin/VBox/MetricsHelp")
+	var controls: Control = screen.get_node("Margin/VBox/Controls")
+	var title_before := title.global_position
+	var metrics_before := metrics_help.global_position
+
+	controls.position = controls.position + Vector2(80.0, 0.0)
+	await _await_frames(1)
+
+	assert_that(title.global_position).is_equal(title_before)
+	assert_that(metrics_help.global_position).is_equal(metrics_before)
+
+
+# ACC:T55.1
 func test_1440x900_frame_keeps_three_player_visible_bands_simultaneously_visible() -> void:
 	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
 	add_child(auto_free(screen))
@@ -139,12 +161,21 @@ func test_battle_map_runtime_summary_should_distinguish_empty_progressed_and_com
 	var exchange_btn: Button = screen.get_node("Margin/VBox/Controls/ExchangeBtn")
 	var cleanup_btn: Button = screen.get_node("Margin/VBox/Controls/CleanupBtn")
 	var finish_btn: Button = screen.get_node("Margin/VBox/Controls/FinishBtn")
+	var status_label: Label = screen.get_node("Margin/VBox/Status")
+	var summary_label: Label = screen.get_node("Margin/VBox/Summary")
 
+	var empty_status := String(status_label.text)
+	var empty_summary := String(summary_label.text)
 	var empty_metrics := _bridge_summary_metrics(bridge)
+	assert_bool(empty_status.length() > 0).is_true()
+	assert_bool(empty_summary.length() > 0).is_true()
 	assert_int(int(empty_metrics["friendly_units_deployed"])).is_equal(0)
 	assert_int(int(empty_metrics["enemy_units_spawned"])).is_equal(0)
 	assert_int(int(empty_metrics["combat_exchanges"])).is_equal(0)
 	assert_int(int(empty_metrics["dead_units_retired"])).is_equal(0)
+	await _await_frames(3)
+	assert_str(status_label.text).is_equal(empty_status)
+	assert_str(summary_label.text).is_equal(empty_summary)
 
 	wave_btn.emit_signal("pressed")
 	await _await_frames(1)
@@ -153,10 +184,17 @@ func test_battle_map_runtime_summary_should_distinguish_empty_progressed_and_com
 			bridge.call("AdvanceSimulation", 0.1)
 	await _await_frames(1)
 
+	var progressed_status := String(status_label.text)
+	var progressed_summary := String(summary_label.text)
 	var progressed_metrics := _bridge_summary_metrics(bridge)
 	assert_int(int(progressed_metrics["enemy_units_spawned"])).is_greater_equal(2)
 	assert_int(int(progressed_metrics["castle_hp"])).is_less(int(empty_metrics["castle_hp"]))
 	assert_int(int(progressed_metrics["friendly_units_deployed"])).is_equal(0)
+	assert_bool(progressed_status != empty_status).is_true()
+	assert_bool(progressed_summary != empty_summary).is_true()
+	await _await_frames(3)
+	assert_str(status_label.text).is_equal(progressed_status)
+	assert_str(summary_label.text).is_equal(progressed_summary)
 
 	build_btn.emit_signal("pressed")
 	wave_btn.emit_signal("pressed")
@@ -165,10 +203,21 @@ func test_battle_map_runtime_summary_should_distinguish_empty_progressed_and_com
 	finish_btn.emit_signal("pressed")
 	await _await_frames(2)
 
+	var completion_status := String(status_label.text)
+	var completion_summary := String(summary_label.text)
 	var completion_metrics := _bridge_summary_metrics(bridge)
 	assert_int(int(completion_metrics["friendly_units_deployed"])).is_greater_equal(1)
 	assert_int(int(completion_metrics["enemy_units_spawned"])).is_greater_equal(2)
 	assert_int(int(completion_metrics["combat_exchanges"])).is_greater_equal(1)
+	assert_bool(completion_status != progressed_status).is_true()
+	assert_bool(completion_summary != progressed_summary).is_true()
+	assert_bool(completion_summary.find("HP") >= 0 or completion_summary.find("生命") >= 0).is_true()
+	assert_bool(completion_summary.find("Friendly") >= 0 or completion_summary.find("友军") >= 0).is_true()
+	assert_bool(completion_summary.find("Enemy") >= 0 or completion_summary.find("敌军") >= 0).is_true()
+	await _await_frames(3)
+	assert_str(status_label.text).is_equal(completion_status)
+	assert_str(summary_label.text).is_equal(completion_summary)
+
 	assert_bool(progressed_metrics != completion_metrics).is_true()
 	assert_bool(empty_metrics != progressed_metrics).is_true()
 
