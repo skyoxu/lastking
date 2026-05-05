@@ -15,6 +15,15 @@ func _status_and_summary(screen: Node) -> Dictionary:
 	}
 
 
+func _bridge_summary_metrics(bridge: Node) -> Dictionary:
+	if not bridge.has_method("GetSummary"):
+		return {}
+	var payload: Variant = bridge.call("GetSummary")
+	if payload is Dictionary:
+		return payload
+	return {}
+
+
 func _hud_count(main: Node) -> int:
 	var runtime_ui := main.get_node("RuntimeUi")
 	var count := 0
@@ -22,6 +31,16 @@ func _hud_count(main: Node) -> int:
 		if str(child.name) == "HUD":
 			count += 1
 	return count
+
+
+func _is_visible_inside_viewport(control: Control, viewport_size: Vector2) -> bool:
+	var top_left := control.global_position
+	var bottom_right := top_left + control.size
+	return control.visible \
+		and top_left.x >= 0.0 \
+		and top_left.y >= 0.0 \
+		and bottom_right.x <= viewport_size.x \
+		and bottom_right.y <= viewport_size.y
 
 
 # ACC:T55.1
@@ -46,6 +65,33 @@ func test_narrow_layout_keeps_header_footer_fixed_when_only_battlefield_moves() 
 	assert_float(background.global_position.x).is_equal(background_before.x - 120.0)
 	assert_that(title.global_position).is_equal(title_before)
 	assert_that(metrics_help.global_position).is_equal(metrics_before)
+
+
+# ACC:T55.1
+func test_1440x900_frame_keeps_three_player_visible_bands_simultaneously_visible() -> void:
+	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
+	add_child(auto_free(screen))
+	await _await_frames(2)
+
+	screen.size = Vector2(1440.0, 900.0)
+	await _await_frames(2)
+
+	var viewport := Vector2(1440.0, 900.0)
+	var background: Control = screen.get_node("Background")
+	var title: Control = screen.get_node("Margin/VBox/Title")
+	var metrics_help: Control = screen.get_node("Margin/VBox/MetricsHelp")
+	var path: Line2D = screen.get_node("Background/Path")
+
+	assert_bool(_is_visible_inside_viewport(title, viewport)).is_true()
+	assert_bool(_is_visible_inside_viewport(background, viewport)).is_true()
+	assert_bool(_is_visible_inside_viewport(metrics_help, viewport)).is_true()
+
+	var title_mid := title.global_position.y + title.size.y * 0.5
+	var midpoint_index := int(path.points.size() * 0.5)
+	var battlefield_mid := background.global_position.y + path.points[midpoint_index].y
+	var bottom_mid := metrics_help.global_position.y + metrics_help.size.y * 0.5
+	assert_float(title_mid).is_less(battlefield_mid)
+	assert_float(battlefield_mid).is_less(bottom_mid)
 
 
 # ACC:T55.1
@@ -78,6 +124,53 @@ func test_battle_map_screen_minimum_runtime_loop_is_player_visible() -> void:
 	assert_bool(String(summary.text).find("HP") >= 0 or String(summary.text).find("生命") >= 0).is_true()
 	assert_bool(String(summary.text).find("Friendly") >= 0 or String(summary.text).find("友军") >= 0).is_true()
 	assert_bool(String(summary.text).find("Enemy") >= 0 or String(summary.text).find("敌军") >= 0).is_true()
+
+
+# ACC:T55.3
+# ACC:T55.7
+func test_battle_map_runtime_summary_should_distinguish_empty_progressed_and_completion_states() -> void:
+	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
+	add_child(auto_free(screen))
+	await _await_frames(2)
+
+	var bridge: Node = screen.get_node("CombatExperienceRuntimeBridge")
+	var wave_btn: Button = screen.get_node("Margin/VBox/Controls/WaveBtn")
+	var build_btn: Button = screen.get_node("Margin/VBox/Controls/BuildBtn")
+	var exchange_btn: Button = screen.get_node("Margin/VBox/Controls/ExchangeBtn")
+	var cleanup_btn: Button = screen.get_node("Margin/VBox/Controls/CleanupBtn")
+	var finish_btn: Button = screen.get_node("Margin/VBox/Controls/FinishBtn")
+
+	var empty_metrics := _bridge_summary_metrics(bridge)
+	assert_int(int(empty_metrics["friendly_units_deployed"])).is_equal(0)
+	assert_int(int(empty_metrics["enemy_units_spawned"])).is_equal(0)
+	assert_int(int(empty_metrics["combat_exchanges"])).is_equal(0)
+	assert_int(int(empty_metrics["dead_units_retired"])).is_equal(0)
+
+	wave_btn.emit_signal("pressed")
+	await _await_frames(1)
+	for _i in range(120):
+		if bridge.has_method("AdvanceSimulation"):
+			bridge.call("AdvanceSimulation", 0.1)
+	await _await_frames(1)
+
+	var progressed_metrics := _bridge_summary_metrics(bridge)
+	assert_int(int(progressed_metrics["enemy_units_spawned"])).is_greater_equal(2)
+	assert_int(int(progressed_metrics["castle_hp"])).is_less(int(empty_metrics["castle_hp"]))
+	assert_int(int(progressed_metrics["friendly_units_deployed"])).is_equal(0)
+
+	build_btn.emit_signal("pressed")
+	wave_btn.emit_signal("pressed")
+	exchange_btn.emit_signal("pressed")
+	cleanup_btn.emit_signal("pressed")
+	finish_btn.emit_signal("pressed")
+	await _await_frames(2)
+
+	var completion_metrics := _bridge_summary_metrics(bridge)
+	assert_int(int(completion_metrics["friendly_units_deployed"])).is_greater_equal(1)
+	assert_int(int(completion_metrics["enemy_units_spawned"])).is_greater_equal(2)
+	assert_int(int(completion_metrics["combat_exchanges"])).is_greater_equal(1)
+	assert_bool(progressed_metrics != completion_metrics).is_true()
+	assert_bool(empty_metrics != progressed_metrics).is_true()
 
 
 # ACC:T55.3

@@ -1,7 +1,6 @@
 extends "res://addons/gdUnit4/src/GdUnitTestSuite.gd"
 
 # ACC:T9.1
-# ACC:T55.9
 # ACC:T9.4
 # ACC:T9.10
 # ACC:T9.12
