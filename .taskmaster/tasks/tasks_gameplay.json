@@ -4590,7 +4590,7 @@
       "Before review passes, task, story, and GDD references/anchors are synchronized to current artifacts; stale or unresolved listed references fail acceptance. Refs: docs/gdd/battlemapscreen-stories.md docs/gdd/battlemapscreen-epics.md docs/gdd/battlemapscreen-story-to-files-mapping.md"
     ],
     "contractRefs": [
-      "core.lastking.ui.feedback.raised"
+      "core.lastking.ui_feedback.raised"
     ],
     "semantic_review_tier": "full",
     "test_strategy": [
@@ -4729,7 +4729,7 @@
       "进入评审前，task/story/GDD 的引用与锚点必须同步到当前工件，且可解析到现行内容。 Refs: docs/gdd/battlemapscreen-stories.md docs/gdd/battlemapscreen-epics.md docs/gdd/battlemapscreen-story-to-files-mapping.md"
     ],
     "contractRefs": [
-      "core.lastking.ui.feedback.raised"
+      "core.lastking.ui_feedback.raised"
     ],
     "semantic_review_tier": "full",
     "test_strategy": [
@@ -5136,7 +5136,7 @@
       "Before review, task/story/GDD references and anchors are synchronized so every listed reference resolves to the current artifacts for this task scope. Refs: docs/gdd/battlemapscreen-stories.md docs/gdd/battlemapscreen-epics.md docs/gdd/battlemapscreen-story-to-files-mapping.md"
     ],
     "contractRefs": [
-      "core.lastking.ui.feedback.raised",
+      "core.lastking.ui_feedback.raised",
       "core.lastking.castle.hp_changed"
     ],
     "semantic_review_tier": "full",
@@ -5346,7 +5346,7 @@
       "Before review, task/story/GDD references and anchors are synchronized with current artifacts so acceptance evidence matches the migrated ownership scope. Refs: docs/gdd/battlemapscreen-stories.md docs/gdd/battlemapscreen-epics.md docs/gdd/battlemapscreen-story-to-files-mapping.md"
     ],
     "contractRefs": [
-      "core.lastking.ui.feedback.raised",
+      "core.lastking.ui_feedback.raised",
       "core.lastking.wave.spawned",
       "core.lastking.castle.hp_changed"
     ],
