@@ -12,6 +12,16 @@ func _overlays(main: Node) -> Node:
 func _navigator(main: Node):
     return main.get_node_or_null("ScreenNavigator")
 
+func _hud_count(main: Node) -> int:
+    var runtime_ui := main.get_node("RuntimeUi")
+    var count := 0
+    for child in runtime_ui.get_children():
+        if str(child.name) == "HUD":
+            count += 1
+    return count
+
+# ACC:T55.2
+# ACC:T55.4
 func test_switch_to_invalid_scene_returns_false() -> void:
     var main = await _load_main()
     var nav = _navigator(main)
@@ -57,3 +67,22 @@ func test_fade_transition_blocks_input_and_cleans_up() -> void:
             break
         await get_tree().process_frame
     assert_bool(removed).is_true()
+
+# ACC:T55.2
+func test_battle_map_enter_exit_keeps_exactly_one_hud_instance() -> void:
+    var main = await _load_main()
+    var nav = _navigator(main)
+    assert_object(nav).is_not_null()
+    nav.UseFadeTransition = false
+    assert_int(_hud_count(main)).is_equal(1)
+
+    var ok_enter = nav.SwitchTo("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn")
+    assert_bool(ok_enter).is_true()
+    await get_tree().process_frame
+    assert_object(main.get_node_or_null("RuntimeUi/ScreenRoot/BattleMapScreen")).is_not_null()
+    assert_int(_hud_count(main)).is_equal(1)
+
+    nav.ClearCurrentScreen()
+    await get_tree().process_frame
+    assert_object(main.get_node_or_null("RuntimeUi/ScreenRoot/BattleMapScreen")).is_null()
+    assert_int(_hud_count(main)).is_equal(1)

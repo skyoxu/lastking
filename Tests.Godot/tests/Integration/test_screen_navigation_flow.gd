@@ -6,6 +6,7 @@ func _load_main() -> Node:
     await get_tree().process_frame
     return main
 
+# ACC:T55.1
 func test_navigate_start_to_settings_and_back() -> void:
     var main = await _load_main()
     var nav = main.get_node_or_null("ScreenNavigator")

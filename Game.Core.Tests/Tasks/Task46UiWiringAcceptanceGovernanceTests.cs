@@ -100,6 +100,7 @@ public sealed class Task46UiWiringAcceptanceGovernanceTests
     ];
 
     // ACC:T46.7
+    // ACC:T55.10
     [Fact]
     public void ShouldMapRequirementIdsToExecutableEvidence_WhenTask46GovernanceIsValidated()
     {

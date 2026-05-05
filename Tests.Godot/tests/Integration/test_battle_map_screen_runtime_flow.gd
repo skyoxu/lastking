@@ -6,6 +6,35 @@ func _await_frames(count: int) -> void:
 		await get_tree().process_frame
 
 
+# ACC:T55.1
+func test_narrow_layout_keeps_header_footer_fixed_when_only_battlefield_moves() -> void:
+	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
+	add_child(auto_free(screen))
+	await _await_frames(2)
+
+	screen.size = Vector2(540.0, 320.0)
+	await _await_frames(2)
+
+	var background: Control = screen.get_node("Background")
+	var title: Control = screen.get_node("Margin/VBox/Title")
+	var metrics_help: Control = screen.get_node("Margin/VBox/MetricsHelp")
+	var title_before := title.global_position
+	var metrics_before := metrics_help.global_position
+	var background_before := background.global_position
+
+	background.position = background.position + Vector2(-120.0, 0.0)
+	await _await_frames(1)
+
+	assert_float(background.global_position.x).is_equal(background_before.x - 120.0)
+	assert_that(title.global_position).is_equal(title_before)
+	assert_that(metrics_help.global_position).is_equal(metrics_before)
+
+
+# ACC:T55.1
+# ACC:T55.3
+# ACC:T55.4
+# ACC:T55.6
+# ACC:T55.8
 func test_battle_map_screen_minimum_runtime_loop_is_player_visible() -> void:
 	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
 	add_child(auto_free(screen))
@@ -32,6 +61,8 @@ func test_battle_map_screen_minimum_runtime_loop_is_player_visible() -> void:
 	assert_bool(String(summary.text).find("Friendly") >= 0 or String(summary.text).find("友军") >= 0).is_true()
 	assert_bool(String(summary.text).find("Enemy") >= 0 or String(summary.text).find("敌军") >= 0).is_true()
 
+# ACC:T55.7
+# ACC:T55.9
 func test_combat_bridge_single_source_updates_actor_snapshots_and_castle_hp() -> void:
 	var bridge := preload("res://Game.Godot/Scripts/Combat/CombatExperienceRuntimeBridge.cs").new()
 	add_child(auto_free(bridge))

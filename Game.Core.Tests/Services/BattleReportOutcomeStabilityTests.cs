@@ -7,6 +7,7 @@ namespace Game.Core.Tests.Services;
 public sealed class BattleReportOutcomeStabilityTests
 {
     // ACC:T39.3
+    // ACC:T55.7
     [Fact]
     public void ShouldKeepMatchOutcomeStableExceptConfigMetadata_WhenBattleInputsAreIdentical()
     {

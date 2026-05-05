@@ -8,6 +8,7 @@ namespace Game.Core.Tests.Services;
 public sealed class BattleInitializationFromConfigTests
 {
     // ACC:T7.4
+    // ACC:T55.5
     [Fact]
     public void ShouldInitializeCastleHpFromConfiguredStartHp_WhenBattleStarts()
     {

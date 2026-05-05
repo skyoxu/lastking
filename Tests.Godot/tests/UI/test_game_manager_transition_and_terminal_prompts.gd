@@ -23,6 +23,7 @@ func _feedback_label(hud: Node) -> Label:
 # acceptance: ACC:T42.3
 # acceptance: ACC:T42.10
 # ACC:T53.1
+# ACC:T55.3
 func test_terminal_and_reward_runtime_events_should_drive_hud_feedback_surfaces() -> void:
 	var hud = await _hud()
 	var feedback_label := _feedback_label(hud)

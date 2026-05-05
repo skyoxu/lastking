@@ -4,6 +4,8 @@ extends "res://addons/gdUnit4/src/GdUnitTestSuite.gd"
 const MAIN_SCENE_PATH := "res://Game.Godot/Scenes/Main.tscn"
 
 
+# ACC:T55.2
+# ACC:T55.6
 func test_main_scene_should_mount_runtime_ui_under_canvas_layer() -> void:
 	var main := preload(MAIN_SCENE_PATH).instantiate()
 	add_child(auto_free(main))

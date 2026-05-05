@@ -1,0 +1,22 @@
+# Task 55 Chapter 6 Residual Needs Fix
+
+- Title: Task 55 Chapter 6 residual needs-fix after fork and narrow-path attempt
+- Date: 2026-05-05
+- Status: accepted
+- Supersedes: n/a
+- Superseded by: n/a
+- Branch: task/T55
+- Git Head: 001d597e8353dc1e54aa18f6d9dd47e695180456
+- Why now: Review pipeline fork run still produced reviewer Needs Fix (security-auditor), and the subsequent needs-fix-fast rerun was blocked by rerun_guard due dirty_worktree_unsafe_paths_ceiling.
+- Decision: Keep Task 55 in recovery state; do not force a full rerun while rerun_guard is active. Record evidence and continue with deterministic test-focused fixes first.
+- Consequences: Current code includes targeted ACC:T55.1/T55.2 test strengthening, but P1 closure is not yet re-verified by a successful chapter6 review closure run.
+- Recovery impact: Next run must resume from protocol recovery chain and clear rerun_guard conditions before attempting another 6.8 or final-pass closure.
+- Validation evidence:
+  - logs/ci/2026-05-05/sc-review-pipeline-task-55-f4adc475553b42edb75b5f3303810df1/agent-review.json
+  - logs/ci/2026-05-05/sc-review-pipeline-task-55-f4adc475553b42edb75b5f3303810df1/repair-guide.json
+  - logs/ci/2026-05-05/sc-review-pipeline-task-55-fb2d214defe44344870bd0309801e19e/summary.json
+  - logs/ci/2026-05-05/sc-review-pipeline-task-55-fb2d214defe44344870bd0309801e19e/run-events.jsonl
+  - logs/e2e/2026-05-05/gdunit-console.txt
+- Related execution plans: execution-plans/2026-05-05-task-55-chapter6-needs-fix-followup.md
+- Related task id(s): T55
+- Related run ids: f4adc475553b42edb75b5f3303810df1, fb2d214defe44344870bd0309801e19e
