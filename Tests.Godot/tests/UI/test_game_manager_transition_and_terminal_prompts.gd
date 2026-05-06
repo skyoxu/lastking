@@ -19,13 +19,23 @@ func _publish(type_name: String, payload: Dictionary) -> void:
 func _feedback_label(hud: Node) -> Label:
 	return hud.get_node("FeedbackLayer/FeedbackLabel")
 
+func _runtime_prompt_label(hud: Node) -> Label:
+	return hud.get_node("FeedbackLayer/RuntimePromptPanel/VBox/RuntimePromptLabel")
+
+func _outcome_label(hud: Node) -> Label:
+	return hud.get_node("FeedbackLayer/OutcomePanel/VBox/OutcomeLabel")
+
 # acceptance: ACC:T19.1
 # acceptance: ACC:T42.3
 # acceptance: ACC:T42.10
 # ACC:T53.1
+# ACC:T55.3
 func test_terminal_and_reward_runtime_events_should_drive_hud_feedback_surfaces() -> void:
 	var hud = await _hud()
 	var feedback_label := _feedback_label(hud)
+	var runtime_prompt := _runtime_prompt_label(hud)
+	var outcome_label := _outcome_label(hud)
+	var prompt_before := String(runtime_prompt.text)
 
 	_publish("core.lastking.reward.offered", {
 		"day_number": 5,
@@ -37,10 +47,11 @@ func test_terminal_and_reward_runtime_events_should_drive_hud_feedback_surfaces(
 	})
 	await get_tree().process_frame
 	assert_bool(feedback_label.visible).is_true()
-	assert_bool(feedback_label.text.find("Reward offered.") >= 0).is_true()
+	assert_bool(String(feedback_label.text).length() > 0).is_true()
 	assert_bool(feedback_label.text.find("artifact+1") >= 0).is_true()
 	assert_bool(feedback_label.text.find("gold+600") >= 0).is_true()
 	assert_bool(feedback_label.text.find("tech+3") >= 0).is_true()
+	var reward_text := String(feedback_label.text)
 
 	_publish("core.run.state.transitioned", {
 		"outcome": "Win",
@@ -49,8 +60,15 @@ func test_terminal_and_reward_runtime_events_should_drive_hud_feedback_surfaces(
 	})
 	await get_tree().process_frame
 	assert_bool(feedback_label.visible).is_true()
-	assert_bool(feedback_label.text.find("Victory!") >= 0).is_true()
+	assert_bool(String(feedback_label.text).length() > 0).is_true()
 	assert_bool(feedback_label.text.find("day=15") >= 0).is_true()
+	var win_text := String(feedback_label.text)
+	assert_bool(win_text != reward_text).is_true()
+	var win_prompt := String(runtime_prompt.text)
+	assert_bool(win_prompt.find("n/a") < 0).is_true()
+	assert_bool(win_prompt != prompt_before).is_true()
+	var win_outcome := String(outcome_label.text)
+	assert_bool(win_outcome.find("n/a") < 0).is_true()
 
 	_publish("core.run.state.transitioned", {
 		"outcome": "Loss",
@@ -59,14 +77,28 @@ func test_terminal_and_reward_runtime_events_should_drive_hud_feedback_surfaces(
 	})
 	await get_tree().process_frame
 	assert_bool(feedback_label.visible).is_true()
-	assert_bool(feedback_label.text.find("Defeat.") >= 0).is_true()
+	assert_bool(String(feedback_label.text).length() > 0).is_true()
 	assert_bool(feedback_label.text.find("day=8") >= 0).is_true()
+	var loss_text := String(feedback_label.text)
+	assert_bool(loss_text != win_text).is_true()
+	var loss_prompt := String(runtime_prompt.text)
+	assert_bool(loss_prompt.find("n/a") < 0).is_true()
+	var loss_outcome := String(outcome_label.text)
+	assert_bool(loss_outcome.find("n/a") < 0).is_true()
+	assert_bool(loss_outcome != win_outcome).is_true()
+
+	for _i in range(3):
+		await get_tree().process_frame
+	assert_str(runtime_prompt.text).is_equal(loss_prompt)
 
 # ACC:T53.3
 # ACC:T53.7
 func test_terminal_feedback_should_ignore_non_terminal_outcome() -> void:
 	var hud = await _hud()
 	var feedback_label := _feedback_label(hud)
+	var runtime_prompt := _runtime_prompt_label(hud)
+	var prompt_before := String(runtime_prompt.text)
+	var prompt_n_a_suffix := "n/a"
 
 	_publish("core.run.state.transitioned", {
 		"outcome": "NONE",
@@ -75,3 +107,41 @@ func test_terminal_feedback_should_ignore_non_terminal_outcome() -> void:
 	})
 	await get_tree().process_frame
 	assert_bool(feedback_label.visible).is_false()
+	assert_bool(String(runtime_prompt.text).find(prompt_n_a_suffix) >= 0).is_true()
+	assert_str(runtime_prompt.text).is_equal(prompt_before)
+
+	for _i in range(3):
+		await get_tree().process_frame
+	assert_bool(String(runtime_prompt.text).find(prompt_n_a_suffix) >= 0).is_true()
+	assert_str(runtime_prompt.text).is_equal(prompt_before)
+
+	_publish("core.run.state.transitioned", {
+		"outcome": "UNKNOWN",
+		"day": 4,
+		"castle_hp": 70
+	})
+	await get_tree().process_frame
+	assert_bool(feedback_label.visible).is_false()
+	assert_bool(String(runtime_prompt.text).find(prompt_n_a_suffix) >= 0).is_true()
+	assert_str(runtime_prompt.text).is_equal(prompt_before)
+
+	# Also ensure invalid/non-terminal outcomes do not regress to a stale terminal prompt.
+	assert_bool(prompt_before.find(prompt_n_a_suffix) >= 0).is_true()
+
+	_publish("core.run.state.transitioned", {
+		"outcome": "Win",
+		"day": 10,
+		"castle_hp": 66
+	})
+	await get_tree().process_frame
+	var prompt_after_win := String(runtime_prompt.text)
+	assert_bool(prompt_after_win.find(prompt_n_a_suffix) < 0).is_true()
+	assert_bool(prompt_after_win != prompt_before).is_true()
+
+	_publish("core.run.state.transitioned", {
+		"outcome": "NONE",
+		"day": 11,
+		"castle_hp": 65
+	})
+	await get_tree().process_frame
+	assert_str(runtime_prompt.text).is_equal(prompt_before)

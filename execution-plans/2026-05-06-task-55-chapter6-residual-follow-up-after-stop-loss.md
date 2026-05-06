@@ -1,0 +1,21 @@
+# Task 55 Chapter6 residual follow-up after stop-loss
+
+- Title: Task 55 Chapter6 residual follow-up after stop-loss
+- Status: blocked
+- Branch: task/T55
+- Git Head: c16d963adf915c5209116b9695b069e7ab80e9b1
+- Goal: Close remaining Task 55 reviewer semantics findings without paying repeated full rerun cost.
+- Scope: Task 55 only; no unrelated task or profile changes.
+- Current step: Residual recorded. Await next round targeted semantic alignment before rerun.
+- Last completed step: n/a (new execution plan scaffold; no completed step recorded yet)
+- Stop-loss: Do not run full rerun command py -3 scripts/sc/run_review_pipeline.py --task-id 55 while blocked_by=recent_failure_summary and same-family repetition persists.
+- Next action: Next re-entry sequence: resume-task --recommendation-only -> chapter6-route --recommendation-only -> inspect-run; if still inspect-first/recent_failure_summary, apply only targeted semantic/test evidence deltas, then resume/fork once.
+- Recovery command: `py -3 scripts/sc/run_review_pipeline.py --task-id 55 --resume`
+- Open questions: none recorded yet
+- Exit criteria: Task 55 can close only when latest agent-review has no P0/P1 Needs Fix and pipeline no longer reports review-needs-fix for current diff set.
+- Related ADRs: none yet
+- Related decision logs: `decision-logs/2026-05-06-task-55-chapter6-residual-after-repeated-review-needs-fix-family.md`
+- Related task id(s): `55`
+- Related run id: `5fab7ea608b147399d31d85b5157888d`
+- Related latest.json: `logs/ci/2026-05-06/sc-review-pipeline-task-55/latest.json`
+- Related pipeline artifacts: `logs/ci/2026-05-06/sc-review-pipeline-task-55-5fab7ea608b147399d31d85b5157888d`

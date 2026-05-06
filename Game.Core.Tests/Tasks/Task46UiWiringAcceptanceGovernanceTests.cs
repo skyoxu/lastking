@@ -100,6 +100,7 @@ public sealed class Task46UiWiringAcceptanceGovernanceTests
     ];
 
     // ACC:T46.7
+    // ACC:T55.10
     [Fact]
     public void ShouldMapRequirementIdsToExecutableEvidence_WhenTask46GovernanceIsValidated()
     {
@@ -278,6 +279,75 @@ public sealed class Task46UiWiringAcceptanceGovernanceTests
             var mutated = entry.ReplaceAcceptance(validationAcceptance!, mutatedAcceptance);
             var mutatedRefs = ParseRefs(mutatedAcceptance).ToArray();
             mutatedRefs.Should().NotContain(path => path.EndsWith(".cs", StringComparison.OrdinalIgnoreCase), $"{viewPath} should fail ACC:T46.9 when xUnit evidence is removed.");
+        }
+    }
+
+    // ACC:T55.10
+    [Fact]
+    public void ShouldKeepTask55AcceptanceRefsAndGovernanceAnchorSynchronized_WhenTask55IsValidated()
+    {
+        foreach (var viewPath in ViewPaths())
+        {
+            var repoPath = ResolveRepositoryPath(viewPath);
+            var root = JsonNode.Parse(File.ReadAllText(repoPath))?.AsArray() ?? throw new InvalidOperationException($"Invalid task view: {viewPath}");
+            var task55 = root
+                .Select(node => node as JsonObject)
+                .FirstOrDefault(node => node?["taskmaster_id"]?.GetValue<int>() == 55);
+            task55.Should().NotBeNull($"{viewPath} must contain Task 55.");
+
+            var acceptance = task55!["acceptance"]?.AsArray().Select(item => item?.GetValue<string>() ?? string.Empty).ToArray() ?? Array.Empty<string>();
+            var testRefs = task55["test_refs"]?.AsArray().Select(item => Normalize(item?.GetValue<string>())).ToArray() ?? Array.Empty<string>();
+
+            acceptance.Should().Contain(line =>
+                line.Contains("Before review passes", StringComparison.OrdinalIgnoreCase) &&
+                line.Contains("refs and declared anchors stay synchronized", StringComparison.OrdinalIgnoreCase));
+            acceptance.Should().Contain(line =>
+                line.Contains("new player-visible controller or node path", StringComparison.OrdinalIgnoreCase) &&
+                line.Contains("focused scene tests", StringComparison.OrdinalIgnoreCase));
+            testRefs.Should().Contain("Game.Core.Tests/Tasks/Task46UiWiringAcceptanceGovernanceTests.cs");
+
+            var focusedSceneAcceptance = FindAcceptance(
+                acceptance,
+                "new player-visible controller or node path",
+                "focused scene tests");
+            focusedSceneAcceptance.Should().NotBeNull($"{viewPath} must keep Task 55 focused scene-test obligation auditable.");
+            var focusedSceneRefs = ParseRefs(focusedSceneAcceptance!).ToArray();
+            focusedSceneRefs.Should().NotBeEmpty($"{viewPath} focused scene-test obligation must declare executable refs.");
+            focusedSceneRefs.Should().OnlyContain(path =>
+                path.EndsWith(".gd", StringComparison.OrdinalIgnoreCase) &&
+                path.StartsWith("Tests.Godot/tests/", StringComparison.OrdinalIgnoreCase));
+            foreach (var focusedRef in focusedSceneRefs)
+            {
+                var focusedPath = ResolveRepositoryPath(focusedRef);
+                File.Exists(focusedPath).Should().BeTrue($"{viewPath} must keep focused scene-test ref '{focusedRef}' resolvable.");
+                var focusedSource = File.ReadAllText(focusedPath);
+                var hasBattleMapAnchor = focusedSource.Contains("BattleMapScreen", StringComparison.OrdinalIgnoreCase);
+                var hasNodePathAssertion =
+                    focusedSource.Contains("get_node(", StringComparison.OrdinalIgnoreCase) ||
+                    focusedSource.Contains("get_node_or_null(", StringComparison.OrdinalIgnoreCase);
+                var hasAssertionCall =
+                    focusedSource.Contains("assert_bool(", StringComparison.OrdinalIgnoreCase) ||
+                    focusedSource.Contains("assert_str(", StringComparison.OrdinalIgnoreCase) ||
+                    focusedSource.Contains("assert_object(", StringComparison.OrdinalIgnoreCase) ||
+                    focusedSource.Contains("assert_int(", StringComparison.OrdinalIgnoreCase) ||
+                    focusedSource.Contains("assert_float(", StringComparison.OrdinalIgnoreCase);
+                (hasBattleMapAnchor && hasNodePathAssertion && hasAssertionCall).Should().BeTrue(
+                    $"{viewPath} focused scene-test ref '{focusedRef}' must include BattleMap node-path assertions with executable assertion calls.");
+            }
+
+            foreach (var line in acceptance)
+            {
+                var refs = ParseRefs(line);
+                if (refs.Count == 0)
+                {
+                    continue;
+                }
+
+                foreach (var reference in refs)
+                {
+                    testRefs.Should().Contain(reference, $"{viewPath} acceptance refs must stay synchronized for Task 55.");
+                }
+            }
         }
     }
 

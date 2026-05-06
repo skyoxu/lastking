@@ -1,0 +1,21 @@
+# Task 55 Chapter6 residual after repeated review-needs-fix family
+
+- Title: Task 55 Chapter6 residual after repeated review-needs-fix family
+- Date: 2026-05-06
+- Status: accepted
+- Supersedes: none
+- Superseded by: none
+- Branch: task/T55
+- Git Head: c16d963adf915c5209116b9695b069e7ab80e9b1
+- Why now: Three consecutive runs stayed in review-needs-fix|llm=ok|pipeline_clean and chapter6 blocked_by=recent_failure_summary; stop-loss requires record-residual instead of more full reruns.
+- Context: Latest run 5fab7ea608b147399d31d85b5157888d; latest_reason=pipeline_clean; run_type=full; reuse_mode=none; approval_status=not-needed; recommended_action=inspect; forbidden_commands includes full rerun.
+- Decision: Freeze Chapter6 loop for Task 55 in this round and record residual Needs Fix evidence for follow-up, instead of reopening another full 6.7 rerun.
+- Consequences: Task 55 is not marked complete in fast mode for this round. Next round must re-enter from resume-task and chapter6-route, then apply only targeted semantic fixes before any rerun attempt.
+- Recovery impact: Prevents wasteful repeated full reruns and keeps artifact chain stable for the same failure family.
+- Validation: Inspect evidence: logs/ci/2026-05-06/sc-review-pipeline-task-55/latest.json; .../summary.json; .../repair-guide.json; .../run-events.jsonl; logs/ci/2026-05-06/sc-llm-review-task-55/review-code-reviewer.md; .../review-security-auditor.md; .../review-semantic-equivalence-auditor.md
+- Related ADRs: none yet
+- Related execution plans: none yet
+- Related task id(s): `55`
+- Related run id: `5fab7ea608b147399d31d85b5157888d`
+- Related latest.json: `logs/ci/2026-05-06/sc-review-pipeline-task-55/latest.json`
+- Related pipeline artifacts: `logs/ci/2026-05-06/sc-review-pipeline-task-55-5fab7ea608b147399d31d85b5157888d`
