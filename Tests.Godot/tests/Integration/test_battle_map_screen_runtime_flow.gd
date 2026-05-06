@@ -147,6 +147,7 @@ func _assert_task56_ownership_map(screen: Control) -> void:
 
 # ACC:T55.1
 # ACC:T56.1
+# ACC:T57.1
 func test_narrow_layout_keeps_header_footer_fixed_when_only_battlefield_moves() -> void:
 	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
 	add_child(auto_free(screen))
@@ -173,6 +174,7 @@ func test_narrow_layout_keeps_header_footer_fixed_when_only_battlefield_moves() 
 
 # ACC:T55.1
 # ACC:T56.2
+# ACC:T57.2
 func test_non_battlefield_layout_perturbation_should_not_shift_header_or_footer() -> void:
 	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
 	add_child(auto_free(screen))
@@ -196,6 +198,7 @@ func test_non_battlefield_layout_perturbation_should_not_shift_header_or_footer(
 
 # ACC:T55.1
 # ACC:T56.3
+# ACC:T57.3
 func test_1440x900_frame_keeps_three_player_visible_bands_simultaneously_visible() -> void:
 	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
 	add_child(auto_free(screen))
@@ -242,6 +245,7 @@ func test_1440x900_frame_keeps_three_player_visible_bands_simultaneously_visible
 
 # ACC:T55.1
 # ACC:T56.4
+# ACC:T57.4
 func test_reenter_battle_map_keeps_three_band_frame_stable_after_viewport_resize() -> void:
 	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
 	add_child(auto_free(main))
@@ -318,6 +322,11 @@ func test_reenter_battle_map_keeps_three_band_frame_stable_after_viewport_resize
 # ACC:T55.6
 # ACC:T55.8
 # ACC:T56.5
+# ACC:T57.5
+# ACC:T57.6
+# ACC:T57.7
+# ACC:T57.8
+# ACC:T57.9
 func test_battle_map_screen_minimum_runtime_loop_is_player_visible() -> void:
 	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
 	add_child(auto_free(screen))
@@ -506,6 +515,7 @@ func test_battle_map_cycle_should_keep_hud_singleton_and_navigator_ownership() -
 # ACC:T55.9
 # ACC:T56.10
 # ACC:T56.11
+# ACC:T57.10
 func test_combat_bridge_single_source_updates_actor_snapshots_and_castle_hp() -> void:
 	var bridge := preload("res://Game.Godot/Scripts/Combat/CombatExperienceRuntimeBridge.cs").new()
 	add_child(auto_free(bridge))
