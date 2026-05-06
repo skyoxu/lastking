@@ -1,6 +1,7 @@
 extends "res://addons/gdUnit4/src/GdUnitTestSuite.gd"
 
 
+
 func _await_frames(count: int) -> void:
 	for _i in range(count):
 		await get_tree().process_frame
@@ -57,7 +58,95 @@ func _frame_snapshot(screen: Control) -> Dictionary:
 	}
 
 
+const _TASK56_OWNERSHIP_CONTAINERS: PackedStringArray = [
+	"battlefield_presentation",
+	"runtime_bridge",
+	"legacy_prototype",
+]
+
+const _TASK56_NODE_OWNERSHIP_MAP := {
+	"Background": "battlefield_presentation",
+	"Background/Path": "battlefield_presentation",
+	"Background/PlayerCastle": "battlefield_presentation",
+	"Background/EnemySpawnA": "battlefield_presentation",
+	"Background/EnemySpawnB": "battlefield_presentation",
+	"Background/BuildSlotA": "battlefield_presentation",
+	"Background/BuildSlotB": "battlefield_presentation",
+	"CombatExperienceRuntimeBridge": "runtime_bridge",
+	"WaveTimer": "runtime_bridge",
+	"Margin": "legacy_prototype",
+	"Margin/VBox": "legacy_prototype",
+	"Margin/VBox/Title": "legacy_prototype",
+	"Margin/VBox/Status": "legacy_prototype",
+	"Margin/VBox/Controls": "legacy_prototype",
+	"Margin/VBox/Controls/BuildBtn": "legacy_prototype",
+	"Margin/VBox/Controls/WaveBtn": "legacy_prototype",
+	"Margin/VBox/Controls/AutoWaveBtn": "legacy_prototype",
+	"Margin/VBox/Controls/ExchangeBtn": "legacy_prototype",
+	"Margin/VBox/Controls/CleanupBtn": "legacy_prototype",
+	"Margin/VBox/Controls/FinishBtn": "legacy_prototype",
+	"Margin/VBox/Controls/BackBtn": "legacy_prototype",
+	"Margin/VBox/Summary": "legacy_prototype",
+	"Margin/VBox/Legend": "legacy_prototype",
+	"Margin/VBox/MetricsHelp": "legacy_prototype",
+}
+
+
+func _resolve_ownership_container(node: Node) -> String:
+	var current: Node = node
+	while current != null:
+		if current.has_meta("ownership_container"):
+			return str(current.get_meta("ownership_container"))
+		current = current.get_parent()
+	return ""
+
+
+func _collect_ownership_roots(screen: Control) -> Dictionary:
+	var counts: Dictionary = {}
+	var pending: Array[Node] = [screen]
+	while pending.size() > 0:
+		var current: Node = pending.pop_back()
+		if current.has_meta("ownership_container"):
+			var container := str(current.get_meta("ownership_container"))
+			counts[container] = int(counts.get(container, 0)) + 1
+		for child_variant in current.get_children():
+			var child := child_variant as Node
+			if child != null:
+				pending.push_back(child)
+	return counts
+
+
+func _assert_task56_ownership_map(screen: Control) -> void:
+	var root_counts := _collect_ownership_roots(screen)
+	assert_int(root_counts.size()).is_equal(_TASK56_OWNERSHIP_CONTAINERS.size())
+	for container in _TASK56_OWNERSHIP_CONTAINERS:
+		assert_bool(root_counts.has(container)).is_true()
+	assert_int(int(root_counts["battlefield_presentation"])).is_equal(1)
+	assert_int(int(root_counts["runtime_bridge"])).is_equal(2)
+	assert_int(int(root_counts["legacy_prototype"])).is_equal(1)
+
+	for node_path_variant in _TASK56_NODE_OWNERSHIP_MAP.keys():
+		var node_path := str(node_path_variant)
+		var node := screen.get_node_or_null(node_path)
+		assert_object(node).is_not_null()
+		var actual_container := _resolve_ownership_container(node)
+		var expected_container := str(_TASK56_NODE_OWNERSHIP_MAP[node_path])
+		assert_str(actual_container).is_equal(expected_container)
+		for other_container in _TASK56_OWNERSHIP_CONTAINERS:
+			if other_container == expected_container:
+				continue
+			assert_str(actual_container).is_not_equal(other_container)
+
+	var legacy_container: Node = screen.get_node("Margin")
+	assert_bool(legacy_container.has_meta("migration_only")).is_true()
+	assert_bool(bool(legacy_container.get_meta("migration_only"))).is_true()
+	assert_bool(screen.get_node("Background").has_meta("migration_only")).is_false()
+	assert_bool(screen.get_node("CombatExperienceRuntimeBridge").has_meta("migration_only")).is_false()
+	assert_bool(screen.get_node("WaveTimer").has_meta("migration_only")).is_false()
+
+
 # ACC:T55.1
+# ACC:T56.1
 func test_narrow_layout_keeps_header_footer_fixed_when_only_battlefield_moves() -> void:
 	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
 	add_child(auto_free(screen))
@@ -79,9 +168,11 @@ func test_narrow_layout_keeps_header_footer_fixed_when_only_battlefield_moves() 
 	assert_float(background.global_position.x).is_equal(background_before.x - 120.0)
 	assert_that(title.global_position).is_equal(title_before)
 	assert_that(metrics_help.global_position).is_equal(metrics_before)
+	_assert_task56_ownership_map(screen)
 
 
 # ACC:T55.1
+# ACC:T56.2
 func test_non_battlefield_layout_perturbation_should_not_shift_header_or_footer() -> void:
 	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
 	add_child(auto_free(screen))
@@ -104,6 +195,7 @@ func test_non_battlefield_layout_perturbation_should_not_shift_header_or_footer(
 
 
 # ACC:T55.1
+# ACC:T56.3
 func test_1440x900_frame_keeps_three_player_visible_bands_simultaneously_visible() -> void:
 	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
 	add_child(auto_free(screen))
@@ -149,6 +241,7 @@ func test_1440x900_frame_keeps_three_player_visible_bands_simultaneously_visible
 
 
 # ACC:T55.1
+# ACC:T56.4
 func test_reenter_battle_map_keeps_three_band_frame_stable_after_viewport_resize() -> void:
 	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
 	add_child(auto_free(main))
@@ -224,6 +317,7 @@ func test_reenter_battle_map_keeps_three_band_frame_stable_after_viewport_resize
 # ACC:T55.4
 # ACC:T55.6
 # ACC:T55.8
+# ACC:T56.5
 func test_battle_map_screen_minimum_runtime_loop_is_player_visible() -> void:
 	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
 	add_child(auto_free(screen))
@@ -253,6 +347,7 @@ func test_battle_map_screen_minimum_runtime_loop_is_player_visible() -> void:
 
 # ACC:T55.3
 # ACC:T55.7
+# ACC:T56.6
 func test_battle_map_runtime_summary_should_distinguish_empty_progressed_and_completion_states() -> void:
 	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
 	add_child(auto_free(screen))
@@ -345,6 +440,7 @@ func test_battle_map_runtime_summary_should_distinguish_empty_progressed_and_com
 # ACC:T55.3
 # ACC:T55.7
 # ACC:T55.10
+# ACC:T56.8
 func test_battle_map_terminal_summary_should_stay_stable_without_state_change() -> void:
 	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
 	add_child(auto_free(screen))
@@ -374,6 +470,7 @@ func test_battle_map_terminal_summary_should_stay_stable_without_state_change() 
 
 # ACC:T55.2
 # ACC:T55.4
+# ACC:T56.9
 func test_battle_map_cycle_should_keep_hud_singleton_and_navigator_ownership() -> void:
 	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
 	add_child(auto_free(main))
@@ -395,10 +492,20 @@ func test_battle_map_cycle_should_keep_hud_singleton_and_navigator_ownership() -
 	assert_object(main.get_node_or_null("RuntimeUi/ScreenRoot/BattleMapScreen")).is_null()
 	assert_int(_hud_count(main)).is_equal(1)
 	assert_object(main.get_node_or_null("ScreenNavigator")).is_not_null()
+	var reopen_ok: bool = nav.call("SwitchTo", "res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn")
+	assert_bool(reopen_ok).is_true()
+	await _await_frames(1)
+	var reopened_screen: Control = main.get_node("RuntimeUi/ScreenRoot/BattleMapScreen")
+	assert_str(str(reopened_screen.get_node("Background").get_meta("ownership_container"))).is_equal("battlefield_presentation")
+	assert_str(str(reopened_screen.get_node("CombatExperienceRuntimeBridge").get_meta("ownership_container"))).is_equal("runtime_bridge")
+	assert_str(str(reopened_screen.get_node("WaveTimer").get_meta("ownership_container"))).is_equal("runtime_bridge")
+	assert_str(str(reopened_screen.get_node("Margin").get_meta("ownership_container"))).is_equal("legacy_prototype")
 
 
 # ACC:T55.7
 # ACC:T55.9
+# ACC:T56.10
+# ACC:T56.11
 func test_combat_bridge_single_source_updates_actor_snapshots_and_castle_hp() -> void:
 	var bridge := preload("res://Game.Godot/Scripts/Combat/CombatExperienceRuntimeBridge.cs").new()
 	add_child(auto_free(bridge))
