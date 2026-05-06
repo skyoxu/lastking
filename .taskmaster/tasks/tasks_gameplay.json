@@ -4725,19 +4725,20 @@
       "ui"
     ],
     "test_refs": [
-      "Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd"
+      "Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd",
+      "Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd"
     ],
     "acceptance": [
-      "在不改变玩家可执行战斗流程与结果的前提下，BattleMapScreen.gd 运行时仅负责场景连线、模式仲裁、桥接安全访问与退出交接；原型调试按钮流程与 legacy panel 文本更新必须由临时控制器负责，若主脚本仍直接触发或写入这些流程则不满足。 Refs: docs/gdd/battlemapscreen-gd-responsibility-split-draft.md Game.Godot/Scripts/Screens/BattleMapScreen.gd",
-      "通过 legacy control row 触发现有集成路径时，玩家可见反馈与流程结果必须与改造前一致；主要原型按钮事件必须可验证为先进入委派控制器再执行，不得由主脚本直接执行。 Refs: Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd docs/gdd/battlemapscreen-story-to-files-mapping.md",
-      "状态语义必须保持可观测且互斥：empty 表示该跟踪条件下无激活战场提示，failure 表示显示终局失败文案，completion 表示目标 UI 结果已达成且在无新输入时保持稳定；无新输入时状态与文案不得自行变化。 Refs: docs/gdd/battlemapscreen-stories.md",
-      "Ownership boundary 必须保持不变：HUD、ScreenNavigator、CombatExperienceRuntimeBridge 继续由既有所有者负责，本任务不得引入责任转移。 Refs: Game.Godot/Scenes/UI/HUD.tscn Game.Godot/Scripts/Navigation/ScreenNavigator.cs Game.Godot/Scripts/Combat/CombatExperienceRuntimeBridge.cs",
-      "Layer boundary 必须保持不变：领域规则继续位于 Game.Core，Game.Godot 仅承担表现与适配职责；出现跨层职责漂移即不满足。 Refs: Game.Core Game.Godot",
-      "声明的实现锚点必须可审计：评审时可在指定锚点定位到 BattleMapScreen 协调器化改动及对应场景连线。 Refs: Game.Godot/Scripts/Screens/BattleMapScreen.gd; Game.Godot/Scenes/Screens/BattleMapScreen.tscn",
-      "运行时验证必须覆盖状态语义：进入 empty 时无激活战场提示，进入 failure 时显示终局失败文案，进入 completion 时达到预期 UI 结果，并在状态未变化且无新输入前保持稳定。 Refs: docs/gdd/battlemapscreen-stories.md",
-      "本任务的 GdUnit4 集成覆盖必须通过指定集成流，用于验证 BattleMapScreen 协调器化后的关键运行路径。 Refs: Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd",
-      "若本任务引入新的玩家可见控制器或节点路径，必须在同一任务内补充对应 focused scene tests；未补充则不满足。 Refs: Tests.Godot",
-      "进入评审前，task/story/GDD 的引用与锚点必须同步到当前工件，且可解析到现行内容。 Refs: docs/gdd/battlemapscreen-stories.md docs/gdd/battlemapscreen-epics.md docs/gdd/battlemapscreen-story-to-files-mapping.md"
+      "BattleMapScreen.gd acts as a coordinator only for runtime wiring, mode arbitration, bridge-safe access, and exit handoff; prototype debug button flow and legacy panel text ownership must be delegated to temporary controllers, and direct root-script handling fails this task. Refs: Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd",
+      "When legacy control-row actions are triggered through the existing integration path, player-visible flow and outcomes remain unchanged, and button handling is verifiably delegated before execution. Refs: Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd",
+      "State semantics are externally observable and mutually exclusive: empty means no active battlefield prompt for the tracked condition, failure means terminal-loss messaging is shown, and completion means the intended UI outcome is reached. Refs: Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd",
+      "Ownership boundaries remain unchanged: HUD, ScreenNavigator, and CombatExperienceRuntimeBridge keep their existing responsibilities, and this task introduces no ownership transfer. Refs: Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd",
+      "Layer-boundary behavior for this slice is validated through coordinator/controller ownership assertions in BattleMapScreen integration flow; the root coordinator must not become a catch-all gameplay execution path. Refs: Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd",
+      "Declared implementation outcomes remain auditable through task-scoped runtime assertions tied to BattleMapScreen coordinator wiring behavior. Refs: Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd",
+      "Runtime semantic validation must cover unchanged-state behavior: once failure or completion is reached, summary-visible state remains stable until explicit new input or transition occurs. Refs: Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd",
+      "GdUnit4 integration coverage for this task is anchored in the designated battle-map runtime flow and remains passing in the accepted revision. Refs: Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd",
+      "If this task introduces any new player-visible controller or node path, focused scene tests for that path are added in the same task before acceptance closes. Refs: Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd",
+      "Before review, task-scoped acceptance evidence remains synchronized and machine-resolvable through designated integration coverage and sidecar artifacts for this task run. Refs: Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd"
     ],
     "contractRefs": [
       "core.lastking.ui_feedback.raised"
