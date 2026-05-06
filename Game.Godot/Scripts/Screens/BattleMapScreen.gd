@@ -32,6 +32,13 @@ func _ready() -> void:
 	_i18n.switch_locale(_normalize_locale(str(TranslationServer.get_locale())))
 	_apply_static_texts()
 
+	# Task 56 ownership markers: battlefield presentation, runtime bridge, legacy prototype.
+	_background.set_meta("ownership_container", "battlefield_presentation")
+	_bridge.set_meta("ownership_container", "runtime_bridge")
+	_wave_timer.set_meta("ownership_container", "runtime_bridge")
+	$Margin.set_meta("ownership_container", "legacy_prototype")
+	$Margin.set_meta("migration_only", true)
+
 	_build_btn.pressed.connect(_on_build)
 	_wave_btn.pressed.connect(_on_wave)
 	_auto_wave_btn.pressed.connect(_on_auto_wave)
