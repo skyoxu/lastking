@@ -4,7 +4,7 @@
 - Date: 2026-05-06
 - Status: accepted
 - Branch: task/T55
-- Git Head: ef9e3396bf696ee0adbd3371b1ffc7d1eb397811
+- Git Head: 7be92f5e198c90b4c2a7003f416d30a52f5b5c1c
 - Why now: Recovery chain still returns `preferred_lane=inspect-first`, `blocked_by=recent_failure_summary`, `six_eight_worthwhile=no`, and inspect shows `rerun_forbidden=true` with no override flag.
 - Decision: Stop current loop and keep residual state. No additional paid rerun in this session.
 - Consequences: Reviewer gate remains open (`review-needs-fix`), while deterministic targeted suites are already green.
@@ -18,3 +18,11 @@
 - Related execution plans: execution-plans/2026-05-05-task-55-chapter6-needs-fix-followup.md
 - Related task id(s): T55
 - Related run ids: 90a978b210ad49e9a23307f229919c0b, 71f38c6ca5c2436490dda3b3157813ca, 01b8f97e1612485ebad9d3e7faf23754
+- Supersedes: n/a (first formal residual decision for this failure family)
+- Superseded by: n/a (active until a later closure decision is recorded)
+- Context: Task 55 Chapter 6 recovery repeatedly produced the same `review-needs-fix` family with stop-loss guard active.
+- Validation: Evidence reviewed from pipeline summary/latest index, route summary, and deterministic test reports before stop-loss decision.
+- Related ADRs: `ADR-0018`, `ADR-0021`, `ADR-0022`, `ADR-0032`.
+- Related run id: `90a978b210ad49e9a23307f229919c0b`, `71f38c6ca5c2436490dda3b3157813ca`, `01b8f97e1612485ebad9d3e7faf23754`.
+- Related latest.json: `logs/ci/2026-05-05/sc-review-pipeline-task-55/latest.json`.
+- Related pipeline artifacts: `logs/ci/2026-05-05/sc-review-pipeline-task-55-01b8f97e1612485ebad9d3e7faf23754/`.
