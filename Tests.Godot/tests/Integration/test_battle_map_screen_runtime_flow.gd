@@ -43,6 +43,20 @@ func _is_visible_inside_viewport(control: Control, viewport_size: Vector2) -> bo
 		and bottom_right.y <= viewport_size.y
 
 
+func _frame_snapshot(screen: Control) -> Dictionary:
+	var background: Control = screen.get_node("Background")
+	var title: Control = screen.get_node("Margin/VBox/Title")
+	var metrics_help: Control = screen.get_node("Margin/VBox/MetricsHelp")
+	return {
+		"background_pos": background.global_position,
+		"background_size": background.size,
+		"title_pos": title.global_position,
+		"title_size": title.size,
+		"metrics_pos": metrics_help.global_position,
+		"metrics_size": metrics_help.size,
+	}
+
+
 # ACC:T55.1
 func test_narrow_layout_keeps_header_footer_fixed_when_only_battlefield_moves() -> void:
 	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
@@ -135,6 +149,77 @@ func test_1440x900_frame_keeps_three_player_visible_bands_simultaneously_visible
 
 
 # ACC:T55.1
+func test_reenter_battle_map_keeps_three_band_frame_stable_after_viewport_resize() -> void:
+	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
+	add_child(auto_free(main))
+	await _await_frames(2)
+
+	var nav: Node = main.get_node("ScreenNavigator")
+	nav.set("UseFadeTransition", false)
+	var screen_root: Node = main.get_node("RuntimeUi/ScreenRoot")
+
+	var ok_enter: bool = nav.call("SwitchTo", "res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn")
+	assert_bool(ok_enter).is_true()
+	await _await_frames(2)
+	var first_screen: Control = screen_root.get_node("BattleMapScreen")
+	first_screen.size = Vector2(1440.0, 900.0)
+	await _await_frames(2)
+	var first_snapshot := _frame_snapshot(first_screen)
+
+	nav.call("ClearCurrentScreen")
+	await _await_frames(2)
+	ok_enter = nav.call("SwitchTo", "res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn")
+	assert_bool(ok_enter).is_true()
+	await _await_frames(2)
+	var second_screen: Control = screen_root.get_node("BattleMapScreen")
+	second_screen.size = Vector2(1440.0, 900.0)
+	await _await_frames(2)
+	var second_snapshot := _frame_snapshot(second_screen)
+	var second_path: Line2D = second_screen.get_node("Background/Path")
+	var second_viewport := Vector2(1440.0, 900.0)
+	var second_mid_index := int(second_path.points.size() * 0.5)
+	var second_background: Control = second_screen.get_node("Background")
+	var second_title: Control = second_screen.get_node("Margin/VBox/Title")
+	var second_metrics_help: Control = second_screen.get_node("Margin/VBox/MetricsHelp")
+
+	assert_bool(_is_visible_inside_viewport(second_title, second_viewport)).is_true()
+	assert_bool(_is_visible_inside_viewport(second_background, second_viewport)).is_true()
+	assert_bool(_is_visible_inside_viewport(second_metrics_help, second_viewport)).is_true()
+	var second_title_mid := second_title.global_position.y + second_title.size.y * 0.5
+	var second_battlefield_mid := second_background.global_position.y + second_path.points[second_mid_index].y
+	var second_bottom_mid := second_metrics_help.global_position.y + second_metrics_help.size.y * 0.5
+	assert_float(second_title_mid).is_less(second_battlefield_mid)
+	assert_float(second_battlefield_mid).is_less(second_bottom_mid)
+
+	# Re-entry + resize still keeps all three bands visible and ordered.
+	second_screen.size = Vector2(1280.0, 720.0)
+	await _await_frames(2)
+	var resized_viewport := Vector2(1280.0, 720.0)
+	assert_bool(_is_visible_inside_viewport(second_title, resized_viewport)).is_true()
+	assert_bool(_is_visible_inside_viewport(second_background, resized_viewport)).is_true()
+	assert_bool(_is_visible_inside_viewport(second_metrics_help, resized_viewport)).is_true()
+	second_title_mid = second_title.global_position.y + second_title.size.y * 0.5
+	second_battlefield_mid = second_background.global_position.y + second_path.points[second_mid_index].y
+	second_bottom_mid = second_metrics_help.global_position.y + second_metrics_help.size.y * 0.5
+	assert_float(second_title_mid).is_less(second_battlefield_mid)
+	assert_float(second_battlefield_mid).is_less(second_bottom_mid)
+
+	second_screen.size = Vector2(1440.0, 900.0)
+	await _await_frames(2)
+	var title_x_before := second_title.global_position.x
+	var metrics_x_before := second_metrics_help.global_position.x
+	var battlefield_x_before := second_background.global_position.x
+
+	second_background.position = second_background.position + Vector2(-80.0, 0.0)
+	await _await_frames(1)
+
+	assert_that(second_snapshot).is_equal(first_snapshot)
+	assert_float(second_background.global_position.x).is_equal(battlefield_x_before - 80.0)
+	assert_float(second_title.global_position.x).is_equal(title_x_before)
+	assert_float(second_metrics_help.global_position.x).is_equal(metrics_x_before)
+
+
+# ACC:T55.1
 # ACC:T55.3
 # ACC:T55.4
 # ACC:T55.6
@@ -200,8 +285,11 @@ func test_battle_map_runtime_summary_should_distinguish_empty_progressed_and_com
 	finish_btn.emit_signal("pressed")
 	await _await_frames(1)
 	var failure_status := String(status_label.text)
-	assert_bool(failure_status.find("cleanup") >= 0 or failure_status.find("清理") >= 0).is_true()
+	var failure_status_lc := failure_status.to_lower()
+	assert_bool(failure_status.length() > 0).is_true()
 	assert_bool(failure_status != empty_status).is_true()
+	assert_bool(failure_status_lc.find("cleanup") >= 0 or failure_status.find("清理") >= 0).is_true()
+	assert_bool(failure_status_lc.find("finished") < 0 and failure_status.find("结束") < 0).is_true()
 	await _await_frames(2)
 	assert_str(status_label.text).is_equal(failure_status)
 
@@ -256,6 +344,7 @@ func test_battle_map_runtime_summary_should_distinguish_empty_progressed_and_com
 
 # ACC:T55.3
 # ACC:T55.7
+# ACC:T55.10
 func test_battle_map_terminal_summary_should_stay_stable_without_state_change() -> void:
 	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
 	add_child(auto_free(screen))
