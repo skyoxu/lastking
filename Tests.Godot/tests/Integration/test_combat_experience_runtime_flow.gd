@@ -39,6 +39,20 @@ func _assert_battlefield_actors_exact(bridge: Node, prefix: String, expected_nam
 		assert_str(names[i]).is_equal(expected_names[i])
 
 
+func _assert_summary_has_required_keys(summary: Dictionary) -> void:
+	var required_keys := [
+		"friendly_units_deployed",
+		"enemy_units_spawned",
+		"combat_exchanges",
+		"dead_units_retired",
+		"active_combat_nodes_after_cleanup",
+		"castle_hp",
+	]
+	for key_variant in required_keys:
+		var key := str(key_variant)
+		assert_bool(summary.has(key)).is_true()
+
+
 # ACC:T47.2
 # ACC:T48.4
 # ACC:T49.5
@@ -136,3 +150,74 @@ func test_runtime_bridge_entrypoints_remain_reachable_after_ownership_isolation(
 	_assert_battlefield_actors_exact(bridge, "EnemyUnit", ["EnemyUnit1", "EnemyUnit2"])
 	assert_bool(bridge.has_node("Battlefield/MgTower")).is_true()
 	assert_bool(bridge.has_node("Battlefield/Barracks")).is_true()
+
+
+# ACC:T57.2
+
+func test_battle_map_control_actions_should_delegate_through_runtime_bridge_and_keep_summary_machine_resolvable() -> void:
+	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
+	add_child(auto_free(main))
+	await get_tree().process_frame
+
+	var nav := main.get_node_or_null("ScreenNavigator")
+	assert_object(nav).is_not_null()
+	nav.set("UseFadeTransition", false)
+	var ok_enter: bool = nav.call("SwitchTo", "res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn")
+	assert_bool(ok_enter).is_true()
+	await get_tree().process_frame
+
+	var screen: Node = main.get_node("RuntimeUi/ScreenRoot/BattleMapScreen")
+	var bridge: Node = screen.get_node("CombatExperienceRuntimeBridge")
+	var wave_btn: Button = screen.get_node("Margin/VBox/Controls/WaveBtn")
+	var exchange_btn: Button = screen.get_node("Margin/VBox/Controls/ExchangeBtn")
+	var cleanup_btn: Button = screen.get_node("Margin/VBox/Controls/CleanupBtn")
+	var finish_btn: Button = screen.get_node("Margin/VBox/Controls/FinishBtn")
+
+	var summary_before: Dictionary = bridge.call("GetSummary")
+	_assert_summary_has_required_keys(summary_before)
+	var before_enemy := int(summary_before.get("enemy_units_spawned", 0))
+	var before_exchanges := int(summary_before.get("combat_exchanges", 0))
+	var before_retired := int(summary_before.get("dead_units_retired", 0))
+
+	# Negative path: out-of-order actions should be blocked and not mutate bridge summary counters.
+	exchange_btn.emit_signal("pressed")
+	cleanup_btn.emit_signal("pressed")
+	finish_btn.emit_signal("pressed")
+	await get_tree().process_frame
+	var summary_blocked: Dictionary = bridge.call("GetSummary")
+	_assert_summary_has_required_keys(summary_blocked)
+	assert_int(int(summary_blocked.get("enemy_units_spawned", 0))).is_equal(before_enemy)
+	assert_int(int(summary_blocked.get("combat_exchanges", 0))).is_equal(before_exchanges)
+	assert_int(int(summary_blocked.get("dead_units_retired", 0))).is_equal(before_retired)
+
+	# Positive path: after wave spawn, exchange/cleanup/finish should drive bridge state transitions.
+	wave_btn.emit_signal("pressed")
+	await get_tree().process_frame
+	exchange_btn.emit_signal("pressed")
+	await get_tree().process_frame
+	cleanup_btn.emit_signal("pressed")
+	await get_tree().process_frame
+	finish_btn.emit_signal("pressed")
+	await get_tree().process_frame
+	var summary_after: Dictionary = bridge.call("GetSummary")
+	_assert_summary_has_required_keys(summary_after)
+	assert_int(int(summary_after.get("enemy_units_spawned", 0))).is_greater_equal(before_enemy + 1)
+	assert_int(int(summary_after.get("combat_exchanges", 0))).is_greater_equal(before_exchanges + 1)
+	assert_int(int(summary_after.get("dead_units_retired", 0))).is_greater_equal(before_retired)
+	assert_bool(bool(summary_after.get("mg_tower_built", true))).is_false()
+	assert_bool(bool(summary_after.get("barracks_built", true))).is_false()
+	assert_int(int(summary_after.get("friendly_units_deployed", -1))).is_equal(0)
+	assert_bool(bridge.has_node("Battlefield/MgTower")).is_false()
+	assert_bool(bridge.has_node("Battlefield/Barracks")).is_false()
+	assert_int(int(summary_after.get("enemy_units_spawned", 0))).is_equal(before_enemy + 2)
+
+	# Coordinator-only guarantee: root handler delegates to bridge and never triggers the full fallback flow.
+	assert_bool(bridge.has_method("RunCompleteCombatExperienceForTest")).is_true()
+	assert_bool(bridge.has_node("Battlefield/MgTower")).is_false()
+	assert_bool(bridge.has_node("Battlefield/Barracks")).is_false()
+	var fallback_summary: Dictionary = bridge.call("RunCompleteCombatExperienceForTest")
+	_assert_summary_has_required_keys(fallback_summary)
+	assert_bool(bridge.has_node("Battlefield/MgTower")).is_true()
+	assert_bool(bridge.has_node("Battlefield/Barracks")).is_true()
+	assert_int(int(fallback_summary.get("enemy_units_spawned", 0))).is_equal(2)
+	assert_int(int(fallback_summary.get("combat_exchanges", 0))).is_greater_equal(1)

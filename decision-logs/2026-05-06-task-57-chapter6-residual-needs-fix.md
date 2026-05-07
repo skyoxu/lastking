@@ -19,3 +19,8 @@
 - Related run id: `536759bd11c047d3b2c2189a9b177ef9`
 - Related latest.json: `logs/ci/2026-05-06/sc-review-pipeline-task-57/latest.json`
 - Related pipeline artifacts: `logs/ci/2026-05-06/sc-review-pipeline-task-57-536759bd11c047d3b2c2189a9b177ef9`
+- Follow-up deterministic evidence (2026-05-07):
+  - `logs/ci/2026-05-07/task57-semantic-delta/acceptance-refs.refactor.v14.json` (`status=ok`, `errors=0`)
+  - `logs/ci/2026-05-07/task57-semantic-delta/acceptance-anchors.refactor.v14.json` (`status=ok`, `errors=0`)
+  - `logs/ci/2026-05-07/sc-test/summary.json` (integration `status=ok`)
+  - `logs/ci/2026-05-07/sc-review-pipeline-task-57/latest.json` (latest review pipeline index for closure traceability)

@@ -147,7 +147,6 @@ func _assert_task56_ownership_map(screen: Control) -> void:
 
 # ACC:T55.1
 # ACC:T56.1
-# ACC:T57.1
 func test_narrow_layout_keeps_header_footer_fixed_when_only_battlefield_moves() -> void:
 	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
 	add_child(auto_free(screen))
@@ -174,7 +173,6 @@ func test_narrow_layout_keeps_header_footer_fixed_when_only_battlefield_moves() 
 
 # ACC:T55.1
 # ACC:T56.2
-# ACC:T57.2
 func test_non_battlefield_layout_perturbation_should_not_shift_header_or_footer() -> void:
 	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
 	add_child(auto_free(screen))
@@ -198,7 +196,6 @@ func test_non_battlefield_layout_perturbation_should_not_shift_header_or_footer(
 
 # ACC:T55.1
 # ACC:T56.3
-# ACC:T57.3
 func test_1440x900_frame_keeps_three_player_visible_bands_simultaneously_visible() -> void:
 	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
 	add_child(auto_free(screen))
@@ -245,7 +242,6 @@ func test_1440x900_frame_keeps_three_player_visible_bands_simultaneously_visible
 
 # ACC:T55.1
 # ACC:T56.4
-# ACC:T57.4
 func test_reenter_battle_map_keeps_three_band_frame_stable_after_viewport_resize() -> void:
 	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
 	add_child(auto_free(main))
@@ -322,15 +318,12 @@ func test_reenter_battle_map_keeps_three_band_frame_stable_after_viewport_resize
 # ACC:T55.6
 # ACC:T55.8
 # ACC:T56.5
-# ACC:T57.5
-# ACC:T57.6
-# ACC:T57.7
 # ACC:T57.8
-# ACC:T57.9
 func test_battle_map_screen_minimum_runtime_loop_is_player_visible() -> void:
 	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
 	add_child(auto_free(screen))
 	await _await_frames(2)
+	_assert_task56_ownership_map(screen)
 
 	var build_btn := screen.get_node("Margin/VBox/Controls/BuildBtn")
 	var wave_btn := screen.get_node("Margin/VBox/Controls/WaveBtn")
@@ -352,11 +345,65 @@ func test_battle_map_screen_minimum_runtime_loop_is_player_visible() -> void:
 	assert_bool(String(summary.text).find("HP") >= 0 or String(summary.text).find("生命") >= 0).is_true()
 	assert_bool(String(summary.text).find("Friendly") >= 0 or String(summary.text).find("友军") >= 0).is_true()
 	assert_bool(String(summary.text).find("Enemy") >= 0 or String(summary.text).find("敌军") >= 0).is_true()
+	_assert_task56_ownership_map(screen)
+
+
+# ACC:T57.1
+# ACC:T57.5
+func test_battle_map_coordinator_guards_should_block_out_of_order_actions_and_preserve_runtime_state() -> void:
+	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
+	add_child(auto_free(screen))
+	await _await_frames(2)
+	_assert_task56_ownership_map(screen)
+
+	var bridge: Node = screen.get_node("CombatExperienceRuntimeBridge")
+	var exchange_btn: Button = screen.get_node("Margin/VBox/Controls/ExchangeBtn")
+	var cleanup_btn: Button = screen.get_node("Margin/VBox/Controls/CleanupBtn")
+	var finish_btn: Button = screen.get_node("Margin/VBox/Controls/FinishBtn")
+	var wave_btn: Button = screen.get_node("Margin/VBox/Controls/WaveBtn")
+	var status_label: Label = screen.get_node("Margin/VBox/Status")
+	var summary_before := _bridge_summary_metrics(bridge)
+
+	exchange_btn.emit_signal("pressed")
+	await _await_frames(1)
+	var status_after_exchange := String(status_label.text)
+	assert_bool(status_after_exchange.find("wave") >= 0 or status_after_exchange.find("波次") >= 0).is_true()
+
+	cleanup_btn.emit_signal("pressed")
+	await _await_frames(1)
+	var status_after_cleanup := String(status_label.text)
+	var status_after_cleanup_lc := status_after_cleanup.to_lower()
+	assert_bool(
+		status_after_cleanup_lc.find("exchange") >= 0
+		or status_after_cleanup_lc.find("combat") >= 0
+		or status_after_cleanup.find("交战") >= 0
+	).is_true()
+
+	finish_btn.emit_signal("pressed")
+	await _await_frames(1)
+	var status_after_finish := String(status_label.text)
+	assert_bool(status_after_finish.to_lower().find("cleanup") >= 0 or status_after_finish.find("清理") >= 0).is_true()
+
+	var summary_after_invalid := _bridge_summary_metrics(bridge)
+	assert_that(summary_after_invalid).is_equal(summary_before)
+
+	wave_btn.emit_signal("pressed")
+	await _await_frames(1)
+	exchange_btn.emit_signal("pressed")
+	await _await_frames(1)
+	cleanup_btn.emit_signal("pressed")
+	await _await_frames(1)
+	finish_btn.emit_signal("pressed")
+	await _await_frames(1)
+	var status_after_valid_flow := String(status_label.text)
+	assert_bool(status_after_valid_flow.find("finished") >= 0 or status_after_valid_flow.find("结束") >= 0).is_true()
+	_assert_task56_ownership_map(screen)
 
 
 # ACC:T55.3
 # ACC:T55.7
 # ACC:T56.6
+# ACC:T57.3
 func test_battle_map_runtime_summary_should_distinguish_empty_progressed_and_completion_states() -> void:
 	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
 	add_child(auto_free(screen))
@@ -446,10 +493,70 @@ func test_battle_map_runtime_summary_should_distinguish_empty_progressed_and_com
 	assert_bool(empty_metrics != progressed_metrics).is_true()
 
 
+# ACC:T57.6
+# ACC:T57.10
+func test_battle_map_back_action_should_handoff_exit_to_navigator_and_restore_main_menu() -> void:
+	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
+	get_tree().get_root().add_child(main)
+	auto_free(main)
+	await _await_frames(2)
+
+	var nav: Node = main.get_node("ScreenNavigator")
+	var menu: Node = main.get_node("RuntimeUi/MainMenu")
+	assert_object(nav).is_not_null()
+	assert_object(menu).is_not_null()
+	nav.set("UseFadeTransition", false)
+
+	if menu.has_method("HideMenu"):
+		menu.call("HideMenu")
+		await _await_frames(1)
+		assert_bool(bool(menu.get("visible"))).is_false()
+
+	var ok_enter: bool = nav.call("SwitchTo", "res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn")
+	assert_bool(ok_enter).is_true()
+	await _await_frames(2)
+
+	var screen_root: Node = main.get_node("RuntimeUi/ScreenRoot")
+	var screen: Control = screen_root.get_node("BattleMapScreen")
+	var back_btn: Button = screen.get_node("Margin/VBox/Controls/BackBtn")
+	back_btn.emit_signal("pressed")
+	await _await_frames(2)
+
+	assert_object(screen_root.get_node_or_null("BattleMapScreen")).is_null()
+	assert_bool(bool(menu.get("visible"))).is_true()
+
+
+# ACC:T57.10
+func test_back_action_without_main_navigator_should_not_mutate_runtime_summary() -> void:
+	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
+	add_child(auto_free(screen))
+	await _await_frames(2)
+
+	var bridge: Node = screen.get_node("CombatExperienceRuntimeBridge")
+	var before := _bridge_summary_metrics(bridge)
+	var before_children := bridge.get_node("Battlefield").get_child_count()
+	var status_before := String((screen.get_node("Margin/VBox/Status") as Label).text)
+	var summary_before := String((screen.get_node("Margin/VBox/Summary") as Label).text)
+
+	var back_btn: Button = screen.get_node("Margin/VBox/Controls/BackBtn")
+	back_btn.emit_signal("pressed")
+	await _await_frames(2)
+
+	var after := _bridge_summary_metrics(bridge)
+	assert_int(int(after.get("friendly_units_deployed", -1))).is_equal(int(before.get("friendly_units_deployed", -1)))
+	assert_int(int(after.get("enemy_units_spawned", -1))).is_equal(int(before.get("enemy_units_spawned", -1)))
+	assert_int(int(after.get("combat_exchanges", -1))).is_equal(int(before.get("combat_exchanges", -1)))
+	assert_int(int(after.get("dead_units_retired", -1))).is_equal(int(before.get("dead_units_retired", -1)))
+	assert_int(bridge.get_node("Battlefield").get_child_count()).is_equal(before_children)
+	assert_str(String((screen.get_node("Margin/VBox/Status") as Label).text)).is_equal(status_before)
+	assert_str(String((screen.get_node("Margin/VBox/Summary") as Label).text)).is_equal(summary_before)
+
+
 # ACC:T55.3
 # ACC:T55.7
 # ACC:T55.10
 # ACC:T56.8
+# ACC:T57.7
 func test_battle_map_terminal_summary_should_stay_stable_without_state_change() -> void:
 	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
 	add_child(auto_free(screen))
@@ -477,9 +584,44 @@ func test_battle_map_terminal_summary_should_stay_stable_without_state_change() 
 	assert_that(snapshot_after).is_equal(snapshot_before)
 
 
+# ACC:T57.9
+func test_bridge_unavailable_should_keep_coordinator_path_recoverable_without_counter_drift() -> void:
+	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
+	add_child(auto_free(screen))
+	await _await_frames(2)
+
+	var bridge: Node = screen.get_node("CombatExperienceRuntimeBridge")
+	var baseline_summary := _bridge_summary_metrics(bridge)
+	var baseline_children := bridge.get_node("Battlefield").get_child_count()
+	var bridge_stub := Node.new()
+	bridge_stub.name = "BridgeStubNoMethods"
+	screen.add_child(auto_free(bridge_stub))
+	screen.set("_bridge", bridge_stub)
+
+	var wave_btn: Button = screen.get_node("Margin/VBox/Controls/WaveBtn")
+	var exchange_btn: Button = screen.get_node("Margin/VBox/Controls/ExchangeBtn")
+	var cleanup_btn: Button = screen.get_node("Margin/VBox/Controls/CleanupBtn")
+	var finish_btn: Button = screen.get_node("Margin/VBox/Controls/FinishBtn")
+	wave_btn.emit_signal("pressed")
+	exchange_btn.emit_signal("pressed")
+	cleanup_btn.emit_signal("pressed")
+	finish_btn.emit_signal("pressed")
+	await _await_frames(2)
+
+	var after_summary := _bridge_summary_metrics(bridge)
+	assert_that(after_summary).is_equal(baseline_summary)
+	assert_int(bridge.get_node("Battlefield").get_child_count()).is_equal(baseline_children)
+	assert_bool(is_instance_valid(screen)).is_true()
+	assert_bool(String((screen.get_node("Margin/VBox/Status") as Label).text).length() > 0).is_true()
+	assert_bool(String((screen.get_node("Margin/VBox/Summary") as Label).text).length() > 0).is_true()
+
+
 # ACC:T55.2
 # ACC:T55.4
 # ACC:T56.9
+# ACC:T57.4
+# ACC:T57.9
+
 func test_battle_map_cycle_should_keep_hud_singleton_and_navigator_ownership() -> void:
 	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
 	add_child(auto_free(main))
@@ -515,7 +657,6 @@ func test_battle_map_cycle_should_keep_hud_singleton_and_navigator_ownership() -
 # ACC:T55.9
 # ACC:T56.10
 # ACC:T56.11
-# ACC:T57.10
 func test_combat_bridge_single_source_updates_actor_snapshots_and_castle_hp() -> void:
 	var bridge := preload("res://Game.Godot/Scripts/Combat/CombatExperienceRuntimeBridge.cs").new()
 	add_child(auto_free(bridge))
@@ -536,6 +677,17 @@ func test_combat_bridge_single_source_updates_actor_snapshots_and_castle_hp() ->
 		summary_before = bridge.call("RunCompleteCombatExperienceForTest")
 	var before_hp := int(summary_before.get("castle_hp", -1))
 	assert_int(before_hp).is_greater_equal(0)
+	var required_summary_keys := [
+		"friendly_units_deployed",
+		"enemy_units_spawned",
+		"combat_exchanges",
+		"dead_units_retired",
+		"active_combat_nodes_after_cleanup",
+		"castle_hp",
+	]
+	for key_variant in required_summary_keys:
+		var key := str(key_variant)
+		assert_bool(summary_before.has(key)).is_true()
 
 	if bridge.has_method("AdvanceSimulation"):
 		for _i in range(120):
@@ -552,3 +704,6 @@ func test_combat_bridge_single_source_updates_actor_snapshots_and_castle_hp() ->
 		summary_after = bridge.call("RunCompleteCombatExperienceForTest")
 	var after_hp := int(summary_after.get("castle_hp", -1))
 	assert_int(after_hp).is_less_equal(before_hp)
+	for key_variant in required_summary_keys:
+		var key := str(key_variant)
+		assert_bool(summary_after.has(key)).is_true()
