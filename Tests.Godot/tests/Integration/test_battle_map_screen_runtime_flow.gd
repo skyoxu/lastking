@@ -147,6 +147,7 @@ func _assert_task56_ownership_map(screen: Control) -> void:
 
 # ACC:T55.1
 # ACC:T56.1
+# ACC:T58.1
 func test_narrow_layout_keeps_header_footer_fixed_when_only_battlefield_moves() -> void:
 	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
 	add_child(auto_free(screen))
@@ -173,6 +174,7 @@ func test_narrow_layout_keeps_header_footer_fixed_when_only_battlefield_moves() 
 
 # ACC:T55.1
 # ACC:T56.2
+# ACC:T58.2
 func test_non_battlefield_layout_perturbation_should_not_shift_header_or_footer() -> void:
 	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
 	add_child(auto_free(screen))
@@ -184,18 +186,25 @@ func test_non_battlefield_layout_perturbation_should_not_shift_header_or_footer(
 	var title: Control = screen.get_node("Margin/VBox/Title")
 	var metrics_help: Control = screen.get_node("Margin/VBox/MetricsHelp")
 	var controls: Control = screen.get_node("Margin/VBox/Controls")
+	var status_label: Label = screen.get_node("Margin/VBox/Status")
+	var summary_label: Label = screen.get_node("Margin/VBox/Summary")
 	var title_before := title.global_position
 	var metrics_before := metrics_help.global_position
+	var status_before := String(status_label.text)
+	var summary_before := String(summary_label.text)
 
 	controls.position = controls.position + Vector2(80.0, 0.0)
 	await _await_frames(1)
 
 	assert_that(title.global_position).is_equal(title_before)
 	assert_that(metrics_help.global_position).is_equal(metrics_before)
+	assert_str(String(status_label.text)).is_equal(status_before)
+	assert_str(String(summary_label.text)).is_equal(summary_before)
 
 
 # ACC:T55.1
 # ACC:T56.3
+# ACC:T58.3
 func test_1440x900_frame_keeps_three_player_visible_bands_simultaneously_visible() -> void:
 	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
 	add_child(auto_free(screen))
@@ -242,6 +251,7 @@ func test_1440x900_frame_keeps_three_player_visible_bands_simultaneously_visible
 
 # ACC:T55.1
 # ACC:T56.4
+# ACC:T58.4
 func test_reenter_battle_map_keeps_three_band_frame_stable_after_viewport_resize() -> void:
 	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
 	add_child(auto_free(main))
@@ -319,6 +329,11 @@ func test_reenter_battle_map_keeps_three_band_frame_stable_after_viewport_resize
 # ACC:T55.8
 # ACC:T56.5
 # ACC:T57.8
+# ACC:T58.7
+# ACC:T58.8
+# ACC:T58.9
+# ACC:T58.10
+# ACC:T58.11
 func test_battle_map_screen_minimum_runtime_loop_is_player_visible() -> void:
 	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
 	add_child(auto_free(screen))
@@ -404,6 +419,7 @@ func test_battle_map_coordinator_guards_should_block_out_of_order_actions_and_pr
 # ACC:T55.7
 # ACC:T56.6
 # ACC:T57.3
+# ACC:T58.5
 func test_battle_map_runtime_summary_should_distinguish_empty_progressed_and_completion_states() -> void:
 	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
 	add_child(auto_free(screen))
@@ -557,6 +573,7 @@ func test_back_action_without_main_navigator_should_not_mutate_runtime_summary()
 # ACC:T55.10
 # ACC:T56.8
 # ACC:T57.7
+# ACC:T58.6
 func test_battle_map_terminal_summary_should_stay_stable_without_state_change() -> void:
 	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
 	add_child(auto_free(screen))
@@ -707,3 +724,30 @@ func test_combat_bridge_single_source_updates_actor_snapshots_and_castle_hp() ->
 	for key_variant in required_summary_keys:
 		var key := str(key_variant)
 		assert_bool(summary_after.has(key)).is_true()
+
+
+# ACC:T58.7
+func test_locale_switch_between_en_us_and_zh_cn_should_keep_player_visible_status_resolvable() -> void:
+	var original_locale := str(TranslationServer.get_locale())
+
+	TranslationServer.set_locale("en-US")
+	var screen_en := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
+	add_child(auto_free(screen_en))
+	await _await_frames(2)
+	var status_en := String((screen_en.get_node("Margin/VBox/Status") as Label).text)
+	var summary_en := String((screen_en.get_node("Margin/VBox/Summary") as Label).text)
+
+	TranslationServer.set_locale("zh-CN")
+	var screen_zh := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
+	add_child(auto_free(screen_zh))
+	await _await_frames(2)
+	var status_zh := String((screen_zh.get_node("Margin/VBox/Status") as Label).text)
+	var summary_zh := String((screen_zh.get_node("Margin/VBox/Summary") as Label).text)
+
+	# Locale switch must keep status/summary readable for players in both locales.
+	assert_bool(status_en.length() > 0).is_true()
+	assert_bool(summary_en.length() > 0).is_true()
+	assert_bool(status_zh.length() > 0).is_true()
+	assert_bool(summary_zh.length() > 0).is_true()
+
+	TranslationServer.set_locale(original_locale)
