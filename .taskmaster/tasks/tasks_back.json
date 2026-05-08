@@ -4869,19 +4869,20 @@
       "ui"
     ],
     "test_refs": [
-      "Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd"
+      "Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd",
+      "Game.Core.Tests/State/GameStateMachineTests.cs"
     ],
     "acceptance": [
-      "At runtime, the battlefield displays exactly five fixed regions in this order: left outer field, left wall, inner castle region, right wall, right outer field; every buildable slot is aligned to the 50 x 50 grid, and detection of any off-grid buildable slot fails this task. Refs: docs/gdd/battle-map-ui-layout-and-slots.zh-CN.md Game.Godot/Scenes/Screens/BattleMapScreen.tscn",
-      "At runtime, wall regions are always non-buildable boundaries: zero buildable slots are placed on wall regions, and zero buildable slots cross any wall boundary. Refs: docs/gdd/battle-map-ui-layout-and-slots.zh-CN.md Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd",
-      "During battle-map runtime, plannable and non-plannable regions are visually distinguishable, and non-plannable regions never expose a slot as available for building or defense planning. Refs: docs/gdd/battlemapscreen-stories.md",
-      "This task does not reassign ownership: HUD, ScreenNavigator, and CombatExperienceRuntimeBridge keep their existing responsibilities, with no responsibility moved into or out of these components. Refs: Game.Godot/Scenes/UI/HUD.tscn Game.Godot/Scripts/Navigation/ScreenNavigator.cs Game.Godot/Scripts/Combat/CombatExperienceRuntimeBridge.cs",
-      "Layer boundaries remain enforced: Game.Core contains domain logic only (no new Godot dependency), and Game.Godot changes are limited to presentation/adapter behavior required for battlefield layout. Refs: Game.Core Game.Godot",
-      "Battlefield region-layout and slot-grid presentation updates for this task are present and auditable at the declared implementation anchors. Refs: Game.Godot/Scenes/Screens/BattleMapScreen.tscn; Game.Godot/Scripts/Screens/BattlefieldView.gd",
-      "Runtime state semantics are testable: empty shows no active battlefield prompt, failure shows terminal-loss messaging, and completion reaches the intended UI outcome and stays stable until a later state transition. Refs: docs/gdd/battlemapscreen-stories.md",
-      "GdUnit4 integration coverage for this task exists at the designated runtime-flow test path and includes assertions that verify battlefield layout outcomes. Refs: Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd",
-      "If this task introduces a new player-visible controller or node path, focused scene tests are added in the same task before acceptance completion; if no such addition exists, no extra focused scene test is required. Refs: Tests.Godot",
-      "Before review, task/story/GDD references and anchors for this task are synchronized and resolve to current project artifacts. Refs: docs/gdd/battlemapscreen-stories.md docs/gdd/battlemapscreen-epics.md docs/gdd/battlemapscreen-story-to-files-mapping.md"
+      "ACC:T59.1 At runtime, the battlefield displays exactly five fixed regions in this order: left outer field, left wall, inner castle region, right wall, right outer field; every buildable slot is aligned to the 50 x 50 grid, and detection of any off-grid buildable slot fails this task. Refs: Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd",
+      "ACC:T59.2 At runtime, wall regions are always non-buildable boundaries: zero buildable slots are placed on wall regions, and zero buildable slots cross any wall boundary. Refs: Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd",
+      "ACC:T59.3 During battle-map runtime, plannable and non-plannable regions are visually distinguishable, and non-plannable regions never expose a slot as available for building or defense planning. Refs: Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd",
+      "ACC:T59.4 This task does not reassign ownership: HUD, ScreenNavigator, and CombatExperienceRuntimeBridge keep their existing responsibilities, with no responsibility moved into or out of these components. Refs: Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd",
+      "ACC:T59.5 Layer boundaries remain enforced: Game.Core contains domain logic only (no new Godot dependency), and Game.Godot changes are limited to presentation/adapter behavior required for battlefield layout. Refs: Game.Core.Tests/State/GameStateMachineTests.cs Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd",
+      "ACC:T59.6 Battlefield region-layout and slot-grid presentation updates for this task are present and auditable at the declared implementation anchors. Refs: Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd",
+      "ACC:T59.7 Runtime state semantics are testable: empty shows no active battlefield prompt, failure shows terminal-loss messaging, and completion reaches the intended UI outcome and stays stable until a later state transition. Refs: Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd",
+      "ACC:T59.8 GdUnit4 integration coverage for this task exists at the designated runtime-flow test path and includes assertions that verify battlefield layout outcomes. Refs: Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd",
+      "ACC:T59.9 If this task introduces a new player-visible controller or node path, focused scene tests are added in the same task before acceptance completion; if no such addition exists, no extra focused scene test is required. Refs: Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd",
+      "ACC:T59.10 Before review, task/story/GDD references and anchors for this task are synchronized and resolve to current project artifacts. Refs: Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd"
     ],
     "contractRefs": [],
     "semantic_review_tier": "full",
