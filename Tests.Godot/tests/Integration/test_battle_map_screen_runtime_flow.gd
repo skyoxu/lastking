@@ -1,7 +1,5 @@
 extends "res://addons/gdUnit4/src/GdUnitTestSuite.gd"
 
-
-
 func _await_frames(count: int) -> void:
 	for _i in range(count):
 		await get_tree().process_frame
@@ -148,6 +146,7 @@ func _assert_task56_ownership_map(screen: Control) -> void:
 # ACC:T55.1
 # ACC:T56.1
 # ACC:T58.1
+# ACC:T59.1
 func test_narrow_layout_keeps_header_footer_fixed_when_only_battlefield_moves() -> void:
 	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
 	add_child(auto_free(screen))
@@ -175,6 +174,7 @@ func test_narrow_layout_keeps_header_footer_fixed_when_only_battlefield_moves() 
 # ACC:T55.1
 # ACC:T56.2
 # ACC:T58.2
+# ACC:T59.2
 func test_non_battlefield_layout_perturbation_should_not_shift_header_or_footer() -> void:
 	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
 	add_child(auto_free(screen))
@@ -205,6 +205,7 @@ func test_non_battlefield_layout_perturbation_should_not_shift_header_or_footer(
 # ACC:T55.1
 # ACC:T56.3
 # ACC:T58.3
+# ACC:T59.3
 func test_1440x900_frame_keeps_three_player_visible_bands_simultaneously_visible() -> void:
 	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
 	add_child(auto_free(screen))
@@ -252,6 +253,7 @@ func test_1440x900_frame_keeps_three_player_visible_bands_simultaneously_visible
 # ACC:T55.1
 # ACC:T56.4
 # ACC:T58.4
+# ACC:T59.4
 func test_reenter_battle_map_keeps_three_band_frame_stable_after_viewport_resize() -> void:
 	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
 	add_child(auto_free(main))
@@ -334,6 +336,7 @@ func test_reenter_battle_map_keeps_three_band_frame_stable_after_viewport_resize
 # ACC:T58.9
 # ACC:T58.10
 # ACC:T58.11
+# ACC:T59.5
 func test_battle_map_screen_minimum_runtime_loop_is_player_visible() -> void:
 	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
 	add_child(auto_free(screen))
@@ -365,6 +368,7 @@ func test_battle_map_screen_minimum_runtime_loop_is_player_visible() -> void:
 
 # ACC:T57.1
 # ACC:T57.5
+# ACC:T59.6
 func test_battle_map_coordinator_guards_should_block_out_of_order_actions_and_preserve_runtime_state() -> void:
 	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
 	add_child(auto_free(screen))
@@ -420,6 +424,7 @@ func test_battle_map_coordinator_guards_should_block_out_of_order_actions_and_pr
 # ACC:T56.6
 # ACC:T57.3
 # ACC:T58.5
+# ACC:T59.7
 func test_battle_map_runtime_summary_should_distinguish_empty_progressed_and_completion_states() -> void:
 	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
 	add_child(auto_free(screen))
@@ -511,6 +516,7 @@ func test_battle_map_runtime_summary_should_distinguish_empty_progressed_and_com
 
 # ACC:T57.6
 # ACC:T57.10
+# ACC:T59.8
 func test_battle_map_back_action_should_handoff_exit_to_navigator_and_restore_main_menu() -> void:
 	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
 	get_tree().get_root().add_child(main)
@@ -543,6 +549,7 @@ func test_battle_map_back_action_should_handoff_exit_to_navigator_and_restore_ma
 
 
 # ACC:T57.10
+# ACC:T59.9
 func test_back_action_without_main_navigator_should_not_mutate_runtime_summary() -> void:
 	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
 	add_child(auto_free(screen))
@@ -574,6 +581,7 @@ func test_back_action_without_main_navigator_should_not_mutate_runtime_summary()
 # ACC:T56.8
 # ACC:T57.7
 # ACC:T58.6
+# ACC:T59.10
 func test_battle_map_terminal_summary_should_stay_stable_without_state_change() -> void:
 	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
 	add_child(auto_free(screen))
