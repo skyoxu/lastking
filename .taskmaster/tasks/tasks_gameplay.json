@@ -4597,7 +4597,7 @@
       "CombatExperienceRuntimeBridge runtime outputs remain deterministic and observable after simulation advances: actor snapshots remain available and castle HP is monotonic non-increasing relative to the pre-simulation state for the same run. Refs: Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd",
       "After a terminal outcome is reached without new runtime input, BattleMapScreen status and summary remain stable across subsequent frames until runtime state changes. Refs: Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd",
       "Before review passes, Task 55 refs and declared anchors stay synchronized with current artifacts so acceptance evidence resolves to the latest sources. Refs: Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd Game.Core.Tests/Tasks/Task46UiWiringAcceptanceGovernanceTests.cs",
-      "If this task introduces any new player-visible controller or node path, focused scene tests are added in this same task and must pass before acceptance closure. Refs: Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd Tests.Godot/tests/UI/test_hud_scene.gd"
+      "If this task introduces any new player-visible controller or node path, focused scene tests are added in this same task and must pass before acceptance closure. Refs: Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd"
     ],
     "contractRefs": [
       "core.lastking.ui_feedback.raised"
