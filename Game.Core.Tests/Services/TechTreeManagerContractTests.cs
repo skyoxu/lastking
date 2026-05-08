@@ -31,6 +31,7 @@ public class TechTreeManagerContractTests
 
         var methodInfo = managerType!.GetMethod("GetStatMultiplier", new[] { typeof(string) });
         methodInfo.Should().NotBeNull("TechTreeManager must expose GetStatMultiplier(string stat).");
+        var resolvedMethod = methodInfo!;
 
         var nodeMapField = FindNodeMapField(managerType);
         nodeMapField.Should().NotBeNull("TechTreeManager must keep an internal TechNode map.");
@@ -40,23 +41,23 @@ public class TechTreeManagerContractTests
 
         var emptyMap = CreateNodeMap(nodeType);
         nodeMapField.SetValue(manager, emptyMap);
-        var baselineResult = InvokeMultiplier(methodInfo!, manager, "attack");
+        var baselineResult = InvokeMultiplier(resolvedMethod, manager, "attack");
 
         var lockedMap = CreateNodeMap(nodeType);
         lockedMap["n1"] = CreateNode(nodeType, "n1", "attack", 1.50, false);
         nodeMapField.SetValue(manager, lockedMap);
-        var lockedResult = InvokeMultiplier(methodInfo, manager, "attack");
+        var lockedResult = InvokeMultiplier(resolvedMethod, manager, "attack");
 
         var oneUnlockedMap = CreateNodeMap(nodeType);
         oneUnlockedMap["n1"] = CreateNode(nodeType, "n1", "attack", 1.50, true);
         nodeMapField.SetValue(manager, oneUnlockedMap);
-        var oneUnlockedResult = InvokeMultiplier(methodInfo, manager, "attack");
+        var oneUnlockedResult = InvokeMultiplier(resolvedMethod, manager, "attack");
 
         var twoUnlockedMap = CreateNodeMap(nodeType);
         twoUnlockedMap["n1"] = CreateNode(nodeType, "n1", "attack", 1.50, true);
         twoUnlockedMap["n2"] = CreateNode(nodeType, "n2", "attack", 1.20, true);
         nodeMapField.SetValue(manager, twoUnlockedMap);
-        var twoUnlockedResult = InvokeMultiplier(methodInfo, manager, "attack");
+        var twoUnlockedResult = InvokeMultiplier(resolvedMethod, manager, "attack");
 
         lockedResult.Should().Be(baselineResult, "locked nodes must not change the multiplier.");
         oneUnlockedResult.Should().NotBe(baselineResult, "an unlocked node must affect the multiplier.");
@@ -127,13 +128,14 @@ public class TechTreeManagerContractTests
     {
         var node = Activator.CreateInstance(nodeType);
         node.Should().NotBeNull("TechNode should be instantiable for runtime state tests.");
+        var resolvedNode = node!;
 
-        SetProperty(node!, nodeType, "Id", id);
-        SetProperty(node, nodeType, "Stat", stat);
-        SetProperty(node, nodeType, "Multiplier", multiplier);
-        SetProperty(node, nodeType, "IsUnlocked", isUnlocked);
+        SetProperty(resolvedNode, nodeType, "Id", id);
+        SetProperty(resolvedNode, nodeType, "Stat", stat);
+        SetProperty(resolvedNode, nodeType, "Multiplier", multiplier);
+        SetProperty(resolvedNode, nodeType, "IsUnlocked", isUnlocked);
 
-        return node;
+        return resolvedNode;
     }
 
     private static void SetProperty(object target, Type targetType, string propertyName, object value)

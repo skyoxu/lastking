@@ -680,7 +680,7 @@ public sealed class GameplayTuningConfigIntegrationTests
 
     private static bool TryExtractEnemyStats(object? rawResult, string enemyId, int depth, out GameplayEnemyRuntimeStats stats)
     {
-        stats = default;
+        stats = GameplayEnemyRuntimeStats.Empty;
         if (rawResult is null || depth > 4)
         {
             return false;
@@ -736,7 +736,7 @@ public sealed class GameplayTuningConfigIntegrationTests
 
     private static bool TryExtractEnemyStatsFromJson(JsonElement element, string enemyId, out GameplayEnemyRuntimeStats stats)
     {
-        stats = default;
+        stats = GameplayEnemyRuntimeStats.Empty;
 
         if (element.ValueKind == JsonValueKind.Array)
         {
@@ -786,7 +786,7 @@ public sealed class GameplayTuningConfigIntegrationTests
 
     private static bool TryBuildEnemyStatsFromObject(object value, out GameplayEnemyRuntimeStats stats)
     {
-        stats = default;
+        stats = GameplayEnemyRuntimeStats.Empty;
         if (!TryGetDecimalLike(value, "Health", out var health)
             || !TryGetDecimalLike(value, "Damage", out var damage)
             || !TryGetDecimalLike(value, "Speed", out var speed))
@@ -1464,7 +1464,10 @@ public sealed class GameplayTuningConfigIntegrationTests
         return tokens.Any(token => source.Contains(token, StringComparison.OrdinalIgnoreCase));
     }
 
-    private sealed record GameplayEnemyRuntimeStats(decimal Health, decimal Damage, decimal Speed);
+    private sealed record GameplayEnemyRuntimeStats(decimal Health, decimal Damage, decimal Speed)
+    {
+        public static GameplayEnemyRuntimeStats Empty { get; } = new(0m, 0m, 0m);
+    }
 
     private sealed record GameplayEnemyRuntimeProbeResult(
         bool Success,
