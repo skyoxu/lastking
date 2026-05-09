@@ -4,6 +4,10 @@
 - Date: 2026-05-09
 - Status: accepted
 - Branch: task/T60
+- Supersedes: none
+- Superseded by: none
+- Git Head: 1eb8fa78fea3df0cf5c181ac7f6746a62455385d
+- Related ADRs: ADR-0018, ADR-0021, ADR-0022, ADR-0032
 - Why now: Chapter 6 recovery shows the latest run is clean at the pipeline level but still carries a repeated review-needs-fix family in sc-llm-review.
 - Context: Current residual findings are limited to reviewer evidence quality in architecture boundary tests, not a broader deterministic failure or approval blocker.
 - Decision: Tighten the Task 60 architecture boundary assertions to use concrete service/contract/method-level evidence instead of broad token-scanning heuristics.
