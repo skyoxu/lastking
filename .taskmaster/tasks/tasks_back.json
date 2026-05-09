@@ -4936,19 +4936,27 @@
       "ui"
     ],
     "test_refs": [
-      "Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd"
+      "Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd",
+      "Tests.Godot/tests/Scenes/BattleMap/test_battle_map_screen_slot_overlay_states.gd",
+      "Tests.Godot/tests/Integration/test_battle_map_overlay_determinism.gd",
+      "Game.Core.Tests/Architecture/Task60OwnershipBoundaryTests.cs",
+      "Game.Core.Tests/Architecture/Task60LayerBoundaryTests.cs",
+      "Tests.Godot/tests/Scenes/BattleMap/test_placement_overlay_controller_wiring.gd",
+      "Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd",
+      "Game.Core.Tests/Tasks/Task60AcceptanceRefsConsistencyTests.cs"
     ],
     "acceptance": [
-      "With placement mode and placement context both active, each battlefield slot renders exactly one valid-overlay outcome: warm color for valid inner-region slots, cool color for valid outer-region slots, and no valid overlay for slots outside all valid regions. Refs: docs/gdd/battle-map-ui-legend-spawn-path-visual-spec.zh-CN.md docs/gdd/battle-map-ui-selection-range-placement-effects-spec.zh-CN.md",
-      "During placement mode, each fixed-invalid slot renders grey with a lock or cross marker, each temporary-invalid slot renders only a red frame on that slot with no reason text, and each wall slot stays a stable red blocker until its legality class changes. Refs: docs/gdd/battle-map-ui-selection-range-placement-effects-spec.zh-CN.md Game.Godot/Scenes/Screens/BattleMapScreen.tscn",
-      "For the same placement context, overlay output is deterministic: legality changes update only affected slots to the matching visual class, and when placement context is inactive, no placement-legality overlays are rendered on battlefield slots. Refs: docs/gdd/battlemapscreen-stories.md",
-      "Placement-overlay implementation keeps existing ownership boundaries unchanged: HUD, ScreenNavigator, and CombatExperienceRuntimeBridge retain their current responsibilities, and no responsibility transfer into or out of those components occurs in this task. Refs: Game.Godot/Scenes/UI/HUD.tscn Game.Godot/Scripts/Navigation/ScreenNavigator.cs Game.Godot/Scripts/Combat/CombatExperienceRuntimeBridge.cs",
-      "Layer boundaries are preserved and verifiable: legality decision logic remains in Game.Core, while Game.Godot changes are limited to presentation and adapter behavior. Refs: Game.Core Game.Godot",
-      "All player-visible placement-overlay changes from this task are traceable at the declared implementation anchors for review and audit. Refs: Game.Godot/Scenes/Screens/BattleMapScreen.tscn; Game.Godot/Scripts/Screens/PlacementOverlayController.gd",
-      "Runtime state semantics remain observable in behavior: empty shows no active battlefield prompt for the tracked condition, failure shows terminal-loss messaging, and completion maintains the intended UI outcome until a later state change occurs. Refs: docs/gdd/battlemapscreen-stories.md",
+      "With placement mode and placement context both active, each battlefield slot renders exactly one valid-overlay outcome: warm color for valid inner-region slots, cool color for valid outer-region slots, and no valid overlay for slots outside all valid regions. Refs: Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd Tests.Godot/tests/Scenes/BattleMap/test_battle_map_screen_slot_overlay_states.gd",
+      "During placement mode, each fixed-invalid slot renders grey with a lock or cross marker, each temporary-invalid slot renders only a red frame on that slot with no reason text, and each wall slot stays a stable red blocker until its legality class changes. Refs: Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd Tests.Godot/tests/Scenes/BattleMap/test_battle_map_screen_slot_overlay_states.gd",
+      "For the same placement context, overlay output is deterministic: legality changes update only affected slots to the matching visual class, and when placement context is inactive, no placement-legality overlays are rendered on battlefield slots. Refs: Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd Tests.Godot/tests/Integration/test_battle_map_overlay_determinism.gd",
+      "Placement-overlay implementation keeps existing ownership boundaries unchanged: HUD, ScreenNavigator, and CombatExperienceRuntimeBridge retain their current responsibilities, and no responsibility transfer into or out of those components occurs in this task. Refs: Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd Game.Core.Tests/Architecture/Task60OwnershipBoundaryTests.cs",
+      "Layer boundaries are preserved and verifiable: legality decision logic remains in Game.Core, while Game.Godot changes are limited to presentation and adapter behavior. Refs: Game.Core.Tests/Architecture/Task60LayerBoundaryTests.cs Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd",
+      "All player-visible placement-overlay changes from this task are traceable at the declared implementation anchors for review and audit. Refs: Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd Tests.Godot/tests/Scenes/BattleMap/test_placement_overlay_controller_wiring.gd",
+      "Runtime state semantics remain observable in behavior: empty shows no active battlefield prompt for the tracked condition, failure shows terminal-loss messaging, and completion maintains the intended UI outcome until a later state change occurs. Refs: Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd",
       "GdUnit4 integration coverage for this task exists and runs through the designated integration flow for placement-overlay behavior. Refs: Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd",
-      "If this task introduces any new player-visible controller or node path, focused scene tests for that new surface are added within the same task before acceptance closure. Refs: Tests.Godot",
-      "Before review, task/story/GDD references and declared anchors are synchronized with current artifacts, and stale links are not present. Refs: docs/gdd/battlemapscreen-stories.md docs/gdd/battlemapscreen-epics.md docs/gdd/battlemapscreen-story-to-files-mapping.md"
+      "If this task introduces any new player-visible controller or node path, focused scene tests for that new surface are added within the same task before acceptance closure. Refs: Tests.Godot/tests/Scenes/BattleMap/test_placement_overlay_controller_wiring.gd",
+      "Before review, task/story/GDD references and declared anchors are synchronized with current artifacts, and stale links are not present. Refs: Game.Core.Tests/Tasks/Task60AcceptanceRefsConsistencyTests.cs Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd",
+      "Unknown or unsupported legality input must never render a valid overlay; it falls back to hidden/invalid visual state with empty reason text to avoid misleading placement guidance. Refs: Tests.Godot/tests/Scenes/BattleMap/test_battle_map_screen_slot_overlay_states.gd"
     ],
     "contractRefs": [],
     "semantic_review_tier": "full",

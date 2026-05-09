@@ -1,0 +1,21 @@
+# Task 60 Implement Placement Legality Overlays acceptance-test generation plan
+
+- Title: Task 60 Implement Placement Legality Overlays acceptance-test generation plan
+- Status: active
+- Branch: task/T60
+- Git Head: 9a70a5bce278a2396677af995c4e0b73a1e3a79e
+- Goal: Control acceptance-driven test generation complexity for task 60.
+- Scope: 6 missing refs across 2 test roots; seed refs: Game.Core.Tests/Architecture/Task60LayerBoundaryTests.cs, Game.Core.Tests/Architecture/Task60OwnershipBoundaryTests.cs, Game.Core.Tests/Tasks/Task60AcceptanceRefsConsistencyTests.cs, ...
+- Current step: Tighten the Task 60 architecture boundary assertions to use concrete Core contracts and real runtime ownership evidence.
+- Last completed step: Task 60 boundary tests were rewritten to assert service signatures, outcome contracts, and actual scene/runtime anchors.
+- Stop-loss: Do not reopen a fresh full review run until the latest targeted boundary tests have been verified and the repeated reviewer fingerprint is re-evaluated.
+- Next action: Rerun the task-level review chain with resume semantics so the updated boundary evidence reaches sc-llm-review.
+- Recovery command: `py -3 scripts/sc/run_review_pipeline.py --task-id 60 --resume`
+- Open questions: none recorded yet
+- Exit criteria: Task 60 boundary evidence is specific enough that the repeated reviewer failure family no longer flags the same weak-token heuristic concerns.
+- Related ADRs: none yet
+- Related decision logs: none yet
+- Related task id(s): `60`
+- Related run id: `97bfe4c185934f6f815b1bd34862c7d8`
+- Related latest.json: `logs/ci/2026-05-09/sc-review-pipeline-task-60/latest.json`
+- Related pipeline artifacts: `logs/ci/2026-05-09/sc-review-pipeline-task-60-97bfe4c185934f6f815b1bd34862c7d8`

@@ -13,6 +13,19 @@ def _read_json(path: Path) -> dict[str, Any]:
     return obj if isinstance(obj, dict) else {}
 
 
+def _read_latest_json(base_dir: Path, relative_path: str) -> dict[str, Any]:
+    if not base_dir.is_dir():
+        return {}
+    candidates = sorted(
+        (p for p in base_dir.glob(f"*/{relative_path}") if p.is_file()),
+        key=lambda p: p.stat().st_mtime,
+        reverse=True,
+    )
+    if not candidates:
+        return {}
+    return _read_json(candidates[0])
+
+
 def _contains_compile_error(*, verify_log_text: str, unit_summary: dict[str, Any]) -> bool:
     haystacks = [verify_log_text]
     excerpt = unit_summary.get("failure_excerpt")
@@ -52,7 +65,11 @@ def evaluate_red_verification(
         return report
 
     unit_summary = _read_json(repo_root / "logs" / "unit" / date / "summary.json")
+    if not unit_summary:
+        unit_summary = _read_latest_json(repo_root / "logs" / "unit", "summary.json")
     gdunit_summary = _read_json(repo_root / "logs" / "e2e" / date / "sc-test" / "gdunit-hard" / "run-summary.json")
+    if not gdunit_summary:
+        gdunit_summary = _read_latest_json(repo_root / "logs" / "e2e", "sc-test/gdunit-hard/run-summary.json")
     report["unit_summary_status"] = unit_summary.get("status")
     report["gdunit_failures"] = ((gdunit_summary.get("results") or {}).get("failures") if gdunit_summary else None)
     report["gdunit_errors"] = ((gdunit_summary.get("results") or {}).get("errors") if gdunit_summary else None)

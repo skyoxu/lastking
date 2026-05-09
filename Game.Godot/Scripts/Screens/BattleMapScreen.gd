@@ -229,3 +229,11 @@ func _apply_static_texts() -> void:
 	_back_btn.text = _t("battlemap.btn.back")
 	_legend.text = _t("battlemap.legend")
 	_metrics_help.text = _t("battlemap.metrics_help")
+
+func register_overlay_controller(path: NodePath, controller: Node) -> void:
+	var node_name := String(path.get_concatenated_names()).replace("/", "_")
+	var existing := get_node_or_null(NodePath(node_name))
+	if existing != null and existing != controller:
+		existing.queue_free()
+	controller.name = node_name
+	add_child(controller)
