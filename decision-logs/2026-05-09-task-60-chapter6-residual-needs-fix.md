@@ -1,0 +1,17 @@
+# task-60-chapter6-residual-needs-fix
+
+- Title: task-60-chapter6-residual-needs-fix
+- Date: 2026-05-09
+- Status: accepted
+- Branch: task/T60
+- Why now: Chapter 6 recovery shows the latest run is clean at the pipeline level but still carries a repeated review-needs-fix family in sc-llm-review.
+- Context: Current residual findings are limited to reviewer evidence quality in architecture boundary tests, not a broader deterministic failure or approval blocker.
+- Decision: Tighten the Task 60 architecture boundary assertions to use concrete service/contract/method-level evidence instead of broad token-scanning heuristics.
+- Consequences: Keep the fast-ship closure loop on the current branch and rerun targeted validation after the boundary tests are strengthened.
+- Recovery impact: Recovery should prefer the inspected repeated-failure fingerprint and the targeted test files before considering any fresh full rerun.
+- Validation: `py -3 scripts/python/dev_cli.py inspect-run --kind pipeline --latest logs/ci/2026-05-09/sc-review-pipeline-task-60/latest.json`
+- Related execution plans: `execution-plans/2026-05-08-task-60-implement-placement-legality-overlays-acceptance-test-generation-plan.md`
+- Related task id(s): `60`
+- Related run id: `97bfe4c185934f6f815b1bd34862c7d8`
+- Related latest.json: `logs/ci/2026-05-09/sc-review-pipeline-task-60/latest.json`
+- Related pipeline artifacts: `logs/ci/2026-05-09/sc-review-pipeline-task-60-97bfe4c185934f6f815b1bd34862c7d8`
