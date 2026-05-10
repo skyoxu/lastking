@@ -1,0 +1,21 @@
+# Task 62 Implement Spawn-Side And Path Readability Cues acceptance-test generation plan
+
+- Title: Task 62 Implement Spawn-Side And Path Readability Cues acceptance-test generation plan
+- Status: active
+- Branch: task/T62
+- Git Head: d51e4eef0b4e000cbd30f7bcbd072847436d878d
+- Goal: Replace placeholder Task 62 anchors with real observable behavior coverage.
+- Scope: Task 62 P1 recovery; spawn-side glow, wave pulse decay, and behavior-led path readability.
+- Current step: Targeted 6.8 repair is in progress; placeholder anchors are being replaced with real assertions.
+- Last completed step: Decision log recorded for the residual Needs Fix state.
+- Stop-loss: Do not reopen 6.7; stay on the existing deterministic-clean + needs-fix-fast lane.
+- Next action: Run the targeted needs-fix-fast review path after the updated tests and minimal cue logic land.
+- Recovery command: `py -3 scripts/sc/llm_review_needs_fix_fast.py --task-id 62 --delivery-profile fast-ship --rerun-failing-only --max-rounds 1`
+- Open questions: none recorded yet
+- Exit criteria: Reviewer evidence no longer reports placeholder anchors for Task 62.
+- Related ADRs: none yet
+- Related decision logs: none yet
+- Related task id(s): `62`
+- Related run id: n/a (no pipeline run id linked yet)
+- Related latest.json: n/a (no task-scoped latest.json pointer resolved yet)
+- Related pipeline artifacts: n/a (no pipeline artifact directory resolved yet)

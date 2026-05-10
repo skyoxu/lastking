@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Text.Json;
 using FluentAssertions;
+using Game.Core.Services;
 using Xunit;
 
 namespace Game.Core.Tests.Tasks;
@@ -89,4 +90,94 @@ public sealed class Task61RefsAnchorsSyncTests
 
         throw new InvalidDataException($"Could not find acceptance line tagged with {accTag}.");
     }
+
+
+    // ACC:T62.10
+    [Fact]
+    public void ShouldResolveTask62AcceptanceRefs_WhenValidatingTask62AnchorBinding()
+    {
+        var root = FindRepositoryRoot();
+        var back = JsonDocument.Parse(File.ReadAllText(Path.Combine(root, ".taskmaster", "tasks", "tasks_back.json")));
+        var gameplay = JsonDocument.Parse(File.ReadAllText(Path.Combine(root, ".taskmaster", "tasks", "tasks_gameplay.json")));
+
+        var backTask = FindTask62(back);
+        var gameplayTask = FindTask62(gameplay);
+        backTask.Should().NotBeNull();
+        gameplayTask.Should().NotBeNull();
+
+        var backTaskValue = backTask!.Value;
+        var gameplayTaskValue = gameplayTask!.Value;
+        var backAcceptance = backTaskValue.GetProperty("acceptance");
+        var gameplayAcceptance = gameplayTaskValue.GetProperty("acceptance");
+
+        FindAcceptanceLine(backAcceptance, "spawn-side glow").Should().Contain("test_battle_map_screen_runtime_flow.gd");
+        FindAcceptanceLine(backAcceptance, "wave pulse").Should().Contain("test_battle_map_screen_runtime_flow.gd");
+        FindAcceptanceLine(gameplayAcceptance, "behavior-led path readability").Should().Contain("test_combat_experience_runtime_flow.gd");
+        FindAcceptanceLine(gameplayAcceptance, "route-line UI").Should().Contain("test_combat_experience_runtime_flow.gd");
+    }
+
+
+
+    // ACC:T62.12
+    [Fact]
+    public void ShouldBindTask62SemanticAnchorsToTaskScopedIntegrationEvidence()
+    {
+        var root = FindRepositoryRoot();
+        var back = JsonDocument.Parse(File.ReadAllText(Path.Combine(root, ".taskmaster", "tasks", "tasks_back.json")));
+        var gameplay = JsonDocument.Parse(File.ReadAllText(Path.Combine(root, ".taskmaster", "tasks", "tasks_gameplay.json")));
+
+        var backTask = FindTask62(back);
+        var gameplayTask = FindTask62(gameplay);
+        backTask.Should().NotBeNull();
+        gameplayTask.Should().NotBeNull();
+
+        var backAcceptance = backTask!.Value.GetProperty("acceptance");
+        var gameplayAcceptance = gameplayTask!.Value.GetProperty("acceptance");
+
+        FindAcceptanceLine(backAcceptance, "spawn-side glow").Should().Contain("test_battle_map_screen_runtime_flow.gd");
+        FindAcceptanceLine(backAcceptance, "wave pulse").Should().Contain("test_battle_map_screen_runtime_flow.gd");
+        FindAcceptanceLine(gameplayAcceptance, "retargeting behavior").Should().Contain("test_combat_experience_runtime_flow.gd");
+        FindAcceptanceLine(gameplayAcceptance, "behavior-led path readability").Should().Contain("test_combat_experience_runtime_flow.gd");
+    }
+
+
+    // ACC:T62.12
+    [Fact]
+    public void ShouldKeepRetargetingDeterministic_WhenTask62SemanticAnchorsNeedCoreEvidence()
+    {
+        var service = new EnemyAiRetargetingService();
+        var candidates = new[]
+        {
+            new EnemyAiRetargetCandidate("castle", 3, true),
+            new EnemyAiRetargetCandidate("barracks", 2, true),
+            new EnemyAiRetargetCandidate("blocked_gate", 5, false),
+        };
+
+        var keepCurrent = service.SelectNextReachableTarget(candidates, "barracks");
+        keepCurrent.Should().NotBeNull();
+        keepCurrent!.TargetId.Should().Be("barracks");
+
+        var switchWhenCurrentUnreachable = service.SelectNextReachableTarget(candidates, "blocked_gate");
+        switchWhenCurrentUnreachable.Should().NotBeNull();
+        switchWhenCurrentUnreachable!.TargetId.Should().Be("castle");
+    }
+
+    private static JsonElement? FindTask62(JsonDocument doc)
+    {
+        foreach (var item in doc.RootElement.EnumerateArray())
+        {
+            if (!item.TryGetProperty("taskmaster_id", out var id))
+            {
+                continue;
+            }
+
+            if (id.GetInt32() == 62)
+            {
+                return item;
+            }
+        }
+
+        return null;
+    }
+
 }

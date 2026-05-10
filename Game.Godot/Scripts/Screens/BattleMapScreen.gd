@@ -14,11 +14,14 @@ extends Control
 @onready var _bridge: Node = $CombatExperienceRuntimeBridge
 @onready var _wave_timer: Timer = $WaveTimer
 @onready var _background: ColorRect = $Background
+@onready var _enemy_spawn_a: ColorRect = $Background/EnemySpawnA
+@onready var _enemy_spawn_b: ColorRect = $Background/EnemySpawnB
 
 var _wave_started := false
 var _combat_resolved := false
 var _cleaned := false
 var _auto_wave := false
+var _spawn_pulse_time_left := 0.0
 var _enemy_tokens := {}
 var _path_points: PackedVector2Array = PackedVector2Array(
 	[Vector2(120, 120), Vector2(260, 120), Vector2(420, 240), Vector2(640, 240), Vector2(840, 340), Vector2(1080, 340)]
@@ -49,6 +52,7 @@ func _ready() -> void:
 	_wave_timer.timeout.connect(_on_wave_timer_timeout)
 
 	_try_bridge_reset()
+	_apply_spawn_cues()
 	_render(_try_bridge_summary(), _t("battlemap.status.loaded"))
 
 func _process(delta: float) -> void:
@@ -58,6 +62,7 @@ func _process(delta: float) -> void:
 		_apply_static_texts()
 	if _bridge.has_method("AdvanceSimulation"):
 		_bridge.call("AdvanceSimulation", delta)
+	_update_spawn_cues(delta)
 	_render_actor_tokens()
 
 func _on_build() -> void:
@@ -73,6 +78,8 @@ func _on_wave() -> void:
 	_wave_started = true
 	_combat_resolved = false
 	_cleaned = false
+	_spawn_pulse_time_left = 4.0
+	_apply_spawn_cues()
 	_render(_call_or_fallback("SpawnEnemyWavePhase"), _t("battlemap.status.wave_spawned"))
 
 func _on_auto_wave() -> void:
@@ -167,6 +174,21 @@ func _render_actor_tokens() -> void:
 		if stale != null and is_instance_valid(stale):
 			stale.queue_free()
 		_enemy_tokens.erase(key)
+
+
+func _update_spawn_cues(delta: float) -> void:
+	if _spawn_pulse_time_left > 0.0:
+		_spawn_pulse_time_left = maxf(0.0, _spawn_pulse_time_left - delta)
+	_apply_spawn_cues()
+
+
+func _apply_spawn_cues() -> void:
+	var pulse_active := _spawn_pulse_time_left > 0.0
+	var weak_color := Color(0.847059, 0.286275, 0.286275, 0.55)
+	var pulse_color := Color(0.996078, 0.505882, 0.505882, 0.95)
+	var spawn_color := pulse_color if pulse_active else weak_color
+	_enemy_spawn_a.color = spawn_color
+	_enemy_spawn_b.color = spawn_color
 
 func _sample_path(progress: float) -> Vector2:
 	var p := clampf(progress, 0.0, 1.0)

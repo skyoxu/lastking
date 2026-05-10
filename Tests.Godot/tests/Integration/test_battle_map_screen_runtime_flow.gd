@@ -56,6 +56,12 @@ func _frame_snapshot(screen: Control) -> Dictionary:
 	}
 
 
+func _spawn_cue_colors(screen: Control) -> Array[Color]:
+	var spawn_a: ColorRect = screen.get_node("Background/EnemySpawnA")
+	var spawn_b: ColorRect = screen.get_node("Background/EnemySpawnB")
+	return [spawn_a.color, spawn_b.color]
+
+
 const _TASK56_OWNERSHIP_CONTAINERS: PackedStringArray = [
 	"battlefield_presentation",
 	"runtime_bridge",
@@ -582,6 +588,7 @@ func test_back_action_without_main_navigator_should_not_mutate_runtime_summary()
 # ACC:T57.7
 # ACC:T58.6
 # ACC:T59.10
+# ACC:T62.3
 func test_battle_map_terminal_summary_should_stay_stable_without_state_change() -> void:
 	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
 	add_child(auto_free(screen))
@@ -607,6 +614,99 @@ func test_battle_map_terminal_summary_should_stay_stable_without_state_change() 
 	await _await_frames(5)
 	var snapshot_after := _status_and_summary(screen)
 	assert_that(snapshot_after).is_equal(snapshot_before)
+
+
+# ACC:T62.1
+# ACC:T62.5
+# ACC:T62.6
+# ACC:T62.7
+# ACC:T62.8
+# ACC:T62.9
+func test_spawn_side_glow_and_wave_pulse_decay_back_to_weak_state() -> void:
+	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
+	add_child(auto_free(screen))
+	await _await_frames(2)
+
+	var before := _spawn_cue_colors(screen)
+	assert_bool(before[0].a < 0.7 and before[1].a < 0.7).is_true()
+
+	var wave_btn: Button = screen.get_node("Margin/VBox/Controls/WaveBtn")
+	wave_btn.emit_signal("pressed")
+	await _await_frames(1)
+	var pulse := _spawn_cue_colors(screen)
+	assert_bool(pulse[0].a > before[0].a and pulse[1].a > before[1].a).is_true()
+	assert_bool(pulse[0].a >= 0.9 and pulse[1].a >= 0.9).is_true()
+
+	await get_tree().create_timer(4.5).timeout
+	var after := _spawn_cue_colors(screen)
+	assert_bool(after[0].a <= before[0].a + 0.05 and after[1].a <= before[1].a + 0.05).is_true()
+
+# ACC:T62.4
+func test_battle_map_cycle_should_keep_hud_singleton_and_navigator_ownership() -> void:
+	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
+	add_child(auto_free(main))
+	await _await_frames(2)
+
+	var nav: Node = main.get_node("ScreenNavigator")
+	assert_object(nav).is_not_null()
+	nav.set("UseFadeTransition", false)
+	assert_int(_hud_count(main)).is_equal(1)
+
+	var ok_enter: bool = nav.call("SwitchTo", "res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn")
+	assert_bool(ok_enter).is_true()
+	await _await_frames(1)
+	assert_object(main.get_node_or_null("RuntimeUi/ScreenRoot/BattleMapScreen")).is_not_null()
+	assert_int(_hud_count(main)).is_equal(1)
+
+	nav.call("ClearCurrentScreen")
+	await _await_frames(1)
+	assert_object(main.get_node_or_null("RuntimeUi/ScreenRoot/BattleMapScreen")).is_null()
+	assert_int(_hud_count(main)).is_equal(1)
+	assert_object(main.get_node_or_null("ScreenNavigator")).is_not_null()
+	var reopen_ok: bool = nav.call("SwitchTo", "res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn")
+	assert_bool(reopen_ok).is_true()
+	await _await_frames(1)
+	var reopened_screen: Control = main.get_node("RuntimeUi/ScreenRoot/BattleMapScreen")
+	assert_str(str(reopened_screen.get_node("Background").get_meta("ownership_container"))).is_equal("battlefield_presentation")
+	assert_str(str(reopened_screen.get_node("CombatExperienceRuntimeBridge").get_meta("ownership_container"))).is_equal("runtime_bridge")
+	assert_str(str(reopened_screen.get_node("WaveTimer").get_meta("ownership_container"))).is_equal("runtime_bridge")
+	assert_str(str(reopened_screen.get_node("Margin").get_meta("ownership_container"))).is_equal("legacy_prototype")
+
+
+# ACC:T62.10
+func test_path_readability_stays_behavior_driven_without_arrow_or_route_ui() -> void:
+	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
+	add_child(auto_free(screen))
+	await _await_frames(2)
+
+	var background: Control = screen.get_node("Background")
+	var path: Line2D = screen.get_node("Background/Path")
+	var bridge: Node = screen.get_node("CombatExperienceRuntimeBridge")
+	var initial_positions := {
+		"EnemySpawnA": (background.get_node("EnemySpawnA") as Control).global_position,
+		"EnemySpawnB": (background.get_node("EnemySpawnB") as Control).global_position,
+	}
+
+	assert_bool(path.visible).is_true()
+	assert_int(background.get_children().filter(func(n): return str((n as Node).name).find("Arrow") >= 0 or str((n as Node).name).find("Route") >= 0).size()).is_equal(0)
+
+	if bridge.has_method("SpawnEnemyWavePhase"):
+		bridge.call("SpawnEnemyWavePhase")
+	await _await_frames(1)
+	if bridge.has_method("AdvanceSimulation"):
+		for _i in range(10):
+			bridge.call("AdvanceSimulation", 0.2)
+	await _await_frames(1)
+
+	var snapshots: Array = bridge.call("GetActorSnapshots") if bridge.has_method("GetActorSnapshots") else []
+	var found_progress := false
+	for item in snapshots:
+		var snapshot := item as Dictionary
+		if snapshot != null and bool(snapshot.get("is_moving_enemy", false)) and float(snapshot.get("path_progress", 0.0)) > 0.0:
+			found_progress = true
+	assert_bool(found_progress).is_true()
+	assert_that((background.get_node("EnemySpawnA") as Control).global_position).is_equal(initial_positions["EnemySpawnA"])
+	assert_that((background.get_node("EnemySpawnB") as Control).global_position).is_equal(initial_positions["EnemySpawnB"])
 
 
 # ACC:T57.9
@@ -640,48 +740,6 @@ func test_bridge_unavailable_should_keep_coordinator_path_recoverable_without_co
 	assert_bool(String((screen.get_node("Margin/VBox/Status") as Label).text).length() > 0).is_true()
 	assert_bool(String((screen.get_node("Margin/VBox/Summary") as Label).text).length() > 0).is_true()
 
-
-# ACC:T55.2
-# ACC:T55.4
-# ACC:T56.9
-# ACC:T57.4
-# ACC:T57.9
-
-func test_battle_map_cycle_should_keep_hud_singleton_and_navigator_ownership() -> void:
-	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
-	add_child(auto_free(main))
-	await _await_frames(2)
-
-	var nav: Node = main.get_node("ScreenNavigator")
-	assert_object(nav).is_not_null()
-	nav.set("UseFadeTransition", false)
-	assert_int(_hud_count(main)).is_equal(1)
-
-	var ok_enter: bool = nav.call("SwitchTo", "res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn")
-	assert_bool(ok_enter).is_true()
-	await _await_frames(1)
-	assert_object(main.get_node_or_null("RuntimeUi/ScreenRoot/BattleMapScreen")).is_not_null()
-	assert_int(_hud_count(main)).is_equal(1)
-
-	nav.call("ClearCurrentScreen")
-	await _await_frames(1)
-	assert_object(main.get_node_or_null("RuntimeUi/ScreenRoot/BattleMapScreen")).is_null()
-	assert_int(_hud_count(main)).is_equal(1)
-	assert_object(main.get_node_or_null("ScreenNavigator")).is_not_null()
-	var reopen_ok: bool = nav.call("SwitchTo", "res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn")
-	assert_bool(reopen_ok).is_true()
-	await _await_frames(1)
-	var reopened_screen: Control = main.get_node("RuntimeUi/ScreenRoot/BattleMapScreen")
-	assert_str(str(reopened_screen.get_node("Background").get_meta("ownership_container"))).is_equal("battlefield_presentation")
-	assert_str(str(reopened_screen.get_node("CombatExperienceRuntimeBridge").get_meta("ownership_container"))).is_equal("runtime_bridge")
-	assert_str(str(reopened_screen.get_node("WaveTimer").get_meta("ownership_container"))).is_equal("runtime_bridge")
-	assert_str(str(reopened_screen.get_node("Margin").get_meta("ownership_container"))).is_equal("legacy_prototype")
-
-
-# ACC:T55.7
-# ACC:T55.9
-# ACC:T56.10
-# ACC:T56.11
 func test_combat_bridge_single_source_updates_actor_snapshots_and_castle_hp() -> void:
 	var bridge := preload("res://Game.Godot/Scripts/Combat/CombatExperienceRuntimeBridge.cs").new()
 	add_child(auto_free(bridge))
@@ -759,3 +817,5 @@ func test_locale_switch_between_en_us_and_zh_cn_should_keep_player_visible_statu
 	assert_bool(summary_zh.length() > 0).is_true()
 
 	TranslationServer.set_locale(original_locale)
+
+
