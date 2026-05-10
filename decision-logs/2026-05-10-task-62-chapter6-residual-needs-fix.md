@@ -3,6 +3,8 @@
 - Title: task-62-chapter6-residual-needs-fix
 - Date: 2026-05-10
 - Status: accepted
+- Supersedes: none
+- Superseded by: decision-logs/2026-05-10-task-62-chapter6-residual-needs-fix-2.md
 - Branch: task/T62
 - Git Head: d51e4eef0b4e000cbd30f7bcbd072847436d878d
 - Why now: Chapter 6 route says the run is deterministic-clean but reviewer evidence is still incomplete.
