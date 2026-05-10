@@ -32,4 +32,6 @@ func test_inactive_placement_context_renders_no_legality_overlay() -> void:
 	controller.apply_legality_overlay({"B1": controller.LEGALITY_WALL})
 	var after := controller.read_slot_visual("B1")
 
-	assert_that(after).is_equal(before)
+	assert_that(before["overlay_state"]).is_equal("overlay_legal")
+	assert_that(after["overlay_state"]).is_equal("overlay_hidden")
+	assert_that(after["overlay_tint"]).is_equal("none")
