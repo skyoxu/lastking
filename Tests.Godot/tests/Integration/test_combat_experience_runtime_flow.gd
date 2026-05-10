@@ -1,6 +1,5 @@
 extends "res://addons/gdUnit4/src/GdUnitTestSuite.gd"
 
-
 const COMBAT_EXPERIENCE_BRIDGE := "res://Game.Godot/Scripts/Combat/CombatExperienceRuntimeBridge.cs"
 
 var _bus: Node
@@ -221,3 +220,107 @@ func test_battle_map_control_actions_should_delegate_through_runtime_bridge_and_
 	assert_bool(bridge.has_node("Battlefield/Barracks")).is_true()
 	assert_int(int(fallback_summary.get("enemy_units_spawned", 0))).is_equal(2)
 	assert_int(int(fallback_summary.get("combat_exchanges", 0))).is_greater_equal(1)
+
+
+# ACC:T62.2
+func test_path_readability_is_expressed_through_enemy_actor_view_motion() -> void:
+	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
+	add_child(auto_free(main))
+	await get_tree().process_frame
+
+	var nav := main.get_node_or_null("ScreenNavigator")
+	assert_object(nav).is_not_null()
+	nav.set("UseFadeTransition", false)
+	var ok_enter: bool = nav.call("SwitchTo", "res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn")
+	assert_bool(ok_enter).is_true()
+	await get_tree().process_frame
+
+	var screen: Node = main.get_node("RuntimeUi/ScreenRoot/BattleMapScreen")
+	var bridge: Node = screen.get_node("CombatExperienceRuntimeBridge")
+	var background: Node = screen.get_node("Background")
+	var path: Line2D = screen.get_node("Background/Path")
+
+	assert_bool(bridge.has_method("GetActorSnapshots")).is_true()
+	assert_bool(bridge.has_method("AdvanceSimulation")).is_true()
+	assert_bool(path.visible).is_true()
+	assert_int(background.get_children().filter(func(n): return str((n as Node).name).find("Arrow") >= 0 or str((n as Node).name).find("Route") >= 0).size()).is_equal(0)
+
+	bridge.call("SpawnEnemyWavePhase")
+	await get_tree().process_frame
+	var snapshots_before: Array = bridge.call("GetActorSnapshots")
+	var before_progress := {}
+	for item in snapshots_before:
+		var snapshot := item as Dictionary
+		if snapshot == null:
+			continue
+		if not bool(snapshot.get("is_moving_enemy", false)):
+			continue
+		var actor_name := String(snapshot.get("name", ""))
+		before_progress[actor_name] = float(snapshot.get("path_progress", 0.0))
+	for _i in range(6):
+		bridge.call("AdvanceSimulation", 0.2)
+	var snapshots_after: Array = bridge.call("GetActorSnapshots")
+	assert_int(snapshots_after.size()).is_equal(snapshots_before.size())
+	var found_progress := false
+	for item in snapshots_after:
+		var snapshot := item as Dictionary
+		if snapshot == null:
+			continue
+		if not bool(snapshot.get("is_moving_enemy", false)):
+			continue
+		var actor_name := String(snapshot.get("name", ""))
+		var after_progress := float(snapshot.get("path_progress", 0.0))
+		if before_progress.has(actor_name):
+			assert_bool(after_progress >= float(before_progress[actor_name])).is_true()
+		if after_progress > 0.0:
+			found_progress = true
+	assert_bool(found_progress).is_true()
+
+
+# ACC:T62.11
+# ACC:T62.12
+func test_spawn_cues_and_path_readability_survive_full_battle_loop() -> void:
+	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
+	add_child(auto_free(main))
+	await get_tree().process_frame
+
+	var nav := main.get_node_or_null("ScreenNavigator")
+	assert_object(nav).is_not_null()
+	nav.set("UseFadeTransition", false)
+	var ok_enter: bool = nav.call("SwitchTo", "res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn")
+	assert_bool(ok_enter).is_true()
+	await get_tree().process_frame
+
+	var screen: Node = main.get_node("RuntimeUi/ScreenRoot/BattleMapScreen")
+	var bridge: Node = screen.get_node("CombatExperienceRuntimeBridge")
+	var background: Node = screen.get_node("Background")
+	var spawn_a: ColorRect = screen.get_node("Background/EnemySpawnA")
+	var spawn_b: ColorRect = screen.get_node("Background/EnemySpawnB")
+	var wave_btn: Button = screen.get_node("Margin/VBox/Controls/WaveBtn")
+	var exchange_btn: Button = screen.get_node("Margin/VBox/Controls/ExchangeBtn")
+	var cleanup_btn: Button = screen.get_node("Margin/VBox/Controls/CleanupBtn")
+	var finish_btn: Button = screen.get_node("Margin/VBox/Controls/FinishBtn")
+
+	var weak_a := spawn_a.color.a
+	var weak_b := spawn_b.color.a
+	wave_btn.emit_signal("pressed")
+	await get_tree().process_frame
+	assert_bool(spawn_a.color.a > weak_a and spawn_b.color.a > weak_b).is_true()
+	assert_int(background.get_children().filter(func(n): return str((n as Node).name).find("Arrow") >= 0 or str((n as Node).name).find("Route") >= 0).size()).is_equal(0)
+	assert_int(int(bridge.call("GetActorSnapshots").size())).is_greater_equal(1)
+
+	exchange_btn.emit_signal("pressed")
+	await get_tree().process_frame
+	cleanup_btn.emit_signal("pressed")
+	await get_tree().process_frame
+	finish_btn.emit_signal("pressed")
+	await get_tree().process_frame
+	for _i in range(24):
+		await get_tree().process_frame
+
+	assert_bool(spawn_a.color.a <= weak_a + 0.05 and spawn_b.color.a <= weak_b + 0.05).is_true()
+	assert_int(background.get_children().filter(func(n): return str((n as Node).name).find("Arrow") >= 0 or str((n as Node).name).find("Route") >= 0).size()).is_equal(0)
+
+	var summary: Dictionary = bridge.call("GetSummary")
+	assert_int(int(summary.get("enemy_units_spawned", 0))).is_greater_equal(2)
+	assert_int(int(summary.get("combat_exchanges", 0))).is_greater_equal(1)
