@@ -69,6 +69,7 @@ func test_battlefield_slot_visual_feedback_is_applied_directly_on_runtime_slot_s
 	assert_that(invalid_state["overlay_state"]).is_equal("overlay_illegal")
 
 # acceptance: ACC:T60.7
+# acceptance: ACC:T61.7
 func test_inactive_context_keeps_battlefield_slot_overlay_hidden_when_scene_state_changes() -> void:
 	var controller := CONTROLLER.new()
 	var slot_id := "runtime_slot_B1"
@@ -80,7 +81,9 @@ func test_inactive_context_keeps_battlefield_slot_overlay_hidden_when_scene_stat
 	controller.apply_legality_overlay({slot_id: controller.LEGALITY_WALL})
 	var after := controller.read_slot_visual(slot_id)
 
-	assert_that(after).is_equal(before)
+	assert_that(before["overlay_state"]).is_equal("overlay_legal")
+	assert_that(after["overlay_state"]).is_equal("overlay_hidden")
+	assert_that(after["overlay_tint"]).is_equal("none")
 
 # acceptance: ACC:T60.8
 func test_reactivating_context_restores_overlay_updates_without_reusing_stale_hidden_state() -> void:

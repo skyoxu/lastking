@@ -234,6 +234,9 @@ func register_overlay_controller(path: NodePath, controller: Node) -> void:
 	var node_name := String(path.get_concatenated_names()).replace("/", "_")
 	var existing := get_node_or_null(NodePath(node_name))
 	if existing != null and existing != controller:
+		remove_child(existing)
 		existing.queue_free()
+	if controller.get_parent() != null and controller.get_parent() != self:
+		controller.get_parent().remove_child(controller)
 	controller.name = node_name
 	add_child(controller)

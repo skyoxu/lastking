@@ -5008,19 +5008,26 @@
       "ui"
     ],
     "test_refs": [
-      "Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd"
+      "Tests.Godot/tests/Scenes/BattleMap/test_battle_map_screen_slot_overlay_states.gd",
+      "Tests.Godot/tests/Scenes/BattleMap/test_placement_overlay_controller_wiring.gd",
+      "Tests.Godot/tests/Integration/test_battle_map_overlay_determinism.gd",
+      "Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd",
+      "Game.Core.Tests/Architecture/Task60LayerBoundaryTests.cs",
+      "Tests.Godot/tests/Scenes/BattleMap/test_task61_building_selection_feedback.gd",
+      "Game.Core.Tests/Tasks/Task61RefsAnchorsSyncTests.cs"
     ],
     "acceptance": [
-      "When an economy, defense, or unit-producing building is selected, the selected building uses the shared outline color and only that category's feedback is visible: economy shows base glow only, defense shows wall-clipped defense range only, and unit-producing shows wall-clipped unit-building range only; feedback from non-selected categories stays hidden. Refs: docs/gdd/battle-map-ui-selection-range-placement-effects-spec.zh-CN.md Game.Godot/Scenes/Screens/BattleMapScreen.tscn",
-      "When a unit-producing building is selected, only already-deployed units linked to that building are outlined, and deployed units not linked to it remain unoutlined; entering placement mode clears the current building selection, removes linked-unit outlines, and they remain absent until another building is selected. Refs: docs/gdd/battle-map-ui-selection-range-placement-effects-spec.zh-CN.md docs/gdd/battlemapscreen-gd-responsibility-split-draft.md",
-      "Selection feedback is state-deterministic: with no building selected, building outline, base glow, range overlay, and linked-unit outlines are absent; selecting a building immediately shows only that selected building category's feedback; switching or clearing selection immediately removes feedback from the previous selection. Refs: docs/gdd/battlemapscreen-stories.md",
-      "Implementation keeps existing ownership boundaries unchanged: HUD, ScreenNavigator, and CombatExperienceRuntimeBridge keep their current ownership, and no new responsibility transfer is introduced. Refs: Game.Godot/Scenes/UI/HUD.tscn Game.Godot/Scripts/Navigation/ScreenNavigator.cs Game.Godot/Scripts/Combat/CombatExperienceRuntimeBridge.cs",
-      "Implementation preserves layer boundaries: domain logic remains in Game.Core, and Game.Godot remains presentation/adapter only. Refs: Game.Core Game.Godot",
-      "Delivered behavior is traceable and auditable through the declared task anchors, with implementation and runtime wiring verifiably connected to those anchors. Refs: Game.Godot/Scenes/Screens/BattleMapScreen.tscn; Game.Godot/Scripts/Screens/BattleSelectionController.gd",
-      "Runtime behavior follows declared state semantics: empty means no active battlefield prompt for the tracked condition, failure shows terminal-loss messaging, and completion keeps the intended UI outcome stable until a subsequent state change. Refs: docs/gdd/battlemapscreen-stories.md",
-      "GdUnit4 integration coverage for this task exists in the designated runtime flow test, and that coverage passes acceptance checks. Refs: Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd",
-      "If this task introduces any new player-visible controller or node path, focused scene tests for that addition are included in this task and pass before acceptance is completed. Refs: Tests.Godot",
-      "Before review, the task, story, and GDD references/anchors used by this task are synchronized to current artifacts and remain resolvable. Refs: docs/gdd/battlemapscreen-stories.md docs/gdd/battlemapscreen-epics.md docs/gdd/battlemapscreen-story-to-files-mapping.md"
+      "Selected building feedback stays category-exclusive and non-selected categories stay hidden; switching/clearing selection removes prior feedback immediately. ACC:T61.1 Refs: Tests.Godot/tests/Scenes/BattleMap/test_task61_building_selection_feedback.gd",
+      "Linked deployed-unit highlight appears only for the currently selected unit-producing building, and non-linked deployed units remain unoutlined. ACC:T61.2 Refs: Tests.Godot/tests/Scenes/BattleMap/test_task61_building_selection_feedback.gd",
+      "Entering placement mode clears current building selection and linked-unit highlights remain absent until a new building is selected. ACC:T61.3 Refs: Tests.Godot/tests/Scenes/BattleMap/test_task61_building_selection_feedback.gd",
+      "Selection transition invariants are deterministic at frame boundary: after select/switch/clear, exactly one feedback owner set is active and no residual outline/glow/range/link remains from prior selection. ACC:T61.4 Refs: Tests.Godot/tests/Scenes/BattleMap/test_task61_building_selection_feedback.gd",
+      "Economy building selection shows economy-base glow only for the selected economy building; switching or clearing selection removes the previous glow immediately. ACC:T61.5 Refs: Tests.Godot/tests/Scenes/BattleMap/test_task61_building_selection_feedback.gd",
+      "Defense building selection shows defense range overlay for the selected defense building only, and non-defense selection keeps defense range hidden. ACC:T61.6 Refs: Tests.Godot/tests/Scenes/BattleMap/test_task61_building_selection_feedback.gd",
+      "Unit-producing building selection shows unit-building range overlay for the selected building only; switching selection clears the previous unit-building range before showing the new one. ACC:T61.7 Refs: Tests.Godot/tests/Scenes/BattleMap/test_task61_building_selection_feedback.gd",
+      "For a selected defense or unit-producing building, range feedback is wall-clipped per current selection snapshot: blocked segments are hidden/blocked and unblocked segments remain visible, and switching selection recomputes clipping immediately without reusing prior building clip state. ACC:T61.8 Refs: Tests.Godot/tests/Scenes/BattleMap/test_task61_building_selection_feedback.gd",
+      "Selected building ownership feedback uses one shared outline color across building categories, while non-selected buildings remain unoutlined. ACC:T61.9 Refs: Tests.Godot/tests/Scenes/BattleMap/test_task61_building_selection_feedback.gd",
+      "When battlefield prompt state is empty (no active prompt), building selection feedback is fully cleared: no building outline, no economy glow, no defense/unit range, and no linked-unit highlight remain visible. ACC:T61.10 Refs: Tests.Godot/tests/Scenes/BattleMap/test_task61_building_selection_feedback.gd",
+      "With multiple unit-producing buildings present, selecting one building highlights only its own deployed units as linked ownership feedback, and switching to another producer updates the linked set with no overlap from the previous selection. ACC:T61.11 Refs: Tests.Godot/tests/Scenes/BattleMap/test_task61_building_selection_feedback.gd"
     ],
     "contractRefs": [],
     "semantic_review_tier": "full",

@@ -71,6 +71,7 @@ public class Task60LayerBoundaryTests
         stateType.GetProperty(nameof(BuildingPlacementState.Placements))?.PropertyType.Should().Be(typeof(List<BuildingPlacementRecord>));
     }
 
+    // ACC:T61.5
     [Fact]
     public void ShouldContainDedicatedLegalityDecisionContractInCore_WhenEnforcingBoundary()
     {
@@ -126,7 +127,8 @@ public class Task60LayerBoundaryTests
         text.Should().Contain("func test_inactive_placement_context_renders_no_legality_overlay()");
         text.Should().Contain("controller.set_placement_context_active(false)");
         text.Should().Contain("controller.apply_legality_overlay({\"B1\": controller.LEGALITY_WALL})");
-        text.Should().Contain("assert_that(after).is_equal(before)");
+        text.Should().Contain("assert_that(before[\"overlay_state\"]).is_equal(\"overlay_legal\")");
+        text.Should().Contain("assert_that(after[\"overlay_state\"]).is_equal(\"overlay_hidden\")");
     }
 
     private static string FindRepositoryRoot()

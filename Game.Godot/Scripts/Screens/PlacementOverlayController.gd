@@ -14,6 +14,8 @@ var _slot_visuals := {}
 var _placement_context_active := true
 
 func set_placement_context_active(active: bool) -> void:
+	if _placement_context_active and not active:
+		_slot_visuals.clear()
 	_placement_context_active = active
 
 func apply_legality(cells: Array[Vector2i]) -> void:
@@ -29,7 +31,9 @@ func apply_legality_overlay(legality_by_slot: Dictionary) -> void:
 		_slot_visuals[slot_id] = render_outcome(slot_id, legality)
 
 func read_slot_visual(slot_id: String) -> Dictionary:
-	return (_slot_visuals.get(slot_id, {"overlay_state": "overlay_hidden"}) as Dictionary).duplicate(true)
+	return (
+		_slot_visuals.get(slot_id, _visual(false, "none", "none", "none", "")) as Dictionary
+	).duplicate(true)
 
 func render_outcome(_slot_id: String, legality: String) -> Dictionary:
 	match legality:
