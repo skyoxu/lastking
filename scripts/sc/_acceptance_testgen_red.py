@@ -78,18 +78,25 @@ def evaluate_red_verification(
         report["reason"] = "compile_error"
         return report
 
+    results = gdunit_summary.get("results") if isinstance(gdunit_summary, dict) else {}
+    failures = int((results or {}).get("failures") or 0)
+    errors = int((results or {}).get("errors") or 0)
     unit_status = str(unit_summary.get("status") or "").strip()
     if unit_status == "tests_failed":
         report["status"] = "ok"
         report["reason"] = "unit_red"
         return report
-    if unit_status in {"ok", "coverage_failed"}:
+    if unit_status == "coverage_failed":
+        if failures > 0 and errors == 0:
+            report["status"] = "ok"
+            report["reason"] = "gdunit_red_with_unit_coverage_failed"
+            return report
+        report["reason"] = "unexpected_green"
+        return report
+    if unit_status == "ok":
         report["reason"] = "unexpected_green"
         return report
 
-    results = gdunit_summary.get("results") if isinstance(gdunit_summary, dict) else {}
-    failures = int((results or {}).get("failures") or 0)
-    errors = int((results or {}).get("errors") or 0)
     if failures > 0 and errors == 0:
         report["status"] = "ok"
         report["reason"] = "gdunit_red"

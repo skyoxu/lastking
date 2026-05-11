@@ -1,0 +1,21 @@
+﻿# Task 65 Chapter 6 Residual Needs Fix
+
+- task_id: 65
+- run_id: ec3ab5ca9b414dd099e276ab86cc5525
+- status: needs-fix
+- summary_status: ok
+- stage: chapter6
+- evidence:
+  - logs/ci/2026-05-11/sc-review-pipeline-task-65-ec3ab5ca9b414dd099e276ab86cc5525/summary.json
+  - logs/ci/2026-05-11/sc-review-pipeline-task-65-ec3ab5ca9b414dd099e276ab86cc5525/repair-guide.json
+  - logs/ci/2026-05-11/sc-review-pipeline-task-65-ec3ab5ca9b414dd099e276ab86cc5525/agent-review.json
+  - logs/ci/2026-05-11/sc-review-pipeline-task-65-ec3ab5ca9b414dd099e276ab86cc5525/run-events.jsonl
+- current_result:
+  - deterministic_ok: true
+  - llm_status: ok
+  - needs_fix_agents: code-reviewer, security-auditor
+  - unknown_agents: semantic-equivalence-auditor
+- next_step: run 6.8 narrow Needs Fix closure
+- notes:
+  - fast-ship is not done yet because review still reports Needs Fix.
+  - fork approval was consumed and the pipeline is now on the clean deterministic path.
