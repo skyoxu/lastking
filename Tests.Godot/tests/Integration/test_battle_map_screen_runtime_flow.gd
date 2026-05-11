@@ -431,6 +431,9 @@ func test_battle_map_coordinator_guards_should_block_out_of_order_actions_and_pr
 # ACC:T57.3
 # ACC:T58.5
 # ACC:T59.7
+# ACC:T63.3
+# ACC:T63.7
+# ACC:T63.9
 func test_battle_map_runtime_summary_should_distinguish_empty_progressed_and_completion_states() -> void:
 	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
 	add_child(auto_free(screen))
@@ -626,20 +629,33 @@ func test_spawn_side_glow_and_wave_pulse_decay_back_to_weak_state() -> void:
 	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
 	add_child(auto_free(screen))
 	await _await_frames(2)
+	var bridge: Node = screen.get_node("CombatExperienceRuntimeBridge")
+	var status_label: Label = screen.get_node("Margin/VBox/Status")
 
 	var before := _spawn_cue_colors(screen)
 	assert_bool(before[0].a < 0.7 and before[1].a < 0.7).is_true()
+	var status_before := String(status_label.text)
+	var summary_before := _bridge_summary_metrics(bridge)
+	assert_int(int(summary_before.get("enemy_units_spawned", 0))).is_equal(0)
 
 	var wave_btn: Button = screen.get_node("Margin/VBox/Controls/WaveBtn")
 	wave_btn.emit_signal("pressed")
 	await _await_frames(1)
 	var pulse := _spawn_cue_colors(screen)
+	var status_after_wave := String(status_label.text)
+	var summary_after_wave := _bridge_summary_metrics(bridge)
 	assert_bool(pulse[0].a > before[0].a and pulse[1].a > before[1].a).is_true()
 	assert_bool(pulse[0].a >= 0.9 and pulse[1].a >= 0.9).is_true()
+	assert_bool(status_after_wave != status_before).is_true()
+	assert_int(int(summary_after_wave.get("enemy_units_spawned", 0))).is_equal(2)
 
 	await get_tree().create_timer(4.5).timeout
 	var after := _spawn_cue_colors(screen)
+	var status_after_decay := String(status_label.text)
 	assert_bool(after[0].a <= before[0].a + 0.05 and after[1].a <= before[1].a + 0.05).is_true()
+	# ACC:T63.7 / ACC:T63.9: transient cue decays without mutating runtime progression counters.
+	assert_str(status_after_decay).is_equal(status_after_wave)
+	assert_that(_bridge_summary_metrics(bridge)).is_equal(summary_after_wave)
 
 # ACC:T62.4
 func test_battle_map_cycle_should_keep_hud_singleton_and_navigator_ownership() -> void:

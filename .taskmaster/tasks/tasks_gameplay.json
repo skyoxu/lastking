@@ -5153,19 +5153,20 @@
       "ui"
     ],
     "test_refs": [
-      "Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd"
+      "Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd",
+      "Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd",
+      "Tests.Godot/tests/Scenes/BattleMap/test_task61_building_selection_feedback.gd",
+      "Game.Core.Tests/Tasks/Task63RefsAnchorsSyncTests.cs",
+      "Game.Core.Tests/Services/CombatSystemTests.cs"
     ],
     "acceptance": [
-      "When hit, wall-pressure, or key battle-event triggers occur, the battlefield-local layer renders the mapped damage numbers, hit flashes, wall-under-attack emphasis, and short prompts; when no relevant trigger is active, those local signals are absent; persistent HUD summary behavior remains visible and is not replaced by local feedback. Refs: docs/gdd/combat-feedback-ui-spec.zh-CN.md Game.Godot/Scenes/Screens/BattleMapScreen.tscn",
-      "With damage-number display disabled, combat events render no damage numbers while still rendering hit flashes, wall-under-attack emphasis, and short prompts; after re-enabling, subsequent combat events render damage numbers again. Refs: docs/gdd/combat-feedback-ui-spec.zh-CN.md Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd",
-      "Battlefield prompt state is externally distinguishable and deterministic: empty means no active prompt for the tracked condition, failure shows terminal-loss messaging, and completion shows the intended UI outcome and keeps it stable until a later trigger changes the state. Refs: docs/gdd/battlemapscreen-stories.md",
-      "Enabling battlefield-local feedback leaves ownership boundaries unchanged: HUD summary ownership, ScreenNavigator ownership, and CombatExperienceRuntimeBridge ownership remain intact, and no bypass path is introduced by this task. Refs: Game.Godot/Scenes/UI/HUD.tscn Game.Godot/Scripts/Navigation/ScreenNavigator.cs Game.Godot/Scripts/Combat/CombatExperienceRuntimeBridge.cs",
-      "Observable behavior preserves layer boundaries: combat/domain decisions originate from Game.Core, and Game.Godot handles only presentation/adapter behavior for these feedback surfaces. Refs: Game.Core Game.Godot",
-      "For each player-visible local feedback output in scope, the trigger-to-feedback path is auditable through the declared anchors, with mappings present in the referenced scene/script files. Refs: Game.Godot/Scenes/Screens/BattleMapScreen.tscn; Game.Godot/Scripts/Screens/BattleLocalFeedbackController.gd; Game.Godot/Scripts/Combat/CombatExperienceRuntimeBridge.cs",
-      "State-transition semantics are enforced at runtime: entering empty clears active battlefield prompt output, entering failure shows terminal-loss messaging, and entering completion shows a stable intended UI outcome until a later event changes state. Refs: docs/gdd/battlemapscreen-stories.md",
-      "GdUnit4 integration coverage exists for this task in the designated combat runtime integration flow, and assertions verify that local feedback responds to relevant runtime events. Refs: Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd",
-      "If this task introduces any new player-visible controller or node path, focused scene tests are added within the same task before acceptance is complete. Refs: Tests.Godot",
-      "Before review, task/story/GDD references and anchors are synchronized so every listed reference resolves to the current artifacts for this task scope. Refs: docs/gdd/battlemapscreen-stories.md docs/gdd/battlemapscreen-epics.md docs/gdd/battlemapscreen-story-to-files-mapping.md"
+      "When hit, wall-pressure, or key battle-event triggers occur, the battlefield-local layer renders mapped damage numbers, hit flashes, wall-under-attack emphasis, and short prompts; when no relevant trigger is active, those local signals are absent; persistent HUD summaries remain concurrently visible and are not state-driven by local feedback outputs. Refs: Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd",
+      "With damage-number display disabled, combat events render no damage numbers while still rendering hit flashes, wall-under-attack emphasis, and short prompts; after re-enabling, subsequent combat events render damage numbers again. Refs: Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd",
+      "Battlefield prompt state is externally distinguishable and deterministic: empty means no active prompt for the tracked condition, failure shows terminal-loss messaging, and completion shows the intended UI outcome and keeps it stable until a later trigger changes the state. Refs: Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd",
+      "For non-terminal short combat prompts, each prompt is transient battlefield-local feedback: it clears automatically after its short display window or is replaced by a later relevant trigger, while terminal failure/completion prompt semantics remain governed by state transitions. Refs: Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd",
+      "Enabling battlefield-local feedback leaves ownership boundaries unchanged: HUD summary ownership, ScreenNavigator ownership, and CombatExperienceRuntimeBridge ownership remain intact, and no bypass path is introduced by this task. Refs: Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd",
+      "Observable behavior preserves layer boundaries: combat/domain decisions stay in the domain layer, and presentation/adapter behavior stays in the runtime adapter layer for these feedback surfaces. Refs: Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd",
+      "For each player-visible local feedback output in scope, the trigger-to-feedback path is auditable through the declared anchors, with mappings present in the referenced scene/script files. Refs: Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd"
     ],
     "contractRefs": [
       "core.lastking.ui_feedback.raised",

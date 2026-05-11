@@ -1,0 +1,21 @@
+# task-63-deterministic-gate-evidence-link
+
+- Title: task-63-deterministic-gate-evidence-link
+- Date: 2026-05-11
+- Status: accepted
+- Supersedes: none
+- Superseded by: none
+- Branch: task/T63
+- Git Head: da51ac1e18ecd47264bcd369c109787d5babdeac
+- Why now: Security reviewer required deterministic evidence to point to completed immutable artifacts instead of moving `latest.json` pointers.
+- Context: Chapter 6 reruns may leave `latest.json` at `running/in_progress`; using it as final proof creates unstable evidence references.
+- Decision: Pin deterministic evidence to completed run bundle `7ffee22874a04f1198b881fa1ea71660` and treat `latest.json` as routing pointer only.
+- Consequences: Reviewer evidence becomes stable and auditable across resume/fork cycles.
+- Recovery impact: Recovery docs and reviewer payloads must cite pinned artifact paths for deterministic gates.
+- Validation: `py -3 scripts/python/dev_cli.py inspect-run --kind pipeline --latest logs/ci/2026-05-11/sc-review-pipeline-task-63/latest.json`
+- Related ADRs: none
+- Related execution plans: `execution-plans/2026-05-11-task-63-deterministic-gate-evidence-followup.md`
+- Related task id(s): `63`
+- Related run id: `7ffee22874a04f1198b881fa1ea71660`
+- Related latest.json: `logs/ci/2026-05-11/sc-review-pipeline-task-63/latest.json`
+- Related pipeline artifacts: `logs/ci/2026-05-10/sc-review-pipeline-task-63-7ffee22874a04f1198b881fa1ea71660/child-artifacts/sc-test/summary.json`; `logs/ci/2026-05-10/sc-review-pipeline-task-63-7ffee22874a04f1198b881fa1ea71660/child-artifacts/sc-acceptance-check/summary.json`; `logs/ci/2026-05-10/sc-acceptance-check-task-63/summary.json`

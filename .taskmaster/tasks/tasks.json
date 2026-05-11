@@ -5,258 +5,35 @@
         "id": 1,
         "title": "Establish baseline Godot 4.5.1 C# Windows project",
         "description": "Create the canonical baseline Godot 4.5.1 C# Windows project used by all later setup tasks.",
-        "details": "Create the single canonical Godot 4.5.1 .NET project on Windows, verify C# compile/run, define core folder layout, and produce a runnable Windows export baseline. This task owns initial project creation and must not be duplicated by downstream setup tasks.",
-        "testStrategy": "Verify editor open, C# build, main scene run, and Windows export run from the same canonical project root. Fail if any downstream setup task creates a second independent project root.",
-        "priority": "high",
-        "adrRefs": [
-          "ADR-0011",
-          "ADR-0018"
-        ],
-        "archRefs": [
-          "CH06",
-          "CH07",
-          "CH10",
-          "CH01"
-        ],
-        "dependencies": [],
         "status": "done",
-        "subtasks": [
-          {
-            "id": "1",
-            "title": "Lock canonical project-root contract",
-            "description": "Define single-root constraints, required folders, and startup-scene ownership for the baseline Windows C# project.",
-            "status": "done",
-            "priority": "high",
-            "dependencies": [],
-            "details": "Document canonical root, mandatory structure, and startup binding constraints used by all downstream tasks.",
-            "testStrategy": "Contract checks reject secondary project roots and missing baseline folders.",
-            "subtasks": []
-          },
-          {
-            "id": "2",
-            "title": "Implement baseline bootstrap and verification flow",
-            "description": "Create/open baseline project, validate C# compile, and verify editor startup flow and export preset availability.",
-            "status": "done",
-            "priority": "high",
-            "dependencies": [
-              "1"
-            ],
-            "details": "Wire deterministic bootstrap flow for editor run and Windows export baseline verification.",
-            "testStrategy": "Integration smoke verifies editor startup and export preset readiness.",
-            "subtasks": []
-          },
-          {
-            "id": "3",
-            "title": "Publish baseline evidence and hard-gate tests",
-            "description": "Emit baseline verification evidence and gate failures for missing compile/startup/export conditions.",
-            "status": "done",
-            "priority": "high",
-            "dependencies": [
-              "2"
-            ],
-            "details": "Produce deterministic evidence artifacts and fail fast when baseline checks are incomplete.",
-            "testStrategy": "Task-level gate tests validate baseline evidence completeness and fail conditions.",
-            "subtasks": []
-          }
-        ],
-        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md"
+        "priority": "high",
+        "dependencies": [],
+        "details": "Story: BACKLOG-LASTKING-M1\nADR Refs: ADR-0011; ADR-0018\nChapters: CH06; CH07; CH10; CH01\nOverlays: docs/architecture/overlays/PRD-lastking-T2/08/_index.md; docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md; docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md; docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md; docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md; docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md\nTest Refs: Game.Core.Tests/State/GameStateMachineTests.cs; Tests.Godot/tests/Integration/test_project_bootstrap_editor_compile_run.gd; Tests.Godot/tests/Integration/test_windows_export_startup_flow.gd; Tests.Godot/tests/Scenes/Smoke/test_main_scene_smoke.gd; Tests.Godot/tests/Integration/test_project_bootstrap_restart_stability.gd; Tests.Godot/tests/Integration/test_project_bootstrap_windows_sdk_resolution.gd; Tests.Godot/tests/Integration/test_project_creation_csharp_mode.gd; Tests.Godot/tests/Integration/test_project_structure_referenced_assets.gd; Tests.Godot/tests/Integration/test_windows_export_preset_artifact.gd; Tests.Godot/tests/Scenes/Smoke/test_glue_connections.gd; Game.Core.Tests/Tasks/Task1BaselineVerificationGateTests.cs; Game.Core.Tests/Tasks/Task1ProjectRootUniquenessTests.cs; Tests.Godot/tests/Integration/test_dotnet_solution_generation_build.gd; Tests.Godot/tests/Integration/test_windows_verification_evidence_records.gd; Tests.Godot/tests/Scenes/Smoke/test_main_scene_bindings_persist.gd\nAcceptance: A single canonical Godot 4.5.1 .NET Windows project root is explicitly defined, and baseline creation, C# verification, core layout definition, and runnable Windows export verification all execute from that same root. Refs: Tests.Godot/tests/Integration/test_project_bootstrap_editor_compile_run.gd Tests.Godot/tests/Integration/test_windows_export_startup_flow.gd; Baseline verification passes only if the editor opens the canonical root, C# compilation succeeds, and the configured startup scene runs with its attached C# script. Refs: Tests.Godot/tests/Scenes/Smoke/test_main_scene_smoke.gd Tests.Godot/tests/Integration/test_project_bootstrap_editor_compile_run.gd; After a clean editor restart, two consecutive runs from the canonical root must enter the same startup flow, with any setup-introduced regression causing failure. Refs: Tests.Godot/tests/Integration/test_project_bootstrap_restart_stability.gd; On Windows, baseline verification requires Godot 4.5.1 .NET editor and a compatible .NET SDK to be installed and detected, with no missing-SDK warning. Refs: Tests.Godot/tests/Integration/test_project_bootstrap_windows_sdk_resolution.gd; Canonical bootstrap is performed in C# mode, and at least one node-attached C# script must compile successfully in the editor. Refs: Tests.Godot/tests/Integration/test_project_creation_csharp_mode.gd Tests.Godot/tests/Integration/test_project_bootstrap_editor_compile_run.gd; Running the startup scene in the editor must complete scene load and script execution without C# binding errors, assembly-load errors, or runtime script errors. Refs: Tests.Godot/tests/Scenes/Smoke/test_main_scene_smoke.gd; The canonical root must define and preserve the baseline folder contract required by downstream setup tasks: Game.Core/Contracts/, Game.Godot/Scripts/, Game.Godot/Scenes/, and Game.Godot/Assets/, with fixed relative paths and at least one project-referenced artifact in each required area. Refs: Tests.Godot/tests/Integration/test_project_structure_referenced_assets.gd Game.Core.Tests/Tasks/Task1BaselineVerificationGateTests.cs; A Windows Desktop export preset is defined in the canonical root, and executing export produces the expected Windows build artifact. Refs: Tests.Godot/tests/Integration/test_windows_export_preset_artifact.gd; Launching the exported Windows artifact as a standalone run must reach the baseline startup flow. Refs: Tests.Godot/tests/Integration/test_windows_export_startup_flow.gd; Startup-path scene creation, node wiring, and script attachment are persisted and observable in saved SceneTree and Inspector bindings. Refs: Tests.Godot/tests/Scenes/Smoke/test_glue_connections.gd; Acceptance must fail fast when any required check fails, including editor open, C# compile, startup scene run, exported artifact run, or single-root validation. Refs: Game.Core.Tests/Tasks/Task1BaselineVerificationGateTests.cs Game.Core.Tests/Tasks/Task1ProjectRootUniquenessTests.cs; A newly initialized canonical Godot 4.5.1 .NET C# project must generate .sln and .csproj files that build successfully with the installed SDK. Refs: Tests.Godot/tests/Integration/test_dotnet_solution_generation_build.gd; The startup scene is configured and saved as Main Scene, and after editor restart it reloads with node-to-script bindings unchanged. Refs: Tests.Godot/tests/Scenes/Smoke/test_main_scene_smoke.gd; Acceptance evidence must include successful Windows verification records for editor open, C# compile, startup scene execution, and export launch, all tied to the same canonical root. Refs: Tests.Godot/tests/Integration/test_windows_verification_evidence_records.gd; Creating and opening the canonical Godot 4.5.1 .NET C# project on Windows must produce no missing SDK, missing assembly, or failed restore errors. Refs: Tests.Godot/tests/Integration/test_project_bootstrap_windows_sdk_resolution.gd; Both editor play of Main Scene and launch of the exported Windows build must reach startup flow without runtime C# script errors. Refs: Tests.Godot/tests/Scenes/Smoke/test_main_scene_smoke.gd; At least one saved startup scene includes an attached C# bootstrap script, and that attachment persists after project reopen. Refs: Tests.Godot/tests/Scenes/Smoke/test_main_scene_bindings_persist.gd; The canonical project is created with C# selected at creation time and opens directly without requiring manual post-creation language conversion. Refs: Tests.Godot/tests/Integration/test_project_creation_csharp_mode.gd; All C# and .NET dependencies needed for editor run and Windows export must resolve on Windows, and any unresolved SDK, assembly, or restore issue fails acceptance. Refs: Tests.Godot/tests/Integration/test_project_bootstrap_windows_sdk_resolution.gd Tests.Godot/tests/Integration/test_dotnet_solution_generation_build.gd; Windows export validation must execute the produced build and confirm it reaches the baseline startup flow. Refs: Tests.Godot/tests/Integration/test_windows_export_startup_flow.gd Tests.Godot/tests/Integration/test_windows_export_preset_artifact.gd; Standalone desktop launch compatibility is accepted only when the exported Windows build starts and reaches expected startup flow without blocking initialization errors. Refs: Tests.Godot/tests/Integration/test_windows_export_startup_flow.gd; Acceptance is rejected if verification bypasses any required check, including C# build, script-attachment validation, startup scene execution, export execution, or root-uniqueness validation. Refs: Game.Core.Tests/Tasks/Task1BaselineVerificationGateTests.cs Game.Core.Tests/Tasks/Task1ProjectRootUniquenessTests.cs; Acceptance fails if this task or any downstream setup task re-initializes or recreates baseline project scaffold metadata (project config, solution wiring, startup-scene bindings) instead of extending the existing canonical baseline in place, and also fails when a second independent project root is created. Refs: Game.Core.Tests/Tasks/Task1ProjectRootUniquenessTests.cs Tests.Godot/tests/Integration/test_project_bootstrap_restart_stability.gd; Canonical-root validation must assert one stable project identity and required baseline directories at verification time; missing either fails acceptance. Refs: Game.Core.Tests/Tasks/Task1BaselineVerificationGateTests.cs Game.Core.Tests/Tasks/Task1ProjectRootUniquenessTests.cs; Repeated bootstrap verification against the same canonical root must produce the same pass/fail decision for root identity, startup bindings, and required baseline directories. Refs: Game.Core.Tests/Tasks/Task1BaselineVerificationGateTests.cs; If the canonical project root already exists, bootstrap verification must be idempotent: it reuses the same root and project identity, does not create a second project root, and does not rewrite startup bindings unless this task explicitly requests it. Refs: Tests.Godot/tests/Integration/test_project_bootstrap_restart_stability.gd Game.Core.Tests/Tasks/Task1ProjectRootUniquenessTests.cs\nTest Strategy: Red: add or update test coverage around Taskmaster #1 primary behavior.; Green: implement minimal deterministic logic to satisfy assertions.; Refactor: preserve passing tests and tighten contract boundaries.\nLabels: backlog; lastking; taskmaster-view; ci\nOwner: architecture\nLayer: ci",
+        "testStrategy": "Red: add or update test coverage around Taskmaster #1 primary behavior.\nGreen: implement minimal deterministic logic to satisfy assertions.\nRefactor: preserve passing tests and tighten contract boundaries."
       },
       {
         "id": 2,
         "title": "Implement config-first balancing system",
         "description": "Create a configuration system to manage game balance values (e.g., wave budgets, day durations) without hardcoding.",
-        "details": "Define a JSON or INI configuration file structure. Create a ConfigManager C# class to load and parse config files. Include settings for day/night durations (4 min Day, 2 min Night), normal wave budget (day1=50, daily growth=120%), elite/boss channels, spawn cadence (10s), boss count (2). Ensure config values are accessible globally in the game. Use Godot's Resource system or custom file I/O.",
-        "testStrategy": "Load config file and verify values are correctly parsed. Test dynamic updates by modifying config and checking in-game effects. Ensure no hardcoded balance values exist in code.",
+        "status": "done",
         "priority": "high",
         "dependencies": [
           1
         ],
-        "status": "done",
-        "subtasks": [
-          {
-            "id": "1",
-            "title": "Define balancing config contract and file layout",
-            "description": "Specify config structure and required fields for day/night timing, wave budgets, channels, cadence, and boss rules.",
-            "status": "done",
-            "priority": "high",
-            "dependencies": [
-              "1"
-            ],
-            "details": "Create canonical config sections and key names; map each key to runtime owner and default value policy.",
-            "testStrategy": "Contract checks verify all mandatory keys exist and names remain stable across revisions.",
-            "subtasks": [],
-            "parentId": "undefined"
-          },
-          {
-            "id": "2",
-            "title": "Implement ConfigManager loading and typed parsing",
-            "description": "Build a C# ConfigManager that loads config files and parses them into typed runtime models.",
-            "status": "done",
-            "priority": "high",
-            "dependencies": [
-              "2.1",
-              "1"
-            ],
-            "details": "Add load order, typed DTO mapping, and deterministic defaults for absent optional fields.",
-            "testStrategy": "Parsing tests assert typed values for valid config and deterministic failure for malformed input.",
-            "subtasks": [],
-            "parentId": "undefined"
-          },
-          {
-            "id": "3",
-            "title": "Expose runtime accessors for balancing values",
-            "description": "Provide stable access APIs for day/night durations, wave budgets, channel budgets, spawn cadence, and boss count.",
-            "status": "done",
-            "priority": "high",
-            "dependencies": [
-              "2.2"
-            ],
-            "details": "Bind accessors used by loop, wave, and spawn systems without duplicating constants elsewhere.",
-            "testStrategy": "Integration checks prove consuming systems read values only from ConfigManager accessors.",
-            "subtasks": [],
-            "parentId": "undefined"
-          },
-          {
-            "id": "4",
-            "title": "Add invalid-config fallback and audit traces",
-            "description": "Implement deterministic fallback behavior for invalid config and emit audit evidence for failure paths.",
-            "status": "done",
-            "priority": "medium",
-            "dependencies": [
-              "2.2"
-            ],
-            "details": "Define reject/fallback rules and write validation outcomes with actionable reason codes.",
-            "testStrategy": "Negative tests cover missing keys, wrong types, and out-of-range values with expected fallback behavior.",
-            "subtasks": [],
-            "parentId": "undefined"
-          },
-          {
-            "id": "5",
-            "title": "Harden with anti-hardcode and regression tests",
-            "description": "Add tests that enforce config-first ownership and prevent reintroduction of hardcoded balance constants.",
-            "status": "done",
-            "priority": "medium",
-            "dependencies": [
-              "2.3",
-              "2.4"
-            ],
-            "details": "Include source scans and behavior tests that fail when runtime diverges from config-driven values.",
-            "testStrategy": "Gate passes only when config mutation changes runtime behavior without code edits.",
-            "subtasks": [],
-            "parentId": "undefined"
-          }
-        ],
-        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
-        "adrRefs": [
-          "ADR-0021",
-          "ADR-0022",
-          "ADR-0018"
-        ],
-        "archRefs": [
-          "CH05",
-          "CH06",
-          "CH04",
-          "CH01",
-          "CH07"
-        ]
+        "details": "Story: PRD-LASTKING-v1.2\nADR Refs: ADR-0021; ADR-0022; ADR-0018\nChapters: CH05; CH06; CH04; CH01; CH07\nOverlays: docs/architecture/overlays/PRD-lastking-T2/08/_index.md; docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md; docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md; docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md; docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md; docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md\nTest Refs: Tests.Godot/tests/Adapters/Config/test_settings_persistence.gd; Game.Core.Tests/Domain/GameConfigTests.cs; Tests.Godot/tests/Security/Hard/test_settings_config_security.gd; Tests.Godot/tests/Integration/test_balance_runtime_config_reload.gd; Tests.Godot/tests/Integration/test_balance_simulation_determinism.gd; Game.Core.Tests/Services/ConfigManagerAccessSurfaceTests.cs; Tests.Godot/tests/Adapters/Config/test_balance_config_single_source.gd; Game.Core.Tests/Services/ConfigManagerParsingTests.cs; Tests.Godot/tests/Integration/test_balance_runtime_day_night_from_config.gd; Game.Core.Tests/Services/WaveBudgetFromConfigTests.cs; Tests.Godot/tests/Integration/test_balance_runtime_wave_budget_from_config.gd; Game.Core.Tests/Services/SpawnScheduleFromConfigTests.cs; Tests.Godot/tests/Integration/test_balance_runtime_spawn_and_boss_from_config.gd; Game.Core.Tests/Services/WaveChannelSelectionTests.cs; Tests.Godot/tests/Integration/test_balance_runtime_channel_selection_from_config.gd; Game.Core.Tests/Services/ConfigDrivenRuntimeLoopTests.cs; Game.Core.Tests/Services/ConfigReloadBehaviorTests.cs; Game.Core.Tests/Domain/GameConfigContractTests.cs; Game.Core.Tests/Domain/GameConfigValidationTests.cs; Tests.Godot/tests/Security/Hard/test_balance_config_validation_audit.gd; Tests.Godot/tests/Adapters/Config/test_settings_config_utf8.gd; Game.Core.Tests/Services/ConfigManagerBehaviorTests.cs\nAcceptance: Hard gate: malformed JSON/INI input must deterministically fail with a fixed reason code, and parse failure must not advance runtime config snapshot (must keep last-known-good or documented fallback). Refs: Tests.Godot/tests/Adapters/Config/test_settings_persistence.gd; Hard gate: ConfigManager load order must be deterministic and explicitly verified across initial load, reload, and fallback paths; any order drift fails acceptance. Refs: Game.Core.Tests/Domain/GameConfigTests.cs Tests.Godot/tests/Adapters/Config/test_settings_persistence.gd; Hard gate: runtime regression must prove loop/wave/spawn/boss outputs are driven only by current config snapshot (same input same output; changed config changes output), and source-scan must fail when hardcoded balance constants appear. Refs: Tests.Godot/tests/Security/Hard/test_settings_config_security.gd Tests.Godot/tests/Integration/test_balance_runtime_config_reload.gd; 鍙湁褰撹繍琛屾椂鍙瀵熷埌鏃ュ寰幆銆佹尝娆￠绠椾笌鍒锋€涓虹敱閰嶇疆鍊奸┍鍔ㄤ笖涓嶄緷璧栦唬鐮佸父閲忔椂锛屾湰浠诲姟鎵嶅彲鍒ゅ畾閫氳繃銆?Refs: Tests.Godot/tests/Integration/test_balance_runtime_config_reload.gd; 鏈换鍔″叧鑱旂殑鑷姩鍖栨祴璇曞湪 Windows Godot + C# 鍩虹嚎鐜蹇呴』鍏ㄩ儴閫氳繃锛屼换涓€澶辫触鍗充笉閫氳繃銆?Refs: Tests.Godot/tests/Integration/test_balance_runtime_config_reload.gd Tests.Godot/tests/Integration/test_balance_simulation_determinism.gd; 鍦ㄩ厤缃緭鍏ヤ笉鍙樼殑鏉′欢涓嬶紝閲嶅鎵ц纭畾鎬фā鎷熷繀椤讳骇鐢熶竴鑷寸殑鏍稿績寰幆杈撳嚭锛屽嚭鐜颁换鎰忓樊寮傚嵆鍒ゅけ璐ャ€?Refs: Tests.Godot/tests/Integration/test_balance_simulation_determinism.gd; 绯荤粺蹇呴』浠呴噰鐢ㄤ竴涓?JSON 鎴?INI 骞宠　閰嶇疆婧愶紝涓?loop/wave/spawn 鍙兘閫氳繃鍞竴鍏ㄥ眬 ConfigManager 璁块棶闈㈣鍙栧钩琛″€笺€?Refs: Game.Core.Tests/Services/ConfigManagerAccessSurfaceTests.cs Tests.Godot/tests/Adapters/Config/test_balance_config_single_source.gd; 鏃ュ鏃堕暱蹇呴』鐢遍厤缃В鏋愬緱鍒帮紝涓旇繍琛屾椂瀹炴祴鍊煎繀椤讳负 Day=240 绉掋€丯ight=120 绉掋€?Refs: Game.Core.Tests/Services/ConfigManagerParsingTests.cs Tests.Godot/tests/Integration/test_balance_runtime_day_night_from_config.gd; 鏅€氭尝娆￠绠楀繀椤荤敱閰嶇疆瑙ｆ瀽寰楀埌锛屼笖杩愯鏃跺€煎繀椤讳负 day1=50銆乨aily growth=120%锛?.2锛夈€?Refs: Game.Core.Tests/Services/WaveBudgetFromConfigTests.cs Tests.Godot/tests/Integration/test_balance_runtime_wave_budget_from_config.gd; 鍒锋€妭濂忎笌 Boss 鏁伴噺蹇呴』鐢遍厤缃В鏋愬緱鍒帮紝涓旇繍琛屾椂鍊煎繀椤讳负 spawn cadence=10 绉掋€乥oss count=2銆?Refs: Game.Core.Tests/Services/SpawnScheduleFromConfigTests.cs Tests.Godot/tests/Integration/test_balance_runtime_spawn_and_boss_from_config.gd; 閰嶇疆蹇呴』鍖呭惈 elite 涓?boss channel 瀛楁锛屼笖杩愯鏃舵尝娆/鍒锋€€夎矾蹇呴』瀹為檯娑堣垂杩欎袱涓瓧娈点€?Refs: Game.Core.Tests/Services/WaveChannelSelectionTests.cs Tests.Godot/tests/Integration/test_balance_runtime_channel_selection_from_config.gd; 淇敼閰嶇疆骞惰Е鍙戦噸杞藉悗锛屾父鎴忓唴鍙瀵熷埌鐨勫钩琛¤涓哄繀椤婚殢鏂板€煎彉鍖栵紱閰嶇疆鏈彉鍖栨椂閲嶈浇鍚庤涓哄繀椤讳繚鎸佷笉鍙樸€?Refs: Tests.Godot/tests/Adapters/Config/test_settings_persistence.gd; 蹇呴』鎻愪緵鍙牳楠岃瘉鎹瘉鏄庡垪鍑虹殑骞宠　鍙傛暟鍦?gameplay 璺緞鍧囨潵鑷?ConfigManager 璇诲彇锛岃€岄潪纭紪鐮佸父閲忋€?Refs: Game.Core.Tests/Services/ConfigDrivenRuntimeLoopTests.cs Game.Core.Tests/Services/ConfigManagerAccessSurfaceTests.cs; 鍦ㄤ笉鏀瑰姩浠ｇ爜鐨勫墠鎻愪笅锛屼粎鏇挎崲骞宠　閰嶇疆骞堕噸杞斤紝蹇呴』瀵艰嚧鏃ュ鍛ㄦ湡銆佹尝娆￠绠楀闀裤€佸埛鎬妭濂忓拰 Boss 鏁伴噺鐨勮繍琛岀粨鏋滃彂鐢熷彉鍖栥€?Refs: Game.Core.Tests/Services/ConfigReloadBehaviorTests.cs Tests.Godot/tests/Integration/test_balance_runtime_config_reload.gd; 蹇呴』瀹氫箟瑙勮寖鍖栭厤缃绾︼紙蹇呭～ sections/keys銆佺ǔ瀹氶敭鍚嶃€佸繀濉敭鍒拌繍琛屾椂娑堣垂鏂规槧灏勶級锛屽苟鍙牳楠屾棩澶滄椂闀裤€佹櫘閫氭尝娆?day1 棰勭畻銆佹櫘閫氭尝娆℃棩澧為暱銆乪lite channel銆乥oss channel銆乻pawn cadence銆乥oss count 鐨勫姞杞藉€笺€?Refs: Game.Core.Tests/Domain/GameConfigContractTests.cs Game.Core.Tests/Services/ConfigManagerParsingTests.cs; 鍒濇鍔犺浇鍚庡繀椤绘彁渚涘叏灞€鍙闂殑寮虹被鍨嬪钩琛″揩鐓?API锛屾毚闇叉棩鏃堕暱銆佸鏃堕暱銆佹櫘閫氭尝娆?day1 棰勭畻銆佹櫘閫氭尝娆℃棩澧為暱銆乪lite channel銆乥oss channel銆乻pawn cadence銆乥oss count锛涚己澶卞彲閫夊瓧娈垫椂蹇呴』閲囩敤纭畾鎬ч粯璁ゅ€笺€?Refs: Game.Core.Tests/Domain/GameConfigTests.cs; 瀵圭己澶遍敭銆佺被鍨嬮敊璇€佽秺鐣屽€硷紝绯荤粺蹇呴』鎵ц鏃㈠畾 reject/fallback 瑙勫垯锛岃緭鍑哄彲鎵ц reason code 瀹¤杞ㄨ抗锛屽苟浣胯繍琛屾椂淇濇寔鍦ㄦ枃妗ｅ寲 fallback 鐘舵€併€?Refs: Game.Core.Tests/Domain/GameConfigValidationTests.cs Tests.Godot/tests/Security/Hard/test_balance_config_validation_audit.gd; ConfigManager must load balance values from real config artifacts (not only in-memory literals), parse successfully, and expose typed runtime snapshot values with deterministic reason codes on failure. Refs: Game.Core.Tests/Services/ConfigManagerBehaviorTests.cs Tests.Godot/tests/Adapters/Config/test_settings_config_utf8.gd; Loading path must be implemented by runtime file I/O or resource-backed path, and switching artifact content without code changes must change observed gameplay outputs after reload. Refs: Tests.Godot/tests/Adapters/Config/test_settings_config_utf8.gd Tests.Godot/tests/Security/Hard/test_settings_config_security.gd\nTest Strategy: Red: add or update test coverage around Taskmaster #2 primary behavior.; Green: implement minimal deterministic logic to satisfy assertions.; Refactor: preserve passing tests and tighten contract boundaries.\nLabels: prd; lastking; taskmaster-view; core\nOwner: gameplay\nLayer: core",
+        "testStrategy": "Red: add or update test coverage around Taskmaster #2 primary behavior.\nGreen: implement minimal deterministic logic to satisfy assertions.\nRefactor: preserve passing tests and tighten contract boundaries."
       },
       {
         "id": 3,
         "title": "Develop runtime state machine for Day/Night cycles",
         "description": "Implement a state machine to manage Day and Night cycles with deterministic progression up to Day15.",
-        "details": "Create a GameStateManager C# class with states: Day, Night. Use timers based on config (Day=4 min, Night=2 min). Track current day (1-15). Implement deterministic behavior using a fixed seed for random events. Transition between states automatically. On Day15 completion, trigger win condition. Integrate with Godot's process loop for updates.",
-        "testStrategy": "Run game and verify Day/Night cycles switch correctly per config times. Test deterministic progression with fixed seed. Ensure win triggers after Day15.",
+        "status": "done",
         "priority": "high",
         "dependencies": [
           2
         ],
-        "status": "done",
-        "subtasks": [
-          {
-            "id": "1",
-            "title": "Define runtime state machine model and transitions",
-            "description": "Design explicit Day and Night states, transition guards, and deterministic state events.",
-            "status": "done",
-            "priority": "high",
-            "dependencies": [
-              "2"
-            ],
-            "details": "Document state graph, transition conditions, and emitted events consumed by downstream systems.",
-            "testStrategy": "State graph tests verify legal transitions and reject invalid transition attempts.",
-            "subtasks": [],
-            "parentId": "undefined"
-          },
-          {
-            "id": "2",
-            "title": "Implement timer-driven Day/Night progression",
-            "description": "Implement 4-minute Day and 2-minute Night timers with deterministic day counter advancement.",
-            "status": "done",
-            "priority": "high",
-            "dependencies": [
-              "3.1",
-              "2"
-            ],
-            "details": "Use config-bound durations and ensure timer updates are monotonic and frame-rate independent.",
-            "testStrategy": "Timing tests assert exact transition boundaries under fixed-step and variable-step updates.",
-            "subtasks": [],
-            "parentId": "undefined"
-          },
-          {
-            "id": "3",
-            "title": "Integrate fixed-seed deterministic progression",
-            "description": "Bind fixed-seed randomness and transition checkpoints to guarantee repeatable cycle behavior.",
-            "status": "done",
-            "priority": "high",
-            "dependencies": [
-              "3.2"
-            ],
-            "details": "Emit deterministic checkpoints at every phase boundary for replay comparison.",
-            "testStrategy": "Same-seed replay tests must produce identical phase and checkpoint sequences.",
-            "subtasks": [],
-            "parentId": "undefined"
-          },
-          {
-            "id": "4",
-            "title": "Implement Day15 terminal trigger and state lock",
-            "description": "Trigger terminal flow when Day15 cycle completes and lock further progression updates.",
-            "status": "done",
-            "priority": "medium",
-            "dependencies": [
-              "3.3"
-            ],
-            "details": "Ensure only one terminal state is emitted and post-terminal transitions are ignored.",
-            "testStrategy": "Terminal tests verify single terminal emission and no post-terminal progression.",
-            "subtasks": [],
-            "parentId": "undefined"
-          },
-          {
-            "id": "5",
-            "title": "Add deterministic cycle verification tests",
-            "description": "Create unit and scene tests covering timing, transitions, and terminal conditions.",
-            "status": "done",
-            "priority": "medium",
-            "dependencies": [
-              "3.4"
-            ],
-            "details": "Cover normal flow, edge timing boundaries, and forced terminal scenarios with fixed seeds.",
-            "testStrategy": "Coverage must include transition correctness and deterministic replay parity checks.",
-            "subtasks": [],
-            "parentId": "undefined"
-          }
-        ],
-        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
-        "adrRefs": [
-          "ADR-0004",
-          "ADR-0018",
-          "ADR-0019"
-        ],
-        "archRefs": [
-          "CH05",
-          "CH06",
-          "CH04",
-          "CH01",
-          "CH07"
-        ]
+        "details": "Story: PRD-LASTKING-v1.2\nADR Refs: ADR-0004; ADR-0018; ADR-0019\nChapters: CH02; CH06; CH04; CH01; CH07\nOverlays: docs/architecture/overlays/PRD-lastking-T2/08/_index.md; docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md; docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md; docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md; docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md; docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md\nTest Refs: Game.Core.Tests/State/GameStateMachineTests.cs; Game.Core.Tests/State/GameStateManagerTests.cs; Game.Core.Tests/Tasks/Task3DayNightScopeGuardTests.cs; Game.Core.Tests/Tasks/Task3DayNightDesignArtifactTests.cs; Tests.Godot/tests/Integration/test_day_night_cycle_runtime_loop.gd; Tests.Godot/tests/UI/test_hud_day_night_cycle_status.gd\nAcceptance: Hard gate: deterministic cycle verification must include a fixed-seed forced-terminal scenario, not only natural Day15 completion paths. Refs: Game.Core.Tests/State/GameStateMachineTests.cs Game.Core.Tests/State/GameStateManagerTests.cs; Hard gate: forced-terminal verification must assert exactly one terminal emission, zero post-terminal progression, and checkpoint replay parity against baseline. Refs: Game.Core.Tests/State/GameStateManagerTests.cs Game.Core.Tests/State/GameStateMachineTests.cs; Taskmaster #3 鐨勭帺娉曡寖鍥翠粎闄?Day/Night 寰幆鎺ㄨ繘鑷?Day15锛涜嫢寮曞叆涓庤寰幆鏃犲叧鐨勭帺娉曡涓哄彉鏇村垯鍒ゅ畾澶辫触銆?Refs: Game.Core.Tests/Tasks/Task3DayNightScopeGuardTests.cs Game.Core.Tests/State/GameStateManagerTests.cs; 鍦?Windows Godot+C# 鍩虹嚎涓嬶紝寮曠敤鐨勮嚜鍔ㄥ寲鐜╂硶娴嬭瘯蹇呴』鍏ㄩ儴閫氳繃锛屽苟瑕嗙洊姝ｅ父娴佺▼銆佽鏃惰竟鐣屻€佸浐瀹氱瀛愰噸鏀句竴鑷存€т笌 Day15 缁堝眬鍦烘櫙銆?Refs: Game.Core.Tests/State/GameStateManagerTests.cs; 瀵?Day/Night 鍔熻兘涔嬪鐨勭帺娉曠郴缁燂紝鍦ㄨ緭鍏ュ簭鍒椾笉鍙樻椂锛岀‘瀹氭€фā鎷熻緭鍑轰笌鏍稿績寰幆鍙瀵熻涓哄繀椤讳繚鎸佷笉鍙樸€?Refs: Game.Core.Tests/State/GameStateManagerTests.cs; 缁堝眬鍓嶇帺瀹跺彲瑙傚療鐨勫惊鐜樁娈典粎鏈?Day 涓?Night锛屼笖鍙細鍑虹幇鍚堟硶鐨?Day<->Night 鍒囨崲锛涢潪娉曞垏鎹笉寰楀嚭鐜般€?Refs: Game.Core.Tests/State/GameStateMachineTests.cs; Day/Night phase durations must be configuration-driven (not hardcoded): default Day=4:00 and Night=2:00; transition is allowed only when the active phase reaches its configured threshold, and transition cannot be manually forced before threshold. Refs: Game.Core.Tests/State/GameStateManagerTests.cs; 鍙 day 璁℃暟浠?Day1 寮€濮嬪苟椤哄簭閫掑锛屼笉璺冲彿銆佷笉鍥為€€锛屼笖濮嬬粓淇濇寔鍦?1-15 鑼冨洿鍐呫€?Refs: Game.Core.Tests/State/GameStateManagerTests.cs; 鍥哄畾绉嶅瓙涓旇緭鍏/鏇存柊搴忓垪涓€鑷存椂锛岄噸澶嶈繍琛屽繀椤讳骇鐢熶竴鑷寸殑闃舵搴忓垪銆侀殢鏈虹粨鏋滀笌闃舵杈圭晫妫€鏌ョ偣銆?Refs: Game.Core.Tests/State/GameStateManagerTests.cs; 浠呭湪 Day15 瀹屾垚鏃跺悜鐜╁鍛堢幇涓€娆¤儨鍒╂潯浠讹紱鍦?Day15 瀹屾垚鍓嶄笉寰楀憟鐜颁换浣曡儨鍒┿€?Refs: Game.Core.Tests/State/GameStateManagerTests.cs; Day/Night 璁℃椂浠呭湪杩愯鏃跺惊鐜洿鏂版椿璺冩椂鎺ㄨ繘锛屽苟鍦?fixed-step 涓?variable-step 涓嬩繚鎸佸崟璋冧笖涓庡抚鐜囨棤鍏炽€?Refs: Game.Core.Tests/State/GameStateManagerTests.cs; 浠?Day1 鍏ㄦ柊寮€灞€寮€濮嬶紝鐜╁搴斿湪鎬昏€楁椂 4:00 瑙傚療鍒?Day->Night锛屽湪鎬昏€楁椂 6:00 瑙傚療鍒?Night->Day2銆?Refs: Game.Core.Tests/State/GameStateManagerTests.cs; 褰撶帺娉曟洿鏂版殏鍋滄垨鍋滄鏃讹紝闃舵鍒囨崲銆佸惊鐜疮璁℃椂闂翠笌 day 璁℃暟鍧囦笉寰楀彉鍖栵紝鐩磋嚦鏇存柊鎭㈠銆?Refs: Game.Core.Tests/State/GameStateManagerTests.cs; Day15 鑳滃埄鏃跺埢涔嬪悗锛岀帺瀹朵笉寰楄瀵熷埌 day>15銆侀噸澶嶈儨鍒╁憟鐜版垨杩涗竴姝ュ惊鐜帹杩涖€?Refs: Game.Core.Tests/State/GameStateManagerTests.cs; 鍦ㄦ瘡涓樁娈佃揪鍒伴厤缃槇鍊间箣鍓嶏紝鐜╁涓嶅緱瑙傚療鍒?Day/Night 鍒囨崲鎴?day 閫掑锛涗粎鍦ㄦ椿鍔ㄦ洿鏂颁腑杈惧埌闃堝€兼椂鎵嶅嚭鐜拌繖浜涘彉鍖栥€?Refs: Game.Core.Tests/State/GameStateManagerTests.cs; At a fresh run start, before the first threshold-driven transition, the player-visible cycle status must remain Day1. Refs: Tests.Godot/tests/UI/test_hud_day_night_cycle_status.gd Game.Core.Tests/State/GameStateManagerTests.cs; A reviewed runtime state-machine design artifact must be linked, and its state diagram, transition rules, and downstream consumer mapping must stay consistent with runtime behavior. Refs: Game.Core.Tests/Tasks/Task3DayNightDesignArtifactTests.cs; At every Day<->Night boundary, runtime must emit exactly one deterministic checkpoint event; no missing and no extra checkpoint events are allowed. Refs: Game.Core.Tests/State/GameStateManagerTests.cs; Replay validation must assert checkpoint-event count equals observed boundary-transition count for the same run input. Refs: Game.Core.Tests/State/GameStateManagerTests.cs; Day/Night runtime updates must be driven by the Godot process loop (_Process and/or _PhysicsProcess) into GameStateManager.UpdateDayNightRuntime; when loop updates are paused or stopped, cycle progression must not advance. Refs: Tests.Godot/tests/Integration/test_day_night_cycle_runtime_loop.gd\nTest Strategy: Red: add or update test coverage around Taskmaster #3 primary behavior.; Green: implement minimal deterministic logic to satisfy assertions.; Refactor: preserve passing tests and tighten contract boundaries.\nLabels: prd; lastking; taskmaster-view; core\nOwner: gameplay\nLayer: core",
+        "testStrategy": "Red: add or update test coverage around Taskmaster #3 primary behavior.\nGreen: implement minimal deterministic logic to satisfy assertions.\nRefactor: preserve passing tests and tighten contract boundaries."
       },
       {
         "id": 4,
@@ -723,344 +500,51 @@
         "id": 11,
         "title": "Refine baseline bootstrap with main-scene and structure standards",
         "description": "Refine the existing T1 project with stricter main-scene, startup bootstrap script, and folder standards.",
-        "details": "Reuse the project created in T1 (no new project). Harden startup main scene bindings, standardize scripts/scenes/assets/config folders, and verify editor reopen stability. This task focuses on baseline quality hardening, not duplicate project initialization.",
-        "testStrategy": "Run reopen/rebuild checks on the same T1 project root, verify main scene bootstrap persistence and folder standards. Reject if validation is performed on a newly recreated project.",
+        "status": "done",
         "priority": "high",
         "dependencies": [
           1
         ],
-        "status": "done",
-        "subtasks": [
-          {
-            "id": "1",
-            "title": "Define bootstrap refinement standards",
-            "description": "Define canonical main-scene, folder layout, and startup script standards for baseline refinement.",
-            "status": "done",
-            "priority": "high",
-            "dependencies": [],
-            "details": "Lock naming conventions and mandatory bootstrap assets on existing root.",
-            "testStrategy": "Contract checks verify required bootstrap assets and scene configuration.",
-            "subtasks": []
-          },
-          {
-            "id": "2",
-            "title": "Implement refined bootstrap wiring",
-            "description": "Apply main-scene and structure refinements while preserving canonical root invariants.",
-            "status": "done",
-            "priority": "high",
-            "dependencies": [
-              "1"
-            ],
-            "details": "Update startup wiring and folder structure without introducing secondary roots.",
-            "testStrategy": "Integration smoke verifies refined startup flow and structure integrity.",
-            "subtasks": []
-          },
-          {
-            "id": "3",
-            "title": "Add structure-regression and gate checks",
-            "description": "Add checks that fail when refined standards regress or startup bindings are broken.",
-            "status": "done",
-            "priority": "high",
-            "dependencies": [
-              "2"
-            ],
-            "details": "Emit structure verification artifacts and fail on missing mandatory bootstrap parts.",
-            "testStrategy": "Gate tests verify refined bootstrap standards remain enforced.",
-            "subtasks": []
-          }
-        ],
-        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
-        "adrRefs": [
-          "ADR-0011",
-          "ADR-0001"
-        ],
-        "archRefs": [
-          "CH07",
-          "CH10",
-          "CH01"
-        ],
-        "testRefs": [
-          "Game.Core.Tests/Tasks/Task11ProjectReuseGuardsTests.cs",
-          "Tests.Godot/tests/Scenes/Smoke/test_main_scene_smoke.gd",
-          "Game.Core.Tests/Tasks/Task11WindowsCSharpBaselineGateTests.cs",
-          "Tests.Godot/tests/Scenes/Smoke/test_glue_connections.gd",
-          "Game.Core.Tests/Tasks/Task11ProjectStructureStandardsTests.cs",
-          "Tests.Godot/tests/Scenes/Smoke/test_main_scene_bootstrap_path.gd",
-          "Game.Core.Tests/Domain/GameConfigTests.cs",
-          "Tests.Godot/tests/Integration/test_editor_reopen_rebuild_stability.gd",
-          "Tests.Godot/tests/Integration/test_singleplayer_startup_flow.gd",
-          "Game.Core.Tests/Services/StartupBootstrapServiceTests.cs",
-          "Game.Core.Tests/Engine/BootstrapStructureContractTests.cs",
-          "Tests.Godot/tests/Integration/test_screen_navigator.gd",
-          "Tests.Godot/tests/Security/Hard/test_db_open_denied_writes_audit_log.gd"
-        ]
+        "details": "Story: BACKLOG-LASTKING-M1\nADR Refs: ADR-0011; ADR-0001\nChapters: CH07; CH10; CH01\nOverlays: docs/architecture/overlays/PRD-lastking-T2/08/_index.md; docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md; docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md; docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md; docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md; docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md\nTest Refs: Game.Core.Tests/Tasks/Task11ProjectReuseGuardsTests.cs; Tests.Godot/tests/Scenes/Smoke/test_main_scene_smoke.gd; Game.Core.Tests/Tasks/Task11WindowsCSharpBaselineGateTests.cs; Tests.Godot/tests/Scenes/Smoke/test_glue_connections.gd; Game.Core.Tests/Tasks/Task11ProjectStructureStandardsTests.cs; Tests.Godot/tests/Scenes/Smoke/test_main_scene_bootstrap_path.gd; Game.Core.Tests/Domain/GameConfigTests.cs; Tests.Godot/tests/Integration/test_editor_reopen_rebuild_stability.gd; Tests.Godot/tests/Integration/test_singleplayer_startup_flow.gd; Game.Core.Tests/Services/StartupBootstrapServiceTests.cs; Game.Core.Tests/Engine/BootstrapStructureContractTests.cs; Tests.Godot/tests/Integration/test_screen_navigator.gd; Tests.Godot/tests/Security/Hard/test_db_open_denied_writes_audit_log.gd\nAcceptance: T11 蹇呴』鍦ㄦ棦鏈?T1 椤圭洰鏍圭洰褰曚笂鎵ц鍔犲浐涓庨獙璇侊紝涓嶅緱鏂板缓鎴栨浛鎹负鍙︿竴涓?Godot 椤圭洰銆?Refs: Game.Core.Tests/Tasks/Task11ProjectReuseGuardsTests.cs; 鏃㈡湁 T1 椤圭洰鐨?Main Scene 涓庡惎鍔ㄧ粦瀹氬凡琚鏌ュ苟鏀舵暃鍒扮粺涓€鏍囧噯锛岃繍琛屾椂浣跨敤璇ョ粦瀹氥€?Refs: Tests.Godot/tests/Scenes/Smoke/test_main_scene_smoke.gd; 浜や粯缁撴灉淇濇寔涓?Windows Godot 4.5.1 + C# 宸ヤ綔娴佺殑鍚屼竴鍩虹嚎椤圭洰锛屼笉鎺ュ彈閫€鍖栦负闈?C# 鍩虹嚎銆?Refs: Game.Core.Tests/Tasks/Task11WindowsCSharpBaselineGateTests.cs; 閽堝 Windows Godot+C# 鍩虹嚎涓斾笌鏈换鍔＄浉鍏崇殑鑷姩鍖栨鏌ュ繀椤诲湪澶嶇敤鐨?T1 鏍圭洰褰曚笂閫氳繃锛屼笖鏍￠獙鍏ュ彛浠ュ綋鍓嶄粨搴撹剼鏈负鍑嗭紙濡?scripts/sc/test.py銆乻cripts/python/run_dotnet.py銆乻cripts/python/smoke_headless.py銆乻cripts/python/run_gdunit.py锛夛紱涓嶅緱瑕佹眰涓嶅瓨鍦ㄧ殑鏃ц剼鏈矾寰勩€?Refs: Game.Core.Tests/Tasks/Task11ProjectReuseGuardsTests.cs Game.Core.Tests/Tasks/Task11WindowsCSharpBaselineGateTests.cs; 鍔犲浐鍚庨」鐩彲绋冲畾瀹屾垚鍩虹鍚姩寰幆锛屼笖鏈紩鍏ユ柊鐨勫惎鍔ㄤ笉绋冲畾闂銆?Refs: Tests.Godot/tests/Scenes/Smoke/test_main_scene_smoke.gd Tests.Godot/tests/Scenes/Smoke/test_glue_connections.gd; On Windows, the project must open in Godot 4.5.1 with the .NET/C# workflow intact; the runtime Main Scene smoke path must not show binding errors or immediate crashes. Refs: Game.Core.Tests/Tasks/Task11WindowsCSharpBaselineGateTests.cs Tests.Godot/tests/Scenes/Smoke/test_main_scene_smoke.gd; Managed build readiness must retain .NET project files, C# sources, and repository-supported build automation entrypoints for the baseline workflow; missing any required build input or entrypoint fails acceptance. Refs: Game.Core.Tests/Tasks/Task11WindowsCSharpBaselineGateTests.cs; Main Scene 琚厤缃负鍚姩鍦烘櫙锛岃繍琛岄」鐩椂杩涘叆璇ュ満鏅笖鏃犺繍琛屾椂寮傚父銆?Refs: Tests.Godot/tests/Scenes/Smoke/test_main_scene_smoke.gd; Folder standards must explicitly cover scripts/, Game.Godot/Scenes, Game.Godot/Assets, and the configuration layer; parallel roots or substitute paths do not satisfy the standard. Refs: Game.Core.Tests/Tasks/Task11ProjectStructureStandardsTests.cs Tests.Godot/tests/Scenes/Smoke/test_glue_connections.gd; 鍚姩娓告垙娴佺▼蹇呴』鍖呭惈宸叉帴鍏ョ殑 Godot C# 鍚姩缁勪欢骞跺湪 Main Scene 鐢熷懡鍛ㄦ湡涓疄闄呮墽琛岋紱鍏佽 Main Scene 鏍硅剼鏈负 GDScript锛屼笉瑕佹眰鏍硅剼鏈湰韬繀椤绘槸 C#銆?Refs: Tests.Godot/tests/Scenes/Smoke/test_main_scene_bootstrap_path.gd; Bootstrap configuration must be loaded from the standardized config layer and participate in startup; config models may deserialize successfully but may not bypass the standard config layer. Refs: Game.Core.Tests/Tasks/Task11ProjectStructureStandardsTests.cs Game.Core.Tests/Domain/GameConfigTests.cs; 閲嶅紑/閲嶅缓楠岃瘉蹇呴』鍦ㄥ悓涓€涓?T1 椤圭洰鏍圭洰褰曟墽琛岋紝涓嶆帴鍙楀湪鏂板缓椤圭洰璺緞涓婂畬鎴愰獙璇併€?Refs: Game.Core.Tests/Tasks/Task11ProjectReuseGuardsTests.cs Tests.Godot/tests/Integration/test_editor_reopen_rebuild_stability.gd; At least one full editor reopen and rebuild cycle must complete, and after that cycle both the Main Scene binding and the directory standard (scripts/, Game.Godot/Scenes, Game.Godot/Assets, config layer) must remain valid without drift. Refs: Tests.Godot/tests/Integration/test_editor_reopen_rebuild_stability.gd Game.Core.Tests/Tasks/Task11ProjectStructureStandardsTests.cs; 瀹屾垚楠岃瘉鍚庣殑椤圭洰鍐嶆杩愯鍙埌杈惧垵濮嬪満鏅紝涓斾笉浼氱珛鍗冲穿婧冦€?Refs: Tests.Godot/tests/Scenes/Smoke/test_main_scene_smoke.gd; 鑻ヤ换涓€蹇呴渶鐨勬墦寮€銆佺紪璇戙€佽繍琛屻€侀噸寮€鎴栭噸寤洪獙璇佸け璐ワ紝鍒欒浠诲姟涓嶄簣楠屾敹銆?Refs: Game.Core.Tests/Tasks/Task11WindowsCSharpBaselineGateTests.cs Tests.Godot/tests/Integration/test_editor_reopen_rebuild_stability.gd; Acceptance must run on the existing Windows + Godot 4.5.1 + .NET SDK baseline host; switching to another host or a non-C# workflow and then claiming success is not allowed. Refs: Game.Core.Tests/Tasks/Task11WindowsCSharpBaselineGateTests.cs; 鍒濆鍦烘櫙鍔犺浇鏈熼棿锛岃嚦灏戜竴涓惎鍔ㄨ矾寰?C# 鑴氭湰浜х敓鍙娴嬫晥鏋滐紝璇佹槑涓嶆槸绌烘搷浣溿€?Refs: Tests.Godot/tests/Scenes/Smoke/test_glue_connections.gd; 楠岃瘉鍚庣殑 Windows 鏋勫缓杩涘叆鍗曚汉鍚姩娴佺▼锛屼笖涓嶄緷璧栧浜轰細璇濆垵濮嬪寲銆?Refs: Tests.Godot/tests/Integration/test_singleplayer_startup_flow.gd Game.Core.Tests/Services/StartupBootstrapServiceTests.cs; Obligation lock O7: 鍚姩鍩虹嚎蹇呴』鍚屾椂淇濊瘉 Main Scene 鍚姩閰嶇疆鏈夋晥锛屼笖鑷冲皯涓€涓?C# bootstrap 缁勪欢鍦ㄥ満鏅惎鍔ㄩ樁娈靛畬鎴愬繀瑕佸垵濮嬪寲鎴栨帴绾匡紱涓嶈姹傚崟涓?C# 鑴氭湰鐙崰瀹屾垚绐楀彛鍒濆鍖栦笌鍒濆鍦烘櫙鍔犺浇銆?Refs: Game.Core.Tests/Services/StartupBootstrapServiceTests.cs Tests.Godot/tests/Scenes/Smoke/test_main_scene_bootstrap_path.gd; Scope boundary: all reopen, rebuild, and run verification must execute inside the reused T1 project root; any validation against a different root fails acceptance. Refs: Game.Core.Tests/Tasks/Task11ProjectReuseGuardsTests.cs; Hard scope gate: creating a second Godot project is forbidden for T11. Refs: Game.Core.Tests/Tasks/Task11ProjectReuseGuardsTests.cs; After at least one independent reopen or rebuild, the same Main Scene binding and startup bootstrap binding must remain valid and continue to produce observable startup effects. Refs: Tests.Godot/tests/Integration/test_editor_reopen_rebuild_stability.gd Tests.Godot/tests/Scenes/Smoke/test_main_scene_bootstrap_path.gd; T11 may not pass by new-project bootstrap, project reinitialization, or introducing a parallel bootstrap/main-scene entrypoint alongside the existing one. Refs: Game.Core.Tests/Tasks/Task11ProjectReuseGuardsTests.cs; 鍦ㄥ悓涓€ T1 鏍圭洰褰曞唴锛屽繀椤绘槑纭苟楠岃瘉鍚姩鍩虹嚎鍛藉悕绾﹀畾锛圡ain Scene 鍚嶇О銆佸惎鍔ㄧ粍浠跺悕绉帮紝浠ュ強 scripts/銆丟ame.Godot/Scenes銆丟ame.Godot/Assets 涓庣幇鏈夐厤缃眰璺緞鍛藉悕锛夊苟淇濇寔涓€鑷达紱浠讳竴涓嶄竴鑷村嵆涓嶉€氳繃銆?Refs: Tests.Godot/tests/Scenes/Smoke/test_main_scene_smoke.gd; 蹇呴渶 bootstrap 璧勪骇锛堣嚦灏戝惈鍚姩鍦烘櫙涓庡惎鍔ㄨ剼鏈級蹇呴』鐢辩粨鏋勫绾︽鏌ュ垪鍑哄苟鏍￠獙锛涚己澶变换涓€蹇呴渶椤规椂闂ㄧ蹇呴』澶辫触銆?Refs: Game.Core.Tests/Engine/BootstrapStructureContractTests.cs; 鍚姩 wiring 涓庣洰褰曟爣鍑嗚皟鏁村悗锛岄泦鎴愬啋鐑熼渶璇佹槑鍚姩娴佷粛浠庢棦鏈変富鍦烘櫙杩涘叆涓旂洰褰曞畬鏁达紱鑻ュ嚭鐜?secondary root 鎴栨浛浠ｆ牴璺緞鍗充笉閫氳繃銆?Refs: Tests.Godot/tests/Scenes/Smoke/test_glue_connections.gd Tests.Godot/tests/Integration/test_screen_navigator.gd; After reopen/rebuild validation in the reused T1 root, executed startup behavior must remain reproducible and attributable to the same Main Scene/bootstrap path. Refs: Tests.Godot/tests/Integration/test_editor_reopen_rebuild_stability.gd Tests.Godot/tests/Scenes/Smoke/test_main_scene_bootstrap_path.gd\nTest Strategy: Red: add or update test coverage around Taskmaster #11 primary behavior.; Green: implement minimal deterministic logic to satisfy assertions.; Refactor: preserve passing tests and tighten contract boundaries.\nLabels: backlog; lastking; taskmaster-view; ci\nOwner: architecture\nLayer: ci",
+        "testStrategy": "Red: add or update test coverage around Taskmaster #11 primary behavior.\nGreen: implement minimal deterministic logic to satisfy assertions.\nRefactor: preserve passing tests and tighten contract boundaries."
       },
       {
         "id": 12,
         "title": "Implement Core Resource System with Integer Safety",
         "description": "Create a resource management system for gold, iron, and population cap, ensuring integer-safe operations to prevent floating-point drift.",
-        "details": "Define a ResourceManager class in C# using integers for gold, iron, and population cap. Initialize with starting values: gold=800, iron=150, pop-cap=50. Implement methods to add/subtract resources with bounds checking (e.g., no negative values). Use Godot's signals or events for UI updates. Store resources as int to avoid floating-point issues. Pseudo-code: public class ResourceManager { private int gold, iron, popCap; public bool TrySpend(int goldCost, int ironCost) { if (gold >= goldCost && iron >= ironCost) { gold -= goldCost; iron -= ironCost; return true; } return false; } }",
-        "testStrategy": "Unit tests in C# using NUnit or similar: test initial values, addition/subtraction, edge cases (zero, negative attempts), and integer overflow prevention. Verify no floating-point usage in resource calculations.",
+        "status": "pending",
         "priority": "high",
         "dependencies": [
           11
         ],
-        "status": "done",
-        "subtasks": [
-          {
-            "id": "1",
-            "title": "Define resource contracts and integer invariants",
-            "description": "Define canonical resource fields and invariants for gold, iron, and population cap as integer-only data.",
-            "status": "pending",
-            "priority": "high",
-            "dependencies": [
-              "11"
-            ],
-            "details": "Lock resource names, initial values, and invariant rules consumed by all economy systems.",
-            "testStrategy": "Contract tests verify integer-only schemas and required invariant declarations.",
-            "subtasks": [],
-            "parentId": "undefined"
-          },
-          {
-            "id": "2",
-            "title": "Implement integer-safe add/spend operations",
-            "description": "Implement atomic add/spend methods with bounds checks and deterministic failure returns.",
-            "status": "pending",
-            "priority": "high",
-            "dependencies": [
-              "12.1",
-              "11"
-            ],
-            "details": "Enforce single-path mutation methods and remove any floating-point math from resource logic.",
-            "testStrategy": "Unit tests verify valid mutation, insufficient-resource rejection, and invariant preservation.",
-            "subtasks": [],
-            "parentId": "undefined"
-          },
-          {
-            "id": "3",
-            "title": "Integrate resource events for gameplay and UI",
-            "description": "Publish deterministic resource change events to UI and gameplay consumers.",
-            "status": "pending",
-            "priority": "medium",
-            "dependencies": [
-              "12.2"
-            ],
-            "details": "Emit structured deltas and reasons to avoid consumer-side recomputation or hidden mutations.",
-            "testStrategy": "Integration tests verify event ordering and payload integrity during rapid updates.",
-            "subtasks": [],
-            "parentId": "undefined"
-          },
-          {
-            "id": "4",
-            "title": "Add overflow guards and snapshot-safe serialization",
-            "description": "Add overflow protection and stable snapshot payloads for save/load compatibility.",
-            "status": "pending",
-            "priority": "medium",
-            "dependencies": [
-              "12.2"
-            ],
-            "details": "Protect arithmetic boundaries and provide deterministic serialization for current resource state.",
-            "testStrategy": "Boundary tests cover max/min values and snapshot roundtrip parity.",
-            "subtasks": [],
-            "parentId": "undefined"
-          },
-          {
-            "id": "5",
-            "title": "Build integer-safety regression test suite",
-            "description": "Create tests that enforce integer-only operations and prevent float-based regressions.",
-            "status": "pending",
-            "priority": "medium",
-            "dependencies": [
-              "12.2",
-              "12.4"
-            ],
-            "details": "Add static checks and runtime assertions that fail on non-integer resource math.",
-            "testStrategy": "Suite fails if any resource path introduces float operations or invariant drift.",
-            "subtasks": [],
-            "parentId": "undefined"
-          }
-        ],
-        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
-        "adrRefs": [
-          "ADR-0021",
-          "ADR-0022",
-          "ADR-0018"
-        ],
-        "archRefs": [
-          "CH05",
-          "CH06",
-          "CH04",
-          "CH01",
-          "CH07"
-        ]
+        "details": "Story: BACKLOG-LASTKING-M1\nADR Refs: ADR-0021; ADR-0022; ADR-0018\nChapters: CH05; CH06; CH04; CH01; CH07\nOverlays: docs/architecture/overlays/PRD-lastking-T2/08/_index.md; docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md; docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md; docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md; docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md; docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md\nTest Refs: Game.Core.Tests/Services/ResourceManagerIntegerSafetyTests.cs; Game.Core.Tests/Engine/GameEngineCoreEventTests.cs; Game.Core.Tests/Services/ResourceManagerTests.cs; Game.Core.Tests/Services/ResourceManagerEventTests.cs; Game.Core.Tests/Tasks/Task44UiWiringAcceptanceGovernanceTests.cs\nAcceptance: Integer safety is enforced by both static scan and runtime assertion gates; any non-integer resource arithmetic is rejected and no resource state mutation is committed. Refs: Game.Core.Tests/Services/ResourceManagerIntegerSafetyTests.cs; ResourceManager emits one stable shared resource-changed contract/API, and tests verify consistent resource names, integer totals, and invariant payload fields. Refs: Game.Core.Tests/Engine/GameEngineCoreEventTests.cs Game.Core.Tests/Services/ResourceManagerEventTests.cs; ResourceManager exposes explicit integer mutation APIs (TryAdd, TrySubtract, TrySpend), and each API is independently verifiable for success/failure semantics and atomic state transitions. Refs: Game.Core.Tests/Services/ResourceManagerTests.cs; Resource snapshots and resource-changed payload fields are deterministic for identical integer initial state and mutation sequence. Refs: Game.Core.Tests/Services/ResourceManagerTests.cs Game.Core.Tests/Services/ResourceManagerEventTests.cs; Resource mutations are deterministic: the same integer initial state and mutation sequence produce the same final resource totals. Refs: Game.Core.Tests/Services/ResourceManagerTests.cs; The ResourceManager contract fixes resource names (gold, iron, population cap), declares integer-only invariants, and initializes exactly gold=800, iron=150, pop-cap=50. Refs: Game.Core.Tests/Services/ResourceManagerTests.cs; A spend request succeeds only when current gold and iron are each greater than or equal to the requested integer costs; on success only gold and iron are reduced by exact costs and population cap remains unchanged. Refs: Game.Core.Tests/Services/ResourceManagerTests.cs; Any spend or subtraction request that would make a tracked resource negative is rejected atomically, and all tracked resource values remain unchanged. Refs: Game.Core.Tests/Services/ResourceManagerTests.cs; Zero-cost and zero-delta requests have explicit deterministic outcomes and preserve all declared resource invariants. Refs: Game.Core.Tests/Services/ResourceManagerTests.cs; Negative inputs for spend/add/subtract follow an explicit contract (rejection or defined no-op); when rejected, resource state is unchanged. Refs: Game.Core.Tests/Services/ResourceManagerTests.cs; Add, subtract, and spend operations apply overflow/underflow guards so wrapped integer results are never committed to state. Refs: Game.Core.Tests/Services/ResourceManagerTests.cs; Each successful resource mutation emits a Godot signal or equivalent event that includes updated integer totals for UI updates. Refs: Game.Core.Tests/Services/ResourceManagerEventTests.cs; Resource logic for gold, iron, and population cap uses integer arithmetic only, with no floating-point math in mutation paths. Refs: Game.Core.Tests/Services/ResourceManagerIntegerSafetyTests.cs Game.Core.Tests/Services/ResourceManagerTests.cs; Valid add/subtract/spend requests for gold, iron, and population cap mutate state only via defined mutation APIs as exact integer deltas, and results are observable via state reads and emitted payloads. Refs: Game.Core.Tests/Services/ResourceManagerTests.cs Game.Core.Tests/Services/ResourceManagerEventTests.cs; When a mutation is refused due to insufficient resources, negative input, or overflow/underflow risk, all tracked resource values remain exactly equal to pre-request values. Refs: Game.Core.Tests/Services/ResourceManagerTests.cs; Spend/add/subtract APIs report success/failure consistently with state transitions: success only when the exact integer mutation is applied, failure only when state is unchanged. Refs: Game.Core.Tests/Services/ResourceManagerTests.cs Game.Core.Tests/Services/ResourceManagerEventTests.cs; Automated tests explicitly verify initial values, successful mutations, zero-input behavior, negative-input handling, and overflow/underflow refusal for gold, iron, and population cap. Refs: Game.Core.Tests/Services/ResourceManagerTests.cs Game.Core.Tests/Services/ResourceManagerEventTests.cs; Obligation lock O10: resource calculations remain integer-only and must not introduce floating-point arithmetic. Refs: Game.Core.Tests/Services/ResourceManagerIntegerSafetyTests.cs Game.Core.Tests/Services/ResourceManagerTests.cs; Obligation lock O11: TryAdd/TrySubtract/TrySpend remain explicit public integer APIs with deterministic success/failure semantics and no hidden mutation paths. Refs: Game.Core.Tests/Services/ResourceManagerTests.cs; Obligation lock O1: the task delivers a C# ResourceManager that stores gold, iron, and population cap as integer state. Refs: Game.Core.Tests/Services/ResourceManagerTests.cs; Obligation lock O2: initial resource state is exactly gold=800, iron=150, and pop-cap=50. Refs: Game.Core.Tests/Services/ResourceManagerTests.cs\nTest Strategy: Red: add or update test coverage around Taskmaster #12 primary behavior.; Green: implement minimal deterministic logic to satisfy assertions.; Refactor: preserve passing tests and tighten contract boundaries.\nLabels: backlog; lastking; taskmaster-view; core\nOwner: architecture\nLayer: core",
+        "testStrategy": "Red: add or update test coverage around Taskmaster #12 primary behavior.\nGreen: implement minimal deterministic logic to satisfy assertions.\nRefactor: preserve passing tests and tighten contract boundaries."
       },
       {
         "id": 13,
         "title": "Design and Implement Building System with Footprint Rules",
         "description": "Develop a building system that supports core buildings (castle, residence, mine, barracks, MG tower, wall, mine trap) with footprint rules and placement logic.",
-        "details": "Create a Building base class in C# with properties: type, level, footprint size, HP, cost. Implement subclasses for each building type. Footprint rules: castle=4, barracks=2, MG tower=1, wall=1. Use a grid-based placement system in Godot (e.g., TileMap or custom grid). For walls, implement drag-line build mode and gate one-way logic (blocks path except at gates). Buildings should be placed only if footprint fits and resources are available. Pseudo-code: public class Building { public Vector2I footprint; public bool CanPlace(Grid grid) { return grid.IsAreaFree(position, footprint); } }",
-        "testStrategy": "Test placement logic: valid/invalid positions, footprint collisions, resource deduction on build. Test wall drag-line building and gate functionality in-game. Use debug visuals to verify grid alignment.",
+        "status": "pending",
         "priority": "high",
         "dependencies": [
           11,
           12
         ],
-        "status": "done",
-        "subtasks": [
-          {
-            "id": "1",
-            "title": "Define building archetypes and footprint metadata",
-            "description": "Define building type metadata including level, HP, cost, and footprint size rules.",
-            "status": "pending",
-            "priority": "high",
-            "dependencies": [
-              "11",
-              "12"
-            ],
-            "details": "Create canonical archetype definitions for castle, residence, mine, barracks, MG tower, wall, and mine trap.",
-            "testStrategy": "Metadata tests verify required fields and footprint values match design constraints.",
-            "subtasks": [],
-            "parentId": "undefined"
-          },
-          {
-            "id": "2",
-            "title": "Implement grid occupancy and placement validation",
-            "description": "Implement grid occupancy checks and placement validation against footprint collisions.",
-            "status": "pending",
-            "priority": "high",
-            "dependencies": [
-              "13.1",
-              "12"
-            ],
-            "details": "Reject out-of-bounds, blocked, and overlapping placements with deterministic reason codes.",
-            "testStrategy": "Placement tests cover valid placement, collision rejection, and boundary constraints.",
-            "subtasks": [],
-            "parentId": "undefined"
-          },
-          {
-            "id": "3",
-            "title": "Implement wall drag-line and one-way gate behavior",
-            "description": "Add drag-line wall building and gate logic that enforces one-way traversal constraints.",
-            "status": "pending",
-            "priority": "high",
-            "dependencies": [
-              "13.2"
-            ],
-            "details": "Support continuous wall placement with gate segments while preserving pathing restrictions.",
-            "testStrategy": "Scene tests verify drag-line placement, gate creation, and traversal direction rules.",
-            "subtasks": [],
-            "parentId": "undefined"
-          },
-          {
-            "id": "4",
-            "title": "Integrate build transactions and resource deduction",
-            "description": "Integrate placement with atomic resource deduction and rollback on failed placements.",
-            "status": "pending",
-            "priority": "medium",
-            "dependencies": [
-              "13.2",
-              "12"
-            ],
-            "details": "Ensure placement and spend are transactional so resources remain unchanged when placement fails.",
-            "testStrategy": "Transaction tests verify spend-on-success and full rollback-on-failure behavior.",
-            "subtasks": [],
-            "parentId": "undefined"
-          },
-          {
-            "id": "5",
-            "title": "Add placement and gate-pathing verification suite",
-            "description": "Create integration tests for footprint collisions, wall gates, and path-block outcomes.",
-            "status": "pending",
-            "priority": "medium",
-            "dependencies": [
-              "13.3",
-              "13.4",
-              "6"
-            ],
-            "details": "Cover blocked-path fallback interactions and validate deterministic tie handling in gate scenarios.",
-            "testStrategy": "Integration suite verifies consistent results across repeated same-seed placement scenarios.",
-            "subtasks": [],
-            "parentId": "undefined"
-          }
-        ],
-        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
-        "adrRefs": [
-          "ADR-0021",
-          "ADR-0022",
-          "ADR-0018"
-        ],
-        "archRefs": [
-          "CH05",
-          "CH06",
-          "CH04",
-          "CH01",
-          "CH07"
-        ]
+        "details": "Story: BACKLOG-LASTKING-M1\nADR Refs: ADR-0021; ADR-0022; ADR-0018\nChapters: CH05; CH06; CH04; CH01; CH07\nOverlays: docs/architecture/overlays/PRD-lastking-T2/08/_index.md; docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md; docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md; docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md; docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md; docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md\nTest Refs: Tests.Godot/tests/Scenes/Building/test_wall_drag_line_gate_segments.gd; Tests.Godot/tests/Scenes/Building/test_wall_gate_invalid_input_no_side_effects.gd; Game.Core.Tests/Services/BuildingSubtypePlacementTests.cs; Game.Core.Tests/Services/BuildingPlacementValidationTests.cs; Game.Core.Tests/Services/BuildingPlacementTransactionTests.cs; Game.Core.Tests/Services/BuildingPlacementDeterminismTests.cs; Game.Core.Tests/Engine/BuildingSystemCoreLoopDeterminismTests.cs; Game.Core.Tests/Domain/BuildingArchetypeTests.cs; Game.Core.Tests/State/GridOccupancyTrackerTests.cs; Game.Core.Tests/Services/WallDragPlacementServiceTests.cs; Game.Core.Tests/Services/GatePathingRulesTests.cs; Game.Core.Tests/Services/BuildingSelectionPolicyTests.cs; Tests.Godot/tests/Scenes/Building/test_building_debug_overlays_alignment.gd; Tests.Godot/tests/Scenes/Building/test_build_mode_preview_and_confirm.gd; Tests.Godot/tests/Scenes/Building/test_grid_placement_refusal_and_snap.gd; Tests.Godot/tests/Integration/test_building_gate_fallback_determinism.gd; Tests.Godot/tests/UI/test_hud_building_type_switch_preview.gd; Tests.Godot/tests/Scenes/Building/test_wall_drag_line_segments.gd; Tests.Godot/tests/Scenes/Building/test_gate_one_way_traversal.gd\nAcceptance: Hard gate锛氬満鏅祴璇曞繀椤诲湪 wall 鎷栫嚎寤洪€犱腑鏄惧紡鏂█ gate 娈靛垱寤虹粨鏋滐紙鏁伴噺銆佷綅缃€佹柟鍚戯級銆?Refs: Tests.Godot/tests/Scenes/Building/test_wall_drag_line_gate_segments.gd; Hard gate锛氶潪娉?gate 鍒涘缓杈撳叆蹇呴』琚嫆缁濓紝涓斾笉寰椾骇鐢?gate/wall 鍓綔鐢紝涔熶笉寰楁敼鍙樿祫婧愮姸鎬併€?Refs: Tests.Godot/tests/Scenes/Building/test_wall_gate_invalid_input_no_side_effects.gd; Taskmaster #13 鐨勫悗绔繀椤诲疄鐜?castle銆乺esidence銆乵ine銆乥arracks銆丮G tower銆亀all銆乵ine trap 鐨勫缓閫狅紝骞剁敱 footprint 瑙勫垯鍐冲畾鏀剧疆鎺ュ彈/鎷掔粷缁撴灉銆?Refs: Game.Core.Tests/Services/BuildingSubtypePlacementTests.cs Game.Core.Tests/Services/BuildingPlacementValidationTests.cs; If any target cell is out-of-bounds, blocked, or occupied, placement must be rejected with no building creation and no resource mutation. Refs: Game.Core.Tests/Services/BuildingPlacementValidationTests.cs Game.Core.Tests/Services/BuildingPlacementTransactionTests.cs; 鍦ㄧ浉鍚?grid 鐘舵€併€佽祫婧愮姸鎬併€乻eed 鍜岃緭鍏ュ簭鍒椾笅锛屾斁缃粨鏋溿€乬ate-pathing 缁撴灉涓庢嫆缁濈粨鏋滃繀椤诲彲閲嶅涓旂‘瀹氥€?Refs: Game.Core.Tests/Services/BuildingPlacementDeterminismTests.cs Game.Core.Tests/Engine/BuildingSystemCoreLoopDeterminismTests.cs; 蹇呴』瀹氫箟 castle銆乺esidence銆乵ine銆乥arracks銆丮G tower銆亀all銆乵ine trap 鐨?canonical archetype锛涙瘡涓?archetype 蹇呴』鎻愪緵 type銆乴evel銆乫ootprint size銆丠P銆乧ost锛屽苟琚斁缃笌鎵ｈ垂鏍￠獙瀹為檯浣跨敤銆?Refs: Game.Core.Tests/Domain/BuildingArchetypeTests.cs; 鏀剧疆鏍￠獙蹇呴』涓ユ牸鎵ц浠诲姟鏄庣ず footprint 鍊硷細castle=4銆乥arracks=2銆丮G tower=1銆亀all=1銆?Refs: Game.Core.Tests/Domain/BuildingArchetypeTests.cs; 浠呭綋鐩爣 footprint 瑕嗙洊鐨勫叏閮ㄦ牸瀛愰兘鍦ㄨ竟鐣屽唴涓斾负绌烘椂锛屽缓閫犺姹傛墠鍙帴鍙楋紱鍚﹀垯蹇呴』浠ョ‘瀹氭€х殑 reason code 鎷掔粷銆?Refs: Game.Core.Tests/Services/BuildingPlacementValidationTests.cs Game.Core.Tests/State/GridOccupancyTrackerTests.cs; 鍙浠讳竴鐩爣鏍间负 out-of-bounds銆乥locked 鎴?occupied锛岃姹傚繀椤昏鎷掔粷锛屼笖涓嶅緱鍒涘缓寤虹瓚銆佷笉寰楁敼鍙樿祫婧愩€?Refs: Game.Core.Tests/Services/BuildingPlacementValidationTests.cs Game.Core.Tests/Services/BuildingPlacementTransactionTests.cs; 褰撹祫婧愪綆浜庢墍閫夊缓绛?cost 鏃讹紝璇锋眰蹇呴』琚嫆缁濓紝涓斾笉寰楀垱寤哄缓绛戙€佷笉寰楁敼鍙樿祫婧愩€?Refs: Game.Core.Tests/Services/BuildingPlacementTransactionTests.cs; 寤洪€犳垚鍔熸椂锛岃祫婧愬繀椤诲彧鎵ｅ噺涓€娆★紝涓旀彁浜ょ殑鍗犵敤鏍煎繀椤讳笌宸叉帴鍙?footprint 瀹屽叏涓€鑷淬€?Refs: Game.Core.Tests/Services/BuildingPlacementTransactionTests.cs Game.Core.Tests/State/GridOccupancyTrackerTests.cs; wall 鎷栫嚎妯″紡蹇呴』鍦ㄦ湁鏁堟牸涓婃部鎷栨嫿璺緞鐢熸垚杩炵画澧欐锛涙棤鏁堟牸涓嶅緱鐢熸垚澧欐涓斾笉寰楁秷鑰楄祫婧愩€?Refs: Game.Core.Tests/Services/WallDragPlacementServiceTests.cs; pathing 蹇呴』鎵ц gate 鍗曞悜瑙勫垯锛氶潪 gate 澧欐牸闃绘尅閫氳锛実ate 鏍间粎鍏佽鍏堕厤缃柟鍚戦€氳銆?Refs: Game.Core.Tests/Services/GatePathingRulesTests.cs; 鑷姩鍖栨牎楠屽繀椤昏鐩栵細鏈夋晥/鏃犳晥鏀剧疆銆佽竟鐣屼笌纰版挒鎷掔粷銆佹垚鍔熸墸璐逛笌澶辫触鍥炴粴銆亀all 鎷栫嚎銆乬ate 琛屼负銆乥locked-path fallback銆乬ate tie 鐨勭‘瀹氭€у鐞嗐€?Refs: Game.Core.Tests/Services/BuildingPlacementDeterminismTests.cs Game.Core.Tests/Services/GatePathingRulesTests.cs; 鏀剧疆鏍￠獙涓庡崰鐢ㄨ拷韪繀椤诲熀浜庣鏁ｇ綉鏍煎潗鏍囷紙TileMap 鎴栫瓑浠疯嚜瀹氫箟缃戞牸锛夛紝涓旀垚鍔熸斁缃笉寰楁彁浜や换浣?off-grid 鍗犵敤銆?Refs: Game.Core.Tests/State/GridOccupancyTrackerTests.cs Game.Core.Tests/Services/BuildingPlacementValidationTests.cs; 瀵规瘡涓彈鏀寔寤虹瓚绫诲瀷锛坈astle銆乺esidence銆乵ine銆乥arracks銆丮G tower銆亀all銆乵ine trap锛夛紝鏀剧疆鏍￠獙涓?cost 鏍￠獙閮藉繀椤讳娇鐢ㄨ绫诲瀷鑷韩閰嶇疆鐨?footprint 涓?cost銆?Refs: Game.Core.Tests/Services/BuildingSelectionPolicyTests.cs Game.Core.Tests/Domain/BuildingArchetypeTests.cs; 蹇呴』瀛樺湪鍏变韩 C# Building 鍩虹被锛坱ype銆乴evel銆乫ootprint size銆丠P銆乧ost锛夛紝涓旀墍鍒楁牳蹇冨缓绛戦兘浣滀负鍏蜂綋瀛愮被鍨嬪疄鐜板苟鍙備笌鏀剧疆鏍￠獙涓庡缓閫犱簨鍔°€?Refs: Game.Core.Tests/Domain/BuildingArchetypeTests.cs Game.Core.Tests/Services/BuildingPlacementTransactionTests.cs; 鏀剧疆璧勬牸鏍￠獙蹇呴』瀵瑰畬鏁?footprint 鍘熷瓙鎵ц锛氫换涓€蹇呴渶鏍兼棤鏁堝嵆鏁翠綋鎷掔粷锛宱ccupancy 涓庤祫婧愰兘涓嶅厑璁稿彉鍖栥€?Refs: Game.Core.Tests/Services/BuildingPlacementValidationTests.cs Game.Core.Tests/Services/BuildingPlacementTransactionTests.cs; 鑷姩鍖栨祴璇曞繀椤诲姣忎釜鍏蜂綋寤虹瓚瀛愮被鍨嬭嚦灏戝寘鍚竴涓垚鍔熺敤渚嬪拰涓€涓嫆缁濈敤渚嬶紝骞舵柇瑷€鍏?subtype 瀵瑰簲鐨?footprint 涓?cost 鏍￠獙銆?Refs: Game.Core.Tests/Services/BuildingSubtypePlacementTests.cs Game.Core.Tests/Domain/BuildingArchetypeTests.cs; 鏍￠獙涓庢祴璇曡繍琛屽繀椤绘彁渚涘彲瑙嗗寲璋冭瘯杈圭晫锛坒ootprint 杈圭晫涓?occupied-cell overlay锛夛紝涓斾笌鎴愬姛鏀剧疆鍚庢渶缁堟彁浜ょ殑缃戞牸鏍煎瓙涓€鑷淬€?Refs: Tests.Godot/tests/Scenes/Building/test_building_debug_overlays_alignment.gd\nTest Strategy: Red: add or update test coverage around Taskmaster #13 primary behavior.; Green: implement minimal deterministic logic to satisfy assertions.; Refactor: preserve passing tests and tighten contract boundaries.\nLabels: backlog; lastking; taskmaster-view; core\nOwner: architecture\nLayer: core",
+        "testStrategy": "Red: add or update test coverage around Taskmaster #13 primary behavior.\nGreen: implement minimal deterministic logic to satisfy assertions.\nRefactor: preserve passing tests and tighten contract boundaries."
       },
       {
         "id": 14,
         "title": "Implement Economy and Tax System for Residences",
         "description": "Add economy features where residences generate gold tax every 15 seconds and provide population capacity.",
-        "details": "Extend the Building system for Residence class. On placement, increase population cap (configurable). Use a timer in Godot (Timer node) to trigger tax every 15 seconds: add gold to ResourceManager. Config-driven values (e.g., tax amount per level). Ensure integer-safe operations. Pseudo-code: public class Residence : Building { private Timer taxTimer; public override void OnBuilt() { resourceManager.IncreasePopCap(popAmount); taxTimer = new Timer(); taxTimer.WaitTime = 15; taxTimer.Timeout += () => resourceManager.AddGold(taxAmount); } }",
-        "testStrategy": "Unit tests for tax timing and gold addition. In-game test: place residence, verify population cap increase, and check gold increments every 15 seconds. Validate no floating-point drift in resource updates.",
+        "status": "pending",
         "priority": "medium",
         "dependencies": [
           12,
           13
         ],
-        "status": "done",
-        "subtasks": [
-          {
-            "id": "1",
-            "title": "Define economy and tax contract",
-            "description": "Define residence tax cadence, integer resource flow, and debt-related guard conditions.",
-            "status": "pending",
-            "priority": "medium",
-            "dependencies": [],
-            "details": "Lock tax tick interval, integer-only updates, and negative-gold handling expectations.",
-            "testStrategy": "Contract tests validate tax cadence fields and integer invariants.",
-            "subtasks": []
-          },
-          {
-            "id": "2",
-            "title": "Implement residence tax runtime flow",
-            "description": "Implement tax generation, resource updates, and deterministic economy event emission.",
-            "status": "pending",
-            "priority": "medium",
-            "dependencies": [
-              "1"
-            ],
-            "details": "Apply integer-only tax mutations and deterministic update ordering per tick.",
-            "testStrategy": "Unit tests verify tax accumulation and debt-state transitions.",
-            "subtasks": []
-          },
-          {
-            "id": "3",
-            "title": "Add economy regression and audit coverage",
-            "description": "Cover invalid config fallback, long-run economy consistency, and audit evidence outputs.",
-            "status": "pending",
-            "priority": "medium",
-            "dependencies": [
-              "2"
-            ],
-            "details": "Emit structured economy traces for tax ticks and mutation reasons.",
-            "testStrategy": "Regression tests verify repeatable tax outcomes under fixed seeds.",
-            "subtasks": []
-          }
-        ],
-        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
-        "adrRefs": [
-          "ADR-0021",
-          "ADR-0022",
-          "ADR-0018"
-        ],
-        "archRefs": [
-          "CH05",
-          "CH06",
-          "CH04",
-          "CH01",
-          "CH07"
-        ]
+        "details": "Story: BACKLOG-LASTKING-M1\nADR Refs: ADR-0021; ADR-0022; ADR-0018\nChapters: CH05; CH06; CH04; CH01; CH07\nOverlays: docs/architecture/overlays/PRD-lastking-T2/08/_index.md; docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md; docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md; docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md; docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md; docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md\nTest Refs: Tests.Godot/tests/Integration/test_residence_economy_flow.gd; Tests.Godot/tests/Scenes/Economy/test_residence_tax_timer_cadence.gd; Game.Core.Tests/Domain/ResidenceBuildingTests.cs; Game.Core.Tests/Services/ResidenceTaxConfigTests.cs; Game.Core.Tests/Services/ResidenceTaxCadenceTests.cs; Tests.Godot/tests/Scenes/Economy/test_residence_placement_no_effect_on_cancel.gd; Tests.Godot/tests/Scenes/Economy/test_residence_multi_tax_sum.gd; Tests.Godot/tests/Scenes/Economy/test_residence_timer_node_tax_binding.gd; Game.Core.Tests/Services/ResidenceTaxPolicyTests.cs; Game.Core.Tests/Services/ResidenceTaxDeterminismTests.cs; Game.Core.Tests/Services/ResidenceTaxTraceTests.cs; Tests.Godot/tests/Integration/test_residence_tax_policy_flow.gd; Tests.Godot/tests/Integration/test_residence_tax_tick_determinism.gd; Tests.Godot/tests/Integration/test_residence_tax_trace_replay.gd\nAcceptance: 浠呭綋 Residence 鎴愬姛寤洪€犲悗鍚屾椂婊¤冻涓ら」鎵嶉€氳繃锛氫汉鍙ｄ笂闄愭寜閰嶇疆鎻愬崌锛屼笖 15 绉掔◣鏀惰妭鎷嶅惎鍔紱浠讳竴缂哄け鍗充笉閫氳繃銆?Refs: Tests.Godot/tests/Integration/test_residence_economy_flow.gd; Residence 寤烘垚鍚庡繀椤讳互鍥哄畾 15 绉掕妭鎷嶈Е鍙戠◣鏀剁粨绠楋紱浠讳竴缁撶畻鐐圭殑閲戝竵澧為噺蹇呴』鍐欏叆 ResourceManager锛屽苟绛変簬璇?Residence 褰撳墠閰嶇疆绋庨銆?Refs: Tests.Godot/tests/Scenes/Economy/test_residence_tax_timer_cadence.gd; 缁欏畾鐩稿悓寤洪€犱簨浠朵笌鐩稿悓璁℃椂鎺ㄨ繘搴忓垪锛孯esidence 缁忔祹缁撴灉锛堥噾甯佷笌浜哄彛涓婇檺锛夊繀椤诲畬鍏ㄤ竴鑷达紝涓斾笉鍙楀抚鐜囧樊寮傚奖鍝嶃€?Refs: Tests.Godot/tests/Scenes/Economy/test_residence_tax_timer_cadence.gd; 姣忔鎴愬姛鏀剧疆 Residence 鍙兘瑙﹀彂涓€娆′汉鍙ｄ笂闄愬彉鏇达紝涓斿彉鏇村€煎繀椤荤瓑浜庤娆℃斁缃搴旂殑閰嶇疆鍊笺€?Refs: Game.Core.Tests/Domain/ResidenceBuildingTests.cs; Residence 寤烘垚鍚庯紝鍦ㄩ涓?15 绉掕秴鏃跺墠涓嶅緱浜х敓浠讳綍 Residence 绋庢敹閲戝竵锛涙瘡娆¤秴鏃舵椂蹇呴』浠呯粨绠椾竴娆″苟鎸夐厤缃鍔犻噾甯併€?Refs: Tests.Godot/tests/Scenes/Economy/test_residence_tax_timer_cadence.gd; 姣忎釜 tick 鐨?Residence 绋庨蹇呴』鏉ヨ嚜閰嶇疆婧愶紝骞跺湪瀛樺湪绛夌骇閰嶇疆鏃舵寜瀵瑰簲绛夌骇鍙栧€笺€?Refs: Game.Core.Tests/Services/ResidenceTaxConfigTests.cs; Residence 绋庢敹涓庝汉鍙ｄ笂闄愬彉鏇村繀椤诲叏绋嬩娇鐢ㄦ暣鏁拌涔夛紱闀挎椂闂磋繍琛屽悗涓嶅緱鍑虹幇灏忔暟绱鎴栨诞鐐规紓绉汇€?Refs: Game.Core.Tests/Services/ResidenceTaxCadenceTests.cs; 褰撴湭寤洪€犱换浣?Residence 鏃讹紝Residence 绋庢敹澶勭悊浜х敓鐨勯噾甯佸閲忓繀椤讳负 0銆?Refs: Game.Core.Tests/Services/ResidenceTaxCadenceTests.cs; 瀵瑰悓涓€鍦烘櫙閲嶅鎵ц鈥滄垚鍔熸斁缃?Residence -> 鎺ㄨ繘 15s tick鈥濇祦绋嬫椂锛屼汉鍙ｄ笂闄愬閲忎笌閲戝竵澧為噺缁撴灉蹇呴』涓€鑷达紝涓斾笌閰嶇疆鏈熸湜鍊间竴鑷淬€?Refs: Tests.Godot/tests/Integration/test_residence_economy_flow.gd; 鑻?Residence 鏀剧疆澶辫触鎴栬鍙栨秷锛岄噾甯佷笌浜哄彛涓婇檺蹇呴』淇濇寔涓嶅彉锛屼笖涓嶅緱鍚姩浠讳綍 Residence 绋庢敹鑺傛媿銆?Refs: Game.Core.Tests/Domain/ResidenceBuildingTests.cs Tests.Godot/tests/Scenes/Economy/test_residence_placement_no_effect_on_cancel.gd; 褰撳瓨鍦ㄥ涓凡寤洪€?Residence 鏃讹紝姣忎釜 15 绉掔粨绠楃偣鐨勯噾甯佸閲忓繀椤荤瓑浜庢墍鏈夌鍚堟潯浠?Residence 閰嶇疆绋庨涔嬪拰銆?Refs: Tests.Godot/tests/Scenes/Economy/test_residence_multi_tax_sum.gd; 瀵瑰崟涓垚鍔熷缓閫犵殑 Residence 杩炵画瑙傚療 45 绉掓椂锛岀◣鏀跺彧鍏佽鍦?15s銆?0s銆?5s 涓変釜鏃剁偣鍙戠敓锛屼笖绱澧為噺蹇呴』绛変簬璇ュ満鏅厤缃崟 tick 绋庨鐨?3 鍊嶃€?Refs: Tests.Godot/tests/Scenes/Economy/test_residence_tax_timer_cadence.gd; 鍚屼竴涓垚鍔熸斁缃簨浠惰閲嶅澶勭悊鏃讹紝涓嶅緱鍐嶆澧炲姞璇ユ鏀剧疆瀵瑰簲鐨勪汉鍙ｄ笂闄愩€?Refs: Game.Core.Tests/Domain/ResidenceBuildingTests.cs; Residence 缁忔祹琛屼负蹇呴』閫氳繃 Building 绯荤粺涓殑 Residence 鎵╁睍璺緞鐢熸晥锛涚粫杩囪璺緞涓嶅緱浜х敓瀵瑰簲缁忔祹鍙樻洿锛屽苟鍙敱娴嬭瘯鎴栧璁¤瘉鎹獙璇併€?Refs: Game.Core.Tests/Domain/ResidenceBuildingTests.cs; Residence 绋庢敹娴佺▼蹇呴』缁戝畾 Godot Timer 鑺傜偣骞朵互 15 绉掕Е鍙戯紝灏嗙◣棰濆啓鍏?ResourceManager锛涜缁戝畾鍏崇郴蹇呴』鍙娴嬭瘯鎴栧彲瀹¤璇佹嵁楠岃瘉銆?Refs: Tests.Godot/tests/Scenes/Economy/test_residence_timer_node_tax_binding.gd Tests.Godot/tests/Scenes/Economy/test_residence_tax_timer_cadence.gd; 褰?Residence 缁忔祹閰嶇疆涓殑绋庢敹鑺傛媿锛?5 绉掞級鎴栧崟 tick 绋庨鍙栧€兼棤鏁堟椂锛岀郴缁熷繀椤绘樉寮忔嫆缁濊閰嶇疆骞朵繚鎸佸凡鎺ュ彈鐘舵€佷笉鍙橈紝涓嶅緱闈欓粯鎺ュ彈闈炴硶杈撳叆銆?Refs: Game.Core.Tests/Services/ResidenceTaxPolicyTests.cs; 鍦ㄧ浉鍚?15 绉?tick 搴忓垪涓庣浉鍚屽垵濮嬬姸鎬佷笅锛孯esidence 绋庢敹缁撶畻缁撴灉蹇呴』鍙噸澶嶏紝涓旀瘡娆＄粨绠椾粎浜х敓鏁存暟璇箟缁撴灉銆?Refs: Game.Core.Tests/Services/ResidenceTaxDeterminismTests.cs; Residence 绋庢敹娴佺▼蹇呴』鍙拷韪笖鍙洖鏀撅細缁欏畾鍚屼竴鍒濆鐘舵€佷笌 tick 搴忓垪锛岄€?tick 閲戝竵澧為噺搴忓垪蹇呴』涓€鑷达紝骞朵笌閰嶇疆鏈熸湜閫愰」鍖归厤銆?Refs: Game.Core.Tests/Services/ResidenceTaxTraceTests.cs\nTest Strategy: Red: add or update test coverage around Taskmaster #14 primary behavior.; Green: implement minimal deterministic logic to satisfy assertions.; Refactor: preserve passing tests and tighten contract boundaries.\nLabels: backlog; lastking; taskmaster-view; core\nOwner: architecture\nLayer: core",
+        "testStrategy": "Red: add or update test coverage around Taskmaster #14 primary behavior.\nGreen: implement minimal deterministic logic to satisfy assertions.\nRefactor: preserve passing tests and tighten contract boundaries."
       },
       {
         "id": 15,
@@ -1131,131 +615,27 @@
         "id": 16,
         "title": "Implement Unit Training Queue in Barracks",
         "description": "Add unit training functionality to barracks with a single queue per barracks, cancellable with 100% refund.",
-        "details": "Create a Barracks class extending Building. Implement a training queue (List or Queue in C#) for units. Each barracks has its own queue. Training consumes resources over time (config-driven). Allow cancellation of any queued unit with 100% refund to resources. Use Godot's signals for UI updates. Pseudo-code: public class Barracks : Building { private Queue<UnitTrainingJob> trainingQueue; public void CancelTraining(int index) { var job = trainingQueue[index]; resourceManager.Refund(job.cost); trainingQueue.RemoveAt(index); } }",
-        "testStrategy": "Unit tests for queue operations, resource deduction/refund on cancel. In-game test: train multiple units, cancel mid-training, verify refund accuracy and queue state. Ensure integer safety.",
+        "status": "pending",
         "priority": "medium",
         "dependencies": [
           13,
           14
         ],
-        "status": "done",
-        "subtasks": [
-          {
-            "id": "1",
-            "title": "Define barracks queue contract",
-            "description": "Define per-barracks queue constraints, slot behavior, and resource-deduction timing rules.",
-            "status": "pending",
-            "priority": "medium",
-            "dependencies": [],
-            "details": "Lock one-queue-per-barracks rule and immediate cost deduction semantics.",
-            "testStrategy": "Contract tests verify queue limits and deduction timing constraints.",
-            "subtasks": []
-          },
-          {
-            "id": "2",
-            "title": "Implement training queue runtime",
-            "description": "Implement enqueue, cancel/refund, and completion flows for unit training per barracks.",
-            "status": "pending",
-            "priority": "medium",
-            "dependencies": [
-              "1"
-            ],
-            "details": "Apply deterministic queue progression and per-queue ownership boundaries.",
-            "testStrategy": "Unit tests verify queue order, cancel refunds, and completion dispatch.",
-            "subtasks": []
-          },
-          {
-            "id": "3",
-            "title": "Add queue stress and regression tests",
-            "description": "Cover rapid enqueue/cancel sequences and multi-barracks isolation scenarios.",
-            "status": "pending",
-            "priority": "medium",
-            "dependencies": [
-              "2"
-            ],
-            "details": "Emit queue diagnostics for ordering and state transitions under load.",
-            "testStrategy": "Regression tests verify deterministic queue behavior in stress cases.",
-            "subtasks": []
-          }
-        ],
-        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
-        "adrRefs": [
-          "ADR-0021",
-          "ADR-0022",
-          "ADR-0018"
-        ],
-        "archRefs": [
-          "CH05",
-          "CH06",
-          "CH04",
-          "CH01",
-          "CH07"
-        ]
+        "details": "Story: BACKLOG-LASTKING-M1\nADR Refs: ADR-0021; ADR-0022; ADR-0018\nChapters: CH05; CH06; CH04; CH01; CH07\nOverlays: docs/architecture/overlays/PRD-lastking-T2/08/_index.md; docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md; docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md; docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md; docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md; docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md\nTest Refs: Game.Core.Tests/Services/BarracksTrainingQueueTests.cs; Tests.Godot/tests/Integration/test_barracks_training_queue_flow.gd; Game.Core.Tests/Engine/GameEngineCoreEventTests.cs; Game.Core.Tests/State/GameStateMachineTests.cs; Game.Core.Tests/Services/BarracksTrainingCostScheduleTests.cs; Tests.Godot/tests/UI/test_hud_updates_on_events.gd; Game.Core.Tests/Domain/BarracksBuildingTests.cs\nAcceptance: Each Barracks instance has exactly one training queue, and canceling any valid queued job refunds exactly 100% of the resources deducted for that job. Refs: Game.Core.Tests/Services/BarracksTrainingQueueTests.cs; Task #16 barracks queue integration flow runs on Windows Godot+C# baseline and validates queue/resource transitions end-to-end. Refs: Tests.Godot/tests/Integration/test_barracks_training_queue_flow.gd; For deterministic simulation baselines outside Barracks training-queue scope, observable outcomes remain unchanged after this task. Refs: Game.Core.Tests/Engine/GameEngineCoreEventTests.cs Game.Core.Tests/State/GameStateMachineTests.cs; Enqueue, cancel, and progress operations in one Barracks do not alter queue state in any other Barracks instance. Refs: Game.Core.Tests/Services/BarracksTrainingQueueTests.cs; When a training request is accepted, any config-required request-time deduction is applied immediately; if required request-time payment cannot be made, the request is rejected and both queue and resources remain unchanged. Refs: Game.Core.Tests/Services/BarracksTrainingCostScheduleTests.cs Game.Core.Tests/Services/BarracksTrainingQueueTests.cs; Training resolves strictly FIFO with config-driven durations; each completed head job is removed once and emits exactly one trained-unit result. Refs: Game.Core.Tests/Services/BarracksTrainingQueueTests.cs Game.Core.Tests/Services/BarracksTrainingCostScheduleTests.cs; Canceling with a valid index removes only the targeted job, refunds exactly 100% of that job's deducted resources, and preserves the relative order of remaining jobs. Refs: Game.Core.Tests/Services/BarracksTrainingQueueTests.cs; Canceling with an invalid index is rejected, and queue contents plus resource totals remain unchanged. Refs: Game.Core.Tests/Services/BarracksTrainingQueueTests.cs; UI observers subscribed to barracks queue signals update displayed queue/resource values consistently across enqueue, cancel, and completion transitions. Refs: Tests.Godot/tests/Integration/test_barracks_training_queue_flow.gd; Across normal and stress-like training/cancel sequences, arithmetic remains integer-safe: no overflow, no underflow, and no negative resource totals. Refs: Game.Core.Tests/Services/BarracksTrainingCostScheduleTests.cs; Canceling the active head job is supported: the job is removed, fully refunded, emits no unit result, and remaining jobs continue in order. Refs: Game.Core.Tests/Services/BarracksTrainingQueueTests.cs Tests.Godot/tests/Integration/test_barracks_training_queue_flow.gd; A training job cannot complete before its configured duration has elapsed. Refs: Game.Core.Tests/Services/BarracksTrainingCostScheduleTests.cs; Under staged-cost configuration, each deduction occurs only at its configured progress/time point and for the configured integer amount. Refs: Game.Core.Tests/Services/BarracksTrainingCostScheduleTests.cs; If a job is canceled after partial or full in-progress deductions, the total refund for that job equals the total amount deducted for that job. Refs: Game.Core.Tests/Services/BarracksTrainingCostScheduleTests.cs; Per-job configuration is the cost authority: for upfront, staged, or mixed timing, summed integer deductions equal configured cost, and cancellation refunds exactly that job's deducted total. Refs: Game.Core.Tests/Services/BarracksTrainingCostScheduleTests.cs; Obligation lock O1: Barracks exists as a class extending Building, verified through tests or auditable evidence. Refs: Game.Core.Tests/Domain/BarracksBuildingTests.cs; Obligation lock O2: Barracks contains a unit training queue implemented with a C# List or Queue, verified through tests or auditable evidence. Refs: Game.Core.Tests/Domain/BarracksBuildingTests.cs Game.Core.Tests/Services/BarracksTrainingQueueTests.cs; Obligation lock O8: Unit and regression tests verify queue operations, cancel deduction/refund correctness, and deterministic queue transitions under stress-relevant scenarios with traceable evidence. Refs: Game.Core.Tests/Services/BarracksTrainingQueueTests.cs Game.Core.Tests/Services/BarracksTrainingCostScheduleTests.cs; Obligation lock O10: At least one in-game test passes multi-unit training, mid-training cancel, exact refund, and queue-state correctness with traceable evidence. Refs: Tests.Godot/tests/Integration/test_barracks_training_queue_flow.gd; When queue capacity is reached, enqueue is rejected and queue/resource state remains unchanged. Refs: Game.Core.Tests/Services/BarracksTrainingQueueTests.cs; Boundary tests cover capacity-1, capacity, and capacity+1 cases and assert deduction timing constraints. Refs: Game.Core.Tests/Services/BarracksTrainingCostScheduleTests.cs; Stress train/cancel scenarios emit queue diagnostics containing operation index, queue snapshot, and state transition. Refs: Game.Core.Tests/Services/BarracksTrainingQueueTests.cs; Regression tests assert diagnostics are consistent with FIFO order and observed state transitions. Refs: Game.Core.Tests/Services/BarracksTrainingQueueTests.cs\nTest Strategy: Red: add or update test coverage around Taskmaster #16 primary behavior.; Green: implement minimal deterministic logic to satisfy assertions.; Refactor: preserve passing tests and tighten contract boundaries.\nLabels: backlog; lastking; taskmaster-view; core\nOwner: architecture\nLayer: core",
+        "testStrategy": "Red: add or update test coverage around Taskmaster #16 primary behavior.\nGreen: implement minimal deterministic logic to satisfy assertions.\nRefactor: preserve passing tests and tighten contract boundaries."
       },
       {
         "id": 17,
         "title": "Design and Integrate Tech Tree for Unit Stats",
         "description": "Develop a config-driven tech tree that affects unit stats (atk speed %, damage, production speed %, range, HP, cost %).",
-        "details": "Create a TechTreeManager class that loads tech definitions from JSON config. Each tech node modifies unit stats multiplicatively (e.g., damage * 1.1 for 10% increase). Apply effects to units trained from barracks. Ensure no hardcoded unlock paths; unlocks are config-driven. Use Godot's resource system for config files. Pseudo-code: public class TechTreeManager { private Dictionary<string, TechNode> nodes; public float GetStatMultiplier(string stat) { // Calculate based on unlocked techs } }",
-        "testStrategy": "Test config loading and parsing. Unit tests for stat multiplier calculations. In-game test: unlock techs, train units, verify stat changes match config. Ensure all unlocks are configurable.",
+        "status": "pending",
         "priority": "medium",
         "dependencies": [
           13,
           16
         ],
-        "status": "done",
-        "subtasks": [
-          {
-            "id": "1",
-            "title": "Define tech-tree stat modifier contract",
-            "description": "Define tech stat categories, integer/percentage boundaries, and stack application order.",
-            "status": "pending",
-            "priority": "medium",
-            "dependencies": [],
-            "details": "Lock tech modifier schema and out-of-range rejection behavior for percentage-based stats.",
-            "testStrategy": "Contract tests verify modifier bounds and deterministic apply order.",
-            "subtasks": []
-          },
-          {
-            "id": "2",
-            "title": "Implement tech application runtime",
-            "description": "Apply tech modifiers to unit stats and production parameters using deterministic update rules.",
-            "status": "pending",
-            "priority": "medium",
-            "dependencies": [
-              "1"
-            ],
-            "details": "Ensure tech effects propagate through runtime snapshots without hardcoded constants.",
-            "testStrategy": "Unit tests verify expected stat outputs after tech changes.",
-            "subtasks": []
-          },
-          {
-            "id": "3",
-            "title": "Add tech regression and balancing checks",
-            "description": "Add tests for cap enforcement, reset/load consistency, and replay-safe outcomes.",
-            "status": "pending",
-            "priority": "medium",
-            "dependencies": [
-              "2"
-            ],
-            "details": "Emit tech application traces and reject out-of-range modifier inputs.",
-            "testStrategy": "Regression tests verify deterministic tech impact under fixed seeds.",
-            "subtasks": []
-          }
-        ],
-        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
-        "adrRefs": [
-          "ADR-0021",
-          "ADR-0022",
-          "ADR-0018"
-        ],
-        "archRefs": [
-          "CH05",
-          "CH06",
-          "CH04",
-          "CH01",
-          "CH07"
-        ]
+        "details": "Story: BACKLOG-LASTKING-M1\nADR Refs: ADR-0021; ADR-0022; ADR-0018\nChapters: CH05; CH06; CH04; CH01; CH07\nOverlays: docs/architecture/overlays/PRD-lastking-T2/08/_index.md; docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md; docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md; docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md; docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md; docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md\nTest Refs: Tests.Godot/tests/Adapters/test_techtree_resource_loading.gd; Game.Core.Tests/Services/TechTreeManagerJsonLoadingTests.cs; Game.Core.Tests/Services/TechTreeMultiplierTests.cs; Game.Core.Tests/Services/TechTreeDeterminismTests.cs; Game.Core.Tests/Services/BarracksUnitStatApplicationTests.cs; Tests.Godot/tests/Integration/test_barracks_techtree_stats.gd; Tests.Godot/tests/Integration/test_techtree_reload_unlock_paths.gd; Game.Core.Tests/Services/TechTreeUnlockPrerequisitesTests.cs; Game.Core.Tests/Services/TechTreeReloadBehaviorTests.cs; Game.Core.Tests/Services/TechTreeManagerContractTests.cs; Game.Core.Tests/Services/TechTreeManagerTests.cs; Game.Core.Tests/State/TechRuntimeSnapshotTests.cs; Tests.Godot/tests/Integration/test_barracks_tech_snapshot_flow.gd; Tests.Godot/tests/Integration/test_barracks_tech_invalid_modifier_rejection.gd; Tests.Godot/tests/Integration/test_barracks_tech_seeded_determinism.gd\nAcceptance: When a valid tech-tree JSON resource is loaded through Godot Resource APIs, runtime exposes exactly the node IDs, prerequisite links, and stat modifiers declared in that resource. Refs: Tests.Godot/tests/Adapters/test_techtree_resource_loading.gd; On the Windows Godot + C# baseline, the referenced automated tests for JSON loading/parsing and multiplier computation pass. Refs: Game.Core.Tests/Services/TechTreeManagerJsonLoadingTests.cs Game.Core.Tests/Services/TechTreeMultiplierTests.cs; Given the same JSON config and the same unlock state, repeated evaluations produce identical stat multipliers and identical barracks-trained unit stats. Refs: Game.Core.Tests/Services/TechTreeDeterminismTests.cs Game.Core.Tests/Services/BarracksUnitStatApplicationTests.cs; Runtime tech node definitions and unlock requirements are sourced from the active JSON resource, and the in-memory node set matches that resource exactly. Refs: Game.Core.Tests/Services/TechTreeManagerJsonLoadingTests.cs; For attack speed, damage, production speed, range, HP, and cost, unlocked-node effects stack multiplicatively rather than additively. Refs: Game.Core.Tests/Services/TechTreeMultiplierTests.cs; If no unlocked node provides a modifier for a stat, that stat multiplier remains 1.0 and newly trained barracks units keep baseline values for that stat. Refs: Game.Core.Tests/Services/TechTreeMultiplierTests.cs Game.Core.Tests/Services/BarracksUnitStatApplicationTests.cs; After configured tech nodes are unlocked, barracks-trained unit stats equal baseline values multiplied by the current computed multipliers. Refs: Tests.Godot/tests/Integration/test_barracks_techtree_stats.gd; Unlock progression is fully config-driven: changing prerequisite or unlock-path JSON data and reloading changes unlock availability without any C# source edits. Refs: Tests.Godot/tests/Integration/test_techtree_reload_unlock_paths.gd; Automated parsing checks confirm runtime node IDs, prerequisite edges, and modifier values match the JSON resource content. Refs: Game.Core.Tests/Services/TechTreeManagerJsonLoadingTests.cs; Unit tests verify multiplicative stacking across multiple unlocked nodes (e.g., 1.1 x 1.2 = 1.32) and verify locked nodes are excluded from calculation. Refs: Game.Core.Tests/Services/TechTreeMultiplierTests.cs; In-game validation unlocks configured techs, trains barracks units, and confirms attack speed, damage, production speed, range, HP, and cost each equal baseline x configured multipliers. Refs: Tests.Godot/tests/Integration/test_barracks_techtree_stats.gd; When prerequisites are not met in the current config state, the target tech remains unavailable and output stats stay at values from currently applicable multipliers only. Refs: Game.Core.Tests/Services/TechTreeUnlockPrerequisitesTests.cs Game.Core.Tests/Services/BarracksUnitStatApplicationTests.cs; Any node present in JSON but still locked at evaluation time contributes no modifier and does not change newly barracks-trained unit stats. Refs: Game.Core.Tests/Services/TechTreeMultiplierTests.cs Game.Core.Tests/Services/BarracksUnitStatApplicationTests.cs; Changing only JSON multiplier values or prerequisite links, then reloading, changes computed multipliers and barracks outcomes without changing C# source. Refs: Tests.Godot/tests/Integration/test_techtree_reload_unlock_paths.gd; Switching between two valid JSON tech-tree resources (without C# source edits) changes unlock availability and barracks-trained unit stats to follow the active resource. Refs: Game.Core.Tests/Services/TechTreeReloadBehaviorTests.cs Tests.Godot/tests/Integration/test_techtree_reload_unlock_paths.gd; For each supported stat (attack speed, damage, production speed, range, HP, cost), runtime multiplier equals the product of modifiers defined for that stat by currently unlocked nodes. Refs: Game.Core.Tests/Services/TechTreeMultiplierTests.cs; A TechTreeManager type exists as the enforced manager for tech-tree behavior and its presence is verifiable by contract tests or audit evidence. Refs: Game.Core.Tests/Services/TechTreeManagerContractTests.cs; TechTreeManager exposes GetStatMultiplier(string stat), and results are computed from currently unlocked tech nodes rather than fixed outputs. Refs: Game.Core.Tests/Services/TechTreeManagerContractTests.cs; TechTreeManager owns loading tech definitions from JSON config via Godot Resource APIs and building the runtime node set; moving JSON load ownership outside it fails acceptance. Refs: Tests.Godot/tests/Adapters/test_techtree_resource_loading.gd; TechTreeManager keeps private ID-keyed node storage as Dictionary<string, TechNode> (or audit-equivalent private map with string keys and TechNode values), verifiable by tests or audit evidence. Refs: Game.Core.Tests/Services/TechTreeManagerContractTests.cs; Before runtime application, tech modifiers are schema-validated: percentage-based modifiers outside defined bounds are rejected, and apply order is deterministic for the same unlocked-node set. Refs: Game.Core.Tests/Services/TechTreeManagerTests.cs; Tech effects propagate through runtime snapshots: after unlock-state changes, the next snapshot used for barracks stat computation reflects new multipliers, while already produced snapshots remain unchanged. Refs: Game.Core.Tests/State/TechRuntimeSnapshotTests.cs Tests.Godot/tests/Integration/test_barracks_tech_snapshot_flow.gd; Runtime calculations use active config values, not embedded constants: reloading with only modifier-value changes updates computed multipliers without source-code edits. Refs: Game.Core.Tests/Services/TechTreeManagerTests.cs; Out-of-range modifier inputs are rejected and do not mutate computed multipliers or trained-unit stats; rejection is observable in runtime results. Refs: Tests.Godot/tests/Integration/test_barracks_tech_invalid_modifier_rejection.gd; Under fixed seeds with identical config and unlock sequences, regression runs produce identical tech-application outcomes, including final multipliers and barracks-trained unit stats. Refs: Game.Core.Tests/Services/TechTreeDeterminismTests.cs Tests.Godot/tests/Integration/test_barracks_tech_seeded_determinism.gd; Regression outputs include deterministic tech-application trace artifacts exposing unlock sequence and multiplier snapshots for audit and replay comparison. Refs: Game.Core.Tests/Services/TechTreeDeterminismTests.cs Game.Core.Tests/Services/TechTreeReloadBehaviorTests.cs\nTest Strategy: Red: add or update test coverage around Taskmaster #17 primary behavior.; Green: implement minimal deterministic logic to satisfy assertions.; Refactor: preserve passing tests and tighten contract boundaries.\nLabels: backlog; lastking; taskmaster-view; core\nOwner: architecture\nLayer: core",
+        "testStrategy": "Red: add or update test coverage around Taskmaster #17 primary behavior.\nGreen: implement minimal deterministic logic to satisfy assertions.\nRefactor: preserve passing tests and tighten contract boundaries."
       },
       {
         "id": 18,
@@ -1392,128 +772,27 @@
         "id": 20,
         "title": "Integrate Combat with Friendly Fire Disabled",
         "description": "Implement combat system for units and towers, with friendly fire disabled for all player attacks.",
-        "details": "Create a CombatSystem class. Units and MG towers can attack enemies. Use Godot's physics or area detection for targeting. Implement attack logic: damage calculation based on stats (from tech tree). Ensure friendly fire is disabled: player-owned units cannot damage other player-owned units or buildings. This can be done by checking team IDs or ownership flags. Pseudo-code: public void Attack(Unit attacker, Unit target) { if (attacker.team == target.team) return; // Friendly fire disabled // Apply damage }",
-        "testStrategy": "Unit tests for attack logic and friendly fire prevention. In-game test: spawn player units and enemies, verify attacks only hit enemies. Test with MG towers and walls. Ensure config-driven stats are applied.",
+        "status": "pending",
         "priority": "medium",
         "dependencies": [
           13,
           16,
           17
         ],
-        "status": "done",
-        "subtasks": [
-          {
-            "id": "1",
-            "title": "Define combat resolution contract",
-            "description": "Define damage resolution, target selection constraints, and no-friendly-fire invariant.",
-            "status": "pending",
-            "priority": "medium",
-            "dependencies": [],
-            "details": "Lock combat event payload and friendly-fire disabled policy across all units/towers.",
-            "testStrategy": "Contract tests verify combat payload fields and friendly-fire invariants.",
-            "subtasks": []
-          },
-          {
-            "id": "2",
-            "title": "Implement combat integration flow",
-            "description": "Integrate unit/tower attacks with target resolution and deterministic combat tick ordering.",
-            "status": "pending",
-            "priority": "medium",
-            "dependencies": [
-              "1"
-            ],
-            "details": "Apply deterministic combat tick sequencing and ignore friendly entities in damage paths.",
-            "testStrategy": "Unit tests verify target resolution and damage application order.",
-            "subtasks": []
-          },
-          {
-            "id": "3",
-            "title": "Add combat regression and edge-case coverage",
-            "description": "Cover mixed-unit scenarios, elite/boss fights, and no-friendly-fire guarantees.",
-            "status": "pending",
-            "priority": "medium",
-            "dependencies": [
-              "2"
-            ],
-            "details": "Emit combat diagnostics for target picks and damage events.",
-            "testStrategy": "Regression tests verify no-friendly-fire under dense engagements.",
-            "subtasks": []
-          }
-        ],
-        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
-        "adrRefs": [
-          "ADR-0021",
-          "ADR-0022",
-          "ADR-0018"
-        ],
-        "archRefs": [
-          "CH05",
-          "CH06",
-          "CH04",
-          "CH01",
-          "CH07"
-        ]
+        "details": "Story: BACKLOG-LASTKING-M1\nADR Refs: ADR-0021; ADR-0022; ADR-0018\nChapters: CH05; CH06; CH04; CH01; CH07\nOverlays: docs/architecture/overlays/PRD-lastking-T2/08/_index.md; docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md; docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md; docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md; docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md; docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md\nTest Refs: Game.Core.Tests/Services/CombatServiceTests.cs; Game.Core.Tests/State/GameStateMachineTests.cs; Tests.Godot/tests/Scenes/Combat/test_combat_scene_targeting_range.gd; Tests.Godot/tests/Integration/test_combat_units_towers_walls_flow.gd; Game.Core.Tests/Services/CombatSystemTests.cs\nAcceptance: Combat executes for both units and MG towers, and tests verify player-owned attacks never reduce HP of player-owned units or buildings. Refs: Game.Core.Tests/Services/CombatServiceTests.cs; All referenced automated combat tests run on the Windows Godot+C# baseline and finish with pass status and zero skipped assertions. Refs: Game.Core.Tests/Services/CombatServiceTests.cs; After combat integration, deterministic simulation checks continue to pass and core-loop determinism shows no regression versus existing deterministic tests. Refs: Game.Core.Tests/Services/CombatSystemTests.cs Game.Core.Tests/Services/CombatServiceTests.cs; If attacker and target share team/owner, attack resolution returns refusal and target HP is unchanged before vs after resolution. Refs: Game.Core.Tests/Services/CombatServiceTests.cs; Player-owned units deal damage only to in-range enemy units or enemy buildings that are valid targets; invalid or out-of-range targets remain undamaged. Refs: Tests.Godot/tests/Scenes/Combat/test_combat_scene_targeting_range.gd; MG towers acquire enemy targets and apply damage, while same-team units and same-team walls take no damage in equivalent scenarios. Refs: Tests.Godot/tests/Integration/test_combat_units_towers_walls_flow.gd; Resolved damage uses current config or tech-tree-derived attacker stats, and changing those stats yields corresponding measurable damage deltas. Refs: Game.Core.Tests/Services/CombatServiceTests.cs; Automated verification includes unit tests for attack resolution and friendly-fire prevention plus an in-game scenario with player units, enemies, MG towers, and walls where only enemies lose HP. Refs: Game.Core.Tests/Services/CombatServiceTests.cs; CombatSystem applies one shared attack-resolution policy to both unit and MG tower attacks, with the same team/owner friendly-fire guard checked before any damage commit. Refs: Game.Core.Tests/Services/CombatSystemTests.cs; Target acquisition uses in-range detection (physics query or area overlap): only detected in-range enemy targets are damaged, while non-detected or out-of-range targets remain unchanged. Refs: Tests.Godot/tests/Scenes/Combat/test_combat_scene_targeting_range.gd; Combat resolution contract stays stable across all unit and MG tower attacks: emitted combat events include attacker identity/team, target identity/team, resolved damage, and outcome, and contract tests fail on payload field drift. Refs: Game.Core.Tests/Services/CombatServiceTests.cs; Given identical simulation state and tick timing, combat target selection and damage application order are deterministic across repeated runs, and same-team entities are excluded from damage paths before resolution. Refs: Game.Core.Tests/Services/CombatServiceTests.cs; Combat diagnostics are emitted for every target pick and every damage or refusal event (including friendly-fire refusals), and dense-engagement regression tests verify diagnostic presence and consistency. Refs: Game.Core.Tests/Services/CombatServiceTests.cs; Contract tests enforce the friendly-fire invariant: same-team attack outcome is refusal and resolved damage equals 0. Refs: Game.Core.Tests/Services/CombatServiceTests.cs; Contract tests fail when combat event fields are present but the friendly-fire invariant is violated. Refs: Game.Core.Tests/Services/CombatServiceTests.cs; Unit tests separately assert target-resolution correctness and damage-application order. Refs: Game.Core.Tests/Services/CombatSystemTests.cs; For identical initial state and tick input, target-resolution outcomes and damage-order outcomes are deterministic. Refs: Game.Core.Tests/Services/CombatSystemTests.cs; High-density combat regression asserts allied unit/building HP remains unchanged while enemy HP decreases under allowed attacks. Refs: Tests.Godot/tests/Integration/test_combat_units_towers_walls_flow.gd; All friendly-fire attempts in high-density scenarios must take the refusal branch and be asserted. Refs: Game.Core.Tests/Services/CombatServiceTests.cs\nTest Strategy: Red: add or update test coverage around Taskmaster #20 primary behavior.; Green: implement minimal deterministic logic to satisfy assertions.; Refactor: preserve passing tests and tighten contract boundaries.\nLabels: backlog; lastking; taskmaster-view; core\nOwner: architecture\nLayer: core",
+        "testStrategy": "Red: add or update test coverage around Taskmaster #20 primary behavior.\nGreen: implement minimal deterministic logic to satisfy assertions.\nRefactor: preserve passing tests and tighten contract boundaries."
       },
       {
         "id": 21,
         "title": "Lock Windows export profile and Steam runtime startup validation",
         "description": "On top of T11, lock Windows-only export profile and validate Steam runtime startup path for single-player mode.",
-        "status": "done",
+        "status": "pending",
+        "priority": "high",
         "dependencies": [
           11
         ],
-        "priority": "high",
-        "details": "Reuse the hardened project from T11 (no re-bootstrap). Finalize Windows-only export configuration, disable online dependencies for single-player path, and verify Steam runtime startup compatibility. This task owns platform/runtime validation only.",
-        "testStrategy": "Validate Windows export artifact and Steam runtime startup flow on the same project root from T11; fail if any step depends on a newly created project or bypasses Steam runtime launch checks.",
-        "subtasks": [
-          {
-            "id": "1",
-            "title": "Define Windows export and Steam startup contract",
-            "description": "Define required Windows export profile fields and Steam runtime startup validation checkpoints.",
-            "status": "pending",
-            "priority": "high",
-            "dependencies": [],
-            "details": "Lock export preset invariants and startup validation criteria on Windows-only target.",
-            "testStrategy": "Contract checks verify export profile keys and startup validation prerequisites.",
-            "subtasks": []
-          },
-          {
-            "id": "2",
-            "title": "Implement export profile lock and startup checks",
-            "description": "Implement validation logic for export profile integrity and Steam startup preflight.",
-            "status": "pending",
-            "priority": "high",
-            "dependencies": [
-              "1"
-            ],
-            "details": "Apply fail-fast checks when profile or startup prerequisites are missing.",
-            "testStrategy": "Integration checks verify startup validation path on Windows runtime.",
-            "subtasks": []
-          },
-          {
-            "id": "3",
-            "title": "Add export/startup gate regression tests",
-            "description": "Cover corrupted profile, missing fields, and startup failure-path diagnostics.",
-            "status": "pending",
-            "priority": "high",
-            "dependencies": [
-              "2"
-            ],
-            "details": "Emit structured export/startup evidence and reject invalid release inputs.",
-            "testStrategy": "Gate tests verify release blocking behavior for invalid profiles.",
-            "subtasks": []
-          }
-        ],
-        "overlay": "docs/architecture/overlays/PRD-lastking-T2/08/_index.md",
-        "adrRefs": [
-          "ADR-0011",
-          "ADR-0001"
-        ],
-        "archRefs": [
-          "CH07",
-          "CH10",
-          "CH01"
-        ]
+        "details": "Story: BACKLOG-LASTKING-M1\nADR Refs: ADR-0011; ADR-0001\nChapters: CH07; CH10; CH01\nOverlays: docs/architecture/overlays/PRD-lastking-T2/08/_index.md; docs/architecture/overlays/PRD-lastking-T2/08/08-Feature-Slice-T2-Core-Loop.md; docs/architecture/overlays/PRD-lastking-T2/08/08-Contracts-T2.md; docs/architecture/overlays/PRD-lastking-T2/08/08-Testing-T2.md; docs/architecture/overlays/PRD-lastking-T2/08/08-Observability-T2.md; docs/architecture/overlays/PRD-lastking-T2/08/ACCEPTANCE_CHECKLIST.md\nTest Refs: Game.Core.Tests/Services/T11BaselineReuseGuardTests.cs; Game.Core.Tests/Services/SteamRuntimeStartupValidationTests.cs; Tests.Godot/tests/Integration/test_windows_startup_steam_runtime.gd; Tests.Godot/tests/Integration/Security/test_security_http_block_signal.gd; Tests.Godot/tests/Integration/test_windows_export_startup_flow.gd; Game.Core.Tests/Tasks/Task21WindowsSteamScopeTests.cs; Game.Core.Tests/Services/WindowsExportProfileLockTests.cs; Game.Core.Tests/Engine/DeterministicCoreLoopRegressionTests.cs; Tests.Godot/tests/Integration/test_csharp_startup_on_godot_451.gd; Game.Core.Tests/Services/ProjectSettingsBaselineTests.cs; Tests.Godot/tests/Scenes/Smoke/test_main_scene_smoke.gd; Tests.Godot/tests/Integration/Security/test_security_http_audit.gd; Tests.Godot/tests/Integration/test_windows_export_preset_artifact.gd; Tests.Godot/tests/Integration/test_project_bootstrap_windows_sdk_resolution.gd; Tests.Godot/tests/Integration/test_windows_verification_evidence_records.gd\nAcceptance: Task 21 validation runs only against the existing T11 project root, and any flow that creates or initializes a new project fails acceptance. Refs: Game.Core.Tests/Services/T11BaselineReuseGuardTests.cs; Windows single-player startup validation includes at least one launch under Steam runtime context, and acceptance fails if Steam runtime launch checks are skipped. Refs: Game.Core.Tests/Services/SteamRuntimeStartupValidationTests.cs Tests.Godot/tests/Integration/test_windows_startup_steam_runtime.gd; Single-player startup validation verifies online-dependent features are disabled before launch on the validated runtime path; acceptance fails if launch still requires enabling online dependency switches. Refs: Tests.Godot/tests/Integration/Security/test_security_http_block_signal.gd Tests.Godot/tests/Integration/test_windows_export_startup_flow.gd; Steam runtime startup validation for single-player reaches startup-ready state without mandatory backend login, matchmaking, or multiplayer session handshake; acceptance fails if startup is blocked until any such online flow succeeds. Refs: Tests.Godot/tests/Integration/test_windows_export_startup_flow.gd Tests.Godot/tests/Integration/Security/test_security_http_block_signal.gd; Taskmaster #21 scope remains limited to Windows export-profile locking and Steam startup-path validation, and acceptance fails on unrelated scope changes. Refs: Game.Core.Tests/Tasks/Task21WindowsSteamScopeTests.cs Game.Core.Tests/Services/WindowsExportProfileLockTests.cs; All referenced automated Windows export/startup validation checks pass on the reused T11 Godot+C# baseline; any failing check blocks acceptance. Refs: Tests.Godot/tests/Integration/test_windows_startup_steam_runtime.gd; Applying Task 21 to the reused T11 baseline does not regress the validated Windows startup/runtime path; any detected regression fails acceptance. Refs: Game.Core.Tests/Engine/DeterministicCoreLoopRegressionTests.cs; The reused T11 project opens in Godot 4.5.1 with C# enabled as a startup-validation prerequisite; acceptance fails on C# initialization errors. Refs: Tests.Godot/tests/Integration/test_csharp_startup_on_godot_451.gd; On the reused baseline for Task 21 validation, application/config/name stays \"LASTKING\" and application/run/main_scene stays \"res://scenes/Main.tscn\"; any deviation fails acceptance. Refs: Game.Core.Tests/Services/ProjectSettingsBaselineTests.cs; On the reused baseline for Task 21 validation, display/window/size/width stays 1920 and display/window/size/height stays 1080; any deviation fails acceptance. Refs: Game.Core.Tests/Services/ProjectSettingsBaselineTests.cs; The locked export-profile contract includes Windows Desktop (64-bit) and a Steam App ID value (placeholder or real) required for single-player Steam runtime startup validation. Refs: Game.Core.Tests/Services/WindowsExportProfileLockTests.cs; The locked export profile disables or omits every non-Windows export target; any enabled non-Windows target fails acceptance. Refs: Game.Core.Tests/Services/WindowsExportProfileLockTests.cs; Required baseline folders for scripts, scenes, configs, saves, assets, ui, and audio remain present on the reused T11 root for validation; missing required folders fail acceptance. Refs: Game.Core.Tests/Services/T11BaselineReuseGuardTests.cs; On Windows, res://scenes/Main.tscn starts without startup errors and produces console output containing \"Project setup complete\" from C# startup logic. Refs: Tests.Godot/tests/Scenes/Smoke/test_main_scene_smoke.gd; .NET SDK/toolchain remains compatible with Godot 4.5.1 C# and successfully builds/runs the validated Windows startup path; incompatibility fails acceptance. Refs: Tests.Godot/tests/Integration/test_csharp_startup_on_godot_451.gd; Scope enforcement rejects any validation flow that re-bootstraps a project; Task 21 validates Windows export and Steam runtime only on the reused T11 baseline. Refs: Game.Core.Tests/Tasks/Task21WindowsSteamScopeTests.cs Game.Core.Tests/Services/T11BaselineReuseGuardTests.cs; Steam runtime hard gate requires at least one Windows export launch under Steam runtime context (real appid or Steam launch stub) that reaches startup without Steam-blocking integration errors. Refs: Game.Core.Tests/Services/SteamRuntimeStartupValidationTests.cs Tests.Godot/tests/Integration/test_windows_startup_steam_runtime.gd; Single-player isolation hard gate requires the startup path to run without backend or multiplayer service dependency at launch; any launch-time online dependency requirement fails acceptance. Refs: Tests.Godot/tests/Integration/Security/test_security_http_block_signal.gd; Steam startup-path validation emits auditable launch evidence and successful startup-entry evidence; missing evidence or invalid startup input is release-blocking. Refs: Tests.Godot/tests/Integration/Security/test_security_http_audit.gd; A Windows-only export/startup contract is explicitly defined as testable Task 21 invariants, including required export profile keys and Steam startup prerequisites; missing or ambiguous contract terms fail acceptance. Refs: Tests.Godot/tests/Integration/test_windows_export_preset_artifact.gd Tests.Godot/tests/Integration/test_windows_export_startup_flow.gd; Validation is fail-fast: when required Windows export profile fields or Steam startup prerequisites are missing or invalid, checks stop with an explicit failure result and do not continue. Refs: Tests.Godot/tests/Integration/test_windows_export_startup_flow.gd Tests.Godot/tests/Integration/test_project_bootstrap_windows_sdk_resolution.gd; Regression gate tests block release inputs with invalid export/startup configuration and emit structured, auditable evidence for both pass and fail outcomes. Refs: Tests.Godot/tests/Integration/test_windows_verification_evidence_records.gd Tests.Godot/tests/Integration/test_windows_export_preset_artifact.gd\nTest Strategy: Red: add or update test coverage around Taskmaster #21 primary behavior.; Green: implement minimal deterministic logic to satisfy assertions.; Refactor: preserve passing tests and tighten contract boundaries.\nLabels: backlog; lastking; taskmaster-view; ci\nOwner: architecture\nLayer: ci",
+        "testStrategy": "Red: add or update test coverage around Taskmaster #21 primary behavior.\nGreen: implement minimal deterministic logic to satisfy assertions.\nRefactor: preserve passing tests and tighten contract boundaries."
       },
       {
         "id": 22,
@@ -3345,7 +2624,7 @@
         "id": 63,
         "title": "Implement Battlefield-Local Combat Feedback Surfaces",
         "description": "Add battlefield-local surfaces for damage numbers, hit flashes, wall pressure emphasis, and short combat prompts.",
-        "details": "BattleMapScreen Story: Story 3.1\nSource: docs/gdd/battlemapscreen-stories.md\nPlanning refs: docs/gdd/battlemapscreen-epics.md; docs/gdd/battlemapscreen-stories.md; docs/gdd/battlemapscreen-implementation-order.md; docs/gdd/battlemapscreen-story-to-files-mapping.md; docs/gdd/combat-feedback-ui-spec.zh-CN.md; docs/gdd/battlemapscreen-node-tree-draft.md\nScope: Create local feedback ownership separate from persistent HUD summaries and include a settings-aware damage-number display path.\nPlayer outcome: The player can react to hits, pressure spikes, and key battle events in real time.\nSystem boundary: preserve HUD, ScreenNavigator, and CombatExperienceRuntimeBridge ownership where referenced; keep domain logic in Game.Core and Godot presentation in Game.Godot.\nImplementation anchors: Game.Godot/Scenes/Screens/BattleMapScreen.tscn; Game.Godot/Scripts/Screens/BattleLocalFeedbackController.gd; Game.Godot/Scripts/Combat/CombatExperienceRuntimeBridge.cs.\nCompletion result: Add battlefield-local surfaces for damage numbers, hit flashes, wall pressure emphasis, and short combat prompts.\nState semantics: empty means no active battlefield prompt for the tracked condition; failure means terminal-loss messaging is shown; completion means the intended UI outcome state is reached and stable.",
+        "details": "BattleMapScreen Story: Story 3.1\nSource: docs/gdd/battlemapscreen-stories.md\nPlanning refs: docs/gdd/battlemapscreen-epics.md; docs/gdd/battlemapscreen-stories.md; docs/gdd/battlemapscreen-implementation-order.md; docs/gdd/battlemapscreen-story-to-files-mapping.md; docs/gdd/combat-feedback-ui-spec.zh-CN.md; docs/gdd/battlemapscreen-node-tree-draft.md\nScope: Create local feedback ownership separate from persistent HUD summaries and include a settings-aware damage-number display path.\nPlayer outcome: The player can react to hits, pressure spikes, and key battle events in real time.\nSystem boundary: preserve HUD, ScreenNavigator, and CombatExperienceRuntimeBridge ownership where referenced; keep domain logic in Game.Core and Godot presentation in Game.Godot.\nImplementation anchors: Game.Godot/Scenes/Screens/BattleMapScreen.tscn; Game.Godot/Scripts/Screens/BattleLocalFeedbackController.gd; Game.Godot/Scripts/Combat/CombatExperienceRuntimeBridge.cs.\nCompletion result: Add battlefield-local surfaces for damage numbers, hit flashes, wall pressure emphasis, and short combat prompts.\nState semantics: empty means no active battlefield prompt for the tracked condition; failure means terminal-loss messaging is shown; completion means the intended UI outcome state is reached and stable.\n\nAcceptance Semantics (Task 63):\n- When hit, wall-pressure, or key battle-event triggers occur, the battlefield-local layer renders mapped damage numbers, hit flashes, wall-under-attack emphasis, and short prompts; when no relevant trigger is active, those local signals are absent; persistent HUD summaries remain concurrently visible and are not state-driven by local feedback outputs. Refs: Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd\n- With damage-number display disabled, combat events render no damage numbers while still rendering hit flashes, wall-under-attack emphasis, and short prompts; after re-enabling, subsequent combat events render damage numbers again. Refs: Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd\n- Battlefield prompt state is externally distinguishable and deterministic: empty means no active prompt for the tracked condition, failure shows terminal-loss messaging, and completion shows the intended UI outcome and keeps it stable until a later trigger changes the state. Refs: Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd\n- For non-terminal short combat prompts, each prompt is transient battlefield-local feedback: it clears automatically after its short display window or is replaced by a later relevant trigger, while terminal failure/completion prompt semantics remain governed by state transitions. Refs: Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd\n- Enabling battlefield-local feedback leaves ownership boundaries unchanged: HUD summary ownership, ScreenNavigator ownership, and CombatExperienceRuntimeBridge ownership remain intact, and no bypass path is introduced by this task. Refs: Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd\n- Observable behavior preserves layer boundaries: combat/domain decisions stay in the domain layer, and presentation/adapter behavior stays in the runtime adapter layer for these feedback surfaces. Refs: Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd\n- For each player-visible local feedback output in scope, the trigger-to-feedback path is auditable through the declared anchors, with mappings present in the referenced scene/script files. Refs: Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd\n",
         "testStrategy": "GdUnit4: cover Implement Battlefield-Local Combat Feedback Surfaces through Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd. Use existing integration tests where possible and add focused scene tests when a new controller or node path becomes player-visible. Acceptance refs/anchors gate: keep task, story, and GDD references synchronized before review.",
         "priority": "high",
         "dependencies": [
@@ -3366,6 +2645,30 @@
           "CH05",
           "CH06",
           "CH07"
+        ],
+        "testRefs": [
+          "Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd",
+          "Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd",
+          "Tests.Godot/tests/Scenes/BattleMap/test_task61_building_selection_feedback.gd",
+          "Game.Core.Tests/Tasks/Task63RefsAnchorsSyncTests.cs"
+        ],
+        "acceptanceCriteria": [
+          "When hit, wall-pressure, or key battle-event triggers occur, the battlefield-local layer renders the mapped damage numbers, hit flashes, wall-under-attack emphasis, and short prompts; when no relevant trigger is active, those local signals are absent; persistent HUD summary behavior remains visible and is not replaced by local feedback. Refs: Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd",
+          "With damage-number display disabled, combat events render no damage numbers while still rendering hit flashes, wall-under-attack emphasis, and short prompts; after re-enabling, subsequent combat events render damage numbers again. Refs: Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd",
+          "Battlefield prompt state is externally distinguishable and deterministic: empty means no active prompt for the tracked condition, failure shows terminal-loss messaging, and completion shows the intended UI outcome and keeps it stable until a later trigger changes the state. Refs: Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd",
+          "Enabling battlefield-local feedback leaves ownership boundaries unchanged: HUD summary ownership, ScreenNavigator ownership, and CombatExperienceRuntimeBridge ownership remain intact, and no bypass path is introduced by this task. Refs: Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd",
+          "Observable behavior preserves layer boundaries: combat/domain decisions stay in the domain layer, and presentation/adapter behavior stays in the runtime adapter layer for these feedback surfaces. Refs: Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd",
+          "For each player-visible local feedback output in scope, the trigger-to-feedback path is auditable through the declared anchors, with mappings present in the referenced scene/script files. Refs: Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd",
+          "State-transition semantics are enforced at runtime: entering empty clears active battlefield prompt output, entering failure shows terminal-loss messaging, and entering completion shows a stable intended UI outcome until a later event changes state. Refs: Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd",
+          "GdUnit4 integration coverage exists for this task in the designated combat runtime integration flow, and assertions verify that local feedback responds to relevant runtime events. Refs: Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd",
+          "If this task introduces any new player-visible controller or node path, focused scene tests are added within the same task before acceptance is complete. Refs: Tests.Godot/tests/Scenes/BattleMap/test_task61_building_selection_feedback.gd Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd",
+          "Before review, task/story/GDD references and anchors are synchronized so every listed reference resolves to the current artifacts for this task scope. Refs: Game.Core.Tests/Tasks/Task63RefsAnchorsSyncTests.cs"
+        ],
+        "test_refs": [
+          "Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd",
+          "Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd",
+          "Tests.Godot/tests/Scenes/BattleMap/test_task61_building_selection_feedback.gd",
+          "Game.Core.Tests/Tasks/Task63RefsAnchorsSyncTests.cs"
         ]
       },
       {
