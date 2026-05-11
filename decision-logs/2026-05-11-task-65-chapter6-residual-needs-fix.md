@@ -1,21 +1,21 @@
-﻿# Task 65 Chapter 6 Residual Needs Fix
+# Decision Log
 
-- task_id: 65
-- run_id: ec3ab5ca9b414dd099e276ab86cc5525
-- status: needs-fix
-- summary_status: ok
-- stage: chapter6
-- evidence:
-  - logs/ci/2026-05-11/sc-review-pipeline-task-65-ec3ab5ca9b414dd099e276ab86cc5525/summary.json
-  - logs/ci/2026-05-11/sc-review-pipeline-task-65-ec3ab5ca9b414dd099e276ab86cc5525/repair-guide.json
-  - logs/ci/2026-05-11/sc-review-pipeline-task-65-ec3ab5ca9b414dd099e276ab86cc5525/agent-review.json
-  - logs/ci/2026-05-11/sc-review-pipeline-task-65-ec3ab5ca9b414dd099e276ab86cc5525/run-events.jsonl
-- current_result:
-  - deterministic_ok: true
-  - llm_status: ok
-  - needs_fix_agents: code-reviewer, security-auditor
-  - unknown_agents: semantic-equivalence-auditor
-- next_step: run 6.8 narrow Needs Fix closure
-- notes:
-  - fast-ship is not done yet because review still reports Needs Fix.
-  - fork approval was consumed and the pipeline is now on the clean deterministic path.
+- Title: task-65-chapter6-residual-needs-fix
+- Date: 2026-05-11
+- Status: accepted
+- Supersedes: none
+- Superseded by: none
+- Branch: task/T65
+- Git Head: 246230dcf54c075dab5ce0b864f679043aec3c12
+- Why now: Chapter 6 routing determined that another immediate 6.8 rerun would not be cost-effective.
+- Context: Remaining findings were low-priority reviewer items after deterministic evidence was already sufficient.
+- Decision: Record the residual Needs Fix items and stop the current fast-ship closure loop until a later change hits the same reviewer anchors.
+- Consequences: The task keeps explicit follow-up evidence instead of paying for another same-shape 6.8 rerun.
+- Recovery impact: Recovery should prefer the recorded follow-up plan over reopening 6.7 or repeating 6.8 without fresh anchor hits.
+- Validation: `py -3 scripts/python/dev_cli.py inspect-run --kind pipeline --latest logs/ci/2026-05-11/sc-review-pipeline-task-65/latest.json`
+- Related ADRs: ADR-0018, ADR-0021, ADR-0022, ADR-0032
+- Related execution plans: `execution-plans/2026-05-11-task-65-chapter6-residual-followup.md`
+- Related task id(s): `65`
+- Related run id: `d3fdc7e53ac241d6a2a0090de398c593`
+- Related latest.json: `logs/ci/2026-05-11/sc-review-pipeline-task-65/latest.json`
+- Related pipeline artifacts: `logs/ci/2026-05-11/sc-review-pipeline-task-65-d3fdc7e53ac241d6a2a0090de398c593`

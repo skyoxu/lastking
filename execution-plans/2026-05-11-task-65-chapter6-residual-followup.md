@@ -1,17 +1,21 @@
-﻿# Task 65 Chapter 6 Residual Followup
+# Execution Plan
 
-- task_id: 65
-- current_run_id: ec3ab5ca9b414dd099e276ab86cc5525
-- status: in-progress
-- entrypoint: run_review_pipeline.py --task-id 65 --resume
-- evidence:
-  - logs/ci/2026-05-11/sc-review-pipeline-task-65-ec3ab5ca9b414dd099e276ab86cc5525/summary.json
-  - logs/ci/2026-05-11/sc-review-pipeline-task-65-ec3ab5ca9b414dd099e276ab86cc5525/agent-review.json
-- next_action:
-  - enter 6.8 narrow Needs Fix closure
-- constraints:
-  - do not rerun full 6.7
-  - do not reopen deterministic gates unless code changes require it
-- current_assessment:
-  - deterministic gates green
-  - review still returns Needs Fix for code-reviewer and security-auditor
+- Title: task-65-chapter6-residual-followup
+- Status: done
+- Branch: task/T65
+- Git Head: 246230dcf54c075dab5ce0b864f679043aec3c12
+- Goal: Close the recorded residual reviewer findings for Task 65.
+- Scope: Final Chapter 6 residual closure evidence for the Task 65 fast-ship path.
+- Current step: Completed residual follow-up documentation and validation.
+- Last completed step: Confirmed fast-ship closeout with `sc-needs-fix-fast status=ok`.
+- Stop-loss: Do not reopen 6.7; only rerun 6.8 if a new change hits the recorded reviewer anchors.
+- Next action: None.
+- Recovery command: `py -3 scripts/python/dev_cli.py resume-task --task-id 65`
+- Open questions: none
+- Exit criteria: Recovery docs validate and the residual record remains traceable to Task 65 artifacts.
+- Related ADRs: ADR-0018, ADR-0021, ADR-0022, ADR-0032
+- Related decision logs: `decision-logs/2026-05-11-task-65-chapter6-residual-needs-fix.md`
+- Related task id(s): `65`
+- Related run id: `d3fdc7e53ac241d6a2a0090de398c593`
+- Related latest.json: `logs/ci/2026-05-11/sc-review-pipeline-task-65/latest.json`
+- Related pipeline artifacts: `logs/ci/2026-05-11/sc-review-pipeline-task-65-d3fdc7e53ac241d6a2a0090de398c593`
