@@ -541,9 +541,15 @@ public partial class HUD : Control
             return;
         }
 
+        if (hp <= 40)
+        {
+            _pressureLabel.Text = $"{T("hud.pressure")}: danger (hp={hp})";
+            return;
+        }
+
         if (hp <= 60)
         {
-            _pressureLabel.Text = $"{T("hud.pressure")}: high (hp={hp})";
+            _pressureLabel.Text = $"{T("hud.pressure")}: warning (hp={hp})";
             return;
         }
 

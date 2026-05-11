@@ -25,7 +25,8 @@ func test_hud_updates_on_core_events() -> void:
     var bus = get_node_or_null("/root/EventBus")
     assert_object(bus).is_not_null()
 
-    var hud = main.get_node("HUD")
+    var hud = main.get_node_or_null("RuntimeUi/HUD")
+    assert_object(hud).is_not_null()
     var day_label: Label = hud.get_node("TopBar/HBox/DayLabel")
     var cycle_label: Label = hud.get_node("TopBar/HBox/CycleRemainingLabel")
     var hp_label: Label = hud.get_node("TopBar/HBox/HealthLabel")

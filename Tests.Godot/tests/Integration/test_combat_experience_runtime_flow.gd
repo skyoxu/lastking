@@ -31,6 +31,37 @@ func _label(hud: Node, path: String) -> Label:
 	return hud.get_node(path) as Label
 
 
+func _emit_castle_hp(bus: Node, current_hp: int, previous_hp: int = 100) -> void:
+	var payload := "{\"Day\":9,\"PreviousHp\":%d,\"CurrentHp\":%d}" % [previous_hp, current_hp]
+	bus.call("PublishSimple", "core.lastking.castle.hp_changed", "ut", payload)
+
+
+func _pressure_state_from_label_text(text: String) -> String:
+	var lowered := text.to_lower()
+	if lowered.find("critical") >= 0:
+		return "critical"
+	if lowered.find("danger") >= 0:
+		return "danger"
+	if lowered.find("warning") >= 0:
+		return "warning"
+	if lowered.find("stable") >= 0:
+		return "stable"
+	return "unknown"
+
+
+func _assert_pressure_state_exact(hud: Node, bus: Node, hp: int, expected_state: String) -> void:
+	var pressure_label := _label(hud, "FeedbackLayer/PressurePanel/VBox/PressureLabel")
+	_emit_castle_hp(bus, hp)
+	for _i in range(6):
+		await get_tree().process_frame
+	var text := pressure_label.text.to_lower()
+	assert_str(_pressure_state_from_label_text(text)).is_equal(expected_state)
+	assert_bool(text.find("critical") >= 0 if expected_state == "critical" else text.find("critical") < 0).is_true()
+	assert_bool(text.find("danger") >= 0 if expected_state == "danger" else text.find("danger") < 0).is_true()
+	assert_bool(text.find("warning") >= 0 if expected_state == "warning" else text.find("warning") < 0).is_true()
+	assert_bool(text.find("stable") >= 0 if expected_state == "stable" else text.find("stable") < 0).is_true()
+
+
 func _battlefield_children_with_prefix(bridge: Node, prefix: String) -> Array[String]:
 	var names: Array[String] = []
 	var battlefield := bridge.get_node("Battlefield")
@@ -119,6 +150,12 @@ func _restore_damage_numbers_setting(snapshot: Dictionary) -> void:
 # ACC:T63.5
 # ACC:T63.6
 # ACC:T63.8
+# ACC:T64.1
+# ACC:T64.7
+# ACC:T64.8
+# ACC:T64.9
+# ACC:T64.10
+# ACC:T64.11
 func test_player_visible_combat_experience_runs_from_building_and_training_to_death_cleanup_and_summary() -> void:
 	var bridge_script := load(COMBAT_EXPERIENCE_BRIDGE)
 	assert_object(bridge_script).is_not_null()
@@ -168,13 +205,21 @@ func test_player_visible_combat_experience_runs_from_building_and_training_to_de
 	assert_bool(bridge.has_node("Battlefield/Projectile")).is_false()
 
 	assert_str(pressure_label.text).contains("hp=42")
-	assert_bool(pressure_label.text.to_lower().find("high") >= 0).is_true()
+	assert_bool(
+		pressure_label.text.to_lower().find("warning") >= 0
+		or pressure_label.text.to_lower().find("danger") >= 0
+		or pressure_label.text.to_lower().find("critical") >= 0
+	).is_true()
 	assert_bool(pressure_label.text.to_lower().find("n/a") < 0).is_true()
 	assert_bool(pressure_panel.visible).is_true()
 	assert_bool(feedback_label.visible).is_true()
 	assert_bool(feedback_label.text.length() > 0).is_true()
 	hit_flash_visible = feedback_label.visible
-	wall_pressure_emphasis_active = pressure_label.text.to_lower().find("high") >= 0 or pressure_label.text.to_lower().find("critical") >= 0
+	wall_pressure_emphasis_active = (
+		pressure_label.text.to_lower().find("warning") >= 0
+		or pressure_label.text.to_lower().find("danger") >= 0
+		or pressure_label.text.to_lower().find("critical") >= 0
+	)
 	assert_bool(hit_flash_visible).is_true()
 	assert_bool(wall_pressure_emphasis_active).is_true()
 	assert_bool(feedback_label.visible).is_true()
@@ -184,6 +229,7 @@ func test_player_visible_combat_experience_runs_from_building_and_training_to_de
 
 
 # ACC:T56.7
+# ACC:T64.2
 func test_runtime_bridge_entrypoints_remain_reachable_after_ownership_isolation() -> void:
 	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
 	add_child(auto_free(main))
@@ -234,6 +280,7 @@ func test_runtime_bridge_entrypoints_remain_reachable_after_ownership_isolation(
 
 
 # ACC:T57.2
+# ACC:T64.3
 
 func test_battle_map_control_actions_should_delegate_through_runtime_bridge_and_keep_summary_machine_resolvable() -> void:
 	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
@@ -305,6 +352,7 @@ func test_battle_map_control_actions_should_delegate_through_runtime_bridge_and_
 
 
 # ACC:T62.2
+# ACC:T64.4
 func test_path_readability_is_expressed_through_enemy_actor_view_motion() -> void:
 	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
 	add_child(auto_free(main))
@@ -367,6 +415,7 @@ func test_path_readability_is_expressed_through_enemy_actor_view_motion() -> voi
 # ACC:T63.5
 # ACC:T63.6
 # ACC:T63.8
+# ACC:T64.5
 func test_spawn_cues_and_path_readability_survive_full_battle_loop() -> void:
 	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
 	add_child(auto_free(main))
@@ -434,6 +483,7 @@ func test_spawn_cues_and_path_readability_survive_full_battle_loop() -> void:
 
 
 # ACC:T63.2
+# ACC:T64.6
 func test_damage_number_toggle_should_hide_then_restore_damage_number_rendering() -> void:
 	var bridge_script := load(COMBAT_EXPERIENCE_BRIDGE)
 	assert_object(bridge_script).is_not_null()
@@ -463,7 +513,11 @@ func test_damage_number_toggle_should_hide_then_restore_damage_number_rendering(
 	# Keep non-damage local feedback alive while damage numbers are disabled.
 	assert_bool(feedback_label.visible).is_true()
 	assert_bool(feedback_label.text.length() > 0).is_true()
-	assert_bool(pressure_label.text.to_lower().find("high") >= 0 or pressure_label.text.to_lower().find("critical") >= 0).is_true()
+	assert_bool(
+		pressure_label.text.to_lower().find("warning") >= 0
+		or pressure_label.text.to_lower().find("danger") >= 0
+		or pressure_label.text.to_lower().find("critical") >= 0
+	).is_true()
 	assert_bool(prompt_label.text.to_lower().find("n/a") < 0).is_true()
 
 	# Positive path: restoring toggle should restore damage number rendering.
@@ -479,3 +533,40 @@ func test_damage_number_toggle_should_hide_then_restore_damage_number_rendering(
 	_restore_damage_numbers_setting(snapshot)
 	_damage_numbers_snapshot_pending = false
 	_damage_numbers_snapshot = {}
+
+
+# ACC:T64.2
+# ACC:T64.3
+# ACC:T64.4
+# ACC:T64.5
+func test_pressure_state_mapping_should_cover_exact_four_states_and_keep_summary_channel_stable() -> void:
+	var hud := await _hud()
+	var bus := get_node_or_null("/root/EventBus")
+	assert_object(bus).is_not_null()
+	var pressure_label := _label(hud, "FeedbackLayer/PressurePanel/VBox/PressureLabel")
+	var prompt_label := _label(hud, "FeedbackLayer/RuntimePromptPanel/VBox/RuntimePromptLabel")
+
+	# Four-state set and mutual exclusion.
+	await _assert_pressure_state_exact(hud, bus, 90, "stable")
+	await _assert_pressure_state_exact(hud, bus, 55, "warning")
+	await _assert_pressure_state_exact(hud, bus, 35, "danger")
+	await _assert_pressure_state_exact(hud, bus, 15, "critical")
+
+	# Input unchanged -> visible output unchanged.
+	_emit_castle_hp(bus, 35, 40)
+	for _i in range(6):
+		await get_tree().process_frame
+	var first_pressure := pressure_label.text
+	var first_prompt := prompt_label.text
+	_emit_castle_hp(bus, 35, 35)
+	for _i in range(6):
+		await get_tree().process_frame
+	assert_str(pressure_label.text).is_equal(first_pressure)
+	assert_str(prompt_label.text).is_equal(first_prompt)
+
+	# Runtime prompt is escalation callout, not top-bar summary replacement.
+	bus.call("PublishSimple", "core.lastking.ui_feedback.raised", "ut", "{\"Code\":\"run_continue_blocked\",\"MessageKey\":\"ui.blocked_action.combat_exchange\",\"Details\":\"escalation\"}")
+	for _i in range(6):
+		await get_tree().process_frame
+	assert_bool(prompt_label.text.to_lower().find("n/a") < 0).is_true()
+	assert_bool(pressure_label.text.to_lower().find("danger") >= 0).is_true()
