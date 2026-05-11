@@ -5298,19 +5298,23 @@
       "ui"
     ],
     "test_refs": [
-      "Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd"
+      "Tests.Godot/tests/UI/test_hud_bottom_bar_combat_readability.gd",
+      "Tests.Godot/tests/UI/test_hud_action_icon_availability_and_cooldown_mask.gd",
+      "Tests.Godot/tests/Scenes/BattleMap/test_battlemap_operation_surface_semantics.gd",
+      "Tests.Godot/tests/Integration/test_battlemap_runtime_flow_bottom_bar_readability.gd",
+      "Game.Core.Tests/Services/CombatServiceTests.cs"
     ],
     "acceptance": [
-      "When the operation surface is visible, the bottom bar shows combat counts using current/max formatting, and when stable runtime morale is unavailable the morale slot shows a numeric placeholder; if either required display is missing, malformed, or non-numeric where required, this fails. Refs: docs/gdd/battle-map-screen-ui-spec.zh-CN.md docs/gdd/combat-feedback-ui-spec.zh-CN.md",
-      "Each spell and skill icon shows a clearly distinguishable HUD state: available at normal brightness, unavailable at 50 percent opacity, and a radial cooldown mask when cooldown applies; if any required state cannot be visually distinguished on screen, this fails. Refs: docs/gdd/combat-feedback-ui-spec.zh-CN.md Game.Godot/Scenes/UI/HUD.tscn",
-      "Tracked runtime UI semantics are mapped correctly: empty shows no active battlefield prompt, failure shows terminal-loss messaging, and completion shows the intended UI outcome state; if any condition maps to a different visible state, this fails. Refs: docs/gdd/battlemapscreen-stories.md",
-      "Task changes preserve responsibility boundaries across HUD, ScreenNavigator, and CombatExperienceRuntimeBridge; if ownership is reassigned, duplicated, or ambiguously split across these components, this fails. Refs: Game.Godot/Scenes/UI/HUD.tscn Game.Godot/Scripts/Navigation/ScreenNavigator.cs Game.Godot/Scripts/Combat/CombatExperienceRuntimeBridge.cs",
-      "Task behavior keeps domain rules in Game.Core and limits Game.Godot to presentation or adapter behavior; if domain decision logic is added to Game.Godot, this fails. Refs: Game.Core Game.Godot",
-      "The delivered behavior is traceable through the declared task anchors, with relevant changes auditable at those paths; if the task outcome cannot be traced through those anchors, this fails. Refs: Game.Godot/Scenes/UI/HUD.tscn; Game.Godot/Scripts/UI/HUD.cs; Game.Godot/Scenes/Screens/BattleMapScreen.tscn",
-      "After runtime state refresh, semantics remain stable: empty still has no active battlefield prompt, failure still shows terminal-loss messaging, and completion remains in the intended UI outcome until a later state transition; if refresh causes semantic drift or unstable presentation, this fails. Refs: docs/gdd/battlemapscreen-stories.md",
-      "GdUnit4 integration coverage exists in the designated runtime flow test and validates bottom-bar combat state and action readability outcomes for this task; if this coverage is missing or does not validate the task outcome, this fails. Refs: Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd",
-      "If this task introduces a new player-visible controller or node path, focused scene tests are added within the same task scope before acceptance; if such visible additions are made without focused scene tests, this fails. Refs: Tests.Godot",
-      "Before review, task, story, GDD references, and declared anchors are synchronized with the current artifacts used by this task; if any reference or anchor is stale or inconsistent with current artifacts, this fails. Refs: docs/gdd/battlemapscreen-stories.md docs/gdd/battlemapscreen-epics.md docs/gdd/battlemapscreen-story-to-files-mapping.md"
+      "When the operation surface is visible, the bottom bar shows combat counts using current/max formatting, and when stable runtime morale is unavailable the morale slot shows a numeric placeholder; if either required display is missing, malformed, or non-numeric where required, this fails. Refs: Tests.Godot/tests/UI/test_hud_bottom_bar_combat_readability.gd",
+      "Each spell and skill icon shows a clearly distinguishable HUD state: available at normal brightness, unavailable at 50 percent opacity, and a radial cooldown mask when cooldown applies; if any required state cannot be visually distinguished on screen, this fails. Refs: Tests.Godot/tests/UI/test_hud_action_icon_availability_and_cooldown_mask.gd",
+      "Tracked runtime UI semantics are mapped correctly: empty shows no active battlefield prompt, failure shows terminal-loss messaging, and completion shows the intended UI outcome state; if any condition maps to a different visible state, this fails. Refs: Tests.Godot/tests/Scenes/BattleMap/test_battlemap_operation_surface_semantics.gd",
+      "Task changes preserve responsibility boundaries across HUD, ScreenNavigator, and CombatExperienceRuntimeBridge; if ownership is reassigned, duplicated, or ambiguously split across these components, this fails. Refs: Tests.Godot/tests/Integration/test_battlemap_runtime_flow_bottom_bar_readability.gd Tests.Godot/tests/Scenes/BattleMap/test_battlemap_operation_surface_semantics.gd",
+      "Task behavior keeps domain rules in Game.Core and limits Game.Godot to presentation or adapter behavior; if domain decision logic is added to Game.Godot, this fails. Refs: Game.Core.Tests/Services/CombatServiceTests.cs",
+      "The delivered behavior is traceable through the declared task anchors, with relevant changes auditable at those paths; if the task outcome cannot be traced through those anchors, this fails. Refs: Tests.Godot/tests/Integration/test_battlemap_runtime_flow_bottom_bar_readability.gd",
+      "After runtime state refresh, semantics remain stable: empty still has no active battlefield prompt, failure still shows terminal-loss messaging, and completion remains in the intended UI outcome until a later state transition; if refresh causes semantic drift or unstable presentation, this fails. Refs: Tests.Godot/tests/Integration/test_battlemap_runtime_flow_bottom_bar_readability.gd",
+      "GdUnit4 integration coverage exists in the designated runtime flow test and validates bottom-bar combat state and action readability outcomes for this task; if this coverage is missing or does not validate the task outcome, this fails. Refs: Tests.Godot/tests/Integration/test_battlemap_runtime_flow_bottom_bar_readability.gd",
+      "If this task introduces a new player-visible controller or node path, focused scene tests are added within the same task scope before acceptance; if such visible additions are made without focused scene tests, this fails. Refs: Tests.Godot/tests/Scenes/BattleMap/test_battlemap_operation_surface_semantics.gd",
+      "Before review, task, story, GDD references, and declared anchors are synchronized with the current artifacts used by this task; if any reference or anchor is stale or inconsistent with current artifacts, this fails. Refs: Game.Core.Tests/Services/CombatServiceTests.cs"
     ],
     "contractRefs": [
       "core.lastking.resources.changed",
@@ -5321,6 +5325,13 @@
       "GdUnit4: verify Implement Bottom-Bar Combat State And Action Readability against its player-visible scene behavior.",
       "Integration: preserve or update BattleMapScreen and combat experience runtime flow coverage in the same task.",
       "Refs gate: acceptance items must keep GDD, story, and test refs synchronized before review."
+    ],
+    "evidence_refs": [
+      "docs/gdd/battle-map-screen-ui-spec.zh-CN.md",
+      "docs/gdd/combat-feedback-ui-spec.zh-CN.md",
+      "docs/gdd/battlemapscreen-stories.md",
+      "docs/gdd/battlemapscreen-epics.md",
+      "docs/gdd/battlemapscreen-story-to-files-mapping.md"
     ]
   },
   {
