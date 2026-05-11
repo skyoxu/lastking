@@ -26,8 +26,13 @@ public partial class CombatExperienceRuntimeBridge : Node
     private int _deadUnitsRetired;
     private int _enemyUnitsSpawned;
     private int _castleHp = 100;
+    private readonly System.Collections.Generic.List<string> _activeDamageNumberNames = new();
     private int _friendlyUnitSeq;
     private int _enemyUnitSeq;
+    private const string SettingsConfigPath = "user://settings.cfg";
+    private const string SettingsSection = "settings";
+    private const string DamageNumbersEnabledKey = "combat_damage_numbers_enabled";
+    private const string LegacyDamageNumbersEnabledKey = "damage_numbers_enabled";
 
     public override void _Ready()
     {
@@ -56,6 +61,7 @@ public partial class CombatExperienceRuntimeBridge : Node
         _castleHp = 100;
         _friendlyUnitSeq = 0;
         _enemyUnitSeq = 0;
+        _activeDamageNumberNames.Clear();
     }
 
     public GDictionary BuildPhase()
@@ -134,6 +140,7 @@ public partial class CombatExperienceRuntimeBridge : Node
 
         _deadUnitsRetired += retired;
         RetireAllDeadActors();
+        CleanupDamageNumbers();
         return GetSummary();
     }
 
@@ -262,6 +269,13 @@ public partial class CombatExperienceRuntimeBridge : Node
         if (_actors.TryGetValue(targetNodeName, out var target))
         {
             target.Hp = Math.Max(0, target.Hp - damage);
+            if (AreDamageNumbersEnabled())
+            {
+                var damageNumberName = $"DamageNumber{_projectilesCreated + 1}";
+                var damageNumber = new Node2D { Name = damageNumberName };
+                _battlefield.AddChild(damageNumber);
+                _activeDamageNumberNames.Add(damageNumberName);
+            }
         }
 
         projectile.QueueFree();
@@ -285,6 +299,46 @@ public partial class CombatExperienceRuntimeBridge : Node
             var node = _battlefield.GetNodeOrNull<Node>(name);
             node?.QueueFree();
         }
+    }
+
+    private void CleanupDamageNumbers()
+    {
+        if (_activeDamageNumberNames.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var name in _activeDamageNumberNames)
+        {
+            var node = _battlefield.GetNodeOrNull<Node>(name);
+            node?.QueueFree();
+        }
+
+        _activeDamageNumberNames.Clear();
+    }
+
+    private static bool AreDamageNumbersEnabled()
+    {
+        var cfg = new ConfigFile();
+        var err = cfg.Load(SettingsConfigPath);
+        if (err != Error.Ok)
+        {
+            return true;
+        }
+
+        Variant direct = cfg.GetValue(SettingsSection, DamageNumbersEnabledKey, Variant.CreateFrom(true));
+        if (direct.VariantType == Variant.Type.Bool)
+        {
+            return direct.AsBool();
+        }
+
+        Variant legacy = cfg.GetValue(SettingsSection, LegacyDamageNumbersEnabledKey, Variant.CreateFrom(true));
+        if (legacy.VariantType == Variant.Type.Bool)
+        {
+            return legacy.AsBool();
+        }
+
+        return true;
     }
 
     private bool IsTargetable(string nodeName)

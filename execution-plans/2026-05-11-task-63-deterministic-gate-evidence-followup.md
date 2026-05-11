@@ -1,0 +1,21 @@
+# task-63-deterministic-gate-evidence-followup
+
+- Title: task-63-deterministic-gate-evidence-followup
+- Status: active
+- Branch: task/T63
+- Git Head: da51ac1e18ecd47264bcd369c109787d5babdeac
+- Goal: Close Task 63 reviewer residuals by pinning deterministic evidence and finishing fast-ship Chapter 6 closure.
+- Scope: Task 63 Chapter 6 reviewer closure and repository hard-check recovery doc compliance.
+- Current step: Update reviewer evidence mapping and rerun Chapter 6 + 6.9 until P0/P1 are clean and hard checks pass.
+- Last completed step: Forked run `ac8f4de809814144a3fe82f5db7c1f1e` reached `SC_AGENT_REVIEW status=pass`; remaining repo hard-check failures were recovery-doc format and overlay-task drift.
+- Stop-loss: Do not reopen full 6.7 rerun command directly when forbidden; use resume/fork state machine only.
+- Next action: `py -3 scripts/python/dev_cli.py run-local-hard-checks --godot-bin "$env:GODOT_BIN"`
+- Recovery command: `py -3 scripts/sc/run_review_pipeline.py --task-id 63 --resume`
+- Open questions: none
+- Exit criteria: Task 63 `SC_AGENT_REVIEW status=pass` and local hard checks return `status=ok`.
+- Related ADRs: none
+- Related decision logs: `decision-logs/2026-05-11-task-63-deterministic-gate-evidence-link.md`
+- Related task id(s): `63`
+- Related run id: `ac8f4de809814144a3fe82f5db7c1f1e`
+- Related latest.json: `logs/ci/2026-05-11/sc-review-pipeline-task-63/latest.json`
+- Related pipeline artifacts: `logs/ci/2026-05-11/sc-review-pipeline-task-63-ac8f4de809814144a3fe82f5db7c1f1e`

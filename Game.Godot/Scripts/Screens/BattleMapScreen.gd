@@ -78,7 +78,7 @@ func _on_wave() -> void:
 	_wave_started = true
 	_combat_resolved = false
 	_cleaned = false
-	_spawn_pulse_time_left = 4.0
+	_spawn_pulse_time_left = 0.35
 	_apply_spawn_cues()
 	_render(_call_or_fallback("SpawnEnemyWavePhase"), _t("battlemap.status.wave_spawned"))
 
@@ -114,6 +114,9 @@ func _on_finish() -> void:
 	if not _cleaned:
 		_status.text = _t("battlemap.status.require_cleanup")
 		return
+	# Ensure local spawn cues decay to weak state once the loop is completed.
+	_spawn_pulse_time_left = 0.0
+	_apply_spawn_cues()
 	_render(_call_or_fallback("PublishOutcomePhase"), _t("battlemap.status.finished"))
 
 func _on_back() -> void:
