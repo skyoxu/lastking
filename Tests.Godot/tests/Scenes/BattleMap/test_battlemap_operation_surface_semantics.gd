@@ -185,3 +185,21 @@ func test_t66_state_transition_semantics_should_stay_bridge_driven_after_legacy_
 	assert_bool(completion_status.to_lower().find("finished") >= 0).is_true()
 	assert_int(int(completion_snapshot.get("enemy_units_spawned", 0))).is_greater_equal(2)
 	assert_int(int(completion_snapshot.get("combat_exchanges", 0))).is_greater_equal(1)
+
+
+# ACC:T67.9
+func test_t67_daily_settlement_modal_node_paths_should_exist_and_default_hidden() -> void:
+	var runtime := await _main_runtime()
+	var screen: Control = runtime["screen"]
+	var modal := screen.get_node_or_null("DailySettlementModal")
+	var rewards := screen.get_node_or_null("DailySettlementModal/VBox/Rewards")
+	var reward_a := screen.get_node_or_null("DailySettlementModal/VBox/Rewards/RewardA")
+	var reward_b := screen.get_node_or_null("DailySettlementModal/VBox/Rewards/RewardB")
+	var reward_c := screen.get_node_or_null("DailySettlementModal/VBox/Rewards/RewardC")
+
+	assert_object(modal).is_not_null()
+	assert_object(rewards).is_not_null()
+	assert_object(reward_a).is_not_null()
+	assert_object(reward_b).is_not_null()
+	assert_object(reward_c).is_not_null()
+	assert_bool((modal as Control).visible).is_false()

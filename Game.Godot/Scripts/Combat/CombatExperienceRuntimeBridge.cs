@@ -26,6 +26,10 @@ public partial class CombatExperienceRuntimeBridge : Node
     private int _deadUnitsRetired;
     private int _enemyUnitsSpawned;
     private int _castleHp = 100;
+    private int _resourceGold;
+    private int _resourceIron;
+    private int _resourcePopulationCap;
+    private string _outcome = "win";
     private readonly System.Collections.Generic.List<string> _activeDamageNumberNames = new();
     private int _friendlyUnitSeq;
     private int _enemyUnitSeq;
@@ -62,6 +66,10 @@ public partial class CombatExperienceRuntimeBridge : Node
         _friendlyUnitSeq = 0;
         _enemyUnitSeq = 0;
         _activeDamageNumberNames.Clear();
+        _resourceGold = 0;
+        _resourceIron = 0;
+        _resourcePopulationCap = 0;
+        _outcome = "win";
     }
 
     public GDictionary BuildPhase()
@@ -146,10 +154,21 @@ public partial class CombatExperienceRuntimeBridge : Node
 
     public GDictionary PublishOutcomePhase()
     {
+        _resourceGold = 120;
+        _resourceIron = 44;
+        _resourcePopulationCap = 26;
+        _outcome = _castleHp > 0 ? "win" : "loss";
         Publish(EventTypes.LastkingCastleHpChanged, "{\"Day\":9,\"PreviousHp\":100,\"CurrentHp\":42}");
         Publish(EventTypes.LastkingResourcesChanged, "{\"RunId\":\"combat-e2e\",\"DayNumber\":9,\"Gold\":120,\"Iron\":44,\"PopulationCap\":26}");
         Publish(EventTypes.LastkingUiFeedbackRaised, "{\"Code\":\"run_continue_blocked\",\"MessageKey\":\"ui.blocked_action.combat_exchange\",\"Details\":\"combat_exchange projectiles=2 retired=1\"}");
-        Publish(EventTypes.RunStateTransitioned, "{\"outcome\":\"win\",\"day\":9}");
+        Publish(EventTypes.RunStateTransitioned, $"{{\"outcome\":\"{_outcome}\",\"day\":9}}");
+        return GetSummary();
+    }
+
+    public GDictionary ForceOutcomeForTest(string outcome, int castleHp)
+    {
+        _castleHp = Math.Max(0, castleHp);
+        _outcome = string.Equals(outcome, "loss", StringComparison.OrdinalIgnoreCase) ? "loss" : "win";
         return GetSummary();
     }
 
@@ -168,6 +187,10 @@ public partial class CombatExperienceRuntimeBridge : Node
             ["active_combat_nodes_after_cleanup"] = activeCombatNodes,
             ["dead_unit_targetable_after_cleanup"] = IsTargetable("DeadEnemy"),
             ["castle_hp"] = _castleHp,
+            ["resource_gold"] = _resourceGold,
+            ["resource_iron"] = _resourceIron,
+            ["resource_population_cap"] = _resourcePopulationCap,
+            ["outcome"] = _outcome,
         };
     }
 

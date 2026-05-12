@@ -5454,19 +5454,20 @@
       "ui"
     ],
     "test_refs": [
-      "Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd"
+      "Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd",
+      "Game.Core.Tests/Tasks/Task67RefsAnchorsSyncTests.cs"
     ],
     "acceptance": [
-      "When a non-terminal night outcome is produced, BattleMap opens a centered daily-settlement modal, combat time stays paused for the full open interval, and run progression cannot continue until the modal is resolved by the player. Refs: docs/gdd/outcome-ui-spec.zh-CN.md Game.Godot/Scenes/Screens/BattleMapScreen.tscn",
-      "The daily-settlement modal always shows exactly three selectable reward entries and the completed-night summary subset (HP, reward summary, kill count, resource snapshot); any render with fewer or more than three reward slots is invalid. Refs: docs/gdd/outcome-ui-spec.zh-CN.md Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd",
-      "Outcome states are mutually exclusive at runtime: empty shows no tracked battlefield prompt, failure shows terminal-loss messaging and does not show non-terminal settlement UI, and completion shows the intended non-terminal outcome UI. Refs: docs/gdd/battlemapscreen-stories.md",
-      "After this change, HUD, ScreenNavigator, and CombatExperienceRuntimeBridge still own their existing responsibilities, with no ownership transfer caused by the settlement modal flow. Refs: Game.Godot/Scenes/UI/HUD.tscn Game.Godot/Scripts/Navigation/ScreenNavigator.cs Game.Godot/Scripts/Combat/CombatExperienceRuntimeBridge.cs",
-      "Layer boundaries are preserved in observable behavior: gameplay/domain rules are executed in Game.Core, while Game.Godot remains presentation/adapter for this flow. Refs: Game.Core Game.Godot",
-      "The settlement-modal implementation is traceable at the declared task anchors, and reviewers can locate the full modal flow evidence directly in those files. Refs: Game.Godot/Scenes/Screens/BattleMapScreen.tscn; Game.Godot/Scripts/Screens/BattleOutcomeOverlayController.gd; Game.Godot/Scripts/UI/HUD.cs",
-      "End-to-end state semantics remain stable over time: empty keeps no active battlefield prompt, failure keeps terminal-loss messaging, and completion keeps the intended outcome UI until a later valid state transition occurs. Refs: docs/gdd/battlemapscreen-stories.md",
+      "When a non-terminal night outcome is produced, BattleMap opens a centered daily-settlement modal, combat time stays paused for the full open interval, and run progression cannot continue until the modal is resolved by the player. Refs: Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd",
+      "The daily-settlement modal always shows exactly three selectable reward entries and the completed-night summary subset (HP, reward summary, kill count, resource snapshot); any render with fewer or more than three reward slots is invalid. Refs: Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd",
+      "Outcome states are mutually exclusive at runtime: empty shows no tracked battlefield prompt, failure shows terminal-loss messaging and does not show non-terminal settlement UI, and completion shows the intended non-terminal outcome UI. Refs: Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd",
+      "After this change, HUD, ScreenNavigator, and CombatExperienceRuntimeBridge still own their existing responsibilities, with no ownership transfer caused by the settlement modal flow. Refs: Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd",
+      "Layer boundaries are preserved in observable behavior: gameplay/domain rules are executed in Game.Core, while Game.Godot remains presentation/adapter for this flow. Refs: Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd",
+      "The settlement-modal implementation is traceable at the declared task anchors, and reviewers can locate the full modal flow evidence directly in those files. Refs: Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd",
+      "End-to-end state semantics remain stable over time: empty keeps no active battlefield prompt, failure keeps terminal-loss messaging, and completion keeps the intended outcome UI until a later valid state transition occurs. Refs: Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd",
       "GdUnit4 integration coverage verifies the non-terminal daily-settlement runtime flow using the designated integration test path. Refs: Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd",
-      "If any new player-visible controller or node path is introduced by this task, focused scene tests in this same task verify that visibility path before acceptance can pass. Refs: Tests.Godot",
-      "Before review, task/story/GDD links and declared anchors are synchronized with current artifacts so acceptance evidence resolves against the latest sources. Refs: docs/gdd/battlemapscreen-stories.md docs/gdd/battlemapscreen-epics.md docs/gdd/battlemapscreen-story-to-files-mapping.md"
+      "If any new player-visible controller or node path is introduced by this task, focused scene tests in this same task verify that visibility path before acceptance can pass. Refs: Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd",
+      "Before review, task/story/GDD links and declared anchors are synchronized with current artifacts so acceptance evidence resolves against the latest sources. Refs: Game.Core.Tests/Tasks/Task67RefsAnchorsSyncTests.cs"
     ],
     "contractRefs": [
       "core.lastking.reward.offered",
