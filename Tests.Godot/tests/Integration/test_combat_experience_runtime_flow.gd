@@ -230,6 +230,7 @@ func test_player_visible_combat_experience_runs_from_building_and_training_to_de
 
 # ACC:T56.7
 # ACC:T64.2
+# ACC:T67.2
 func test_runtime_bridge_entrypoints_remain_reachable_after_ownership_isolation() -> void:
 	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
 	add_child(auto_free(main))
@@ -281,6 +282,7 @@ func test_runtime_bridge_entrypoints_remain_reachable_after_ownership_isolation(
 
 # ACC:T57.2
 # ACC:T64.3
+# ACC:T67.3
 
 func test_battle_map_control_actions_should_delegate_through_runtime_bridge_and_keep_summary_machine_resolvable() -> void:
 	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
@@ -570,3 +572,277 @@ func test_pressure_state_mapping_should_cover_exact_four_states_and_keep_summary
 		await get_tree().process_frame
 	assert_bool(prompt_label.text.to_lower().find("n/a") < 0).is_true()
 	assert_bool(pressure_label.text.to_lower().find("danger") >= 0).is_true()
+
+
+# ACC:T67.1
+# ACC:T67.2
+# ACC:T67.3
+# ACC:T67.4
+# ACC:T67.5
+# ACC:T67.6
+# ACC:T67.7
+# ACC:T67.8
+func test_daily_settlement_modal_should_block_progress_until_reward_is_selected() -> void:
+	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
+	add_child(auto_free(main))
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	var nav := main.get_node_or_null("ScreenNavigator")
+	assert_object(nav).is_not_null()
+	nav.set("UseFadeTransition", false)
+	var ok_enter: bool = nav.call("SwitchTo", "res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn")
+	assert_bool(ok_enter).is_true()
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	var screen: Node = main.get_node("RuntimeUi/ScreenRoot/BattleMapScreen")
+	var wave_btn: Button = screen.get_node("Margin/VBox/Controls/WaveBtn")
+	var exchange_btn: Button = screen.get_node("Margin/VBox/Controls/ExchangeBtn")
+	var cleanup_btn: Button = screen.get_node("Margin/VBox/Controls/CleanupBtn")
+	var finish_btn: Button = screen.get_node("Margin/VBox/Controls/FinishBtn")
+	var modal: PanelContainer = screen.get_node("DailySettlementModal")
+	var status_label: Label = screen.get_node("Margin/VBox/Status")
+	var bridge: Node = screen.get_node("CombatExperienceRuntimeBridge")
+	var reward_a: Button = screen.get_node("DailySettlementModal/VBox/Rewards/RewardA")
+	var reward_b: Button = screen.get_node("DailySettlementModal/VBox/Rewards/RewardB")
+	var reward_c: Button = screen.get_node("DailySettlementModal/VBox/Rewards/RewardC")
+	var summary_label: Label = screen.get_node("DailySettlementModal/VBox/Summary")
+	var rewards_box: VBoxContainer = screen.get_node("DailySettlementModal/VBox/Rewards")
+	var hud := main.get_node("RuntimeUi/HUD")
+	var outcome_label: Label = hud.get_node("FeedbackLayer/OutcomePanel/VBox/OutcomeLabel")
+
+	# Drive battle to completion so non-terminal settlement modal opens.
+	wave_btn.emit_signal("pressed")
+	await get_tree().process_frame
+	exchange_btn.emit_signal("pressed")
+	await get_tree().process_frame
+	cleanup_btn.emit_signal("pressed")
+	await get_tree().process_frame
+	finish_btn.emit_signal("pressed")
+	await get_tree().process_frame
+
+	assert_bool(modal.visible).is_true()
+	assert_bool(get_tree().paused).is_true()
+	assert_bool(outcome_label.text.to_lower().find("outcome:") >= 0).is_true()
+	assert_bool(summary_label.text.find("rewards=3") >= 0).is_true()
+	assert_bool(summary_label.text.find("reward_summary=") >= 0).is_true()
+	assert_bool(summary_label.text.find("HP=") >= 0).is_true()
+	assert_bool(summary_label.text.find("kills=") >= 0).is_true()
+	assert_bool(summary_label.text.find("gold=120") >= 0).is_true()
+	assert_bool(summary_label.text.find("iron=44") >= 0).is_true()
+	assert_bool(summary_label.text.find("pop=26") >= 0).is_true()
+	assert_int(rewards_box.get_child_count()).is_equal(3)
+	assert_bool(not reward_a.disabled).is_true()
+	assert_bool(not reward_b.disabled).is_true()
+	assert_bool(not reward_c.disabled).is_true()
+	assert_bool(not reward_a.text.is_empty()).is_true()
+	assert_bool(not reward_b.text.is_empty()).is_true()
+	assert_bool(not reward_c.text.is_empty()).is_true()
+
+	# While modal is open, progression actions must be blocked.
+	var blocked_before := status_label.text
+	var summary_before: Dictionary = bridge.call("GetSummary")
+	wave_btn.emit_signal("pressed")
+	await get_tree().process_frame
+	assert_bool(status_label.text != blocked_before).is_true()
+	assert_bool(status_label.text.to_lower().find("resolve reward first") >= 0).is_true()
+	assert_that(bridge.call("GetSummary")).is_equal(summary_before)
+
+	var blocked_after_wave := status_label.text
+	exchange_btn.emit_signal("pressed")
+	await get_tree().process_frame
+	assert_str(status_label.text).is_equal(blocked_after_wave)
+	assert_bool(status_label.text.to_lower().find("resolve reward first") >= 0).is_true()
+	assert_that(bridge.call("GetSummary")).is_equal(summary_before)
+
+	var blocked_after_exchange := status_label.text
+	cleanup_btn.emit_signal("pressed")
+	await get_tree().process_frame
+	assert_str(status_label.text).is_equal(blocked_after_exchange)
+	assert_bool(status_label.text.to_lower().find("resolve reward first") >= 0).is_true()
+	assert_that(bridge.call("GetSummary")).is_equal(summary_before)
+
+	var blocked_after_cleanup := status_label.text
+	finish_btn.emit_signal("pressed")
+	await get_tree().process_frame
+	assert_str(status_label.text).is_equal(blocked_after_cleanup)
+	assert_bool(status_label.text.to_lower().find("resolve reward first") >= 0).is_true()
+	assert_that(bridge.call("GetSummary")).is_equal(summary_before)
+
+	# Resolve one reward to close modal and unblock progression.
+	reward_a.emit_signal("pressed")
+	await get_tree().process_frame
+	assert_bool(modal.visible).is_false()
+	assert_bool(get_tree().paused).is_false()
+	assert_bool(status_label.text.to_lower().find("settlement resolved") >= 0).is_true()
+
+
+# ACC:T67.2
+func test_daily_settlement_modal_should_ignore_invalid_reward_selection_index() -> void:
+	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
+	add_child(auto_free(main))
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	var nav := main.get_node_or_null("ScreenNavigator")
+	assert_object(nav).is_not_null()
+	nav.set("UseFadeTransition", false)
+	var ok_enter: bool = nav.call("SwitchTo", "res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn")
+	assert_bool(ok_enter).is_true()
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	var screen: Node = main.get_node("RuntimeUi/ScreenRoot/BattleMapScreen")
+	var wave_btn: Button = screen.get_node("Margin/VBox/Controls/WaveBtn")
+	var exchange_btn: Button = screen.get_node("Margin/VBox/Controls/ExchangeBtn")
+	var cleanup_btn: Button = screen.get_node("Margin/VBox/Controls/CleanupBtn")
+	var finish_btn: Button = screen.get_node("Margin/VBox/Controls/FinishBtn")
+	var modal: PanelContainer = screen.get_node("DailySettlementModal")
+	var status_label: Label = screen.get_node("Margin/VBox/Status")
+
+	wave_btn.emit_signal("pressed")
+	await get_tree().process_frame
+	exchange_btn.emit_signal("pressed")
+	await get_tree().process_frame
+	cleanup_btn.emit_signal("pressed")
+	await get_tree().process_frame
+	finish_btn.emit_signal("pressed")
+	await get_tree().process_frame
+
+	assert_bool(modal.visible).is_true()
+	assert_bool(get_tree().paused).is_true()
+	var status_before := status_label.text
+	screen.call("_on_settlement_reward_selected", 99)
+	await get_tree().process_frame
+	assert_bool(modal.visible).is_true()
+	assert_bool(get_tree().paused).is_true()
+	assert_str(status_label.text).is_equal(status_before)
+
+
+# ACC:T67.2
+func test_daily_settlement_modal_should_reject_invalid_reward_option_count() -> void:
+	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
+	add_child(auto_free(main))
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	var nav := main.get_node_or_null("ScreenNavigator")
+	assert_object(nav).is_not_null()
+	nav.set("UseFadeTransition", false)
+	var ok_enter: bool = nav.call("SwitchTo", "res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn")
+	assert_bool(ok_enter).is_true()
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	var screen: Node = main.get_node("RuntimeUi/ScreenRoot/BattleMapScreen")
+	var bridge: Node = screen.get_node("CombatExperienceRuntimeBridge")
+	var wave_btn: Button = screen.get_node("Margin/VBox/Controls/WaveBtn")
+	var exchange_btn: Button = screen.get_node("Margin/VBox/Controls/ExchangeBtn")
+	var cleanup_btn: Button = screen.get_node("Margin/VBox/Controls/CleanupBtn")
+	var finish_btn: Button = screen.get_node("Margin/VBox/Controls/FinishBtn")
+	var modal: PanelContainer = screen.get_node("DailySettlementModal")
+	var status_label: Label = screen.get_node("Margin/VBox/Status")
+	var settlement_options = screen.get("_settlement_options")
+	assert_that(settlement_options).is_instanceof(TYPE_ARRAY)
+	var original_options: Array = (settlement_options as Array).duplicate()
+	screen.set("_settlement_options", ["OnlyOne"])
+
+	assert_bool(bridge.has_method("ForceOutcomeForTest")).is_true()
+	bridge.call("ForceOutcomeForTest", "win", 42)
+	wave_btn.emit_signal("pressed")
+	await get_tree().process_frame
+	exchange_btn.emit_signal("pressed")
+	await get_tree().process_frame
+	cleanup_btn.emit_signal("pressed")
+	await get_tree().process_frame
+	finish_btn.emit_signal("pressed")
+	await get_tree().process_frame
+
+	assert_bool(modal.visible).is_false()
+	assert_bool(get_tree().paused).is_false()
+	assert_bool(status_label.text.to_lower().find("invalid") >= 0).is_true()
+	screen.set("_settlement_options", original_options)
+
+
+# ACC:T67.3
+func test_daily_settlement_modal_should_not_open_for_terminal_outcome() -> void:
+	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
+	add_child(auto_free(main))
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	var nav := main.get_node_or_null("ScreenNavigator")
+	assert_object(nav).is_not_null()
+	nav.set("UseFadeTransition", false)
+	var ok_enter: bool = nav.call("SwitchTo", "res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn")
+	assert_bool(ok_enter).is_true()
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	var screen: Node = main.get_node("RuntimeUi/ScreenRoot/BattleMapScreen")
+	var bridge: Node = screen.get_node("CombatExperienceRuntimeBridge")
+	var modal: PanelContainer = screen.get_node("DailySettlementModal")
+	var status_label: Label = screen.get_node("Margin/VBox/Status")
+	var wave_btn: Button = screen.get_node("Margin/VBox/Controls/WaveBtn")
+	var exchange_btn: Button = screen.get_node("Margin/VBox/Controls/ExchangeBtn")
+	var cleanup_btn: Button = screen.get_node("Margin/VBox/Controls/CleanupBtn")
+	var finish_btn: Button = screen.get_node("Margin/VBox/Controls/FinishBtn")
+	var hud := main.get_node("RuntimeUi/HUD")
+	var outcome_label: Label = hud.get_node("FeedbackLayer/OutcomePanel/VBox/OutcomeLabel")
+
+	assert_bool(bridge.has_method("ForceOutcomeForTest")).is_true()
+	bridge.call("ForceOutcomeForTest", "loss", 0)
+	wave_btn.emit_signal("pressed")
+	await get_tree().process_frame
+	exchange_btn.emit_signal("pressed")
+	await get_tree().process_frame
+	cleanup_btn.emit_signal("pressed")
+	await get_tree().process_frame
+	finish_btn.emit_signal("pressed")
+	await get_tree().process_frame
+
+	assert_bool(modal.visible).is_false()
+	assert_bool(get_tree().paused).is_false()
+	assert_bool(outcome_label.text.to_lower().find("outcome: loss") >= 0).is_true()
+	assert_bool(status_label.text.to_lower().find("finished") >= 0).is_true()
+
+
+# ACC:T67.1
+# ACC:T67.4
+# ACC:T67.5
+# ACC:T67.6
+# ACC:T67.7
+# ACC:T67.8
+func test_daily_settlement_modal_should_stay_centered_and_preserve_runtime_ownership_boundaries() -> void:
+	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
+	add_child(auto_free(main))
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	var nav := main.get_node_or_null("ScreenNavigator")
+	assert_object(nav).is_not_null()
+	nav.set("UseFadeTransition", false)
+	var ok_enter: bool = nav.call("SwitchTo", "res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn")
+	assert_bool(ok_enter).is_true()
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	var screen: Node = main.get_node("RuntimeUi/ScreenRoot/BattleMapScreen")
+	var modal: PanelContainer = screen.get_node("DailySettlementModal")
+	var bridge: Node = screen.get_node("CombatExperienceRuntimeBridge")
+	var background: Node = screen.get_node("Background")
+	var margin: Node = screen.get_node("Margin")
+
+	assert_float(modal.anchor_left).is_equal(0.5)
+	assert_float(modal.anchor_right).is_equal(0.5)
+	assert_float(modal.anchor_top).is_equal(0.5)
+	assert_float(modal.anchor_bottom).is_equal(0.5)
+	assert_float(modal.offset_left + modal.offset_right).is_equal(0.0)
+	assert_float(modal.offset_top + modal.offset_bottom).is_equal(0.0)
+
+	assert_str(str(background.get_meta("ownership_container"))).is_equal("battlefield_presentation")
+	assert_str(str(bridge.get_meta("ownership_container"))).is_equal("runtime_bridge")
+	assert_str(str(margin.get_meta("ownership_container"))).is_equal("legacy_prototype")
+	var runtime_summary: Dictionary = bridge.call("GetSummary")
+	assert_int(int(runtime_summary.get("enemy_units_spawned", 0))).is_equal(0)
