@@ -181,6 +181,7 @@ func test_narrow_layout_keeps_header_footer_fixed_when_only_battlefield_moves() 
 # ACC:T56.2
 # ACC:T58.2
 # ACC:T59.2
+# ACC:T66.2
 func test_non_battlefield_layout_perturbation_should_not_shift_header_or_footer() -> void:
 	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
 	add_child(auto_free(screen))
@@ -212,6 +213,7 @@ func test_non_battlefield_layout_perturbation_should_not_shift_header_or_footer(
 # ACC:T56.3
 # ACC:T58.3
 # ACC:T59.3
+# ACC:T66.3
 func test_1440x900_frame_keeps_three_player_visible_bands_simultaneously_visible() -> void:
 	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
 	add_child(auto_free(screen))
@@ -260,6 +262,7 @@ func test_1440x900_frame_keeps_three_player_visible_bands_simultaneously_visible
 # ACC:T56.4
 # ACC:T58.4
 # ACC:T59.4
+# ACC:T66.4
 func test_reenter_battle_map_keeps_three_band_frame_stable_after_viewport_resize() -> void:
 	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
 	add_child(auto_free(main))
@@ -755,6 +758,54 @@ func test_bridge_unavailable_should_keep_coordinator_path_recoverable_without_co
 	assert_bool(is_instance_valid(screen)).is_true()
 	assert_bool(String((screen.get_node("Margin/VBox/Status") as Label).text).length() > 0).is_true()
 	assert_bool(String((screen.get_node("Margin/VBox/Summary") as Label).text).length() > 0).is_true()
+
+
+# ACC:T66.1
+# ACC:T66.6
+func test_legacy_labels_should_not_be_authoritative_source_for_runtime_feedback() -> void:
+	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
+	add_child(auto_free(screen))
+	await _await_frames(2)
+
+	var bridge: Node = screen.get_node("CombatExperienceRuntimeBridge")
+	var status_label: Label = screen.get_node("Margin/VBox/Status")
+	var summary_label: Label = screen.get_node("Margin/VBox/Summary")
+	var legend_label: Label = screen.get_node("Margin/VBox/Legend")
+	var metrics_help_label: Label = screen.get_node("Margin/VBox/MetricsHelp")
+	var wave_btn: Button = screen.get_node("Margin/VBox/Controls/WaveBtn")
+	var exchange_btn: Button = screen.get_node("Margin/VBox/Controls/ExchangeBtn")
+	var cleanup_btn: Button = screen.get_node("Margin/VBox/Controls/CleanupBtn")
+	var finish_btn: Button = screen.get_node("Margin/VBox/Controls/FinishBtn")
+
+	var baseline_summary := _bridge_summary_metrics(bridge)
+	var baseline_status_text := String(status_label.text)
+
+	# Negative path: tampering legacy text must not mutate runtime counters/state.
+	summary_label.text = "LEGACY_OVERRIDE_SUMMARY"
+	legend_label.text = "LEGACY_OVERRIDE_LEGEND"
+	metrics_help_label.text = "LEGACY_OVERRIDE_METRICS_HELP"
+	await _await_frames(1)
+
+	var after_legacy_override := _bridge_summary_metrics(bridge)
+	assert_that(after_legacy_override).is_equal(baseline_summary)
+	assert_str(String(status_label.text)).is_equal(baseline_status_text)
+
+	# Positive path: runtime progression should still be driven by bridge flow, not legacy labels.
+	wave_btn.emit_signal("pressed")
+	await _await_frames(1)
+	var after_wave := _bridge_summary_metrics(bridge)
+	assert_int(int(after_wave.get("enemy_units_spawned", 0))).is_greater_equal(int(baseline_summary.get("enemy_units_spawned", 0)) + 2)
+	assert_bool(String(status_label.text).to_lower().find("wave") >= 0).is_true()
+
+	exchange_btn.emit_signal("pressed")
+	await _await_frames(1)
+	cleanup_btn.emit_signal("pressed")
+	await _await_frames(1)
+	finish_btn.emit_signal("pressed")
+	await _await_frames(1)
+	var terminal_summary := _bridge_summary_metrics(bridge)
+	assert_int(int(terminal_summary.get("combat_exchanges", 0))).is_greater_equal(1)
+	assert_bool(String(status_label.text).to_lower().find("finished") >= 0).is_true()
 
 func test_combat_bridge_single_source_updates_actor_snapshots_and_castle_hp() -> void:
 	var bridge := preload("res://Game.Godot/Scripts/Combat/CombatExperienceRuntimeBridge.cs").new()
