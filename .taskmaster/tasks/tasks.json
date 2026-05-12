@@ -2761,6 +2761,13 @@
           "CH05",
           "CH06",
           "CH07"
+        ],
+        "test_refs": [
+          "Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd",
+          "Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd",
+          "Tests.Godot/tests/Scenes/BattleMap/test_battlemap_operation_surface_semantics.gd",
+          "Game.Core.Tests/Architecture/Task60OwnershipBoundaryTests.cs",
+          "Game.Core.Tests/Tasks/Task66RefsAnchorsSyncTests.cs"
         ]
       },
       {

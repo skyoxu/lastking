@@ -110,3 +110,78 @@ func test_new_visible_node_paths_require_focused_scene_test_coverage() -> void:
 	assert_bool(String((title as Label).text).length() > 0).is_true()
 	assert_bool(bridge.has_method("BuildPhase")).is_true()
 	assert_bool(bridge.has_method("GetSummary")).is_true()
+
+
+# ACC:T66.5
+func test_t66_feedback_ownership_should_keep_runtime_bridge_as_state_authority() -> void:
+	var runtime := await _main_runtime()
+	var screen: Control = runtime["screen"]
+	var bridge: Node = runtime["bridge"]
+	var summary_label: Label = runtime["summary"]
+	var legend_label: Label = screen.get_node("Margin/VBox/Legend")
+	var metrics_help_label: Label = screen.get_node("Margin/VBox/MetricsHelp")
+	var status_label: Label = runtime["status"]
+	var wave_btn: Button = screen.get_node("Margin/VBox/Controls/WaveBtn")
+
+	var before := bridge.call("GetSummary")
+	var before_status := String(status_label.text)
+	summary_label.text = "LEGACY_TEXT_ONLY_OVERRIDE"
+	legend_label.text = "LEGACY_LEGEND_ONLY_OVERRIDE"
+	metrics_help_label.text = "LEGACY_METRICS_ONLY_OVERRIDE"
+	await _await_frames(1)
+	var after_legacy_override := bridge.call("GetSummary")
+	assert_that(after_legacy_override).is_equal(before)
+	assert_str(String(status_label.text)).is_equal(before_status)
+
+	wave_btn.emit_signal("pressed")
+	await _await_frames(1)
+	var after_wave := bridge.call("GetSummary")
+	assert_int(int(after_wave.get("enemy_units_spawned", 0))).is_greater_equal(int(before.get("enemy_units_spawned", 0)) + 2)
+
+
+# ACC:T66.7
+# ACC:T66.8
+# ACC:T66.9
+func test_t66_state_transition_semantics_should_stay_bridge_driven_after_legacy_text_override() -> void:
+	var runtime := await _main_runtime()
+	var screen: Control = runtime["screen"]
+	var bridge: Node = runtime["bridge"]
+	var status_label: Label = runtime["status"]
+	var summary_label: Label = runtime["summary"]
+	var wave_btn: Button = screen.get_node("Margin/VBox/Controls/WaveBtn")
+	var exchange_btn: Button = screen.get_node("Margin/VBox/Controls/ExchangeBtn")
+	var cleanup_btn: Button = screen.get_node("Margin/VBox/Controls/CleanupBtn")
+	var finish_btn: Button = screen.get_node("Margin/VBox/Controls/FinishBtn")
+
+	var empty_snapshot := bridge.call("GetSummary")
+	var empty_status := String(status_label.text)
+	assert_int(int(empty_snapshot.get("enemy_units_spawned", 0))).is_equal(0)
+	assert_bool(empty_status.to_lower().find("finished") < 0).is_true()
+
+	summary_label.text = "LEGACY_OVERRIDE_SHOULD_NOT_DRIVE_STATE"
+	await _await_frames(1)
+	assert_that(bridge.call("GetSummary")).is_equal(empty_snapshot)
+	assert_str(String(status_label.text)).is_equal(empty_status)
+
+	# failure semantics: out-of-order finish should not enter completion.
+	finish_btn.emit_signal("pressed")
+	await _await_frames(1)
+	var failure_status := String(status_label.text)
+	assert_bool(failure_status.to_lower().find("cleanup") >= 0).is_true()
+	assert_bool(failure_status.to_lower().find("finished") < 0).is_true()
+
+	# completion semantics: bridge-driven valid sequence should enter completion deterministically.
+	wave_btn.emit_signal("pressed")
+	await _await_frames(1)
+	exchange_btn.emit_signal("pressed")
+	await _await_frames(1)
+	cleanup_btn.emit_signal("pressed")
+	await _await_frames(1)
+	finish_btn.emit_signal("pressed")
+	await _await_frames(1)
+
+	var completion_status := String(status_label.text)
+	var completion_snapshot := bridge.call("GetSummary")
+	assert_bool(completion_status.to_lower().find("finished") >= 0).is_true()
+	assert_int(int(completion_snapshot.get("enemy_units_spawned", 0))).is_greater_equal(2)
+	assert_int(int(completion_snapshot.get("combat_exchanges", 0))).is_greater_equal(1)
