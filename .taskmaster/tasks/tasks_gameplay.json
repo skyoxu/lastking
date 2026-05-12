@@ -5451,10 +5451,11 @@
       "battlemap",
       "ui"
     ],
-    "test_refs": [
-      "Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd",
-      "Game.Core.Tests/Tasks/Task67RefsAnchorsSyncTests.cs"
-    ],
+      "test_refs": [
+        "Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd",
+        "Tests.Godot/tests/Scenes/BattleMap/test_battlemap_operation_surface_semantics.gd",
+        "Game.Core.Tests/Tasks/Task67RefsAnchorsSyncTests.cs"
+      ],
     "acceptance": [
       "When a non-terminal night outcome is produced, BattleMap opens a centered daily-settlement modal, combat time stays paused for the full open interval, and run progression cannot continue until the modal is resolved by the player. Refs: Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd",
       "The daily-settlement modal always shows exactly three selectable reward entries and the completed-night summary subset (HP, reward summary, kill count, resource snapshot); any render with fewer or more than three reward slots is invalid. Refs: Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd",
@@ -5523,19 +5524,21 @@
       "ui"
     ],
     "test_refs": [
-      "Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd"
+      "Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd",
+      "Tests.Godot/tests/Scenes/BattleMap/test_battlemap_operation_surface_semantics.gd",
+      "Game.Core.Tests/Tasks/Task68RefsAnchorsSyncTests.cs"
     ],
     "acceptance": [
-      "After final boss defeat, a centered victory modal is displayed, combat remains paused for the entire modal lifetime, and the modal text explicitly indicates that live battle cannot be resumed from this outcome state. Refs: docs/gdd/outcome-ui-spec.zh-CN.md Game.Godot/Scenes/Screens/BattleMapScreen.tscn",
-      "The victory modal provides exactly two actions: Return to Main Menu and Restart; Continue Battle is not present, and no button, hotkey, or alternate input path can resume live battle. Refs: docs/gdd/outcome-ui-spec.zh-CN.md Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd",
-      "Outcome-state behavior is deterministic for the tracked condition: empty shows no active battlefield prompt, failure shows terminal-loss messaging, and completion shows victory UI that remains unchanged until a terminal action is selected. Refs: docs/gdd/battlemapscreen-stories.md",
-      "This task does not reassign ownership: HUD, ScreenNavigator, and CombatExperienceRuntimeBridge keep their existing responsibilities, and no ownership transfer is introduced. Refs: Game.Godot/Scenes/UI/HUD.tscn Game.Godot/Scripts/Navigation/ScreenNavigator.cs Game.Godot/Scripts/Combat/CombatExperienceRuntimeBridge.cs",
-      "This task keeps layer boundaries intact: domain rules stay in Game.Core, and Game.Godot stays presentation/adapter only. Refs: Game.Core Game.Godot",
-      "Task behavior changes are traceable at the declared anchors, and a reviewer can map victory-modal behavior updates to those files. Refs: Game.Godot/Scenes/Screens/BattleMapScreen.tscn; Game.Godot/Scripts/Screens/BattleOutcomeOverlayController.gd; Game.Godot/Scripts/UI/HUD.cs",
-      "At runtime, state semantics are verifiable: empty has no active battlefield prompt, failure shows terminal-loss messaging, and completion remains in stable victory UI until a terminal action changes state. Refs: docs/gdd/battlemapscreen-stories.md",
+      "After final boss defeat, a centered victory modal is displayed, combat remains paused for the entire modal lifetime, and the modal text explicitly indicates that live battle cannot be resumed from this outcome state. Refs: Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd Tests.Godot/tests/Scenes/BattleMap/test_battlemap_operation_surface_semantics.gd",
+      "The victory modal provides exactly two actions: Return to Main Menu and Restart; Continue Battle is not present, and no button, hotkey, or alternate input path can resume live battle. Refs: Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd Game.Core.Tests/Tasks/Task68RefsAnchorsSyncTests.cs",
+      "Outcome-state behavior is deterministic for the tracked condition: empty shows no active battlefield prompt, failure shows terminal-loss messaging, and completion shows victory UI that remains unchanged until a terminal action is selected. Refs: Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd Game.Core.Tests/Tasks/Task68RefsAnchorsSyncTests.cs",
+      "This task does not reassign ownership: HUD, ScreenNavigator, and CombatExperienceRuntimeBridge keep their existing responsibilities, and no ownership transfer is introduced. Refs: Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd Tests.Godot/tests/Scenes/BattleMap/test_battlemap_operation_surface_semantics.gd",
+      "This task keeps layer boundaries intact: domain rules stay in Game.Core, and Game.Godot stays presentation/adapter only. Refs: Game.Core.Tests/Tasks/Task68RefsAnchorsSyncTests.cs Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd",
+      "Task behavior changes are traceable at the declared anchors, and a reviewer can map victory-modal behavior updates to those files. Refs: Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd Tests.Godot/tests/Scenes/BattleMap/test_battlemap_operation_surface_semantics.gd Game.Core.Tests/Tasks/Task68RefsAnchorsSyncTests.cs",
+      "At runtime, state semantics are verifiable: empty has no active battlefield prompt, failure shows terminal-loss messaging, and completion remains in stable victory UI until a terminal action changes state. Refs: Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd Game.Core.Tests/Tasks/Task68RefsAnchorsSyncTests.cs",
       "GdUnit4 integration coverage for this task is present in the designated runtime-flow test and includes assertions for the required victory outcome behavior. Refs: Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd",
-      "If this task introduces any new player-visible controller or node path, focused scene tests for that addition are included in the same task before acceptance completes. Refs: Tests.Godot",
-      "Before review, the task, story, and GDD references/anchors used by this task are synchronized and resolve to current artifacts. Refs: docs/gdd/battlemapscreen-stories.md docs/gdd/battlemapscreen-epics.md docs/gdd/battlemapscreen-story-to-files-mapping.md"
+      "If this task introduces any new player-visible controller or node path, focused scene tests for that addition are included in the same task before acceptance completes. Refs: Tests.Godot/tests/Scenes/BattleMap/test_battlemap_operation_surface_semantics.gd Game.Core.Tests/Tasks/Task68RefsAnchorsSyncTests.cs",
+      "Before review, the task, story, and GDD references/anchors used by this task are synchronized and resolve to current artifacts. Refs: Game.Core.Tests/Tasks/Task68RefsAnchorsSyncTests.cs Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd"
     ],
     "contractRefs": [
       "core.lastking.reward.offered",

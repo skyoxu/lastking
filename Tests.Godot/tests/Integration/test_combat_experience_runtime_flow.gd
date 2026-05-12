@@ -127,11 +127,13 @@ func _restore_damage_numbers_setting(snapshot: Dictionary) -> void:
 	if bool(snapshot.get("had_primary", false)):
 		cfg.set_value("settings", "combat_damage_numbers_enabled", bool(snapshot.get("primary_value", true)))
 	else:
-		cfg.erase_section_key("settings", "combat_damage_numbers_enabled")
+		if cfg.has_section_key("settings", "combat_damage_numbers_enabled"):
+			cfg.erase_section_key("settings", "combat_damage_numbers_enabled")
 	if bool(snapshot.get("had_legacy", false)):
 		cfg.set_value("settings", "damage_numbers_enabled", bool(snapshot.get("legacy_value", true)))
 	else:
-		cfg.erase_section_key("settings", "damage_numbers_enabled")
+		if cfg.has_section_key("settings", "damage_numbers_enabled"):
+			cfg.erase_section_key("settings", "damage_numbers_enabled")
 	var err := cfg.save(_SETTINGS_CFG_PATH)
 	assert_int(int(err)).is_equal(int(OK))
 
@@ -613,6 +615,8 @@ func test_daily_settlement_modal_should_block_progress_until_reward_is_selected(
 	var outcome_label: Label = hud.get_node("FeedbackLayer/OutcomePanel/VBox/OutcomeLabel")
 
 	# Drive battle to completion so non-terminal settlement modal opens.
+	assert_bool(bridge.has_method("ForceOutcomeForTest")).is_true()
+	bridge.call("ForceOutcomeForTest", "settlement", 42)
 	wave_btn.emit_signal("pressed")
 	await get_tree().process_frame
 	exchange_btn.emit_signal("pressed")
@@ -701,6 +705,8 @@ func test_daily_settlement_modal_should_ignore_invalid_reward_selection_index() 
 	var modal: PanelContainer = screen.get_node("DailySettlementModal")
 	var status_label: Label = screen.get_node("Margin/VBox/Status")
 
+	assert_bool(screen.get_node("CombatExperienceRuntimeBridge").has_method("ForceOutcomeForTest")).is_true()
+	screen.get_node("CombatExperienceRuntimeBridge").call("ForceOutcomeForTest", "settlement", 42)
 	wave_btn.emit_signal("pressed")
 	await get_tree().process_frame
 	exchange_btn.emit_signal("pressed")
@@ -744,12 +750,13 @@ func test_daily_settlement_modal_should_reject_invalid_reward_option_count() -> 
 	var modal: PanelContainer = screen.get_node("DailySettlementModal")
 	var status_label: Label = screen.get_node("Margin/VBox/Status")
 	var settlement_options = screen.get("_settlement_options")
-	assert_that(settlement_options).is_instanceof(TYPE_ARRAY)
+	assert_int(typeof(settlement_options)).is_equal(TYPE_ARRAY)
 	var original_options: Array = (settlement_options as Array).duplicate()
-	screen.set("_settlement_options", ["OnlyOne"])
+	assert_bool(screen.has_method("SetSettlementOptionsForTest")).is_true()
+	screen.call("SetSettlementOptionsForTest", ["OnlyOne"])
 
 	assert_bool(bridge.has_method("ForceOutcomeForTest")).is_true()
-	bridge.call("ForceOutcomeForTest", "win", 42)
+	bridge.call("ForceOutcomeForTest", "settlement", 42)
 	wave_btn.emit_signal("pressed")
 	await get_tree().process_frame
 	exchange_btn.emit_signal("pressed")
@@ -762,7 +769,7 @@ func test_daily_settlement_modal_should_reject_invalid_reward_option_count() -> 
 	assert_bool(modal.visible).is_false()
 	assert_bool(get_tree().paused).is_false()
 	assert_bool(status_label.text.to_lower().find("invalid") >= 0).is_true()
-	screen.set("_settlement_options", original_options)
+	screen.call("SetSettlementOptionsForTest", original_options)
 
 
 # ACC:T67.3
@@ -806,6 +813,114 @@ func test_daily_settlement_modal_should_not_open_for_terminal_outcome() -> void:
 	assert_bool(get_tree().paused).is_false()
 	assert_bool(outcome_label.text.to_lower().find("outcome: loss") >= 0).is_true()
 	assert_bool(status_label.text.to_lower().find("finished") >= 0).is_true()
+
+
+# ACC:T68.1
+# ACC:T68.4
+# ACC:T68.6
+# ACC:T68.8
+func test_victory_outcome_modal_should_pause_runtime_and_only_offer_terminal_actions() -> void:
+	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
+	add_child(auto_free(main))
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	var nav := main.get_node_or_null("ScreenNavigator")
+	assert_object(nav).is_not_null()
+	nav.set("UseFadeTransition", false)
+	var ok_enter: bool = nav.call("SwitchTo", "res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn")
+	assert_bool(ok_enter).is_true()
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	var screen: Node = main.get_node("RuntimeUi/ScreenRoot/BattleMapScreen")
+	var bridge: Node = screen.get_node("CombatExperienceRuntimeBridge")
+	var wave_btn: Button = screen.get_node("Margin/VBox/Controls/WaveBtn")
+	var exchange_btn: Button = screen.get_node("Margin/VBox/Controls/ExchangeBtn")
+	var cleanup_btn: Button = screen.get_node("Margin/VBox/Controls/CleanupBtn")
+	var finish_btn: Button = screen.get_node("Margin/VBox/Controls/FinishBtn")
+	var settlement_modal: PanelContainer = screen.get_node("DailySettlementModal")
+	var victory_modal: PanelContainer = screen.get_node("VictoryOutcomeModal")
+	var victory_title: Label = screen.get_node("VictoryOutcomeModal/VBox/Title")
+	var victory_summary: Label = screen.get_node("VictoryOutcomeModal/VBox/Summary")
+	var victory_hint: Label = screen.get_node("VictoryOutcomeModal/VBox/Hint")
+	var action_box: VBoxContainer = screen.get_node("VictoryOutcomeModal/VBox/Actions")
+	var return_btn: Button = screen.get_node("VictoryOutcomeModal/VBox/Actions/ReturnToMainMenuBtn")
+	var restart_btn: Button = screen.get_node("VictoryOutcomeModal/VBox/Actions/RestartBtn")
+	var status_label: Label = screen.get_node("Margin/VBox/Status")
+	var hud := main.get_node("RuntimeUi/HUD")
+	var outcome_label: Label = hud.get_node("FeedbackLayer/OutcomePanel/VBox/OutcomeLabel")
+
+	assert_bool(bridge.has_method("ForceOutcomeForTest")).is_true()
+	bridge.call("ForceOutcomeForTest", "win", 42)
+	wave_btn.emit_signal("pressed")
+	await get_tree().process_frame
+	exchange_btn.emit_signal("pressed")
+	await get_tree().process_frame
+	cleanup_btn.emit_signal("pressed")
+	await get_tree().process_frame
+	finish_btn.emit_signal("pressed")
+	await get_tree().process_frame
+
+	assert_bool(settlement_modal.visible).is_false()
+	assert_bool(victory_modal.visible).is_true()
+	assert_bool(get_tree().paused).is_true()
+	assert_bool(outcome_label.text.to_lower().find("outcome: win") >= 0).is_true()
+	assert_bool(victory_title.text.to_lower().find("victory") >= 0).is_true()
+	assert_bool(victory_hint.text.to_lower().find("cannot be resumed") >= 0).is_true()
+	assert_bool(victory_summary.text.find("HP=42") >= 0).is_true()
+	assert_bool(victory_summary.text.find("kills=") >= 0).is_true()
+	assert_bool(victory_summary.text.find("gold=120") >= 0).is_true()
+	assert_bool(victory_summary.text.find("iron=44") >= 0).is_true()
+	assert_bool(victory_summary.text.find("pop=26") >= 0).is_true()
+	assert_int(action_box.get_child_count()).is_equal(2)
+
+	assert_str(return_btn.text).is_equal("Return to Main Menu")
+	assert_str(restart_btn.text).is_equal("Restart")
+	assert_bool(not return_btn.disabled).is_true()
+	assert_bool(not restart_btn.disabled).is_true()
+
+	var status_before := status_label.text
+	wave_btn.emit_signal("pressed")
+	await get_tree().process_frame
+	assert_bool(status_label.text != status_before).is_true()
+	assert_bool(status_label.text.to_lower().find("terminal outcome") >= 0).is_true()
+	assert_bool(status_label.text.to_lower().find("continue battle") < 0).is_true()
+	assert_bool(victory_modal.visible).is_true()
+	assert_bool(get_tree().paused).is_true()
+
+
+# ACC:T68.7
+func test_victory_outcome_modal_should_stay_centered_and_preserve_runtime_ownership_boundaries() -> void:
+	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
+	add_child(auto_free(main))
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	var nav := main.get_node_or_null("ScreenNavigator")
+	assert_object(nav).is_not_null()
+	nav.set("UseFadeTransition", false)
+	var ok_enter: bool = nav.call("SwitchTo", "res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn")
+	assert_bool(ok_enter).is_true()
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	var screen: Node = main.get_node("RuntimeUi/ScreenRoot/BattleMapScreen")
+	var modal: PanelContainer = screen.get_node("VictoryOutcomeModal")
+	var bridge: Node = screen.get_node("CombatExperienceRuntimeBridge")
+	var background: Node = screen.get_node("Background")
+	var margin: Node = screen.get_node("Margin")
+
+	assert_float(modal.anchor_left).is_equal(0.5)
+	assert_float(modal.anchor_right).is_equal(0.5)
+	assert_float(modal.anchor_top).is_equal(0.5)
+	assert_float(modal.anchor_bottom).is_equal(0.5)
+	assert_float(modal.offset_left + modal.offset_right).is_equal(0.0)
+	assert_float(modal.offset_top + modal.offset_bottom).is_equal(0.0)
+
+	assert_str(str(background.get_meta("ownership_container"))).is_equal("battlefield_presentation")
+	assert_str(str(bridge.get_meta("ownership_container"))).is_equal("runtime_bridge")
+	assert_str(str(margin.get_meta("ownership_container"))).is_equal("legacy_prototype")
 
 
 # ACC:T67.1

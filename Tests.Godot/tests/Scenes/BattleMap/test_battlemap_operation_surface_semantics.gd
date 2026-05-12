@@ -123,20 +123,20 @@ func test_t66_feedback_ownership_should_keep_runtime_bridge_as_state_authority()
 	var status_label: Label = runtime["status"]
 	var wave_btn: Button = screen.get_node("Margin/VBox/Controls/WaveBtn")
 
-	var before := bridge.call("GetSummary")
+	var before_summary: Dictionary = bridge.call("GetSummary")
 	var before_status := String(status_label.text)
 	summary_label.text = "LEGACY_TEXT_ONLY_OVERRIDE"
 	legend_label.text = "LEGACY_LEGEND_ONLY_OVERRIDE"
 	metrics_help_label.text = "LEGACY_METRICS_ONLY_OVERRIDE"
 	await _await_frames(1)
-	var after_legacy_override := bridge.call("GetSummary")
-	assert_that(after_legacy_override).is_equal(before)
+	var after_legacy_override: Dictionary = bridge.call("GetSummary")
+	assert_that(after_legacy_override).is_equal(before_summary)
 	assert_str(String(status_label.text)).is_equal(before_status)
 
 	wave_btn.emit_signal("pressed")
 	await _await_frames(1)
-	var after_wave := bridge.call("GetSummary")
-	assert_int(int(after_wave.get("enemy_units_spawned", 0))).is_greater_equal(int(before.get("enemy_units_spawned", 0)) + 2)
+	var after_wave: Dictionary = bridge.call("GetSummary")
+	assert_int(int(after_wave.get("enemy_units_spawned", 0))).is_greater_equal(int(before_summary.get("enemy_units_spawned", 0)) + 2)
 
 
 # ACC:T66.7
@@ -153,7 +153,7 @@ func test_t66_state_transition_semantics_should_stay_bridge_driven_after_legacy_
 	var cleanup_btn: Button = screen.get_node("Margin/VBox/Controls/CleanupBtn")
 	var finish_btn: Button = screen.get_node("Margin/VBox/Controls/FinishBtn")
 
-	var empty_snapshot := bridge.call("GetSummary")
+	var empty_snapshot: Dictionary = bridge.call("GetSummary")
 	var empty_status := String(status_label.text)
 	assert_int(int(empty_snapshot.get("enemy_units_spawned", 0))).is_equal(0)
 	assert_bool(empty_status.to_lower().find("finished") < 0).is_true()
@@ -181,7 +181,7 @@ func test_t66_state_transition_semantics_should_stay_bridge_driven_after_legacy_
 	await _await_frames(1)
 
 	var completion_status := String(status_label.text)
-	var completion_snapshot := bridge.call("GetSummary")
+	var completion_snapshot: Dictionary = bridge.call("GetSummary")
 	assert_bool(completion_status.to_lower().find("finished") >= 0).is_true()
 	assert_int(int(completion_snapshot.get("enemy_units_spawned", 0))).is_greater_equal(2)
 	assert_int(int(completion_snapshot.get("combat_exchanges", 0))).is_greater_equal(1)
@@ -203,3 +203,27 @@ func test_t67_daily_settlement_modal_node_paths_should_exist_and_default_hidden(
 	assert_object(reward_b).is_not_null()
 	assert_object(reward_c).is_not_null()
 	assert_bool((modal as Control).visible).is_false()
+
+
+# ACC:T68.1
+# ACC:T68.4
+# ACC:T68.6
+# ACC:T68.9
+func test_t68_victory_outcome_modal_node_paths_should_exist_and_default_hidden() -> void:
+	var runtime := await _main_runtime()
+	var screen: Control = runtime["screen"]
+	var modal := screen.get_node_or_null("VictoryOutcomeModal")
+	var summary := screen.get_node_or_null("VictoryOutcomeModal/VBox/Summary")
+	var hint := screen.get_node_or_null("VictoryOutcomeModal/VBox/Hint")
+	var actions := screen.get_node_or_null("VictoryOutcomeModal/VBox/Actions")
+	var return_btn := screen.get_node_or_null("VictoryOutcomeModal/VBox/Actions/ReturnToMainMenuBtn")
+	var restart_btn := screen.get_node_or_null("VictoryOutcomeModal/VBox/Actions/RestartBtn")
+
+	assert_object(modal).is_not_null()
+	assert_object(summary).is_not_null()
+	assert_object(hint).is_not_null()
+	assert_object(actions).is_not_null()
+	assert_object(return_btn).is_not_null()
+	assert_object(restart_btn).is_not_null()
+	assert_bool((modal as Control).visible).is_false()
+	assert_int((actions as VBoxContainer).get_child_count()).is_equal(2)

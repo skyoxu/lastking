@@ -74,7 +74,7 @@ public sealed class Task66RefsAnchorsSyncTests
             }),
             ["ACC:T66.5"] = ("scene", "test_t66_feedback_ownership_should_keep_runtime_bridge_as_state_authority", new[]
             {
-                "assert_that(after_legacy_override).is_equal(before)",
+                "assert_that(after_legacy_override).is_equal(before_summary)",
             }),
             ["ACC:T66.6"] = ("integration", "test_legacy_labels_should_not_be_authoritative_source_for_runtime_feedback", new[]
             {

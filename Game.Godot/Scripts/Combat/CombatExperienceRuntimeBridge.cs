@@ -30,6 +30,7 @@ public partial class CombatExperienceRuntimeBridge : Node
     private int _resourceIron;
     private int _resourcePopulationCap;
     private string _outcome = "win";
+    private string _forcedOutcomeOverride = string.Empty;
     private readonly System.Collections.Generic.List<string> _activeDamageNumberNames = new();
     private int _friendlyUnitSeq;
     private int _enemyUnitSeq;
@@ -70,6 +71,7 @@ public partial class CombatExperienceRuntimeBridge : Node
         _resourceIron = 0;
         _resourcePopulationCap = 0;
         _outcome = "win";
+        _forcedOutcomeOverride = string.Empty;
     }
 
     public GDictionary BuildPhase()
@@ -157,7 +159,9 @@ public partial class CombatExperienceRuntimeBridge : Node
         _resourceGold = 120;
         _resourceIron = 44;
         _resourcePopulationCap = 26;
-        _outcome = _castleHp > 0 ? "win" : "loss";
+        _outcome = string.IsNullOrWhiteSpace(_forcedOutcomeOverride)
+            ? (_castleHp > 0 ? "win" : "loss")
+            : _forcedOutcomeOverride;
         Publish(EventTypes.LastkingCastleHpChanged, "{\"Day\":9,\"PreviousHp\":100,\"CurrentHp\":42}");
         Publish(EventTypes.LastkingResourcesChanged, "{\"RunId\":\"combat-e2e\",\"DayNumber\":9,\"Gold\":120,\"Iron\":44,\"PopulationCap\":26}");
         Publish(EventTypes.LastkingUiFeedbackRaised, "{\"Code\":\"run_continue_blocked\",\"MessageKey\":\"ui.blocked_action.combat_exchange\",\"Details\":\"combat_exchange projectiles=2 retired=1\"}");
@@ -168,7 +172,21 @@ public partial class CombatExperienceRuntimeBridge : Node
     public GDictionary ForceOutcomeForTest(string outcome, int castleHp)
     {
         _castleHp = Math.Max(0, castleHp);
-        _outcome = string.Equals(outcome, "loss", StringComparison.OrdinalIgnoreCase) ? "loss" : "win";
+        if (string.Equals(outcome, "loss", StringComparison.OrdinalIgnoreCase))
+        {
+            _forcedOutcomeOverride = "loss";
+            _outcome = "loss";
+        }
+        else if (string.Equals(outcome, "win", StringComparison.OrdinalIgnoreCase))
+        {
+            _forcedOutcomeOverride = "win";
+            _outcome = "win";
+        }
+        else
+        {
+            _forcedOutcomeOverride = "settlement";
+            _outcome = "settlement";
+        }
         return GetSummary();
     }
 

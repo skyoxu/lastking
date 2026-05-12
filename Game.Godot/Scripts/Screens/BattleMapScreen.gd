@@ -18,10 +18,15 @@ extends Control
 @onready var _enemy_spawn_b: ColorRect = $Background/EnemySpawnB
 @onready var _daily_settlement_modal: PanelContainer = $DailySettlementModal
 @onready var _daily_settlement_summary: Label = $DailySettlementModal/VBox/Summary
-@onready var _daily_settlement_rewards: VBoxContainer = $DailySettlementModal/VBox/Rewards
 @onready var _daily_reward_a: Button = $DailySettlementModal/VBox/Rewards/RewardA
 @onready var _daily_reward_b: Button = $DailySettlementModal/VBox/Rewards/RewardB
 @onready var _daily_reward_c: Button = $DailySettlementModal/VBox/Rewards/RewardC
+@onready var _victory_outcome_modal: PanelContainer = $VictoryOutcomeModal
+@onready var _victory_outcome_title: Label = $VictoryOutcomeModal/VBox/Title
+@onready var _victory_outcome_summary: Label = $VictoryOutcomeModal/VBox/Summary
+@onready var _victory_outcome_hint: Label = $VictoryOutcomeModal/VBox/Hint
+@onready var _victory_return_btn: Button = $VictoryOutcomeModal/VBox/Actions/ReturnToMainMenuBtn
+@onready var _victory_restart_btn: Button = $VictoryOutcomeModal/VBox/Actions/RestartBtn
 
 var _wave_started := false
 var _combat_resolved := false
@@ -34,7 +39,7 @@ var _path_points: PackedVector2Array = PackedVector2Array(
 )
 var _i18n: Variant = null
 var _settlement_modal_open := false
-var _settlement_options := ["Reward A", "Reward B", "Reward C"]
+var _settlement_options: Array[String] = ["Reward A", "Reward B", "Reward C"]
 
 func _ready() -> void:
 	_i18n = load("res://Game.Godot/Scripts/Localization/LocalizationManager.gd").new()
@@ -46,6 +51,9 @@ func _ready() -> void:
 	_daily_reward_a.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
 	_daily_reward_b.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
 	_daily_reward_c.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	_victory_outcome_modal.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	_victory_return_btn.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	_victory_restart_btn.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
 
 	# Task 56 ownership markers: battlefield presentation, runtime bridge, legacy prototype.
 	_background.set_meta("ownership_container", "battlefield_presentation")
@@ -64,10 +72,13 @@ func _ready() -> void:
 	_daily_reward_a.pressed.connect(_on_settlement_reward_selected.bind(0))
 	_daily_reward_b.pressed.connect(_on_settlement_reward_selected.bind(1))
 	_daily_reward_c.pressed.connect(_on_settlement_reward_selected.bind(2))
+	_victory_return_btn.pressed.connect(_on_victory_return_to_main_menu)
+	_victory_restart_btn.pressed.connect(_on_victory_restart)
 	_wave_timer.timeout.connect(_on_wave_timer_timeout)
 
 	_try_bridge_reset()
 	_close_settlement_modal()
+	_close_victory_modal()
 	_apply_spawn_cues()
 	_render(_try_bridge_summary(), _t("battlemap.status.loaded"))
 
@@ -94,6 +105,9 @@ func _on_wave() -> void:
 	if _settlement_modal_open:
 		_status.text = "Settlement modal is open; resolve reward first."
 		return
+	if _victory_outcome_modal.visible:
+		_status.text = "Terminal outcome is open; choose Restart or Return to Main Menu."
+		return
 	_wave_started = true
 	_combat_resolved = false
 	_cleaned = false
@@ -119,6 +133,9 @@ func _on_exchange() -> void:
 	if _settlement_modal_open:
 		_status.text = "Settlement modal is open; resolve reward first."
 		return
+	if _victory_outcome_modal.visible:
+		_status.text = "Terminal outcome is open; choose Restart or Return to Main Menu."
+		return
 	if not _wave_started:
 		_status.text = _t("battlemap.status.require_wave")
 		return
@@ -128,6 +145,9 @@ func _on_exchange() -> void:
 func _on_cleanup() -> void:
 	if _settlement_modal_open:
 		_status.text = "Settlement modal is open; resolve reward first."
+		return
+	if _victory_outcome_modal.visible:
+		_status.text = "Terminal outcome is open; choose Restart or Return to Main Menu."
 		return
 	if not _combat_resolved:
 		_status.text = _t("battlemap.status.require_exchange")
@@ -139,6 +159,9 @@ func _on_finish() -> void:
 	if _settlement_modal_open:
 		_status.text = "Settlement modal is open; resolve reward first."
 		return
+	if _victory_outcome_modal.visible:
+		_status.text = "Terminal outcome is open; choose Restart or Return to Main Menu."
+		return
 	if not _cleaned:
 		_status.text = _t("battlemap.status.require_cleanup")
 		return
@@ -147,7 +170,9 @@ func _on_finish() -> void:
 	_apply_spawn_cues()
 	var outcome := _call_or_fallback("PublishOutcomePhase")
 	_render(outcome, _t("battlemap.status.finished"))
-	if _is_settlement_outcome(outcome):
+	if _is_victory_outcome(outcome):
+		_open_victory_modal(outcome)
+	elif _is_settlement_outcome(outcome):
 		_open_settlement_modal(outcome)
 
 func _on_back() -> void:
@@ -297,13 +322,22 @@ func register_overlay_controller(path: NodePath, controller: Node) -> void:
 	controller.name = node_name
 	add_child(controller)
 
+func SetSettlementOptionsForTest(options: Array) -> void:
+	_settlement_options.clear()
+	for option in options:
+		_settlement_options.append(String(option))
+
 func _is_settlement_outcome(summary: Dictionary) -> bool:
 	var outcome := String(summary.get("outcome", "")).to_lower()
-	if outcome == "win":
+	if outcome == "settlement":
 		return true
 	if outcome == "loss":
 		return false
 	return false
+
+func _is_victory_outcome(summary: Dictionary) -> bool:
+	var outcome := String(summary.get("outcome", "")).to_lower()
+	return outcome == "win"
 
 func _open_settlement_modal(summary: Dictionary) -> void:
 	_settlement_modal_open = true
@@ -312,7 +346,7 @@ func _open_settlement_modal(summary: Dictionary) -> void:
 	var gold := int(summary.get("resource_gold", 0))
 	var iron := int(summary.get("resource_iron", 0))
 	var pop_cap := int(summary.get("resource_population_cap", 0))
-	var rewards := _settlement_options
+	var rewards: Array[String] = _settlement_options
 	if rewards.size() != 3:
 		_settlement_modal_open = false
 		_daily_settlement_modal.visible = false
@@ -332,6 +366,25 @@ func _close_settlement_modal() -> void:
 	_daily_settlement_modal.visible = false
 	get_tree().paused = false
 
+func _open_victory_modal(summary: Dictionary) -> void:
+	_settlement_modal_open = false
+	_daily_settlement_modal.visible = false
+	_victory_outcome_modal.visible = true
+	get_tree().paused = true
+	var hp := int(summary.get("castle_hp", 0))
+	var kills := int(summary.get("dead_units_retired", 0))
+	var gold := int(summary.get("resource_gold", 0))
+	var iron := int(summary.get("resource_iron", 0))
+	var pop_cap := int(summary.get("resource_population_cap", 0))
+	_victory_outcome_title.text = "Victory"
+	_victory_outcome_summary.text = "HP=%d | kills=%d | resources(gold=%d,iron=%d,pop=%d)" % [hp, kills, gold, iron, pop_cap]
+	_victory_outcome_hint.text = "Live battle cannot be resumed from this outcome state."
+
+func _close_victory_modal() -> void:
+	_victory_outcome_modal.visible = false
+	if get_tree() != null:
+		get_tree().paused = false
+
 func _on_settlement_reward_selected(index: int) -> void:
 	if not _settlement_modal_open:
 		return
@@ -339,3 +392,25 @@ func _on_settlement_reward_selected(index: int) -> void:
 		return
 	_status.text = "Settlement resolved with %s" % _settlement_options[index]
 	_close_settlement_modal()
+
+func _on_victory_return_to_main_menu() -> void:
+	if not _victory_outcome_modal.visible:
+		return
+	_close_victory_modal()
+	_status.text = "Victory outcome resolved with Return to Main Menu."
+	_on_back()
+
+func _on_victory_restart() -> void:
+	if not _victory_outcome_modal.visible:
+		return
+	_close_victory_modal()
+	_status.text = "Victory outcome resolved with Restart."
+	_wave_started = false
+	_combat_resolved = false
+	_cleaned = false
+	_auto_wave = false
+	_wave_timer.stop()
+	_auto_wave_btn.text = _t("battlemap.btn.auto_toggle")
+	_try_bridge_reset()
+	_apply_spawn_cues()
+	_render(_try_bridge_summary(), _t("battlemap.status.loaded"))
