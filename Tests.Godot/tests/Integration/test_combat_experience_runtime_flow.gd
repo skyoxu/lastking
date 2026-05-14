@@ -773,7 +773,8 @@ func test_daily_settlement_modal_should_reject_invalid_reward_option_count() -> 
 
 
 # ACC:T67.3
-func test_daily_settlement_modal_should_not_open_for_terminal_outcome() -> void:
+# ACC:T69.1 ACC:T69.4
+func test_defeat_outcome_modal_should_open_immediately_when_active_battle_crosses_terminal_hp_boundary() -> void:
 	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
 	add_child(auto_free(main))
 	await get_tree().process_frame
@@ -789,7 +790,65 @@ func test_daily_settlement_modal_should_not_open_for_terminal_outcome() -> void:
 
 	var screen: Node = main.get_node("RuntimeUi/ScreenRoot/BattleMapScreen")
 	var bridge: Node = screen.get_node("CombatExperienceRuntimeBridge")
-	var modal: PanelContainer = screen.get_node("DailySettlementModal")
+	var defeat_modal: PanelContainer = screen.get_node("DefeatOutcomeModal")
+	var defeat_summary: Label = screen.get_node("DefeatOutcomeModal/VBox/Summary")
+	var status_label: Label = screen.get_node("Margin/VBox/Status")
+	var wave_btn: Button = screen.get_node("Margin/VBox/Controls/WaveBtn")
+	var exchange_btn: Button = screen.get_node("Margin/VBox/Controls/ExchangeBtn")
+	var finish_btn: Button = screen.get_node("Margin/VBox/Controls/FinishBtn")
+
+	assert_bool(bridge.has_method("ConfigureDurabilityForTest")).is_true()
+	bridge.call("ConfigureDurabilityForTest", 42, 1)
+	wave_btn.emit_signal("pressed")
+	await get_tree().process_frame
+	assert_bool(defeat_modal.visible).is_false()
+	assert_bool(get_tree().paused).is_false()
+
+	exchange_btn.emit_signal("pressed")
+	await get_tree().process_frame
+	assert_bool(defeat_modal.visible).is_false()
+	assert_bool(get_tree().paused).is_false()
+
+	bridge.call("ConfigureDurabilityForTest", 42, 0)
+	await get_tree().process_frame
+	assert_bool(defeat_modal.visible).is_true()
+	assert_bool(get_tree().paused).is_true()
+	assert_bool(defeat_summary.text.to_lower().find("wall breached") >= 0).is_true()
+	assert_bool(status_label.text.to_lower().find("finished") < 0).is_true()
+
+	finish_btn.emit_signal("pressed")
+	await get_tree().process_frame
+	assert_bool(status_label.text.to_lower().find("terminal outcome") >= 0).is_true()
+	assert_bool(defeat_modal.visible).is_true()
+	assert_bool(get_tree().paused).is_true()
+
+
+# ACC:T69.2 ACC:T69.3 ACC:T69.6 ACC:T69.7 ACC:T69.8 ACC:T69.9 ACC:T69.10
+func test_defeat_outcome_modal_should_pause_runtime_and_only_offer_terminal_actions() -> void:
+	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
+	add_child(auto_free(main))
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	var nav := main.get_node_or_null("ScreenNavigator")
+	assert_object(nav).is_not_null()
+	nav.set("UseFadeTransition", false)
+	var ok_enter: bool = nav.call("SwitchTo", "res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn")
+	assert_bool(ok_enter).is_true()
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	var screen: Node = main.get_node("RuntimeUi/ScreenRoot/BattleMapScreen")
+	var bridge: Node = screen.get_node("CombatExperienceRuntimeBridge")
+	var settlement_modal: PanelContainer = screen.get_node("DailySettlementModal")
+	var victory_modal: PanelContainer = screen.get_node("VictoryOutcomeModal")
+	var defeat_modal: PanelContainer = screen.get_node("DefeatOutcomeModal")
+	var defeat_title: Label = screen.get_node("DefeatOutcomeModal/VBox/Title")
+	var defeat_summary: Label = screen.get_node("DefeatOutcomeModal/VBox/Summary")
+	var defeat_hint: Label = screen.get_node("DefeatOutcomeModal/VBox/Hint")
+	var action_box: VBoxContainer = screen.get_node("DefeatOutcomeModal/VBox/Actions")
+	var return_btn: Button = screen.get_node("DefeatOutcomeModal/VBox/Actions/ReturnToMainMenuBtn")
+	var restart_btn: Button = screen.get_node("DefeatOutcomeModal/VBox/Actions/RestartBtn")
 	var status_label: Label = screen.get_node("Margin/VBox/Status")
 	var wave_btn: Button = screen.get_node("Margin/VBox/Controls/WaveBtn")
 	var exchange_btn: Button = screen.get_node("Margin/VBox/Controls/ExchangeBtn")
@@ -798,8 +857,101 @@ func test_daily_settlement_modal_should_not_open_for_terminal_outcome() -> void:
 	var hud := main.get_node("RuntimeUi/HUD")
 	var outcome_label: Label = hud.get_node("FeedbackLayer/OutcomePanel/VBox/OutcomeLabel")
 
-	assert_bool(bridge.has_method("ForceOutcomeForTest")).is_true()
-	bridge.call("ForceOutcomeForTest", "loss", 0)
+	assert_bool(settlement_modal.visible).is_false()
+	assert_bool(victory_modal.visible).is_false()
+	assert_bool(defeat_modal.visible).is_false()
+	assert_bool(bridge.has_method("ForceDefeatStateForTest")).is_true()
+	bridge.call("ForceDefeatStateForTest", "wall_breached", 42, 0)
+	wave_btn.emit_signal("pressed")
+	await get_tree().process_frame
+
+	assert_bool(settlement_modal.visible).is_false()
+	assert_bool(victory_modal.visible).is_false()
+	assert_bool(defeat_modal.visible).is_true()
+	assert_bool(get_tree().paused).is_true()
+	var defeat_summary_state: Dictionary = bridge.call("GetSummary")
+	assert_str(String(defeat_summary_state.get("defeat_reason", ""))).is_equal("wall_breached")
+	assert_int(int(defeat_summary_state.get("castle_hp", -1))).is_equal(42)
+	assert_int(int(defeat_summary_state.get("wall_hp", -1))).is_equal(0)
+	assert_bool(defeat_title.text.to_lower().find("defeat") >= 0).is_true()
+	assert_bool(defeat_summary.text.to_lower().find("wall breached") >= 0).is_true()
+	assert_bool(defeat_summary.text.to_lower().find("run ended") >= 0).is_true()
+	assert_bool(defeat_hint.text.to_lower().find("cannot be resumed") >= 0).is_true()
+	assert_int(action_box.get_child_count()).is_equal(2)
+	assert_str(return_btn.text).is_equal("Return to Main Menu")
+	assert_str(restart_btn.text).is_equal("Restart")
+	assert_bool(not return_btn.disabled).is_true()
+	assert_bool(not restart_btn.disabled).is_true()
+	assert_bool(outcome_label.text.to_lower().find("outcome: loss") < 0).is_true()
+
+	exchange_btn.emit_signal("pressed")
+	await get_tree().process_frame
+	assert_bool(status_label.text.to_lower().find("terminal outcome") >= 0).is_true()
+	cleanup_btn.emit_signal("pressed")
+	await get_tree().process_frame
+	assert_bool(status_label.text.to_lower().find("terminal outcome") >= 0).is_true()
+	finish_btn.emit_signal("pressed")
+	await get_tree().process_frame
+	assert_bool(status_label.text.to_lower().find("terminal outcome") >= 0).is_true()
+	assert_bool(outcome_label.text.to_lower().find("outcome: loss") < 0).is_true()
+
+	return_btn.emit_signal("pressed")
+	await get_tree().process_frame
+	await get_tree().process_frame
+	assert_bool(defeat_modal.visible).is_false()
+	assert_bool(get_tree().paused).is_false()
+	var main_menu: Node = main.get_node("RuntimeUi/MainMenu")
+	assert_bool(bool(main_menu.get("visible"))).is_true()
+
+	var restart_screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
+	add_child(auto_free(restart_screen))
+	await get_tree().process_frame
+	await get_tree().process_frame
+	screen = restart_screen
+	bridge = screen.get_node("CombatExperienceRuntimeBridge")
+	settlement_modal = screen.get_node("DailySettlementModal")
+	victory_modal = screen.get_node("VictoryOutcomeModal")
+	defeat_modal = screen.get_node("DefeatOutcomeModal")
+	defeat_title = screen.get_node("DefeatOutcomeModal/VBox/Title")
+	defeat_summary = screen.get_node("DefeatOutcomeModal/VBox/Summary")
+	defeat_hint = screen.get_node("DefeatOutcomeModal/VBox/Hint")
+	action_box = screen.get_node("DefeatOutcomeModal/VBox/Actions")
+	return_btn = screen.get_node("DefeatOutcomeModal/VBox/Actions/ReturnToMainMenuBtn")
+	status_label = screen.get_node("Margin/VBox/Status")
+	wave_btn = screen.get_node("Margin/VBox/Controls/WaveBtn")
+	exchange_btn = screen.get_node("Margin/VBox/Controls/ExchangeBtn")
+	cleanup_btn = screen.get_node("Margin/VBox/Controls/CleanupBtn")
+	finish_btn = screen.get_node("Margin/VBox/Controls/FinishBtn")
+	restart_btn = screen.get_node("DefeatOutcomeModal/VBox/Actions/RestartBtn")
+	assert_bool(defeat_modal.visible).is_false()
+
+	bridge.call("ForceDefeatStateForTest", "wall_breached", 0, 14)
+	wave_btn.emit_signal("pressed")
+	await get_tree().process_frame
+	assert_bool(settlement_modal.visible).is_false()
+	assert_bool(victory_modal.visible).is_false()
+	assert_bool(defeat_modal.visible).is_true()
+	assert_bool(get_tree().paused).is_true()
+	defeat_summary_state = bridge.call("GetSummary")
+	assert_str(String(defeat_summary_state.get("defeat_reason", ""))).is_equal("wall_breached")
+	assert_int(int(defeat_summary_state.get("castle_hp", -1))).is_equal(0)
+	assert_int(int(defeat_summary_state.get("wall_hp", -1))).is_equal(14)
+	assert_bool(defeat_summary.text.to_lower().find("wall breached") >= 0).is_true()
+
+	var status_before := status_label.text
+	wave_btn.emit_signal("pressed")
+	await get_tree().process_frame
+	assert_bool(status_label.text != status_before).is_true()
+	assert_bool(status_label.text.to_lower().find("terminal outcome") >= 0).is_true()
+	assert_bool(defeat_modal.visible).is_true()
+	assert_bool(get_tree().paused).is_true()
+
+	# Negative path: when HP stays above zero, defeat modal must not appear.
+	restart_btn.emit_signal("pressed")
+	await get_tree().process_frame
+	assert_bool(defeat_modal.visible).is_false()
+	assert_bool(get_tree().paused).is_false()
+	bridge.call("ForceOutcomeForTest", "win", 42)
 	wave_btn.emit_signal("pressed")
 	await get_tree().process_frame
 	exchange_btn.emit_signal("pressed")
@@ -808,10 +960,7 @@ func test_daily_settlement_modal_should_not_open_for_terminal_outcome() -> void:
 	await get_tree().process_frame
 	finish_btn.emit_signal("pressed")
 	await get_tree().process_frame
-
-	assert_bool(modal.visible).is_false()
-	assert_bool(get_tree().paused).is_false()
-	assert_bool(outcome_label.text.to_lower().find("outcome: loss") >= 0).is_true()
+	assert_bool(defeat_modal.visible).is_false()
 	assert_bool(status_label.text.to_lower().find("finished") >= 0).is_true()
 
 

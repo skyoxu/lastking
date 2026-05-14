@@ -90,6 +90,7 @@ public sealed class CastleDurabilityTerminalTests
     }
 
     // ACC:T7.19
+    // ACC:T69.5
     [Fact]
     public void ShouldEnterGameOverExactlyAtZeroBoundary_WhenPreviousHitLeavesHpAboveZero()
     {
@@ -114,6 +115,7 @@ public sealed class CastleDurabilityTerminalTests
 
     // ACC:T7.17
     // ACC:T7.21
+    // ACC:T69.5
     [Fact]
     public void ShouldEmitSingleTerminalDispatch_WhenRuntimeFirstReachesZero()
     {

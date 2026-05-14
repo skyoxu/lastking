@@ -26,10 +26,12 @@ public partial class CombatExperienceRuntimeBridge : Node
     private int _deadUnitsRetired;
     private int _enemyUnitsSpawned;
     private int _castleHp = 100;
+    private int _wallHp = 20;
     private int _resourceGold;
     private int _resourceIron;
     private int _resourcePopulationCap;
     private string _outcome = "win";
+    private string _defeatReason = string.Empty;
     private string _forcedOutcomeOverride = string.Empty;
     private readonly System.Collections.Generic.List<string> _activeDamageNumberNames = new();
     private int _friendlyUnitSeq;
@@ -64,6 +66,7 @@ public partial class CombatExperienceRuntimeBridge : Node
         _deadUnitsRetired = 0;
         _enemyUnitsSpawned = 0;
         _castleHp = 100;
+        _wallHp = 20;
         _friendlyUnitSeq = 0;
         _enemyUnitSeq = 0;
         _activeDamageNumberNames.Clear();
@@ -71,6 +74,7 @@ public partial class CombatExperienceRuntimeBridge : Node
         _resourceIron = 0;
         _resourcePopulationCap = 0;
         _outcome = "win";
+        _defeatReason = string.Empty;
         _forcedOutcomeOverride = string.Empty;
     }
 
@@ -159,8 +163,9 @@ public partial class CombatExperienceRuntimeBridge : Node
         _resourceGold = 120;
         _resourceIron = 44;
         _resourcePopulationCap = 26;
+        SyncTerminalOutcomeState();
         _outcome = string.IsNullOrWhiteSpace(_forcedOutcomeOverride)
-            ? (_castleHp > 0 ? "win" : "loss")
+            ? (_defeatReason.Length == 0 ? "win" : "loss")
             : _forcedOutcomeOverride;
         Publish(EventTypes.LastkingCastleHpChanged, "{\"Day\":9,\"PreviousHp\":100,\"CurrentHp\":42}");
         Publish(EventTypes.LastkingResourcesChanged, "{\"RunId\":\"combat-e2e\",\"DayNumber\":9,\"Gold\":120,\"Iron\":44,\"PopulationCap\":26}");
@@ -176,17 +181,48 @@ public partial class CombatExperienceRuntimeBridge : Node
         {
             _forcedOutcomeOverride = "loss";
             _outcome = "loss";
+            if (_castleHp <= 0)
+            {
+                _defeatReason = "castle_destroyed";
+            }
+            else
+            {
+                _wallHp = 0;
+                _defeatReason = "wall_breached";
+            }
         }
         else if (string.Equals(outcome, "win", StringComparison.OrdinalIgnoreCase))
         {
             _forcedOutcomeOverride = "win";
             _outcome = "win";
+            _defeatReason = string.Empty;
         }
         else
         {
             _forcedOutcomeOverride = "settlement";
             _outcome = "settlement";
+            _defeatReason = string.Empty;
         }
+        return GetSummary();
+    }
+
+    public GDictionary ForceDefeatStateForTest(string defeatReason, int castleHp, int wallHp)
+    {
+        _castleHp = Math.Max(0, castleHp);
+        _wallHp = Math.Max(0, wallHp);
+        _defeatReason = NormalizeDefeatReason(defeatReason, _castleHp, _wallHp);
+        _forcedOutcomeOverride = "loss";
+        _outcome = "loss";
+        return GetSummary();
+    }
+
+    public GDictionary ConfigureDurabilityForTest(int castleHp, int wallHp)
+    {
+        _castleHp = Math.Max(0, castleHp);
+        _wallHp = Math.Max(0, wallHp);
+        _defeatReason = NormalizeDefeatReason(string.Empty, _castleHp, _wallHp);
+        _forcedOutcomeOverride = string.Empty;
+        _outcome = _defeatReason.Length == 0 ? "win" : "loss";
         return GetSummary();
     }
 
@@ -205,10 +241,12 @@ public partial class CombatExperienceRuntimeBridge : Node
             ["active_combat_nodes_after_cleanup"] = activeCombatNodes,
             ["dead_unit_targetable_after_cleanup"] = IsTargetable("DeadEnemy"),
             ["castle_hp"] = _castleHp,
+            ["wall_hp"] = _wallHp,
             ["resource_gold"] = _resourceGold,
             ["resource_iron"] = _resourceIron,
             ["resource_population_cap"] = _resourcePopulationCap,
             ["outcome"] = _outcome,
+            ["defeat_reason"] = _defeatReason,
         };
     }
 
@@ -232,9 +270,58 @@ public partial class CombatExperienceRuntimeBridge : Node
                 actor.Active = false;
                 var node = _battlefield.GetNodeOrNull<Node>(actor.NodeName);
                 node?.QueueFree();
-                _castleHp = Math.Max(0, _castleHp - 5);
+                if (_wallHp > 0)
+                {
+                    _wallHp = Math.Max(0, _wallHp - 5);
+                    if (_wallHp <= 0)
+                    {
+                        _defeatReason = "wall_breached";
+                    }
+                }
+                else
+                {
+                    _castleHp = Math.Max(0, _castleHp - 5);
+                    if (_castleHp <= 0)
+                    {
+                        _defeatReason = "castle_destroyed";
+                    }
+                }
             }
         }
+    }
+
+    private void SyncTerminalOutcomeState()
+    {
+        _defeatReason = NormalizeDefeatReason(_defeatReason, _castleHp, _wallHp);
+        if (_defeatReason.Length == 0 && string.Equals(_forcedOutcomeOverride, "loss", StringComparison.OrdinalIgnoreCase))
+        {
+            _defeatReason = _castleHp <= 0 ? "castle_destroyed" : "wall_breached";
+        }
+    }
+
+    private static string NormalizeDefeatReason(string defeatReason, int castleHp, int wallHp)
+    {
+        if (string.Equals(defeatReason, "castle_destroyed", StringComparison.OrdinalIgnoreCase))
+        {
+            return "castle_destroyed";
+        }
+
+        if (string.Equals(defeatReason, "wall_breached", StringComparison.OrdinalIgnoreCase))
+        {
+            return "wall_breached";
+        }
+
+        if (castleHp <= 0)
+        {
+            return "castle_destroyed";
+        }
+
+        if (wallHp <= 0)
+        {
+            return "wall_breached";
+        }
+
+        return string.Empty;
     }
 
     public global::Godot.Collections.Array GetActorSnapshots()

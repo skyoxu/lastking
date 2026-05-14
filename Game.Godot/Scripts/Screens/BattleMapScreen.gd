@@ -27,6 +27,12 @@ extends Control
 @onready var _victory_outcome_hint: Label = $VictoryOutcomeModal/VBox/Hint
 @onready var _victory_return_btn: Button = $VictoryOutcomeModal/VBox/Actions/ReturnToMainMenuBtn
 @onready var _victory_restart_btn: Button = $VictoryOutcomeModal/VBox/Actions/RestartBtn
+@onready var _defeat_outcome_modal: PanelContainer = $DefeatOutcomeModal
+@onready var _defeat_outcome_title: Label = $DefeatOutcomeModal/VBox/Title
+@onready var _defeat_outcome_summary: Label = $DefeatOutcomeModal/VBox/Summary
+@onready var _defeat_outcome_hint: Label = $DefeatOutcomeModal/VBox/Hint
+@onready var _defeat_return_btn: Button = $DefeatOutcomeModal/VBox/Actions/ReturnToMainMenuBtn
+@onready var _defeat_restart_btn: Button = $DefeatOutcomeModal/VBox/Actions/RestartBtn
 
 var _wave_started := false
 var _combat_resolved := false
@@ -54,6 +60,9 @@ func _ready() -> void:
 	_victory_outcome_modal.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
 	_victory_return_btn.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
 	_victory_restart_btn.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	_defeat_outcome_modal.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	_defeat_return_btn.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	_defeat_restart_btn.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
 
 	# Task 56 ownership markers: battlefield presentation, runtime bridge, legacy prototype.
 	_background.set_meta("ownership_container", "battlefield_presentation")
@@ -74,11 +83,14 @@ func _ready() -> void:
 	_daily_reward_c.pressed.connect(_on_settlement_reward_selected.bind(2))
 	_victory_return_btn.pressed.connect(_on_victory_return_to_main_menu)
 	_victory_restart_btn.pressed.connect(_on_victory_restart)
+	_defeat_return_btn.pressed.connect(_on_defeat_return_to_main_menu)
+	_defeat_restart_btn.pressed.connect(_on_defeat_restart)
 	_wave_timer.timeout.connect(_on_wave_timer_timeout)
 
 	_try_bridge_reset()
 	_close_settlement_modal()
 	_close_victory_modal()
+	_close_defeat_modal()
 	_apply_spawn_cues()
 	_render(_try_bridge_summary(), _t("battlemap.status.loaded"))
 
@@ -89,6 +101,7 @@ func _process(delta: float) -> void:
 		_apply_static_texts()
 	if _bridge.has_method("AdvanceSimulation"):
 		_bridge.call("AdvanceSimulation", delta)
+	_sync_terminal_outcome_from_runtime()
 	_update_spawn_cues(delta)
 	_render_actor_tokens()
 
@@ -100,12 +113,13 @@ func _on_build() -> void:
 	var summary := _try_bridge_summary()
 	var friendly := int(summary.get("friendly_units_deployed", 0))
 	_render(summary, "%s (%s=%d)" % [_t("battlemap.status.build_ready"), _t("battlemap.summary.friendly_units"), friendly])
+	_sync_terminal_outcome_from_runtime(summary)
 
 func _on_wave() -> void:
 	if _settlement_modal_open:
 		_status.text = "Settlement modal is open; resolve reward first."
 		return
-	if _victory_outcome_modal.visible:
+	if _is_terminal_outcome_modal_visible():
 		_status.text = "Terminal outcome is open; choose Restart or Return to Main Menu."
 		return
 	_wave_started = true
@@ -113,7 +127,9 @@ func _on_wave() -> void:
 	_cleaned = false
 	_spawn_pulse_time_left = 0.35
 	_apply_spawn_cues()
-	_render(_call_or_fallback("SpawnEnemyWavePhase"), _t("battlemap.status.wave_spawned"))
+	var summary := _call_or_fallback("SpawnEnemyWavePhase")
+	_render(summary, _t("battlemap.status.wave_spawned"))
+	_sync_terminal_outcome_from_runtime(summary)
 
 func _on_auto_wave() -> void:
 	_auto_wave = not _auto_wave
@@ -133,33 +149,37 @@ func _on_exchange() -> void:
 	if _settlement_modal_open:
 		_status.text = "Settlement modal is open; resolve reward first."
 		return
-	if _victory_outcome_modal.visible:
+	if _is_terminal_outcome_modal_visible():
 		_status.text = "Terminal outcome is open; choose Restart or Return to Main Menu."
 		return
 	if not _wave_started:
 		_status.text = _t("battlemap.status.require_wave")
 		return
 	_combat_resolved = true
-	_render(_call_or_fallback("ResolveCombatExchangePhase"), _t("battlemap.status.exchange_done"))
+	var summary := _call_or_fallback("ResolveCombatExchangePhase")
+	_render(summary, _t("battlemap.status.exchange_done"))
+	_sync_terminal_outcome_from_runtime(summary)
 
 func _on_cleanup() -> void:
 	if _settlement_modal_open:
 		_status.text = "Settlement modal is open; resolve reward first."
 		return
-	if _victory_outcome_modal.visible:
+	if _is_terminal_outcome_modal_visible():
 		_status.text = "Terminal outcome is open; choose Restart or Return to Main Menu."
 		return
 	if not _combat_resolved:
 		_status.text = _t("battlemap.status.require_exchange")
 		return
 	_cleaned = true
-	_render(_call_or_fallback("CleanupDeadUnitsPhase"), _t("battlemap.status.cleanup_done"))
+	var summary := _call_or_fallback("CleanupDeadUnitsPhase")
+	_render(summary, _t("battlemap.status.cleanup_done"))
+	_sync_terminal_outcome_from_runtime(summary)
 
 func _on_finish() -> void:
 	if _settlement_modal_open:
 		_status.text = "Settlement modal is open; resolve reward first."
 		return
-	if _victory_outcome_modal.visible:
+	if _is_terminal_outcome_modal_visible():
 		_status.text = "Terminal outcome is open; choose Restart or Return to Main Menu."
 		return
 	if not _cleaned:
@@ -170,7 +190,9 @@ func _on_finish() -> void:
 	_apply_spawn_cues()
 	var outcome := _call_or_fallback("PublishOutcomePhase")
 	_render(outcome, _t("battlemap.status.finished"))
-	if _is_victory_outcome(outcome):
+	if _is_defeat_outcome(outcome):
+		_open_defeat_modal(outcome)
+	elif _is_victory_outcome(outcome):
 		_open_victory_modal(outcome)
 	elif _is_settlement_outcome(outcome):
 		_open_settlement_modal(outcome)
@@ -339,8 +361,30 @@ func _is_victory_outcome(summary: Dictionary) -> bool:
 	var outcome := String(summary.get("outcome", "")).to_lower()
 	return outcome == "win"
 
+func _is_defeat_outcome(summary: Dictionary) -> bool:
+	return not _defeat_reason_for_summary(summary).is_empty()
+
+func _defeat_reason_for_summary(summary: Dictionary) -> String:
+	var explicit_reason := String(summary.get("defeat_reason", "")).to_lower()
+	if explicit_reason == "wall_breached" or explicit_reason == "castle_destroyed":
+		return explicit_reason
+	var outcome := String(summary.get("outcome", "")).to_lower()
+	var castle_hp := int(summary.get("castle_hp", 0))
+	var wall_hp := int(summary.get("wall_hp", 1))
+	if outcome == "loss" and wall_hp <= 0:
+		return "wall_breached"
+	if outcome == "loss" and castle_hp <= 0:
+		return "castle_destroyed"
+	if wall_hp <= 0:
+		return "wall_breached"
+	if castle_hp <= 0:
+		return "castle_destroyed"
+	return ""
+
 func _open_settlement_modal(summary: Dictionary) -> void:
 	_settlement_modal_open = true
+	_defeat_outcome_modal.visible = false
+	_victory_outcome_modal.visible = false
 	var hp := int(summary.get("castle_hp", 0))
 	var kills := int(summary.get("dead_units_retired", 0))
 	var gold := int(summary.get("resource_gold", 0))
@@ -369,6 +413,7 @@ func _close_settlement_modal() -> void:
 func _open_victory_modal(summary: Dictionary) -> void:
 	_settlement_modal_open = false
 	_daily_settlement_modal.visible = false
+	_defeat_outcome_modal.visible = false
 	_victory_outcome_modal.visible = true
 	get_tree().paused = true
 	var hp := int(summary.get("castle_hp", 0))
@@ -385,6 +430,31 @@ func _close_victory_modal() -> void:
 	if get_tree() != null:
 		get_tree().paused = false
 
+func _open_defeat_modal(summary: Dictionary) -> void:
+	_settlement_modal_open = false
+	_daily_settlement_modal.visible = false
+	_victory_outcome_modal.visible = false
+	_defeat_outcome_modal.visible = true
+	get_tree().paused = true
+	var hp := int(summary.get("castle_hp", 0))
+	var wall_hp := int(summary.get("wall_hp", 0))
+	var kills := int(summary.get("dead_units_retired", 0))
+	var gold := int(summary.get("resource_gold", 0))
+	var iron := int(summary.get("resource_iron", 0))
+	var pop_cap := int(summary.get("resource_population_cap", 0))
+	var defeat_copy := "Wall breached. The run ended."
+	_defeat_outcome_title.text = "Defeat"
+	_defeat_outcome_summary.text = "%s Castle HP=%d | Wall HP=%d | kills=%d | resources(gold=%d,iron=%d,pop=%d)" % [defeat_copy, hp, wall_hp, kills, gold, iron, pop_cap]
+	_defeat_outcome_hint.text = "Live battle cannot be resumed from this outcome state."
+
+func _close_defeat_modal() -> void:
+	_defeat_outcome_modal.visible = false
+	if get_tree() != null:
+		get_tree().paused = false
+
+func _is_terminal_outcome_modal_visible() -> bool:
+	return _victory_outcome_modal.visible or _defeat_outcome_modal.visible
+
 func _on_settlement_reward_selected(index: int) -> void:
 	if not _settlement_modal_open:
 		return
@@ -396,6 +466,9 @@ func _on_settlement_reward_selected(index: int) -> void:
 func _on_victory_return_to_main_menu() -> void:
 	if not _victory_outcome_modal.visible:
 		return
+	_wave_started = false
+	_combat_resolved = false
+	_cleaned = false
 	_close_victory_modal()
 	_status.text = "Victory outcome resolved with Return to Main Menu."
 	_on_back()
@@ -405,6 +478,26 @@ func _on_victory_restart() -> void:
 		return
 	_close_victory_modal()
 	_status.text = "Victory outcome resolved with Restart."
+	_restart_from_terminal_outcome()
+
+func _on_defeat_return_to_main_menu() -> void:
+	if not _defeat_outcome_modal.visible:
+		return
+	_wave_started = false
+	_combat_resolved = false
+	_cleaned = false
+	_close_defeat_modal()
+	_status.text = "Defeat outcome resolved with Return to Main Menu."
+	_on_back()
+
+func _on_defeat_restart() -> void:
+	if not _defeat_outcome_modal.visible:
+		return
+	_close_defeat_modal()
+	_status.text = "Defeat outcome resolved with Restart."
+	_restart_from_terminal_outcome()
+
+func _restart_from_terminal_outcome() -> void:
 	_wave_started = false
 	_combat_resolved = false
 	_cleaned = false
@@ -414,3 +507,14 @@ func _on_victory_restart() -> void:
 	_try_bridge_reset()
 	_apply_spawn_cues()
 	_render(_try_bridge_summary(), _t("battlemap.status.loaded"))
+
+func _sync_terminal_outcome_from_runtime(summary: Dictionary = {}) -> void:
+	if _settlement_modal_open or _is_terminal_outcome_modal_visible():
+		return
+	if not _wave_started:
+		return
+	var runtime_summary := summary
+	if runtime_summary.is_empty():
+		runtime_summary = _try_bridge_summary()
+	if _is_defeat_outcome(runtime_summary):
+		_open_defeat_modal(runtime_summary)
