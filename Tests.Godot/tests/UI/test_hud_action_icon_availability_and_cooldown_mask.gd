@@ -25,8 +25,8 @@ func _main_runtime() -> Dictionary:
 	}
 
 func _spawn_cues(screen: Control) -> Array[float]:
-	var a: ColorRect = screen.get_node("Background/EnemySpawnA")
-	var b: ColorRect = screen.get_node("Background/EnemySpawnB")
+	var a: ColorRect = screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnA")
+	var b: ColorRect = screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnB")
 	return [a.color.a, b.color.a]
 
 # ACC:T65.2

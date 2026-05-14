@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3]
+[gd_scene load_steps=15 format=3]
 
 [ext_resource type="Script" path="res://Game.Godot/Scripts/Screens/BattleMapScreen.gd" id="1"]
 [ext_resource type="Script" path="res://Game.Godot/Scripts/Combat/CombatExperienceRuntimeBridge.cs" id="2"]
@@ -13,6 +13,7 @@
 [ext_resource type="Script" path="res://Game.Godot/Scripts/Screens/BattleMapRefsProvider.gd" id="11"]
 [ext_resource type="Script" path="res://Game.Godot/Scripts/Screens/BattleMapOwnershipCoordinator.gd" id="12"]
 [ext_resource type="Script" path="res://Game.Godot/Scripts/Screens/BattleMapBridgeProvider.gd" id="13"]
+[ext_resource type="Script" path="res://Game.Godot/Scripts/Screens/BattlefieldView.gd" id="14"]
 
 [node name="BattleMapScreen" type="Control"]
 layout_mode = 3
@@ -31,41 +32,88 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.0784314, 0.117647, 0.109804, 1)
+script = ExtResource("14")
 
-[node name="Path" type="Line2D" parent="Background"]
+[node name="BattlefieldViewport" type="Control" parent="Background"]
+custom_minimum_size = Vector2(1440, 600)
+layout_mode = 0
+offset_right = 1440.0
+offset_bottom = 600.0
+
+[node name="BattlefieldRoot" type="Control" parent="Background/BattlefieldViewport"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MapBaseLayer" type="Control" parent="Background/BattlefieldViewport/BattlefieldRoot"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="BoundaryLayer" type="Control" parent="Background/BattlefieldViewport/BattlefieldRoot"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="SlotOverlayLayer" type="Control" parent="Background/BattlefieldViewport/BattlefieldRoot"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MapMarkerLayer" type="Control" parent="Background/BattlefieldViewport/BattlefieldRoot"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Path" type="Line2D" parent="Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer"]
 points = PackedVector2Array(120, 120, 260, 120, 420, 240, 640, 240, 840, 340, 1080, 340)
 width = 8.0
 default_color = Color(0.909804, 0.752941, 0.482353, 1)
 
-[node name="PlayerCastle" type="ColorRect" parent="Background"]
+[node name="PlayerCastle" type="ColorRect" parent="Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer"]
 offset_left = 56.0
 offset_top = 88.0
 offset_right = 116.0
 offset_bottom = 152.0
 color = Color(0.321569, 0.584314, 0.894118, 1)
 
-[node name="EnemySpawnA" type="ColorRect" parent="Background"]
+[node name="EnemySpawnA" type="ColorRect" parent="Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer"]
 offset_left = 1040.0
 offset_top = 300.0
 offset_right = 1070.0
 offset_bottom = 330.0
 color = Color(0.847059, 0.286275, 0.286275, 1)
 
-[node name="EnemySpawnB" type="ColorRect" parent="Background"]
+[node name="EnemySpawnB" type="ColorRect" parent="Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer"]
 offset_left = 1110.0
 offset_top = 360.0
 offset_right = 1140.0
 offset_bottom = 390.0
 color = Color(0.847059, 0.286275, 0.286275, 1)
 
-[node name="BuildSlotA" type="ColorRect" parent="Background"]
+[node name="BuildSlotA" type="ColorRect" parent="Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer"]
 offset_left = 310.0
 offset_top = 170.0
 offset_right = 340.0
 offset_bottom = 200.0
 color = Color(0.419608, 0.698039, 0.388235, 1)
 
-[node name="BuildSlotB" type="ColorRect" parent="Background"]
+[node name="BuildSlotB" type="ColorRect" parent="Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer"]
 offset_left = 520.0
 offset_top = 200.0
 offset_right = 550.0
