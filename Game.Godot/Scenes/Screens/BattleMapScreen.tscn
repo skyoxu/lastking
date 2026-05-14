@@ -1,7 +1,18 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=14 format=3]
 
 [ext_resource type="Script" path="res://Game.Godot/Scripts/Screens/BattleMapScreen.gd" id="1"]
 [ext_resource type="Script" path="res://Game.Godot/Scripts/Combat/CombatExperienceRuntimeBridge.cs" id="2"]
+[ext_resource type="Script" path="res://Game.Godot/Scripts/Screens/BattleMapOperationController.gd" id="3"]
+[ext_resource type="Script" path="res://Game.Godot/Scripts/Screens/BattleMapFeedbackController.gd" id="4"]
+[ext_resource type="Script" path="res://Game.Godot/Scripts/Screens/BattleMapOutcomeController.gd" id="5"]
+[ext_resource type="Script" path="res://Game.Godot/Scripts/Screens/PlacementOverlayController.gd" id="6"]
+[ext_resource type="Script" path="res://Game.Godot/Scripts/Screens/BattleSelectionController.gd" id="7"]
+[ext_resource type="Script" path="res://Game.Godot/Scripts/Screens/BattleMapPresentationController.gd" id="8"]
+[ext_resource type="Script" path="res://Game.Godot/Scripts/Screens/BattleMapNavigationController.gd" id="9"]
+[ext_resource type="Script" path="res://Game.Godot/Scripts/Screens/BattleMapRuntimeCoordinator.gd" id="10"]
+[ext_resource type="Script" path="res://Game.Godot/Scripts/Screens/BattleMapRefsProvider.gd" id="11"]
+[ext_resource type="Script" path="res://Game.Godot/Scripts/Screens/BattleMapOwnershipCoordinator.gd" id="12"]
+[ext_resource type="Script" path="res://Game.Godot/Scripts/Screens/BattleMapBridgeProvider.gd" id="13"]
 
 [node name="BattleMapScreen" type="Control"]
 layout_mode = 3
@@ -312,3 +323,36 @@ script = ExtResource("2")
 
 [node name="WaveTimer" type="Timer" parent="."]
 wait_time = 4.0
+
+[node name="OperationController" type="Node" parent="."]
+script = ExtResource("3")
+
+[node name="FeedbackController" type="Node" parent="."]
+script = ExtResource("4")
+
+[node name="OutcomeController" type="Node" parent="."]
+script = ExtResource("5")
+
+[node name="SelectionController" type="Node" parent="."]
+script = ExtResource("7")
+
+[node name="PresentationController" type="Node" parent="."]
+script = ExtResource("8")
+
+[node name="NavigationController" type="Node" parent="."]
+script = ExtResource("9")
+
+[node name="RuntimeCoordinator" type="Node" parent="."]
+script = ExtResource("10")
+
+[node name="RefsProvider" type="Node" parent="."]
+script = ExtResource("11")
+
+[node name="OwnershipCoordinator" type="Node" parent="."]
+script = ExtResource("12")
+
+[node name="BridgeProvider" type="Node" parent="."]
+script = ExtResource("13")
+
+[node name="UI_PlacementOverlayController" type="Node" parent="."]
+script = ExtResource("6")

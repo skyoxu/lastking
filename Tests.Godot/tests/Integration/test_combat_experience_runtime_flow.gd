@@ -614,6 +614,7 @@ func test_daily_settlement_modal_should_block_progress_until_reward_is_selected(
 	var finish_btn: Button = screen.get_node("Margin/VBox/Controls/FinishBtn")
 	var modal: PanelContainer = screen.get_node("DailySettlementModal")
 	var status_label: Label = screen.get_node("Margin/VBox/Status")
+	var outcome_controller: Node = screen.get_node("OutcomeController")
 	var bridge: Node = screen.get_node("CombatExperienceRuntimeBridge")
 	var reward_a: Button = screen.get_node("DailySettlementModal/VBox/Rewards/RewardA")
 	var reward_b: Button = screen.get_node("DailySettlementModal/VBox/Rewards/RewardB")
@@ -722,7 +723,9 @@ func test_daily_settlement_modal_should_block_progress_until_reward_is_selected(
 	var status_after_resolve := status_label.text
 	var summary_after_resolve: Dictionary = bridge.call("GetSummary")
 	# Single-consume guard: duplicate reward callback must not trigger extra transition side effects.
-	screen.call("_on_settlement_reward_selected", 1)
+	assert_bool(screen.has_method("_on_settlement_reward_selected")).is_false()
+	assert_bool(outcome_controller.has_method("_on_settlement_reward_selected")).is_true()
+	outcome_controller.call("_on_settlement_reward_selected", 1)
 	await get_tree().process_frame
 	assert_bool(modal.visible).is_false()
 	assert_bool(get_tree().paused).is_false()
@@ -755,6 +758,7 @@ func test_daily_settlement_modal_should_ignore_invalid_reward_selection_index() 
 	var finish_btn: Button = screen.get_node("Margin/VBox/Controls/FinishBtn")
 	var modal: PanelContainer = screen.get_node("DailySettlementModal")
 	var status_label: Label = screen.get_node("Margin/VBox/Status")
+	var outcome_controller: Node = screen.get_node("OutcomeController")
 
 	assert_bool(screen.get_node("CombatExperienceRuntimeBridge").has_method("ForceOutcomeForTest")).is_true()
 	screen.get_node("CombatExperienceRuntimeBridge").call("ForceOutcomeForTest", "settlement", 42)
@@ -769,11 +773,13 @@ func test_daily_settlement_modal_should_ignore_invalid_reward_selection_index() 
 
 	assert_bool(modal.visible).is_true()
 	assert_bool(get_tree().paused).is_true()
+	assert_bool(screen.has_method("_on_settlement_reward_selected")).is_false()
+	assert_bool(outcome_controller.has_method("_on_settlement_reward_selected")).is_true()
 	var runtime_summary_before: Dictionary = bridge.call("GetSummary")
 	assert_str(String(runtime_summary_before.get("outcome", ""))).is_equal("settlement")
 	assert_int(int(runtime_summary_before.get("castle_hp", -1))).is_equal(42)
 	var status_before := status_label.text
-	screen.call("_on_settlement_reward_selected", 99)
+	outcome_controller.call("_on_settlement_reward_selected", 99)
 	await get_tree().process_frame
 	assert_bool(modal.visible).is_true()
 	assert_bool(get_tree().paused).is_true()
@@ -810,16 +816,19 @@ func test_settlement_confirm_should_be_rejected_when_no_resolved_result_is_activ
 	var victory_modal: PanelContainer = screen.get_node("VictoryOutcomeModal")
 	var defeat_modal: PanelContainer = screen.get_node("DefeatOutcomeModal")
 	var status_label: Label = screen.get_node("Margin/VBox/Status")
+	var outcome_controller: Node = screen.get_node("OutcomeController")
 
 	assert_bool(modal.visible).is_false()
 	assert_bool(victory_modal.visible).is_false()
 	assert_bool(defeat_modal.visible).is_false()
 	assert_bool(get_tree().paused).is_false()
+	assert_bool(screen.has_method("_on_settlement_reward_selected")).is_false()
+	assert_bool(outcome_controller.has_method("_on_settlement_reward_selected")).is_true()
 	var status_before := status_label.text
 	var summary_before: Dictionary = bridge.call("GetSummary")
 
 	# No resolved settlement result is active; confirm input must be ignored.
-	screen.call("_on_settlement_reward_selected", 0)
+	outcome_controller.call("_on_settlement_reward_selected", 0)
 	await get_tree().process_frame
 
 	assert_bool(modal.visible).is_false()
@@ -856,6 +865,7 @@ func test_daily_settlement_evidence_panel_should_hide_non_applicable_fields_for_
 	var defeat_reason_evidence: Label = screen.get_node("DailySettlementModal/VBox/EvidencePanel/DefeatReasonEvidence")
 	var expand_context_btn: Button = screen.get_node("DailySettlementModal/VBox/EvidencePanel/ExpandContextBtn")
 	var runtime_context_payload: Label = screen.get_node("DailySettlementModal/VBox/EvidencePanel/RuntimeContextPayload")
+	var outcome_controller: Node = screen.get_node("OutcomeController")
 
 	var partial_summary := {
 		"outcome": "settlement",
@@ -865,8 +875,7 @@ func test_daily_settlement_evidence_panel_should_hide_non_applicable_fields_for_
 		"resource_iron": 3,
 		"resource_population_cap": 5
 	}
-	assert_bool(screen.has_method("_open_settlement_modal")).is_true()
-	screen.call("_open_settlement_modal", partial_summary)
+	outcome_controller.call("open_outcome", partial_summary)
 	await get_tree().process_frame
 
 	assert_bool(modal.visible).is_true()
@@ -889,13 +898,13 @@ func test_daily_settlement_evidence_panel_should_hide_non_applicable_fields_for_
 	assert_bool(payload_text.find("\"resource_gold\":7") >= 0).is_true()
 	assert_bool(payload_text.find("\"reward_summary\"") < 0).is_true()
 
-	screen.call("_close_settlement_modal")
+	outcome_controller.call("close_all")
 	await get_tree().process_frame
 	assert_bool(modal.visible).is_false()
 
 	var summary_with_reward := partial_summary.duplicate()
 	summary_with_reward["reward_summary"] = "Reward A,Reward B,Reward C"
-	screen.call("_open_settlement_modal", summary_with_reward)
+	outcome_controller.call("open_outcome", summary_with_reward)
 	await get_tree().process_frame
 
 	assert_bool(modal.visible).is_true()
@@ -910,7 +919,7 @@ func test_daily_settlement_evidence_panel_should_hide_non_applicable_fields_for_
 	assert_bool(payload_text_with_reward.find("\"reward_summary\":\"Reward A,Reward B,Reward C\"") >= 0).is_true()
 	assert_bool(payload_text_with_reward.find("\"resource_gold\":7") >= 0).is_true()
 
-	screen.call("_close_settlement_modal")
+	outcome_controller.call("close_all")
 	await get_tree().process_frame
 	assert_bool(modal.visible).is_false()
 
@@ -939,11 +948,13 @@ func test_daily_settlement_modal_should_reject_invalid_reward_option_count() -> 
 	var finish_btn: Button = screen.get_node("Margin/VBox/Controls/FinishBtn")
 	var modal: PanelContainer = screen.get_node("DailySettlementModal")
 	var status_label: Label = screen.get_node("Margin/VBox/Status")
-	var settlement_options = screen.get("_settlement_options")
+	var outcome_controller: Node = screen.get_node("OutcomeController")
+	var settlement_options = outcome_controller.call("get_settlement_options")
 	assert_int(typeof(settlement_options)).is_equal(TYPE_ARRAY)
 	var original_options: Array = (settlement_options as Array).duplicate()
-	assert_bool(screen.has_method("SetSettlementOptionsForTest")).is_true()
-	screen.call("SetSettlementOptionsForTest", ["OnlyOne"])
+	assert_bool(screen.has_method("SetSettlementOptionsForTest")).is_false()
+	assert_bool(outcome_controller.has_method("SetSettlementOptionsForTest")).is_true()
+	outcome_controller.call("SetSettlementOptionsForTest", ["OnlyOne"])
 
 	assert_bool(bridge.has_method("ForceOutcomeForTest")).is_true()
 	bridge.call("ForceOutcomeForTest", "settlement", 42)
@@ -961,7 +972,7 @@ func test_daily_settlement_modal_should_reject_invalid_reward_option_count() -> 
 	assert_bool(status_label.text.to_lower().find("invalid") >= 0).is_true()
 	# T70.11: invalid option count rejection must keep deterministic flow stable.
 	assert_bool(status_label.text.to_lower().find("settlement resolved") < 0).is_true()
-	screen.call("SetSettlementOptionsForTest", original_options)
+	outcome_controller.call("SetSettlementOptionsForTest", original_options)
 
 
 # ACC:T67.3

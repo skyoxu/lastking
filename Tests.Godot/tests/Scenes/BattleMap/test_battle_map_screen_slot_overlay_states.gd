@@ -5,6 +5,7 @@ const CONTROLLER := preload("res://Game.Godot/Scripts/Screens/PlacementOverlayCo
 # acceptance: ACC:T60.1
 func test_placement_mode_renders_single_valid_overlay_per_slot_region() -> void:
 	var controller := CONTROLLER.new()
+	add_child(auto_free(controller))
 
 	var inner := controller.render_outcome("slot_inner", controller.LEGALITY_VALID_INNER)
 	var outer := controller.render_outcome("slot_outer", controller.LEGALITY_VALID_OUTER)
@@ -25,6 +26,7 @@ func test_placement_mode_renders_single_valid_overlay_per_slot_region() -> void:
 # acceptance: ACC:T60.2
 func test_placement_mode_invalid_and_wall_slots_keep_expected_visual_contract() -> void:
 	var controller := CONTROLLER.new()
+	add_child(auto_free(controller))
 
 	var fixed_invalid := controller.render_outcome("slot_fixed", controller.LEGALITY_FIXED_INVALID)
 	assert_that(fixed_invalid["overlay_tint"]).is_equal("grey")
@@ -46,6 +48,7 @@ func test_placement_mode_invalid_and_wall_slots_keep_expected_visual_contract() 
 # acceptance: ACC:T60.11
 func test_unknown_legality_should_not_render_valid_overlay() -> void:
 	var controller := CONTROLLER.new()
+	add_child(auto_free(controller))
 	var unknown := controller.render_outcome("slot_unknown", "unsupported_legality")
 
 	assert_that(unknown["valid_overlay"]).is_equal(false)
@@ -56,6 +59,7 @@ func test_unknown_legality_should_not_render_valid_overlay() -> void:
 # acceptance: ACC:T60.2
 func test_battlefield_slot_visual_feedback_is_applied_directly_on_runtime_slot_state() -> void:
 	var controller := CONTROLLER.new()
+	add_child(auto_free(controller))
 	var slot_id := "runtime_slot_A1"
 
 	controller.apply_legality_overlay({slot_id: controller.LEGALITY_VALID_INNER})
@@ -72,22 +76,24 @@ func test_battlefield_slot_visual_feedback_is_applied_directly_on_runtime_slot_s
 # acceptance: ACC:T61.7
 func test_inactive_context_keeps_battlefield_slot_overlay_hidden_when_scene_state_changes() -> void:
 	var controller := CONTROLLER.new()
+	add_child(auto_free(controller))
 	var slot_id := "runtime_slot_B1"
 
 	controller.apply_legality_overlay({slot_id: controller.LEGALITY_VALID_INNER})
-	var before := controller.read_slot_visual(slot_id)
+	var state_before_toggle := controller.read_slot_visual(slot_id)
 
 	controller.set_placement_context_active(false)
 	controller.apply_legality_overlay({slot_id: controller.LEGALITY_WALL})
-	var after := controller.read_slot_visual(slot_id)
+	var state_after_toggle := controller.read_slot_visual(slot_id)
 
-	assert_that(before["overlay_state"]).is_equal("overlay_legal")
-	assert_that(after["overlay_state"]).is_equal("overlay_hidden")
-	assert_that(after["overlay_tint"]).is_equal("none")
+	assert_that(state_before_toggle["overlay_state"]).is_equal("overlay_legal")
+	assert_that(state_after_toggle["overlay_state"]).is_equal("overlay_hidden")
+	assert_that(state_after_toggle["overlay_tint"]).is_equal("none")
 
 # acceptance: ACC:T60.8
 func test_reactivating_context_restores_overlay_updates_without_reusing_stale_hidden_state() -> void:
 	var controller := CONTROLLER.new()
+	add_child(auto_free(controller))
 	var slot_id := "runtime_slot_B2"
 
 	controller.set_placement_context_active(false)
