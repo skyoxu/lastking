@@ -25,12 +25,17 @@ func test_battle_map_screen_registers_runtime_overlay_controller_path_via_real_s
 	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
 	add_child(auto_free(screen))
 	await get_tree().process_frame
+	var selection_controller := screen.get_node_or_null("SelectionController")
+	assert_object(selection_controller).is_not_null()
+	assert_bool((selection_controller as Node).has_method("register_overlay_controller")).is_true()
 
-	assert_object(screen.get_node_or_null("UI_PlacementOverlayController")).is_null()
+	var default_overlay := screen.get_node_or_null("UI_PlacementOverlayController")
+	assert_object(default_overlay).is_not_null()
+	assert_str(String((default_overlay as Node).name)).is_equal("UI_PlacementOverlayController")
 
 	var path := NodePath("UI/PlacementOverlayController")
 	var runtime_controller := CONTROLLER.new()
-	screen.register_overlay_controller(path, runtime_controller)
+	(selection_controller as Node).call("register_overlay_controller", path, runtime_controller)
 	auto_free(runtime_controller)
 	await get_tree().process_frame
 
@@ -39,8 +44,8 @@ func test_battle_map_screen_registers_runtime_overlay_controller_path_via_real_s
 	assert_str(String(runtime_controller.name)).is_equal("UI_PlacementOverlayController")
 	assert_object(runtime_controller.get_parent()).is_equal(screen)
 
-	runtime_controller.apply_legality_overlay({"slot_live": runtime_controller.LEGALITY_WALL})
-	var slot_state := runtime_controller.read_slot_visual("slot_live")
+	selection_controller.call("apply_legality_overlay", {"slot_live": runtime_controller.LEGALITY_WALL})
+	var slot_state := selection_controller.call("read_slot_visual", "slot_live") as Dictionary
 	assert_that(slot_state["overlay_state"]).is_equal("overlay_illegal")
 
 # acceptance: ACC:T60.9
@@ -48,12 +53,13 @@ func test_register_overlay_controller_replaces_existing_named_overlay_without_du
 	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
 	add_child(auto_free(screen))
 	await get_tree().process_frame
+	var selection_controller: Node = screen.get_node("SelectionController")
 
 	var path := NodePath("UI/PlacementOverlayController")
 	var first := CONTROLLER.new()
 	var second := CONTROLLER.new()
-	screen.register_overlay_controller(path, first)
-	screen.register_overlay_controller(path, second)
+	selection_controller.call("register_overlay_controller", path, first)
+	selection_controller.call("register_overlay_controller", path, second)
 	auto_free(first)
 	auto_free(second)
 	await get_tree().process_frame
@@ -76,6 +82,7 @@ func test_register_overlay_controller_reparents_foreign_parent_controller_withou
 	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
 	add_child(auto_free(screen))
 	await get_tree().process_frame
+	var selection_controller: Node = screen.get_node("SelectionController")
 
 	var foreign_parent := Node.new()
 	foreign_parent.name = "ForeignParent"
@@ -87,7 +94,7 @@ func test_register_overlay_controller_reparents_foreign_parent_controller_withou
 	await get_tree().process_frame
 
 	var path := NodePath("UI/PlacementOverlayController")
-	screen.register_overlay_controller(path, controller)
+	selection_controller.call("register_overlay_controller", path, controller)
 	await get_tree().process_frame
 
 	assert_object(controller.get_parent()).is_equal(screen)
@@ -108,10 +115,11 @@ func test_runtime_registered_overlay_controller_produces_scene_scoped_feedback_c
 	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
 	add_child(auto_free(screen))
 	await get_tree().process_frame
+	var selection_controller: Node = screen.get_node("SelectionController")
 
 	var path := NodePath("UI/PlacementOverlayController")
 	var runtime_controller := CONTROLLER.new()
-	screen.register_overlay_controller(path, runtime_controller)
+	selection_controller.call("register_overlay_controller", path, runtime_controller)
 	auto_free(runtime_controller)
 	await get_tree().process_frame
 
@@ -119,17 +127,17 @@ func test_runtime_registered_overlay_controller_produces_scene_scoped_feedback_c
 	assert_object(overlay).is_not_null()
 	assert_object(overlay).is_equal(runtime_controller)
 
-	runtime_controller.apply_legality_overlay({
+	selection_controller.call("apply_legality_overlay", {
 		"linked_unit_slot": runtime_controller.LEGALITY_VALID_OUTER,
 		"non_linked_unit_slot": runtime_controller.LEGALITY_OUTSIDE_VALID,
 		"blocked_segment": runtime_controller.LEGALITY_WALL,
 		"unblocked_segment": runtime_controller.LEGALITY_VALID_OUTER,
 	})
 
-	var linked := runtime_controller.read_slot_visual("linked_unit_slot")
-	var non_linked := runtime_controller.read_slot_visual("non_linked_unit_slot")
-	var blocked := runtime_controller.read_slot_visual("blocked_segment")
-	var unblocked := runtime_controller.read_slot_visual("unblocked_segment")
+	var linked := selection_controller.call("read_slot_visual", "linked_unit_slot") as Dictionary
+	var non_linked := selection_controller.call("read_slot_visual", "non_linked_unit_slot") as Dictionary
+	var blocked := selection_controller.call("read_slot_visual", "blocked_segment") as Dictionary
+	var unblocked := selection_controller.call("read_slot_visual", "unblocked_segment") as Dictionary
 
 	assert_that(linked["overlay_state"]).is_equal("overlay_legal")
 	assert_that(linked["overlay_tint"]).is_equal("cool")

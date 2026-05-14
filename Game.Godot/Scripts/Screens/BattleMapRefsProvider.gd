@@ -1,0 +1,49 @@
+extends Node
+
+var _screen: Control = null
+
+func configure(refs: Dictionary) -> void:
+	_screen = refs["screen"]
+
+func build_refs() -> Dictionary:
+	return {
+		"title": _screen.get_node("Margin/VBox/Title"),
+		"status": _screen.get_node("Margin/VBox/Status"),
+		"summary": _screen.get_node("Margin/VBox/Summary"),
+		"legend": _screen.get_node("Margin/VBox/Legend"),
+		"metrics_help": _screen.get_node("Margin/VBox/MetricsHelp"),
+		"build_btn": _screen.get_node("Margin/VBox/Controls/BuildBtn"),
+		"wave_btn": _screen.get_node("Margin/VBox/Controls/WaveBtn"),
+		"auto_wave_btn": _screen.get_node("Margin/VBox/Controls/AutoWaveBtn"),
+		"exchange_btn": _screen.get_node("Margin/VBox/Controls/ExchangeBtn"),
+		"cleanup_btn": _screen.get_node("Margin/VBox/Controls/CleanupBtn"),
+		"finish_btn": _screen.get_node("Margin/VBox/Controls/FinishBtn"),
+		"back_btn": _screen.get_node("Margin/VBox/Controls/BackBtn"),
+		"background": _screen.get_node("Background"),
+		"enemy_spawn_a": _screen.get_node("Background/EnemySpawnA"),
+		"enemy_spawn_b": _screen.get_node("Background/EnemySpawnB"),
+		"daily_settlement_modal": _screen.get_node("DailySettlementModal"),
+		"daily_settlement_summary": _screen.get_node("DailySettlementModal/VBox/Summary"),
+		"daily_evidence_hp": _screen.get_node("DailySettlementModal/VBox/EvidencePanel/HpEvidence"),
+		"daily_evidence_kills": _screen.get_node("DailySettlementModal/VBox/EvidencePanel/KillEvidence"),
+		"daily_evidence_reward_summary": _screen.get_node("DailySettlementModal/VBox/EvidencePanel/RewardSummaryEvidence"),
+		"daily_evidence_resources": _screen.get_node("DailySettlementModal/VBox/EvidencePanel/ResourceEvidence"),
+		"daily_evidence_defeat_reason": _screen.get_node("DailySettlementModal/VBox/EvidencePanel/DefeatReasonEvidence"),
+		"daily_expand_context_btn": _screen.get_node("DailySettlementModal/VBox/EvidencePanel/ExpandContextBtn"),
+		"daily_runtime_context_payload": _screen.get_node("DailySettlementModal/VBox/EvidencePanel/RuntimeContextPayload"),
+		"daily_reward_a": _screen.get_node("DailySettlementModal/VBox/Rewards/RewardA"),
+		"daily_reward_b": _screen.get_node("DailySettlementModal/VBox/Rewards/RewardB"),
+		"daily_reward_c": _screen.get_node("DailySettlementModal/VBox/Rewards/RewardC"),
+		"victory_outcome_modal": _screen.get_node("VictoryOutcomeModal"),
+		"victory_outcome_title": _screen.get_node("VictoryOutcomeModal/VBox/Title"),
+		"victory_outcome_summary": _screen.get_node("VictoryOutcomeModal/VBox/Summary"),
+		"victory_outcome_hint": _screen.get_node("VictoryOutcomeModal/VBox/Hint"),
+		"victory_return_btn": _screen.get_node("VictoryOutcomeModal/VBox/Actions/ReturnToMainMenuBtn"),
+		"victory_restart_btn": _screen.get_node("VictoryOutcomeModal/VBox/Actions/RestartBtn"),
+		"defeat_outcome_modal": _screen.get_node("DefeatOutcomeModal"),
+		"defeat_outcome_title": _screen.get_node("DefeatOutcomeModal/VBox/Title"),
+		"defeat_outcome_summary": _screen.get_node("DefeatOutcomeModal/VBox/Summary"),
+		"defeat_outcome_hint": _screen.get_node("DefeatOutcomeModal/VBox/Hint"),
+		"defeat_return_btn": _screen.get_node("DefeatOutcomeModal/VBox/Actions/ReturnToMainMenuBtn"),
+		"defeat_restart_btn": _screen.get_node("DefeatOutcomeModal/VBox/Actions/RestartBtn"),
+	}

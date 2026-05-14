@@ -5,6 +5,7 @@ const CONTROLLER := preload("res://Game.Godot/Scripts/Screens/PlacementOverlayCo
 # acceptance: ACC:T61.1
 func test_selected_category_feedback_stays_exclusive_and_switch_clears_previous_state() -> void:
 	var controller := CONTROLLER.new()
+	add_child(auto_free(controller))
 	controller.apply_legality_overlay({"economy_slot": controller.LEGALITY_VALID_INNER})
 	var economy_selected := controller.read_slot_visual("economy_slot")
 	var defense_initial := controller.read_slot_visual("defense_slot")
@@ -32,6 +33,7 @@ func test_selected_category_feedback_stays_exclusive_and_switch_clears_previous_
 # acceptance: ACC:T61.2
 func test_non_linked_units_stay_unhighlighted_when_linked_unit_feedback_changes() -> void:
 	var controller := CONTROLLER.new()
+	add_child(auto_free(controller))
 	controller.apply_legality_overlay({"linked_unit_slot": controller.LEGALITY_VALID_OUTER})
 
 	var linked := controller.read_slot_visual("linked_unit_slot")
@@ -50,6 +52,7 @@ func test_non_linked_units_stay_unhighlighted_when_linked_unit_feedback_changes(
 # acceptance: ACC:T61.3
 func test_entering_placement_mode_clears_selection_feedback_until_new_selection() -> void:
 	var controller := CONTROLLER.new()
+	add_child(auto_free(controller))
 	controller.apply_legality_overlay({
 		"selected_slot": controller.LEGALITY_VALID_INNER,
 		"linked_unit_slot": controller.LEGALITY_VALID_OUTER,
@@ -86,6 +89,7 @@ func test_entering_placement_mode_clears_selection_feedback_until_new_selection(
 # acceptance: ACC:T61.3
 func test_clearing_selection_should_not_leave_stale_outline_or_range_feedback() -> void:
 	var controller := CONTROLLER.new()
+	add_child(auto_free(controller))
 	controller.apply_legality_overlay({"selected_slot": controller.LEGALITY_WALL})
 	var selected := controller.read_slot_visual("selected_slot")
 	assert_that(selected["overlay_state"]).is_equal("overlay_illegal")
@@ -105,6 +109,8 @@ func test_clearing_selection_should_not_leave_stale_outline_or_range_feedback() 
 func test_selection_feedback_transitions_are_deterministic_across_repeat_sequences() -> void:
 	var first := CONTROLLER.new()
 	var second := CONTROLLER.new()
+	add_child(auto_free(first))
+	add_child(auto_free(second))
 	var sequence := [
 		{"slot_a": first.LEGALITY_VALID_INNER},
 		{"slot_b": first.LEGALITY_WALL},
@@ -124,6 +130,7 @@ func test_selection_feedback_transitions_are_deterministic_across_repeat_sequenc
 # acceptance: ACC:T61.7
 func test_inactive_context_prevents_stale_overlay_reuse_until_context_reactivated() -> void:
 	var controller := CONTROLLER.new()
+	add_child(auto_free(controller))
 	controller.set_placement_context_active(false)
 	controller.apply_legality_overlay({"stale_slot": controller.LEGALITY_WALL})
 	var hidden := controller.read_slot_visual("stale_slot")
@@ -145,33 +152,35 @@ func test_task_scoped_scene_checks_cover_runtime_registration_and_selection_feed
 	add_child(auto_free(screen))
 	await get_tree().process_frame
 
+	var selection_controller: Node = screen.get_node("SelectionController")
 	var path := NodePath("UI/PlacementOverlayController")
 	var controller := CONTROLLER.new()
-	screen.register_overlay_controller(path, controller)
+	selection_controller.call("register_overlay_controller", path, controller)
 	auto_free(controller)
 	await get_tree().process_frame
 
-	controller.apply_legality_overlay({"slot_runtime": controller.LEGALITY_TEMP_INVALID})
-	var state := controller.read_slot_visual("slot_runtime")
+	selection_controller.call("apply_legality_overlay", {"slot_runtime": controller.LEGALITY_TEMP_INVALID})
+	var state := selection_controller.call("read_slot_visual", "slot_runtime") as Dictionary
 	assert_that(state["overlay_state"]).is_equal("overlay_illegal")
 	assert_that(state["frame"]).is_equal("red")
 	assert_that(state["marker"]).is_equal("none")
 
-	controller.apply_legality_overlay({"slot_runtime_b": controller.LEGALITY_VALID_OUTER})
-	var switched_new := controller.read_slot_visual("slot_runtime_b")
+	selection_controller.call("apply_legality_overlay", {"slot_runtime_b": controller.LEGALITY_VALID_OUTER})
+	var switched_new := selection_controller.call("read_slot_visual", "slot_runtime_b") as Dictionary
 	assert_that(switched_new["overlay_state"]).is_equal("overlay_legal")
 	assert_that(switched_new["overlay_tint"]).is_equal("cool")
 
-	controller.set_placement_context_active(false)
-	controller.set_placement_context_active(true)
-	var cleared_old := controller.read_slot_visual("slot_runtime")
-	var cleared_new := controller.read_slot_visual("slot_runtime_b")
+	selection_controller.call("set_placement_context_active", false)
+	selection_controller.call("set_placement_context_active", true)
+	var cleared_old := selection_controller.call("read_slot_visual", "slot_runtime") as Dictionary
+	var cleared_new := selection_controller.call("read_slot_visual", "slot_runtime_b") as Dictionary
 	assert_that(cleared_old["overlay_state"]).is_equal("overlay_hidden")
 	assert_that(cleared_new["overlay_state"]).is_equal("overlay_hidden")
 
 # acceptance: ACC:T61.1
 func test_category_switch_maintains_expected_shared_outline_color_contract() -> void:
 	var controller := CONTROLLER.new()
+	add_child(auto_free(controller))
 	controller.apply_legality_overlay({"economy": controller.LEGALITY_VALID_INNER})
 	controller.apply_legality_overlay({"economy": controller.LEGALITY_VALID_OUTER})
 	var economy := controller.read_slot_visual("economy")
@@ -187,6 +196,7 @@ func test_category_switch_maintains_expected_shared_outline_color_contract() -> 
 # acceptance: ACC:T61.8
 func test_linked_unit_highlight_should_clear_after_switch_and_clear_selection() -> void:
 	var controller := CONTROLLER.new()
+	add_child(auto_free(controller))
 
 	controller.apply_legality_overlay({
 		"unit_building_linked_unit": controller.LEGALITY_VALID_OUTER,
@@ -218,6 +228,7 @@ func test_linked_unit_highlight_should_clear_after_switch_and_clear_selection() 
 # acceptance: ACC:T61.5
 func test_economy_selection_glow_only_for_selected_economy_building() -> void:
 	var controller := CONTROLLER.new()
+	add_child(auto_free(controller))
 	controller.apply_legality_overlay({"economy_building": controller.LEGALITY_VALID_INNER})
 	var selected := controller.read_slot_visual("economy_building")
 	var non_selected := controller.read_slot_visual("other_economy_building")
@@ -234,6 +245,7 @@ func test_economy_selection_glow_only_for_selected_economy_building() -> void:
 # acceptance: ACC:T61.6
 func test_defense_selection_shows_only_defense_range_overlay() -> void:
 	var controller := CONTROLLER.new()
+	add_child(auto_free(controller))
 	controller.apply_legality_overlay({"defense_building": controller.LEGALITY_WALL})
 	var defense := controller.read_slot_visual("defense_building")
 	var economy := controller.read_slot_visual("economy_building")
@@ -253,6 +265,7 @@ func test_defense_selection_shows_only_defense_range_overlay() -> void:
 # acceptance: ACC:T61.7
 func test_unit_building_range_overlay_switch_clears_previous_before_new_selection() -> void:
 	var controller := CONTROLLER.new()
+	add_child(auto_free(controller))
 	controller.apply_legality_overlay({"unit_building_a": controller.LEGALITY_VALID_OUTER})
 	var first := controller.read_slot_visual("unit_building_a")
 
@@ -269,6 +282,7 @@ func test_unit_building_range_overlay_switch_clears_previous_before_new_selectio
 # acceptance: ACC:T61.8
 func test_range_overlay_wall_clipped_contract_uses_blocked_vs_unblocked_states() -> void:
 	var controller := CONTROLLER.new()
+	add_child(auto_free(controller))
 	controller.apply_legality_overlay({
 		"blocked_segment": controller.LEGALITY_WALL,
 		"unblocked_segment": controller.LEGALITY_VALID_OUTER,
@@ -315,6 +329,7 @@ func test_range_overlay_wall_clipped_contract_uses_blocked_vs_unblocked_states()
 # acceptance: ACC:T61.9
 func test_selected_building_ownership_feedback_uses_shared_outline_color_contract() -> void:
 	var controller := CONTROLLER.new()
+	add_child(auto_free(controller))
 	controller.apply_legality_overlay({"economy_slot": controller.LEGALITY_VALID_OUTER})
 	controller.apply_legality_overlay({"unit_slot": controller.LEGALITY_VALID_OUTER})
 	var economy := controller.read_slot_visual("economy_slot")
@@ -330,6 +345,7 @@ func test_selected_building_ownership_feedback_uses_shared_outline_color_contrac
 # acceptance: ACC:T61.10
 func test_empty_prompt_state_clears_all_building_selection_feedback_channels() -> void:
 	var controller := CONTROLLER.new()
+	add_child(auto_free(controller))
 	controller.apply_legality_overlay({
 		"economy_slot": controller.LEGALITY_VALID_INNER,
 		"defense_slot": controller.LEGALITY_WALL,
@@ -353,6 +369,7 @@ func test_empty_prompt_state_clears_all_building_selection_feedback_channels() -
 # acceptance: ACC:T61.11
 func test_switching_between_multiple_producers_updates_linked_unit_set_without_overlap() -> void:
 	var controller := CONTROLLER.new()
+	add_child(auto_free(controller))
 	controller.apply_legality_overlay({
 		"producer_a_linked_unit": controller.LEGALITY_VALID_OUTER,
 		"producer_b_linked_unit": controller.LEGALITY_OUTSIDE_VALID,
