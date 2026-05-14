@@ -156,6 +156,50 @@ layout_mode = 2
 autowrap_mode = 3
 text = "HP / rewards / kills / resources"
 
+[node name="EvidencePanel" type="VBoxContainer" parent="DailySettlementModal/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="EvidenceTitle" type="Label" parent="DailySettlementModal/VBox/EvidencePanel"]
+layout_mode = 2
+text = "Outcome Evidence"
+
+[node name="HpEvidence" type="Label" parent="DailySettlementModal/VBox/EvidencePanel"]
+layout_mode = 2
+autowrap_mode = 3
+text = "Final HP"
+
+[node name="KillEvidence" type="Label" parent="DailySettlementModal/VBox/EvidencePanel"]
+layout_mode = 2
+autowrap_mode = 3
+text = "Kills"
+
+[node name="RewardSummaryEvidence" type="Label" parent="DailySettlementModal/VBox/EvidencePanel"]
+layout_mode = 2
+autowrap_mode = 3
+text = "Reward Summary"
+
+[node name="ResourceEvidence" type="Label" parent="DailySettlementModal/VBox/EvidencePanel"]
+layout_mode = 2
+autowrap_mode = 3
+text = "Resources"
+
+[node name="DefeatReasonEvidence" type="Label" parent="DailySettlementModal/VBox/EvidencePanel"]
+visible = false
+layout_mode = 2
+autowrap_mode = 3
+text = "Defeat reason: n/a"
+
+[node name="ExpandContextBtn" type="Button" parent="DailySettlementModal/VBox/EvidencePanel"]
+layout_mode = 2
+text = "Show Runtime Context"
+
+[node name="RuntimeContextPayload" type="Label" parent="DailySettlementModal/VBox/EvidencePanel"]
+visible = false
+layout_mode = 2
+autowrap_mode = 3
+text = "{}"
+
 [node name="Rewards" type="VBoxContainer" parent="DailySettlementModal/VBox"]
 layout_mode = 2
 theme_override_constants/separation = 6

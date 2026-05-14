@@ -188,6 +188,7 @@ func test_t66_state_transition_semantics_should_stay_bridge_driven_after_legacy_
 
 
 # ACC:T67.9
+# ACC:T70.9
 func test_t67_daily_settlement_modal_node_paths_should_exist_and_default_hidden() -> void:
 	var runtime := await _main_runtime()
 	var screen: Control = runtime["screen"]
@@ -203,6 +204,33 @@ func test_t67_daily_settlement_modal_node_paths_should_exist_and_default_hidden(
 	assert_object(reward_b).is_not_null()
 	assert_object(reward_c).is_not_null()
 	assert_bool((modal as Control).visible).is_false()
+	# T70.9: focused scene path must become visible/interactive after settlement trigger.
+	var bridge: Node = runtime["bridge"]
+	var status_label: Label = runtime["status"]
+	var wave_btn: Button = screen.get_node("Margin/VBox/Controls/WaveBtn")
+	var exchange_btn: Button = screen.get_node("Margin/VBox/Controls/ExchangeBtn")
+	var cleanup_btn: Button = screen.get_node("Margin/VBox/Controls/CleanupBtn")
+	var finish_btn: Button = screen.get_node("Margin/VBox/Controls/FinishBtn")
+	assert_bool(bridge.has_method("ForceOutcomeForTest")).is_true()
+	bridge.call("ForceOutcomeForTest", "settlement", 42)
+	wave_btn.emit_signal("pressed")
+	await _await_frames(1)
+	exchange_btn.emit_signal("pressed")
+	await _await_frames(1)
+	cleanup_btn.emit_signal("pressed")
+	await _await_frames(1)
+	finish_btn.emit_signal("pressed")
+	await _await_frames(2)
+	assert_bool((modal as Control).visible).is_true()
+	assert_bool((reward_a as Button).disabled).is_false()
+	var summary_before_select: Dictionary = bridge.call("GetSummary")
+	assert_str(String(summary_before_select.get("outcome", ""))).is_equal("settlement")
+	(reward_a as Button).emit_signal("pressed")
+	await _await_frames(1)
+	assert_bool((modal as Control).visible).is_false()
+	assert_bool(get_tree().paused).is_false()
+	assert_bool(String(status_label.text).to_lower().find("settlement resolved") >= 0).is_true()
+	assert_that(bridge.call("GetSummary")).is_equal(summary_before_select)
 
 
 # ACC:T68.1

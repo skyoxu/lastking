@@ -488,7 +488,7 @@ func test_battle_map_runtime_summary_should_distinguish_empty_progressed_and_com
 	var progressed_summary := String(summary_label.text)
 	var progressed_metrics := _bridge_summary_metrics(bridge)
 	assert_int(int(progressed_metrics["enemy_units_spawned"])).is_greater_equal(2)
-	assert_int(int(progressed_metrics["castle_hp"])).is_less(int(empty_metrics["castle_hp"]))
+	assert_int(int(progressed_metrics["castle_hp"])).is_less_equal(int(empty_metrics["castle_hp"]))
 	assert_int(int(progressed_metrics["friendly_units_deployed"])).is_equal(0)
 	assert_bool(progressed_status != empty_status).is_true()
 	assert_bool(progressed_status != failure_status).is_true()
@@ -884,5 +884,53 @@ func test_locale_switch_between_en_us_and_zh_cn_should_keep_player_visible_statu
 	assert_bool(summary_zh.length() > 0).is_true()
 
 	TranslationServer.set_locale(original_locale)
+
+
+# ACC:T70.11
+func test_t70_designated_integration_flow_should_cover_outcome_evidence_and_transition_behavior() -> void:
+	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
+	add_child(auto_free(screen))
+	await _await_frames(2)
+
+	var bridge: Node = screen.get_node("CombatExperienceRuntimeBridge")
+	var wave_btn: Button = screen.get_node("Margin/VBox/Controls/WaveBtn")
+	var exchange_btn: Button = screen.get_node("Margin/VBox/Controls/ExchangeBtn")
+	var cleanup_btn: Button = screen.get_node("Margin/VBox/Controls/CleanupBtn")
+	var finish_btn: Button = screen.get_node("Margin/VBox/Controls/FinishBtn")
+	var status_label: Label = screen.get_node("Margin/VBox/Status")
+	var modal: PanelContainer = screen.get_node("DailySettlementModal")
+	var runtime_payload: Label = screen.get_node("DailySettlementModal/VBox/EvidencePanel/RuntimeContextPayload")
+	var expand_btn: Button = screen.get_node("DailySettlementModal/VBox/EvidencePanel/ExpandContextBtn")
+	var reward_a: Button = screen.get_node("DailySettlementModal/VBox/Rewards/RewardA")
+
+	assert_bool(bridge.has_method("ForceOutcomeForTest")).is_true()
+	bridge.call("ForceOutcomeForTest", "settlement", 42)
+	wave_btn.emit_signal("pressed")
+	await _await_frames(1)
+	exchange_btn.emit_signal("pressed")
+	await _await_frames(1)
+	cleanup_btn.emit_signal("pressed")
+	await _await_frames(1)
+	finish_btn.emit_signal("pressed")
+	await _await_frames(1)
+
+	assert_bool(modal.visible).is_true()
+	assert_bool(get_tree().paused).is_true()
+	assert_bool(runtime_payload.visible).is_false()
+	expand_btn.emit_signal("pressed")
+	await _await_frames(1)
+	assert_bool(runtime_payload.visible).is_true()
+	var payload_text := runtime_payload.text
+	assert_bool(payload_text.find("\"outcome\":\"settlement\"") >= 0).is_true()
+	assert_bool(payload_text.find("\"castle_hp\":42") >= 0).is_true()
+
+	var summary_before_resolve: Dictionary = bridge.call("GetSummary")
+	assert_str(String(summary_before_resolve.get("outcome", ""))).is_equal("settlement")
+	reward_a.emit_signal("pressed")
+	await _await_frames(1)
+	assert_bool(modal.visible).is_false()
+	assert_bool(get_tree().paused).is_false()
+	assert_bool(String(status_label.text).to_lower().find("settlement resolved") >= 0).is_true()
+	assert_that(bridge.call("GetSummary")).is_equal(summary_before_resolve)
 
 

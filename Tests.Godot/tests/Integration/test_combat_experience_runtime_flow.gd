@@ -584,6 +584,15 @@ func test_pressure_state_mapping_should_cover_exact_four_states_and_keep_summary
 # ACC:T67.6
 # ACC:T67.7
 # ACC:T67.8
+# ACC:T70.1
+# ACC:T70.13
+# ACC:T70.14
+# ACC:T70.15
+# ACC:T70.6
+# ACC:T70.7
+#
+# Keep T70 anchors adjacent to concrete test entrypoints so acceptance-anchor
+# validation can map each item to a focused scenario.
 func test_daily_settlement_modal_should_block_progress_until_reward_is_selected() -> void:
 	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
 	add_child(auto_free(main))
@@ -610,6 +619,13 @@ func test_daily_settlement_modal_should_block_progress_until_reward_is_selected(
 	var reward_b: Button = screen.get_node("DailySettlementModal/VBox/Rewards/RewardB")
 	var reward_c: Button = screen.get_node("DailySettlementModal/VBox/Rewards/RewardC")
 	var summary_label: Label = screen.get_node("DailySettlementModal/VBox/Summary")
+	var evidence_hp: Label = screen.get_node("DailySettlementModal/VBox/EvidencePanel/HpEvidence")
+	var evidence_kills: Label = screen.get_node("DailySettlementModal/VBox/EvidencePanel/KillEvidence")
+	var evidence_reward_summary: Label = screen.get_node("DailySettlementModal/VBox/EvidencePanel/RewardSummaryEvidence")
+	var evidence_resources: Label = screen.get_node("DailySettlementModal/VBox/EvidencePanel/ResourceEvidence")
+	var evidence_defeat_reason: Label = screen.get_node("DailySettlementModal/VBox/EvidencePanel/DefeatReasonEvidence")
+	var expand_context_btn: Button = screen.get_node("DailySettlementModal/VBox/EvidencePanel/ExpandContextBtn")
+	var runtime_context_payload: Label = screen.get_node("DailySettlementModal/VBox/EvidencePanel/RuntimeContextPayload")
 	var rewards_box: VBoxContainer = screen.get_node("DailySettlementModal/VBox/Rewards")
 	var hud := main.get_node("RuntimeUi/HUD")
 	var outcome_label: Label = hud.get_node("FeedbackLayer/OutcomePanel/VBox/OutcomeLabel")
@@ -636,6 +652,29 @@ func test_daily_settlement_modal_should_block_progress_until_reward_is_selected(
 	assert_bool(summary_label.text.find("gold=120") >= 0).is_true()
 	assert_bool(summary_label.text.find("iron=44") >= 0).is_true()
 	assert_bool(summary_label.text.find("pop=26") >= 0).is_true()
+	assert_bool(evidence_hp.text.find("42") >= 0).is_true()
+	assert_bool(evidence_kills.text.find("0") >= 0).is_true()
+	assert_bool(evidence_reward_summary.visible).is_false()
+	assert_bool(evidence_resources.text.find("gold=120") >= 0).is_true()
+	assert_bool(evidence_resources.text.find("iron=44") >= 0).is_true()
+	assert_bool(evidence_resources.text.find("pop=26") >= 0).is_true()
+	assert_bool(evidence_defeat_reason.visible).is_false()
+	assert_bool(runtime_context_payload.visible).is_false()
+	assert_str(expand_context_btn.text).is_equal("Show Runtime Context")
+	expand_context_btn.emit_signal("pressed")
+	await get_tree().process_frame
+	assert_bool(runtime_context_payload.visible).is_true()
+	assert_str(expand_context_btn.text).is_equal("Hide Runtime Context")
+	var context_payload := runtime_context_payload.text
+	assert_bool(context_payload.find("\"outcome\":\"settlement\"") >= 0).is_true()
+	assert_bool(context_payload.find("\"castle_hp\":42") >= 0).is_true()
+	assert_bool(context_payload.find("\"resource_gold\":120") >= 0).is_true()
+	var summary_for_context: Dictionary = bridge.call("GetSummary")
+	assert_str(String(summary_for_context.get("outcome", ""))).is_equal("settlement")
+	assert_int(int(summary_for_context.get("castle_hp", -1))).is_equal(42)
+	assert_int(int(summary_for_context.get("resource_gold", -1))).is_equal(120)
+	assert_int(int(summary_for_context.get("resource_iron", -1))).is_equal(44)
+	assert_int(int(summary_for_context.get("resource_population_cap", -1))).is_equal(26)
 	assert_int(rewards_box.get_child_count()).is_equal(3)
 	assert_bool(not reward_a.disabled).is_true()
 	assert_bool(not reward_b.disabled).is_true()
@@ -680,9 +719,20 @@ func test_daily_settlement_modal_should_block_progress_until_reward_is_selected(
 	assert_bool(modal.visible).is_false()
 	assert_bool(get_tree().paused).is_false()
 	assert_bool(status_label.text.to_lower().find("settlement resolved") >= 0).is_true()
+	var status_after_resolve := status_label.text
+	var summary_after_resolve: Dictionary = bridge.call("GetSummary")
+	# Single-consume guard: duplicate reward callback must not trigger extra transition side effects.
+	screen.call("_on_settlement_reward_selected", 1)
+	await get_tree().process_frame
+	assert_bool(modal.visible).is_false()
+	assert_bool(get_tree().paused).is_false()
+	assert_str(status_label.text).is_equal(status_after_resolve)
+	assert_that(bridge.call("GetSummary")).is_equal(summary_after_resolve)
 
 
 # ACC:T67.2
+# ACC:T70.2
+# ACC:T70.8
 func test_daily_settlement_modal_should_ignore_invalid_reward_selection_index() -> void:
 	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
 	add_child(auto_free(main))
@@ -698,6 +748,7 @@ func test_daily_settlement_modal_should_ignore_invalid_reward_selection_index() 
 	await get_tree().process_frame
 
 	var screen: Node = main.get_node("RuntimeUi/ScreenRoot/BattleMapScreen")
+	var bridge: Node = screen.get_node("CombatExperienceRuntimeBridge")
 	var wave_btn: Button = screen.get_node("Margin/VBox/Controls/WaveBtn")
 	var exchange_btn: Button = screen.get_node("Margin/VBox/Controls/ExchangeBtn")
 	var cleanup_btn: Button = screen.get_node("Margin/VBox/Controls/CleanupBtn")
@@ -718,15 +769,154 @@ func test_daily_settlement_modal_should_ignore_invalid_reward_selection_index() 
 
 	assert_bool(modal.visible).is_true()
 	assert_bool(get_tree().paused).is_true()
+	var runtime_summary_before: Dictionary = bridge.call("GetSummary")
+	assert_str(String(runtime_summary_before.get("outcome", ""))).is_equal("settlement")
+	assert_int(int(runtime_summary_before.get("castle_hp", -1))).is_equal(42)
 	var status_before := status_label.text
 	screen.call("_on_settlement_reward_selected", 99)
 	await get_tree().process_frame
 	assert_bool(modal.visible).is_true()
 	assert_bool(get_tree().paused).is_true()
 	assert_str(status_label.text).is_equal(status_before)
+	var runtime_summary_after: Dictionary = bridge.call("GetSummary")
+	assert_that(runtime_summary_after).is_equal(runtime_summary_before)
+	# T70.8: while unresolved modal is visible, no implicit transition should mutate UI snapshot.
+	var frozen_summary := String(screen.get_node("DailySettlementModal/VBox/Summary").text)
+	for _i in range(6):
+		await get_tree().process_frame
+	assert_str(String(screen.get_node("DailySettlementModal/VBox/Summary").text)).is_equal(frozen_summary)
+	assert_that(bridge.call("GetSummary")).is_equal(runtime_summary_before)
+	assert_bool(modal.visible).is_true()
+
+
+# ACC:T70.16
+func test_settlement_confirm_should_be_rejected_when_no_resolved_result_is_active() -> void:
+	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
+	add_child(auto_free(main))
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	var nav := main.get_node_or_null("ScreenNavigator")
+	assert_object(nav).is_not_null()
+	nav.set("UseFadeTransition", false)
+	var ok_enter: bool = nav.call("SwitchTo", "res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn")
+	assert_bool(ok_enter).is_true()
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	var screen: Node = main.get_node("RuntimeUi/ScreenRoot/BattleMapScreen")
+	var bridge: Node = screen.get_node("CombatExperienceRuntimeBridge")
+	var modal: PanelContainer = screen.get_node("DailySettlementModal")
+	var victory_modal: PanelContainer = screen.get_node("VictoryOutcomeModal")
+	var defeat_modal: PanelContainer = screen.get_node("DefeatOutcomeModal")
+	var status_label: Label = screen.get_node("Margin/VBox/Status")
+
+	assert_bool(modal.visible).is_false()
+	assert_bool(victory_modal.visible).is_false()
+	assert_bool(defeat_modal.visible).is_false()
+	assert_bool(get_tree().paused).is_false()
+	var status_before := status_label.text
+	var summary_before: Dictionary = bridge.call("GetSummary")
+
+	# No resolved settlement result is active; confirm input must be ignored.
+	screen.call("_on_settlement_reward_selected", 0)
+	await get_tree().process_frame
+
+	assert_bool(modal.visible).is_false()
+	assert_bool(victory_modal.visible).is_false()
+	assert_bool(defeat_modal.visible).is_false()
+	assert_bool(get_tree().paused).is_false()
+	assert_str(status_label.text).is_equal(status_before)
+	assert_that(bridge.call("GetSummary")).is_equal(summary_before)
+
+
+# ACC:T70.1
+# ACC:T70.12
+# ACC:T70.14
+func test_daily_settlement_evidence_panel_should_hide_non_applicable_fields_for_same_resolved_result_payload() -> void:
+	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
+	add_child(auto_free(main))
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	var nav := main.get_node_or_null("ScreenNavigator")
+	assert_object(nav).is_not_null()
+	nav.set("UseFadeTransition", false)
+	var ok_enter: bool = nav.call("SwitchTo", "res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn")
+	assert_bool(ok_enter).is_true()
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	var screen: Node = main.get_node("RuntimeUi/ScreenRoot/BattleMapScreen")
+	var modal: PanelContainer = screen.get_node("DailySettlementModal")
+	var hp_evidence: Label = screen.get_node("DailySettlementModal/VBox/EvidencePanel/HpEvidence")
+	var kills_evidence: Label = screen.get_node("DailySettlementModal/VBox/EvidencePanel/KillEvidence")
+	var reward_summary_evidence: Label = screen.get_node("DailySettlementModal/VBox/EvidencePanel/RewardSummaryEvidence")
+	var resources_evidence: Label = screen.get_node("DailySettlementModal/VBox/EvidencePanel/ResourceEvidence")
+	var defeat_reason_evidence: Label = screen.get_node("DailySettlementModal/VBox/EvidencePanel/DefeatReasonEvidence")
+	var expand_context_btn: Button = screen.get_node("DailySettlementModal/VBox/EvidencePanel/ExpandContextBtn")
+	var runtime_context_payload: Label = screen.get_node("DailySettlementModal/VBox/EvidencePanel/RuntimeContextPayload")
+
+	var partial_summary := {
+		"outcome": "settlement",
+		"castle_hp": 21,
+		"dead_units_retired": 2,
+		"resource_gold": 7,
+		"resource_iron": 3,
+		"resource_population_cap": 5
+	}
+	assert_bool(screen.has_method("_open_settlement_modal")).is_true()
+	screen.call("_open_settlement_modal", partial_summary)
+	await get_tree().process_frame
+
+	assert_bool(modal.visible).is_true()
+	assert_bool(hp_evidence.visible).is_true()
+	assert_bool(kills_evidence.visible).is_true()
+	assert_bool(resources_evidence.visible).is_true()
+	assert_bool(defeat_reason_evidence.visible).is_false()
+	assert_str(hp_evidence.text).is_equal("Final HP: 21")
+	assert_str(kills_evidence.text).is_equal("Kills: 2")
+	assert_str(resources_evidence.text).is_equal("Resources: gold=7, iron=3, pop=5")
+	# non-applicable reward_summary field should be hidden when summary payload omits it.
+	assert_bool(reward_summary_evidence.visible).is_false()
+	assert_bool(runtime_context_payload.visible).is_false()
+	expand_context_btn.emit_signal("pressed")
+	await get_tree().process_frame
+	assert_bool(runtime_context_payload.visible).is_true()
+	var payload_text := runtime_context_payload.text
+	assert_bool(payload_text.find("\"outcome\":\"settlement\"") >= 0).is_true()
+	assert_bool(payload_text.find("\"castle_hp\":21") >= 0).is_true()
+	assert_bool(payload_text.find("\"resource_gold\":7") >= 0).is_true()
+	assert_bool(payload_text.find("\"reward_summary\"") < 0).is_true()
+
+	screen.call("_close_settlement_modal")
+	await get_tree().process_frame
+	assert_bool(modal.visible).is_false()
+
+	var summary_with_reward := partial_summary.duplicate()
+	summary_with_reward["reward_summary"] = "Reward A,Reward B,Reward C"
+	screen.call("_open_settlement_modal", summary_with_reward)
+	await get_tree().process_frame
+
+	assert_bool(modal.visible).is_true()
+	assert_bool(reward_summary_evidence.visible).is_true()
+	assert_str(reward_summary_evidence.text).is_equal("Reward Summary: Reward A,Reward B,Reward C")
+	assert_bool(runtime_context_payload.visible).is_false()
+	expand_context_btn.emit_signal("pressed")
+	await get_tree().process_frame
+	assert_bool(runtime_context_payload.visible).is_true()
+	var payload_text_with_reward := runtime_context_payload.text
+	assert_bool(payload_text_with_reward.find("\"castle_hp\":21") >= 0).is_true()
+	assert_bool(payload_text_with_reward.find("\"reward_summary\":\"Reward A,Reward B,Reward C\"") >= 0).is_true()
+	assert_bool(payload_text_with_reward.find("\"resource_gold\":7") >= 0).is_true()
+
+	screen.call("_close_settlement_modal")
+	await get_tree().process_frame
+	assert_bool(modal.visible).is_false()
 
 
 # ACC:T67.2
+# ACC:T70.11
 func test_daily_settlement_modal_should_reject_invalid_reward_option_count() -> void:
 	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
 	add_child(auto_free(main))
@@ -769,11 +959,14 @@ func test_daily_settlement_modal_should_reject_invalid_reward_option_count() -> 
 	assert_bool(modal.visible).is_false()
 	assert_bool(get_tree().paused).is_false()
 	assert_bool(status_label.text.to_lower().find("invalid") >= 0).is_true()
+	# T70.11: invalid option count rejection must keep deterministic flow stable.
+	assert_bool(status_label.text.to_lower().find("settlement resolved") < 0).is_true()
 	screen.call("SetSettlementOptionsForTest", original_options)
 
 
 # ACC:T67.3
 # ACC:T69.1 ACC:T69.4
+# ACC:T70.3
 func test_defeat_outcome_modal_should_open_immediately_when_active_battle_crosses_terminal_hp_boundary() -> void:
 	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
 	add_child(auto_free(main))
@@ -815,6 +1008,12 @@ func test_defeat_outcome_modal_should_open_immediately_when_active_battle_crosse
 	assert_bool(get_tree().paused).is_true()
 	assert_bool(defeat_summary.text.to_lower().find("wall breached") >= 0).is_true()
 	assert_bool(status_label.text.to_lower().find("finished") < 0).is_true()
+	# T70.3: failure mapping should remain stable until explicit transition input.
+	var defeat_summary_before := String(defeat_summary.text)
+	for _i in range(6):
+		await get_tree().process_frame
+	assert_str(defeat_summary.text).is_equal(defeat_summary_before)
+	assert_bool(defeat_modal.visible).is_true()
 
 	finish_btn.emit_signal("pressed")
 	await get_tree().process_frame
@@ -968,6 +1167,7 @@ func test_defeat_outcome_modal_should_pause_runtime_and_only_offer_terminal_acti
 # ACC:T68.4
 # ACC:T68.6
 # ACC:T68.8
+# ACC:T70.10
 func test_victory_outcome_modal_should_pause_runtime_and_only_offer_terminal_actions() -> void:
 	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
 	add_child(auto_free(main))
@@ -1030,6 +1230,13 @@ func test_victory_outcome_modal_should_pause_runtime_and_only_offer_terminal_act
 	assert_bool(not restart_btn.disabled).is_true()
 
 	var status_before := status_label.text
+	var runtime_summary_before_blocked: Dictionary = bridge.call("GetSummary")
+	assert_str(String(runtime_summary_before_blocked.get("outcome", ""))).is_equal("win")
+	assert_str(String(runtime_summary_before_blocked.get("defeat_reason", ""))).is_equal("")
+	assert_int(int(runtime_summary_before_blocked.get("castle_hp", -1))).is_equal(42)
+	assert_int(int(runtime_summary_before_blocked.get("resource_gold", -1))).is_equal(120)
+	assert_int(int(runtime_summary_before_blocked.get("resource_iron", -1))).is_equal(44)
+	assert_int(int(runtime_summary_before_blocked.get("resource_population_cap", -1))).is_equal(26)
 	wave_btn.emit_signal("pressed")
 	await get_tree().process_frame
 	assert_bool(status_label.text != status_before).is_true()
@@ -1037,9 +1244,16 @@ func test_victory_outcome_modal_should_pause_runtime_and_only_offer_terminal_act
 	assert_bool(status_label.text.to_lower().find("continue battle") < 0).is_true()
 	assert_bool(victory_modal.visible).is_true()
 	assert_bool(get_tree().paused).is_true()
+	var runtime_summary_after_blocked: Dictionary = bridge.call("GetSummary")
+	assert_that(runtime_summary_after_blocked).is_equal(runtime_summary_before_blocked)
+	# T70.10: assert behavior semantics, not API existence.
+	assert_str(String(runtime_summary_after_blocked.get("outcome", ""))).is_equal("win")
+	assert_str(String(runtime_summary_after_blocked.get("defeat_reason", ""))).is_equal("")
 
 
 # ACC:T68.7
+# ACC:T70.4
+# ACC:T70.5
 func test_victory_outcome_modal_should_stay_centered_and_preserve_runtime_ownership_boundaries() -> void:
 	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
 	add_child(auto_free(main))
