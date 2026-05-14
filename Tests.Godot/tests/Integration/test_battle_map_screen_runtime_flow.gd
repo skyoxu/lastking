@@ -1,4 +1,4 @@
-extends "res://addons/gdUnit4/src/GdUnitTestSuite.gd"
+﻿extends "res://addons/gdUnit4/src/GdUnitTestSuite.gd"
 
 func _await_frames(count: int) -> void:
 	for _i in range(count):
@@ -43,7 +43,7 @@ func _is_visible_inside_viewport(control: Control, viewport_size: Vector2) -> bo
 
 
 func _frame_snapshot(screen: Control) -> Dictionary:
-	var background: Control = screen.get_node("Background")
+	var background: Control = screen.get_node("Background/BattlefieldViewport")
 	var title: Control = screen.get_node("Margin/VBox/Title")
 	var metrics_help: Control = screen.get_node("Margin/VBox/MetricsHelp")
 	return {
@@ -57,9 +57,32 @@ func _frame_snapshot(screen: Control) -> Dictionary:
 
 
 func _spawn_cue_colors(screen: Control) -> Array[Color]:
-	var spawn_a: ColorRect = screen.get_node("Background/EnemySpawnA")
-	var spawn_b: ColorRect = screen.get_node("Background/EnemySpawnB")
+	var spawn_a: ColorRect = screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnA")
+	var spawn_b: ColorRect = screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnB")
 	return [spawn_a.color, spawn_b.color]
+
+
+const _T59_REGION_ORDER: PackedStringArray = [
+	"LeftOuterField",
+	"LeftWall",
+	"InnerCastleRegion",
+	"RightWall",
+	"RightOuterField",
+]
+
+const _T59_REGION_WIDTHS := {
+	"LeftOuterField": 500.0,
+	"LeftWall": 20.0,
+	"InnerCastleRegion": 400.0,
+	"RightWall": 20.0,
+	"RightOuterField": 500.0,
+}
+
+const _T59_SLOT_TOTALS := {
+	"LeftOuterSlots": 120,
+	"InnerCastleSlots": 96,
+	"RightOuterSlots": 120,
+}
 
 
 const _TASK56_OWNERSHIP_CONTAINERS: PackedStringArray = [
@@ -70,12 +93,18 @@ const _TASK56_OWNERSHIP_CONTAINERS: PackedStringArray = [
 
 const _TASK56_NODE_OWNERSHIP_MAP := {
 	"Background": "battlefield_presentation",
-	"Background/Path": "battlefield_presentation",
-	"Background/PlayerCastle": "battlefield_presentation",
-	"Background/EnemySpawnA": "battlefield_presentation",
-	"Background/EnemySpawnB": "battlefield_presentation",
-	"Background/BuildSlotA": "battlefield_presentation",
-	"Background/BuildSlotB": "battlefield_presentation",
+	"Background/BattlefieldViewport": "battlefield_presentation",
+	"Background/BattlefieldViewport/BattlefieldRoot": "battlefield_presentation",
+	"Background/BattlefieldViewport/BattlefieldRoot/MapBaseLayer": "battlefield_presentation",
+	"Background/BattlefieldViewport/BattlefieldRoot/BoundaryLayer": "battlefield_presentation",
+	"Background/BattlefieldViewport/BattlefieldRoot/SlotOverlayLayer": "battlefield_presentation",
+	"Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer": "battlefield_presentation",
+	"Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/Path": "battlefield_presentation",
+	"Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/PlayerCastle": "battlefield_presentation",
+	"Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnA": "battlefield_presentation",
+	"Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnB": "battlefield_presentation",
+	"Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/BuildSlotA": "battlefield_presentation",
+	"Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/BuildSlotB": "battlefield_presentation",
 	"CombatExperienceRuntimeBridge": "runtime_bridge",
 	"WaveTimer": "runtime_bridge",
 	"Margin": "legacy_prototype",
@@ -149,6 +178,35 @@ func _assert_task56_ownership_map(screen: Control) -> void:
 	assert_bool(screen.get_node("WaveTimer").has_meta("migration_only")).is_false()
 
 
+func _battlefield_viewport(screen: Control) -> Control:
+	return screen.get_node_or_null("Background/BattlefieldViewport") as Control
+
+
+func _battlefield_root(screen: Control) -> Control:
+	return screen.get_node_or_null("Background/BattlefieldViewport/BattlefieldRoot") as Control
+
+
+func _battlefield_slot_layer(screen: Control) -> Node:
+	return screen.get_node_or_null("Background/BattlefieldViewport/BattlefieldRoot/SlotOverlayLayer")
+
+
+func _assert_t59_slot_grid(slot_root: Control, expected_count: int) -> void:
+	assert_object(slot_root).is_not_null()
+	assert_int(slot_root.get_child_count()).is_equal(expected_count)
+	for child_variant in slot_root.get_children():
+		var slot := child_variant as Control
+		assert_object(slot).is_not_null()
+		assert_that(slot.size).is_equal(Vector2(50.0, 50.0))
+		assert_float(fmod(slot.position.x, 50.0)).is_equal(0.0)
+		assert_float(fmod(slot.position.y, 50.0)).is_equal(0.0)
+		assert_bool(bool(slot.get_meta("buildable", false))).is_true()
+		assert_bool(bool(slot.get_meta("slot_available", false))).is_true()
+		assert_bool(slot.position.x >= 0.0).is_true()
+		assert_bool(slot.position.y >= 0.0).is_true()
+		assert_bool(slot.position.x + slot.size.x <= slot_root.size.x).is_true()
+		assert_bool(slot.position.y + slot.size.y <= slot_root.size.y).is_true()
+
+
 # ACC:T55.1
 # ACC:T56.1
 # ACC:T58.1
@@ -161,7 +219,7 @@ func test_narrow_layout_keeps_header_footer_fixed_when_only_battlefield_moves() 
 	screen.size = Vector2(540.0, 320.0)
 	await _await_frames(2)
 
-	var background: Control = screen.get_node("Background")
+	var background: Control = screen.get_node("Background/BattlefieldViewport")
 	var title: Control = screen.get_node("Margin/VBox/Title")
 	var metrics_help: Control = screen.get_node("Margin/VBox/MetricsHelp")
 	var title_before := title.global_position
@@ -223,10 +281,10 @@ func test_1440x900_frame_keeps_three_player_visible_bands_simultaneously_visible
 	await _await_frames(2)
 
 	var viewport := Vector2(1440.0, 900.0)
-	var background: Control = screen.get_node("Background")
+	var background: Control = screen.get_node("Background/BattlefieldViewport")
 	var title: Control = screen.get_node("Margin/VBox/Title")
 	var metrics_help: Control = screen.get_node("Margin/VBox/MetricsHelp")
-	var path: Line2D = screen.get_node("Background/Path")
+	var path: Line2D = screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/Path")
 	var background_top_before := background.global_position.y
 	var background_height_before := background.size.y
 	var title_top_before := title.global_position.y
@@ -237,6 +295,7 @@ func test_1440x900_frame_keeps_three_player_visible_bands_simultaneously_visible
 	assert_bool(_is_visible_inside_viewport(title, viewport)).is_true()
 	assert_bool(_is_visible_inside_viewport(background, viewport)).is_true()
 	assert_bool(_is_visible_inside_viewport(metrics_help, viewport)).is_true()
+	assert_that(background.size).is_equal(Vector2(1440.0, 600.0))
 
 	var title_mid := title.global_position.y + title.size.y * 0.5
 	var midpoint_index := int(path.points.size() * 0.5)
@@ -289,16 +348,17 @@ func test_reenter_battle_map_keeps_three_band_frame_stable_after_viewport_resize
 	second_screen.size = Vector2(1440.0, 900.0)
 	await _await_frames(2)
 	var second_snapshot := _frame_snapshot(second_screen)
-	var second_path: Line2D = second_screen.get_node("Background/Path")
+	var second_path: Line2D = second_screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/Path")
 	var second_viewport := Vector2(1440.0, 900.0)
 	var second_mid_index := int(second_path.points.size() * 0.5)
-	var second_background: Control = second_screen.get_node("Background")
+	var second_background: Control = second_screen.get_node("Background/BattlefieldViewport")
 	var second_title: Control = second_screen.get_node("Margin/VBox/Title")
 	var second_metrics_help: Control = second_screen.get_node("Margin/VBox/MetricsHelp")
 
 	assert_bool(_is_visible_inside_viewport(second_title, second_viewport)).is_true()
 	assert_bool(_is_visible_inside_viewport(second_background, second_viewport)).is_true()
 	assert_bool(_is_visible_inside_viewport(second_metrics_help, second_viewport)).is_true()
+	assert_that(second_background.size).is_equal(Vector2(1440.0, 600.0))
 	var second_title_mid := second_title.global_position.y + second_title.size.y * 0.5
 	var second_battlefield_mid := second_background.global_position.y + second_path.points[second_mid_index].y
 	var second_bottom_mid := second_metrics_help.global_position.y + second_metrics_help.size.y * 0.5
@@ -310,8 +370,9 @@ func test_reenter_battle_map_keeps_three_band_frame_stable_after_viewport_resize
 	await _await_frames(2)
 	var resized_viewport := Vector2(1280.0, 720.0)
 	assert_bool(_is_visible_inside_viewport(second_title, resized_viewport)).is_true()
-	assert_bool(_is_visible_inside_viewport(second_background, resized_viewport)).is_true()
 	assert_bool(_is_visible_inside_viewport(second_metrics_help, resized_viewport)).is_true()
+	assert_that(second_background.size).is_equal(Vector2(1440.0, 600.0))
+	assert_float(second_background.global_position.x).is_equal(0.0)
 	second_title_mid = second_title.global_position.y + second_title.size.y * 0.5
 	second_battlefield_mid = second_background.global_position.y + second_path.points[second_mid_index].y
 	second_bottom_mid = second_metrics_help.global_position.y + second_metrics_help.size.y * 0.5
@@ -369,9 +430,9 @@ func test_battle_map_screen_minimum_runtime_loop_is_player_visible() -> void:
 
 	assert_bool(String(status.text).length() > 0).is_true()
 	assert_bool(String(summary.text).find(":") >= 0).is_true()
-	assert_bool(String(summary.text).find("HP") >= 0 or String(summary.text).find("生命") >= 0).is_true()
-	assert_bool(String(summary.text).find("Friendly") >= 0 or String(summary.text).find("友军") >= 0).is_true()
-	assert_bool(String(summary.text).find("Enemy") >= 0 or String(summary.text).find("敌军") >= 0).is_true()
+	assert_bool(String(summary.text).find("HP") >= 0 or String(summary.text).find("鐢熷懡") >= 0).is_true()
+	assert_bool(String(summary.text).find("Friendly") >= 0 or String(summary.text).find("鍙嬪啗") >= 0).is_true()
+	assert_bool(String(summary.text).find("Enemy") >= 0 or String(summary.text).find("鏁屽啗") >= 0).is_true()
 	_assert_task56_ownership_map(screen)
 
 
@@ -395,7 +456,7 @@ func test_battle_map_coordinator_guards_should_block_out_of_order_actions_and_pr
 	exchange_btn.emit_signal("pressed")
 	await _await_frames(1)
 	var status_after_exchange := String(status_label.text)
-	assert_bool(status_after_exchange.find("wave") >= 0 or status_after_exchange.find("波次") >= 0).is_true()
+	assert_bool(status_after_exchange.find("wave") >= 0 or status_after_exchange.find("娉㈡") >= 0).is_true()
 
 	cleanup_btn.emit_signal("pressed")
 	await _await_frames(1)
@@ -404,13 +465,13 @@ func test_battle_map_coordinator_guards_should_block_out_of_order_actions_and_pr
 	assert_bool(
 		status_after_cleanup_lc.find("exchange") >= 0
 		or status_after_cleanup_lc.find("combat") >= 0
-		or status_after_cleanup.find("交战") >= 0
+		or status_after_cleanup.find("浜ゆ垬") >= 0
 	).is_true()
 
 	finish_btn.emit_signal("pressed")
 	await _await_frames(1)
 	var status_after_finish := String(status_label.text)
-	assert_bool(status_after_finish.to_lower().find("cleanup") >= 0 or status_after_finish.find("清理") >= 0).is_true()
+	assert_bool(status_after_finish.to_lower().find("cleanup") >= 0 or status_after_finish.find("娓呯悊") >= 0).is_true()
 
 	var summary_after_invalid := _bridge_summary_metrics(bridge)
 	assert_that(summary_after_invalid).is_equal(summary_before)
@@ -424,7 +485,7 @@ func test_battle_map_coordinator_guards_should_block_out_of_order_actions_and_pr
 	finish_btn.emit_signal("pressed")
 	await _await_frames(1)
 	var status_after_valid_flow := String(status_label.text)
-	assert_bool(status_after_valid_flow.find("finished") >= 0 or status_after_valid_flow.find("结束") >= 0).is_true()
+	assert_bool(status_after_valid_flow.find("finished") >= 0 or status_after_valid_flow.find("缁撴潫") >= 0).is_true()
 	_assert_task56_ownership_map(screen)
 
 
@@ -454,8 +515,8 @@ func test_battle_map_runtime_summary_should_distinguish_empty_progressed_and_com
 	var empty_status := String(status_label.text)
 	var empty_summary := String(summary_label.text)
 	var empty_metrics := _bridge_summary_metrics(bridge)
-	assert_bool(empty_status.find("loaded") >= 0 or empty_status.find("加载") >= 0).is_true()
-	assert_bool(empty_status.find("finished") < 0 and empty_status.find("结束") < 0).is_true()
+	assert_bool(empty_status.find("loaded") >= 0 or empty_status.find("鍔犺浇") >= 0).is_true()
+	assert_bool(empty_status.find("finished") < 0 and empty_status.find("缁撴潫") < 0).is_true()
 	assert_bool(empty_status.length() > 0).is_true()
 	assert_bool(empty_summary.length() > 0).is_true()
 	assert_int(int(empty_metrics["friendly_units_deployed"])).is_equal(0)
@@ -472,8 +533,8 @@ func test_battle_map_runtime_summary_should_distinguish_empty_progressed_and_com
 	var failure_status_lc := failure_status.to_lower()
 	assert_bool(failure_status.length() > 0).is_true()
 	assert_bool(failure_status != empty_status).is_true()
-	assert_bool(failure_status_lc.find("cleanup") >= 0 or failure_status.find("清理") >= 0).is_true()
-	assert_bool(failure_status_lc.find("finished") < 0 and failure_status.find("结束") < 0).is_true()
+	assert_bool(failure_status_lc.find("cleanup") >= 0 or failure_status.find("娓呯悊") >= 0).is_true()
+	assert_bool(failure_status_lc.find("finished") < 0 and failure_status.find("缁撴潫") < 0).is_true()
 	await _await_frames(2)
 	assert_str(status_label.text).is_equal(failure_status)
 
@@ -510,14 +571,14 @@ func test_battle_map_runtime_summary_should_distinguish_empty_progressed_and_com
 	assert_int(int(completion_metrics["friendly_units_deployed"])).is_greater_equal(1)
 	assert_int(int(completion_metrics["enemy_units_spawned"])).is_greater_equal(2)
 	assert_int(int(completion_metrics["combat_exchanges"])).is_greater_equal(1)
-	assert_bool(completion_status.find("finished") >= 0 or completion_status.find("结束") >= 0).is_true()
-	assert_bool(completion_status.find("cleanup") < 0 and completion_status.find("清理") < 0).is_true()
+	assert_bool(completion_status.find("finished") >= 0 or completion_status.find("缁撴潫") >= 0).is_true()
+	assert_bool(completion_status.find("cleanup") < 0 and completion_status.find("娓呯悊") < 0).is_true()
 	assert_bool(completion_status != progressed_status).is_true()
 	assert_bool(completion_status != failure_status).is_true()
 	assert_bool(completion_summary != progressed_summary).is_true()
-	assert_bool(completion_summary.find("HP") >= 0 or completion_summary.find("生命") >= 0).is_true()
-	assert_bool(completion_summary.find("Friendly") >= 0 or completion_summary.find("友军") >= 0).is_true()
-	assert_bool(completion_summary.find("Enemy") >= 0 or completion_summary.find("敌军") >= 0).is_true()
+	assert_bool(completion_summary.find("HP") >= 0 or completion_summary.find("鐢熷懡") >= 0).is_true()
+	assert_bool(completion_summary.find("Friendly") >= 0 or completion_summary.find("鍙嬪啗") >= 0).is_true()
+	assert_bool(completion_summary.find("Enemy") >= 0 or completion_summary.find("鏁屽啗") >= 0).is_true()
 	await _await_frames(3)
 	assert_str(status_label.text).is_equal(completion_status)
 	assert_str(summary_label.text).is_equal(completion_summary)
@@ -622,6 +683,91 @@ func test_battle_map_terminal_summary_should_stay_stable_without_state_change() 
 	assert_that(snapshot_after).is_equal(snapshot_before)
 
 
+# ACC:T59.1
+func test_battlefield_layout_should_define_five_regions_in_gdd_order() -> void:
+	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
+	add_child(auto_free(screen))
+	await _await_frames(2)
+
+	var viewport := _battlefield_viewport(screen)
+	assert_object(viewport).is_not_null()
+	assert_that(viewport.size).is_equal(Vector2(1440.0, 600.0))
+
+	var root := _battlefield_root(screen)
+	assert_object(root).is_not_null()
+	var map_base := root.get_node_or_null("MapBaseLayer")
+	assert_object(map_base).is_not_null()
+
+	var region_names: Array[String] = []
+	for child_variant in map_base.get_children():
+		var child := child_variant as Node
+		if child != null:
+			region_names.append(String(child.name))
+	assert_that(PackedStringArray(region_names)).is_equal(_T59_REGION_ORDER)
+
+	var expected_x := 0.0
+	for region_name in _T59_REGION_ORDER:
+		var region := map_base.get_node_or_null(region_name) as Control
+		assert_object(region).is_not_null()
+		assert_float(region.position.x).is_equal(expected_x)
+		assert_float(region.position.y).is_equal(0.0)
+		assert_float(region.size.x).is_equal(float(_T59_REGION_WIDTHS[region_name]))
+		assert_float(region.size.y).is_equal(600.0)
+		expected_x += float(_T59_REGION_WIDTHS[region_name])
+	assert_float(expected_x).is_equal(1440.0)
+
+
+# ACC:T59.2
+func test_battlefield_layout_should_keep_walls_non_buildable_and_slots_within_regions() -> void:
+	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
+	add_child(auto_free(screen))
+	await _await_frames(2)
+
+	var root := _battlefield_root(screen)
+	assert_object(root).is_not_null()
+	var map_base := root.get_node("MapBaseLayer")
+	var slot_layer := _battlefield_slot_layer(screen)
+	assert_object(slot_layer).is_not_null()
+
+	for wall_name in ["LeftWall", "RightWall"]:
+		var wall := map_base.get_node_or_null(wall_name) as Control
+		assert_object(wall).is_not_null()
+		assert_bool(bool(wall.get_meta("buildable", true))).is_false()
+		assert_object(slot_layer.get_node_or_null("%sSlots" % wall_name)).is_null()
+
+	for slot_root_name_variant in _T59_SLOT_TOTALS.keys():
+		var slot_root_name := String(slot_root_name_variant)
+		var slot_root := slot_layer.get_node_or_null(slot_root_name) as Control
+		_assert_t59_slot_grid(slot_root, int(_T59_SLOT_TOTALS[slot_root_name]))
+
+
+# ACC:T59.3
+func test_battlefield_layout_should_visually_distinguish_buildable_and_non_buildable_regions() -> void:
+	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
+	add_child(auto_free(screen))
+	await _await_frames(2)
+
+	var root := _battlefield_root(screen)
+	assert_object(root).is_not_null()
+	var map_base := root.get_node("MapBaseLayer")
+	var slot_layer := _battlefield_slot_layer(screen)
+	assert_object(slot_layer).is_not_null()
+
+	var left_outer := map_base.get_node("LeftOuterField") as ColorRect
+	var inner_castle := map_base.get_node("InnerCastleRegion") as ColorRect
+	var left_wall := map_base.get_node("LeftWall") as ColorRect
+	var right_wall := map_base.get_node("RightWall") as ColorRect
+	assert_bool(left_outer.color != left_wall.color).is_true()
+	assert_bool(inner_castle.color != left_wall.color).is_true()
+	assert_bool(left_wall.color == right_wall.color).is_true()
+
+	for slot_root_name_variant in _T59_SLOT_TOTALS.keys():
+		var slot_root_name := String(slot_root_name_variant)
+		var slot_root := slot_layer.get_node(slot_root_name) as Control
+		assert_bool(bool(slot_root.get_meta("buildable_region", false))).is_true()
+		assert_bool(slot_root.modulate.a > 0.0).is_true()
+
+
 # ACC:T62.1
 # ACC:T62.5
 # ACC:T62.6
@@ -698,12 +844,12 @@ func test_path_readability_stays_behavior_driven_without_arrow_or_route_ui() -> 
 	add_child(auto_free(screen))
 	await _await_frames(2)
 
-	var background: Control = screen.get_node("Background")
-	var path: Line2D = screen.get_node("Background/Path")
+	var background: Control = screen.get_node("Background/BattlefieldViewport")
+	var path: Line2D = screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/Path")
 	var bridge: Node = screen.get_node("CombatExperienceRuntimeBridge")
 	var initial_positions := {
-		"EnemySpawnA": (background.get_node("EnemySpawnA") as Control).global_position,
-		"EnemySpawnB": (background.get_node("EnemySpawnB") as Control).global_position,
+		"EnemySpawnA": (screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnA") as Control).global_position,
+		"EnemySpawnB": (screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnB") as Control).global_position,
 	}
 
 	assert_bool(path.visible).is_true()
@@ -724,8 +870,8 @@ func test_path_readability_stays_behavior_driven_without_arrow_or_route_ui() -> 
 		if snapshot != null and bool(snapshot.get("is_moving_enemy", false)) and float(snapshot.get("path_progress", 0.0)) > 0.0:
 			found_progress = true
 	assert_bool(found_progress).is_true()
-	assert_that((background.get_node("EnemySpawnA") as Control).global_position).is_equal(initial_positions["EnemySpawnA"])
-	assert_that((background.get_node("EnemySpawnB") as Control).global_position).is_equal(initial_positions["EnemySpawnB"])
+	assert_that((screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnA") as Control).global_position).is_equal(initial_positions["EnemySpawnA"])
+	assert_that((screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnB") as Control).global_position).is_equal(initial_positions["EnemySpawnB"])
 
 
 # ACC:T57.9
@@ -932,5 +1078,6 @@ func test_t70_designated_integration_flow_should_cover_outcome_evidence_and_tran
 	assert_bool(get_tree().paused).is_false()
 	assert_bool(String(status_label.text).to_lower().find("settlement resolved") >= 0).is_true()
 	assert_that(bridge.call("GetSummary")).is_equal(summary_before_resolve)
+
 
 
