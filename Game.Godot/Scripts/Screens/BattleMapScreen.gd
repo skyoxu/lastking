@@ -18,6 +18,13 @@ extends Control
 @onready var _enemy_spawn_b: ColorRect = $Background/EnemySpawnB
 @onready var _daily_settlement_modal: PanelContainer = $DailySettlementModal
 @onready var _daily_settlement_summary: Label = $DailySettlementModal/VBox/Summary
+@onready var _daily_evidence_hp: Label = $DailySettlementModal/VBox/EvidencePanel/HpEvidence
+@onready var _daily_evidence_kills: Label = $DailySettlementModal/VBox/EvidencePanel/KillEvidence
+@onready var _daily_evidence_reward_summary: Label = $DailySettlementModal/VBox/EvidencePanel/RewardSummaryEvidence
+@onready var _daily_evidence_resources: Label = $DailySettlementModal/VBox/EvidencePanel/ResourceEvidence
+@onready var _daily_evidence_defeat_reason: Label = $DailySettlementModal/VBox/EvidencePanel/DefeatReasonEvidence
+@onready var _daily_expand_context_btn: Button = $DailySettlementModal/VBox/EvidencePanel/ExpandContextBtn
+@onready var _daily_runtime_context_payload: Label = $DailySettlementModal/VBox/EvidencePanel/RuntimeContextPayload
 @onready var _daily_reward_a: Button = $DailySettlementModal/VBox/Rewards/RewardA
 @onready var _daily_reward_b: Button = $DailySettlementModal/VBox/Rewards/RewardB
 @onready var _daily_reward_c: Button = $DailySettlementModal/VBox/Rewards/RewardC
@@ -46,6 +53,8 @@ var _path_points: PackedVector2Array = PackedVector2Array(
 var _i18n: Variant = null
 var _settlement_modal_open := false
 var _settlement_options: Array[String] = ["Reward A", "Reward B", "Reward C"]
+var _settlement_context_expanded := false
+var _settlement_context_snapshot: Dictionary = {}
 
 func _ready() -> void:
 	_i18n = load("res://Game.Godot/Scripts/Localization/LocalizationManager.gd").new()
@@ -81,6 +90,7 @@ func _ready() -> void:
 	_daily_reward_a.pressed.connect(_on_settlement_reward_selected.bind(0))
 	_daily_reward_b.pressed.connect(_on_settlement_reward_selected.bind(1))
 	_daily_reward_c.pressed.connect(_on_settlement_reward_selected.bind(2))
+	_daily_expand_context_btn.pressed.connect(_on_settlement_context_toggle)
 	_victory_return_btn.pressed.connect(_on_victory_return_to_main_menu)
 	_victory_restart_btn.pressed.connect(_on_victory_restart)
 	_defeat_return_btn.pressed.connect(_on_defeat_return_to_main_menu)
@@ -383,6 +393,8 @@ func _defeat_reason_for_summary(summary: Dictionary) -> String:
 
 func _open_settlement_modal(summary: Dictionary) -> void:
 	_settlement_modal_open = true
+	_settlement_context_expanded = false
+	_settlement_context_snapshot = summary.duplicate(true)
 	_defeat_outcome_modal.visible = false
 	_victory_outcome_modal.visible = false
 	var hp := int(summary.get("castle_hp", 0))
@@ -401,14 +413,55 @@ func _open_settlement_modal(summary: Dictionary) -> void:
 	get_tree().paused = true
 	var reward_summary := "%s,%s,%s" % [rewards[0], rewards[1], rewards[2]]
 	_daily_settlement_summary.text = "HP=%d | rewards=%d | reward_summary=%s | kills=%d | resources(gold=%d,iron=%d,pop=%d)" % [hp, rewards.size(), reward_summary, kills, gold, iron, pop_cap]
+	var has_hp := summary.has("castle_hp") and typeof(summary.get("castle_hp", null)) != TYPE_NIL
+	_daily_evidence_hp.visible = has_hp
+	if has_hp:
+		_daily_evidence_hp.text = "Final HP: %d" % hp
+	var has_kills := summary.has("dead_units_retired") and typeof(summary.get("dead_units_retired", null)) != TYPE_NIL
+	_daily_evidence_kills.visible = has_kills
+	if has_kills:
+		_daily_evidence_kills.text = "Kills: %d" % kills
+	var has_summary_reward_key := summary.has("reward_summary") and typeof(summary.get("reward_summary", null)) != TYPE_NIL
+	var summary_reward_text := String(summary.get("reward_summary", "")).strip_edges()
+	var has_reward_summary := has_summary_reward_key and not summary_reward_text.is_empty()
+	_daily_evidence_reward_summary.visible = has_reward_summary
+	if has_reward_summary:
+		_daily_evidence_reward_summary.text = "Reward Summary: %s" % summary_reward_text
+	var has_resource_gold := summary.has("resource_gold") and typeof(summary.get("resource_gold", null)) != TYPE_NIL
+	var has_resource_iron := summary.has("resource_iron") and typeof(summary.get("resource_iron", null)) != TYPE_NIL
+	var has_resource_pop := summary.has("resource_population_cap") and typeof(summary.get("resource_population_cap", null)) != TYPE_NIL
+	var has_resources := has_resource_gold and has_resource_iron and has_resource_pop
+	_daily_evidence_resources.visible = has_resources
+	if has_resources:
+		_daily_evidence_resources.text = "Resources: gold=%d, iron=%d, pop=%d" % [gold, iron, pop_cap]
+	var defeat_reason_raw = summary.get("defeat_reason", null)
+	var defeat_reason := String(defeat_reason_raw if defeat_reason_raw != null else "").strip_edges()
+	_daily_evidence_defeat_reason.visible = summary.has("defeat_reason") and not defeat_reason.is_empty()
+	_daily_evidence_defeat_reason.text = "Defeat Reason: %s" % defeat_reason
+	_daily_runtime_context_payload.visible = false
+	_daily_runtime_context_payload.text = JSON.stringify(_settlement_context_snapshot)
+	_daily_expand_context_btn.text = "Show Runtime Context"
 	_daily_reward_a.text = rewards[0]
 	_daily_reward_b.text = rewards[1]
 	_daily_reward_c.text = rewards[2]
 
 func _close_settlement_modal() -> void:
 	_settlement_modal_open = false
+	_settlement_context_expanded = false
+	_settlement_context_snapshot = {}
 	_daily_settlement_modal.visible = false
+	_daily_runtime_context_payload.visible = false
+	_daily_expand_context_btn.text = "Show Runtime Context"
 	get_tree().paused = false
+
+func _on_settlement_context_toggle() -> void:
+	if not _settlement_modal_open:
+		return
+	_settlement_context_expanded = not _settlement_context_expanded
+	_daily_runtime_context_payload.visible = _settlement_context_expanded
+	_daily_expand_context_btn.text = "Hide Runtime Context" if _settlement_context_expanded else "Show Runtime Context"
+	if _settlement_context_expanded:
+		_daily_runtime_context_payload.text = JSON.stringify(_settlement_context_snapshot)
 
 func _open_victory_modal(summary: Dictionary) -> void:
 	_settlement_modal_open = false
