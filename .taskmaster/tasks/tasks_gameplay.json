@@ -5451,11 +5451,11 @@
       "battlemap",
       "ui"
     ],
-      "test_refs": [
-        "Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd",
-        "Tests.Godot/tests/Scenes/BattleMap/test_battlemap_operation_surface_semantics.gd",
-        "Game.Core.Tests/Tasks/Task67RefsAnchorsSyncTests.cs"
-      ],
+    "test_refs": [
+      "Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd",
+      "Tests.Godot/tests/Scenes/BattleMap/test_battlemap_operation_surface_semantics.gd",
+      "Game.Core.Tests/Tasks/Task67RefsAnchorsSyncTests.cs"
+    ],
     "acceptance": [
       "When a non-terminal night outcome is produced, BattleMap opens a centered daily-settlement modal, combat time stays paused for the full open interval, and run progression cannot continue until the modal is resolved by the player. Refs: Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd",
       "The daily-settlement modal always shows exactly three selectable reward entries and the completed-night summary subset (HP, reward summary, kill count, resource snapshot); any render with fewer or more than three reward slots is invalid. Refs: Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd",
@@ -5595,19 +5595,21 @@
       "ui"
     ],
     "test_refs": [
-      "Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd"
+      "Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd",
+      "Tests.Godot/tests/Scenes/BattleMap/test_battlemap_operation_surface_semantics.gd",
+      "Game.Core.Tests/Services/CastleDurabilityTerminalTests.cs"
     ],
     "acceptance": [
-      "When battle is active and either wall HP or castle HP transitions from >0 to <=0, a centered defeat modal is shown immediately, battle simulation stays paused for the entire modal lifetime, and no available UI action resumes live battle; when both HP values remain >0, the defeat modal is not shown. Refs: docs/gdd/outcome-ui-spec.zh-CN.md Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd",
-      "The defeat modal text explicitly states that the wall was breached and the run ended, and it exposes exactly two actionable buttons: Return to Main Menu and Restart; no third actionable option is available. Refs: docs/gdd/outcome-ui-spec.zh-CN.md Game.Godot/Scenes/Screens/BattleMapScreen.tscn",
-      "Outcome states are externally verifiable: empty means no active battlefield prompt for this condition, failure means terminal-loss messaging is visible, and completion means the defeat outcome UI is reached and remains visible until the player selects Return to Main Menu or Restart. Refs: docs/gdd/battlemapscreen-stories.md",
-      "This task preserves ownership boundaries: HUD remains responsible for HUD presentation, ScreenNavigator remains responsible for screen navigation, and CombatExperienceRuntimeBridge remains responsible for runtime bridge behavior; the defeat flow introduces no bypass that shifts these responsibilities. Refs: Game.Godot/Scenes/UI/HUD.tscn Game.Godot/Scripts/Navigation/ScreenNavigator.cs Game.Godot/Scripts/Combat/CombatExperienceRuntimeBridge.cs",
-      "Architecture layering remains intact for this task: domain rules are implemented in Game.Core, and Game.Godot changes are limited to presentation or adapter behavior for the defeat outcome flow. Refs: Game.Core Game.Godot",
-      "The defeat outcome path is auditable from the declared anchors by tracing modal presentation, wall-breach defeat messaging, and terminal actions through the scene, overlay controller, and HUD integration points. Refs: Game.Godot/Scenes/Screens/BattleMapScreen.tscn; Game.Godot/Scripts/Screens/BattleOutcomeOverlayController.gd; Game.Godot/Scripts/UI/HUD.cs",
-      "Runtime visibility follows declared semantics with stable behavior: empty keeps no active battlefield prompt, failure shows terminal-loss messaging, and completion stays in the intended defeat outcome UI until an explicit next action/state transition occurs. Refs: docs/gdd/battlemapscreen-stories.md",
+      "When battle is active and either wall HP or castle HP transitions from >0 to <=0, a centered defeat modal is shown immediately, battle simulation stays paused for the entire modal lifetime, and no available UI action resumes live battle; when both HP values remain >0, the defeat modal is not shown. Refs: Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd",
+      "The defeat modal text explicitly states that the wall was breached and the run ended, and it exposes exactly two actionable buttons: Return to Main Menu and Restart; no third actionable option is available. Refs: Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd",
+      "Outcome states are externally verifiable: empty means no active battlefield prompt for this condition, failure means terminal-loss messaging is visible, and completion means the defeat outcome UI is reached and remains visible until the player selects Return to Main Menu or Restart. Refs: Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd",
+      "This task preserves ownership boundaries: HUD remains responsible for HUD presentation, ScreenNavigator remains responsible for screen navigation, and CombatExperienceRuntimeBridge remains responsible for runtime bridge behavior; the defeat flow introduces no bypass that shifts these responsibilities. Refs: Tests.Godot/tests/Scenes/BattleMap/test_battlemap_operation_surface_semantics.gd Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd",
+    "Architecture layering remains intact for this task: domain rules are implemented in Game.Core, and Game.Godot changes are limited to presentation or adapter behavior for the defeat outcome flow. Refs: Game.Core.Tests/Services/CastleDurabilityTerminalTests.cs",
+      "The defeat outcome path is auditable from the declared anchors by tracing modal presentation, wall-breach defeat messaging, and terminal actions through the scene, overlay controller, and HUD integration points. Refs: Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd",
+      "Runtime visibility follows declared semantics with stable behavior: empty keeps no active battlefield prompt, failure shows terminal-loss messaging, and completion stays in the intended defeat outcome UI until an explicit next action/state transition occurs. Refs: Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd",
       "GdUnit4 integration coverage for this defeat outcome remains present at the designated runtime-flow test path, and that coverage passes for this task. Refs: Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd",
-      "If this task introduces any new player-visible controller or node path, focused scene tests for that addition are included in the same task and pass before acceptance closure. Refs: Tests.Godot",
-      "Before review, task/story/GDD references and declared anchors used by this task are synchronized with the current artifacts. Refs: docs/gdd/battlemapscreen-stories.md docs/gdd/battlemapscreen-epics.md docs/gdd/battlemapscreen-story-to-files-mapping.md"
+      "If this task introduces any new player-visible controller or node path, focused scene tests for that addition are included in the same task and pass before acceptance closure. Refs: Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd",
+      "Before review, task/story/GDD references and declared anchors used by this task are synchronized with the current artifacts. Refs: Tests.Godot/tests/Integration/test_combat_experience_runtime_flow.gd"
     ],
     "contractRefs": [
       "core.lastking.castle.hp_changed"
