@@ -16,6 +16,7 @@ public partial class HUD : Control
     private const double DefaultDayDurationSeconds = 240d;
     private const double DefaultNightDurationSeconds = 120d;
     private readonly HudAfterActionComposer _afterActionComposer = new();
+    private readonly RuntimePressureStateMapper _pressureStateMapper = new();
 
     private EventBusAdapter? _bus;
     private Label _day = default!;
@@ -86,6 +87,7 @@ public partial class HUD : Control
     private TaxCollected? _lastTaxCollected;
     private TechApplied? _lastTechApplied;
     private RewardOffered? _lastRewardOffered;
+    private string _currentPressureState = "n/a";
 
     public override void _Ready()
     {
@@ -441,16 +443,7 @@ public partial class HUD : Control
             count ?? 0,
             ReadInt(payload, "WaveBudget", "wave_budget", "budget") ?? 0,
             DateTimeOffset.UtcNow);
-        if (count.HasValue && day.HasValue)
-        {
-            _pressureLabel.Text = $"{T("hud.pressure")}: day={day.Value} spawned={count.Value}";
-            return;
-        }
-
-        if (count.HasValue)
-        {
-            _pressureLabel.Text = $"{T("hud.pressure")}: spawned={count.Value}";
-        }
+        RenderPressureSummary();
     }
 
     private void HandleCameraScrolledEvent(JsonElement payload)
@@ -535,25 +528,19 @@ public partial class HUD : Control
 
     private void UpdatePressureLabelFromHp(int hp)
     {
-        if (hp <= 20)
+        _currentPressureState = _pressureStateMapper.MapCastleHp(hp);
+        _pressureLabel.Text = $"{T("hud.pressure")}: {_currentPressureState} (hp={hp})";
+    }
+
+    private void RenderPressureSummary()
+    {
+        if (_lastCastleHpChanged is null)
         {
-            _pressureLabel.Text = $"{T("hud.pressure")}: critical (hp={hp})";
+            _pressureLabel.Text = $"{T("hud.pressure")}: n/a";
             return;
         }
 
-        if (hp <= 40)
-        {
-            _pressureLabel.Text = $"{T("hud.pressure")}: danger (hp={hp})";
-            return;
-        }
-
-        if (hp <= 60)
-        {
-            _pressureLabel.Text = $"{T("hud.pressure")}: warning (hp={hp})";
-            return;
-        }
-
-        _pressureLabel.Text = $"{T("hud.pressure")}: stable (hp={hp})";
+        _pressureLabel.Text = $"{T("hud.pressure")}: {_currentPressureState} (hp={_lastCastleHpChanged.CurrentHp})";
     }
 
     private void ShowTemporaryFeedback(string messageKey, string details, string code, int priority)
