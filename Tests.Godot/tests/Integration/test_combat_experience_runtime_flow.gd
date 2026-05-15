@@ -376,7 +376,7 @@ func test_path_readability_is_expressed_through_enemy_actor_view_motion() -> voi
 
 	assert_bool(bridge.has_method("GetActorSnapshots")).is_true()
 	assert_bool(bridge.has_method("AdvanceSimulation")).is_true()
-	assert_bool(path.visible).is_true()
+	assert_bool(path.visible).is_false()
 	assert_int(background.get_children().filter(func(n): return str((n as Node).name).find("Arrow") >= 0 or str((n as Node).name).find("Route") >= 0).size()).is_equal(0)
 
 	bridge.call("SpawnEnemyWavePhase")
@@ -468,6 +468,9 @@ func test_spawn_cues_and_path_readability_survive_full_battle_loop() -> void:
 	assert_bool(spawn_a.color.a > weak_a and spawn_b.color.a > weak_b).is_true()
 	assert_int(background.get_children().filter(func(n): return str((n as Node).name).find("Arrow") >= 0 or str((n as Node).name).find("Route") >= 0).size()).is_equal(0)
 	assert_int(int(bridge.call("GetActorSnapshots").size())).is_greater_equal(1)
+
+	await get_tree().create_timer(2.0).timeout
+	assert_bool(spawn_a.color.a >= 0.9 and spawn_b.color.a >= 0.9).is_true()
 
 	exchange_btn.emit_signal("pressed")
 	await get_tree().process_frame

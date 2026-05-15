@@ -1,5 +1,7 @@
 extends Node
 
+const SPAWN_PULSE_DURATION_SEC := 4.0
+
 var _bridge: Node = null
 var _bridge_provider: Callable
 var _wave_timer: Timer = null
@@ -86,7 +88,7 @@ func on_wave() -> void:
 	_combat_resolved = false
 	_cleaned = false
 	if _feedback_controller != null:
-		_feedback_controller.call("mark_spawn_pulse", 0.35)
+		_feedback_controller.call("mark_spawn_pulse", SPAWN_PULSE_DURATION_SEC)
 	var summary := _call_or_fallback("SpawnEnemyWavePhase")
 	_render(summary, _t("battlemap.status.wave_spawned"))
 	_sync(summary)
