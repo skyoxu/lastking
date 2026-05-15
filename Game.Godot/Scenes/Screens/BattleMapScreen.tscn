@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=3]
+[gd_scene load_steps=16 format=3]
 
 [ext_resource type="Script" path="res://Game.Godot/Scripts/Screens/BattleMapScreen.gd" id="1"]
 [ext_resource type="Script" path="res://Game.Godot/Scripts/Combat/CombatExperienceRuntimeBridge.cs" id="2"]
@@ -14,6 +14,7 @@
 [ext_resource type="Script" path="res://Game.Godot/Scripts/Screens/BattleMapOwnershipCoordinator.gd" id="12"]
 [ext_resource type="Script" path="res://Game.Godot/Scripts/Screens/BattleMapBridgeProvider.gd" id="13"]
 [ext_resource type="Script" path="res://Game.Godot/Scripts/Screens/BattlefieldView.gd" id="14"]
+[ext_resource type="Script" path="res://Game.Godot/Scripts/Screens/BattleMapHudCoordinator.gd" id="15"]
 [node name="BattleMapScreen" type="Control"]
 layout_mode = 3
 anchors_preset = 15
@@ -183,6 +184,7 @@ theme_override_constants/margin_bottom = 24
 layout_mode = 2
 
 [node name="Title" type="Label" parent="Margin/VBox"]
+visible = false
 layout_mode = 2
 text = "Battle Map Screen"
 
@@ -192,6 +194,7 @@ layout_mode = 2
 text = "Status"
 
 [node name="Controls" type="HBoxContainer" parent="Margin/VBox"]
+visible = false
 layout_mode = 2
 
 [node name="BuildBtn" type="Button" parent="Margin/VBox/Controls"]
@@ -452,6 +455,9 @@ script = ExtResource("12")
 
 [node name="BridgeProvider" type="Node" parent="."]
 script = ExtResource("13")
+
+[node name="HudCoordinator" type="Node" parent="."]
+script = ExtResource("15")
 
 [node name="UI_PlacementOverlayController" type="Node" parent="."]
 script = ExtResource("6")

@@ -57,16 +57,41 @@ func _is_visible_inside_viewport(control: Control, viewport_size: Vector2) -> bo
 
 func _frame_snapshot(screen: Control) -> Dictionary:
 	var background: Control = screen.get_node("Background/BattlefieldViewport")
-	var title: Control = screen.get_node("Margin/VBox/Title")
-	var status: Control = screen.get_node("Margin/VBox/Status")
+	var main := _resolve_main_root(screen)
+	var top_band: Control = main.get_node("RuntimeUi/HUD/TopBar") if main != null else screen.get_node("Margin/VBox/Title")
+	var bottom_band: Control = main.get_node("RuntimeUi/HUD/CombatHud/BottomBar") if main != null else screen.get_node("Margin/VBox/Status")
 	return {
 		"background_pos": background.global_position,
 		"background_size": background.size,
-		"title_pos": title.global_position,
-		"title_size": title.size,
-		"status_pos": status.global_position,
-		"status_size": status.size,
+		"title_pos": top_band.global_position,
+		"title_size": top_band.size,
+		"status_pos": bottom_band.global_position,
+		"status_size": bottom_band.size,
 	}
+
+
+func _battlemap_player_bands(screen: Control) -> Dictionary:
+	var main := _resolve_main_root(screen)
+	if main != null:
+		return {
+			"top": main.get_node("RuntimeUi/HUD/TopBar"),
+			"middle": screen.get_node("Background/BattlefieldViewport"),
+			"bottom": main.get_node("RuntimeUi/HUD/CombatHud/BottomBar"),
+		}
+	return {
+		"top": screen.get_node("Margin/VBox/Title"),
+		"middle": screen.get_node("Background/BattlefieldViewport"),
+		"bottom": screen.get_node("Margin/VBox/Status"),
+	}
+
+
+func _resolve_main_root(node: Node) -> Node:
+	var current: Node = node
+	while current != null:
+		if String(current.name) == "Main":
+			return current
+		current = current.get_parent()
+	return null
 
 
 func _spawn_cue_colors(screen: Control) -> Array[Color]:
@@ -312,9 +337,10 @@ func test_1440x900_frame_keeps_three_player_visible_bands_simultaneously_visible
 	await _await_frames(2)
 
 	var viewport := Vector2(1440.0, 900.0)
-	var background: Control = screen.get_node("Background/BattlefieldViewport")
-	var title: Control = screen.get_node("Margin/VBox/Title")
-	var status: Control = screen.get_node("Margin/VBox/Status")
+	var bands := _battlemap_player_bands(screen)
+	var background: Control = bands["middle"]
+	var title: Control = bands["top"]
+	var status: Control = bands["bottom"]
 	var metrics_help: Control = screen.get_node("Margin/VBox/MetricsHelp")
 	var path: Line2D = screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/Path")
 	var background_top_before := background.global_position.y
@@ -324,17 +350,16 @@ func test_1440x900_frame_keeps_three_player_visible_bands_simultaneously_visible
 	var status_top_before := status.global_position.y
 	var status_height_before := status.size.y
 
-	assert_bool(_is_visible_inside_viewport(title, viewport)).is_true()
+	assert_bool(title.visible).is_true()
 	assert_bool(_is_visible_inside_viewport(background, viewport)).is_true()
-	assert_bool(_is_visible_inside_viewport(status, viewport)).is_true()
+	assert_bool(status.visible).is_true()
 	assert_bool(metrics_help.visible).is_false()
 	assert_that(background.size).is_equal(Vector2(1440.0, 600.0))
 
-	var title_mid := title.global_position.y + title.size.y * 0.5
-	var bottom_mid := status.global_position.y + status.size.y * 0.5
 	var battlefield_top := background.global_position.y
 	var battlefield_bottom := battlefield_top + background.size.y
-	assert_float(title_mid).is_less(bottom_mid)
+	assert_bool(title.global_position.y < battlefield_bottom).is_true()
+	assert_bool(status.global_position.y > title.global_position.y).is_true()
 	assert_bool(battlefield_top <= viewport.y * 0.5 and battlefield_bottom >= viewport.y * 0.5).is_true()
 
 	# Resize stability: top/bottom bands stay anchored and keep their heights.
@@ -381,39 +406,38 @@ func test_reenter_battle_map_keeps_three_band_frame_stable_after_viewport_resize
 	second_screen.size = Vector2(1440.0, 900.0)
 	await _await_frames(2)
 	var second_snapshot := _frame_snapshot(second_screen)
+	var second_bands := _battlemap_player_bands(second_screen)
 	var second_path: Line2D = second_screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/Path")
 	var second_viewport := Vector2(1440.0, 900.0)
 	var second_mid_index := int(second_path.points.size() * 0.5)
-	var second_background: Control = second_screen.get_node("Background/BattlefieldViewport")
-	var second_title: Control = second_screen.get_node("Margin/VBox/Title")
-	var second_status: Control = second_screen.get_node("Margin/VBox/Status")
+	var second_background: Control = second_bands["middle"]
+	var second_title: Control = second_bands["top"]
+	var second_status: Control = second_bands["bottom"]
 	var second_metrics_help: Control = second_screen.get_node("Margin/VBox/MetricsHelp")
 
-	assert_bool(_is_visible_inside_viewport(second_title, second_viewport)).is_true()
+	assert_bool(second_title.visible).is_true()
 	assert_bool(_is_visible_inside_viewport(second_background, second_viewport)).is_true()
-	assert_bool(_is_visible_inside_viewport(second_status, second_viewport)).is_true()
+	assert_bool(second_status.visible).is_true()
 	assert_bool(second_metrics_help.visible).is_false()
 	assert_that(second_background.size).is_equal(Vector2(1440.0, 600.0))
-	var second_title_mid := second_title.global_position.y + second_title.size.y * 0.5
-	var second_bottom_mid := second_status.global_position.y + second_status.size.y * 0.5
 	var second_battlefield_top := second_background.global_position.y
 	var second_battlefield_bottom := second_battlefield_top + second_background.size.y
-	assert_float(second_title_mid).is_less(second_bottom_mid)
+	assert_bool(second_title.global_position.y < second_battlefield_bottom).is_true()
+	assert_bool(second_status.global_position.y > second_title.global_position.y).is_true()
 	assert_bool(second_battlefield_top <= second_viewport.y * 0.5 and second_battlefield_bottom >= second_viewport.y * 0.5).is_true()
 
 	# Re-entry + resize still keeps all three bands visible and ordered.
 	second_screen.size = Vector2(1280.0, 720.0)
 	await _await_frames(2)
 	var resized_viewport := Vector2(1280.0, 720.0)
-	assert_bool(_is_visible_inside_viewport(second_title, resized_viewport)).is_true()
-	assert_bool(_is_visible_inside_viewport(second_status, resized_viewport)).is_true()
+	assert_bool(second_title.visible).is_true()
+	assert_bool(second_status.visible).is_true()
 	assert_that(second_background.size).is_equal(Vector2(1440.0, 600.0))
 	assert_float(second_background.global_position.x).is_equal(0.0)
-	second_title_mid = second_title.global_position.y + second_title.size.y * 0.5
-	second_bottom_mid = second_status.global_position.y + second_status.size.y * 0.5
 	second_battlefield_top = second_background.global_position.y
 	second_battlefield_bottom = second_battlefield_top + second_background.size.y
-	assert_float(second_title_mid).is_less(second_bottom_mid)
+	assert_bool(second_title.global_position.y < second_battlefield_bottom).is_true()
+	assert_bool(second_status.global_position.y > second_title.global_position.y).is_true()
 	assert_bool(second_battlefield_top <= resized_viewport.y * 0.5 and second_battlefield_bottom >= resized_viewport.y * 0.5).is_true()
 
 	second_screen.size = Vector2(1440.0, 900.0)

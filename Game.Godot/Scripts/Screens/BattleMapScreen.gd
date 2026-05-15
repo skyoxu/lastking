@@ -13,6 +13,7 @@ extends Control
 @onready var _refs_provider: Node = $RefsProvider
 @onready var _ownership_coordinator: Node = $OwnershipCoordinator
 @onready var _bridge_provider: Node = $BridgeProvider
+@onready var _hud_coordinator: Node = $HudCoordinator
 
 var _path_points: PackedVector2Array = PackedVector2Array(
 	[Vector2(120, 120), Vector2(260, 120), Vector2(420, 240), Vector2(640, 240), Vector2(840, 340), Vector2(1080, 340)]
@@ -56,6 +57,12 @@ func _configure_controllers() -> void:
 	_navigation_controller.call("configure", {
 		"screen": self,
 		"back_btn": refs["back_btn"],
+	})
+	_hud_coordinator.call("configure", {
+		"screen": self,
+		"operation_controller": _operation_controller,
+		"navigation_controller": _navigation_controller,
+		"hud": get_node_or_null("/root/Main/RuntimeUi/HUD"),
 	})
 	_runtime_coordinator.call("configure", {
 		"bridge_provider": Callable(_bridge_provider, "resolve_current_bridge"),
@@ -137,6 +144,7 @@ func _configure_controllers() -> void:
 	})
 	_operation_controller.call("connect_signals")
 	_navigation_controller.call("connect_signals")
+	_hud_coordinator.call("connect_signals")
 
 	_selection_controller.call("configure", self, {
 		"presentation_controller": _presentation_controller,
