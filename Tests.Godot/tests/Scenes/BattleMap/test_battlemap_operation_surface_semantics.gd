@@ -45,6 +45,7 @@ func test_runtime_ui_semantics_mapping_for_empty_failure_completion() -> void:
 	assert_object(screen.get_node_or_null("Margin/VBox/Summary")).is_not_null()
 	assert_bool(screen.visible).is_true()
 	assert_bool(background.visible).is_true()
+	assert_bool(status_label.visible).is_false()
 	assert_bool(String(status_label.text).length() > 0).is_true()
 	assert_bool(summary_label.visible).is_false()
 
@@ -374,3 +375,11 @@ func test_battle_map_should_hide_legacy_summary_legend_and_metrics_help_from_pla
 	assert_bool(summary_label.visible).is_false()
 	assert_bool(legend_label.visible).is_false()
 	assert_bool(metrics_help_label.visible).is_false()
+
+
+func test_battle_map_should_hide_legacy_status_from_player_view() -> void:
+	var runtime := await _main_runtime()
+	var screen: Control = runtime["screen"]
+	var status_label: Label = screen.get_node("Margin/VBox/Status")
+
+	assert_bool(status_label.visible).is_false()
