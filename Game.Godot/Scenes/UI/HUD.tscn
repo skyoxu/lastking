@@ -1,6 +1,56 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://Game.Godot/Scripts/UI/HUD.cs" id="1"]
+
+[sub_resource type="StyleBoxFlat" id="1_bottom_bar_style"]
+bg_color = Color(0.0509804, 0.0666667, 0.0823529, 0.9)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.772549, 0.623529, 0.321569, 0.55)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
+shadow_color = Color(0, 0, 0, 0.35)
+shadow_size = 6
+content_margin_left = 20.0
+content_margin_top = 16.0
+content_margin_right = 20.0
+content_margin_bottom = 16.0
+
+[sub_resource type="StyleBoxFlat" id="2_action_frame_style"]
+bg_color = Color(0.101961, 0.129412, 0.156863, 0.72)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(1, 1, 1, 0.15)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+content_margin_left = 6.0
+content_margin_top = 6.0
+content_margin_right = 6.0
+content_margin_bottom = 6.0
+
+[sub_resource type="StyleBoxFlat" id="3_metric_chip_style"]
+bg_color = Color(1, 1, 1, 0.05)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(1, 1, 1, 0.08)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+content_margin_left = 10.0
+content_margin_top = 6.0
+content_margin_right = 10.0
+content_margin_bottom = 6.0
 
 [node name="HUD" type="Control"]
 layout_mode = 3
@@ -69,30 +119,71 @@ anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 20.0
-offset_top = -140.0
+offset_top = -176.0
 offset_right = -20.0
 offset_bottom = -20.0
+theme_override_styles/panel = SubResource("1_bottom_bar_style")
 
 [node name="VBox" type="VBoxContainer" parent="CombatHud/BottomBar"]
 layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
 
 [node name="CombatCountsLabel" type="Label" parent="CombatHud/BottomBar/VBox"]
+custom_minimum_size = Vector2(0, 34)
 layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.956863, 0.913725, 0.768627, 1)
+theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("3_metric_chip_style")
 autowrap_mode = 3
 text = "Combat: 0/0"
 
 [node name="MoraleLabel" type="Label" parent="CombatHud/BottomBar/VBox"]
+custom_minimum_size = Vector2(0, 30)
 layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.760784, 0.898039, 0.831373, 1)
+theme_override_font_sizes/font_size = 16
+theme_override_styles/normal = SubResource("3_metric_chip_style")
 autowrap_mode = 3
 text = "Morale: 0"
 
 [node name="Actions" type="HBoxContainer" parent="CombatHud/BottomBar/VBox"]
 layout_mode = 2
+size_flags_horizontal = 4
+alignment = 1
+theme_override_constants/separation = 14
 
 [node name="BuildAction" type="ColorRect" parent="CombatHud/BottomBar/VBox/Actions"]
-custom_minimum_size = Vector2(52, 52)
+custom_minimum_size = Vector2(112, 72)
 layout_mode = 2
 color = Color(0.458824, 0.74902, 0.47451, 1)
+
+[node name="Frame" type="PanelContainer" parent="CombatHud/BottomBar/VBox/Actions/BuildAction"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("2_action_frame_style")
+
+[node name="Content" type="VBoxContainer" parent="CombatHud/BottomBar/VBox/Actions/BuildAction/Frame"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="Key" type="Label" parent="CombatHud/BottomBar/VBox/Actions/BuildAction/Frame/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.152941, 0.192157, 0.160784, 0.95)
+theme_override_font_sizes/font_size = 11
+text = "Phase 1"
+
+[node name="Label" type="Label" parent="CombatHud/BottomBar/VBox/Actions/BuildAction/Frame/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.0901961, 0.121569, 0.105882, 1)
+theme_override_font_sizes/font_size = 16
+text = "Build"
 
 [node name="CooldownMask" type="ColorRect" parent="CombatHud/BottomBar/VBox/Actions/BuildAction"]
 visible = false
@@ -105,9 +196,34 @@ grow_vertical = 2
 color = Color(0, 0, 0, 0.45)
 
 [node name="WaveAction" type="ColorRect" parent="CombatHud/BottomBar/VBox/Actions"]
-custom_minimum_size = Vector2(52, 52)
+custom_minimum_size = Vector2(112, 72)
 layout_mode = 2
 color = Color(0.909804, 0.541176, 0.309804, 1)
+
+[node name="Frame" type="PanelContainer" parent="CombatHud/BottomBar/VBox/Actions/WaveAction"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("2_action_frame_style")
+
+[node name="Content" type="VBoxContainer" parent="CombatHud/BottomBar/VBox/Actions/WaveAction/Frame"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="Key" type="Label" parent="CombatHud/BottomBar/VBox/Actions/WaveAction/Frame/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.243137, 0.137255, 0.0588235, 0.95)
+theme_override_font_sizes/font_size = 11
+text = "Phase 2"
+
+[node name="Label" type="Label" parent="CombatHud/BottomBar/VBox/Actions/WaveAction/Frame/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.211765, 0.109804, 0.0235294, 1)
+theme_override_font_sizes/font_size = 16
+text = "Wave"
 
 [node name="CooldownMask" type="ColorRect" parent="CombatHud/BottomBar/VBox/Actions/WaveAction"]
 visible = false
@@ -120,9 +236,34 @@ grow_vertical = 2
 color = Color(0, 0, 0, 0.45)
 
 [node name="ExchangeAction" type="ColorRect" parent="CombatHud/BottomBar/VBox/Actions"]
-custom_minimum_size = Vector2(52, 52)
+custom_minimum_size = Vector2(112, 72)
 layout_mode = 2
 color = Color(0.466667, 0.643137, 0.917647, 1)
+
+[node name="Frame" type="PanelContainer" parent="CombatHud/BottomBar/VBox/Actions/ExchangeAction"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("2_action_frame_style")
+
+[node name="Content" type="VBoxContainer" parent="CombatHud/BottomBar/VBox/Actions/ExchangeAction/Frame"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="Key" type="Label" parent="CombatHud/BottomBar/VBox/Actions/ExchangeAction/Frame/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.0745098, 0.160784, 0.290196, 0.95)
+theme_override_font_sizes/font_size = 11
+text = "Phase 3"
+
+[node name="Label" type="Label" parent="CombatHud/BottomBar/VBox/Actions/ExchangeAction/Frame/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.0352941, 0.105882, 0.211765, 1)
+theme_override_font_sizes/font_size = 16
+text = "Exchange"
 
 [node name="CooldownMask" type="ColorRect" parent="CombatHud/BottomBar/VBox/Actions/ExchangeAction"]
 visible = false
@@ -135,9 +276,34 @@ grow_vertical = 2
 color = Color(0, 0, 0, 0.45)
 
 [node name="CleanupAction" type="ColorRect" parent="CombatHud/BottomBar/VBox/Actions"]
-custom_minimum_size = Vector2(52, 52)
+custom_minimum_size = Vector2(112, 72)
 layout_mode = 2
 color = Color(0.815686, 0.694118, 0.360784, 1)
+
+[node name="Frame" type="PanelContainer" parent="CombatHud/BottomBar/VBox/Actions/CleanupAction"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("2_action_frame_style")
+
+[node name="Content" type="VBoxContainer" parent="CombatHud/BottomBar/VBox/Actions/CleanupAction/Frame"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="Key" type="Label" parent="CombatHud/BottomBar/VBox/Actions/CleanupAction/Frame/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.227451, 0.168627, 0.0509804, 0.95)
+theme_override_font_sizes/font_size = 11
+text = "Phase 4"
+
+[node name="Label" type="Label" parent="CombatHud/BottomBar/VBox/Actions/CleanupAction/Frame/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.176471, 0.129412, 0.027451, 1)
+theme_override_font_sizes/font_size = 16
+text = "Cleanup"
 
 [node name="CooldownMask" type="ColorRect" parent="CombatHud/BottomBar/VBox/Actions/CleanupAction"]
 visible = false
@@ -150,9 +316,34 @@ grow_vertical = 2
 color = Color(0, 0, 0, 0.45)
 
 [node name="FinishAction" type="ColorRect" parent="CombatHud/BottomBar/VBox/Actions"]
-custom_minimum_size = Vector2(52, 52)
+custom_minimum_size = Vector2(112, 72)
 layout_mode = 2
 color = Color(0.780392, 0.403922, 0.403922, 1)
+
+[node name="Frame" type="PanelContainer" parent="CombatHud/BottomBar/VBox/Actions/FinishAction"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("2_action_frame_style")
+
+[node name="Content" type="VBoxContainer" parent="CombatHud/BottomBar/VBox/Actions/FinishAction/Frame"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="Key" type="Label" parent="CombatHud/BottomBar/VBox/Actions/FinishAction/Frame/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.294118, 0.0745098, 0.0823529, 0.95)
+theme_override_font_sizes/font_size = 11
+text = "Phase 5"
+
+[node name="Label" type="Label" parent="CombatHud/BottomBar/VBox/Actions/FinishAction/Frame/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.243137, 0.0470588, 0.054902, 1)
+theme_override_font_sizes/font_size = 16
+text = "Finish"
 
 [node name="CooldownMask" type="ColorRect" parent="CombatHud/BottomBar/VBox/Actions/FinishAction"]
 visible = false
