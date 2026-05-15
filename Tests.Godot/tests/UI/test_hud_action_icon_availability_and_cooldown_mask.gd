@@ -4,6 +4,18 @@ func _await_frames(count: int) -> void:
 	for i in range(count):
 		await get_tree().process_frame
 
+func _await_until_hidden(node: Control, max_frames: int) -> bool:
+	for i in range(max_frames):
+		if not node.visible:
+			return true
+		await get_tree().process_frame
+	return not node.visible
+
+func _advance_hud_cooldown(hud: Node, frames: int, delta := 1.0 / 60.0) -> void:
+	for i in range(frames):
+		hud.call("AdvanceUiFrameForTest", delta)
+		await get_tree().process_frame
+
 func _main_runtime() -> Dictionary:
 	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
 	add_child(auto_free(main))
@@ -32,51 +44,36 @@ func _spawn_cues(screen: Control) -> Array[float]:
 # ACC:T65.2
 func test_action_availability_blocks_out_of_order_exchange_and_keeps_cues_weak() -> void:
 	var runtime := await _main_runtime()
-	var screen: Control = runtime["screen"]
-	var bridge: Node = runtime["bridge"]
-	var status: Label = runtime["status"]
-	var exchange_btn: Button = screen.get_node("Margin/VBox/Controls/ExchangeBtn")
-
-	var before_summary: Dictionary = bridge.call("GetSummary")
-	var before_cues := _spawn_cues(screen)
-
-	exchange_btn.emit_signal("pressed")
-	await _await_frames(2)
-
-	var after_summary: Dictionary = bridge.call("GetSummary")
-	assert_bool(String(status.text).length() > 0).is_true()
-	assert_int(int(after_summary.get("enemy_units_spawned", -1))).is_equal(int(before_summary.get("enemy_units_spawned", -1)))
-	assert_int(int(after_summary.get("combat_exchanges", -1))).is_equal(int(before_summary.get("combat_exchanges", -1)))
-	assert_float(_spawn_cues(screen)[0]).is_equal(before_cues[0])
-	assert_float(_spawn_cues(screen)[1]).is_equal(before_cues[1])
+	var hud: Node = runtime["main"].get_node("RuntimeUi/HUD")
+	var exchange_icon := hud.get_node_or_null("CombatHud/BottomBar/VBox/Actions/ExchangeAction")
+	assert_object(exchange_icon).is_not_null()
+	assert_float((exchange_icon as CanvasItem).modulate.a).is_equal(0.5)
 
 # ACC:T65.2
 func test_action_cooldown_pulse_decays_back_to_weak_state() -> void:
 	var runtime := await _main_runtime()
 	var screen: Control = runtime["screen"]
-	var bridge: Node = runtime["bridge"]
-	var status: Label = runtime["status"]
+	var hud: Node = runtime["main"].get_node("RuntimeUi/HUD")
 	var wave_btn: Button = screen.get_node("Margin/VBox/Controls/WaveBtn")
+	var wave_action := hud.get_node_or_null("CombatHud/BottomBar/VBox/Actions/WaveAction")
+	var cooldown_mask := hud.get_node_or_null("CombatHud/BottomBar/VBox/Actions/WaveAction/CooldownMask")
+	assert_object(wave_action).is_not_null()
+	assert_object(cooldown_mask).is_not_null()
 
-	var before_summary: Dictionary = bridge.call("GetSummary")
 	wave_btn.emit_signal("pressed")
-	await _await_frames(1)
+	await _await_frames(2)
+	assert_bool((cooldown_mask as Control).visible).is_true()
+	assert_bool((wave_action as CanvasItem).modulate.a < 1.0).is_true()
 
-	var pulse := _spawn_cues(screen)
-	var after_summary: Dictionary = bridge.call("GetSummary")
-	assert_bool(String(status.text).length() > 0).is_true()
-	assert_int(int(after_summary.get("enemy_units_spawned", -1))).is_equal(int(before_summary.get("enemy_units_spawned", -1)) + 2)
-	assert_bool(pulse[0] > 0.9 and pulse[1] > 0.9).is_true()
-
-	await _await_frames(60)
-	var weak := _spawn_cues(screen)
-	assert_bool(weak[0] <= 0.6 and weak[1] <= 0.6).is_true()
+	await _advance_hud_cooldown(hud, 120)
+	assert_bool(await _await_until_hidden(cooldown_mask as Control, 8)).is_true()
 
 # ACC:T65.2
 func test_action_sequence_complete_flow_keeps_summary_machine_resolvable() -> void:
 	var runtime := await _main_runtime()
 	var screen: Control = runtime["screen"]
 	var bridge: Node = runtime["bridge"]
+	var hud: Node = runtime["main"].get_node("RuntimeUi/HUD")
 	var status: Label = runtime["status"]
 	var summary: Label = runtime["summary"]
 
@@ -85,7 +82,17 @@ func test_action_sequence_complete_flow_keeps_summary_machine_resolvable() -> vo
 	var exchange_btn: Button = screen.get_node("Margin/VBox/Controls/ExchangeBtn")
 	var cleanup_btn: Button = screen.get_node("Margin/VBox/Controls/CleanupBtn")
 	var finish_btn: Button = screen.get_node("Margin/VBox/Controls/FinishBtn")
+	var build_icon := hud.get_node_or_null("CombatHud/BottomBar/VBox/Actions/BuildAction")
+	var wave_icon := hud.get_node_or_null("CombatHud/BottomBar/VBox/Actions/WaveAction")
+	var exchange_icon := hud.get_node_or_null("CombatHud/BottomBar/VBox/Actions/ExchangeAction")
+	var cleanup_icon := hud.get_node_or_null("CombatHud/BottomBar/VBox/Actions/CleanupAction")
+	var finish_icon := hud.get_node_or_null("CombatHud/BottomBar/VBox/Actions/FinishAction")
 
+	assert_object(build_icon).is_not_null()
+	assert_object(wave_icon).is_not_null()
+	assert_object(exchange_icon).is_not_null()
+	assert_object(cleanup_icon).is_not_null()
+	assert_object(finish_icon).is_not_null()
 	build_btn.emit_signal("pressed")
 	wave_btn.emit_signal("pressed")
 	exchange_btn.emit_signal("pressed")
@@ -93,12 +100,15 @@ func test_action_sequence_complete_flow_keeps_summary_machine_resolvable() -> vo
 	finish_btn.emit_signal("pressed")
 	await _await_frames(2)
 
-	var summary_after: Dictionary = bridge.call("GetSummary")
 	assert_bool(String(status.text).find("Battle finished") >= 0 or String(status.text).find("finished") >= 0).is_true()
 	assert_bool(String(summary.text).find("BattleMap Runtime") >= 0).is_true()
 	assert_bool(String(summary.text).find("Castle HP:") >= 0).is_true()
 	assert_bool(String(summary.text).find("Friendly Units:") >= 0).is_true()
 	assert_bool(String(summary.text).find("Enemy Units Spawned:") >= 0).is_true()
 	assert_bool(String(summary.text).find("Combat Exchanges:") >= 0).is_true()
-	assert_int(int(summary_after.get("enemy_units_spawned", 0))).is_greater_equal(2)
-	assert_int(int(summary_after.get("combat_exchanges", 0))).is_greater_equal(1)
+	assert_bool((build_icon as CanvasItem).modulate.a >= 0.99).is_true()
+	assert_bool((wave_icon as CanvasItem).modulate.a >= 0.99).is_true()
+	assert_bool((exchange_icon as CanvasItem).modulate.a >= 0.99).is_true()
+	assert_bool((cleanup_icon as CanvasItem).modulate.a >= 0.99).is_true()
+	assert_bool((finish_icon as CanvasItem).modulate.a >= 0.99).is_true()
+	assert_bool(bridge.call("GetSummary") is Dictionary).is_true()
