@@ -190,6 +190,23 @@ func _battlefield_slot_layer(screen: Control) -> Node:
 	return screen.get_node_or_null("Background/BattlefieldViewport/BattlefieldRoot/SlotOverlayLayer")
 
 
+func _battlefield_slot(screen: Control, slot_root: String, slot_name: String) -> ColorRect:
+	return screen.get_node_or_null(
+		"Background/BattlefieldViewport/BattlefieldRoot/SlotOverlayLayer/%s/%s" % [slot_root, slot_name]
+	) as ColorRect
+
+
+func _runtime_slot_overlay_snapshot(slot: ColorRect) -> Dictionary:
+	return {
+		"color": slot.color,
+		"overlay_state": str(slot.get_meta("overlay_state", "overlay_hidden")),
+		"overlay_tint": str(slot.get_meta("overlay_tint", "none")),
+		"marker": str(slot.get_meta("marker", "none")),
+		"frame": str(slot.get_meta("frame", "none")),
+		"reason_text": str(slot.get_meta("reason_text", "")),
+	}
+
+
 func _assert_t59_slot_grid(slot_root: Control, expected_count: int) -> void:
 	assert_object(slot_root).is_not_null()
 	assert_int(slot_root.get_child_count()).is_equal(expected_count)
@@ -766,6 +783,73 @@ func test_battlefield_layout_should_visually_distinguish_buildable_and_non_build
 		var slot_root := slot_layer.get_node(slot_root_name) as Control
 		assert_bool(bool(slot_root.get_meta("buildable_region", false))).is_true()
 		assert_bool(slot_root.modulate.a > 0.0).is_true()
+
+
+# ACC:T60.1
+# ACC:T60.2
+func test_placement_overlay_should_drive_runtime_slot_visuals_on_battlefield_scene() -> void:
+	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
+	add_child(auto_free(screen))
+	await _await_frames(2)
+
+	var selection_controller: Node = screen.get_node("SelectionController")
+	var inner_slot := _battlefield_slot(screen, "InnerCastleSlots", "InnerCastleRegionSlot_00_00")
+	var outer_slot := _battlefield_slot(screen, "LeftOuterSlots", "LeftOuterFieldSlot_00_00")
+	var temp_slot := _battlefield_slot(screen, "RightOuterSlots", "RightOuterFieldSlot_00_00")
+	var wall_slot := _battlefield_slot(screen, "LeftOuterSlots", "LeftOuterFieldSlot_01_00")
+	assert_object(inner_slot).is_not_null()
+	assert_object(outer_slot).is_not_null()
+	assert_object(temp_slot).is_not_null()
+	assert_object(wall_slot).is_not_null()
+
+	selection_controller.call("apply_legality_overlay", {
+		"InnerCastleRegionSlot_00_00": "valid_inner",
+		"LeftOuterFieldSlot_00_00": "valid_outer",
+		"RightOuterFieldSlot_00_00": "temp_invalid",
+		"LeftOuterFieldSlot_01_00": "wall",
+	})
+	await _await_frames(1)
+
+	var inner := _runtime_slot_overlay_snapshot(inner_slot)
+	var outer := _runtime_slot_overlay_snapshot(outer_slot)
+	var temp := _runtime_slot_overlay_snapshot(temp_slot)
+	var wall := _runtime_slot_overlay_snapshot(wall_slot)
+
+	assert_str(str(inner["overlay_state"])).is_equal("overlay_legal")
+	assert_str(str(inner["overlay_tint"])).is_equal("warm")
+	assert_str(str(outer["overlay_state"])).is_equal("overlay_legal")
+	assert_str(str(outer["overlay_tint"])).is_equal("cool")
+	assert_str(str(temp["overlay_state"])).is_equal("overlay_illegal")
+	assert_str(str(temp["frame"])).is_equal("red")
+	assert_str(str(temp["reason_text"])).is_equal("")
+	assert_str(str(wall["overlay_state"])).is_equal("overlay_illegal")
+	assert_str(str(wall["overlay_tint"])).is_equal("red")
+	assert_str(str(wall["marker"])).is_equal("blocker")
+
+
+# ACC:T60.3
+func test_inactive_placement_context_should_clear_runtime_slot_overlay_from_battlefield_scene() -> void:
+	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
+	add_child(auto_free(screen))
+	await _await_frames(2)
+
+	var selection_controller: Node = screen.get_node("SelectionController")
+	var slot := _battlefield_slot(screen, "InnerCastleSlots", "InnerCastleRegionSlot_00_01")
+	assert_object(slot).is_not_null()
+
+	selection_controller.call("apply_legality_overlay", {
+		"InnerCastleRegionSlot_00_01": "valid_inner",
+	})
+	await _await_frames(1)
+	var before := _runtime_slot_overlay_snapshot(slot)
+
+	selection_controller.call("set_placement_context_active", false)
+	await _await_frames(1)
+	var after := _runtime_slot_overlay_snapshot(slot)
+
+	assert_str(str(before["overlay_state"])).is_equal("overlay_legal")
+	assert_str(str(after["overlay_state"])).is_equal("overlay_hidden")
+	assert_str(str(after["overlay_tint"])).is_equal("none")
 
 
 # ACC:T62.1
