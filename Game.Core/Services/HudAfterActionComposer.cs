@@ -22,6 +22,8 @@ public sealed record HudAfterActionPresentation(
 
 public sealed class HudAfterActionComposer
 {
+    private readonly RuntimePressureStateMapper _pressureStateMapper = new();
+
     public HudAfterActionPresentation Compose(HudAfterActionInputs input)
     {
         var normalizedOutcome = (input.Outcome ?? string.Empty).Trim();
@@ -63,11 +65,7 @@ public sealed class HudAfterActionComposer
         }
 
         var pressure = hp.HasValue
-            ? hp.Value <= 20
-                ? "critical"
-                : hp.Value <= 60
-                    ? "high"
-                    : "stable"
+            ? new RuntimePressureStateMapper().MapCastleHp(hp.Value)
             : "n/a";
         var hpText = hp.HasValue ? hp.Value.ToString() : "n/a";
         var spawnText = spawn.HasValue ? spawn.Value.ToString() : "n/a";
