@@ -2,8 +2,22 @@ extends Node
 
 const DEFAULT_OVERLAY_CONTROLLER_NAME := "UI_PlacementOverlayController"
 const BATTLEFIELD_VIEW_PATH := "Background"
+const CATEGORY_ECONOMY := "economy"
+const CATEGORY_DEFENSE := "defense"
+const CATEGORY_UNIT := "unit"
+
+const CHANNEL_PRIORITY := {
+	"linked_unit": 10,
+	"defense_range": 20,
+	"unit_range": 20,
+	"building_outline": 30,
+	"economy_glow": 40,
+}
 
 var _screen: Control = null
+var _overlay_slot_visuals: Dictionary = {}
+var _selection_slot_visuals: Dictionary = {}
+var _selection_context_active: bool = true
 
 func configure(screen: Control, _refs: Dictionary = {}) -> void:
 	_screen = screen
@@ -12,7 +26,7 @@ func register_overlay_controller(path: NodePath, controller: Node) -> void:
 	if _screen == null:
 		return
 	var node_name := String(path.get_concatenated_names()).replace("/", "_")
-	var existing := _screen.get_node_or_null(NodePath(node_name))
+	var existing: Node = _screen.get_node_or_null(NodePath(node_name))
 	if existing != null and existing != controller:
 		_screen.remove_child(existing)
 		existing.queue_free()
@@ -32,29 +46,185 @@ func get_battlefield_view() -> Node:
 	return _screen.get_node_or_null(NodePath(BATTLEFIELD_VIEW_PATH))
 
 func apply_legality_overlay(legality_by_slot: Dictionary) -> void:
-	var controller := get_overlay_controller()
+	var controller: Node = get_overlay_controller()
 	if controller != null and controller.has_method("apply_legality_overlay"):
 		controller.call("apply_legality_overlay", legality_by_slot)
-	var battlefield_view := get_battlefield_view()
-	if battlefield_view == null or not battlefield_view.has_method("apply_slot_visual"):
-		return
 	for slot_id_variant in legality_by_slot.keys():
 		var slot_id := str(slot_id_variant)
-		var visual := read_slot_visual(slot_id)
-		battlefield_view.call("apply_slot_visual", slot_id, visual)
+		_overlay_slot_visuals[slot_id] = _read_overlay_slot_visual(slot_id)
+	_sync_runtime_visuals()
 
 func read_slot_visual(slot_id: String) -> Dictionary:
-	var controller := get_overlay_controller()
+	var selection_visual: Variant = _selection_slot_visuals.get(slot_id, null)
+	if selection_visual is Dictionary:
+		return (selection_visual as Dictionary).duplicate(true)
+	var overlay_visual: Variant = _overlay_slot_visuals.get(slot_id, null)
+	if overlay_visual is Dictionary:
+		return (overlay_visual as Dictionary).duplicate(true)
+	return _hidden_visual()
+
+func set_placement_context_active(active: bool) -> void:
+	_selection_context_active = active
+	var controller: Node = get_overlay_controller()
+	if controller != null and controller.has_method("set_placement_context_active"):
+		controller.call("set_placement_context_active", active)
+	if not active:
+		_overlay_slot_visuals.clear()
+		_selection_slot_visuals.clear()
+	_sync_runtime_visuals()
+
+func apply_building_selection(snapshot: Dictionary) -> void:
+	if not _selection_context_active:
+		return
+	_selection_slot_visuals = _build_selection_slot_visuals(snapshot)
+	_sync_runtime_visuals()
+
+func clear_building_selection() -> void:
+	_selection_slot_visuals.clear()
+	_sync_runtime_visuals()
+
+func _build_selection_slot_visuals(snapshot: Dictionary) -> Dictionary:
+	var slot_visuals: Dictionary = {}
+	var selection_id := str(snapshot.get("selection_id", ""))
+	var category := str(snapshot.get("category", ""))
+	var building_slots := _string_array(snapshot.get("building_slots", []))
+	var range_slots := _string_array(snapshot.get("range_slots", []))
+	var blocked_range_slots := _string_array(snapshot.get("blocked_range_slots", []))
+	var linked_unit_slots := _string_array(snapshot.get("linked_unit_slots", []))
+
+	for slot_id in building_slots:
+		var building_channel: String = "building_outline"
+		var building_tint: String = "cool"
+		if category == CATEGORY_ECONOMY:
+			building_channel = "economy_glow"
+			building_tint = "warm"
+		_assign_selection_visual(slot_visuals, slot_id, _selection_visual(
+			building_tint,
+			"none",
+			"none",
+			building_channel,
+			selection_id,
+			category,
+			false
+		))
+
+	var range_channel: String = ""
+	if category == CATEGORY_DEFENSE:
+		range_channel = "defense_range"
+	elif category == CATEGORY_UNIT:
+		range_channel = "unit_range"
+	for slot_id in range_slots:
+		if range_channel.is_empty():
+			continue
+		_assign_selection_visual(slot_visuals, slot_id, _selection_visual(
+			"cool",
+			"none",
+			"none",
+			range_channel,
+			selection_id,
+			category,
+			false
+		))
+	for slot_id in blocked_range_slots:
+		if range_channel.is_empty():
+			continue
+		_assign_selection_visual(slot_visuals, slot_id, _selection_visual(
+			"red",
+			"blocker",
+			"red",
+			range_channel,
+			selection_id,
+			category,
+			true
+		))
+
+	for slot_id in linked_unit_slots:
+		_assign_selection_visual(slot_visuals, slot_id, _selection_visual(
+			"cool",
+			"none",
+			"none",
+			"linked_unit",
+			selection_id,
+			category,
+			false
+		))
+
+	return slot_visuals
+
+func _assign_selection_visual(slot_visuals: Dictionary, slot_id: String, visual: Dictionary) -> void:
+	var new_channel := str(visual.get("feedback_channel", "none"))
+	var new_priority := int(CHANNEL_PRIORITY.get(new_channel, 0))
+	var existing: Variant = slot_visuals.get(slot_id, null)
+	if existing is Dictionary:
+		var existing_channel := str((existing as Dictionary).get("feedback_channel", "none"))
+		var existing_priority := int(CHANNEL_PRIORITY.get(existing_channel, 0))
+		if existing_priority > new_priority:
+			return
+	slot_visuals[slot_id] = visual
+
+func _selection_visual(
+	overlay_tint: String,
+	marker: String,
+	frame: String,
+	feedback_channel: String,
+	selection_owner: String,
+	selection_category: String,
+	range_clipped: bool
+) -> Dictionary:
+	var visual: Dictionary = _hidden_visual()
+	visual["overlay_state"] = "overlay_legal"
+	visual["overlay_tint"] = overlay_tint
+	visual["marker"] = marker
+	visual["frame"] = frame
+	visual["feedback_channel"] = feedback_channel
+	visual["selection_owner"] = selection_owner
+	visual["selection_category"] = selection_category
+	visual["outline_tint"] = "cool"
+	visual["range_clipped"] = range_clipped
+	if marker != "none" or frame != "none":
+		visual["overlay_state"] = "overlay_illegal"
+	return visual
+
+func _sync_runtime_visuals() -> void:
+	var battlefield_view: Node = get_battlefield_view()
+	if battlefield_view == null or not battlefield_view.has_method("apply_slot_visual"):
+		return
+	if battlefield_view.has_method("clear_all_slot_visuals"):
+		battlefield_view.call("clear_all_slot_visuals")
+	var slot_ids: Dictionary = {}
+	for slot_id_variant in _overlay_slot_visuals.keys():
+		slot_ids[str(slot_id_variant)] = true
+	for slot_id_variant in _selection_slot_visuals.keys():
+		slot_ids[str(slot_id_variant)] = true
+	for slot_id_variant in slot_ids.keys():
+		var slot_id := str(slot_id_variant)
+		battlefield_view.call("apply_slot_visual", slot_id, read_slot_visual(slot_id))
+
+func _read_overlay_slot_visual(slot_id: String) -> Dictionary:
+	var controller: Node = get_overlay_controller()
 	if controller != null and controller.has_method("read_slot_visual"):
 		var result = controller.call("read_slot_visual", slot_id)
 		if result is Dictionary:
 			return (result as Dictionary).duplicate(true)
-	return {}
+	return _hidden_visual()
 
-func set_placement_context_active(active: bool) -> void:
-	var controller := get_overlay_controller()
-	if controller != null and controller.has_method("set_placement_context_active"):
-		controller.call("set_placement_context_active", active)
-	var battlefield_view := get_battlefield_view()
-	if not active and battlefield_view != null and battlefield_view.has_method("clear_all_slot_visuals"):
-		battlefield_view.call("clear_all_slot_visuals")
+func _string_array(values: Variant) -> Array[String]:
+	var result: Array[String] = []
+	if values is Array:
+		for value in values:
+			result.append(str(value))
+	return result
+
+func _hidden_visual() -> Dictionary:
+	return {
+		"overlay_state": "overlay_hidden",
+		"overlay_tint": "none",
+		"marker": "none",
+		"frame": "none",
+		"reason_text": "",
+		"feedback_channel": "none",
+		"selection_owner": "",
+		"selection_category": "",
+		"outline_tint": "none",
+		"range_clipped": false,
+	}

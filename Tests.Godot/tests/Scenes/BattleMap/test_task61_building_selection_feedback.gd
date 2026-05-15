@@ -1,6 +1,23 @@
 extends "res://addons/gdUnit4/src/GdUnitTestSuite.gd"
 
 const CONTROLLER := preload("res://Game.Godot/Scripts/Screens/PlacementOverlayController.gd")
+const BATTLE_MAP_SCREEN := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn")
+
+func _runtime_slot_snapshot(screen: Node, slot_id: String) -> Dictionary:
+	var slot := screen.find_child(slot_id, true, false) as ColorRect
+	assert_object(slot).is_not_null()
+	return {
+		"overlay_state": str(slot.get_meta("overlay_state", "overlay_hidden")),
+		"overlay_tint": str(slot.get_meta("overlay_tint", "none")),
+		"marker": str(slot.get_meta("marker", "none")),
+		"frame": str(slot.get_meta("frame", "none")),
+		"reason_text": str(slot.get_meta("reason_text", "")),
+		"feedback_channel": str(slot.get_meta("feedback_channel", "none")),
+		"selection_owner": str(slot.get_meta("selection_owner", "")),
+		"selection_category": str(slot.get_meta("selection_category", "")),
+		"outline_tint": str(slot.get_meta("outline_tint", "none")),
+		"range_clipped": bool(slot.get_meta("range_clipped", false)),
+	}
 
 # acceptance: ACC:T61.1
 func test_selected_category_feedback_stays_exclusive_and_switch_clears_previous_state() -> void:
@@ -390,3 +407,94 @@ func test_switching_between_multiple_producers_updates_linked_unit_set_without_o
 	assert_that(b_linked_when_a_selected["overlay_state"]).is_equal("overlay_hidden")
 	assert_that(a_linked_when_b_selected["overlay_state"]).is_equal("overlay_hidden")
 	assert_that(b_linked_when_b_selected["overlay_state"]).is_equal("overlay_legal")
+
+# acceptance: ACC:T61.8
+# acceptance: ACC:T61.11
+func test_scene_selection_controller_should_mount_formal_selection_feedback_into_runtime_slots() -> void:
+	var screen := BATTLE_MAP_SCREEN.instantiate()
+	add_child(auto_free(screen))
+	await get_tree().process_frame
+
+	var selection_controller: Node = screen.get_node("SelectionController")
+	assert_bool(selection_controller.has_method("apply_building_selection")).is_true()
+	selection_controller.call("apply_building_selection", {
+		"selection_id": "barracks_alpha",
+		"category": "unit",
+		"building_slots": ["InnerCastleRegionSlot_00_00"],
+		"range_slots": ["InnerCastleRegionSlot_01_00"],
+		"blocked_range_slots": ["InnerCastleRegionSlot_02_00"],
+		"linked_unit_slots": ["LeftOuterFieldSlot_00_00"],
+	})
+
+	var building := _runtime_slot_snapshot(screen, "InnerCastleRegionSlot_00_00")
+	var visible_range := _runtime_slot_snapshot(screen, "InnerCastleRegionSlot_01_00")
+	var blocked_range := _runtime_slot_snapshot(screen, "InnerCastleRegionSlot_02_00")
+	var linked_unit := _runtime_slot_snapshot(screen, "LeftOuterFieldSlot_00_00")
+	var unrelated := _runtime_slot_snapshot(screen, "LeftOuterFieldSlot_00_01")
+
+	assert_that(building["feedback_channel"]).is_equal("building_outline")
+	assert_that(building["selection_owner"]).is_equal("barracks_alpha")
+	assert_that(building["selection_category"]).is_equal("unit")
+	assert_that(building["outline_tint"]).is_equal("cool")
+	assert_that(visible_range["feedback_channel"]).is_equal("unit_range")
+	assert_that(visible_range["overlay_state"]).is_equal("overlay_legal")
+	assert_that(blocked_range["feedback_channel"]).is_equal("unit_range")
+	assert_that(blocked_range["overlay_state"]).is_equal("overlay_illegal")
+	assert_that(blocked_range["marker"]).is_equal("blocker")
+	assert_that(bool(blocked_range["range_clipped"])).is_true()
+	assert_that(linked_unit["feedback_channel"]).is_equal("linked_unit")
+	assert_that(linked_unit["overlay_state"]).is_equal("overlay_legal")
+	assert_that(unrelated["feedback_channel"]).is_equal("none")
+	assert_that(unrelated["overlay_state"]).is_equal("overlay_hidden")
+
+# acceptance: ACC:T61.1
+# acceptance: ACC:T61.3
+# acceptance: ACC:T61.5
+# acceptance: ACC:T61.6
+# acceptance: ACC:T61.7
+# acceptance: ACC:T61.9
+# acceptance: ACC:T61.10
+func test_scene_selection_controller_should_switch_and_clear_formal_selection_feedback_without_stale_runtime_state() -> void:
+	var screen := BATTLE_MAP_SCREEN.instantiate()
+	add_child(auto_free(screen))
+	await get_tree().process_frame
+
+	var selection_controller: Node = screen.get_node("SelectionController")
+	assert_bool(selection_controller.has_method("apply_building_selection")).is_true()
+	assert_bool(selection_controller.has_method("clear_building_selection")).is_true()
+	selection_controller.call("apply_building_selection", {
+		"selection_id": "tower_alpha",
+		"category": "defense",
+		"building_slots": ["InnerCastleRegionSlot_03_00"],
+		"range_slots": ["InnerCastleRegionSlot_04_00"],
+		"blocked_range_slots": ["InnerCastleRegionSlot_05_00"],
+		"linked_unit_slots": ["LeftOuterFieldSlot_01_00"],
+	})
+
+	selection_controller.call("apply_building_selection", {
+		"selection_id": "farm_alpha",
+		"category": "economy",
+		"building_slots": ["InnerCastleRegionSlot_06_00"],
+	})
+
+	var old_building := _runtime_slot_snapshot(screen, "InnerCastleRegionSlot_03_00")
+	var old_range := _runtime_slot_snapshot(screen, "InnerCastleRegionSlot_04_00")
+	var old_blocked := _runtime_slot_snapshot(screen, "InnerCastleRegionSlot_05_00")
+	var old_linked := _runtime_slot_snapshot(screen, "LeftOuterFieldSlot_01_00")
+	var new_economy := _runtime_slot_snapshot(screen, "InnerCastleRegionSlot_06_00")
+
+	assert_that(old_building["overlay_state"]).is_equal("overlay_hidden")
+	assert_that(old_range["overlay_state"]).is_equal("overlay_hidden")
+	assert_that(old_blocked["overlay_state"]).is_equal("overlay_hidden")
+	assert_that(old_linked["overlay_state"]).is_equal("overlay_hidden")
+	assert_that(new_economy["feedback_channel"]).is_equal("economy_glow")
+	assert_that(new_economy["selection_owner"]).is_equal("farm_alpha")
+	assert_that(new_economy["selection_category"]).is_equal("economy")
+	assert_that(new_economy["overlay_tint"]).is_equal("warm")
+	assert_that(new_economy["outline_tint"]).is_equal("cool")
+
+	selection_controller.call("clear_building_selection")
+	var cleared_economy := _runtime_slot_snapshot(screen, "InnerCastleRegionSlot_06_00")
+	assert_that(cleared_economy["overlay_state"]).is_equal("overlay_hidden")
+	assert_that(cleared_economy["feedback_channel"]).is_equal("none")
+	assert_that(cleared_economy["selection_owner"]).is_equal("")
