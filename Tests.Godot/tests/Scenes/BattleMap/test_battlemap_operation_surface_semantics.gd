@@ -318,3 +318,47 @@ func test_t68_victory_outcome_modal_node_paths_should_exist_and_default_hidden()
 	assert_object(restart_btn).is_not_null()
 	assert_bool((modal as Control).visible).is_false()
 	assert_int((actions as VBoxContainer).get_child_count()).is_equal(2)
+
+
+func test_battle_map_should_hide_player_castle_marker_and_place_enemy_spawns_on_both_sides() -> void:
+	var runtime := await _main_runtime()
+	var screen: Control = runtime["screen"]
+	var viewport: Control = screen.get_node("Background/BattlefieldViewport")
+	var player_castle := screen.get_node_or_null("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/PlayerCastle")
+	var spawn_a: ColorRect = screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnA")
+	var spawn_b: ColorRect = screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnB")
+	var half_width := viewport.size.x * 0.5
+
+	assert_object(player_castle).is_null()
+	assert_bool(spawn_a.position.x < half_width).is_true()
+	assert_bool(spawn_b.position.x > half_width).is_true()
+
+
+func test_battle_map_debug_inspector_should_exist_and_report_scene_and_hovered_node() -> void:
+	var runtime := await _main_runtime()
+	var main: Control = runtime["main"]
+	var screen: Control = runtime["screen"]
+	var inspector := main.get_node_or_null("RuntimeUi/Overlays/DebugInspectorOverlay")
+	var scene_label := main.get_node_or_null("RuntimeUi/Overlays/DebugInspectorOverlay/Panel/VBox/SceneLabel")
+	var hover_label := main.get_node_or_null("RuntimeUi/Overlays/DebugInspectorOverlay/Panel/VBox/HoverLabel")
+	var path_label := main.get_node_or_null("RuntimeUi/Overlays/DebugInspectorOverlay/Panel/VBox/PathLabel")
+	var wave_btn: Button = screen.get_node("Margin/VBox/Controls/WaveBtn")
+	var hud_finish: CanvasItem = main.get_node("RuntimeUi/HUD/CombatHud/BottomBar/VBox/Actions/FinishAction")
+
+	assert_object(inspector).is_not_null()
+	assert_object(scene_label).is_not_null()
+	assert_object(hover_label).is_not_null()
+	assert_object(path_label).is_not_null()
+	assert_bool((inspector as Control).visible).is_true()
+	assert_bool(String((scene_label as Label).text).find("BattleMapScreen") >= 0).is_true()
+	assert_bool(inspector.has_method("DebugSetHoveredNode")).is_true()
+
+	inspector.call("DebugSetHoveredNode", wave_btn)
+	await _await_frames(1)
+	assert_bool(String((hover_label as Label).text).find("WaveBtn") >= 0).is_true()
+	assert_bool(String((path_label as Label).text).find("Margin/VBox/Controls/WaveBtn") >= 0).is_true()
+
+	inspector.call("DebugSetHoveredNode", hud_finish)
+	await _await_frames(1)
+	assert_bool(String((hover_label as Label).text).find("FinishAction") >= 0).is_true()
+	assert_bool(String((path_label as Label).text).find("RuntimeUi/HUD/CombatHud/BottomBar/VBox/Actions/FinishAction") >= 0).is_true()

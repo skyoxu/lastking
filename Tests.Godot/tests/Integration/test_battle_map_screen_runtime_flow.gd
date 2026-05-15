@@ -113,7 +113,6 @@ const _TASK56_NODE_OWNERSHIP_MAP := {
 	"Background/BattlefieldViewport/BattlefieldRoot/SlotOverlayLayer": "battlefield_presentation",
 	"Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer": "battlefield_presentation",
 	"Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/Path": "battlefield_presentation",
-	"Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/PlayerCastle": "battlefield_presentation",
 	"Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnA": "battlefield_presentation",
 	"Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnB": "battlefield_presentation",
 	"Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/BuildSlotA": "battlefield_presentation",
