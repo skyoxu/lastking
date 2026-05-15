@@ -119,6 +119,59 @@ func test_new_visible_node_paths_require_focused_scene_test_coverage() -> void:
 	assert_bool(bridge.has_method("BuildPhase")).is_true()
 	assert_bool(bridge.has_method("GetSummary")).is_true()
 
+# ACC:T63.5
+# ACC:T63.6
+# ACC:T63.7
+# ACC:T63.8
+func test_t63_local_feedback_surface_nodes_should_exist_under_battlefield_root_with_transient_defaults() -> void:
+	var runtime := await _main_runtime()
+	var screen: Control = runtime["screen"]
+	var local_feedback_layer := screen.get_node_or_null("Background/BattlefieldViewport/BattlefieldRoot/LocalFeedbackLayer")
+	var hit_flash_overlay := screen.get_node_or_null("Background/BattlefieldViewport/BattlefieldRoot/LocalFeedbackLayer/HitFlashOverlay")
+	var wall_pressure_overlay := screen.get_node_or_null("Background/BattlefieldViewport/BattlefieldRoot/LocalFeedbackLayer/WallPressureOverlay")
+	var local_prompt_panel := screen.get_node_or_null("Background/BattlefieldViewport/BattlefieldRoot/LocalFeedbackLayer/LocalPromptPanel")
+	var local_prompt_label := screen.get_node_or_null("Background/BattlefieldViewport/BattlefieldRoot/LocalFeedbackLayer/LocalPromptPanel/PromptLabel")
+
+	assert_object(local_feedback_layer).is_not_null()
+	assert_object(hit_flash_overlay).is_not_null()
+	assert_object(wall_pressure_overlay).is_not_null()
+	assert_object(local_prompt_panel).is_not_null()
+	assert_object(local_prompt_label).is_not_null()
+	assert_bool((local_feedback_layer as CanvasItem).visible).is_true()
+	assert_bool((hit_flash_overlay as Control).visible).is_false()
+	assert_bool((wall_pressure_overlay as Control).visible).is_false()
+	assert_bool((local_prompt_panel as Control).visible).is_false()
+	assert_str(String((local_prompt_label as Label).text)).is_empty()
+
+# ACC:T63.1
+# ACC:T63.2
+func test_t63_local_feedback_surfaces_should_light_up_inside_battlefield_for_wave_exchange_and_wall_pressure() -> void:
+	var runtime := await _main_runtime()
+	var screen: Control = runtime["screen"]
+	var bridge: Node = runtime["bridge"]
+	var wave_btn: Button = screen.get_node("Margin/VBox/Controls/WaveBtn")
+	var exchange_btn: Button = screen.get_node("Margin/VBox/Controls/ExchangeBtn")
+	var hit_flash_overlay: Control = screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/LocalFeedbackLayer/HitFlashOverlay")
+	var wall_pressure_overlay: Control = screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/LocalFeedbackLayer/WallPressureOverlay")
+	var local_prompt_panel: Control = screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/LocalFeedbackLayer/LocalPromptPanel")
+	var local_prompt_label: Label = screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/LocalFeedbackLayer/LocalPromptPanel/PromptLabel")
+
+	wave_btn.emit_signal("pressed")
+	await _await_frames(2)
+	assert_bool(local_prompt_panel.visible).is_true()
+	assert_bool(String(local_prompt_label.text).to_lower().find("wave") >= 0).is_true()
+
+	exchange_btn.emit_signal("pressed")
+	await _await_frames(2)
+	assert_bool(hit_flash_overlay.visible).is_true()
+
+	bridge.call("ConfigureDurabilityForTest", 45, 10)
+	screen.get_node("FeedbackController").call("render_summary", bridge.call("GetSummary"), "Wall under pressure")
+	await _await_frames(2)
+	assert_bool(wall_pressure_overlay.visible).is_true()
+	assert_bool(local_prompt_panel.visible).is_true()
+	assert_bool(String(local_prompt_label.text).to_lower().find("reinforce") >= 0 or String(local_prompt_label.text).to_lower().find("wall") >= 0).is_true()
+
 
 # ACC:T66.5
 func test_t66_feedback_ownership_should_keep_runtime_bridge_as_state_authority() -> void:

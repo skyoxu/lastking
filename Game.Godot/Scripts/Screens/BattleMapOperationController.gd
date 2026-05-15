@@ -80,9 +80,13 @@ func on_build() -> void:
 func on_wave() -> void:
 	if _is_settlement_open():
 		_status_label.text = "Settlement modal is open; resolve reward first."
+		if _feedback_controller != null:
+			_feedback_controller.call("show_local_prompt", "Resolve settlement reward before continuing.")
 		return
 	if _is_terminal_visible():
 		_status_label.text = "Terminal outcome is open; choose Restart or Return to Main Menu."
+		if _feedback_controller != null:
+			_feedback_controller.call("show_local_prompt", "Close terminal outcome before starting a new wave.")
 		return
 	_wave_started = true
 	_combat_resolved = false
@@ -110,12 +114,18 @@ func on_wave_timer_timeout() -> void:
 func on_exchange() -> void:
 	if _is_settlement_open():
 		_status_label.text = "Settlement modal is open; resolve reward first."
+		if _feedback_controller != null:
+			_feedback_controller.call("show_local_prompt", "Resolve settlement reward before combat exchange.")
 		return
 	if _is_terminal_visible():
 		_status_label.text = "Terminal outcome is open; choose Restart or Return to Main Menu."
+		if _feedback_controller != null:
+			_feedback_controller.call("show_local_prompt", "Outcome modal blocks combat exchange.")
 		return
 	if not _wave_started:
 		_status_label.text = _t("battlemap.status.require_wave")
+		if _feedback_controller != null:
+			_feedback_controller.call("show_local_prompt", "Spawn a wave before resolving combat.")
 		return
 	_combat_resolved = true
 	var summary := _call_or_fallback("ResolveCombatExchangePhase")
@@ -125,12 +135,18 @@ func on_exchange() -> void:
 func on_cleanup() -> void:
 	if _is_settlement_open():
 		_status_label.text = "Settlement modal is open; resolve reward first."
+		if _feedback_controller != null:
+			_feedback_controller.call("show_local_prompt", "Resolve settlement reward before cleanup.")
 		return
 	if _is_terminal_visible():
 		_status_label.text = "Terminal outcome is open; choose Restart or Return to Main Menu."
+		if _feedback_controller != null:
+			_feedback_controller.call("show_local_prompt", "Outcome modal blocks cleanup.")
 		return
 	if not _combat_resolved:
 		_status_label.text = _t("battlemap.status.require_exchange")
+		if _feedback_controller != null:
+			_feedback_controller.call("show_local_prompt", "Resolve combat before cleanup.")
 		return
 	_cleaned = true
 	var summary := _call_or_fallback("CleanupDeadUnitsPhase")
@@ -140,12 +156,18 @@ func on_cleanup() -> void:
 func on_finish() -> void:
 	if _is_settlement_open():
 		_status_label.text = "Settlement modal is open; resolve reward first."
+		if _feedback_controller != null:
+			_feedback_controller.call("show_local_prompt", "Resolve settlement reward before finishing battle.")
 		return
 	if _is_terminal_visible():
 		_status_label.text = "Terminal outcome is open; choose Restart or Return to Main Menu."
+		if _feedback_controller != null:
+			_feedback_controller.call("show_local_prompt", "Terminal outcome already open.")
 		return
 	if not _cleaned:
 		_status_label.text = _t("battlemap.status.require_cleanup")
+		if _feedback_controller != null:
+			_feedback_controller.call("show_local_prompt", "Cleanup dead units before finishing battle.")
 		return
 	if _feedback_controller != null:
 		_feedback_controller.call("clear_spawn_pulse")
