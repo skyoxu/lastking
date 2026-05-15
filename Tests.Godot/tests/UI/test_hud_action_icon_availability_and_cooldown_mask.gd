@@ -65,8 +65,10 @@ func test_action_cooldown_pulse_decays_back_to_weak_state() -> void:
 	assert_bool((cooldown_mask as Control).visible).is_true()
 	assert_bool((wave_action as CanvasItem).modulate.a < 1.0).is_true()
 
-	await _advance_hud_cooldown(hud, 120)
-	assert_bool(await _await_until_hidden(cooldown_mask as Control, 8)).is_true()
+	await get_tree().create_timer(2.2).timeout
+	await _await_frames(2)
+	assert_bool(await _await_until_hidden(cooldown_mask as Control, 60)).is_true()
+	assert_bool((wave_action as CanvasItem).modulate.a >= 0.99).is_true()
 
 # ACC:T65.2
 func test_action_sequence_complete_flow_keeps_summary_machine_resolvable() -> void:
@@ -107,4 +109,41 @@ func test_action_sequence_complete_flow_keeps_summary_machine_resolvable() -> vo
 	assert_bool((cleanup_icon as CanvasItem).modulate.a >= 0.99).is_true()
 	assert_bool((finish_icon as CanvasItem).modulate.a >= 0.99).is_true()
 	assert_bool(bridge.call("GetSummary") is Dictionary).is_true()
+
+
+func test_action_cards_should_expose_runtime_status_labels_for_each_phase() -> void:
+	var runtime := await _main_runtime()
+	var screen: Control = runtime["screen"]
+	var hud: Node = runtime["main"].get_node("RuntimeUi/HUD")
+
+	var build_status: Label = hud.get_node("CombatHud/BottomBar/VBox/Actions/BuildAction/Frame/Content/Status")
+	var wave_status: Label = hud.get_node("CombatHud/BottomBar/VBox/Actions/WaveAction/Frame/Content/Status")
+	var exchange_status: Label = hud.get_node("CombatHud/BottomBar/VBox/Actions/ExchangeAction/Frame/Content/Status")
+	var cleanup_status: Label = hud.get_node("CombatHud/BottomBar/VBox/Actions/CleanupAction/Frame/Content/Status")
+	var finish_status: Label = hud.get_node("CombatHud/BottomBar/VBox/Actions/FinishAction/Frame/Content/Status")
+
+	assert_str(build_status.text).contains("Ready")
+	assert_str(wave_status.text).contains("Ready")
+	assert_str(exchange_status.text).contains("Locked")
+	assert_str(cleanup_status.text).contains("Locked")
+	assert_str(finish_status.text).contains("Locked")
+
+	screen.get_node("Margin/VBox/Controls/WaveBtn").emit_signal("pressed")
+	await _await_frames(2)
+	assert_str(wave_status.text).contains("Cooldown")
+	assert_str(exchange_status.text).contains("Ready")
+	assert_str(cleanup_status.text).contains("Ready")
+
+	screen.get_node("Margin/VBox/Controls/ExchangeBtn").emit_signal("pressed")
+	await _await_frames(2)
+	assert_str(exchange_status.text).contains("Done")
+	assert_str(finish_status.text).contains("Ready")
+
+	screen.get_node("Margin/VBox/Controls/CleanupBtn").emit_signal("pressed")
+	await _await_frames(2)
+	assert_str(cleanup_status.text).contains("Done")
+
+	screen.get_node("Margin/VBox/Controls/FinishBtn").emit_signal("pressed")
+	await _await_frames(2)
+	assert_str(finish_status.text).contains("Done")
 

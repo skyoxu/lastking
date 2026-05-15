@@ -46,6 +46,8 @@ func test_hud_scene_exposes_expected_labels() -> void:
             label_count += 1
     assert_int(label_count).is_equal(3)
 
+
+
 # ACC:T45.3
 func test_hud_renders_perf_and_platform_status_feedback_from_runtime_events() -> void:
     var bus: Node = preload("res://Game.Godot/Adapters/EventBusAdapter.cs").new()

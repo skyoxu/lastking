@@ -7,6 +7,7 @@ using Game.Core.Contracts.Lastking;
 using Game.Godot.Adapters;
 using Game.Core.Services;
 using Godot;
+using GDictionary = Godot.Collections.Dictionary;
 
 namespace Game.Godot.Scripts.UI;
 
@@ -27,14 +28,19 @@ public partial class HUD : Control
     private Label _combatCountsLabel = default!;
     private Label _moraleLabel = default!;
     private CanvasItem _buildAction = default!;
+    private Label _buildStatusLabel = default!;
     private Control _buildCooldownMask = default!;
     private CanvasItem _waveAction = default!;
+    private Label _waveStatusLabel = default!;
     private Control _waveCooldownMask = default!;
     private CanvasItem _exchangeAction = default!;
+    private Label _exchangeStatusLabel = default!;
     private Control _exchangeCooldownMask = default!;
     private CanvasItem _cleanupAction = default!;
+    private Label _cleanupStatusLabel = default!;
     private Control _cleanupCooldownMask = default!;
     private CanvasItem _finishAction = default!;
+    private Label _finishStatusLabel = default!;
     private Control _finishCooldownMask = default!;
     private Label _feedbackLabel = default!;
     private Control _feedbackLayer = default!;
@@ -107,7 +113,7 @@ public partial class HUD : Control
 
     public override void _Ready()
     {
-        ProcessMode = ProcessModeEnum.WhenPaused;
+        ProcessMode = ProcessModeEnum.Always;
         _day = GetNode<Label>("TopBar/HBox/DayLabel");
         _cycleRemaining = GetNode<Label>("TopBar/HBox/CycleRemainingLabel");
         _health = GetNode<Label>("TopBar/HBox/HealthLabel");
@@ -115,14 +121,19 @@ public partial class HUD : Control
         _combatCountsLabel = GetNode<Label>("CombatHud/BottomBar/VBox/CombatCountsLabel");
         _moraleLabel = GetNode<Label>("CombatHud/BottomBar/VBox/MoraleLabel");
         _buildAction = GetNode<CanvasItem>("CombatHud/BottomBar/VBox/Actions/BuildAction");
+        _buildStatusLabel = GetNode<Label>("CombatHud/BottomBar/VBox/Actions/BuildAction/Frame/Content/Status");
         _buildCooldownMask = GetNode<Control>("CombatHud/BottomBar/VBox/Actions/BuildAction/CooldownMask");
         _waveAction = GetNode<CanvasItem>("CombatHud/BottomBar/VBox/Actions/WaveAction");
+        _waveStatusLabel = GetNode<Label>("CombatHud/BottomBar/VBox/Actions/WaveAction/Frame/Content/Status");
         _waveCooldownMask = GetNode<Control>("CombatHud/BottomBar/VBox/Actions/WaveAction/CooldownMask");
         _exchangeAction = GetNode<CanvasItem>("CombatHud/BottomBar/VBox/Actions/ExchangeAction");
+        _exchangeStatusLabel = GetNode<Label>("CombatHud/BottomBar/VBox/Actions/ExchangeAction/Frame/Content/Status");
         _exchangeCooldownMask = GetNode<Control>("CombatHud/BottomBar/VBox/Actions/ExchangeAction/CooldownMask");
         _cleanupAction = GetNode<CanvasItem>("CombatHud/BottomBar/VBox/Actions/CleanupAction");
+        _cleanupStatusLabel = GetNode<Label>("CombatHud/BottomBar/VBox/Actions/CleanupAction/Frame/Content/Status");
         _cleanupCooldownMask = GetNode<Control>("CombatHud/BottomBar/VBox/Actions/CleanupAction/CooldownMask");
         _finishAction = GetNode<CanvasItem>("CombatHud/BottomBar/VBox/Actions/FinishAction");
+        _finishStatusLabel = GetNode<Label>("CombatHud/BottomBar/VBox/Actions/FinishAction/Frame/Content/Status");
         _finishCooldownMask = GetNode<Control>("CombatHud/BottomBar/VBox/Actions/FinishAction/CooldownMask");
         _feedbackLayer = GetNode<Control>("FeedbackLayer");
         _feedbackLabel = GetNode<Label>("FeedbackLayer/FeedbackLabel");
@@ -224,6 +235,7 @@ public partial class HUD : Control
             RenderCycleRemaining();
         }
 
+        RefreshBottomBarFromRuntime();
         TickCooldownMasks(Math.Max(0d, delta));
 
         if (!_phaseCountdownEnabled || delta <= 0d)
@@ -625,21 +637,34 @@ public partial class HUD : Control
 
     private void RefreshBottomBarFromRuntime()
     {
-        var current = _lastWaveSpawned?.SpawnCount ?? 0;
+        var runtimeSummary = TryGetActiveBattleSummary();
+        var operationController = TryGetActiveOperationController();
+        var current = ReadSummaryInt(runtimeSummary, "enemy_units_spawned", _lastWaveSpawned?.SpawnCount ?? 0);
         var max = Math.Max(current, 6);
         _combatCountsLabel.Text = $"Combat: {current}/{max}";
-        _moraleLabel.Text = $"Morale: {Math.Clamp((_lastCastleHpChanged?.CurrentHp ?? 0) / 10, 0, 10)}";
+        var runtimeCastleHp = ReadSummaryInt(runtimeSummary, "castle_hp", _lastCastleHpChanged?.CurrentHp ?? 0);
+        _moraleLabel.Text = $"Morale: {Math.Clamp(runtimeCastleHp / 10, 0, 10)}";
 
-        var hasWave = current > 0;
-        var hasExchange = _activeFeedbackMessageKey.Contains("combat_exchange", StringComparison.OrdinalIgnoreCase) || _activeFeedbackCode.Contains("combat_exchange", StringComparison.OrdinalIgnoreCase);
-        var hasCleanup = _runtimePromptLabel.Text.Contains("cleanup", StringComparison.OrdinalIgnoreCase);
-        var hasOutcome = !_outcomeLabel.Text.EndsWith("n/a", StringComparison.OrdinalIgnoreCase);
+        var phaseStatuses = TryGetBattleHudPhaseStatuses(operationController);
+        var buildAvailable = ReadDictionaryBool(phaseStatuses, "build_available", true);
+        var waveAvailable = ReadDictionaryBool(phaseStatuses, "wave_available", true);
+        var exchangeAvailable = ReadDictionaryBool(phaseStatuses, "exchange_available", false);
+        var cleanupAvailable = ReadDictionaryBool(phaseStatuses, "cleanup_available", false);
+        var finishAvailable = ReadDictionaryBool(phaseStatuses, "finish_available", false);
         ApplyActionAvailability(
-            buildAvailable: true,
-            waveAvailable: true,
-            exchangeAvailable: hasWave,
-            cleanupAvailable: hasWave || hasExchange,
-            finishAvailable: hasOutcome || hasCleanup || hasExchange);
+            buildAvailable,
+            waveAvailable,
+            exchangeAvailable,
+            cleanupAvailable,
+            finishAvailable);
+
+        _buildStatusLabel.Text = ReadDictionaryString(phaseStatuses, "build_status", "Ready");
+        _waveStatusLabel.Text = _waveCooldownHideAtMs > 0
+            ? "Cooldown"
+            : ReadDictionaryString(phaseStatuses, "wave_status", "Ready");
+        _exchangeStatusLabel.Text = ReadDictionaryString(phaseStatuses, "exchange_status", "Locked");
+        _cleanupStatusLabel.Text = ReadDictionaryString(phaseStatuses, "cleanup_status", "Locked");
+        _finishStatusLabel.Text = ReadDictionaryString(phaseStatuses, "finish_status", "Locked");
     }
 
     private void ApplyActionAvailability(bool buildAvailable, bool waveAvailable, bool exchangeAvailable, bool cleanupAvailable, bool finishAvailable)
@@ -649,6 +674,140 @@ public partial class HUD : Control
         _exchangeAction.Modulate = new Color(1f, 1f, 1f, exchangeAvailable ? 1f : 0.5f);
         _cleanupAction.Modulate = new Color(1f, 1f, 1f, cleanupAvailable ? 1f : 0.5f);
         _finishAction.Modulate = new Color(1f, 1f, 1f, finishAvailable ? 1f : 0.5f);
+    }
+
+    private static int ReadSummaryInt(GDictionary summary, string key, int fallback)
+    {
+        if (summary.Count == 0 || !summary.ContainsKey(key))
+        {
+            return fallback;
+        }
+
+        var value = summary[key];
+        return value.VariantType switch
+        {
+            Variant.Type.Int => value.AsInt32(),
+            Variant.Type.Float => (int)value.AsDouble(),
+            Variant.Type.String when int.TryParse(value.AsString(), out var parsed) => parsed,
+            _ => fallback,
+        };
+    }
+
+    private GDictionary TryGetActiveBattleSummary()
+    {
+        var main = ResolveMainRoot();
+        var screenRoot = main?.GetNodeOrNull<Node>("RuntimeUi/ScreenRoot");
+        if (screenRoot == null || screenRoot.GetChildCount() == 0)
+        {
+            return new GDictionary();
+        }
+
+        var screen = screenRoot.GetChild(0);
+        if (screen == null || !string.Equals(screen.Name, "BattleMapScreen", StringComparison.Ordinal))
+        {
+            return new GDictionary();
+        }
+
+        var bridge = screen.GetNodeOrNull<Node>("CombatExperienceRuntimeBridge");
+        if (bridge == null || !bridge.HasMethod("GetSummary"))
+        {
+            return new GDictionary();
+        }
+
+        var summary = bridge.Call("GetSummary");
+        return summary.VariantType == Variant.Type.Dictionary
+            ? summary.AsGodotDictionary()
+            : new GDictionary();
+    }
+
+    private Node? TryGetActiveOperationController()
+    {
+        var main = ResolveMainRoot();
+        var screenRoot = main?.GetNodeOrNull<Node>("RuntimeUi/ScreenRoot");
+        if (screenRoot == null || screenRoot.GetChildCount() == 0)
+        {
+            return null;
+        }
+
+        var screen = screenRoot.GetChild(0);
+        if (screen == null || !string.Equals(screen.Name, "BattleMapScreen", StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        return screen.GetNodeOrNull<Node>("OperationController");
+    }
+
+    private static bool ReadControllerFlag(Node? controller, string methodName)
+    {
+        if (controller == null || !controller.HasMethod(methodName))
+        {
+            return false;
+        }
+
+        var value = controller.Call(methodName);
+        return value.VariantType == Variant.Type.Bool && value.AsBool();
+    }
+
+    private static GDictionary TryGetBattleHudPhaseStatuses(Node? controller)
+    {
+        if (controller == null || !controller.HasMethod("get_hud_phase_statuses"))
+        {
+            return new GDictionary();
+        }
+
+        var value = controller.Call("get_hud_phase_statuses");
+        return value.VariantType == Variant.Type.Dictionary
+            ? value.AsGodotDictionary()
+            : new GDictionary();
+    }
+
+    private static string ReadDictionaryString(GDictionary payload, string key, string fallback)
+    {
+        if (payload.Count == 0 || !payload.ContainsKey(key))
+        {
+            return fallback;
+        }
+
+        var value = payload[key];
+        return value.VariantType switch
+        {
+            Variant.Type.String => string.IsNullOrWhiteSpace(value.AsString()) ? fallback : value.AsString(),
+            Variant.Type.Nil => fallback,
+            _ => string.IsNullOrWhiteSpace(value.ToString()) ? fallback : value.ToString(),
+        };
+    }
+
+    private static bool ReadDictionaryBool(GDictionary payload, string key, bool fallback)
+    {
+        if (payload.Count == 0 || !payload.ContainsKey(key))
+        {
+            return fallback;
+        }
+
+        var value = payload[key];
+        return value.VariantType switch
+        {
+            Variant.Type.Bool => value.AsBool(),
+            Variant.Type.String when bool.TryParse(value.AsString(), out var parsed) => parsed,
+            _ => fallback,
+        };
+    }
+
+    private Node? ResolveMainRoot()
+    {
+        Node? current = this;
+        while (current != null)
+        {
+            if (string.Equals(current.Name, "Main", StringComparison.Ordinal))
+            {
+                return current;
+            }
+
+            current = current.GetParent();
+        }
+
+        return null;
     }
 
     private void TickCooldownMasks(double delta)
