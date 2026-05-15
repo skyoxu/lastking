@@ -15,6 +15,7 @@ public partial class HUD : Control
     private static readonly JsonDocumentOptions EventJsonOptions = new() { MaxDepth = 16 };
     private const double DefaultDayDurationSeconds = 240d;
     private const double DefaultNightDurationSeconds = 120d;
+    private const ulong WaveCooldownPulseDurationMs = 1500;
     private readonly HudAfterActionComposer _afterActionComposer = new();
     private readonly RuntimePressureStateMapper _pressureStateMapper = new();
 
@@ -22,6 +23,19 @@ public partial class HUD : Control
     private Label _day = default!;
     private Label _cycleRemaining = default!;
     private Label _health = default!;
+    private PanelContainer _bottomBar = default!;
+    private Label _combatCountsLabel = default!;
+    private Label _moraleLabel = default!;
+    private CanvasItem _buildAction = default!;
+    private Control _buildCooldownMask = default!;
+    private CanvasItem _waveAction = default!;
+    private Control _waveCooldownMask = default!;
+    private CanvasItem _exchangeAction = default!;
+    private Control _exchangeCooldownMask = default!;
+    private CanvasItem _cleanupAction = default!;
+    private Control _cleanupCooldownMask = default!;
+    private CanvasItem _finishAction = default!;
+    private Control _finishCooldownMask = default!;
     private Label _feedbackLabel = default!;
     private Control _feedbackLayer = default!;
     private PanelContainer _pressurePanel = default!;
@@ -88,6 +102,8 @@ public partial class HUD : Control
     private TechApplied? _lastTechApplied;
     private RewardOffered? _lastRewardOffered;
     private string _currentPressureState = "n/a";
+    private float _waveCooldownMaskAlpha = 0f;
+    private ulong _waveCooldownHideAtMs;
 
     public override void _Ready()
     {
@@ -95,6 +111,19 @@ public partial class HUD : Control
         _day = GetNode<Label>("TopBar/HBox/DayLabel");
         _cycleRemaining = GetNode<Label>("TopBar/HBox/CycleRemainingLabel");
         _health = GetNode<Label>("TopBar/HBox/HealthLabel");
+        _bottomBar = GetNode<PanelContainer>("CombatHud/BottomBar");
+        _combatCountsLabel = GetNode<Label>("CombatHud/BottomBar/VBox/CombatCountsLabel");
+        _moraleLabel = GetNode<Label>("CombatHud/BottomBar/VBox/MoraleLabel");
+        _buildAction = GetNode<CanvasItem>("CombatHud/BottomBar/VBox/Actions/BuildAction");
+        _buildCooldownMask = GetNode<Control>("CombatHud/BottomBar/VBox/Actions/BuildAction/CooldownMask");
+        _waveAction = GetNode<CanvasItem>("CombatHud/BottomBar/VBox/Actions/WaveAction");
+        _waveCooldownMask = GetNode<Control>("CombatHud/BottomBar/VBox/Actions/WaveAction/CooldownMask");
+        _exchangeAction = GetNode<CanvasItem>("CombatHud/BottomBar/VBox/Actions/ExchangeAction");
+        _exchangeCooldownMask = GetNode<Control>("CombatHud/BottomBar/VBox/Actions/ExchangeAction/CooldownMask");
+        _cleanupAction = GetNode<CanvasItem>("CombatHud/BottomBar/VBox/Actions/CleanupAction");
+        _cleanupCooldownMask = GetNode<Control>("CombatHud/BottomBar/VBox/Actions/CleanupAction/CooldownMask");
+        _finishAction = GetNode<CanvasItem>("CombatHud/BottomBar/VBox/Actions/FinishAction");
+        _finishCooldownMask = GetNode<Control>("CombatHud/BottomBar/VBox/Actions/FinishAction/CooldownMask");
         _feedbackLayer = GetNode<Control>("FeedbackLayer");
         _feedbackLabel = GetNode<Label>("FeedbackLayer/FeedbackLabel");
         _pressurePanel = GetNode<PanelContainer>("FeedbackLayer/PressurePanel");
@@ -129,6 +158,9 @@ public partial class HUD : Control
         RenderDay();
         RenderCycleRemaining();
         _health.Text = $"{T("hud.hp")}: 0";
+        _bottomBar.Visible = true;
+        _combatCountsLabel.Text = "Combat: 0/0";
+        _moraleLabel.Text = "Morale: 0";
         _pauseButton.Pressed += OnPausePressed;
         _oneXButton.Pressed += OnOneXPressed;
         _twoXButton.Pressed += OnTwoXPressed;
@@ -157,6 +189,17 @@ public partial class HUD : Control
         _resourceSummaryLabel.Text = $"{T("hud.resources")}: gold=n/a iron=n/a pop=n/a";
         _buildSummaryLabel.Text = $"{T("hud.build")}: tax=n/a total_gold=n/a";
         _progressionSummaryLabel.Text = $"{T("hud.progression")}: tech=n/a reward=n/a";
+        ApplyActionAvailability(
+            buildAvailable: true,
+            waveAvailable: true,
+            exchangeAvailable: false,
+            cleanupAvailable: false,
+            finishAvailable: false);
+        SetCooldownMask(_buildCooldownMask, false, 0f);
+        SetCooldownMask(_waveCooldownMask, false, 0f);
+        SetCooldownMask(_exchangeCooldownMask, false, 0f);
+        SetCooldownMask(_cleanupCooldownMask, false, 0f);
+        SetCooldownMask(_finishCooldownMask, false, 0f);
         _activeFeedbackCode = string.Empty;
         _activeFeedbackMessageKey = string.Empty;
         _hasPendingErrorDialog = false;
@@ -180,6 +223,8 @@ public partial class HUD : Control
             RenderDay();
             RenderCycleRemaining();
         }
+
+        TickCooldownMasks(Math.Max(0d, delta));
 
         if (!_phaseCountdownEnabled || delta <= 0d)
         {
@@ -210,6 +255,26 @@ public partial class HUD : Control
         catch (ObjectDisposedException)
         {
         }
+    }
+
+    public void AdvanceUiFrameForTest(double delta)
+    {
+        if (_waveCooldownHideAtMs > 0)
+        {
+            var nowMs = Time.GetTicksMsec();
+            var remainingMs = _waveCooldownHideAtMs > nowMs
+                ? _waveCooldownHideAtMs - nowMs
+                : 0UL;
+            var stepMs = Math.Max(1UL, (ulong)Math.Round(Math.Max(0d, delta) * 1000d));
+            remainingMs = remainingMs > stepMs
+                ? remainingMs - stepMs
+                : 0UL;
+            _waveCooldownHideAtMs = remainingMs > 0
+                ? nowMs + remainingMs
+                : 0UL;
+        }
+        TickCooldownMasks(Math.Max(0d, delta));
+        UpdateFeedbackVisibility();
     }
 
     private void OnDomainEventEmitted(
@@ -416,6 +481,11 @@ public partial class HUD : Control
             Reward: _lastRewardOffered));
         _outcomeLabel.Text = presentation.OutcomeText;
         _runtimePromptLabel.Text = presentation.PromptText;
+        _waveCooldownMaskAlpha = 0f;
+        _waveCooldownHideAtMs = 0;
+        SetCooldownMask(_waveCooldownMask, false, 0f);
+        _waveAction.Modulate = new Color(1f, 1f, 1f, 1f);
+        RefreshBottomBarFromRuntime();
         var details = day.HasValue ? $"day={day.Value}" : string.Empty;
         if (string.Equals(outcome, "win", StringComparison.OrdinalIgnoreCase))
         {
@@ -443,6 +513,11 @@ public partial class HUD : Control
             count ?? 0,
             ReadInt(payload, "WaveBudget", "wave_budget", "budget") ?? 0,
             DateTimeOffset.UtcNow);
+        _waveCooldownMaskAlpha = 1f;
+        _waveCooldownHideAtMs = Time.GetTicksMsec() + WaveCooldownPulseDurationMs;
+        RefreshBottomBarFromRuntime();
+        _waveAction.Modulate = new Color(1f, 1f, 1f, 0.5f);
+        SetCooldownMask(_waveCooldownMask, true, _waveCooldownMaskAlpha);
         RenderPressureSummary();
     }
 
@@ -480,6 +555,7 @@ public partial class HUD : Control
             _resourceSummaryLabel.Text =
                 $"{T("hud.resources")}: gold={DisplayInt(gold)} iron={DisplayInt(iron)} pop={DisplayInt(popCap)}";
         }
+        RefreshBottomBarFromRuntime();
     }
 
     private void HandleTaxCollectedEvent(JsonElement payload)
@@ -497,6 +573,7 @@ public partial class HUD : Control
         var details = !string.IsNullOrWhiteSpace(residenceId) ? $"residence={residenceId}" : "residence=n/a";
         _buildSummaryLabel.Text =
             $"{T("hud.build")}: tax={DisplayInt(taxDelta)} total_gold={DisplayInt(totalGold)} {details}";
+        RefreshBottomBarFromRuntime();
     }
 
     private void HandleTechAppliedEvent(JsonElement payload)
@@ -516,6 +593,7 @@ public partial class HUD : Control
         var statText = !string.IsNullOrWhiteSpace(statKey) ? statKey : "n/a";
         _progressionSummaryLabel.Text =
             $"{T("hud.progression")}: tech={techText}:{statText} {DisplayInt(previous)}->{DisplayInt(current)} reward=n/a";
+        RefreshBottomBarFromRuntime();
     }
 
     private void RenderRuntimePrompt(string messageKey, string details, string fallbackCode)
@@ -530,6 +608,7 @@ public partial class HUD : Control
     {
         _currentPressureState = _pressureStateMapper.MapCastleHp(hp);
         _pressureLabel.Text = $"{T("hud.pressure")}: {_currentPressureState} (hp={hp})";
+        RefreshBottomBarFromRuntime();
     }
 
     private void RenderPressureSummary()
@@ -541,6 +620,70 @@ public partial class HUD : Control
         }
 
         _pressureLabel.Text = $"{T("hud.pressure")}: {_currentPressureState} (hp={_lastCastleHpChanged.CurrentHp})";
+        RefreshBottomBarFromRuntime();
+    }
+
+    private void RefreshBottomBarFromRuntime()
+    {
+        var current = _lastWaveSpawned?.SpawnCount ?? 0;
+        var max = Math.Max(current, 6);
+        _combatCountsLabel.Text = $"Combat: {current}/{max}";
+        _moraleLabel.Text = $"Morale: {Math.Clamp((_lastCastleHpChanged?.CurrentHp ?? 0) / 10, 0, 10)}";
+
+        var hasWave = current > 0;
+        var hasExchange = _activeFeedbackMessageKey.Contains("combat_exchange", StringComparison.OrdinalIgnoreCase) || _activeFeedbackCode.Contains("combat_exchange", StringComparison.OrdinalIgnoreCase);
+        var hasCleanup = _runtimePromptLabel.Text.Contains("cleanup", StringComparison.OrdinalIgnoreCase);
+        var hasOutcome = !_outcomeLabel.Text.EndsWith("n/a", StringComparison.OrdinalIgnoreCase);
+        ApplyActionAvailability(
+            buildAvailable: true,
+            waveAvailable: true,
+            exchangeAvailable: hasWave,
+            cleanupAvailable: hasWave || hasExchange,
+            finishAvailable: hasOutcome || hasCleanup || hasExchange);
+    }
+
+    private void ApplyActionAvailability(bool buildAvailable, bool waveAvailable, bool exchangeAvailable, bool cleanupAvailable, bool finishAvailable)
+    {
+        _buildAction.Modulate = new Color(1f, 1f, 1f, buildAvailable ? 1f : 0.5f);
+        _waveAction.Modulate = new Color(1f, 1f, 1f, waveAvailable ? 1f : 0.5f);
+        _exchangeAction.Modulate = new Color(1f, 1f, 1f, exchangeAvailable ? 1f : 0.5f);
+        _cleanupAction.Modulate = new Color(1f, 1f, 1f, cleanupAvailable ? 1f : 0.5f);
+        _finishAction.Modulate = new Color(1f, 1f, 1f, finishAvailable ? 1f : 0.5f);
+    }
+
+    private void TickCooldownMasks(double delta)
+    {
+        if (_waveCooldownHideAtMs == 0)
+        {
+            _waveCooldownMaskAlpha = 0f;
+            SetCooldownMask(_waveCooldownMask, false, 0f);
+            _waveAction.Modulate = new Color(1f, 1f, 1f, 1f);
+            return;
+        }
+
+        var nowMs = Time.GetTicksMsec();
+        if (nowMs >= _waveCooldownHideAtMs)
+        {
+            _waveCooldownHideAtMs = 0;
+            _waveCooldownMaskAlpha = 0f;
+            SetCooldownMask(_waveCooldownMask, false, 0f);
+            _waveAction.Modulate = new Color(1f, 1f, 1f, 1f);
+            return;
+        }
+
+        var remainingMs = _waveCooldownHideAtMs - nowMs;
+        _waveCooldownMaskAlpha = remainingMs / (float)WaveCooldownPulseDurationMs;
+        SetCooldownMask(_waveCooldownMask, _waveCooldownMaskAlpha > 0f, _waveCooldownMaskAlpha);
+        _waveAction.Modulate = new Color(1f, 1f, 1f, _waveCooldownMaskAlpha > 0f ? 0.5f : 1f);
+    }
+
+    private static void SetCooldownMask(Control mask, bool visible, float alpha)
+    {
+        mask.Visible = visible;
+        if (mask is ColorRect rect)
+        {
+            rect.Color = new Color(0f, 0f, 0f, Math.Clamp(alpha, 0f, 1f) * 0.45f);
+        }
     }
 
     private void ShowTemporaryFeedback(string messageKey, string details, string code, int priority)

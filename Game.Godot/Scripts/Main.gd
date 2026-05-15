@@ -5,6 +5,9 @@ var _score: int = 0
 var _hp: int = 100
 var _i18n: Variant = null
 
+func _enter_tree() -> void:
+	_ensure_event_bus()
+
 func _ready() -> void:
 	_i18n = load("res://Game.Godot/Scripts/Localization/LocalizationManager.gd").new()
 	_i18n.configure_locale_resource("en-US", "res://Game.Godot/Localization/en-US.json")
@@ -71,6 +74,21 @@ func _on_log() -> void:
 
 func _bus():
 	return get_node_or_null("/root/EventBus")
+
+func _ensure_event_bus() -> void:
+	if get_node_or_null("/root/EventBus") != null:
+		return
+	var root := get_tree().get_root()
+	if root == null:
+		return
+	var event_bus_script := load("res://Game.Godot/Adapters/EventBusAdapter.cs")
+	if event_bus_script == null:
+		return
+	var event_bus = event_bus_script.new()
+	if event_bus == null:
+		return
+	event_bus.name = "EventBus"
+	root.add_child(event_bus)
 
 func _on_add_score() -> void:
 	_score += 10
