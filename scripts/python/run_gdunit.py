@@ -17,6 +17,8 @@ import subprocess
 import json
 import sys
 import time
+import threading
+import queue
 import xml.etree.ElementTree as ET
 
 
@@ -76,27 +78,80 @@ def run_cmd_failfast(args, cwd=None, timeout=600_000, break_markers=None):
         'Parser Error',
         'SCRIPT ERROR',
     ]
+    completion_markers = [
+        'Overall Summary:',
+    ]
+    idle_grace_sec = 0.5
     p = subprocess.Popen(args, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                          text=True, encoding='utf-8', errors='ignore')
     buf_lines = []
     hit_break = False
+    saw_completion = False
+    stream_closed = False
+    line_queue: "queue.Queue[str | None]" = queue.Queue()
+
+    def _reader() -> None:
+        try:
+            if p.stdout is None:
+                line_queue.put(None)
+                return
+            for line in p.stdout:
+                line_queue.put(line)
+        finally:
+            line_queue.put(None)
+
+    def _infer_completed_rc(output: str) -> int | None:
+        for line in output.splitlines():
+            if 'Overall Summary:' not in line:
+                continue
+            if '| 0 errors | 0 failures |' in line:
+                return 0
+            return 1
+        return None
+
+    reader = threading.Thread(target=_reader, daemon=True)
+    reader.start()
     try:
-        # Poll line-by-line up to timeout
         end_ts = dt.datetime.now().timestamp() + (timeout/1000.0)
+        last_output_ts = dt.datetime.now().timestamp()
         while True:
-            line = p.stdout.readline()
-            if line:
+            now_ts = dt.datetime.now().timestamp()
+            remaining = max(0.0, min(0.1, end_ts - now_ts))
+            try:
+                line = line_queue.get(timeout=remaining if remaining > 0.0 else 0.01)
+            except queue.Empty:
+                line = None
+
+            if line is None:
+                if not stream_closed:
+                    stream_closed = True
+                if p.poll() is not None:
+                    break
+                if saw_completion and (now_ts - last_output_ts) >= idle_grace_sec:
+                    inferred_rc = _infer_completed_rc(''.join(buf_lines))
+                    if inferred_rc is not None:
+                        p.kill()
+                        try:
+                            p.wait(timeout=1.0)
+                        except subprocess.TimeoutExpired:
+                            pass
+                        return inferred_rc, ''.join(buf_lines)
+            elif line:
                 buf_lines.append(line)
+                last_output_ts = dt.datetime.now().timestamp()
                 low = line.lower()
                 if any(m.lower() in low for m in break_markers):
                     hit_break = True
                     p.kill()
                     break
-            else:
-                if p.poll() is not None:
-                    break
+                if any(m.lower() in low for m in completion_markers):
+                    saw_completion = True
             if dt.datetime.now().timestamp() > end_ts:
                 p.kill()
+                try:
+                    p.wait(timeout=1.0)
+                except subprocess.TimeoutExpired:
+                    pass
                 return 124, ''.join(buf_lines)
         out = ''.join(buf_lines)
         if hit_break:
@@ -108,6 +163,12 @@ def run_cmd_failfast(args, cwd=None, timeout=600_000, break_markers=None):
         except Exception:
             pass
         return 1, ''.join(buf_lines)
+    finally:
+        try:
+            if p.stdout is not None:
+                p.stdout.close()
+        except Exception:
+            pass
 
 
 def write_text(path: str, content: str) -> None:
