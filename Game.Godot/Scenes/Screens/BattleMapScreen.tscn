@@ -80,6 +80,60 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
+[node name="LocalFeedbackLayer" type="Control" parent="Background/BattlefieldViewport/BattlefieldRoot"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="HitFlashOverlay" type="ColorRect" parent="Background/BattlefieldViewport/BattlefieldRoot/LocalFeedbackLayer"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(1, 0.560784, 0.403922, 0.22)
+
+[node name="WallPressureOverlay" type="ColorRect" parent="Background/BattlefieldViewport/BattlefieldRoot/LocalFeedbackLayer"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.901961, 0.309804, 0.25098, 0.16)
+
+[node name="LocalPromptPanel" type="PanelContainer" parent="Background/BattlefieldViewport/BattlefieldRoot/LocalFeedbackLayer"]
+visible = false
+custom_minimum_size = Vector2(360, 0)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -180.0
+offset_top = -72.0
+offset_right = 180.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+
+[node name="PromptLabel" type="Label" parent="Background/BattlefieldViewport/BattlefieldRoot/LocalFeedbackLayer/LocalPromptPanel"]
+layout_mode = 2
+autowrap_mode = 3
+horizontal_alignment = 1
+text = ""
+
 [node name="Path" type="Line2D" parent="Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer"]
 visible = false
 points = PackedVector2Array(120, 120, 260, 120, 420, 240, 640, 240, 840, 340, 1080, 340)
