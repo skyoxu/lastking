@@ -55,7 +55,7 @@ const REGION_DEFS := [
 @onready var _boundary_layer: Control = _require_control("BattlefieldViewport/BattlefieldRoot/BoundaryLayer")
 @onready var _slot_overlay_layer: Control = _require_control("BattlefieldViewport/BattlefieldRoot/SlotOverlayLayer")
 
-var _slot_nodes := {}
+var _slot_nodes: Dictionary = {}
 
 
 func _ready() -> void:
@@ -74,7 +74,7 @@ func _rebuild_regions() -> void:
 	for child in _boundary_layer.get_children():
 		child.queue_free()
 
-	var offset_x := 0.0
+	var offset_x: float = 0.0
 	for region_def_variant in REGION_DEFS:
 		var region_def: Dictionary = region_def_variant
 		var region := ColorRect.new()
@@ -85,7 +85,7 @@ func _rebuild_regions() -> void:
 		region.set_meta("buildable", bool(region_def["buildable"]))
 		_map_base_layer.add_child(region)
 		if not bool(region_def["buildable"]):
-			var boundary := ColorRect.new()
+			var boundary: ColorRect = ColorRect.new()
 			boundary.name = "%sBoundary" % String(region_def["name"])
 			boundary.position = region.position
 			boundary.size = region.size
@@ -99,11 +99,11 @@ func _rebuild_slots() -> void:
 		child.queue_free()
 	_slot_nodes.clear()
 
-	var offset_x := 0.0
+	var offset_x: float = 0.0
 	for region_def_variant in REGION_DEFS:
 		var region_def: Dictionary = region_def_variant
 		if bool(region_def["buildable"]):
-			var slot_root := Control.new()
+			var slot_root: Control = Control.new()
 			slot_root.name = String(region_def["slot_root"])
 			slot_root.position = Vector2(offset_x, 0.0)
 			slot_root.size = Vector2(float(region_def["width"]), BATTLEFIELD_SIZE.y)
@@ -117,7 +117,7 @@ func _rebuild_slots() -> void:
 func _populate_slots(slot_root: Control, columns: int, rows: int, region_name: String) -> void:
 	for row in range(rows):
 		for column in range(columns):
-			var slot := ColorRect.new()
+			var slot: ColorRect = ColorRect.new()
 			slot.name = "%sSlot_%02d_%02d" % [region_name, column, row]
 			slot.position = Vector2(column * SLOT_SIZE.x, row * SLOT_SIZE.y)
 			slot.size = SLOT_SIZE
@@ -129,10 +129,27 @@ func _populate_slots(slot_root: Control, columns: int, rows: int, region_name: S
 
 
 func apply_slot_visual(slot_id: String, visual: Dictionary) -> void:
-	var slot := _slot_nodes.get(slot_id, null) as ColorRect
+	var slot: ColorRect = _slot_nodes.get(slot_id, null) as ColorRect
 	if slot == null:
 		return
 	_apply_slot_visual(slot, visual)
+
+func read_slot_visual(slot_id: String) -> Dictionary:
+	var slot: ColorRect = _slot_nodes.get(slot_id, null) as ColorRect
+	if slot == null:
+		return _hidden_visual()
+	return {
+		"overlay_state": str(slot.get_meta("overlay_state", "overlay_hidden")),
+		"overlay_tint": str(slot.get_meta("overlay_tint", "none")),
+		"marker": str(slot.get_meta("marker", "none")),
+		"frame": str(slot.get_meta("frame", "none")),
+		"reason_text": str(slot.get_meta("reason_text", "")),
+		"feedback_channel": str(slot.get_meta("feedback_channel", "none")),
+		"selection_owner": str(slot.get_meta("selection_owner", "")),
+		"selection_category": str(slot.get_meta("selection_category", "")),
+		"outline_tint": str(slot.get_meta("outline_tint", "none")),
+		"range_clipped": bool(slot.get_meta("range_clipped", false)),
+	}
 
 
 func clear_all_slot_visuals() -> void:
@@ -143,11 +160,16 @@ func clear_all_slot_visuals() -> void:
 
 
 func _apply_slot_visual(slot: ColorRect, visual: Dictionary) -> void:
-	var overlay_state := str(visual.get("overlay_state", "overlay_hidden"))
-	var overlay_tint := str(visual.get("overlay_tint", "none"))
-	var marker := str(visual.get("marker", "none"))
-	var frame := str(visual.get("frame", "none"))
-	var reason_text := str(visual.get("reason_text", ""))
+	var overlay_state: String = str(visual.get("overlay_state", "overlay_hidden"))
+	var overlay_tint: String = str(visual.get("overlay_tint", "none"))
+	var marker: String = str(visual.get("marker", "none"))
+	var frame: String = str(visual.get("frame", "none"))
+	var reason_text: String = str(visual.get("reason_text", ""))
+	var feedback_channel: String = str(visual.get("feedback_channel", "none"))
+	var selection_owner: String = str(visual.get("selection_owner", ""))
+	var selection_category: String = str(visual.get("selection_category", ""))
+	var outline_tint: String = str(visual.get("outline_tint", "none"))
+	var range_clipped: bool = bool(visual.get("range_clipped", false))
 
 	match overlay_state:
 		"overlay_legal":
@@ -170,6 +192,11 @@ func _apply_slot_visual(slot: ColorRect, visual: Dictionary) -> void:
 	slot.set_meta("marker", marker)
 	slot.set_meta("frame", frame)
 	slot.set_meta("reason_text", reason_text)
+	slot.set_meta("feedback_channel", feedback_channel)
+	slot.set_meta("selection_owner", selection_owner)
+	slot.set_meta("selection_category", selection_category)
+	slot.set_meta("outline_tint", outline_tint)
+	slot.set_meta("range_clipped", range_clipped)
 
 
 func _hidden_visual() -> Dictionary:
@@ -179,6 +206,11 @@ func _hidden_visual() -> Dictionary:
 		"marker": "none",
 		"frame": "none",
 		"reason_text": "",
+		"feedback_channel": "none",
+		"selection_owner": "",
+		"selection_category": "",
+		"outline_tint": "none",
+		"range_clipped": false,
 	}
 
 
