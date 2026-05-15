@@ -13,6 +13,11 @@ namespace Game.Godot.Scripts.UI;
 
 public partial class HUD : Control
 {
+    private const string BattleActionRequestedSignal = "BattleActionRequested";
+
+    [Signal]
+    public delegate void BattleActionRequestedEventHandler(string actionCode);
+
     private static readonly JsonDocumentOptions EventJsonOptions = new() { MaxDepth = 16 };
     private const double DefaultDayDurationSeconds = 240d;
     private const double DefaultNightDurationSeconds = 120d;
@@ -27,21 +32,23 @@ public partial class HUD : Control
     private PanelContainer _bottomBar = default!;
     private Label _combatCountsLabel = default!;
     private Label _moraleLabel = default!;
-    private CanvasItem _buildAction = default!;
+    private Control _buildAction = default!;
     private Label _buildStatusLabel = default!;
     private Control _buildCooldownMask = default!;
-    private CanvasItem _waveAction = default!;
+    private Control _waveAction = default!;
     private Label _waveStatusLabel = default!;
     private Control _waveCooldownMask = default!;
-    private CanvasItem _exchangeAction = default!;
+    private Control _exchangeAction = default!;
     private Label _exchangeStatusLabel = default!;
     private Control _exchangeCooldownMask = default!;
-    private CanvasItem _cleanupAction = default!;
+    private Control _cleanupAction = default!;
     private Label _cleanupStatusLabel = default!;
     private Control _cleanupCooldownMask = default!;
-    private CanvasItem _finishAction = default!;
+    private Control _finishAction = default!;
     private Label _finishStatusLabel = default!;
     private Control _finishCooldownMask = default!;
+    private Control _backAction = default!;
+    private Label _backStatusLabel = default!;
     private Label _feedbackLabel = default!;
     private Control _feedbackLayer = default!;
     private PanelContainer _pressurePanel = default!;
@@ -114,27 +121,34 @@ public partial class HUD : Control
     public override void _Ready()
     {
         ProcessMode = ProcessModeEnum.Always;
+        MouseFilter = MouseFilterEnum.Pass;
+        if (!HasSignal(BattleActionRequestedSignal))
+        {
+            AddUserSignal(BattleActionRequestedSignal);
+        }
         _day = GetNode<Label>("TopBar/HBox/DayLabel");
         _cycleRemaining = GetNode<Label>("TopBar/HBox/CycleRemainingLabel");
         _health = GetNode<Label>("TopBar/HBox/HealthLabel");
         _bottomBar = GetNode<PanelContainer>("CombatHud/BottomBar");
         _combatCountsLabel = GetNode<Label>("CombatHud/BottomBar/VBox/CombatCountsLabel");
         _moraleLabel = GetNode<Label>("CombatHud/BottomBar/VBox/MoraleLabel");
-        _buildAction = GetNode<CanvasItem>("CombatHud/BottomBar/VBox/Actions/BuildAction");
+        _buildAction = GetNode<Control>("CombatHud/BottomBar/VBox/Actions/BuildAction");
         _buildStatusLabel = GetNode<Label>("CombatHud/BottomBar/VBox/Actions/BuildAction/Frame/Content/Status");
         _buildCooldownMask = GetNode<Control>("CombatHud/BottomBar/VBox/Actions/BuildAction/CooldownMask");
-        _waveAction = GetNode<CanvasItem>("CombatHud/BottomBar/VBox/Actions/WaveAction");
+        _waveAction = GetNode<Control>("CombatHud/BottomBar/VBox/Actions/WaveAction");
         _waveStatusLabel = GetNode<Label>("CombatHud/BottomBar/VBox/Actions/WaveAction/Frame/Content/Status");
         _waveCooldownMask = GetNode<Control>("CombatHud/BottomBar/VBox/Actions/WaveAction/CooldownMask");
-        _exchangeAction = GetNode<CanvasItem>("CombatHud/BottomBar/VBox/Actions/ExchangeAction");
+        _exchangeAction = GetNode<Control>("CombatHud/BottomBar/VBox/Actions/ExchangeAction");
         _exchangeStatusLabel = GetNode<Label>("CombatHud/BottomBar/VBox/Actions/ExchangeAction/Frame/Content/Status");
         _exchangeCooldownMask = GetNode<Control>("CombatHud/BottomBar/VBox/Actions/ExchangeAction/CooldownMask");
-        _cleanupAction = GetNode<CanvasItem>("CombatHud/BottomBar/VBox/Actions/CleanupAction");
+        _cleanupAction = GetNode<Control>("CombatHud/BottomBar/VBox/Actions/CleanupAction");
         _cleanupStatusLabel = GetNode<Label>("CombatHud/BottomBar/VBox/Actions/CleanupAction/Frame/Content/Status");
         _cleanupCooldownMask = GetNode<Control>("CombatHud/BottomBar/VBox/Actions/CleanupAction/CooldownMask");
-        _finishAction = GetNode<CanvasItem>("CombatHud/BottomBar/VBox/Actions/FinishAction");
+        _finishAction = GetNode<Control>("CombatHud/BottomBar/VBox/Actions/FinishAction");
         _finishStatusLabel = GetNode<Label>("CombatHud/BottomBar/VBox/Actions/FinishAction/Frame/Content/Status");
         _finishCooldownMask = GetNode<Control>("CombatHud/BottomBar/VBox/Actions/FinishAction/CooldownMask");
+        _backAction = GetNode<Control>("CombatHud/BottomBar/VBox/Actions/BackAction");
+        _backStatusLabel = GetNode<Label>("CombatHud/BottomBar/VBox/Actions/BackAction/Frame/Content/Status");
         _feedbackLayer = GetNode<Control>("FeedbackLayer");
         _feedbackLabel = GetNode<Label>("FeedbackLayer/FeedbackLabel");
         _pressurePanel = GetNode<PanelContainer>("FeedbackLayer/PressurePanel");
@@ -176,8 +190,15 @@ public partial class HUD : Control
         _oneXButton.Pressed += OnOneXPressed;
         _twoXButton.Pressed += OnTwoXPressed;
         _dismissButton.Pressed += OnDismissFeedbackPressed;
+        _buildAction.GuiInput += (@event) => OnBattleActionGuiInput(@event, "build");
+        _waveAction.GuiInput += (@event) => OnBattleActionGuiInput(@event, "wave");
+        _exchangeAction.GuiInput += (@event) => OnBattleActionGuiInput(@event, "exchange");
+        _cleanupAction.GuiInput += (@event) => OnBattleActionGuiInput(@event, "cleanup");
+        _finishAction.GuiInput += (@event) => OnBattleActionGuiInput(@event, "finish");
+        _backAction.GuiInput += (@event) => OnBattleActionGuiInput(@event, "back");
         _feedbackLabel.Visible = false;
         _feedbackLabel.Text = string.Empty;
+        _feedbackLayer.Visible = true;
         _pressurePanel.Visible = true;
         _pressureLabel.Text = $"{T("hud.pressure")}: n/a";
         _cameraControlOverlay.Visible = true;
@@ -200,6 +221,7 @@ public partial class HUD : Control
         _resourceSummaryLabel.Text = $"{T("hud.resources")}: gold=n/a iron=n/a pop=n/a";
         _buildSummaryLabel.Text = $"{T("hud.build")}: tax=n/a total_gold=n/a";
         _progressionSummaryLabel.Text = $"{T("hud.progression")}: tech=n/a reward=n/a";
+        _backStatusLabel.Text = "Menu";
         ApplyActionAvailability(
             buildAvailable: true,
             waveAvailable: true,
@@ -808,6 +830,61 @@ public partial class HUD : Control
         }
 
         return null;
+    }
+
+    private void OnBattleActionGuiInput(InputEvent @event, string actionCode)
+    {
+        if (!IsBattleActionInput(@event))
+        {
+            return;
+        }
+
+        RequestBattleAction(actionCode);
+    }
+
+    public void RequestBattleAction(string actionCode)
+    {
+        if (string.IsNullOrWhiteSpace(actionCode))
+        {
+            return;
+        }
+
+        EmitSignal(BattleActionRequestedSignal, actionCode);
+        TryRouteBattleActionThroughActiveCoordinator(actionCode);
+    }
+
+    private void TryRouteBattleActionThroughActiveCoordinator(string actionCode)
+    {
+        var main = ResolveMainRoot();
+        var screenRoot = main?.GetNodeOrNull<Node>("RuntimeUi/ScreenRoot");
+        if (screenRoot == null || screenRoot.GetChildCount() == 0)
+        {
+            return;
+        }
+
+        var screen = screenRoot.GetChild(0);
+        if (screen == null || !string.Equals(screen.Name, "BattleMapScreen", StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        var coordinator = screen.GetNodeOrNull<Node>("HudCoordinator");
+        if (coordinator == null || !coordinator.HasMethod("route_action"))
+        {
+            return;
+        }
+
+        coordinator.Call("route_action", actionCode);
+    }
+
+    private static bool IsBattleActionInput(InputEvent @event)
+    {
+        return @event switch
+        {
+            InputEventMouseButton mouse => mouse.Pressed && mouse.ButtonIndex == MouseButton.Left,
+            InputEventScreenTouch touch => touch.Pressed,
+            _ => false,
+        };
     }
 
     private void TickCooldownMasks(double delta)

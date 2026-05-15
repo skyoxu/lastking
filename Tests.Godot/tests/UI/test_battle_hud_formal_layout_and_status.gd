@@ -77,3 +77,49 @@ func test_battle_hud_action_cards_should_surface_runtime_phase_statuses() -> voi
 	screen.get_node("Margin/VBox/Controls/FinishBtn").emit_signal("pressed")
 	await _await_frames(2)
 	assert_str(finish_status.text).contains("Done")
+
+
+func test_battle_hud_should_be_visibly_layered_above_battlemap_and_feedback_panels_enabled() -> void:
+	var runtime := await _main_runtime()
+	var main: Control = runtime["main"]
+	var hud: Control = runtime["hud"]
+	var screen_root: Control = main.get_node("RuntimeUi/ScreenRoot")
+	var feedback_layer: Control = hud.get_node("FeedbackLayer")
+	var bottom_bar: Control = hud.get_node("CombatHud/BottomBar")
+
+	assert_bool(hud.visible).is_true()
+	assert_bool(bottom_bar.visible).is_true()
+	assert_bool(feedback_layer.visible).is_true()
+	assert_int(hud.get_index()).is_greater(screen_root.get_index())
+
+
+func test_battle_hud_action_cards_should_drive_battlemap_operations_without_legacy_buttons() -> void:
+	var runtime := await _main_runtime()
+	var screen: Control = runtime["screen"]
+	var hud: Control = runtime["hud"]
+	var status: Label = screen.get_node("Margin/VBox/Status")
+	var legacy_controls: Control = screen.get_node("Margin/VBox/Controls")
+	var operation_controller: Node = screen.get_node("OperationController")
+	var finish_status: Label = hud.get_node("CombatHud/BottomBar/VBox/Actions/FinishAction/Frame/Content/Status")
+
+	assert_bool(legacy_controls.visible).is_false()
+
+	hud.call("RequestBattleAction", "build")
+	await _await_frames(2)
+	assert_bool(status.text.to_lower().find("build") >= 0).is_true()
+
+	hud.call("RequestBattleAction", "wave")
+	await _await_frames(2)
+	assert_bool(operation_controller.call("is_wave_started")).is_true()
+
+	hud.call("RequestBattleAction", "exchange")
+	await _await_frames(2)
+	assert_bool(operation_controller.call("is_combat_resolved")).is_true()
+
+	hud.call("RequestBattleAction", "cleanup")
+	await _await_frames(2)
+	assert_bool(operation_controller.call("is_cleanup_completed")).is_true()
+
+	hud.call("RequestBattleAction", "finish")
+	await _await_frames(2)
+	assert_str(finish_status.text).contains("Done")
