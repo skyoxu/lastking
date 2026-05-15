@@ -81,6 +81,7 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="Path" type="Line2D" parent="Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer"]
+visible = false
 points = PackedVector2Array(120, 120, 260, 120, 420, 240, 640, 240, 840, 340, 1080, 340)
 width = 8.0
 default_color = Color(0.909804, 0.752941, 0.482353, 1)

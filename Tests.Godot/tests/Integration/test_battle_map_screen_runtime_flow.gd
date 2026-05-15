@@ -882,6 +882,10 @@ func test_spawn_side_glow_and_wave_pulse_decay_back_to_weak_state() -> void:
 	assert_bool(status_after_wave != status_before).is_true()
 	assert_int(int(summary_after_wave.get("enemy_units_spawned", 0))).is_equal(2)
 
+	await get_tree().create_timer(2.0).timeout
+	var pulse_midway := _spawn_cue_colors(screen)
+	assert_bool(pulse_midway[0].a >= 0.9 and pulse_midway[1].a >= 0.9).is_true()
+
 	await get_tree().create_timer(4.5).timeout
 	var after := _spawn_cue_colors(screen)
 	var status_after_decay := String(status_label.text)
@@ -936,7 +940,7 @@ func test_path_readability_stays_behavior_driven_without_arrow_or_route_ui() -> 
 		"EnemySpawnB": (screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnB") as Control).global_position,
 	}
 
-	assert_bool(path.visible).is_true()
+	assert_bool(path.visible).is_false()
 	assert_int(background.get_children().filter(func(n): return str((n as Node).name).find("Arrow") >= 0 or str((n as Node).name).find("Route") >= 0).size()).is_equal(0)
 
 	if bridge.has_method("SpawnEnemyWavePhase"):
