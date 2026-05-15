@@ -42,7 +42,7 @@ func test_preserves_responsibility_boundaries_without_ambiguous_split() -> void:
 	assert_str(str(screen.get_node("WaveTimer").get_meta("ownership_container"))).is_equal("runtime_bridge")
 	assert_str(str(screen.get_node("Margin").get_meta("ownership_container"))).is_equal("legacy_prototype")
 	assert_bool(status.text.length() > 0).is_true()
-	assert_bool(String(summary.text).length() > 0).is_true()
+	assert_bool(summary.visible).is_false()
 
 # ACC:T65.6
 func test_runtime_flow_is_traceable_through_auditable_events() -> void:
@@ -86,6 +86,7 @@ func test_runtime_refresh_keeps_semantics_stable_until_later_transition() -> voi
 	bridge.call("PublishOutcomePhase")
 	await _await_frames(2)
 	assert_str(summary.text).is_equal(before)
+	assert_bool(summary.visible).is_false()
 	assert_bool(screen.get_node("Margin/VBox/Status").text.length() > 0).is_true()
 
 # ACC:T65.8
@@ -96,13 +97,13 @@ func test_integration_validates_bottom_bar_state_and_action_readability() -> voi
 	var status: Label = runtime["status"]
 	var summary: Label = runtime["summary"]
 
-	assert_bool(String(summary.text).length() > 0).is_true()
+	assert_bool(summary.visible).is_false()
 	assert_bool(status.text.length() > 0).is_true()
 
 	screen.get_node("Margin/VBox/Controls/WaveBtn").emit_signal("pressed")
 	await _await_frames(2)
 	assert_bool(status.text.to_lower().find("wave") >= 0).is_true()
-	assert_bool(String(summary.text).length() > 0).is_true()
+	assert_bool(summary.visible).is_false()
 	assert_bool(bridge.call("GetSummary") is Dictionary).is_true()
 
 # ACC:T65.5
@@ -128,7 +129,7 @@ func test_stateful_bottom_bar_sequence_keeps_operation_surface_and_hud_readable(
 	await _await_frames(3)
 
 	assert_bool(String(status.text).to_lower().find("finish") >= 0).is_true()
-	assert_bool(String(summary.text).length() > 0).is_true()
+	assert_bool(summary.visible).is_false()
 	assert_bool(String(pressure_label.text).find("hp=") >= 0 or String(pressure_label.text).find("stable") >= 0 or String(pressure_label.text).find("warning") >= 0 or String(pressure_label.text).find("danger") >= 0 or String(pressure_label.text).find("critical") >= 0).is_true()
 	assert_bool(String(outcome_label.text).find("Outcome:") >= 0).is_true()
 	assert_bool(String(prompt_label.text).find("Prompt:") >= 0).is_true()

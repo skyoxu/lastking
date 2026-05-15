@@ -46,7 +46,7 @@ func test_runtime_ui_semantics_mapping_for_empty_failure_completion() -> void:
 	assert_bool(screen.visible).is_true()
 	assert_bool(background.visible).is_true()
 	assert_bool(String(status_label.text).length() > 0).is_true()
-	assert_bool(String(summary_label.text).length() > 0).is_true()
+	assert_bool(summary_label.visible).is_false()
 
 	build_btn.emit_signal("pressed")
 	wave_btn.emit_signal("pressed")
@@ -55,7 +55,7 @@ func test_runtime_ui_semantics_mapping_for_empty_failure_completion() -> void:
 	finish_btn.emit_signal("pressed")
 	await _await_frames(2)
 	var runtime_summary: Dictionary = bridge.call("GetSummary")
-	assert_bool(String(summary_label.text).length() > 0).is_true()
+	assert_bool(summary_label.visible).is_false()
 	assert_int(int(runtime_summary.get("friendly_units_deployed", 0))).is_greater_equal(1)
 	assert_int(int(runtime_summary.get("combat_exchanges", 0))).is_greater_equal(1)
 	assert_bool(status_label.text.to_lower().find("finished") >= 0).is_true()
@@ -362,3 +362,15 @@ func test_battle_map_debug_inspector_should_exist_and_report_scene_and_hovered_n
 	await _await_frames(1)
 	assert_bool(String((hover_label as Label).text).find("FinishAction") >= 0).is_true()
 	assert_bool(String((path_label as Label).text).find("RuntimeUi/HUD/CombatHud/BottomBar/VBox/Actions/FinishAction") >= 0).is_true()
+
+
+func test_battle_map_should_hide_legacy_summary_legend_and_metrics_help_from_player_view() -> void:
+	var runtime := await _main_runtime()
+	var screen: Control = runtime["screen"]
+	var summary_label: Label = screen.get_node("Margin/VBox/Summary")
+	var legend_label: Label = screen.get_node("Margin/VBox/Legend")
+	var metrics_help_label: Label = screen.get_node("Margin/VBox/MetricsHelp")
+
+	assert_bool(summary_label.visible).is_false()
+	assert_bool(legend_label.visible).is_false()
+	assert_bool(metrics_help_label.visible).is_false()
