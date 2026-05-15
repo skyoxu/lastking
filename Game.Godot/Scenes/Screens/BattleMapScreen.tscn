@@ -14,7 +14,6 @@
 [ext_resource type="Script" path="res://Game.Godot/Scripts/Screens/BattleMapOwnershipCoordinator.gd" id="12"]
 [ext_resource type="Script" path="res://Game.Godot/Scripts/Screens/BattleMapBridgeProvider.gd" id="13"]
 [ext_resource type="Script" path="res://Game.Godot/Scripts/Screens/BattlefieldView.gd" id="14"]
-
 [node name="BattleMapScreen" type="Control"]
 layout_mode = 3
 anchors_preset = 15
@@ -140,24 +139,17 @@ points = PackedVector2Array(120, 120, 260, 120, 420, 240, 640, 240, 840, 340, 10
 width = 8.0
 default_color = Color(0.909804, 0.752941, 0.482353, 1)
 
-[node name="PlayerCastle" type="ColorRect" parent="Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer"]
-offset_left = 56.0
-offset_top = 88.0
-offset_right = 116.0
-offset_bottom = 152.0
-color = Color(0.321569, 0.584314, 0.894118, 1)
-
 [node name="EnemySpawnA" type="ColorRect" parent="Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer"]
-offset_left = 1040.0
+offset_left = 32.0
 offset_top = 300.0
-offset_right = 1070.0
+offset_right = 62.0
 offset_bottom = 330.0
 color = Color(0.847059, 0.286275, 0.286275, 1)
 
 [node name="EnemySpawnB" type="ColorRect" parent="Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer"]
-offset_left = 1110.0
+offset_left = 1378.0
 offset_top = 360.0
-offset_right = 1140.0
+offset_right = 1408.0
 offset_bottom = 390.0
 color = Color(0.847059, 0.286275, 0.286275, 1)
 
