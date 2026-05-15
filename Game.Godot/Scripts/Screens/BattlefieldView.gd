@@ -2,6 +2,11 @@ extends Control
 
 const BATTLEFIELD_SIZE := Vector2(1440.0, 600.0)
 const SLOT_SIZE := Vector2(50.0, 50.0)
+const BASE_SLOT_COLOR := Color(0.603922, 0.784314, 0.560784, 0.18)
+const WARM_SLOT_COLOR := Color(0.905882, 0.65098, 0.278431, 0.45)
+const COOL_SLOT_COLOR := Color(0.372549, 0.666667, 0.94902, 0.45)
+const GREY_SLOT_COLOR := Color(0.552941, 0.552941, 0.552941, 0.32)
+const RED_SLOT_COLOR := Color(0.862745, 0.286275, 0.286275, 0.38)
 const REGION_DEFS := [
 	{
 		"name": "LeftOuterField",
@@ -50,6 +55,8 @@ const REGION_DEFS := [
 @onready var _boundary_layer: Control = _require_control("BattlefieldViewport/BattlefieldRoot/BoundaryLayer")
 @onready var _slot_overlay_layer: Control = _require_control("BattlefieldViewport/BattlefieldRoot/SlotOverlayLayer")
 
+var _slot_nodes := {}
+
 
 func _ready() -> void:
 	ensure_layout()
@@ -90,6 +97,7 @@ func _rebuild_regions() -> void:
 func _rebuild_slots() -> void:
 	for child in _slot_overlay_layer.get_children():
 		child.queue_free()
+	_slot_nodes.clear()
 
 	var offset_x := 0.0
 	for region_def_variant in REGION_DEFS:
@@ -113,10 +121,65 @@ func _populate_slots(slot_root: Control, columns: int, rows: int, region_name: S
 			slot.name = "%sSlot_%02d_%02d" % [region_name, column, row]
 			slot.position = Vector2(column * SLOT_SIZE.x, row * SLOT_SIZE.y)
 			slot.size = SLOT_SIZE
-			slot.color = Color(0.603922, 0.784314, 0.560784, 0.18)
 			slot.set_meta("buildable", true)
 			slot.set_meta("slot_available", true)
+			_apply_slot_visual(slot, _hidden_visual())
 			slot_root.add_child(slot)
+			_slot_nodes[String(slot.name)] = slot
+
+
+func apply_slot_visual(slot_id: String, visual: Dictionary) -> void:
+	var slot := _slot_nodes.get(slot_id, null) as ColorRect
+	if slot == null:
+		return
+	_apply_slot_visual(slot, visual)
+
+
+func clear_all_slot_visuals() -> void:
+	for slot_variant in _slot_nodes.values():
+		var slot := slot_variant as ColorRect
+		if slot != null:
+			_apply_slot_visual(slot, _hidden_visual())
+
+
+func _apply_slot_visual(slot: ColorRect, visual: Dictionary) -> void:
+	var overlay_state := str(visual.get("overlay_state", "overlay_hidden"))
+	var overlay_tint := str(visual.get("overlay_tint", "none"))
+	var marker := str(visual.get("marker", "none"))
+	var frame := str(visual.get("frame", "none"))
+	var reason_text := str(visual.get("reason_text", ""))
+
+	match overlay_state:
+		"overlay_legal":
+			if overlay_tint == "warm":
+				slot.color = WARM_SLOT_COLOR
+			elif overlay_tint == "cool":
+				slot.color = COOL_SLOT_COLOR
+			else:
+				slot.color = BASE_SLOT_COLOR
+		"overlay_illegal":
+			if overlay_tint == "grey":
+				slot.color = GREY_SLOT_COLOR
+			else:
+				slot.color = RED_SLOT_COLOR
+		_:
+			slot.color = BASE_SLOT_COLOR
+
+	slot.set_meta("overlay_state", overlay_state)
+	slot.set_meta("overlay_tint", overlay_tint)
+	slot.set_meta("marker", marker)
+	slot.set_meta("frame", frame)
+	slot.set_meta("reason_text", reason_text)
+
+
+func _hidden_visual() -> Dictionary:
+	return {
+		"overlay_state": "overlay_hidden",
+		"overlay_tint": "none",
+		"marker": "none",
+		"frame": "none",
+		"reason_text": "",
+	}
 
 
 func _require_control(node_path: NodePath) -> Control:

@@ -127,8 +127,8 @@ public class Task60LayerBoundaryTests
         text.Should().Contain("func test_inactive_placement_context_renders_no_legality_overlay()");
         text.Should().Contain("controller.set_placement_context_active(false)");
         text.Should().Contain("controller.apply_legality_overlay({\"B1\": controller.LEGALITY_WALL})");
-        text.Should().Contain("assert_that(before[\"overlay_state\"]).is_equal(\"overlay_legal\")");
-        text.Should().Contain("assert_that(after[\"overlay_state\"]).is_equal(\"overlay_hidden\")");
+        text.Should().Contain("assert_that(before_snapshot[\"overlay_state\"]).is_equal(\"overlay_legal\")");
+        text.Should().Contain("assert_that(after_snapshot[\"overlay_state\"]).is_equal(\"overlay_hidden\")");
     }
 
     private static string FindRepositoryRoot()
