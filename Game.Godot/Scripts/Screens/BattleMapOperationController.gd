@@ -20,6 +20,7 @@ var _wave_started := false
 var _combat_resolved := false
 var _cleaned := false
 var _auto_wave := false
+var _outcome_published := false
 
 func configure(refs: Dictionary) -> void:
 	_bridge = refs["bridge"]
@@ -55,14 +56,38 @@ func connect_signals() -> void:
 func is_wave_started() -> bool:
 	return _wave_started
 
+func is_combat_resolved() -> bool:
+	return _combat_resolved
+
+func is_cleanup_completed() -> bool:
+	return _cleaned
+
 func is_auto_wave() -> bool:
 	return _auto_wave
+
+func get_hud_phase_statuses() -> Dictionary:
+	var exchange_ready := _wave_started
+	var cleanup_ready := _wave_started
+	var finish_ready := _combat_resolved or _cleaned
+	return {
+		"build_status": "Ready",
+		"wave_status": "Ready",
+		"exchange_status": "Done" if _combat_resolved else ("Ready" if exchange_ready else "Locked"),
+		"cleanup_status": "Done" if _cleaned else ("Ready" if cleanup_ready else "Locked"),
+		"finish_status": "Done" if _outcome_published else ("Ready" if finish_ready else "Locked"),
+		"build_available": true,
+		"wave_available": true,
+		"exchange_available": exchange_ready,
+		"cleanup_available": cleanup_ready,
+		"finish_available": finish_ready or _outcome_published,
+	}
 
 func reset_flags() -> void:
 	_wave_started = false
 	_combat_resolved = false
 	_cleaned = false
 	_auto_wave = false
+	_outcome_published = false
 	if _wave_timer != null:
 		_wave_timer.stop()
 
@@ -91,6 +116,7 @@ func on_wave() -> void:
 	_wave_started = true
 	_combat_resolved = false
 	_cleaned = false
+	_outcome_published = false
 	if _feedback_controller != null:
 		_feedback_controller.call("mark_spawn_pulse", SPAWN_PULSE_DURATION_SEC)
 	var summary := _call_or_fallback("SpawnEnemyWavePhase")
@@ -171,6 +197,7 @@ func on_finish() -> void:
 		return
 	if _feedback_controller != null:
 		_feedback_controller.call("clear_spawn_pulse")
+	_outcome_published = true
 	var outcome := _call_or_fallback("PublishOutcomePhase")
 	_render(outcome, _t("battlemap.status.finished"))
 	if _outcome_controller != null:
