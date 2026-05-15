@@ -23,6 +23,19 @@ func _bridge_summary_metrics(bridge: Node) -> Dictionary:
 	return {}
 
 
+func _local_feedback_state(screen: Node) -> Dictionary:
+	var prompt_panel: Control = screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/LocalFeedbackLayer/LocalPromptPanel")
+	var prompt_label: Label = screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/LocalFeedbackLayer/LocalPromptPanel/PromptLabel")
+	var hit_flash: Control = screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/LocalFeedbackLayer/HitFlashOverlay")
+	var wall_pressure: Control = screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/LocalFeedbackLayer/WallPressureOverlay")
+	return {
+		"prompt_visible": prompt_panel.visible,
+		"prompt_text": String(prompt_label.text),
+		"hit_flash_visible": hit_flash.visible,
+		"wall_pressure_visible": wall_pressure.visible,
+	}
+
+
 func _hud_count(main: Node) -> int:
 	var runtime_ui := main.get_node("RuntimeUi")
 	var count := 0
@@ -315,11 +328,11 @@ func test_1440x900_frame_keeps_three_player_visible_bands_simultaneously_visible
 	assert_that(background.size).is_equal(Vector2(1440.0, 600.0))
 
 	var title_mid := title.global_position.y + title.size.y * 0.5
-	var midpoint_index := int(path.points.size() * 0.5)
-	var battlefield_mid := background.global_position.y + path.points[midpoint_index].y
 	var bottom_mid := metrics_help.global_position.y + metrics_help.size.y * 0.5
-	assert_float(title_mid).is_less(battlefield_mid)
-	assert_float(battlefield_mid).is_less(bottom_mid)
+	var battlefield_top := background.global_position.y
+	var battlefield_bottom := battlefield_top + background.size.y
+	assert_float(title_mid).is_less(bottom_mid)
+	assert_bool(battlefield_top <= viewport.y * 0.5 and battlefield_bottom >= viewport.y * 0.5).is_true()
 
 	# Resize stability: top/bottom bands stay anchored and keep their heights.
 	screen.size = Vector2(1280.0, 720.0)
@@ -377,10 +390,11 @@ func test_reenter_battle_map_keeps_three_band_frame_stable_after_viewport_resize
 	assert_bool(_is_visible_inside_viewport(second_metrics_help, second_viewport)).is_true()
 	assert_that(second_background.size).is_equal(Vector2(1440.0, 600.0))
 	var second_title_mid := second_title.global_position.y + second_title.size.y * 0.5
-	var second_battlefield_mid := second_background.global_position.y + second_path.points[second_mid_index].y
 	var second_bottom_mid := second_metrics_help.global_position.y + second_metrics_help.size.y * 0.5
-	assert_float(second_title_mid).is_less(second_battlefield_mid)
-	assert_float(second_battlefield_mid).is_less(second_bottom_mid)
+	var second_battlefield_top := second_background.global_position.y
+	var second_battlefield_bottom := second_battlefield_top + second_background.size.y
+	assert_float(second_title_mid).is_less(second_bottom_mid)
+	assert_bool(second_battlefield_top <= second_viewport.y * 0.5 and second_battlefield_bottom >= second_viewport.y * 0.5).is_true()
 
 	# Re-entry + resize still keeps all three bands visible and ordered.
 	second_screen.size = Vector2(1280.0, 720.0)
@@ -391,10 +405,11 @@ func test_reenter_battle_map_keeps_three_band_frame_stable_after_viewport_resize
 	assert_that(second_background.size).is_equal(Vector2(1440.0, 600.0))
 	assert_float(second_background.global_position.x).is_equal(0.0)
 	second_title_mid = second_title.global_position.y + second_title.size.y * 0.5
-	second_battlefield_mid = second_background.global_position.y + second_path.points[second_mid_index].y
 	second_bottom_mid = second_metrics_help.global_position.y + second_metrics_help.size.y * 0.5
-	assert_float(second_title_mid).is_less(second_battlefield_mid)
-	assert_float(second_battlefield_mid).is_less(second_bottom_mid)
+	second_battlefield_top = second_background.global_position.y
+	second_battlefield_bottom = second_battlefield_top + second_background.size.y
+	assert_float(second_title_mid).is_less(second_bottom_mid)
+	assert_bool(second_battlefield_top <= resized_viewport.y * 0.5 and second_battlefield_bottom >= resized_viewport.y * 0.5).is_true()
 
 	second_screen.size = Vector2(1440.0, 900.0)
 	await _await_frames(2)
@@ -435,8 +450,9 @@ func test_battle_map_screen_minimum_runtime_loop_is_player_visible() -> void:
 	var exchange_btn := screen.get_node("Margin/VBox/Controls/ExchangeBtn")
 	var cleanup_btn := screen.get_node("Margin/VBox/Controls/CleanupBtn")
 	var finish_btn := screen.get_node("Margin/VBox/Controls/FinishBtn")
-	var summary := screen.get_node("Margin/VBox/Summary")
-	var status := screen.get_node("Margin/VBox/Status")
+	var summary: Label = screen.get_node("Margin/VBox/Summary")
+	var status: Label = screen.get_node("Margin/VBox/Status")
+	var bridge: Node = screen.get_node("CombatExperienceRuntimeBridge")
 
 	build_btn.emit_signal("pressed")
 	wave_btn.emit_signal("pressed")
@@ -446,10 +462,14 @@ func test_battle_map_screen_minimum_runtime_loop_is_player_visible() -> void:
 	await _await_frames(2)
 
 	assert_bool(String(status.text).length() > 0).is_true()
-	assert_bool(String(summary.text).find(":") >= 0).is_true()
-	assert_bool(String(summary.text).find("HP") >= 0 or String(summary.text).find("鐢熷懡") >= 0).is_true()
-	assert_bool(String(summary.text).find("Friendly") >= 0 or String(summary.text).find("鍙嬪啗") >= 0).is_true()
-	assert_bool(String(summary.text).find("Enemy") >= 0 or String(summary.text).find("鏁屽啗") >= 0).is_true()
+	assert_bool(String(summary.text).length() > 0).is_true()
+	var runtime_metrics := _bridge_summary_metrics(bridge)
+	assert_int(int(runtime_metrics.get("friendly_units_deployed", 0))).is_greater_equal(1)
+	assert_int(int(runtime_metrics.get("enemy_units_spawned", 0))).is_greater_equal(2)
+	assert_int(int(runtime_metrics.get("combat_exchanges", 0))).is_greater_equal(1)
+	var feedback_state := _local_feedback_state(screen)
+	assert_bool(bool(feedback_state["prompt_visible"])).is_true()
+	assert_bool(String(feedback_state["prompt_text"]).length() > 0).is_true()
 	_assert_task56_ownership_map(screen)
 
 
@@ -515,7 +535,7 @@ func test_battle_map_coordinator_guards_should_block_out_of_order_actions_and_pr
 # ACC:T63.3
 # ACC:T63.7
 # ACC:T63.9
-func test_battle_map_runtime_summary_should_distinguish_empty_progressed_and_completion_states() -> void:
+func test_battle_map_runtime_state_should_distinguish_empty_progressed_and_completion_states() -> void:
 	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
 	add_child(auto_free(screen))
 	await _await_frames(2)
@@ -532,10 +552,12 @@ func test_battle_map_runtime_summary_should_distinguish_empty_progressed_and_com
 	var empty_status := String(status_label.text)
 	var empty_summary := String(summary_label.text)
 	var empty_metrics := _bridge_summary_metrics(bridge)
+	var empty_feedback := _local_feedback_state(screen)
 	assert_bool(empty_status.find("loaded") >= 0 or empty_status.find("鍔犺浇") >= 0).is_true()
 	assert_bool(empty_status.find("finished") < 0 and empty_status.find("缁撴潫") < 0).is_true()
 	assert_bool(empty_status.length() > 0).is_true()
 	assert_bool(empty_summary.length() > 0).is_true()
+	assert_bool(bool(empty_feedback["prompt_visible"])).is_false()
 	assert_int(int(empty_metrics["friendly_units_deployed"])).is_equal(0)
 	assert_int(int(empty_metrics["enemy_units_spawned"])).is_equal(0)
 	assert_int(int(empty_metrics["combat_exchanges"])).is_equal(0)
@@ -565,12 +587,18 @@ func test_battle_map_runtime_summary_should_distinguish_empty_progressed_and_com
 	var progressed_status := String(status_label.text)
 	var progressed_summary := String(summary_label.text)
 	var progressed_metrics := _bridge_summary_metrics(bridge)
+	var progressed_feedback := _local_feedback_state(screen)
 	assert_int(int(progressed_metrics["enemy_units_spawned"])).is_greater_equal(2)
 	assert_int(int(progressed_metrics["castle_hp"])).is_less_equal(int(empty_metrics["castle_hp"]))
 	assert_int(int(progressed_metrics["friendly_units_deployed"])).is_equal(0)
 	assert_bool(progressed_status != empty_status).is_true()
 	assert_bool(progressed_status != failure_status).is_true()
-	assert_bool(progressed_summary != empty_summary).is_true()
+	assert_str(progressed_summary).is_equal(empty_summary)
+	assert_bool(
+		bool(progressed_feedback["prompt_visible"])
+		or bool(progressed_feedback["hit_flash_visible"])
+		or bool(progressed_feedback["wall_pressure_visible"])
+	).is_true()
 	await _await_frames(3)
 	assert_str(status_label.text).is_equal(progressed_status)
 	assert_str(summary_label.text).is_equal(progressed_summary)
@@ -585,6 +613,7 @@ func test_battle_map_runtime_summary_should_distinguish_empty_progressed_and_com
 	var completion_status := String(status_label.text)
 	var completion_summary := String(summary_label.text)
 	var completion_metrics := _bridge_summary_metrics(bridge)
+	var completion_feedback := _local_feedback_state(screen)
 	assert_int(int(completion_metrics["friendly_units_deployed"])).is_greater_equal(1)
 	assert_int(int(completion_metrics["enemy_units_spawned"])).is_greater_equal(2)
 	assert_int(int(completion_metrics["combat_exchanges"])).is_greater_equal(1)
@@ -592,10 +621,9 @@ func test_battle_map_runtime_summary_should_distinguish_empty_progressed_and_com
 	assert_bool(completion_status.find("cleanup") < 0 and completion_status.find("娓呯悊") < 0).is_true()
 	assert_bool(completion_status != progressed_status).is_true()
 	assert_bool(completion_status != failure_status).is_true()
-	assert_bool(completion_summary != progressed_summary).is_true()
-	assert_bool(completion_summary.find("HP") >= 0 or completion_summary.find("鐢熷懡") >= 0).is_true()
-	assert_bool(completion_summary.find("Friendly") >= 0 or completion_summary.find("鍙嬪啗") >= 0).is_true()
-	assert_bool(completion_summary.find("Enemy") >= 0 or completion_summary.find("鏁屽啗") >= 0).is_true()
+	assert_str(completion_summary).is_equal(progressed_summary)
+	assert_bool(bool(completion_feedback["prompt_visible"])).is_true()
+	assert_bool(String(completion_feedback["prompt_text"]).length() > 0).is_true()
 	await _await_frames(3)
 	assert_str(status_label.text).is_equal(completion_status)
 	assert_str(summary_label.text).is_equal(completion_summary)
@@ -1013,6 +1041,7 @@ func test_legacy_labels_should_not_be_authoritative_source_for_runtime_feedback(
 
 	var baseline_summary := _bridge_summary_metrics(bridge)
 	var baseline_status_text := String(status_label.text)
+	var baseline_static_summary := String(summary_label.text)
 
 	# Negative path: tampering legacy text must not mutate runtime counters/state.
 	summary_label.text = "LEGACY_OVERRIDE_SUMMARY"
@@ -1028,8 +1057,11 @@ func test_legacy_labels_should_not_be_authoritative_source_for_runtime_feedback(
 	wave_btn.emit_signal("pressed")
 	await _await_frames(1)
 	var after_wave := _bridge_summary_metrics(bridge)
+	var wave_feedback := _local_feedback_state(screen)
 	assert_int(int(after_wave.get("enemy_units_spawned", 0))).is_greater_equal(int(baseline_summary.get("enemy_units_spawned", 0)) + 2)
 	assert_bool(String(status_label.text).to_lower().find("wave") >= 0).is_true()
+	assert_bool(bool(wave_feedback["prompt_visible"])).is_true()
+	assert_bool(String(wave_feedback["prompt_text"]).length() > 0).is_true()
 
 	exchange_btn.emit_signal("pressed")
 	await _await_frames(1)
@@ -1040,6 +1072,7 @@ func test_legacy_labels_should_not_be_authoritative_source_for_runtime_feedback(
 	var terminal_summary := _bridge_summary_metrics(bridge)
 	assert_int(int(terminal_summary.get("combat_exchanges", 0))).is_greater_equal(1)
 	assert_bool(String(status_label.text).to_lower().find("finished") >= 0).is_true()
+	assert_str(String(summary_label.text)).is_equal(baseline_static_summary)
 
 func test_combat_bridge_single_source_updates_actor_snapshots_and_castle_hp() -> void:
 	var bridge := preload("res://Game.Godot/Scripts/Combat/CombatExperienceRuntimeBridge.cs").new()

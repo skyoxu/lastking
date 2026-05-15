@@ -60,20 +60,8 @@ func clear_spawn_pulse() -> void:
 	_apply_spawn_cues()
 
 func render_summary(result: Dictionary, status_text: String) -> void:
-	var friendly := int(result.get("friendly_units_deployed", 0))
-	var enemies := int(result.get("enemy_units_spawned", 0))
-	var exchanges := int(result.get("combat_exchanges", 0))
-	var retired := int(result.get("dead_units_retired", 0))
-	var active := int(result.get("active_combat_nodes_after_cleanup", 0))
-	var castle_hp := int(result.get("castle_hp", 0))
 	_status_label.text = status_text
-	_summary_label.text = "%s\n" % _t("battlemap.summary.title") \
-		+ "%s: %d\n" % [_t("battlemap.summary.castle_hp"), castle_hp] \
-		+ "%s: %d\n" % [_t("battlemap.summary.friendly_units"), friendly] \
-		+ "%s: %d\n" % [_t("battlemap.summary.enemy_units_spawned"), enemies] \
-		+ "%s: %d\n" % [_t("battlemap.summary.combat_exchanges"), exchanges] \
-		+ "%s: %d\n" % [_t("battlemap.summary.dead_units_retired"), retired] \
-		+ "%s: %d" % [_t("battlemap.summary.active_nodes"), active]
+	_summary_label.text = _t("battlemap.summary.title")
 	_last_status_text = status_text
 	_sync_local_feedback_from_summary(result, status_text)
 

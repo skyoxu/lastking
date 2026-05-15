@@ -101,14 +101,10 @@ func test_action_sequence_complete_flow_keeps_summary_machine_resolvable() -> vo
 	await _await_frames(2)
 
 	assert_bool(String(status.text).find("Battle finished") >= 0 or String(status.text).find("finished") >= 0).is_true()
-	assert_bool(String(summary.text).find("BattleMap Runtime") >= 0).is_true()
-	assert_bool(String(summary.text).find("Castle HP:") >= 0).is_true()
-	assert_bool(String(summary.text).find("Friendly Units:") >= 0).is_true()
-	assert_bool(String(summary.text).find("Enemy Units Spawned:") >= 0).is_true()
-	assert_bool(String(summary.text).find("Combat Exchanges:") >= 0).is_true()
 	assert_bool((build_icon as CanvasItem).modulate.a >= 0.99).is_true()
 	assert_bool((wave_icon as CanvasItem).modulate.a >= 0.99).is_true()
 	assert_bool((exchange_icon as CanvasItem).modulate.a >= 0.99).is_true()
 	assert_bool((cleanup_icon as CanvasItem).modulate.a >= 0.99).is_true()
 	assert_bool((finish_icon as CanvasItem).modulate.a >= 0.99).is_true()
 	assert_bool(bridge.call("GetSummary") is Dictionary).is_true()
+
