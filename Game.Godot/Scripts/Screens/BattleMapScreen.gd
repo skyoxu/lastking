@@ -15,6 +15,7 @@ const FORMAL_SCREEN_SIZE := Vector2(1600.0, 900.0)
 @onready var _ownership_coordinator: Node = $OwnershipCoordinator
 @onready var _bridge_provider: Node = $BridgeProvider
 @onready var _hud_coordinator: Node = $HudCoordinator
+@onready var _selection_data_provider: Node = $SelectionDataProvider
 
 var _path_points: PackedVector2Array = PackedVector2Array(
 	[Vector2(120, 120), Vector2(260, 120), Vector2(420, 240), Vector2(640, 240), Vector2(840, 340), Vector2(1080, 340)]
@@ -35,6 +36,9 @@ func _configure_controllers() -> void:
 	})
 	_bridge_provider.call("configure", {
 		"screen": self,
+	})
+	_selection_data_provider.call("configure", {
+		"bridge_provider": Callable(_bridge_provider, "resolve_current_bridge"),
 	})
 	var refs: Dictionary = _refs_provider.call("build_refs")
 	_ownership_coordinator.call("configure", {
@@ -151,7 +155,9 @@ func _configure_controllers() -> void:
 
 	_selection_controller.call("configure", self, {
 		"presentation_controller": _presentation_controller,
+		"formal_selection_data_provider": _selection_data_provider,
 	})
+	_connect_battlefield_selection_signals()
 
 func _hide_legacy_runtime_hud_panels() -> void:
 	var huds := []
@@ -212,3 +218,17 @@ func _resolve_main_root() -> Node:
 			return current
 		current = current.get_parent()
 	return null
+
+func _connect_battlefield_selection_signals() -> void:
+	if not (_selection_controller != null and _selection_controller.has_method("select_formal_building_slot")):
+		return
+	var battlefield_view := get_node_or_null("Background")
+	if battlefield_view == null:
+		return
+	var callable := Callable(self, "_on_battlefield_slot_clicked")
+	if battlefield_view.has_signal("battlefield_slot_clicked") and not battlefield_view.is_connected("battlefield_slot_clicked", callable):
+		battlefield_view.connect("battlefield_slot_clicked", callable)
+
+func _on_battlefield_slot_clicked(slot_id: String) -> void:
+	if _selection_controller != null and _selection_controller.has_method("select_formal_building_slot"):
+		_selection_controller.call("select_formal_building_slot", slot_id)

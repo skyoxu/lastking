@@ -91,6 +91,11 @@ public partial class CombatExperienceRuntimeBridge : Node
             AddMarker("Barracks");
         }
 
+        if (!HasNode("Battlefield/Residence"))
+        {
+            AddMarker("Residence");
+        }
+
         return GetSummary();
     }
 
@@ -233,6 +238,7 @@ public partial class CombatExperienceRuntimeBridge : Node
         {
             ["mg_tower_built"] = HasNode("Battlefield/MgTower"),
             ["barracks_built"] = HasNode("Battlefield/Barracks"),
+            ["residence_built"] = HasNode("Battlefield/Residence"),
             ["friendly_units_deployed"] = CountActiveActorsByTeam(1),
             ["enemy_units_spawned"] = _enemyUnitsSpawned,
             ["projectiles_created"] = _projectilesCreated,
