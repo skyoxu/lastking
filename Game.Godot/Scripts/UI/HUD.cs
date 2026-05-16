@@ -5,6 +5,7 @@ using System.Linq;
 using Game.Core.Contracts;
 using Game.Core.Contracts.Lastking;
 using Game.Godot.Adapters;
+using Game.Godot.Scripts.Runtime;
 using Game.Core.Services;
 using Godot;
 using GDictionary = Godot.Collections.Dictionary;
@@ -26,9 +27,11 @@ public partial class HUD : Control
     private readonly RuntimePressureStateMapper _pressureStateMapper = new();
 
     private EventBusAdapter? _bus;
+    private Control _topBar = default!;
     private Label _day = default!;
     private Label _cycleRemaining = default!;
     private Label _health = default!;
+    private Label _speedStateLabel = default!;
     private PanelContainer _bottomBar = default!;
     private Label _combatCountsLabel = default!;
     private Label _moraleLabel = default!;
@@ -117,6 +120,11 @@ public partial class HUD : Control
     private string _currentPressureState = "n/a";
     private float _waveCooldownMaskAlpha = 0f;
     private ulong _waveCooldownHideAtMs;
+    private bool _battleHudActive;
+    private static readonly Vector2 FormalTopBarPosition = new(8f, 0f);
+    private static readonly Vector2 FormalTopBarSize = new(1584f, 80f);
+    private static readonly Vector2 FormalBottomBarPosition = new(8f, 704f);
+    private static readonly Vector2 FormalBottomBarSize = new(1584f, 196f);
 
     public override void _Ready()
     {
@@ -126,9 +134,11 @@ public partial class HUD : Control
         {
             AddUserSignal(BattleActionRequestedSignal);
         }
+        _topBar = GetNode<Control>("TopBar");
         _day = GetNode<Label>("TopBar/HBox/DayLabel");
         _cycleRemaining = GetNode<Label>("TopBar/HBox/CycleRemainingLabel");
         _health = GetNode<Label>("TopBar/HBox/HealthLabel");
+        _speedStateLabel = GetNode<Label>("TopBar/HBox/SpeedStateLabel");
         _bottomBar = GetNode<PanelContainer>("CombatHud/BottomBar");
         _combatCountsLabel = GetNode<Label>("CombatHud/BottomBar/VBox/CombatCountsLabel");
         _moraleLabel = GetNode<Label>("CombatHud/BottomBar/VBox/MoraleLabel");
@@ -184,8 +194,9 @@ public partial class HUD : Control
         RenderCycleRemaining();
         _health.Text = $"{T("hud.hp")}: 0";
         _bottomBar.Visible = true;
-        _combatCountsLabel.Text = "Combat: 0/0";
-        _moraleLabel.Text = "Morale: 0";
+        _combatCountsLabel.Text = $"{T("hud.enemies")}: 0";
+        _moraleLabel.Text = $"{T("hud.castle")}: 0/100";
+        _speedStateLabel.Text = $"{T("hud.speed_state")}: {T("hud.speed_1x")}";
         _pauseButton.Pressed += OnPausePressed;
         _oneXButton.Pressed += OnOneXPressed;
         _twoXButton.Pressed += OnTwoXPressed;
@@ -199,20 +210,21 @@ public partial class HUD : Control
         _feedbackLabel.Visible = false;
         _feedbackLabel.Text = string.Empty;
         _feedbackLayer.Visible = true;
-        _pressurePanel.Visible = true;
+        _feedbackLayer.MouseFilter = MouseFilterEnum.Ignore;
+        _pressurePanel.Visible = false;
         _pressureLabel.Text = $"{T("hud.pressure")}: n/a";
-        _cameraControlOverlay.Visible = true;
+        _cameraControlOverlay.Visible = false;
         _cameraStatusLabel.Text = $"{T("hud.camera")}: {T("hud.camera.idle")}";
         _errorDialog.Visible = false;
         _errorMessageLabel.Text = string.Empty;
-        _configAuditPanel.Visible = true;
-        _migrationStatusDialog.Visible = true;
-        _reportMetadataPanel.Visible = true;
-        _outcomePanel.Visible = true;
-        _runtimePromptPanel.Visible = true;
-        _resourcePanel.Visible = true;
-        _buildPanel.Visible = true;
-        _progressionPanel.Visible = true;
+        _configAuditPanel.Visible = false;
+        _migrationStatusDialog.Visible = false;
+        _reportMetadataPanel.Visible = false;
+        _outcomePanel.Visible = false;
+        _runtimePromptPanel.Visible = false;
+        _resourcePanel.Visible = false;
+        _buildPanel.Visible = false;
+        _progressionPanel.Visible = false;
         _configAuditSummaryLabel.Text = $"{T("hud.config")}: n/a | {T("hud.schema")}: n/a | {T("hud.fallback")}: n/a";
         _migrationStatusLabel.Text = $"{T("hud.migration")}: n/a";
         _reportMetadataLabel.Text = $"{T("hud.metadata")}: n/a";
@@ -237,6 +249,7 @@ public partial class HUD : Control
         _activeFeedbackMessageKey = string.Empty;
         _hasPendingErrorDialog = false;
         _feedbackHideAtMs = 0f;
+        SetBattleHudActive(Visible);
 
         _bus = GetNodeOrNull<EventBusAdapter>("/root/EventBus");
         if (_bus != null)
@@ -247,6 +260,8 @@ public partial class HUD : Control
 
     public override void _Process(double delta)
     {
+        SyncBattleHudActiveState();
+        ApplyFormalBattleHudBands();
         var locale = NormalizeLocale(TranslationServer.GetLocale());
         if (!string.Equals(locale, _localizedLocale, StringComparison.OrdinalIgnoreCase))
         {
@@ -257,6 +272,7 @@ public partial class HUD : Control
             RenderCycleRemaining();
         }
 
+        RefreshSpeedControlsFromRuntime();
         RefreshBottomBarFromRuntime();
         TickCooldownMasks(Math.Max(0d, delta));
 
@@ -483,9 +499,6 @@ public partial class HUD : Control
         var optionC = ReadString(payload, "option_c", "OptionC");
         var details = string.Join(", ", new[] { optionA, optionB, optionC }.Where(value => !string.IsNullOrWhiteSpace(value)));
         ShowTemporaryFeedback("ui.reward.offer.presented", details, code: "reward_offered", priority: 1);
-        _progressionSummaryLabel.Text = string.IsNullOrWhiteSpace(details)
-            ? "Progression: tech=n/a reward=offered"
-            : $"Progression: tech=n/a reward={details}";
     }
 
     private void HandleRunStateTransitionedEvent(JsonElement payload)
@@ -504,17 +517,6 @@ public partial class HUD : Control
             return;
         }
 
-        var presentation = _afterActionComposer.Compose(new HudAfterActionInputs(
-            Outcome: outcome,
-            DayNumber: day,
-            CastleHp: _lastCastleHpChanged,
-            Wave: _lastWaveSpawned,
-            Resources: _lastResourcesChanged,
-            Tax: _lastTaxCollected,
-            Tech: _lastTechApplied,
-            Reward: _lastRewardOffered));
-        _outcomeLabel.Text = presentation.OutcomeText;
-        _runtimePromptLabel.Text = presentation.PromptText;
         _waveCooldownMaskAlpha = 0f;
         _waveCooldownHideAtMs = 0;
         SetCooldownMask(_waveCooldownMask, false, 0f);
@@ -561,6 +563,7 @@ public partial class HUD : Control
         var dy = ReadInt(payload, "dy", "Dy", "delta_y", "DeltaY");
         if (dx.HasValue && dy.HasValue)
         {
+            _cameraControlOverlay.Visible = !IsBattleMapHudContext();
             _cameraStatusLabel.Text = $"{T("hud.camera")}: dx={dx.Value} dy={dy.Value}";
             return;
         }
@@ -568,6 +571,7 @@ public partial class HUD : Control
         var mode = ReadString(payload, "mode", "Mode");
         if (!string.IsNullOrWhiteSpace(mode))
         {
+            _cameraControlOverlay.Visible = !IsBattleMapHudContext();
             _cameraStatusLabel.Text = $"{T("hud.camera")}: {mode}";
         }
     }
@@ -586,8 +590,6 @@ public partial class HUD : Control
             DateTimeOffset.UtcNow);
         if (gold.HasValue || iron.HasValue || popCap.HasValue)
         {
-            _resourceSummaryLabel.Text =
-                $"{T("hud.resources")}: gold={DisplayInt(gold)} iron={DisplayInt(iron)} pop={DisplayInt(popCap)}";
         }
         RefreshBottomBarFromRuntime();
     }
@@ -604,9 +606,6 @@ public partial class HUD : Control
             taxDelta ?? 0,
             totalGold ?? 0,
             DateTimeOffset.UtcNow);
-        var details = !string.IsNullOrWhiteSpace(residenceId) ? $"residence={residenceId}" : "residence=n/a";
-        _buildSummaryLabel.Text =
-            $"{T("hud.build")}: tax={DisplayInt(taxDelta)} total_gold={DisplayInt(totalGold)} {details}";
         RefreshBottomBarFromRuntime();
     }
 
@@ -623,24 +622,19 @@ public partial class HUD : Control
             previous ?? 0,
             current ?? 0,
             DateTimeOffset.UtcNow);
-        var techText = !string.IsNullOrWhiteSpace(techId) ? techId : "n/a";
-        var statText = !string.IsNullOrWhiteSpace(statKey) ? statKey : "n/a";
-        _progressionSummaryLabel.Text =
-            $"{T("hud.progression")}: tech={techText}:{statText} {DisplayInt(previous)}->{DisplayInt(current)} reward=n/a";
         RefreshBottomBarFromRuntime();
     }
 
     private void RenderRuntimePrompt(string messageKey, string details, string fallbackCode)
     {
-        var text = BuildFeedbackDisplayText(messageKey, details, fallbackCode);
-        _runtimePromptLabel.Text = string.IsNullOrWhiteSpace(text)
-            ? $"{T("hud.prompt")}: n/a"
-            : $"{T("hud.prompt")}: {text}";
+        _runtimePromptLabel.Text = $"{T("hud.prompt")}: n/a";
+        HideLegacyFeedbackPanelsForBattleMap();
     }
 
     private void UpdatePressureLabelFromHp(int hp)
     {
         _currentPressureState = _pressureStateMapper.MapCastleHp(hp);
+        _pressurePanel.Visible = !IsBattleMapHudContext();
         _pressureLabel.Text = $"{T("hud.pressure")}: {_currentPressureState} (hp={hp})";
         RefreshBottomBarFromRuntime();
     }
@@ -649,23 +643,25 @@ public partial class HUD : Control
     {
         if (_lastCastleHpChanged is null)
         {
+            _pressurePanel.Visible = false;
             _pressureLabel.Text = $"{T("hud.pressure")}: n/a";
             return;
         }
 
+        _pressurePanel.Visible = !IsBattleMapHudContext();
         _pressureLabel.Text = $"{T("hud.pressure")}: {_currentPressureState} (hp={_lastCastleHpChanged.CurrentHp})";
         RefreshBottomBarFromRuntime();
     }
 
     private void RefreshBottomBarFromRuntime()
     {
+        HideLegacyFeedbackPanelsForBattleMap();
         var runtimeSummary = TryGetActiveBattleSummary();
         var operationController = TryGetActiveOperationController();
         var current = ReadSummaryInt(runtimeSummary, "enemy_units_spawned", _lastWaveSpawned?.SpawnCount ?? 0);
-        var max = Math.Max(current, 6);
-        _combatCountsLabel.Text = $"Combat: {current}/{max}";
+        _combatCountsLabel.Text = $"{T("hud.enemies")}: {current}";
         var runtimeCastleHp = ReadSummaryInt(runtimeSummary, "castle_hp", _lastCastleHpChanged?.CurrentHp ?? 0);
-        _moraleLabel.Text = $"Morale: {Math.Clamp(runtimeCastleHp / 10, 0, 10)}";
+        _moraleLabel.Text = $"{T("hud.castle")}: {Math.Clamp(runtimeCastleHp, 0, 100)}/100";
 
         var phaseStatuses = TryGetBattleHudPhaseStatuses(operationController);
         var buildAvailable = ReadDictionaryBool(phaseStatuses, "build_available", true);
@@ -715,17 +711,37 @@ public partial class HUD : Control
         };
     }
 
-    private GDictionary TryGetActiveBattleSummary()
+    private Node? ResolveActiveBattleScreen()
     {
         var main = ResolveMainRoot();
         var screenRoot = main?.GetNodeOrNull<Node>("RuntimeUi/ScreenRoot");
-        if (screenRoot == null || screenRoot.GetChildCount() == 0)
+        if (screenRoot != null && screenRoot.GetChildCount() > 0)
         {
-            return new GDictionary();
+            var screenFromMain = screenRoot.GetChild(0);
+            if (screenFromMain != null && string.Equals(screenFromMain.Name, "BattleMapScreen", StringComparison.Ordinal))
+            {
+                return screenFromMain;
+            }
         }
 
-        var screen = screenRoot.GetChild(0);
-        if (screen == null || !string.Equals(screen.Name, "BattleMapScreen", StringComparison.Ordinal))
+        Node? current = this;
+        while (current != null)
+        {
+            if (string.Equals(current.Name, "BattleMapScreen", StringComparison.Ordinal))
+            {
+                return current;
+            }
+
+            current = current.GetParent();
+        }
+
+        return null;
+    }
+
+    private GDictionary TryGetActiveBattleSummary()
+    {
+        var screen = ResolveActiveBattleScreen();
+        if (screen == null)
         {
             return new GDictionary();
         }
@@ -744,15 +760,8 @@ public partial class HUD : Control
 
     private Node? TryGetActiveOperationController()
     {
-        var main = ResolveMainRoot();
-        var screenRoot = main?.GetNodeOrNull<Node>("RuntimeUi/ScreenRoot");
-        if (screenRoot == null || screenRoot.GetChildCount() == 0)
-        {
-            return null;
-        }
-
-        var screen = screenRoot.GetChild(0);
-        if (screen == null || !string.Equals(screen.Name, "BattleMapScreen", StringComparison.Ordinal))
+        var screen = ResolveActiveBattleScreen();
+        if (screen == null)
         {
             return null;
         }
@@ -844,6 +853,11 @@ public partial class HUD : Control
 
     public void RequestBattleAction(string actionCode)
     {
+        if (!_battleHudActive)
+        {
+            return;
+        }
+
         if (string.IsNullOrWhiteSpace(actionCode))
         {
             return;
@@ -855,15 +869,8 @@ public partial class HUD : Control
 
     private void TryRouteBattleActionThroughActiveCoordinator(string actionCode)
     {
-        var main = ResolveMainRoot();
-        var screenRoot = main?.GetNodeOrNull<Node>("RuntimeUi/ScreenRoot");
-        if (screenRoot == null || screenRoot.GetChildCount() == 0)
-        {
-            return;
-        }
-
-        var screen = screenRoot.GetChild(0);
-        if (screen == null || !string.Equals(screen.Name, "BattleMapScreen", StringComparison.Ordinal))
+        var screen = ResolveActiveBattleScreen();
+        if (screen == null)
         {
             return;
         }
@@ -875,6 +882,120 @@ public partial class HUD : Control
         }
 
         coordinator.Call("route_action", actionCode);
+    }
+
+    public void SetBattleHudActive(bool active)
+    {
+        ApplyBattleHudActiveState(active);
+    }
+
+    private void SyncBattleHudActiveState()
+    {
+        var shouldBeActive = ShouldBattleHudBeActive();
+        if (_battleHudActive == shouldBeActive
+            && Visible == shouldBeActive
+            && _topBar.Visible == shouldBeActive
+            && _bottomBar.Visible == shouldBeActive
+            && _feedbackLayer.Visible == shouldBeActive)
+        {
+            return;
+        }
+
+        ApplyBattleHudActiveState(shouldBeActive);
+    }
+
+    private bool ShouldBattleHudBeActive()
+    {
+        var owningBattleScreen = ResolveOwningBattleScreen();
+        var main = ResolveMainRoot();
+        if (main != null)
+        {
+            var globalHud = main.GetNodeOrNull<Control>("RuntimeUi/HUD");
+            if (globalHud != null && ReferenceEquals(this, globalHud))
+            {
+                return ResolveActiveBattleScreen() != null;
+            }
+
+            if (owningBattleScreen != null)
+            {
+                return globalHud == null;
+            }
+
+            return false;
+        }
+
+        if (owningBattleScreen != null)
+        {
+            return true;
+        }
+
+        return true;
+    }
+
+    private Node? ResolveOwningBattleScreen()
+    {
+        Node? current = this;
+        while (current != null)
+        {
+            if (string.Equals(current.Name, "BattleMapScreen", StringComparison.Ordinal))
+            {
+                return current;
+            }
+
+            current = current.GetParent();
+        }
+
+        return null;
+    }
+
+    private bool IsBattleMapHudContext()
+    {
+        return ResolveActiveBattleScreen() != null;
+    }
+
+    private void HideLegacyFeedbackPanelsForBattleMap()
+    {
+        if (!IsBattleMapHudContext())
+        {
+            return;
+        }
+
+        _pressurePanel.Visible = false;
+        _cameraControlOverlay.Visible = false;
+        _configAuditPanel.Visible = false;
+        _migrationStatusDialog.Visible = false;
+        _reportMetadataPanel.Visible = false;
+        _outcomePanel.Visible = false;
+        _runtimePromptPanel.Visible = false;
+        _resourcePanel.Visible = false;
+        _buildPanel.Visible = false;
+        _progressionPanel.Visible = false;
+    }
+
+    private void ApplyBattleHudActiveState(bool active)
+    {
+        _battleHudActive = active;
+        Visible = active;
+        _topBar.Visible = active;
+        _bottomBar.Visible = active;
+        _feedbackLayer.Visible = active;
+        MouseFilter = active ? MouseFilterEnum.Pass : MouseFilterEnum.Ignore;
+    }
+
+    private void ApplyFormalBattleHudBands()
+    {
+        if (!_battleHudActive || !IsBattleMapHudContext())
+        {
+            return;
+        }
+
+        _topBar.Position = FormalTopBarPosition;
+        _topBar.Size = FormalTopBarSize;
+        _topBar.CustomMinimumSize = FormalTopBarSize;
+
+        _bottomBar.Position = FormalBottomBarPosition;
+        _bottomBar.Size = FormalBottomBarSize;
+        _bottomBar.CustomMinimumSize = FormalBottomBarSize;
     }
 
     private static bool IsBattleActionInput(InputEvent @event)
@@ -1109,17 +1230,60 @@ public partial class HUD : Control
 
     private void OnPausePressed()
     {
-        GetNodeOrNull<Node>("/root/GameManager")?.Call("SetPause");
+        ResolveGameManager()?.Call("SetPause");
+        RefreshSpeedControlsFromRuntime();
     }
 
     private void OnOneXPressed()
     {
-        GetNodeOrNull<Node>("/root/GameManager")?.Call("SetOneX");
+        ResolveGameManager()?.Call("SetOneX");
+        RefreshSpeedControlsFromRuntime();
     }
 
     private void OnTwoXPressed()
     {
-        GetNodeOrNull<Node>("/root/GameManager")?.Call("SetTwoX");
+        ResolveGameManager()?.Call("SetTwoX");
+        RefreshSpeedControlsFromRuntime();
+    }
+
+    private GameManager? ResolveGameManager()
+    {
+        return GetNodeOrNull<GameManager>("/root/GameManager") ?? GameManager.Instance;
+    }
+
+    private void RefreshSpeedControlsFromRuntime()
+    {
+        var manager = ResolveGameManager();
+        if (manager == null)
+        {
+            _pauseButton.Disabled = true;
+            _oneXButton.Disabled = true;
+            _twoXButton.Disabled = true;
+            _pauseButton.Text = T("hud.pause");
+            _oneXButton.Text = T("hud.speed_1x");
+            _twoXButton.Text = T("hud.speed_2x");
+            return;
+        }
+
+        _pauseButton.Disabled = false;
+        _oneXButton.Disabled = false;
+        _twoXButton.Disabled = false;
+
+        var state = manager.GetSpeedState();
+        var isPaused = state.ContainsKey("is_paused") && state["is_paused"].AsBool();
+        var scalePercent = state.ContainsKey("scale_percent") ? state["scale_percent"].AsInt32() : 100;
+
+        _pauseButton.Text = isPaused ? T("hud.speed_paused") : T("hud.pause");
+        _oneXButton.Text = !isPaused && scalePercent == 100 ? T("hud.speed_1x_active") : T("hud.speed_1x");
+        _twoXButton.Text = !isPaused && scalePercent == 200 ? T("hud.speed_2x_active") : T("hud.speed_2x");
+        _speedStateLabel.Text = isPaused
+            ? $"{T("hud.speed_state")}: {T("hud.speed_paused")}"
+            : scalePercent == 200
+                ? $"{T("hud.speed_state")}: {T("hud.speed_2x")}"
+                : $"{T("hud.speed_state")}: {T("hud.speed_1x")}";
+        _pauseButton.Modulate = isPaused ? new Color(1f, 1f, 1f, 1f) : new Color(1f, 1f, 1f, 0.72f);
+        _oneXButton.Modulate = !isPaused && scalePercent == 100 ? new Color(1f, 1f, 1f, 1f) : new Color(1f, 1f, 1f, 0.72f);
+        _twoXButton.Modulate = !isPaused && scalePercent == 200 ? new Color(1f, 1f, 1f, 1f) : new Color(1f, 1f, 1f, 0.72f);
     }
 
     private static int? ReadInt(JsonElement element, params string[] keys)
@@ -1237,11 +1401,11 @@ public partial class HUD : Control
             : $"{T("hud.migration")}: {migrationStatus} ({reasonCode})";
         _reportMetadataLabel.Text = $"{T("hud.metadata")}: {reportMetadata}";
 
-        _configAuditPanel.Visible = true;
-        _migrationStatusDialog.Visible = true;
-        _reportMetadataPanel.Visible = true;
-        _configAuditRefreshButton.Disabled = false;
-        _migrationRetryButton.Disabled = false;
+        _configAuditPanel.Visible = false;
+        _migrationStatusDialog.Visible = false;
+        _reportMetadataPanel.Visible = false;
+        _configAuditRefreshButton.Disabled = true;
+        _migrationRetryButton.Disabled = true;
     }
 
     private static string ReadDictionaryString(global::Godot.Collections.Dictionary payload, params string[] keys)

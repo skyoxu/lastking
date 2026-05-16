@@ -13,6 +13,17 @@ func _ready() -> void:
 	_i18n.configure_locale_resource("en-US", "res://Game.Godot/Localization/en-US.json")
 	_i18n.configure_locale_resource("zh-CN", "res://Game.Godot/Localization/zh-CN.json")
 	_i18n.switch_locale(_normalize_locale(str(TranslationServer.get_locale())))
+	var hud = get_node_or_null("RuntimeUi/HUD")
+	if hud != null:
+		hud.visible = false
+		var bottom_bar = hud.get_node_or_null("CombatHud/BottomBar")
+		if bottom_bar != null:
+			bottom_bar.visible = false
+		var feedback_layer = hud.get_node_or_null("FeedbackLayer")
+		if feedback_layer != null:
+			feedback_layer.visible = false
+		if hud.has_method("SetBattleHudActive"):
+			hud.call("SetBattleHudActive", false)
 	print("[TEMPLATE_SMOKE_READY] Main scene initialized")
 	var db = get_node_or_null("/root/SqlDb")
 	if db != null:

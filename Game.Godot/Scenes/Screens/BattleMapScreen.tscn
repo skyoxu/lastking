@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3]
+[gd_scene load_steps=18 format=3]
 
 [ext_resource type="Script" path="res://Game.Godot/Scripts/Screens/BattleMapScreen.gd" id="1"]
 [ext_resource type="Script" path="res://Game.Godot/Scripts/Combat/CombatExperienceRuntimeBridge.cs" id="2"]
@@ -15,6 +15,8 @@
 [ext_resource type="Script" path="res://Game.Godot/Scripts/Screens/BattleMapBridgeProvider.gd" id="13"]
 [ext_resource type="Script" path="res://Game.Godot/Scripts/Screens/BattlefieldView.gd" id="14"]
 [ext_resource type="Script" path="res://Game.Godot/Scripts/Screens/BattleMapHudCoordinator.gd" id="15"]
+[ext_resource type="PackedScene" path="res://Game.Godot/Scenes/UI/HUD.tscn" id="16"]
+[ext_resource type="PackedScene" path="res://Game.Godot/Scenes/UI/BattleMapDebugOverlay.tscn" id="17"]
 [node name="BattleMapScreen" type="Control"]
 layout_mode = 3
 anchors_preset = 15
@@ -35,10 +37,13 @@ color = Color(0.0784314, 0.117647, 0.109804, 1)
 script = ExtResource("14")
 
 [node name="BattlefieldViewport" type="Control" parent="Background"]
-custom_minimum_size = Vector2(1440, 600)
-layout_mode = 0
-offset_right = 1440.0
-offset_bottom = 600.0
+custom_minimum_size = Vector2(1584, 624)
+layout_mode = 1
+anchors_preset = 0
+offset_left = 8.0
+offset_top = 80.0
+offset_right = 1592.0
+offset_bottom = 704.0
 
 [node name="BattlefieldRoot" type="Control" parent="Background/BattlefieldViewport"]
 layout_mode = 1
@@ -136,36 +141,36 @@ text = ""
 
 [node name="Path" type="Line2D" parent="Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer"]
 visible = false
-points = PackedVector2Array(120, 120, 260, 120, 420, 240, 640, 240, 840, 340, 1080, 340)
+points = PackedVector2Array(96, 144, 336, 144, 576, 240, 792, 240, 1008, 336, 1296, 432, 1488, 432)
 width = 8.0
 default_color = Color(0.909804, 0.752941, 0.482353, 1)
 
 [node name="EnemySpawnA" type="ColorRect" parent="Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer"]
-offset_left = 32.0
-offset_top = 300.0
-offset_right = 62.0
-offset_bottom = 330.0
+offset_left = 24.0
+offset_top = 288.0
+offset_right = 72.0
+offset_bottom = 336.0
 color = Color(0.847059, 0.286275, 0.286275, 1)
 
 [node name="EnemySpawnB" type="ColorRect" parent="Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer"]
-offset_left = 1378.0
-offset_top = 360.0
-offset_right = 1408.0
-offset_bottom = 390.0
+offset_left = 1512.0
+offset_top = 288.0
+offset_right = 1560.0
+offset_bottom = 336.0
 color = Color(0.847059, 0.286275, 0.286275, 1)
 
 [node name="BuildSlotA" type="ColorRect" parent="Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer"]
-offset_left = 310.0
-offset_top = 170.0
-offset_right = 340.0
-offset_bottom = 200.0
+offset_left = 696.0
+offset_top = 96.0
+offset_right = 744.0
+offset_bottom = 144.0
 color = Color(0.419608, 0.698039, 0.388235, 1)
 
 [node name="BuildSlotB" type="ColorRect" parent="Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer"]
-offset_left = 520.0
-offset_top = 200.0
-offset_right = 550.0
-offset_bottom = 230.0
+offset_left = 840.0
+offset_top = 192.0
+offset_right = 888.0
+offset_bottom = 240.0
 color = Color(0.419608, 0.698039, 0.388235, 1)
 
 [node name="Margin" type="MarginContainer" parent="."]
@@ -461,3 +466,9 @@ script = ExtResource("15")
 
 [node name="UI_PlacementOverlayController" type="Node" parent="."]
 script = ExtResource("6")
+
+[node name="BattleHud" parent="." instance=ExtResource("16")]
+z_index = 200
+
+[node name="DebugInspectorOverlay" parent="." instance=ExtResource("17")]
+z_index = 300

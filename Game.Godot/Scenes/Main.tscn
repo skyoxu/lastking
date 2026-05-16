@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://Game.Godot/Scripts/Main.gd" id="1_0k4m0"]
 [ext_resource type="PackedScene" path="res://Game.Godot/Scenes/UI/HUD.tscn" id="2"]
@@ -12,7 +12,6 @@
 [ext_resource type="Script" path="res://Game.Godot/Scripts/Bootstrap/InputMapper.cs" id="12"]
 [ext_resource type="Script" path="res://Game.Godot/Scripts/Camera/CameraController.cs" id="14_cam"]
 [ext_resource type="Script" path="res://Game.Godot/Scripts/Audio/AudioManager.cs" id="15_audio"]
-[ext_resource type="PackedScene" path="res://Game.Godot/Scenes/UI/BattleMapDebugOverlay.tscn" id="16_debug"]
 
 [node name="Main" type="Control"]
 layout_mode = 3
@@ -64,6 +63,7 @@ grow_vertical = 2
 mouse_filter = 2
 
 [node name="HUD" parent="RuntimeUi" instance=ExtResource("2")]
+visible = false
 mouse_filter = 2
 
 [node name="ScreenNavigator" type="Node" parent="."]
@@ -81,12 +81,6 @@ grow_horizontal = 2
 grow_vertical = 2
 z_index = 100
 mouse_filter = 2
-
-[node name="DebugInspectorOverlay" parent="RuntimeUi/Overlays" instance=ExtResource("16_debug")]
-mouse_filter = 2
-
-
-
 
 
 [node name="SettingsPanel" parent="RuntimeUi" instance=ExtResource("7")]

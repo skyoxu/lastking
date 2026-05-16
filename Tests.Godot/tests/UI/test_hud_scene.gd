@@ -35,16 +35,18 @@ func test_hud_scene_exposes_expected_labels() -> void:
     var day_label = scene.get_node("TopBar/HBox/DayLabel")
     var cycle_label = scene.get_node("TopBar/HBox/CycleRemainingLabel")
     var hp_label = scene.get_node("TopBar/HBox/HealthLabel")
+    var speed_state_label = scene.get_node("TopBar/HBox/SpeedStateLabel")
     assert_object(day_label).is_not_null()
     assert_object(cycle_label).is_not_null()
     assert_object(hp_label).is_not_null()
+    assert_object(speed_state_label).is_not_null()
     assert_bool(scene.has_node("TopBar/HBox/ScoreLabel")).is_false()
     var hbox: HBoxContainer = scene.get_node("TopBar/HBox")
     var label_count := 0
     for child in hbox.get_children():
         if child is Label:
             label_count += 1
-    assert_int(label_count).is_equal(3)
+    assert_int(label_count).is_equal(4)
 
 
 

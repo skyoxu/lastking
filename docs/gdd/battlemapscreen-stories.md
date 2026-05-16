@@ -36,7 +36,7 @@ So that the battle screen feels consistent and ready for production UI.
 
 - **Given** BattleMapScreen is opened through the existing ScreenNavigator flow
   **When** the scene loads
-  **Then** the screen presents a stable top, battlefield, and bottom composition aligned to the 1440 x 900 baseline
+  **Then** the screen presents a stable top, battlefield, and bottom composition aligned to the 1600 x 900 baseline
   **And** only the battlefield area is eligible for horizontal scrolling on narrow displays.
 - **Given** the new frame is introduced
   **When** Main.tscn, HUD.tscn, and ScreenNavigator are active
@@ -117,7 +117,7 @@ So that I can understand where building and defense planning is allowed.
 - **Given** BattleMapScreen is visible
   **When** the battlefield is rendered
   **Then** the map reads as left outer field, left wall, inner castle region, right wall, and right outer field
-  **And** the battlefield uses a strict 50 x 50 slot grid across the valid buildable regions.
+  **And** the battlefield uses a strict 48 x 48 slot grid across the valid buildable regions.
 - **Given** walls are part of the battlefield
   **When** region layout is shown
   **Then** walls are visibly permanent and non-buildable

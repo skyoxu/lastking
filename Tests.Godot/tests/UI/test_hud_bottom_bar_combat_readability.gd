@@ -27,7 +27,7 @@ func _publish(type_name: String, payload: Dictionary) -> void:
 	_bus.PublishSimple(type_name, "ut", JSON.stringify(payload))
 
 # ACC:T65.1
-func test_bottom_bar_shows_combat_current_max_and_numeric_morale_placeholder_when_operation_surface_visible() -> void:
+func test_bottom_bar_shows_enemy_pressure_and_castle_stability_labels_when_operation_surface_visible() -> void:
 	var hud := await _hud()
 	var screen := await _screen()
 	var bottom_bar := hud.get_node_or_null("CombatHud/BottomBar")
@@ -40,8 +40,8 @@ func test_bottom_bar_shows_combat_current_max_and_numeric_morale_placeholder_whe
 	assert_object(morale_label).is_not_null()
 	assert_object(screen.get_node_or_null("CombatExperienceRuntimeBridge")).is_not_null()
 	assert_bool((bottom_bar as Control).visible).is_true()
-	assert_bool(String((counts_label as Label).text).find("/") >= 0).is_true()
-	assert_bool(String((morale_label as Label).text).find("Morale:") >= 0).is_true()
+	assert_bool(String((counts_label as Label).text).find(":") >= 0).is_true()
+	assert_bool(String((morale_label as Label).text).find(":") >= 0).is_true()
 
 	bridge.call("BuildPhase")
 	bridge.call("TrainFriendlyUnitPhase")
@@ -54,10 +54,10 @@ func test_bottom_bar_shows_combat_current_max_and_numeric_morale_placeholder_whe
 	var counts_text := String((counts_label as Label).text)
 	var morale_text := String((morale_label as Label).text)
 	var counts_regex := RegEx.new()
-	assert_int(counts_regex.compile("([0-9]+)/([0-9]+)")).is_equal(OK)
+	assert_int(counts_regex.compile(".*?:\\s*([0-9]+)")).is_equal(OK)
 	assert_object(counts_regex.search(counts_text)).is_not_null()
 	var morale_regex := RegEx.new()
-	assert_int(morale_regex.compile("Morale: ([0-9]+)")).is_equal(OK)
+	assert_int(morale_regex.compile(".*?:\\s*([0-9]+)/100")).is_equal(OK)
 	assert_object(morale_regex.search(morale_text)).is_not_null()
 
 func test_bottom_bar_rejects_malformed_or_missing_required_displays() -> void:

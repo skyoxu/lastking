@@ -1,7 +1,7 @@
 extends Control
 
-const BATTLEFIELD_SIZE := Vector2(1440.0, 600.0)
-const SLOT_SIZE := Vector2(50.0, 50.0)
+const BATTLEFIELD_SIZE := Vector2(1584.0, 624.0)
+const SLOT_SIZE := Vector2(48.0, 48.0)
 const BASE_SLOT_COLOR := Color(0.603922, 0.784314, 0.560784, 0.18)
 const WARM_SLOT_COLOR := Color(0.905882, 0.65098, 0.278431, 0.45)
 const COOL_SLOT_COLOR := Color(0.372549, 0.666667, 0.94902, 0.45)
@@ -10,47 +10,46 @@ const RED_SLOT_COLOR := Color(0.862745, 0.286275, 0.286275, 0.38)
 const REGION_DEFS := [
 	{
 		"name": "LeftOuterField",
-		"width": 500.0,
+		"width": 528.0,
 		"buildable": true,
 		"slot_root": "LeftOuterSlots",
-		"columns": 10,
-		"rows": 12,
+		"columns": 11,
+		"rows": 13,
 		"color": Color(0.141176, 0.231373, 0.2, 1.0),
 	},
 	{
 		"name": "LeftWall",
-		"width": 20.0,
+		"width": 48.0,
 		"buildable": false,
 		"color": Color(0.345098, 0.333333, 0.305882, 1.0),
 	},
 	{
 		"name": "InnerCastleRegion",
-		"width": 400.0,
+		"width": 432.0,
 		"buildable": true,
 		"slot_root": "InnerCastleSlots",
-		"columns": 8,
-		"rows": 12,
+		"columns": 9,
+		"rows": 13,
 		"color": Color(0.223529, 0.192157, 0.141176, 1.0),
 	},
 	{
 		"name": "RightWall",
-		"width": 20.0,
+		"width": 48.0,
 		"buildable": false,
 		"color": Color(0.345098, 0.333333, 0.305882, 1.0),
 	},
 	{
 		"name": "RightOuterField",
-		"width": 500.0,
+		"width": 528.0,
 		"buildable": true,
 		"slot_root": "RightOuterSlots",
-		"columns": 10,
-		"rows": 12,
+		"columns": 11,
+		"rows": 13,
 		"color": Color(0.129412, 0.188235, 0.176471, 1.0),
 	},
 ]
 
 @onready var _viewport: Control = _require_control("BattlefieldViewport")
-@onready var _root: Control = _require_control("BattlefieldViewport/BattlefieldRoot")
 @onready var _map_base_layer: Control = _require_control("BattlefieldViewport/BattlefieldRoot/MapBaseLayer")
 @onready var _boundary_layer: Control = _require_control("BattlefieldViewport/BattlefieldRoot/BoundaryLayer")
 @onready var _slot_overlay_layer: Control = _require_control("BattlefieldViewport/BattlefieldRoot/SlotOverlayLayer")
