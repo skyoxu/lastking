@@ -44,8 +44,6 @@ Applies-To:
   - `PlayerCastle`
   - `EnemySpawnA`
   - `EnemySpawnB`
-  - `BuildSlotA`
-  - `BuildSlotB`
 - 按钮已存在并能触发流程：
   - `BuildBtn`
   - `WaveBtn`
@@ -202,8 +200,8 @@ Applies-To:
 | --- | --- | --- |
 | 地图布局 | `Background` + `Path` + 固定锚点 | 已有 |
 | 阵营图例 | `Legend` 文本 | 已有 |
-| 建筑槽位 | `BuildSlotA/B` | 已有 |
-| 敌军刷新点 | `EnemySpawnA/B` | 已有 |
+| 建筑槽位 | 严格 `48x48` 网格槽位 | 已有 |
+| 敌军刷新点 | `EnemySpawnA/B` 左右整列出生带 | 已有 |
 | 单位路径 | `Line2D` + `GetActorSnapshots()` token | 部分已有 |
 | 按钮反馈 | `Status` + 按钮文本 | 部分已有 |
 | 友军/敌军数量 | `Summary` 文本 | 已有 |

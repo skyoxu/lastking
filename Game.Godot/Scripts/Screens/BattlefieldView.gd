@@ -10,10 +10,10 @@ const RED_SLOT_COLOR := Color(0.862745, 0.286275, 0.286275, 0.38)
 const REGION_DEFS := [
 	{
 		"name": "LeftOuterField",
-		"width": 528.0,
+		"width": 576.0,
 		"buildable": true,
 		"slot_root": "LeftOuterSlots",
-		"columns": 11,
+		"columns": 12,
 		"rows": 13,
 		"color": Color(0.141176, 0.231373, 0.2, 1.0),
 	},
@@ -25,10 +25,10 @@ const REGION_DEFS := [
 	},
 	{
 		"name": "InnerCastleRegion",
-		"width": 432.0,
+		"width": 336.0,
 		"buildable": true,
 		"slot_root": "InnerCastleSlots",
-		"columns": 9,
+		"columns": 7,
 		"rows": 13,
 		"color": Color(0.223529, 0.192157, 0.141176, 1.0),
 	},
@@ -40,10 +40,10 @@ const REGION_DEFS := [
 	},
 	{
 		"name": "RightOuterField",
-		"width": 528.0,
+		"width": 576.0,
 		"buildable": true,
 		"slot_root": "RightOuterSlots",
-		"columns": 11,
+		"columns": 12,
 		"rows": 13,
 		"color": Color(0.129412, 0.188235, 0.176471, 1.0),
 	},

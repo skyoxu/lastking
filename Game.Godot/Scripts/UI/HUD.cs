@@ -111,6 +111,7 @@ public partial class HUD : Control
     private double _phaseDurationSeconds = DefaultDayDurationSeconds;
     private double _phaseElapsedSeconds;
     private bool _phaseCountdownEnabled = true;
+    private bool _isDayPhase = true;
     private CastleHpChanged? _lastCastleHpChanged;
     private WaveSpawned? _lastWaveSpawned;
     private ResourcesChanged? _lastResourcesChanged;
@@ -192,10 +193,10 @@ public partial class HUD : Control
         SetupLocalization();
         RenderDay();
         RenderCycleRemaining();
-        _health.Text = $"{T("hud.hp")}: 0";
+        _health.Text = $"{T("hud.hp")}: 100";
         _bottomBar.Visible = true;
         _combatCountsLabel.Text = $"{T("hud.enemies")}: 0";
-        _moraleLabel.Text = $"{T("hud.castle")}: 0/100";
+        _moraleLabel.Text = $"{T("hud.castle")}: 100/100";
         _speedStateLabel.Text = $"{T("hud.speed_state")}: {T("hud.speed_1x")}";
         _pauseButton.Pressed += OnPausePressed;
         _oneXButton.Pressed += OnOneXPressed;
@@ -349,7 +350,8 @@ public partial class HUD : Control
                 var day = ReadInt(doc.RootElement, "day", "Day", "day_number", "DayNumber");
                 if (day.HasValue)
                 {
-                    _currentDay = Math.Clamp(day.Value, 1, 15);
+                _currentDay = Math.Clamp(day.Value, 1, 15);
+                    _isDayPhase = type == EventTypes.LastkingDayStarted;
                     RenderDay();
                 }
 
@@ -660,7 +662,8 @@ public partial class HUD : Control
         var operationController = TryGetActiveOperationController();
         var current = ReadSummaryInt(runtimeSummary, "enemy_units_spawned", _lastWaveSpawned?.SpawnCount ?? 0);
         _combatCountsLabel.Text = $"{T("hud.enemies")}: {current}";
-        var runtimeCastleHp = ReadSummaryInt(runtimeSummary, "castle_hp", _lastCastleHpChanged?.CurrentHp ?? 0);
+        var runtimeCastleHp = ReadSummaryInt(runtimeSummary, "castle_hp", _lastCastleHpChanged?.CurrentHp ?? 100);
+        _health.Text = $"{T("hud.hp")}: {Math.Clamp(runtimeCastleHp, 0, 100)}";
         _moraleLabel.Text = $"{T("hud.castle")}: {Math.Clamp(runtimeCastleHp, 0, 100)}/100";
 
         var phaseStatuses = TryGetBattleHudPhaseStatuses(operationController);
@@ -1358,19 +1361,32 @@ public partial class HUD : Control
 
     private void RenderDay()
     {
-        _day.Text = $"{T("hud.day")}: {_currentDay}";
+        var phaseLabel = _isDayPhase ? "Day" : "Night";
+        _day.Text = $"{phaseLabel} {_currentDay}";
     }
 
     private void RenderCycleRemaining()
     {
         var remaining = Math.Max(0d, _phaseDurationSeconds - _phaseElapsedSeconds);
-        _cycleRemaining.Text = $"{T("hud.cycle_remaining")}: {remaining:0.0}s";
+        var phaseLabel = _isDayPhase ? "Day" : "Night";
+        _cycleRemaining.Text = $"{T("hud.cycle_remaining")} ({phaseLabel}): {remaining:0.0}s";
     }
 
     public void SetDay(int day)
     {
         _currentDay = Math.Clamp(day, 1, 15);
         RenderDay();
+    }
+
+    public void SetDayPhaseForTest(int day, bool isDay, double remainingSeconds)
+    {
+        _currentDay = Math.Clamp(day, 1, 15);
+        _isDayPhase = isDay;
+        _phaseCountdownEnabled = false;
+        _phaseElapsedSeconds = 0d;
+        _phaseDurationSeconds = Math.Max(0d, remainingSeconds);
+        RenderDay();
+        RenderCycleRemaining();
     }
 
     public void SetCycleRemainingSeconds(double seconds)

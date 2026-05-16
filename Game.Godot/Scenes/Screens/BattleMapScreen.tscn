@@ -146,32 +146,15 @@ width = 8.0
 default_color = Color(0.909804, 0.752941, 0.482353, 1)
 
 [node name="EnemySpawnA" type="ColorRect" parent="Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer"]
-offset_left = 24.0
-offset_top = 288.0
-offset_right = 72.0
-offset_bottom = 336.0
+offset_right = 48.0
+offset_bottom = 624.0
 color = Color(0.847059, 0.286275, 0.286275, 1)
 
 [node name="EnemySpawnB" type="ColorRect" parent="Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer"]
-offset_left = 1512.0
-offset_top = 288.0
-offset_right = 1560.0
-offset_bottom = 336.0
+offset_left = 1536.0
+offset_right = 1584.0
+offset_bottom = 624.0
 color = Color(0.847059, 0.286275, 0.286275, 1)
-
-[node name="BuildSlotA" type="ColorRect" parent="Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer"]
-offset_left = 696.0
-offset_top = 96.0
-offset_right = 744.0
-offset_bottom = 144.0
-color = Color(0.419608, 0.698039, 0.388235, 1)
-
-[node name="BuildSlotB" type="ColorRect" parent="Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer"]
-offset_left = 840.0
-offset_top = 192.0
-offset_right = 888.0
-offset_bottom = 240.0
-color = Color(0.419608, 0.698039, 0.388235, 1)
 
 [node name="Margin" type="MarginContainer" parent="."]
 layout_mode = 1

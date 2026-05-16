@@ -117,17 +117,17 @@ const _T59_REGION_ORDER: PackedStringArray = [
 ]
 
 const _T59_REGION_WIDTHS := {
-	"LeftOuterField": 528.0,
+	"LeftOuterField": 576.0,
 	"LeftWall": 48.0,
-	"InnerCastleRegion": 432.0,
+	"InnerCastleRegion": 336.0,
 	"RightWall": 48.0,
-	"RightOuterField": 528.0,
+	"RightOuterField": 576.0,
 }
 
 const _T59_SLOT_TOTALS := {
-	"LeftOuterSlots": 143,
-	"InnerCastleSlots": 117,
-	"RightOuterSlots": 143,
+	"LeftOuterSlots": 156,
+	"InnerCastleSlots": 91,
+	"RightOuterSlots": 156,
 }
 
 
@@ -148,8 +148,6 @@ const _TASK56_NODE_OWNERSHIP_MAP := {
 	"Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/Path": "battlefield_presentation",
 	"Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnA": "battlefield_presentation",
 	"Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnB": "battlefield_presentation",
-	"Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/BuildSlotA": "battlefield_presentation",
-	"Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/BuildSlotB": "battlefield_presentation",
 	"CombatExperienceRuntimeBridge": "runtime_bridge",
 	"WaveTimer": "runtime_bridge",
 	"Margin": "legacy_prototype",
@@ -1009,6 +1007,10 @@ func test_path_readability_stays_behavior_driven_without_arrow_or_route_ui() -> 
 	assert_bool(found_progress).is_true()
 	assert_that((screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnA") as Control).global_position).is_equal(initial_positions["EnemySpawnA"])
 	assert_that((screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnB") as Control).global_position).is_equal(initial_positions["EnemySpawnB"])
+	assert_float((screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnA") as Control).size.x).is_equal(48.0)
+	assert_float((screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnA") as Control).size.y).is_equal(_T59_BATTLEFIELD_SIZE.y)
+	assert_float((screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnB") as Control).size.x).is_equal(48.0)
+	assert_float((screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnB") as Control).size.y).is_equal(_T59_BATTLEFIELD_SIZE.y)
 
 
 # ACC:T57.9
