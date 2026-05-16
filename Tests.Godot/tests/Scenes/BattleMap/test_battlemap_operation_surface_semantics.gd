@@ -328,11 +328,16 @@ func test_battle_map_should_hide_player_castle_marker_and_place_enemy_spawns_on_
 	var player_castle := screen.get_node_or_null("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/PlayerCastle")
 	var spawn_a: ColorRect = screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnA")
 	var spawn_b: ColorRect = screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnB")
-	var half_width := viewport.size.x * 0.5
 
 	assert_object(player_castle).is_null()
-	assert_bool(spawn_a.position.x < half_width).is_true()
-	assert_bool(spawn_b.position.x > half_width).is_true()
+	assert_float(spawn_a.position.x).is_equal(0.0)
+	assert_float(spawn_a.position.y).is_equal(0.0)
+	assert_float(spawn_a.size.x).is_equal(48.0)
+	assert_float(spawn_a.size.y).is_equal(viewport.size.y)
+	assert_float(spawn_b.position.x).is_equal(viewport.size.x - 48.0)
+	assert_float(spawn_b.position.y).is_equal(0.0)
+	assert_float(spawn_b.size.x).is_equal(48.0)
+	assert_float(spawn_b.size.y).is_equal(viewport.size.y)
 
 
 func test_battle_map_debug_inspector_should_exist_and_report_scene_and_hovered_node() -> void:

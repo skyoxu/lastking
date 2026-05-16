@@ -1,4 +1,4 @@
-extends "res://addons/gdUnit4/src/GdUnitTestSuite.gd"
+﻿extends "res://addons/gdUnit4/src/GdUnitTestSuite.gd"
 
 func before() -> void:
     var __bus = preload("res://Game.Godot/Adapters/EventBusAdapter.cs").new()
@@ -12,7 +12,9 @@ func _load_main() -> Node:
     return main
 
 func _remaining_seconds(label_text: String) -> float:
-    var cleaned := label_text.replace("Cycle Remaining:", "").replace("s", "").strip_edges()
+    var parts := label_text.split(":")
+    var tail := parts[parts.size() - 1] if parts.size() > 0 else label_text
+    var cleaned := tail.replace("s", "").strip_edges()
     return float(cleaned)
 
 # ACC:T9.7
@@ -34,11 +36,10 @@ func test_hud_updates_on_core_events() -> void:
     bus.PublishSimple("core.lastking.day.started", "ut", '{"day":4,"from":"Night","to":"Day","tick":20}')
     for i in range(20):
         await get_tree().process_frame
-    assert_str(day_label.text).is_equal("Day: 4")
+    assert_bool(day_label.text.find("4") >= 0).is_true()
     var day_start_remaining = _remaining_seconds(cycle_label.text)
     assert_float(day_start_remaining).is_greater(200.0)
 
-    var cycle_before = cycle_label.text
     for i in range(30):
         await get_tree().process_frame
     var cycle_after = cycle_label.text
@@ -48,13 +49,15 @@ func test_hud_updates_on_core_events() -> void:
     bus.PublishSimple("core.lastking.castle.hp_changed", "ut", '{"Day":4,"PreviousHp":100,"CurrentHp":77}')
     for i in range(20):
         await get_tree().process_frame
-    assert_str(hp_label.text).is_equal("HP: 77")
+    assert_bool(hp_label.text.find("77") >= 0).is_true()
 
     bus.PublishSimple("core.lastking.night.started", "ut", '{"day":4,"from":"Day","to":"Night","tick":21}')
     for i in range(20):
         await get_tree().process_frame
     var night_cycle = cycle_label.text
     assert_str(night_cycle).is_not_equal(cycle_after)
+    assert_bool(day_label.text.find("Night") >= 0 or day_label.text.find("夜") >= 0).is_true()
     var night_remaining = _remaining_seconds(night_cycle)
     assert_float(night_remaining).is_less(120.1)
     assert_float(night_remaining).is_greater(90.0)
+

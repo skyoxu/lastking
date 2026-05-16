@@ -22,24 +22,24 @@ It does not define full AI, full pathfinding, or final balance tables.
 - Screen baseline: `1600 x 900`
 - Battlefield usable area: `1584 x 624`
 - Decorative side padding: `8px` on left and `8px` on right
-- Castle interior region: `432 x 624`
+- Castle interior region: `336 x 624`
 - Left wall: `48px`
 - Right wall: `48px`
-- Left outer field: `528px`
-- Right outer field: `528px`
+- Left outer field: `576px`
+- Right outer field: `576px`
 
 Total width:
 
-`528 + 48 + 432 + 48 + 528 = 1584`
+`576 + 48 + 336 + 48 + 576 = 1584`
 
 ## 3. Grid Rules
 
 - Slot size: `48 x 48`
 - The map uses a strict grid, not free placement
 - The walls split the battlefield into three valid slot regions:
-  - left outer grid: `11 x 13 = 143`
-  - inner castle grid: `9 x 13 = 117`
-  - right outer grid: `11 x 13 = 143`
+  - left outer grid: `12 x 13 = 156`
+  - inner castle grid: `7 x 13 = 91`
+  - right outer grid: `12 x 13 = 156`
 - Total valid slots: `403`
 
 Walls are not buildable slots.

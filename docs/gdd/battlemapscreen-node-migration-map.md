@@ -37,10 +37,8 @@ It is intentionally conservative:
 | `Background` | battlefield background root | `BattlefieldRoot/MapBaseLayer/TerrainBackdrop` | move/rename | stop using it as a catch-all parent for runtime visuals |
 | `Path` | placeholder path visual | `BattlefieldRoot/MapMarkerLayer` or `PathingVisualLayer` | move | keep only as a temporary debug visual if still useful |
 | `PlayerCastle` | placeholder castle marker | `BattlefieldRoot/MapMarkerLayer/CastleAnchor` or map art replacement | move/rename | should become marker/anchor, not final castle UI |
-| `EnemySpawnA` | placeholder spawn marker | `BattlefieldRoot/MapMarkerLayer/EnemySpawnMarkerLeft` | move/rename | later replace with proper side spawn-band visuals |
-| `EnemySpawnB` | placeholder spawn marker | `BattlefieldRoot/MapMarkerLayer/EnemySpawnMarkerRight` | move/rename | later replace with proper side spawn-band visuals |
-| `BuildSlotA` | placeholder slot marker | `BattlefieldRoot/SlotOverlayLayer` | move | convert into slot overlay sample or remove after real slot grid exists |
-| `BuildSlotB` | placeholder slot marker | `BattlefieldRoot/SlotOverlayLayer` | move | same as above |
+| `EnemySpawnA` | left spawn band marker | `BattlefieldRoot/MapMarkerLayer/EnemySpawnMarkerLeft` | keep/rename later | current runtime uses a full-height left spawn band |
+| `EnemySpawnB` | right spawn band marker | `BattlefieldRoot/MapMarkerLayer/EnemySpawnMarkerRight` | keep/rename later | current runtime uses a full-height right spawn band |
 | `Margin` | prototype UI root | `LegacyPrototypeRoot/Margin` | move | keep only during migration |
 | `Margin/VBox/Title` | prototype title label | `LegacyPrototypeRoot/...` | keep-temporary | remove after HUD-driven title/state is no longer needed |
 | `Margin/VBox/Status` | prototype status text | `LegacyPrototypeRoot/...` | keep-temporary | replace with battlefield prompt + HUD feedback |
@@ -139,8 +137,6 @@ Move:
 - `PlayerCastle`
 - `EnemySpawnA`
 - `EnemySpawnB`
-- `BuildSlotA`
-- `BuildSlotB`
 
 Goal:
 
