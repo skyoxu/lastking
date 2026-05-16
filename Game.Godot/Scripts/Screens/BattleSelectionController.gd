@@ -15,12 +15,16 @@ const CHANNEL_PRIORITY := {
 }
 
 var _screen: Control = null
+var _formal_selection_data_provider: Node = null
 var _overlay_slot_visuals: Dictionary = {}
 var _selection_slot_visuals: Dictionary = {}
 var _selection_context_active: bool = true
 
-func configure(screen: Control, _refs: Dictionary = {}) -> void:
+func configure(screen: Control, refs: Dictionary = {}) -> void:
 	_screen = screen
+	var provider: Variant = refs.get("formal_selection_data_provider", null)
+	if provider is Node:
+		_formal_selection_data_provider = provider
 
 func register_overlay_controller(path: NodePath, controller: Node) -> void:
 	if _screen == null:
@@ -82,6 +86,16 @@ func apply_building_selection(snapshot: Dictionary) -> void:
 func clear_building_selection() -> void:
 	_selection_slot_visuals.clear()
 	_sync_runtime_visuals()
+
+func select_formal_building_slot(slot_id: String) -> void:
+	if not _selection_context_active:
+		return
+	if _formal_selection_data_provider != null and _formal_selection_data_provider.has_method("get_formal_selection_snapshot"):
+		var snapshot_variant = _formal_selection_data_provider.call("get_formal_selection_snapshot", slot_id)
+		if snapshot_variant is Dictionary and not (snapshot_variant as Dictionary).is_empty():
+			apply_building_selection((snapshot_variant as Dictionary).duplicate(true))
+			return
+	clear_building_selection()
 
 func _build_selection_slot_visuals(snapshot: Dictionary) -> Dictionary:
 	var slot_visuals: Dictionary = {}

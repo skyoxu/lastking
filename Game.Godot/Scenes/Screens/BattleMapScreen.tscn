@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=3]
+[gd_scene load_steps=19 format=3]
 
 [ext_resource type="Script" path="res://Game.Godot/Scripts/Screens/BattleMapScreen.gd" id="1"]
 [ext_resource type="Script" path="res://Game.Godot/Scripts/Combat/CombatExperienceRuntimeBridge.cs" id="2"]
@@ -17,6 +17,7 @@
 [ext_resource type="Script" path="res://Game.Godot/Scripts/Screens/BattleMapHudCoordinator.gd" id="15"]
 [ext_resource type="PackedScene" path="res://Game.Godot/Scenes/UI/HUD.tscn" id="16"]
 [ext_resource type="PackedScene" path="res://Game.Godot/Scenes/UI/BattleMapDebugOverlay.tscn" id="17"]
+[ext_resource type="Script" path="res://Game.Godot/Scripts/Screens/BattleMapSelectionDataProvider.gd" id="18"]
 [node name="BattleMapScreen" type="Control"]
 layout_mode = 3
 anchors_preset = 15
@@ -446,6 +447,9 @@ script = ExtResource("13")
 
 [node name="HudCoordinator" type="Node" parent="."]
 script = ExtResource("15")
+
+[node name="SelectionDataProvider" type="Node" parent="."]
+script = ExtResource("18")
 
 [node name="UI_PlacementOverlayController" type="Node" parent="."]
 script = ExtResource("6")

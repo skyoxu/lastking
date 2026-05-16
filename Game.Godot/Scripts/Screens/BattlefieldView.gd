@@ -7,6 +7,7 @@ const WARM_SLOT_COLOR := Color(0.905882, 0.65098, 0.278431, 0.45)
 const COOL_SLOT_COLOR := Color(0.372549, 0.666667, 0.94902, 0.45)
 const GREY_SLOT_COLOR := Color(0.552941, 0.552941, 0.552941, 0.32)
 const RED_SLOT_COLOR := Color(0.862745, 0.286275, 0.286275, 0.38)
+signal battlefield_slot_clicked(slot_id: String)
 const REGION_DEFS := [
 	{
 		"name": "LeftOuterField",
@@ -122,6 +123,8 @@ func _populate_slots(slot_root: Control, columns: int, rows: int, region_name: S
 			slot.size = SLOT_SIZE
 			slot.set_meta("buildable", true)
 			slot.set_meta("slot_available", true)
+			slot.mouse_filter = Control.MOUSE_FILTER_PASS
+			slot.gui_input.connect(_on_slot_gui_input.bind(String(slot.name)))
 			_apply_slot_visual(slot, _hidden_visual())
 			slot_root.add_child(slot)
 			_slot_nodes[String(slot.name)] = slot
@@ -211,6 +214,13 @@ func _hidden_visual() -> Dictionary:
 		"outline_tint": "none",
 		"range_clipped": false,
 	}
+
+
+func _on_slot_gui_input(event: InputEvent, slot_id: String) -> void:
+	if event is InputEventMouseButton:
+		var mouse_event := event as InputEventMouseButton
+		if mouse_event.pressed and mouse_event.button_index == MOUSE_BUTTON_LEFT:
+			emit_signal("battlefield_slot_clicked", slot_id)
 
 
 func _require_control(node_path: NodePath) -> Control:
