@@ -115,7 +115,7 @@ Notes:
 
 Purpose:
 
-- owns the visible 1440x600 battlefield presentation area
+- owns the visible 1584x624 battlefield presentation area inside the 1600x900 frame
 - becomes the scrollable region when low horizontal resolution forces battlefield scrolling
 
 Notes:

@@ -22,11 +22,12 @@ The goal is to move from a prototype combat screen to a production-oriented thre
 
 ## 2. Frame Baseline
 
-- Primary layout baseline: `1440 x 900`
+- Primary layout baseline: `1600 x 900`
 - Top status bar height: `80px`
-- Battlefield height: `600px`
-- Bottom operation bar height: `220px`
-- Main battlefield width is aligned with the gameplay canvas
+- Battlefield usable area: `1584 x 624`
+- Decorative side padding: `8px` on left and `8px` on right
+- Bottom operation bar height: `196px`
+- Main battlefield width is aligned with the gameplay canvas inside the `1584px` usable band
 - On narrow displays, only the battlefield area may scroll horizontally
 - Vertical scrolling is not part of the design target
 

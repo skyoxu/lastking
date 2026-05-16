@@ -18,10 +18,11 @@ This document summarizes the complete BattleMapScreen structure across Battle Ma
 
 ## 2. Global Frame
 
-- Full screen baseline: `1440 x 900`
+- Full screen baseline: `1600 x 900`
 - Top status bar: `80px`
-- Battlefield: `600px`
-- Bottom operation bar: `220px`
+- Battlefield usable area: `1584 x 624`
+- Decorative side padding: `8px` on left and `8px` on right
+- Bottom operation bar: `196px`
 
 ## 3. Top Bar Summary
 

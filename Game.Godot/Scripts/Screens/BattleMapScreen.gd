@@ -1,8 +1,9 @@
 extends Control
 
+const FORMAL_SCREEN_SIZE := Vector2(1600.0, 900.0)
+
 @onready var _bridge: Node = $CombatExperienceRuntimeBridge
 @onready var _wave_timer: Timer = $WaveTimer
-@onready var _background: ColorRect = $Background
 @onready var _operation_controller: Node = $OperationController
 @onready var _feedback_controller: Node = $FeedbackController
 @onready var _outcome_controller: Node = $OutcomeController
@@ -20,7 +21,9 @@ var _path_points: PackedVector2Array = PackedVector2Array(
 )
 
 func _ready() -> void:
+	_apply_formal_screen_frame()
 	_configure_controllers()
+	_hide_legacy_runtime_hud_panels()
 	_runtime_coordinator.call("initialize_runtime")
 
 func _process(delta: float) -> void:
@@ -62,7 +65,7 @@ func _configure_controllers() -> void:
 		"screen": self,
 		"operation_controller": _operation_controller,
 		"navigation_controller": _navigation_controller,
-		"hud": get_node_or_null("/root/Main/RuntimeUi/HUD"),
+		"hud": _resolve_runtime_ui_node("HUD"),
 	})
 	_runtime_coordinator.call("configure", {
 		"bridge_provider": Callable(_bridge_provider, "resolve_current_bridge"),
@@ -149,3 +152,63 @@ func _configure_controllers() -> void:
 	_selection_controller.call("configure", self, {
 		"presentation_controller": _presentation_controller,
 	})
+
+func _hide_legacy_runtime_hud_panels() -> void:
+	var huds := []
+	var local_hud := get_node_or_null("BattleHud")
+	if local_hud != null:
+		huds.append(local_hud)
+	var global_hud := _resolve_runtime_ui_node("HUD")
+	if global_hud != null:
+		huds.append(global_hud)
+
+	var hidden_paths := [
+		"FeedbackLayer/PressurePanel",
+		"FeedbackLayer/CameraControlOverlay",
+		"FeedbackLayer/ConfigAuditPanel",
+		"FeedbackLayer/MigrationStatusDialog",
+		"FeedbackLayer/ReportMetadataPanel",
+		"FeedbackLayer/OutcomePanel",
+		"FeedbackLayer/RuntimePromptPanel",
+		"FeedbackLayer/ResourcePanel",
+		"FeedbackLayer/BuildPanel",
+		"FeedbackLayer/ProgressionPanel",
+	]
+	var disabled_button_paths := [
+		"FeedbackLayer/ConfigAuditPanel/VBox/RefreshButton",
+		"FeedbackLayer/MigrationStatusDialog/VBox/RetryButton",
+	]
+
+	for hud in huds:
+		for path in hidden_paths:
+			var node = hud.get_node_or_null(path)
+			if node is CanvasItem:
+				(node as CanvasItem).visible = false
+		for path in disabled_button_paths:
+			var node = hud.get_node_or_null(path)
+			if node is BaseButton:
+				(node as BaseButton).disabled = true
+
+func _resolve_runtime_ui_node(relative_path: String) -> Node:
+	var main := _resolve_main_root()
+	if main != null:
+		return main.get_node_or_null("RuntimeUi/%s" % relative_path)
+	return null
+
+func _apply_formal_screen_frame() -> void:
+	custom_minimum_size = FORMAL_SCREEN_SIZE
+	var main := _resolve_main_root()
+	if main == null:
+		anchor_right = 0.0
+		anchor_bottom = 0.0
+		position = Vector2.ZERO
+		size = FORMAL_SCREEN_SIZE
+	return
+
+func _resolve_main_root() -> Node:
+	var current: Node = self
+	while current != null:
+		if String(current.name) == "Main":
+			return current
+		current = current.get_parent()
+	return null

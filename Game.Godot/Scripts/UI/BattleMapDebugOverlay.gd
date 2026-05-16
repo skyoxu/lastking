@@ -77,17 +77,22 @@ func _refresh_labels() -> void:
 
 func _current_screen() -> Node:
 	var main := _main_root()
-	if main == null:
-		return null
-	var screen_root := main.get_node_or_null("RuntimeUi/ScreenRoot")
-	if screen_root == null or screen_root.get_child_count() == 0:
-		return null
-	return screen_root.get_child(0)
+	if main != null:
+		var screen_root := main.get_node_or_null("RuntimeUi/ScreenRoot")
+		if screen_root != null and screen_root.get_child_count() > 0:
+			return screen_root.get_child(0)
+	var direct_screen := _battle_map_root()
+	if direct_screen != null:
+		return direct_screen
+	return null
 
 
 func _relative_path_for(node: Node) -> String:
 	var main := _main_root()
 	if main == null:
+		var battle_map := _battle_map_root()
+		if battle_map != null:
+			return String(battle_map.get_path_to(node))
 		return String(node.get_path())
 	return String(main.get_path_to(node))
 
@@ -96,6 +101,15 @@ func _main_root() -> Node:
 	var current: Node = self
 	while current != null:
 		if String(current.name) == "Main":
+			return current
+		current = current.get_parent()
+	return null
+
+
+func _battle_map_root() -> Node:
+	var current: Node = self
+	while current != null:
+		if String(current.name) == "BattleMapScreen":
 			return current
 		current = current.get_parent()
 	return null

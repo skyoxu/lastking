@@ -339,10 +339,10 @@ func test_battle_map_debug_inspector_should_exist_and_report_scene_and_hovered_n
 	var runtime := await _main_runtime()
 	var main: Control = runtime["main"]
 	var screen: Control = runtime["screen"]
-	var inspector := main.get_node_or_null("RuntimeUi/Overlays/DebugInspectorOverlay")
-	var scene_label := main.get_node_or_null("RuntimeUi/Overlays/DebugInspectorOverlay/Panel/VBox/SceneLabel")
-	var hover_label := main.get_node_or_null("RuntimeUi/Overlays/DebugInspectorOverlay/Panel/VBox/HoverLabel")
-	var path_label := main.get_node_or_null("RuntimeUi/Overlays/DebugInspectorOverlay/Panel/VBox/PathLabel")
+	var inspector := screen.get_node_or_null("DebugInspectorOverlay")
+	var scene_label := screen.get_node_or_null("DebugInspectorOverlay/Panel/VBox/SceneLabel")
+	var hover_label := screen.get_node_or_null("DebugInspectorOverlay/Panel/VBox/HoverLabel")
+	var path_label := screen.get_node_or_null("DebugInspectorOverlay/Panel/VBox/PathLabel")
 	var wave_btn: Button = screen.get_node("Margin/VBox/Controls/WaveBtn")
 	var hud_finish: CanvasItem = main.get_node("RuntimeUi/HUD/CombatHud/BottomBar/VBox/Actions/FinishAction")
 

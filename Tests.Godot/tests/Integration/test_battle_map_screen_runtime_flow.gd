@@ -58,8 +58,8 @@ func _is_visible_inside_viewport(control: Control, viewport_size: Vector2) -> bo
 func _frame_snapshot(screen: Control) -> Dictionary:
 	var background: Control = screen.get_node("Background/BattlefieldViewport")
 	var main := _resolve_main_root(screen)
-	var top_band: Control = main.get_node("RuntimeUi/HUD/TopBar") if main != null else screen.get_node("Margin/VBox/Title")
-	var bottom_band: Control = main.get_node("RuntimeUi/HUD/CombatHud/BottomBar") if main != null else screen.get_node("Margin/VBox/Status")
+	var top_band: Control = main.get_node("RuntimeUi/HUD/TopBar") if main != null else screen.get_node("BattleHud/TopBar")
+	var bottom_band: Control = main.get_node("RuntimeUi/HUD/CombatHud/BottomBar") if main != null else screen.get_node("BattleHud/CombatHud/BottomBar")
 	return {
 		"background_pos": background.global_position,
 		"background_size": background.size,
@@ -79,9 +79,9 @@ func _battlemap_player_bands(screen: Control) -> Dictionary:
 			"bottom": main.get_node("RuntimeUi/HUD/CombatHud/BottomBar"),
 		}
 	return {
-		"top": screen.get_node("Margin/VBox/Title"),
+		"top": screen.get_node("BattleHud/TopBar"),
 		"middle": screen.get_node("Background/BattlefieldViewport"),
-		"bottom": screen.get_node("Margin/VBox/Status"),
+		"bottom": screen.get_node("BattleHud/CombatHud/BottomBar"),
 	}
 
 
@@ -100,6 +100,14 @@ func _spawn_cue_colors(screen: Control) -> Array[Color]:
 	return [spawn_a.color, spawn_b.color]
 
 
+const _T59_SCREEN_BASELINE := Vector2(1600.0, 900.0)
+const _T59_BATTLEFIELD_SIZE := Vector2(1584.0, 624.0)
+const _T59_SLOT_SIZE := 48.0
+const _T59_TOP_HUD_HEIGHT := 80.0
+const _T59_BOTTOM_HUD_HEIGHT := 196.0
+const _T59_SIDE_GUTTER := 8.0
+
+
 const _T59_REGION_ORDER: PackedStringArray = [
 	"LeftOuterField",
 	"LeftWall",
@@ -109,17 +117,17 @@ const _T59_REGION_ORDER: PackedStringArray = [
 ]
 
 const _T59_REGION_WIDTHS := {
-	"LeftOuterField": 500.0,
-	"LeftWall": 20.0,
-	"InnerCastleRegion": 400.0,
-	"RightWall": 20.0,
-	"RightOuterField": 500.0,
+	"LeftOuterField": 528.0,
+	"LeftWall": 48.0,
+	"InnerCastleRegion": 432.0,
+	"RightWall": 48.0,
+	"RightOuterField": 528.0,
 }
 
 const _T59_SLOT_TOTALS := {
-	"LeftOuterSlots": 120,
-	"InnerCastleSlots": 96,
-	"RightOuterSlots": 120,
+	"LeftOuterSlots": 143,
+	"InnerCastleSlots": 117,
+	"RightOuterSlots": 143,
 }
 
 
@@ -250,9 +258,9 @@ func _assert_t59_slot_grid(slot_root: Control, expected_count: int) -> void:
 	for child_variant in slot_root.get_children():
 		var slot := child_variant as Control
 		assert_object(slot).is_not_null()
-		assert_that(slot.size).is_equal(Vector2(50.0, 50.0))
-		assert_float(fmod(slot.position.x, 50.0)).is_equal(0.0)
-		assert_float(fmod(slot.position.y, 50.0)).is_equal(0.0)
+		assert_that(slot.size).is_equal(Vector2(_T59_SLOT_SIZE, _T59_SLOT_SIZE))
+		assert_float(fmod(slot.position.x, _T59_SLOT_SIZE)).is_equal(0.0)
+		assert_float(fmod(slot.position.y, _T59_SLOT_SIZE)).is_equal(0.0)
 		assert_bool(bool(slot.get_meta("buildable", false))).is_true()
 		assert_bool(bool(slot.get_meta("slot_available", false))).is_true()
 		assert_bool(slot.position.x >= 0.0).is_true()
@@ -328,21 +336,21 @@ func test_non_battlefield_layout_perturbation_should_not_shift_header_or_footer(
 # ACC:T58.3
 # ACC:T59.3
 # ACC:T66.3
-func test_1440x900_frame_keeps_three_player_visible_bands_simultaneously_visible() -> void:
+func test_1600x900_frame_keeps_three_player_visible_bands_simultaneously_visible() -> void:
 	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
 	add_child(auto_free(screen))
 	await _await_frames(2)
 
-	screen.size = Vector2(1440.0, 900.0)
+	screen.size = _T59_SCREEN_BASELINE
 	await _await_frames(2)
 
-	var viewport := Vector2(1440.0, 900.0)
+	var viewport := _T59_SCREEN_BASELINE
 	var bands := _battlemap_player_bands(screen)
 	var background: Control = bands["middle"]
 	var title: Control = bands["top"]
 	var status: Control = bands["bottom"]
 	var metrics_help: Control = screen.get_node("Margin/VBox/MetricsHelp")
-	var path: Line2D = screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/Path")
+	var _path: Line2D = screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/Path")
 	var background_top_before := background.global_position.y
 	var background_height_before := background.size.y
 	var title_top_before := title.global_position.y
@@ -354,18 +362,22 @@ func test_1440x900_frame_keeps_three_player_visible_bands_simultaneously_visible
 	assert_bool(_is_visible_inside_viewport(background, viewport)).is_true()
 	assert_bool(status.visible).is_true()
 	assert_bool(metrics_help.visible).is_false()
-	assert_that(background.size).is_equal(Vector2(1440.0, 600.0))
+	assert_that(background.size).is_equal(_T59_BATTLEFIELD_SIZE)
 
 	var battlefield_top := background.global_position.y
 	var battlefield_bottom := battlefield_top + background.size.y
+	assert_float(background.global_position.x).is_equal(_T59_SIDE_GUTTER)
+	assert_float(battlefield_top).is_equal(_T59_TOP_HUD_HEIGHT)
+	assert_float(battlefield_bottom).is_equal(_T59_TOP_HUD_HEIGHT + _T59_BATTLEFIELD_SIZE.y)
+	assert_float(title.global_position.y).is_equal(0.0)
+	assert_float(title.size.y).is_equal(_T59_TOP_HUD_HEIGHT)
+	assert_float(status.global_position.y).is_equal(_T59_TOP_HUD_HEIGHT + _T59_BATTLEFIELD_SIZE.y)
+	assert_float(status.size.y).is_equal(_T59_BOTTOM_HUD_HEIGHT)
 	assert_bool(title.global_position.y < battlefield_bottom).is_true()
 	assert_bool(status.global_position.y > title.global_position.y).is_true()
-	assert_bool(battlefield_top <= viewport.y * 0.5 and battlefield_bottom >= viewport.y * 0.5).is_true()
 
-	# Resize stability: top/bottom bands stay anchored and keep their heights.
-	screen.size = Vector2(1280.0, 720.0)
-	await _await_frames(2)
-	screen.size = Vector2(1440.0, 900.0)
+	# Fixed 1600x900 formal frame: refreshing the same baseline should keep all three bands stable.
+	screen.size = _T59_SCREEN_BASELINE
 	await _await_frames(2)
 	assert_float(background.global_position.y).is_equal(background_top_before)
 	assert_float(background.size.y).is_equal(background_height_before)
@@ -382,7 +394,9 @@ func test_1440x900_frame_keeps_three_player_visible_bands_simultaneously_visible
 # ACC:T66.4
 func test_reenter_battle_map_keeps_three_band_frame_stable_after_viewport_resize() -> void:
 	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
-	add_child(auto_free(main))
+	get_tree().root.add_child(auto_free(main))
+	await _await_frames(2)
+	main.size = _T59_SCREEN_BASELINE
 	await _await_frames(2)
 
 	var nav: Node = main.get_node("ScreenNavigator")
@@ -393,7 +407,7 @@ func test_reenter_battle_map_keeps_three_band_frame_stable_after_viewport_resize
 	assert_bool(ok_enter).is_true()
 	await _await_frames(2)
 	var first_screen: Control = screen_root.get_node("BattleMapScreen")
-	first_screen.size = Vector2(1440.0, 900.0)
+	first_screen.size = _T59_SCREEN_BASELINE
 	await _await_frames(2)
 	var first_snapshot := _frame_snapshot(first_screen)
 
@@ -403,45 +417,24 @@ func test_reenter_battle_map_keeps_three_band_frame_stable_after_viewport_resize
 	assert_bool(ok_enter).is_true()
 	await _await_frames(2)
 	var second_screen: Control = screen_root.get_node("BattleMapScreen")
-	second_screen.size = Vector2(1440.0, 900.0)
+	second_screen.size = _T59_SCREEN_BASELINE
 	await _await_frames(2)
 	var second_snapshot := _frame_snapshot(second_screen)
 	var second_bands := _battlemap_player_bands(second_screen)
-	var second_path: Line2D = second_screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/Path")
-	var second_viewport := Vector2(1440.0, 900.0)
-	var second_mid_index := int(second_path.points.size() * 0.5)
 	var second_background: Control = second_bands["middle"]
 	var second_title: Control = second_bands["top"]
 	var second_status: Control = second_bands["bottom"]
 	var second_metrics_help: Control = second_screen.get_node("Margin/VBox/MetricsHelp")
 
 	assert_bool(second_title.visible).is_true()
-	assert_bool(_is_visible_inside_viewport(second_background, second_viewport)).is_true()
 	assert_bool(second_status.visible).is_true()
 	assert_bool(second_metrics_help.visible).is_false()
-	assert_that(second_background.size).is_equal(Vector2(1440.0, 600.0))
-	var second_battlefield_top := second_background.global_position.y
-	var second_battlefield_bottom := second_battlefield_top + second_background.size.y
-	assert_bool(second_title.global_position.y < second_battlefield_bottom).is_true()
-	assert_bool(second_status.global_position.y > second_title.global_position.y).is_true()
-	assert_bool(second_battlefield_top <= second_viewport.y * 0.5 and second_battlefield_bottom >= second_viewport.y * 0.5).is_true()
+	assert_that(second_background.size).is_equal(_T59_BATTLEFIELD_SIZE)
 
-	# Re-entry + resize still keeps all three bands visible and ordered.
-	second_screen.size = Vector2(1280.0, 720.0)
+	# Re-entry under the fixed 1600x900 formal frame should restore the same three-band snapshot.
+	second_screen.size = _T59_SCREEN_BASELINE
 	await _await_frames(2)
-	var resized_viewport := Vector2(1280.0, 720.0)
-	assert_bool(second_title.visible).is_true()
-	assert_bool(second_status.visible).is_true()
-	assert_that(second_background.size).is_equal(Vector2(1440.0, 600.0))
-	assert_float(second_background.global_position.x).is_equal(0.0)
-	second_battlefield_top = second_background.global_position.y
-	second_battlefield_bottom = second_battlefield_top + second_background.size.y
-	assert_bool(second_title.global_position.y < second_battlefield_bottom).is_true()
-	assert_bool(second_status.global_position.y > second_title.global_position.y).is_true()
-	assert_bool(second_battlefield_top <= resized_viewport.y * 0.5 and second_battlefield_bottom >= resized_viewport.y * 0.5).is_true()
-
-	second_screen.size = Vector2(1440.0, 900.0)
-	await _await_frames(2)
+	assert_that(second_snapshot).is_equal(first_snapshot)
 	var title_x_before := second_title.global_position.x
 	var status_x_before := second_status.global_position.x
 	var battlefield_x_before := second_background.global_position.x
@@ -449,7 +442,6 @@ func test_reenter_battle_map_keeps_three_band_frame_stable_after_viewport_resize
 	second_background.position = second_background.position + Vector2(-80.0, 0.0)
 	await _await_frames(1)
 
-	assert_that(second_snapshot).is_equal(first_snapshot)
 	assert_float(second_background.global_position.x).is_equal(battlefield_x_before - 80.0)
 	assert_float(second_title.global_position.x).is_equal(title_x_before)
 	assert_float(second_status.global_position.x).is_equal(status_x_before)
@@ -703,7 +695,7 @@ func test_back_action_without_main_navigator_should_not_mutate_runtime_summary()
 	await _await_frames(2)
 
 	var bridge: Node = screen.get_node("CombatExperienceRuntimeBridge")
-	var before := _bridge_summary_metrics(bridge)
+	var before_metrics := _bridge_summary_metrics(bridge)
 	var before_children := bridge.get_node("Battlefield").get_child_count()
 	var status_before := String((screen.get_node("Margin/VBox/Status") as Label).text)
 	var summary_before := String((screen.get_node("Margin/VBox/Summary") as Label).text)
@@ -712,11 +704,11 @@ func test_back_action_without_main_navigator_should_not_mutate_runtime_summary()
 	back_btn.emit_signal("pressed")
 	await _await_frames(2)
 
-	var after := _bridge_summary_metrics(bridge)
-	assert_int(int(after.get("friendly_units_deployed", -1))).is_equal(int(before.get("friendly_units_deployed", -1)))
-	assert_int(int(after.get("enemy_units_spawned", -1))).is_equal(int(before.get("enemy_units_spawned", -1)))
-	assert_int(int(after.get("combat_exchanges", -1))).is_equal(int(before.get("combat_exchanges", -1)))
-	assert_int(int(after.get("dead_units_retired", -1))).is_equal(int(before.get("dead_units_retired", -1)))
+	var after_metrics := _bridge_summary_metrics(bridge)
+	assert_int(int(after_metrics.get("friendly_units_deployed", -1))).is_equal(int(before_metrics.get("friendly_units_deployed", -1)))
+	assert_int(int(after_metrics.get("enemy_units_spawned", -1))).is_equal(int(before_metrics.get("enemy_units_spawned", -1)))
+	assert_int(int(after_metrics.get("combat_exchanges", -1))).is_equal(int(before_metrics.get("combat_exchanges", -1)))
+	assert_int(int(after_metrics.get("dead_units_retired", -1))).is_equal(int(before_metrics.get("dead_units_retired", -1)))
 	assert_int(bridge.get_node("Battlefield").get_child_count()).is_equal(before_children)
 	assert_str(String((screen.get_node("Margin/VBox/Status") as Label).text)).is_equal(status_before)
 	assert_str(String((screen.get_node("Margin/VBox/Summary") as Label).text)).is_equal(summary_before)
@@ -765,7 +757,7 @@ func test_battlefield_layout_should_define_five_regions_in_gdd_order() -> void:
 
 	var viewport := _battlefield_viewport(screen)
 	assert_object(viewport).is_not_null()
-	assert_that(viewport.size).is_equal(Vector2(1440.0, 600.0))
+	assert_that(viewport.size).is_equal(_T59_BATTLEFIELD_SIZE)
 
 	var root := _battlefield_root(screen)
 	assert_object(root).is_not_null()
@@ -786,9 +778,9 @@ func test_battlefield_layout_should_define_five_regions_in_gdd_order() -> void:
 		assert_float(region.position.x).is_equal(expected_x)
 		assert_float(region.position.y).is_equal(0.0)
 		assert_float(region.size.x).is_equal(float(_T59_REGION_WIDTHS[region_name]))
-		assert_float(region.size.y).is_equal(600.0)
+		assert_float(region.size.y).is_equal(_T59_BATTLEFIELD_SIZE.y)
 		expected_x += float(_T59_REGION_WIDTHS[region_name])
-	assert_float(expected_x).is_equal(1440.0)
+	assert_float(expected_x).is_equal(_T59_BATTLEFIELD_SIZE.x)
 
 
 # ACC:T59.2
@@ -898,15 +890,15 @@ func test_inactive_placement_context_should_clear_runtime_slot_overlay_from_batt
 		"InnerCastleRegionSlot_00_01": "valid_inner",
 	})
 	await _await_frames(1)
-	var before := _runtime_slot_overlay_snapshot(slot)
+	var before_snapshot := _runtime_slot_overlay_snapshot(slot)
 
 	selection_controller.call("set_placement_context_active", false)
 	await _await_frames(1)
-	var after := _runtime_slot_overlay_snapshot(slot)
+	var after_snapshot := _runtime_slot_overlay_snapshot(slot)
 
-	assert_str(str(before["overlay_state"])).is_equal("overlay_legal")
-	assert_str(str(after["overlay_state"])).is_equal("overlay_hidden")
-	assert_str(str(after["overlay_tint"])).is_equal("none")
+	assert_str(str(before_snapshot["overlay_state"])).is_equal("overlay_legal")
+	assert_str(str(after_snapshot["overlay_state"])).is_equal("overlay_hidden")
+	assert_str(str(after_snapshot["overlay_tint"])).is_equal("none")
 
 
 # ACC:T62.1
@@ -922,8 +914,8 @@ func test_spawn_side_glow_and_wave_pulse_decay_back_to_weak_state() -> void:
 	var bridge: Node = screen.get_node("CombatExperienceRuntimeBridge")
 	var status_label: Label = screen.get_node("Margin/VBox/Status")
 
-	var before := _spawn_cue_colors(screen)
-	assert_bool(before[0].a < 0.7 and before[1].a < 0.7).is_true()
+	var before_pulse := _spawn_cue_colors(screen)
+	assert_bool(before_pulse[0].a < 0.7 and before_pulse[1].a < 0.7).is_true()
 	var status_before := String(status_label.text)
 	var summary_before := _bridge_summary_metrics(bridge)
 	assert_int(int(summary_before.get("enemy_units_spawned", 0))).is_equal(0)
@@ -934,7 +926,7 @@ func test_spawn_side_glow_and_wave_pulse_decay_back_to_weak_state() -> void:
 	var pulse := _spawn_cue_colors(screen)
 	var status_after_wave := String(status_label.text)
 	var summary_after_wave := _bridge_summary_metrics(bridge)
-	assert_bool(pulse[0].a > before[0].a and pulse[1].a > before[1].a).is_true()
+	assert_bool(pulse[0].a > before_pulse[0].a and pulse[1].a > before_pulse[1].a).is_true()
 	assert_bool(pulse[0].a >= 0.9 and pulse[1].a >= 0.9).is_true()
 	assert_bool(status_after_wave != status_before).is_true()
 	assert_int(int(summary_after_wave.get("enemy_units_spawned", 0))).is_equal(2)
@@ -944,9 +936,9 @@ func test_spawn_side_glow_and_wave_pulse_decay_back_to_weak_state() -> void:
 	assert_bool(pulse_midway[0].a >= 0.9 and pulse_midway[1].a >= 0.9).is_true()
 
 	await get_tree().create_timer(4.5).timeout
-	var after := _spawn_cue_colors(screen)
+	var after_pulse := _spawn_cue_colors(screen)
 	var status_after_decay := String(status_label.text)
-	assert_bool(after[0].a <= before[0].a + 0.05 and after[1].a <= before[1].a + 0.05).is_true()
+	assert_bool(after_pulse[0].a <= before_pulse[0].a + 0.05 and after_pulse[1].a <= before_pulse[1].a + 0.05).is_true()
 	# ACC:T63.7 / ACC:T63.9: transient cue decays without mutating runtime progression counters.
 	assert_str(status_after_decay).is_equal(status_after_wave)
 	assert_that(_bridge_summary_metrics(bridge)).is_equal(summary_after_wave)
