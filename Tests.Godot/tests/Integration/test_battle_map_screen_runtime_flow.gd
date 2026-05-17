@@ -1,4 +1,4 @@
-﻿extends "res://addons/gdUnit4/src/GdUnitTestSuite.gd"
+extends "res://addons/gdUnit4/src/GdUnitTestSuite.gd"
 
 func _await_frames(count: int) -> void:
 	for _i in range(count):
@@ -6,8 +6,8 @@ func _await_frames(count: int) -> void:
 
 
 func _status_and_summary(screen: Node) -> Dictionary:
-	var status: Label = screen.get_node("Margin/VBox/Status")
-	var summary: Label = screen.get_node("Margin/VBox/Summary")
+	var status: Label = screen.get_node("LegacyPrototypeRoot/VBox/Status")
+	var summary: Label = screen.get_node("LegacyPrototypeRoot/VBox/Summary")
 	return {
 		"status": String(status.text),
 		"summary": String(summary.text),
@@ -35,6 +35,10 @@ func _local_feedback_state(screen: Node) -> Dictionary:
 		"wall_pressure_visible": wall_pressure.visible,
 	}
 
+func _request_hud_action(screen: Control, action_code: String) -> void:
+	var hud: Node = screen.get_node("BattleHud")
+	hud.call("RequestBattleAction", action_code)
+
 
 func _hud_count(main: Node) -> int:
 	var runtime_ui := main.get_node("RuntimeUi")
@@ -57,9 +61,9 @@ func _is_visible_inside_viewport(control: Control, viewport_size: Vector2) -> bo
 
 func _frame_snapshot(screen: Control) -> Dictionary:
 	var background: Control = screen.get_node("Background/BattlefieldViewport")
-	var main := _resolve_main_root(screen)
-	var top_band: Control = main.get_node("RuntimeUi/HUD/TopBar") if main != null else screen.get_node("BattleHud/TopBar")
-	var bottom_band: Control = main.get_node("RuntimeUi/HUD/CombatHud/BottomBar") if main != null else screen.get_node("BattleHud/CombatHud/BottomBar")
+	var bands := _battlemap_player_bands(screen)
+	var top_band: Control = bands["top"]
+	var bottom_band: Control = bands["bottom"]
 	return {
 		"background_pos": background.global_position,
 		"background_size": background.size,
@@ -71,17 +75,27 @@ func _frame_snapshot(screen: Control) -> Dictionary:
 
 
 func _battlemap_player_bands(screen: Control) -> Dictionary:
+	var local_top := screen.get_node("BattleHud/TopBar")
+	var local_bottom := screen.get_node("BattleHud/CombatHud/BottomBar")
 	var main := _resolve_main_root(screen)
 	if main != null:
+		var global_top := main.get_node_or_null("RuntimeUi/HUD/TopBar") as Control
+		var global_bottom := main.get_node_or_null("RuntimeUi/HUD/CombatHud/BottomBar") as Control
+		if global_top != null and global_bottom != null and global_top.visible and global_bottom.visible:
+			return {
+				"top": global_top,
+				"middle": screen.get_node("Background/BattlefieldViewport"),
+				"bottom": global_bottom,
+			}
 		return {
-			"top": main.get_node("RuntimeUi/HUD/TopBar"),
+			"top": local_top,
 			"middle": screen.get_node("Background/BattlefieldViewport"),
-			"bottom": main.get_node("RuntimeUi/HUD/CombatHud/BottomBar"),
+			"bottom": local_bottom,
 		}
 	return {
-		"top": screen.get_node("BattleHud/TopBar"),
+		"top": local_top,
 		"middle": screen.get_node("Background/BattlefieldViewport"),
-		"bottom": screen.get_node("BattleHud/CombatHud/BottomBar"),
+		"bottom": local_bottom,
 	}
 
 
@@ -150,21 +164,14 @@ const _TASK56_NODE_OWNERSHIP_MAP := {
 	"Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnB": "battlefield_presentation",
 	"CombatExperienceRuntimeBridge": "runtime_bridge",
 	"WaveTimer": "runtime_bridge",
-	"Margin": "legacy_prototype",
-	"Margin/VBox": "legacy_prototype",
-	"Margin/VBox/Title": "legacy_prototype",
-	"Margin/VBox/Status": "legacy_prototype",
-	"Margin/VBox/Controls": "legacy_prototype",
-	"Margin/VBox/Controls/BuildBtn": "legacy_prototype",
-	"Margin/VBox/Controls/WaveBtn": "legacy_prototype",
-	"Margin/VBox/Controls/AutoWaveBtn": "legacy_prototype",
-	"Margin/VBox/Controls/ExchangeBtn": "legacy_prototype",
-	"Margin/VBox/Controls/CleanupBtn": "legacy_prototype",
-	"Margin/VBox/Controls/FinishBtn": "legacy_prototype",
-	"Margin/VBox/Controls/BackBtn": "legacy_prototype",
-	"Margin/VBox/Summary": "legacy_prototype",
-	"Margin/VBox/Legend": "legacy_prototype",
-	"Margin/VBox/MetricsHelp": "legacy_prototype",
+	"LegacyPrototypeRoot": "legacy_prototype",
+	"LegacyPrototypeRoot/VBox": "legacy_prototype",
+	"LegacyPrototypeRoot/VBox/Title": "legacy_prototype",
+	"LegacyPrototypeRoot/VBox/Status": "legacy_prototype",
+	"LegacyPrototypeRoot/VBox/Controls": "legacy_prototype",
+	"LegacyPrototypeRoot/VBox/Summary": "legacy_prototype",
+	"LegacyPrototypeRoot/VBox/Legend": "legacy_prototype",
+	"LegacyPrototypeRoot/VBox/MetricsHelp": "legacy_prototype",
 }
 
 
@@ -213,9 +220,9 @@ func _assert_task56_ownership_map(screen: Control) -> void:
 				continue
 			assert_str(actual_container).is_not_equal(other_container)
 
-	var legacy_container: Node = screen.get_node("Margin")
+	var legacy_container: Node = screen.get_node("LegacyPrototypeRoot")
 	assert_bool(legacy_container.has_meta("migration_only")).is_true()
-	assert_bool(bool(legacy_container.get_meta("migration_only"))).is_true()
+	assert_bool(legacy_container.get_meta("migration_only") == true).is_true()
 	assert_bool(screen.get_node("Background").has_meta("migration_only")).is_false()
 	assert_bool(screen.get_node("CombatExperienceRuntimeBridge").has_meta("migration_only")).is_false()
 	assert_bool(screen.get_node("WaveTimer").has_meta("migration_only")).is_false()
@@ -259,8 +266,8 @@ func _assert_t59_slot_grid(slot_root: Control, expected_count: int) -> void:
 		assert_that(slot.size).is_equal(Vector2(_T59_SLOT_SIZE, _T59_SLOT_SIZE))
 		assert_float(fmod(slot.position.x, _T59_SLOT_SIZE)).is_equal(0.0)
 		assert_float(fmod(slot.position.y, _T59_SLOT_SIZE)).is_equal(0.0)
-		assert_bool(bool(slot.get_meta("buildable", false))).is_true()
-		assert_bool(bool(slot.get_meta("slot_available", false))).is_true()
+		assert_bool(slot.get_meta("buildable", false) == true).is_true()
+		assert_bool(slot.get_meta("slot_available", false) == true).is_true()
 		assert_bool(slot.position.x >= 0.0).is_true()
 		assert_bool(slot.position.y >= 0.0).is_true()
 		assert_bool(slot.position.x + slot.size.x <= slot_root.size.x).is_true()
@@ -280,8 +287,8 @@ func test_narrow_layout_keeps_header_footer_fixed_when_only_battlefield_moves() 
 	await _await_frames(2)
 
 	var background: Control = screen.get_node("Background/BattlefieldViewport")
-	var title: Control = screen.get_node("Margin/VBox/Title")
-	var metrics_help: Control = screen.get_node("Margin/VBox/MetricsHelp")
+	var title: Control = screen.get_node("LegacyPrototypeRoot/VBox/Title")
+	var metrics_help: Control = screen.get_node("LegacyPrototypeRoot/VBox/MetricsHelp")
 	var title_before := title.global_position
 	var metrics_before := metrics_help.global_position
 	var background_before := background.global_position
@@ -309,11 +316,11 @@ func test_non_battlefield_layout_perturbation_should_not_shift_header_or_footer(
 	screen.size = Vector2(540.0, 320.0)
 	await _await_frames(2)
 
-	var title: Control = screen.get_node("Margin/VBox/Title")
-	var metrics_help: Control = screen.get_node("Margin/VBox/MetricsHelp")
-	var controls: Control = screen.get_node("Margin/VBox/Controls")
-	var status_label: Label = screen.get_node("Margin/VBox/Status")
-	var summary_label: Label = screen.get_node("Margin/VBox/Summary")
+	var title: Control = screen.get_node("LegacyPrototypeRoot/VBox/Title")
+	var metrics_help: Control = screen.get_node("LegacyPrototypeRoot/VBox/MetricsHelp")
+	var controls: Control = screen.get_node("LegacyPrototypeRoot/VBox/Controls")
+	var status_label: Label = screen.get_node("LegacyPrototypeRoot/VBox/Status")
+	var summary_label: Label = screen.get_node("LegacyPrototypeRoot/VBox/Summary")
 	var title_before := title.global_position
 	var metrics_before := metrics_help.global_position
 	var status_before := String(status_label.text)
@@ -347,7 +354,7 @@ func test_1600x900_frame_keeps_three_player_visible_bands_simultaneously_visible
 	var background: Control = bands["middle"]
 	var title: Control = bands["top"]
 	var status: Control = bands["bottom"]
-	var metrics_help: Control = screen.get_node("Margin/VBox/MetricsHelp")
+	var metrics_help: Control = screen.get_node("LegacyPrototypeRoot/VBox/MetricsHelp")
 	var _path: Line2D = screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/Path")
 	var background_top_before := background.global_position.y
 	var background_height_before := background.size.y
@@ -422,7 +429,7 @@ func test_reenter_battle_map_keeps_three_band_frame_stable_after_viewport_resize
 	var second_background: Control = second_bands["middle"]
 	var second_title: Control = second_bands["top"]
 	var second_status: Control = second_bands["bottom"]
-	var second_metrics_help: Control = second_screen.get_node("Margin/VBox/MetricsHelp")
+	var second_metrics_help: Control = second_screen.get_node("LegacyPrototypeRoot/VBox/MetricsHelp")
 
 	assert_bool(second_title.visible).is_true()
 	assert_bool(second_status.visible).is_true()
@@ -464,20 +471,15 @@ func test_battle_map_screen_minimum_runtime_loop_is_player_visible() -> void:
 	await _await_frames(2)
 	_assert_task56_ownership_map(screen)
 
-	var build_btn := screen.get_node("Margin/VBox/Controls/BuildBtn")
-	var wave_btn := screen.get_node("Margin/VBox/Controls/WaveBtn")
-	var exchange_btn := screen.get_node("Margin/VBox/Controls/ExchangeBtn")
-	var cleanup_btn := screen.get_node("Margin/VBox/Controls/CleanupBtn")
-	var finish_btn := screen.get_node("Margin/VBox/Controls/FinishBtn")
-	var summary: Label = screen.get_node("Margin/VBox/Summary")
-	var status: Label = screen.get_node("Margin/VBox/Status")
+	var summary: Label = screen.get_node("LegacyPrototypeRoot/VBox/Summary")
+	var status: Label = screen.get_node("LegacyPrototypeRoot/VBox/Status")
 	var bridge: Node = screen.get_node("CombatExperienceRuntimeBridge")
 
-	build_btn.emit_signal("pressed")
-	wave_btn.emit_signal("pressed")
-	exchange_btn.emit_signal("pressed")
-	cleanup_btn.emit_signal("pressed")
-	finish_btn.emit_signal("pressed")
+	_request_hud_action(screen, "build")
+	_request_hud_action(screen, "wave")
+	_request_hud_action(screen, "exchange")
+	_request_hud_action(screen, "cleanup")
+	_request_hud_action(screen, "finish")
 	await _await_frames(2)
 
 	assert_bool(String(status.text).length() > 0).is_true()
@@ -487,8 +489,31 @@ func test_battle_map_screen_minimum_runtime_loop_is_player_visible() -> void:
 	assert_int(int(runtime_metrics.get("enemy_units_spawned", 0))).is_greater_equal(2)
 	assert_int(int(runtime_metrics.get("combat_exchanges", 0))).is_greater_equal(1)
 	var feedback_state := _local_feedback_state(screen)
-	assert_bool(bool(feedback_state["prompt_visible"])).is_true()
+	assert_bool(feedback_state["prompt_visible"] == true).is_true()
 	assert_bool(String(feedback_state["prompt_text"]).length() > 0).is_true()
+
+
+func test_battle_map_formal_hud_actions_should_drive_runtime_without_legacy_buttons() -> void:
+	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
+	add_child(auto_free(screen))
+	await _await_frames(2)
+
+	var bridge: Node = screen.get_node("CombatExperienceRuntimeBridge")
+	var status: Label = screen.get_node("LegacyPrototypeRoot/VBox/Status")
+
+	_request_hud_action(screen, "build")
+	_request_hud_action(screen, "wave")
+	_request_hud_action(screen, "exchange")
+	_request_hud_action(screen, "cleanup")
+	_request_hud_action(screen, "finish")
+	await _await_frames(2)
+
+	var runtime_metrics := _bridge_summary_metrics(bridge)
+	assert_bool(String(status.text).length() > 0).is_true()
+	assert_int(int(runtime_metrics.get("friendly_units_deployed", 0))).is_greater_equal(1)
+	assert_int(int(runtime_metrics.get("enemy_units_spawned", 0))).is_greater_equal(2)
+	assert_int(int(runtime_metrics.get("combat_exchanges", 0))).is_greater_equal(1)
+	assert_str(String(runtime_metrics.get("outcome", ""))).is_not_empty()
 	_assert_task56_ownership_map(screen)
 
 
@@ -502,19 +527,15 @@ func test_battle_map_coordinator_guards_should_block_out_of_order_actions_and_pr
 	_assert_task56_ownership_map(screen)
 
 	var bridge: Node = screen.get_node("CombatExperienceRuntimeBridge")
-	var exchange_btn: Button = screen.get_node("Margin/VBox/Controls/ExchangeBtn")
-	var cleanup_btn: Button = screen.get_node("Margin/VBox/Controls/CleanupBtn")
-	var finish_btn: Button = screen.get_node("Margin/VBox/Controls/FinishBtn")
-	var wave_btn: Button = screen.get_node("Margin/VBox/Controls/WaveBtn")
-	var status_label: Label = screen.get_node("Margin/VBox/Status")
+	var status_label: Label = screen.get_node("LegacyPrototypeRoot/VBox/Status")
 	var summary_before := _bridge_summary_metrics(bridge)
 
-	exchange_btn.emit_signal("pressed")
+	_request_hud_action(screen, "exchange")
 	await _await_frames(1)
 	var status_after_exchange := String(status_label.text)
 	assert_bool(status_after_exchange.find("wave") >= 0 or status_after_exchange.find("娉㈡") >= 0).is_true()
 
-	cleanup_btn.emit_signal("pressed")
+	_request_hud_action(screen, "cleanup")
 	await _await_frames(1)
 	var status_after_cleanup := String(status_label.text)
 	var status_after_cleanup_lc := status_after_cleanup.to_lower()
@@ -524,7 +545,7 @@ func test_battle_map_coordinator_guards_should_block_out_of_order_actions_and_pr
 		or status_after_cleanup.find("浜ゆ垬") >= 0
 	).is_true()
 
-	finish_btn.emit_signal("pressed")
+	_request_hud_action(screen, "finish")
 	await _await_frames(1)
 	var status_after_finish := String(status_label.text)
 	assert_bool(status_after_finish.to_lower().find("cleanup") >= 0 or status_after_finish.find("娓呯悊") >= 0).is_true()
@@ -532,13 +553,13 @@ func test_battle_map_coordinator_guards_should_block_out_of_order_actions_and_pr
 	var summary_after_invalid := _bridge_summary_metrics(bridge)
 	assert_that(summary_after_invalid).is_equal(summary_before)
 
-	wave_btn.emit_signal("pressed")
+	_request_hud_action(screen, "wave")
 	await _await_frames(1)
-	exchange_btn.emit_signal("pressed")
+	_request_hud_action(screen, "exchange")
 	await _await_frames(1)
-	cleanup_btn.emit_signal("pressed")
+	_request_hud_action(screen, "cleanup")
 	await _await_frames(1)
-	finish_btn.emit_signal("pressed")
+	_request_hud_action(screen, "finish")
 	await _await_frames(1)
 	var status_after_valid_flow := String(status_label.text)
 	assert_bool(status_after_valid_flow.find("finished") >= 0 or status_after_valid_flow.find("缁撴潫") >= 0).is_true()
@@ -560,13 +581,8 @@ func test_battle_map_runtime_state_should_distinguish_empty_progressed_and_compl
 	await _await_frames(2)
 
 	var bridge: Node = screen.get_node("CombatExperienceRuntimeBridge")
-	var wave_btn: Button = screen.get_node("Margin/VBox/Controls/WaveBtn")
-	var build_btn: Button = screen.get_node("Margin/VBox/Controls/BuildBtn")
-	var exchange_btn: Button = screen.get_node("Margin/VBox/Controls/ExchangeBtn")
-	var cleanup_btn: Button = screen.get_node("Margin/VBox/Controls/CleanupBtn")
-	var finish_btn: Button = screen.get_node("Margin/VBox/Controls/FinishBtn")
-	var status_label: Label = screen.get_node("Margin/VBox/Status")
-	var summary_label: Label = screen.get_node("Margin/VBox/Summary")
+	var status_label: Label = screen.get_node("LegacyPrototypeRoot/VBox/Status")
+	var summary_label: Label = screen.get_node("LegacyPrototypeRoot/VBox/Summary")
 
 	var empty_status := String(status_label.text)
 	var empty_summary := String(summary_label.text)
@@ -576,7 +592,7 @@ func test_battle_map_runtime_state_should_distinguish_empty_progressed_and_compl
 	assert_bool(empty_status.find("finished") < 0 and empty_status.find("缁撴潫") < 0).is_true()
 	assert_bool(empty_status.length() > 0).is_true()
 	assert_bool(empty_summary.length() > 0).is_true()
-	assert_bool(bool(empty_feedback["prompt_visible"])).is_false()
+	assert_bool(empty_feedback["prompt_visible"] == true).is_false()
 	assert_int(int(empty_metrics["friendly_units_deployed"])).is_equal(0)
 	assert_int(int(empty_metrics["enemy_units_spawned"])).is_equal(0)
 	assert_int(int(empty_metrics["combat_exchanges"])).is_equal(0)
@@ -585,7 +601,7 @@ func test_battle_map_runtime_state_should_distinguish_empty_progressed_and_compl
 	assert_str(status_label.text).is_equal(empty_status)
 	assert_str(summary_label.text).is_equal(empty_summary)
 
-	finish_btn.emit_signal("pressed")
+	_request_hud_action(screen, "finish")
 	await _await_frames(1)
 	var failure_status := String(status_label.text)
 	var failure_status_lc := failure_status.to_lower()
@@ -596,7 +612,7 @@ func test_battle_map_runtime_state_should_distinguish_empty_progressed_and_compl
 	await _await_frames(2)
 	assert_str(status_label.text).is_equal(failure_status)
 
-	wave_btn.emit_signal("pressed")
+	_request_hud_action(screen, "wave")
 	await _await_frames(1)
 	for _i in range(120):
 		if bridge.has_method("AdvanceSimulation"):
@@ -614,19 +630,19 @@ func test_battle_map_runtime_state_should_distinguish_empty_progressed_and_compl
 	assert_bool(progressed_status != failure_status).is_true()
 	assert_str(progressed_summary).is_equal(empty_summary)
 	assert_bool(
-		bool(progressed_feedback["prompt_visible"])
-		or bool(progressed_feedback["hit_flash_visible"])
-		or bool(progressed_feedback["wall_pressure_visible"])
+		progressed_feedback["prompt_visible"] == true
+		or progressed_feedback["hit_flash_visible"] == true
+		or progressed_feedback["wall_pressure_visible"] == true
 	).is_true()
 	await _await_frames(3)
 	assert_str(status_label.text).is_equal(progressed_status)
 	assert_str(summary_label.text).is_equal(progressed_summary)
 
-	build_btn.emit_signal("pressed")
-	wave_btn.emit_signal("pressed")
-	exchange_btn.emit_signal("pressed")
-	cleanup_btn.emit_signal("pressed")
-	finish_btn.emit_signal("pressed")
+	_request_hud_action(screen, "build")
+	_request_hud_action(screen, "wave")
+	_request_hud_action(screen, "exchange")
+	_request_hud_action(screen, "cleanup")
+	_request_hud_action(screen, "finish")
 	await _await_frames(2)
 
 	var completion_status := String(status_label.text)
@@ -641,7 +657,7 @@ func test_battle_map_runtime_state_should_distinguish_empty_progressed_and_compl
 	assert_bool(completion_status != progressed_status).is_true()
 	assert_bool(completion_status != failure_status).is_true()
 	assert_str(completion_summary).is_equal(progressed_summary)
-	assert_bool(bool(completion_feedback["prompt_visible"])).is_true()
+	assert_bool(completion_feedback["prompt_visible"] == true).is_true()
 	assert_bool(String(completion_feedback["prompt_text"]).length() > 0).is_true()
 	await _await_frames(3)
 	assert_str(status_label.text).is_equal(completion_status)
@@ -669,7 +685,7 @@ func test_battle_map_back_action_should_handoff_exit_to_navigator_and_restore_ma
 	if menu.has_method("HideMenu"):
 		menu.call("HideMenu")
 		await _await_frames(1)
-		assert_bool(bool(menu.get("visible"))).is_false()
+		assert_bool(menu.get("visible") == true).is_false()
 
 	var ok_enter: bool = nav.call("SwitchTo", "res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn")
 	assert_bool(ok_enter).is_true()
@@ -677,12 +693,11 @@ func test_battle_map_back_action_should_handoff_exit_to_navigator_and_restore_ma
 
 	var screen_root: Node = main.get_node("RuntimeUi/ScreenRoot")
 	var screen: Control = screen_root.get_node("BattleMapScreen")
-	var back_btn: Button = screen.get_node("Margin/VBox/Controls/BackBtn")
-	back_btn.emit_signal("pressed")
+	_request_hud_action(screen, "back")
 	await _await_frames(2)
 
 	assert_object(screen_root.get_node_or_null("BattleMapScreen")).is_null()
-	assert_bool(bool(menu.get("visible"))).is_true()
+	assert_bool(menu.get("visible") == true).is_true()
 
 
 # ACC:T57.10
@@ -695,11 +710,10 @@ func test_back_action_without_main_navigator_should_not_mutate_runtime_summary()
 	var bridge: Node = screen.get_node("CombatExperienceRuntimeBridge")
 	var before_metrics := _bridge_summary_metrics(bridge)
 	var before_children := bridge.get_node("Battlefield").get_child_count()
-	var status_before := String((screen.get_node("Margin/VBox/Status") as Label).text)
-	var summary_before := String((screen.get_node("Margin/VBox/Summary") as Label).text)
+	var status_before := String((screen.get_node("LegacyPrototypeRoot/VBox/Status") as Label).text)
+	var summary_before := String((screen.get_node("LegacyPrototypeRoot/VBox/Summary") as Label).text)
 
-	var back_btn: Button = screen.get_node("Margin/VBox/Controls/BackBtn")
-	back_btn.emit_signal("pressed")
+	_request_hud_action(screen, "back")
 	await _await_frames(2)
 
 	var after_metrics := _bridge_summary_metrics(bridge)
@@ -708,8 +722,30 @@ func test_back_action_without_main_navigator_should_not_mutate_runtime_summary()
 	assert_int(int(after_metrics.get("combat_exchanges", -1))).is_equal(int(before_metrics.get("combat_exchanges", -1)))
 	assert_int(int(after_metrics.get("dead_units_retired", -1))).is_equal(int(before_metrics.get("dead_units_retired", -1)))
 	assert_int(bridge.get_node("Battlefield").get_child_count()).is_equal(before_children)
-	assert_str(String((screen.get_node("Margin/VBox/Status") as Label).text)).is_equal(status_before)
-	assert_str(String((screen.get_node("Margin/VBox/Summary") as Label).text)).is_equal(summary_before)
+	assert_str(String((screen.get_node("LegacyPrototypeRoot/VBox/Status") as Label).text)).is_equal(status_before)
+	assert_str(String((screen.get_node("LegacyPrototypeRoot/VBox/Summary") as Label).text)).is_equal(summary_before)
+
+
+func test_battle_map_formal_hud_back_action_should_handoff_exit_without_legacy_back_button() -> void:
+	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
+	get_tree().root.add_child(auto_free(main))
+	await _await_frames(2)
+
+	var nav: Node = main.get_node("ScreenNavigator")
+	nav.set("UseFadeTransition", false)
+	var ok_enter: bool = nav.call("SwitchTo", "res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn")
+	assert_bool(ok_enter).is_true()
+	await _await_frames(2)
+
+	var screen_root: Node = main.get_node("RuntimeUi/ScreenRoot")
+	var screen: Control = screen_root.get_node("BattleMapScreen")
+
+	_request_hud_action(screen, "back")
+	await _await_frames(2)
+
+	assert_object(screen_root.get_node_or_null("BattleMapScreen")).is_null()
+	var menu: Node = main.get_node("RuntimeUi/MainMenu")
+	assert_bool(menu.visible).is_true()
 
 
 # ACC:T55.3
@@ -725,17 +761,11 @@ func test_battle_map_terminal_summary_should_stay_stable_without_state_change() 
 	add_child(auto_free(screen))
 	await _await_frames(2)
 
-	var build_btn: Button = screen.get_node("Margin/VBox/Controls/BuildBtn")
-	var wave_btn: Button = screen.get_node("Margin/VBox/Controls/WaveBtn")
-	var exchange_btn: Button = screen.get_node("Margin/VBox/Controls/ExchangeBtn")
-	var cleanup_btn: Button = screen.get_node("Margin/VBox/Controls/CleanupBtn")
-	var finish_btn: Button = screen.get_node("Margin/VBox/Controls/FinishBtn")
-
-	build_btn.emit_signal("pressed")
-	wave_btn.emit_signal("pressed")
-	exchange_btn.emit_signal("pressed")
-	cleanup_btn.emit_signal("pressed")
-	finish_btn.emit_signal("pressed")
+	_request_hud_action(screen, "build")
+	_request_hud_action(screen, "wave")
+	_request_hud_action(screen, "exchange")
+	_request_hud_action(screen, "cleanup")
+	_request_hud_action(screen, "finish")
 	await _await_frames(2)
 
 	var snapshot_before := _status_and_summary(screen)
@@ -796,7 +826,7 @@ func test_battlefield_layout_should_keep_walls_non_buildable_and_slots_within_re
 	for wall_name in ["LeftWall", "RightWall"]:
 		var wall := map_base.get_node_or_null(wall_name) as Control
 		assert_object(wall).is_not_null()
-		assert_bool(bool(wall.get_meta("buildable", true))).is_false()
+		assert_bool(wall.get_meta("buildable", true) == true).is_false()
 		assert_object(slot_layer.get_node_or_null("%sSlots" % wall_name)).is_null()
 
 	for slot_root_name_variant in _T59_SLOT_TOTALS.keys():
@@ -828,7 +858,7 @@ func test_battlefield_layout_should_visually_distinguish_buildable_and_non_build
 	for slot_root_name_variant in _T59_SLOT_TOTALS.keys():
 		var slot_root_name := String(slot_root_name_variant)
 		var slot_root := slot_layer.get_node(slot_root_name) as Control
-		assert_bool(bool(slot_root.get_meta("buildable_region", false))).is_true()
+		assert_bool(slot_root.get_meta("buildable_region", false) == true).is_true()
 		assert_bool(slot_root.modulate.a > 0.0).is_true()
 
 
@@ -910,7 +940,7 @@ func test_spawn_side_glow_and_wave_pulse_decay_back_to_weak_state() -> void:
 	add_child(auto_free(screen))
 	await _await_frames(2)
 	var bridge: Node = screen.get_node("CombatExperienceRuntimeBridge")
-	var status_label: Label = screen.get_node("Margin/VBox/Status")
+	var status_label: Label = screen.get_node("LegacyPrototypeRoot/VBox/Status")
 
 	var before_pulse := _spawn_cue_colors(screen)
 	assert_bool(before_pulse[0].a < 0.7 and before_pulse[1].a < 0.7).is_true()
@@ -918,8 +948,7 @@ func test_spawn_side_glow_and_wave_pulse_decay_back_to_weak_state() -> void:
 	var summary_before := _bridge_summary_metrics(bridge)
 	assert_int(int(summary_before.get("enemy_units_spawned", 0))).is_equal(0)
 
-	var wave_btn: Button = screen.get_node("Margin/VBox/Controls/WaveBtn")
-	wave_btn.emit_signal("pressed")
+	_request_hud_action(screen, "wave")
 	await _await_frames(1)
 	var pulse := _spawn_cue_colors(screen)
 	var status_after_wave := String(status_label.text)
@@ -970,7 +999,7 @@ func test_battle_map_cycle_should_keep_hud_singleton_and_navigator_ownership() -
 	assert_str(str(reopened_screen.get_node("Background").get_meta("ownership_container"))).is_equal("battlefield_presentation")
 	assert_str(str(reopened_screen.get_node("CombatExperienceRuntimeBridge").get_meta("ownership_container"))).is_equal("runtime_bridge")
 	assert_str(str(reopened_screen.get_node("WaveTimer").get_meta("ownership_container"))).is_equal("runtime_bridge")
-	assert_str(str(reopened_screen.get_node("Margin").get_meta("ownership_container"))).is_equal("legacy_prototype")
+	assert_str(str(reopened_screen.get_node("LegacyPrototypeRoot").get_meta("ownership_container"))).is_equal("legacy_prototype")
 
 
 # ACC:T62.10
@@ -1002,7 +1031,7 @@ func test_path_readability_stays_behavior_driven_without_arrow_or_route_ui() -> 
 	var found_progress := false
 	for item in snapshots:
 		var snapshot := item as Dictionary
-		if snapshot != null and bool(snapshot.get("is_moving_enemy", false)) and float(snapshot.get("path_progress", 0.0)) > 0.0:
+		if snapshot != null and snapshot.get("is_moving_enemy", false) == true and float(snapshot.get("path_progress", 0.0)) > 0.0:
 			found_progress = true
 	assert_bool(found_progress).is_true()
 	assert_that((screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnA") as Control).global_position).is_equal(initial_positions["EnemySpawnA"])
@@ -1027,22 +1056,18 @@ func test_bridge_unavailable_should_keep_coordinator_path_recoverable_without_co
 	screen.add_child(auto_free(bridge_stub))
 	screen.set("_bridge", bridge_stub)
 
-	var wave_btn: Button = screen.get_node("Margin/VBox/Controls/WaveBtn")
-	var exchange_btn: Button = screen.get_node("Margin/VBox/Controls/ExchangeBtn")
-	var cleanup_btn: Button = screen.get_node("Margin/VBox/Controls/CleanupBtn")
-	var finish_btn: Button = screen.get_node("Margin/VBox/Controls/FinishBtn")
-	wave_btn.emit_signal("pressed")
-	exchange_btn.emit_signal("pressed")
-	cleanup_btn.emit_signal("pressed")
-	finish_btn.emit_signal("pressed")
+	_request_hud_action(screen, "wave")
+	_request_hud_action(screen, "exchange")
+	_request_hud_action(screen, "cleanup")
+	_request_hud_action(screen, "finish")
 	await _await_frames(2)
 
 	var after_summary := _bridge_summary_metrics(bridge)
 	assert_that(after_summary).is_equal(baseline_summary)
 	assert_int(bridge.get_node("Battlefield").get_child_count()).is_equal(baseline_children)
 	assert_bool(is_instance_valid(screen)).is_true()
-	assert_bool(String((screen.get_node("Margin/VBox/Status") as Label).text).length() > 0).is_true()
-	assert_bool((screen.get_node("Margin/VBox/Summary") as Label).visible).is_false()
+	assert_bool(String((screen.get_node("LegacyPrototypeRoot/VBox/Status") as Label).text).length() > 0).is_true()
+	assert_bool((screen.get_node("LegacyPrototypeRoot/VBox/Summary") as Label).visible).is_false()
 
 
 # ACC:T66.1
@@ -1053,14 +1078,10 @@ func test_legacy_labels_should_not_be_authoritative_source_for_runtime_feedback(
 	await _await_frames(2)
 
 	var bridge: Node = screen.get_node("CombatExperienceRuntimeBridge")
-	var status_label: Label = screen.get_node("Margin/VBox/Status")
-	var summary_label: Label = screen.get_node("Margin/VBox/Summary")
-	var legend_label: Label = screen.get_node("Margin/VBox/Legend")
-	var metrics_help_label: Label = screen.get_node("Margin/VBox/MetricsHelp")
-	var wave_btn: Button = screen.get_node("Margin/VBox/Controls/WaveBtn")
-	var exchange_btn: Button = screen.get_node("Margin/VBox/Controls/ExchangeBtn")
-	var cleanup_btn: Button = screen.get_node("Margin/VBox/Controls/CleanupBtn")
-	var finish_btn: Button = screen.get_node("Margin/VBox/Controls/FinishBtn")
+	var status_label: Label = screen.get_node("LegacyPrototypeRoot/VBox/Status")
+	var summary_label: Label = screen.get_node("LegacyPrototypeRoot/VBox/Summary")
+	var legend_label: Label = screen.get_node("LegacyPrototypeRoot/VBox/Legend")
+	var metrics_help_label: Label = screen.get_node("LegacyPrototypeRoot/VBox/MetricsHelp")
 
 	var baseline_summary := _bridge_summary_metrics(bridge)
 	var baseline_status_text := String(status_label.text)
@@ -1077,20 +1098,20 @@ func test_legacy_labels_should_not_be_authoritative_source_for_runtime_feedback(
 	assert_str(String(status_label.text)).is_equal(baseline_status_text)
 
 	# Positive path: runtime progression should still be driven by bridge flow, not legacy labels.
-	wave_btn.emit_signal("pressed")
+	_request_hud_action(screen, "wave")
 	await _await_frames(1)
 	var after_wave := _bridge_summary_metrics(bridge)
 	var wave_feedback := _local_feedback_state(screen)
 	assert_int(int(after_wave.get("enemy_units_spawned", 0))).is_greater_equal(int(baseline_summary.get("enemy_units_spawned", 0)) + 2)
 	assert_bool(String(status_label.text).to_lower().find("wave") >= 0).is_true()
-	assert_bool(bool(wave_feedback["prompt_visible"])).is_true()
+	assert_bool(wave_feedback["prompt_visible"] == true).is_true()
 	assert_bool(String(wave_feedback["prompt_text"]).length() > 0).is_true()
 
-	exchange_btn.emit_signal("pressed")
+	_request_hud_action(screen, "exchange")
 	await _await_frames(1)
-	cleanup_btn.emit_signal("pressed")
+	_request_hud_action(screen, "cleanup")
 	await _await_frames(1)
-	finish_btn.emit_signal("pressed")
+	_request_hud_action(screen, "finish")
 	await _await_frames(1)
 	var terminal_summary := _bridge_summary_metrics(bridge)
 	assert_int(int(terminal_summary.get("combat_exchanges", 0))).is_greater_equal(1)
@@ -1157,23 +1178,23 @@ func test_locale_switch_between_en_us_and_zh_cn_should_keep_player_visible_statu
 	var screen_en := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
 	add_child(auto_free(screen_en))
 	await _await_frames(2)
-	var status_en := String((screen_en.get_node("Margin/VBox/Status") as Label).text)
-	var summary_en := String((screen_en.get_node("Margin/VBox/Summary") as Label).text)
+	var status_en := String((screen_en.get_node("LegacyPrototypeRoot/VBox/Status") as Label).text)
+	var summary_en := String((screen_en.get_node("LegacyPrototypeRoot/VBox/Summary") as Label).text)
 
 	TranslationServer.set_locale("zh-CN")
 	var screen_zh := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
 	add_child(auto_free(screen_zh))
 	await _await_frames(2)
-	var status_zh := String((screen_zh.get_node("Margin/VBox/Status") as Label).text)
-	var summary_zh := String((screen_zh.get_node("Margin/VBox/Summary") as Label).text)
+	var status_zh := String((screen_zh.get_node("LegacyPrototypeRoot/VBox/Status") as Label).text)
+	var summary_zh := String((screen_zh.get_node("LegacyPrototypeRoot/VBox/Summary") as Label).text)
 
 	# Locale switch must keep status/summary readable for players in both locales.
 	assert_bool(status_en.length() > 0).is_true()
 	assert_bool(status_zh.length() > 0).is_true()
 	assert_bool(summary_en.length() > 0).is_true()
 	assert_bool(summary_zh.length() > 0).is_true()
-	assert_bool((screen_en.get_node("Margin/VBox/Summary") as Label).visible).is_false()
-	assert_bool((screen_zh.get_node("Margin/VBox/Summary") as Label).visible).is_false()
+	assert_bool((screen_en.get_node("LegacyPrototypeRoot/VBox/Summary") as Label).visible).is_false()
+	assert_bool((screen_zh.get_node("LegacyPrototypeRoot/VBox/Summary") as Label).visible).is_false()
 
 	TranslationServer.set_locale(original_locale)
 
@@ -1185,11 +1206,7 @@ func test_t70_designated_integration_flow_should_cover_outcome_evidence_and_tran
 	await _await_frames(2)
 
 	var bridge: Node = screen.get_node("CombatExperienceRuntimeBridge")
-	var wave_btn: Button = screen.get_node("Margin/VBox/Controls/WaveBtn")
-	var exchange_btn: Button = screen.get_node("Margin/VBox/Controls/ExchangeBtn")
-	var cleanup_btn: Button = screen.get_node("Margin/VBox/Controls/CleanupBtn")
-	var finish_btn: Button = screen.get_node("Margin/VBox/Controls/FinishBtn")
-	var status_label: Label = screen.get_node("Margin/VBox/Status")
+	var status_label: Label = screen.get_node("LegacyPrototypeRoot/VBox/Status")
 	var modal: PanelContainer = screen.get_node("DailySettlementModal")
 	var runtime_payload: Label = screen.get_node("DailySettlementModal/VBox/EvidencePanel/RuntimeContextPayload")
 	var expand_btn: Button = screen.get_node("DailySettlementModal/VBox/EvidencePanel/ExpandContextBtn")
@@ -1197,13 +1214,13 @@ func test_t70_designated_integration_flow_should_cover_outcome_evidence_and_tran
 
 	assert_bool(bridge.has_method("ForceOutcomeForTest")).is_true()
 	bridge.call("ForceOutcomeForTest", "settlement", 42)
-	wave_btn.emit_signal("pressed")
+	_request_hud_action(screen, "wave")
 	await _await_frames(1)
-	exchange_btn.emit_signal("pressed")
+	_request_hud_action(screen, "exchange")
 	await _await_frames(1)
-	cleanup_btn.emit_signal("pressed")
+	_request_hud_action(screen, "cleanup")
 	await _await_frames(1)
-	finish_btn.emit_signal("pressed")
+	_request_hud_action(screen, "finish")
 	await _await_frames(1)
 
 	assert_bool(modal.visible).is_true()

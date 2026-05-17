@@ -118,23 +118,23 @@ func _snapshot_damage_numbers_setting() -> Dictionary:
 		return result
 	if cfg.has_section_key("settings", "combat_damage_numbers_enabled"):
 		result["had_primary"] = true
-		result["primary_value"] = bool(cfg.get_value("settings", "combat_damage_numbers_enabled", true))
+		result["primary_value"] = cfg.get_value("settings", "combat_damage_numbers_enabled", true) == true
 	if cfg.has_section_key("settings", "damage_numbers_enabled"):
 		result["had_legacy"] = true
-		result["legacy_value"] = bool(cfg.get_value("settings", "damage_numbers_enabled", true))
+		result["legacy_value"] = cfg.get_value("settings", "damage_numbers_enabled", true) == true
 	return result
 
 
 func _restore_damage_numbers_setting(snapshot: Dictionary) -> void:
 	var cfg := ConfigFile.new()
 	cfg.load(_SETTINGS_CFG_PATH)
-	if bool(snapshot.get("had_primary", false)):
-		cfg.set_value("settings", "combat_damage_numbers_enabled", bool(snapshot.get("primary_value", true)))
+	if snapshot.get("had_primary", false) == true:
+		cfg.set_value("settings", "combat_damage_numbers_enabled", snapshot.get("primary_value", true) == true)
 	else:
 		if cfg.has_section_key("settings", "combat_damage_numbers_enabled"):
 			cfg.erase_section_key("settings", "combat_damage_numbers_enabled")
-	if bool(snapshot.get("had_legacy", false)):
-		cfg.set_value("settings", "damage_numbers_enabled", bool(snapshot.get("legacy_value", true)))
+	if snapshot.get("had_legacy", false) == true:
+		cfg.set_value("settings", "damage_numbers_enabled", snapshot.get("legacy_value", true) == true)
 	else:
 		if cfg.has_section_key("settings", "damage_numbers_enabled"):
 			cfg.erase_section_key("settings", "damage_numbers_enabled")
@@ -193,15 +193,15 @@ func test_player_visible_combat_experience_runs_from_building_and_training_to_de
 	var result: Dictionary = bridge.call("RunCompleteCombatExperienceForTest")
 	await get_tree().process_frame
 
-	assert_bool(bool(result.get("mg_tower_built", false))).is_true()
-	assert_bool(bool(result.get("barracks_built", false))).is_true()
+	assert_bool(result.get("mg_tower_built", false) == true).is_true()
+	assert_bool(result.get("barracks_built", false) == true).is_true()
 	assert_int(int(result.get("friendly_units_deployed", 0))).is_greater_equal(1)
 	assert_int(int(result.get("enemy_units_spawned", 0))).is_greater_equal(1)
 	assert_int(int(result.get("projectiles_created", 0))).is_greater_equal(1)
 	assert_int(int(result.get("combat_exchanges", 0))).is_greater_equal(1)
 	assert_int(int(result.get("dead_units_retired", 0))).is_equal(0)
 	assert_int(int(result.get("active_combat_nodes_after_cleanup", -1))).is_equal(3)
-	assert_bool(bool(result.get("dead_unit_targetable_after_cleanup", true))).is_false()
+	assert_bool(result.get("dead_unit_targetable_after_cleanup", true) == true).is_false()
 
 	assert_bool(bridge.has_node("Battlefield/MgTower")).is_true()
 	assert_bool(bridge.has_node("Battlefield/Barracks")).is_true()
@@ -279,7 +279,7 @@ func test_runtime_bridge_entrypoints_remain_reachable_after_ownership_isolation(
 	assert_int(int(summary.get("enemy_units_spawned", 0))).is_greater_equal(2)
 	assert_int(int(summary.get("combat_exchanges", 0))).is_greater_equal(1)
 	assert_int(int(summary.get("active_combat_nodes_after_cleanup", -1))).is_equal(3)
-	assert_bool(bool(summary.get("dead_unit_targetable_after_cleanup", true))).is_false()
+	assert_bool(summary.get("dead_unit_targetable_after_cleanup", true) == true).is_false()
 	_assert_battlefield_actors_exact(bridge, "FriendlyUnit", ["FriendlyUnit1"])
 	_assert_battlefield_actors_exact(bridge, "EnemyUnit", ["EnemyUnit1", "EnemyUnit2"])
 	assert_bool(bridge.has_node("Battlefield/MgTower")).is_true()
@@ -336,8 +336,8 @@ func test_battle_map_control_actions_should_delegate_through_runtime_bridge_and_
 	assert_int(int(summary_after.get("enemy_units_spawned", 0))).is_greater_equal(before_enemy + 1)
 	assert_int(int(summary_after.get("combat_exchanges", 0))).is_greater_equal(before_exchanges + 1)
 	assert_int(int(summary_after.get("dead_units_retired", 0))).is_greater_equal(before_retired)
-	assert_bool(bool(summary_after.get("mg_tower_built", true))).is_false()
-	assert_bool(bool(summary_after.get("barracks_built", true))).is_false()
+	assert_bool(summary_after.get("mg_tower_built", true) == true).is_false()
+	assert_bool(summary_after.get("barracks_built", true) == true).is_false()
 	assert_int(int(summary_after.get("friendly_units_deployed", -1))).is_equal(0)
 	assert_bool(bridge.has_node("Battlefield/MgTower")).is_false()
 	assert_bool(bridge.has_node("Battlefield/Barracks")).is_false()
@@ -387,7 +387,7 @@ func test_path_readability_is_expressed_through_enemy_actor_view_motion() -> voi
 		var snapshot := item as Dictionary
 		if snapshot == null:
 			continue
-		if not bool(snapshot.get("is_moving_enemy", false)):
+		if snapshot.get("is_moving_enemy", false) != true:
 			continue
 		var actor_name := String(snapshot.get("name", ""))
 		before_progress[actor_name] = float(snapshot.get("path_progress", 0.0))
@@ -400,7 +400,7 @@ func test_path_readability_is_expressed_through_enemy_actor_view_motion() -> voi
 		var snapshot := item as Dictionary
 		if snapshot == null:
 			continue
-		if not bool(snapshot.get("is_moving_enemy", false)):
+		if snapshot.get("is_moving_enemy", false) != true:
 			continue
 		var actor_name := String(snapshot.get("name", ""))
 		var after_progress := float(snapshot.get("path_progress", 0.0))
@@ -1090,7 +1090,7 @@ func test_defeat_outcome_modal_should_pause_runtime_and_only_offer_terminal_acti
 	await get_tree().process_frame
 	assert_bool(get_tree().paused).is_false()
 	var main_menu: Node = main.get_node("RuntimeUi/MainMenu")
-	assert_bool(bool(main_menu.get("visible"))).is_true()
+	assert_bool(main_menu.get("visible") == true).is_true()
 
 	var restart_screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
 	add_child(auto_free(restart_screen))

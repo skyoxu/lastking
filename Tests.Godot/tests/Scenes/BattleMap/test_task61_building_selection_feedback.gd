@@ -16,7 +16,7 @@ func _runtime_slot_snapshot(screen: Node, slot_id: String) -> Dictionary:
 		"selection_owner": str(slot.get_meta("selection_owner", "")),
 		"selection_category": str(slot.get_meta("selection_category", "")),
 		"outline_tint": str(slot.get_meta("outline_tint", "none")),
-		"range_clipped": bool(slot.get_meta("range_clipped", false)),
+		"range_clipped": slot.get_meta("range_clipped", false) == true,
 	}
 
 # acceptance: ACC:T61.1
@@ -441,7 +441,7 @@ func test_scene_selection_controller_should_mount_formal_selection_feedback_into
 	assert_that(blocked_range["feedback_channel"]).is_equal("unit_range")
 	assert_that(blocked_range["overlay_state"]).is_equal("overlay_illegal")
 	assert_that(blocked_range["marker"]).is_equal("blocker")
-	assert_that(bool(blocked_range["range_clipped"])).is_true()
+	assert_that(blocked_range["range_clipped"] == true).is_true()
 	assert_that(linked_unit["feedback_channel"]).is_equal("linked_unit")
 	assert_that(linked_unit["overlay_state"]).is_equal("overlay_legal")
 	assert_that(unrelated["feedback_channel"]).is_equal("none")
@@ -646,5 +646,5 @@ func test_scene_clicking_runtime_battlefield_slot_should_drive_formal_building_s
 	assert_that(visible_range["feedback_channel"]).is_equal("unit_range")
 	assert_that(visible_range["overlay_state"]).is_equal("overlay_legal")
 	assert_that(blocked_range["overlay_state"]).is_equal("overlay_illegal")
-	assert_that(bool(blocked_range["range_clipped"])).is_true()
+	assert_that(blocked_range["range_clipped"] == true).is_true()
 	assert_that(linked_unit["feedback_channel"]).is_equal("linked_unit")
