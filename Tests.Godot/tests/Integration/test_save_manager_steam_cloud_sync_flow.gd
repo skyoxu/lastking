@@ -26,8 +26,8 @@ func test_cloud_enabled_save_and_load_execute_sync_integration_path() -> void:
     var load_result = bridge.call("LoadWithCloudSync", "auto:steam_100", "steam_100", true) as Dictionary
     var op_ids = bridge.call("GetCloudOperationIds") as Array
 
-    assert_that(bool(save_result.get("ok", false))).is_true()
-    assert_that(bool(load_result.get("ok", false))).is_true()
+    assert_that(save_result.get("ok", false) == true).is_true()
+    assert_that(load_result.get("ok", false) == true).is_true()
     assert_that(str(load_result.get("loaded_from", ""))).is_equal("cloud")
     assert_that(op_ids.size()).is_equal(2)
     assert_that(str(op_ids[0])).contains("steam-upload-")
@@ -43,13 +43,13 @@ func test_windows_baseline_cloud_sync_sample_flow_passes_with_expected_results()
         JSON.stringify({"health": 61, "score": 120, "level": 3}),
         true
     ) as Dictionary
-    assert_that(bool(save_result.get("ok", false))).is_true()
-    assert_that(bool(save_result.get("uploaded", false))).is_true()
+    assert_that(save_result.get("ok", false) == true).is_true()
+    assert_that(save_result.get("uploaded", false) == true).is_true()
 
     bridge.call("SaveRaw", "auto:steam_report", JSON.stringify({"health": 1, "score": 0, "level": 1}))
     var load_result = bridge.call("LoadWithCloudSync", "auto:steam_report", "steam_report", true) as Dictionary
     var snapshot_text := _snapshot_text(bridge)
-    assert_that(bool(load_result.get("ok", false))).is_true()
+    assert_that(load_result.get("ok", false) == true).is_true()
     assert_that(str(load_result.get("loaded_from", ""))).is_equal("cloud")
     assert_that(snapshot_text).contains("\"health\":61")
     assert_that(snapshot_text).contains("\"score\":120")
@@ -61,7 +61,7 @@ func test_windows_baseline_cloud_sync_sample_flow_passes_with_expected_results()
         JSON.stringify({"health": 999, "score": 999, "level": 9}),
         true
     ) as Dictionary
-    assert_that(bool(reject_result.get("rejected", false))).is_true()
+    assert_that(reject_result.get("rejected", false) == true).is_true()
     assert_that(str(reject_result.get("reason_code", ""))).is_equal("ownership_mismatch")
 
     var op_ids = bridge.call("GetCloudOperationIds") as Array
@@ -79,8 +79,8 @@ func test_save_trigger_uploads_active_save_file_and_reports_success() -> void:
     ) as Dictionary
     var operation_id := str(bridge.call("LastCloudOperationId"))
 
-    assert_that(bool(result.get("ok", false))).is_true()
-    assert_that(bool(result.get("uploaded", false))).is_true()
+    assert_that(result.get("ok", false) == true).is_true()
+    assert_that(result.get("uploaded", false) == true).is_true()
     assert_that(operation_id).contains("steam-upload-")
 
 # acceptance: ACC:T26.17
@@ -91,9 +91,9 @@ func test_account_binding_enforces_single_auto_slot_per_account() -> void:
     var save_a2 = bridge.call("SaveWithCloudSync", "auto:shared", "steam_A", JSON.stringify({"health": 2, "score": 2, "level": 1}), false) as Dictionary
     var save_b = bridge.call("SaveWithCloudSync", "auto:shared", "steam_B", JSON.stringify({"health": 3, "score": 3, "level": 1}), false) as Dictionary
 
-    assert_that(bool(save_a1.get("ok", false))).is_true()
-    assert_that(bool(save_a2.get("ok", false))).is_true()
-    assert_that(bool(save_b.get("rejected", false))).is_true()
+    assert_that(save_a1.get("ok", false) == true).is_true()
+    assert_that(save_a2.get("ok", false) == true).is_true()
+    assert_that(save_b.get("rejected", false) == true).is_true()
     assert_that(str(save_b.get("reason_code", ""))).is_equal("ownership_mismatch")
 
 # acceptance: ACC:T26.19
@@ -116,8 +116,8 @@ func test_sync_flow_covers_cloud_sync_ownership_check_allow_and_reject_branches(
     ) as Dictionary
     var op_ids = bridge.call("GetCloudOperationIds") as Array
 
-    assert_that(bool(allow_result.get("ok", false))).is_true()
-    assert_that(bool(reject_result.get("rejected", false))).is_true()
+    assert_that(allow_result.get("ok", false) == true).is_true()
+    assert_that(reject_result.get("rejected", false) == true).is_true()
     assert_that(str(reject_result.get("reason_code", ""))).is_equal("ownership_mismatch")
     assert_that(op_ids.size()).is_equal(1)
 
@@ -131,7 +131,7 @@ func test_ownership_mismatch_aborts_sync_and_keeps_local_save_unchanged() -> voi
         JSON.stringify({"health": 10, "score": 10, "level": 1}),
         false
     ) as Dictionary
-    assert_that(bool(seed.get("ok", false))).is_true()
+    assert_that(seed.get("ok", false) == true).is_true()
     var before_state := _snapshot_text(bridge)
 
     var result: Dictionary = bridge.call(
@@ -144,7 +144,7 @@ func test_ownership_mismatch_aborts_sync_and_keeps_local_save_unchanged() -> voi
     var after_state := _snapshot_text(bridge)
     var op_ids = bridge.call("GetCloudOperationIds") as Array
 
-    assert_that(bool(result.get("rejected", false))).is_true()
+    assert_that(result.get("rejected", false) == true).is_true()
     assert_that(str(result.get("reason_code", ""))).is_equal("ownership_mismatch")
     assert_that(op_ids.size()).is_equal(0)
     assert_that(after_state).is_equal(before_state)
@@ -161,11 +161,11 @@ func test_no_valid_steam_login_skips_cloud_sync_with_user_visible_status_and_loc
     ) as Dictionary
     var load_result = bridge.call("LoadWithCloudSync", "auto:steam_missing", "steam_missing", true) as Dictionary
 
-    assert_that(bool(save_result.get("ok", true))).is_false()
+    assert_that(save_result.get("ok", true) == true).is_false()
     assert_that(str(save_result.get("reason_code", ""))).is_equal("steam_login_required")
     assert_that(str(bridge.call("LastCloudStatusCode"))).is_equal("steam_login_required")
     assert_that(str(bridge.call("LastCloudStatusMessage"))).contains("No valid Steam login")
-    assert_that(bool(load_result.get("ok", false))).is_true()
+    assert_that(load_result.get("ok", false) == true).is_true()
     assert_that(str(load_result.get("loaded_from", ""))).is_equal("local")
 
 # acceptance: ACC:T26.5
@@ -179,13 +179,13 @@ func test_uploaded_cloud_state_restores_after_local_state_is_replaced() -> void:
         JSON.stringify({"health": 61, "score": 120, "level": 3}),
         true
     ) as Dictionary
-    assert_that(bool(save_result.get("ok", false))).is_true()
+    assert_that(save_result.get("ok", false) == true).is_true()
 
     bridge.call("SaveRaw", slot, JSON.stringify({"health": 1, "score": 0, "level": 1}))
     var load_result = bridge.call("LoadWithCloudSync", slot, "steam_restore", true) as Dictionary
     var snapshot_text := _snapshot_text(bridge)
 
-    assert_that(bool(load_result.get("ok", false))).is_true()
+    assert_that(load_result.get("ok", false) == true).is_true()
     assert_that(str(load_result.get("loaded_from", ""))).is_equal("cloud")
     assert_that(snapshot_text).contains("\"health\":61")
     assert_that(snapshot_text).contains("\"score\":120")
@@ -210,7 +210,7 @@ func test_upload_failure_surfaces_status_and_preserves_local_state() -> void:
     var after_state := _snapshot_text(bridge)
     var after_load: String = str(bridge.call("LoadRaw", slot))
 
-    assert_that(bool(save_result.get("ok", true))).is_false()
+    assert_that(save_result.get("ok", true) == true).is_false()
     assert_that(str(save_result.get("reason_code", ""))).is_equal("steam_remote_storage_required")
     assert_that(str(save_result.get("status_message", ""))).contains("not Steam Remote Storage")
     assert_that(after_state).is_equal(before_state)
@@ -227,7 +227,7 @@ func test_download_failure_surfaces_status_and_preserves_local_state() -> void:
     var load_result = bridge.call("LoadWithCloudSync", slot, "steam_fail_download", true) as Dictionary
     var after_state := _snapshot_text(bridge)
 
-    assert_that(bool(load_result.get("ok", false))).is_true()
+    assert_that(load_result.get("ok", false) == true).is_true()
     assert_that(str(load_result.get("loaded_from", ""))).is_equal("local")
     assert_that(str(load_result.get("reason_code", ""))).is_equal("steam_remote_storage_required")
     assert_that(str(load_result.get("status_message", ""))).contains("not Steam Remote Storage")
@@ -246,7 +246,7 @@ func test_cross_account_read_write_overwrite_are_rejected_without_affecting_owne
         JSON.stringify({"health": 77, "score": 11, "level": 2}),
         true
     ) as Dictionary
-    assert_that(bool(owner_save.get("ok", false))).is_true()
+    assert_that(owner_save.get("ok", false) == true).is_true()
     var owner_before := _snapshot_text(bridge)
 
     var intruder_save = bridge.call(
@@ -259,9 +259,9 @@ func test_cross_account_read_write_overwrite_are_rejected_without_affecting_owne
     var intruder_load = bridge.call("LoadWithCloudSync", slot, "steam_intruder", true) as Dictionary
     var owner_after := _snapshot_text(bridge)
 
-    assert_that(bool(intruder_save.get("rejected", false))).is_true()
+    assert_that(intruder_save.get("rejected", false) == true).is_true()
     assert_that(str(intruder_save.get("reason_code", ""))).is_equal("ownership_mismatch")
-    assert_that(bool(intruder_load.get("rejected", false))).is_true()
+    assert_that(intruder_load.get("rejected", false) == true).is_true()
     assert_that(str(intruder_load.get("reason_code", ""))).is_equal("ownership_mismatch")
     assert_that(owner_after).is_equal(owner_before)
 
@@ -279,9 +279,9 @@ func test_local_workflow_remains_usable_when_cloud_unavailable() -> void:
     ) as Dictionary
     var load_result = bridge.call("LoadWithCloudSync", slot, "steam_local_only", true) as Dictionary
 
-    assert_that(bool(save_result.get("ok", true))).is_false()
+    assert_that(save_result.get("ok", true) == true).is_false()
     assert_that(str(save_result.get("reason_code", ""))).is_equal("steam_remote_storage_required")
-    assert_that(bool(load_result.get("ok", false))).is_true()
+    assert_that(load_result.get("ok", false) == true).is_true()
     assert_that(str(load_result.get("loaded_from", ""))).is_equal("local")
 
 # acceptance: ACC:T26.12
@@ -295,7 +295,7 @@ func test_empty_account_id_is_rejected_for_save_and_load_without_state_pollution
         JSON.stringify({"health": 48, "score": 8, "level": 1}),
         false
     ) as Dictionary
-    assert_that(bool(seeded.get("ok", false))).is_true()
+    assert_that(seeded.get("ok", false) == true).is_true()
     var before_state := _snapshot_text(bridge)
 
     var save_result = bridge.call(
@@ -308,9 +308,9 @@ func test_empty_account_id_is_rejected_for_save_and_load_without_state_pollution
     var load_result = bridge.call("LoadWithCloudSync", slot, "", true) as Dictionary
     var after_state := _snapshot_text(bridge)
 
-    assert_that(bool(save_result.get("ok", true))).is_false()
+    assert_that(save_result.get("ok", true) == true).is_false()
     assert_that(str(save_result.get("reason_code", ""))).is_equal("invalid_account")
-    assert_that(bool(load_result.get("ok", true))).is_false()
+    assert_that(load_result.get("ok", true) == true).is_false()
     assert_that(str(load_result.get("reason_code", ""))).is_equal("invalid_account")
     assert_that(after_state).is_equal(before_state)
 
@@ -330,7 +330,7 @@ func test_ownership_validation_rejects_mismatch_and_keeps_local_state_unchanged_
     ) as Dictionary
     var after_state := _snapshot_text(bridge)
 
-    assert_that(bool(rejected.get("rejected", false))).is_true()
+    assert_that(rejected.get("rejected", false) == true).is_true()
     assert_that(str(rejected.get("reason_code", ""))).is_equal("ownership_mismatch")
     assert_that(after_state).is_equal(before_state)
 
@@ -345,7 +345,7 @@ func test_metadata_validation_rejects_mismatch_for_same_owner_and_keeps_state_un
         JSON.stringify({"health": 42, "score": 6, "level": 1}),
         true
     ) as Dictionary
-    assert_that(bool(seeded.get("ok", false))).is_true()
+    assert_that(seeded.get("ok", false) == true).is_true()
     bridge.call("SaveRaw", slot, JSON.stringify({"health": 77, "score": 17, "level": 2}))
     var before_state := _snapshot_text(bridge)
     bridge.call(
@@ -359,7 +359,7 @@ func test_metadata_validation_rejects_mismatch_for_same_owner_and_keeps_state_un
     var rejected = bridge.call("LoadWithCloudSync", slot, "steam_owner15_meta", true) as Dictionary
     var after_state := _snapshot_text(bridge)
 
-    assert_that(bool(rejected.get("rejected", false))).is_true()
+    assert_that(rejected.get("rejected", false) == true).is_true()
     assert_that(str(rejected.get("reason_code", ""))).is_equal("metadata_mismatch")
     assert_that(str(rejected.get("operation_id", ""))).contains("steam-download-")
     assert_that(str(rejected.get("evidence_source", ""))).is_equal("metadata_binding_check")
@@ -421,9 +421,9 @@ func test_regression_chain_covers_upload_download_conflict_and_failure_recovery_
         true
     ) as Dictionary
 
-    assert_that(bool(upload.get("ok", false))).is_true()
+    assert_that(upload.get("ok", false) == true).is_true()
     assert_that(str(download.get("loaded_from", ""))).is_equal("cloud")
-    assert_that(bool(conflict.get("prompt_required", false))).is_true()
+    assert_that(conflict.get("prompt_required", false) == true).is_true()
     assert_that(str(failure.get("reason_code", ""))).is_equal("steam_remote_storage_required")
 
 # acceptance: ACC:T26.15
@@ -436,13 +436,13 @@ func test_load_rejects_owner_mismatch_and_keeps_state_unchanged() -> void:
         JSON.stringify({"health": 23, "score": 4, "level": 1}),
         false
     ) as Dictionary
-    assert_that(bool(seed.get("ok", false))).is_true()
+    assert_that(seed.get("ok", false) == true).is_true()
     var before_state := _snapshot_text(bridge)
 
     var load_result: Dictionary = bridge.call("LoadWithCloudSync", "auto:steam_owner_slot", "steam_intruder", true) as Dictionary
     var after_state := _snapshot_text(bridge)
 
-    assert_that(bool(load_result.get("ok", true))).is_false()
-    assert_that(bool(load_result.get("rejected", false))).is_true()
+    assert_that(load_result.get("ok", true) == true).is_false()
+    assert_that(load_result.get("rejected", false) == true).is_true()
     assert_that(str(load_result.get("reason_code", ""))).is_equal("ownership_mismatch")
     assert_that(after_state).is_equal(before_state)

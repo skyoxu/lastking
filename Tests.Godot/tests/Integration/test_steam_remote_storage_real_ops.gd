@@ -22,9 +22,9 @@ func test_cloud_enabled_save_load_route_through_account_bound_steam_storage() ->
 	var load_result = bridge.call("LoadWithCloudSync", "slot_1", "steam_user_1001", true) as Dictionary
 	var operation_ids = bridge.call("GetCloudOperationIds") as Array
 
-	assert_bool(bool(save_result.get("ok", false))).is_true()
-	assert_bool(bool(save_result.get("uploaded", false))).is_true()
-	assert_bool(bool(load_result.get("ok", false))).is_true()
+	assert_bool(save_result.get("ok", false) == true).is_true()
+	assert_bool(save_result.get("uploaded", false) == true).is_true()
+	assert_bool(load_result.get("ok", false) == true).is_true()
 	assert_str(str(load_result.get("loaded_from", ""))).is_equal("cloud")
 	assert_int(operation_ids.size()).is_equal(2)
 	assert_str(str(operation_ids[0])).contains("steam-upload-")
@@ -37,7 +37,7 @@ func test_cloud_sync_rejects_local_only_backend_for_logged_in_account() -> void:
 	var save_result = bridge.call("SaveWithCloudSync", "slot_2", "steam_user_1001", payload, true) as Dictionary
 	var operation_ids = bridge.call("GetCloudOperationIds") as Array
 
-	assert_bool(bool(save_result.get("ok", true))).is_false()
+	assert_bool(save_result.get("ok", true) == true).is_false()
 	assert_str(str(save_result.get("reason_code", ""))).is_equal("steam_remote_storage_required")
 	assert_str(str(save_result.get("backend", ""))).is_equal("LOCAL_MOCK")
 	assert_int(operation_ids.size()).is_equal(1)
@@ -51,11 +51,11 @@ func test_cloud_sync_reports_real_steam_remote_storage_evidence_when_runtime_has
 	var require_real_evidence := _require_real_steam_evidence_lane()
 
 	if Engine.has_singleton("Steam"):
-		assert_bool(bool(save_result.get("ok", false))).is_true()
-		assert_bool(bool(save_result.get("real_api_checked", false))).is_true()
+		assert_bool(save_result.get("ok", false) == true).is_true()
+		assert_bool(save_result.get("real_api_checked", false) == true).is_true()
 		assert_str(evidence_source).is_equal("steam_remote_storage_methods")
 	else:
-		assert_bool(bool(save_result.get("ok", true))).is_false()
+		assert_bool(save_result.get("ok", true) == true).is_false()
 		assert_str(str(save_result.get("reason_code", ""))).is_equal("steam_api_unavailable")
 		assert_str(evidence_source).contains("steam_singleton")
 		if require_real_evidence:
