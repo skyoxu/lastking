@@ -22,6 +22,7 @@ var _prompt_time_left: float = 0.0
 var _last_status_text: String = ""
 var _last_prompt_text: String = ""
 var _translate: Callable
+var _battle_hud: Node = null
 
 const HIT_FLASH_DURATION_SEC := 0.65
 const WALL_PRESSURE_DURATION_SEC := 2.4
@@ -43,6 +44,7 @@ func configure(screen: Control, bridge: Node, refs: Dictionary) -> void:
 	_local_prompt_label = refs["local_prompt_label"]
 	_path_points = refs["path_points"]
 	_translate = refs["translate"]
+	_battle_hud = _screen.get_node_or_null("BattleHud")
 	_apply_local_feedback_visuals()
 
 func process_frame(delta: float) -> void:
@@ -62,6 +64,7 @@ func clear_spawn_pulse() -> void:
 func render_summary(result: Dictionary, status_text: String) -> void:
 	_status_label.text = status_text
 	_summary_label.text = _t("battlemap.summary.title")
+	_push_formal_battle_hud_messages(result, status_text)
 	_last_status_text = status_text
 	_sync_local_feedback_from_summary(result, status_text)
 
@@ -82,6 +85,11 @@ func clear_local_prompt() -> void:
 	if _local_prompt_label != null:
 		_local_prompt_label.text = ""
 	_apply_local_feedback_visuals()
+
+func render_status_only(status_text: String) -> void:
+	_status_label.text = status_text
+	_last_status_text = status_text
+	_push_formal_battle_hud_messages(_try_bridge_summary(), status_text)
 
 func _render_actor_tokens() -> void:
 	var bridge: Node = _current_bridge()
@@ -228,11 +236,26 @@ func _try_bridge_summary() -> Dictionary:
 			return full
 	return {}
 
+func _push_formal_battle_hud_messages(result: Dictionary, status_text: String) -> void:
+	if _battle_hud == null:
+		return
+	if _battle_hud.has_method("SetBattleStatusMessage"):
+		_battle_hud.call("SetBattleStatusMessage", status_text)
+	if _battle_hud.has_method("SetBattleSummaryMessage"):
+		_battle_hud.call("SetBattleSummaryMessage", _compose_formal_summary(result))
+
+func _compose_formal_summary(result: Dictionary) -> String:
+	var castle_hp: int = int(result.get("castle_hp", 100))
+	var wall_hp: int = int(result.get("wall_hp", 20))
+	var enemies: int = int(result.get("enemy_units_spawned", 0))
+	var friendly: int = int(result.get("friendly_units_deployed", 0))
+	var exchanges: int = int(result.get("combat_exchanges", 0))
+	return "Castle HP=%d | Wall HP=%d | Allies=%d | Enemies=%d | Exchanges=%d" % [castle_hp, wall_hp, friendly, enemies, exchanges]
+
 func _current_bridge() -> Node:
 	if _bridge_provider.is_valid():
 		var provided: Variant = _bridge_provider.call()
 		if provided is Node:
 			return provided
 	return _bridge
-
 

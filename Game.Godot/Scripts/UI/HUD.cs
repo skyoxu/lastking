@@ -29,29 +29,32 @@ public partial class HUD : Control
     private EventBusAdapter? _bus;
     private Control _topBar = default!;
     private Label _day = default!;
+    private Label _phase = default!;
     private Label _cycleRemaining = default!;
     private Label _health = default!;
     private Label _speedStateLabel = default!;
+    private Button _settingsButton = default!;
     private PanelContainer _bottomBar = default!;
     private Label _combatCountsLabel = default!;
     private Label _moraleLabel = default!;
+    private Label _enemiesLabel = default!;
+    private Label _battlePressureSummaryLabel = default!;
+    private Label _battleSummaryLabel = default!;
+    private Label _battleReservedLabel = default!;
+    private Label _productionLabel = default!;
+    private Label _skillsHintLabel = default!;
     private Control _buildAction = default!;
-    private Label _buildStatusLabel = default!;
     private Control _buildCooldownMask = default!;
+    private Button _towerSlot = default!;
+    private Button _residenceSlot = default!;
     private Control _waveAction = default!;
-    private Label _waveStatusLabel = default!;
     private Control _waveCooldownMask = default!;
     private Control _exchangeAction = default!;
-    private Label _exchangeStatusLabel = default!;
     private Control _exchangeCooldownMask = default!;
     private Control _cleanupAction = default!;
-    private Label _cleanupStatusLabel = default!;
     private Control _cleanupCooldownMask = default!;
     private Control _finishAction = default!;
-    private Label _finishStatusLabel = default!;
     private Control _finishCooldownMask = default!;
-    private Control _backAction = default!;
-    private Label _backStatusLabel = default!;
     private Label _feedbackLabel = default!;
     private Control _feedbackLayer = default!;
     private PanelContainer _pressurePanel = default!;
@@ -82,6 +85,9 @@ public partial class HUD : Control
     private Button _pauseButton = default!;
     private Button _oneXButton = default!;
     private Button _twoXButton = default!;
+    private Label _buildingsTitleLabel = default!;
+    private Label _battleTitleLabel = default!;
+    private Label _skillsTitleLabel = default!;
     private GodotObject? _i18n;
     private string _localizedLocale = "en-US";
     private string _activeFeedbackCode = string.Empty;
@@ -112,6 +118,7 @@ public partial class HUD : Control
     private double _phaseElapsedSeconds;
     private bool _phaseCountdownEnabled = true;
     private bool _isDayPhase = true;
+    private bool _testPhaseOverrideActive;
     private CastleHpChanged? _lastCastleHpChanged;
     private WaveSpawned? _lastWaveSpawned;
     private ResourcesChanged? _lastResourcesChanged;
@@ -122,6 +129,8 @@ public partial class HUD : Control
     private float _waveCooldownMaskAlpha = 0f;
     private ulong _waveCooldownHideAtMs;
     private bool _battleHudActive;
+    private string _battleStatusOverride = string.Empty;
+    private string _battleSummaryOverride = string.Empty;
     private static readonly Vector2 FormalTopBarPosition = new(8f, 0f);
     private static readonly Vector2 FormalTopBarSize = new(1584f, 80f);
     private static readonly Vector2 FormalBottomBarPosition = new(8f, 704f);
@@ -137,29 +146,32 @@ public partial class HUD : Control
         }
         _topBar = GetNode<Control>("TopBar");
         _day = GetNode<Label>("TopBar/HBox/DayLabel");
+        _phase = GetNode<Label>("TopBar/HBox/PhaseLabel");
         _cycleRemaining = GetNode<Label>("TopBar/HBox/CycleRemainingLabel");
         _health = GetNode<Label>("TopBar/HBox/HealthLabel");
         _speedStateLabel = GetNode<Label>("TopBar/HBox/SpeedStateLabel");
+        _settingsButton = GetNode<Button>("TopBar/HBox/SettingsButton");
+        _enemiesLabel = GetNode<Label>("TopBar/HBox/EnemiesLabel");
         _bottomBar = GetNode<PanelContainer>("CombatHud/BottomBar");
-        _combatCountsLabel = GetNode<Label>("CombatHud/BottomBar/VBox/CombatCountsLabel");
-        _moraleLabel = GetNode<Label>("CombatHud/BottomBar/VBox/MoraleLabel");
-        _buildAction = GetNode<Control>("CombatHud/BottomBar/VBox/Actions/BuildAction");
-        _buildStatusLabel = GetNode<Label>("CombatHud/BottomBar/VBox/Actions/BuildAction/Frame/Content/Status");
-        _buildCooldownMask = GetNode<Control>("CombatHud/BottomBar/VBox/Actions/BuildAction/CooldownMask");
-        _waveAction = GetNode<Control>("CombatHud/BottomBar/VBox/Actions/WaveAction");
-        _waveStatusLabel = GetNode<Label>("CombatHud/BottomBar/VBox/Actions/WaveAction/Frame/Content/Status");
-        _waveCooldownMask = GetNode<Control>("CombatHud/BottomBar/VBox/Actions/WaveAction/CooldownMask");
-        _exchangeAction = GetNode<Control>("CombatHud/BottomBar/VBox/Actions/ExchangeAction");
-        _exchangeStatusLabel = GetNode<Label>("CombatHud/BottomBar/VBox/Actions/ExchangeAction/Frame/Content/Status");
-        _exchangeCooldownMask = GetNode<Control>("CombatHud/BottomBar/VBox/Actions/ExchangeAction/CooldownMask");
-        _cleanupAction = GetNode<Control>("CombatHud/BottomBar/VBox/Actions/CleanupAction");
-        _cleanupStatusLabel = GetNode<Label>("CombatHud/BottomBar/VBox/Actions/CleanupAction/Frame/Content/Status");
-        _cleanupCooldownMask = GetNode<Control>("CombatHud/BottomBar/VBox/Actions/CleanupAction/CooldownMask");
-        _finishAction = GetNode<Control>("CombatHud/BottomBar/VBox/Actions/FinishAction");
-        _finishStatusLabel = GetNode<Label>("CombatHud/BottomBar/VBox/Actions/FinishAction/Frame/Content/Status");
-        _finishCooldownMask = GetNode<Control>("CombatHud/BottomBar/VBox/Actions/FinishAction/CooldownMask");
-        _backAction = GetNode<Control>("CombatHud/BottomBar/VBox/Actions/BackAction");
-        _backStatusLabel = GetNode<Label>("CombatHud/BottomBar/VBox/Actions/BackAction/Frame/Content/Status");
+        _combatCountsLabel = GetNode<Label>("CombatHud/BottomBar/Root/BattlePanel/VBox/CountsRow/CombatCountsLabel");
+        _moraleLabel = GetNode<Label>("CombatHud/BottomBar/Root/BattlePanel/VBox/CountsRow/MoraleLabel");
+        _battlePressureSummaryLabel = GetNode<Label>("CombatHud/BottomBar/Root/BattlePanel/VBox/CountsRow/BattlePressureLabel");
+        _battleSummaryLabel = GetNode<Label>("CombatHud/BottomBar/Root/BattlePanel/VBox/SummaryLabel");
+        _battleReservedLabel = GetNode<Label>("CombatHud/BottomBar/Root/BattlePanel/VBox/ReservedLabel");
+        _productionLabel = GetNode<Label>("CombatHud/BottomBar/Root/BuildingsPanel/VBox/ProductionLabel");
+        _skillsHintLabel = GetNode<Label>("CombatHud/BottomBar/Root/SkillsPanel/VBox/HintLabel");
+        _buildAction = GetNode<Control>("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/BuildAction");
+        _buildCooldownMask = GetNode<Control>("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/BuildAction/CooldownMask");
+        _towerSlot = GetNode<Button>("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/TowerSlot");
+        _residenceSlot = GetNode<Button>("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/ResidenceSlot");
+        _waveAction = GetNode<Control>("CombatHud/BottomBar/Root/SkillsPanel/VBox/SkillButtons/WaveAction");
+        _waveCooldownMask = GetNode<Control>("CombatHud/BottomBar/Root/SkillsPanel/VBox/SkillButtons/WaveAction/CooldownMask");
+        _exchangeAction = GetNode<Control>("CombatHud/BottomBar/Root/SkillsPanel/VBox/SkillButtons/ExchangeAction");
+        _exchangeCooldownMask = GetNode<Control>("CombatHud/BottomBar/Root/SkillsPanel/VBox/SkillButtons/ExchangeAction/CooldownMask");
+        _cleanupAction = GetNode<Control>("CombatHud/BottomBar/Root/SkillsPanel/VBox/SkillButtons/CleanupAction");
+        _cleanupCooldownMask = GetNode<Control>("CombatHud/BottomBar/Root/SkillsPanel/VBox/SkillButtons/CleanupAction/CooldownMask");
+        _finishAction = GetNode<Control>("CombatHud/BottomBar/Root/SkillsPanel/VBox/SkillButtons/FinishAction");
+        _finishCooldownMask = GetNode<Control>("CombatHud/BottomBar/Root/SkillsPanel/VBox/SkillButtons/FinishAction/CooldownMask");
         _feedbackLayer = GetNode<Control>("FeedbackLayer");
         _feedbackLabel = GetNode<Label>("FeedbackLayer/FeedbackLabel");
         _pressurePanel = GetNode<PanelContainer>("FeedbackLayer/PressurePanel");
@@ -190,24 +202,36 @@ public partial class HUD : Control
         _pauseButton = GetNode<Button>("TopBar/HBox/SpeedControls/PauseButton");
         _oneXButton = GetNode<Button>("TopBar/HBox/SpeedControls/OneXButton");
         _twoXButton = GetNode<Button>("TopBar/HBox/SpeedControls/TwoXButton");
+        _buildingsTitleLabel = GetNode<Label>("CombatHud/BottomBar/Root/BuildingsPanel/VBox/TitleLabel");
+        _battleTitleLabel = GetNode<Label>("CombatHud/BottomBar/Root/BattlePanel/VBox/TitleLabel");
+        _skillsTitleLabel = GetNode<Label>("CombatHud/BottomBar/Root/SkillsPanel/VBox/TitleLabel");
         SetupLocalization();
         RenderDay();
+        RenderPhase();
         RenderCycleRemaining();
-        _health.Text = $"{T("hud.hp")}: 100";
+        _health.Text = $"{T("hud.hp")}: 100/100";
+        _moraleLabel.Text = $"{T("hud.morale")}: 100/100";
         _bottomBar.Visible = true;
-        _combatCountsLabel.Text = $"{T("hud.enemies")}: 0";
-        _moraleLabel.Text = $"{T("hud.castle")}: 100/100";
+        _combatCountsLabel.Text = $"{T("hud.allies")}: 0 | {T("hud.enemies")}: 0";
+        _enemiesLabel.Text = $"{T("hud.enemies")}: 0";
+        _battlePressureSummaryLabel.Text = $"{T("hud.pressure")}: calm";
+        _battleSummaryLabel.Text = $"Day 1 | {CurrentPhaseDisplayText()}";
+        _battleReservedLabel.Text = T("hud.talent_state_info");
+        _productionLabel.Text = T("hud.production_ready");
+        _skillsHintLabel.Text = T("hud.skill_commands");
+        _towerSlot.Visible = false;
+        _residenceSlot.Visible = false;
         _speedStateLabel.Text = $"{T("hud.speed_state")}: {T("hud.speed_1x")}";
         _pauseButton.Pressed += OnPausePressed;
         _oneXButton.Pressed += OnOneXPressed;
         _twoXButton.Pressed += OnTwoXPressed;
+        _settingsButton.Pressed += () => RequestBattleAction("open_settings");
         _dismissButton.Pressed += OnDismissFeedbackPressed;
         _buildAction.GuiInput += (@event) => OnBattleActionGuiInput(@event, "build");
         _waveAction.GuiInput += (@event) => OnBattleActionGuiInput(@event, "wave");
         _exchangeAction.GuiInput += (@event) => OnBattleActionGuiInput(@event, "exchange");
         _cleanupAction.GuiInput += (@event) => OnBattleActionGuiInput(@event, "cleanup");
         _finishAction.GuiInput += (@event) => OnBattleActionGuiInput(@event, "finish");
-        _backAction.GuiInput += (@event) => OnBattleActionGuiInput(@event, "back");
         _feedbackLabel.Visible = false;
         _feedbackLabel.Text = string.Empty;
         _feedbackLayer.Visible = true;
@@ -234,7 +258,6 @@ public partial class HUD : Control
         _resourceSummaryLabel.Text = $"{T("hud.resources")}: gold=n/a iron=n/a pop=n/a";
         _buildSummaryLabel.Text = $"{T("hud.build")}: tax=n/a total_gold=n/a";
         _progressionSummaryLabel.Text = $"{T("hud.progression")}: tech=n/a reward=n/a";
-        _backStatusLabel.Text = "Menu";
         ApplyActionAvailability(
             buildAvailable: true,
             waveAvailable: true,
@@ -270,6 +293,7 @@ public partial class HUD : Control
             _i18n?.Call("switch_locale", _localizedLocale);
             ApplyLocalizedStaticTexts();
             RenderDay();
+            RenderPhase();
             RenderCycleRemaining();
         }
 
@@ -277,7 +301,7 @@ public partial class HUD : Control
         RefreshBottomBarFromRuntime();
         TickCooldownMasks(Math.Max(0d, delta));
 
-        if (!_phaseCountdownEnabled || delta <= 0d)
+        if (_testPhaseOverrideActive || !_phaseCountdownEnabled || delta <= 0d)
         {
             UpdateFeedbackVisibility();
             return;
@@ -350,9 +374,10 @@ public partial class HUD : Control
                 var day = ReadInt(doc.RootElement, "day", "Day", "day_number", "DayNumber");
                 if (day.HasValue)
                 {
-                _currentDay = Math.Clamp(day.Value, 1, 15);
+                    _currentDay = Math.Clamp(day.Value, 1, 15);
                     _isDayPhase = type == EventTypes.LastkingDayStarted;
                     RenderDay();
+                    RenderPhase();
                 }
 
                 _phaseDurationSeconds = type == EventTypes.LastkingNightStarted
@@ -392,7 +417,7 @@ public partial class HUD : Control
             var hp = ReadInt(doc.RootElement, "current_hp", "CurrentHp", "value", "health");
             if (hp.HasValue)
             {
-                _health.Text = $"{T("hud.hp")}: {hp.Value}";
+                _health.Text = $"{T("hud.hp")}: {Math.Clamp(hp.Value, 0, 100)}/100";
                 UpdatePressureLabelFromHp(hp.Value);
                 var hpRunId = ReadString(doc.RootElement, "RunId", "run_id") ?? "runtime";
                 var hpDay = ReadInt(doc.RootElement, "DayNumber", "day", "Day") ?? _currentDay;
@@ -661,10 +686,22 @@ public partial class HUD : Control
         var runtimeSummary = TryGetActiveBattleSummary();
         var operationController = TryGetActiveOperationController();
         var current = ReadSummaryInt(runtimeSummary, "enemy_units_spawned", _lastWaveSpawned?.SpawnCount ?? 0);
-        _combatCountsLabel.Text = $"{T("hud.enemies")}: {current}";
+        var friendlyUnits = ReadSummaryInt(runtimeSummary, "friendly_units_deployed", 0);
+        _combatCountsLabel.Text = $"{T("hud.allies")}: {friendlyUnits} | {T("hud.enemies")}: {current}";
+        _enemiesLabel.Text = $"{T("hud.enemies")}: {current}";
         var runtimeCastleHp = ReadSummaryInt(runtimeSummary, "castle_hp", _lastCastleHpChanged?.CurrentHp ?? 100);
-        _health.Text = $"{T("hud.hp")}: {Math.Clamp(runtimeCastleHp, 0, 100)}";
-        _moraleLabel.Text = $"{T("hud.castle")}: {Math.Clamp(runtimeCastleHp, 0, 100)}/100";
+        var clampedCastleHp = Math.Clamp(runtimeCastleHp, 0, 100);
+        _health.Text = $"{T("hud.hp")}: {clampedCastleHp}/100";
+        _moraleLabel.Text = $"{T("hud.morale")}: {clampedCastleHp}/100";
+        _battlePressureSummaryLabel.Text = $"{T("hud.pressure")}: {_currentPressureState}";
+        _battleSummaryLabel.Text = string.IsNullOrWhiteSpace(_battleStatusOverride)
+            ? $"{T("hud.day")} {_currentDay} | {CurrentPhaseDisplayText()}"
+            : _battleStatusOverride;
+        _battleReservedLabel.Text = string.IsNullOrWhiteSpace(_battleSummaryOverride)
+            ? T("hud.talent_state_info")
+            : _battleSummaryOverride;
+        _productionLabel.Text = T("hud.production_ready");
+        _skillsHintLabel.Text = T("hud.skill_commands");
 
         var phaseStatuses = TryGetBattleHudPhaseStatuses(operationController);
         var buildAvailable = ReadDictionaryBool(phaseStatuses, "build_available", true);
@@ -678,14 +715,6 @@ public partial class HUD : Control
             exchangeAvailable,
             cleanupAvailable,
             finishAvailable);
-
-        _buildStatusLabel.Text = ReadDictionaryString(phaseStatuses, "build_status", "Ready");
-        _waveStatusLabel.Text = _waveCooldownHideAtMs > 0
-            ? "Cooldown"
-            : ReadDictionaryString(phaseStatuses, "wave_status", "Ready");
-        _exchangeStatusLabel.Text = ReadDictionaryString(phaseStatuses, "exchange_status", "Locked");
-        _cleanupStatusLabel.Text = ReadDictionaryString(phaseStatuses, "cleanup_status", "Locked");
-        _finishStatusLabel.Text = ReadDictionaryString(phaseStatuses, "finish_status", "Locked");
     }
 
     private void ApplyActionAvailability(bool buildAvailable, bool waveAvailable, bool exchangeAvailable, bool cleanupAvailable, bool finishAvailable)
@@ -695,6 +724,26 @@ public partial class HUD : Control
         _exchangeAction.Modulate = new Color(1f, 1f, 1f, exchangeAvailable ? 1f : 0.5f);
         _cleanupAction.Modulate = new Color(1f, 1f, 1f, cleanupAvailable ? 1f : 0.5f);
         _finishAction.Modulate = new Color(1f, 1f, 1f, finishAvailable ? 1f : 0.5f);
+        if (_buildAction is BaseButton buildButton)
+        {
+            buildButton.Disabled = !buildAvailable;
+        }
+        if (_waveAction is BaseButton waveButton)
+        {
+            waveButton.Disabled = !waveAvailable;
+        }
+        if (_exchangeAction is BaseButton exchangeButton)
+        {
+            exchangeButton.Disabled = !exchangeAvailable;
+        }
+        if (_cleanupAction is BaseButton cleanupButton)
+        {
+            cleanupButton.Disabled = !cleanupAvailable;
+        }
+        if (_finishAction is BaseButton finishButton)
+        {
+            finishButton.Disabled = !finishAvailable;
+        }
     }
 
     private static int ReadSummaryInt(GDictionary summary, string key, int fallback)
@@ -892,6 +941,25 @@ public partial class HUD : Control
         ApplyBattleHudActiveState(active);
     }
 
+    public void SetBattleStatusMessage(string text)
+    {
+        _battleStatusOverride = text?.Trim() ?? string.Empty;
+        RefreshBottomBarFromRuntime();
+    }
+
+    public void SetBattleSummaryMessage(string text)
+    {
+        _battleSummaryOverride = text?.Trim() ?? string.Empty;
+        RefreshBottomBarFromRuntime();
+    }
+
+    public void ClearBattleSurfaceMessages()
+    {
+        _battleStatusOverride = string.Empty;
+        _battleSummaryOverride = string.Empty;
+        RefreshBottomBarFromRuntime();
+    }
+
     private void SyncBattleHudActiveState()
     {
         var shouldBeActive = ShouldBattleHudBeActive();
@@ -916,12 +984,12 @@ public partial class HUD : Control
             var globalHud = main.GetNodeOrNull<Control>("RuntimeUi/HUD");
             if (globalHud != null && ReferenceEquals(this, globalHud))
             {
-                return ResolveActiveBattleScreen() != null;
+                return ResolveActiveBattleScreen() == null;
             }
 
             if (owningBattleScreen != null)
             {
-                return globalHud == null;
+                return true;
             }
 
             return false;
@@ -953,7 +1021,7 @@ public partial class HUD : Control
 
     private bool IsBattleMapHudContext()
     {
-        return ResolveActiveBattleScreen() != null;
+        return ResolveOwningBattleScreen() != null;
     }
 
     private void HideLegacyFeedbackPanelsForBattleMap()
@@ -1361,15 +1429,19 @@ public partial class HUD : Control
 
     private void RenderDay()
     {
-        var phaseLabel = _isDayPhase ? "Day" : "Night";
-        _day.Text = $"{phaseLabel} {_currentDay}";
+        _day.Text = $"{T("hud.day")}: {_currentDay}";
+    }
+
+    private void RenderPhase()
+    {
+        _phase.Text = $"{T("hud.phase")}: {CurrentPhaseDisplayText()}";
     }
 
     private void RenderCycleRemaining()
     {
         var remaining = Math.Max(0d, _phaseDurationSeconds - _phaseElapsedSeconds);
-        var phaseLabel = _isDayPhase ? "Day" : "Night";
-        _cycleRemaining.Text = $"{T("hud.cycle_remaining")} ({phaseLabel}): {remaining:0.0}s";
+        var remainingLabelKey = _isDayPhase ? "hud.day_remaining" : "hud.night_remaining";
+        _cycleRemaining.Text = $"{T(remainingLabelKey)}: {remaining:0.0}s";
     }
 
     public void SetDay(int day)
@@ -1382,24 +1454,51 @@ public partial class HUD : Control
     {
         _currentDay = Math.Clamp(day, 1, 15);
         _isDayPhase = isDay;
+        _testPhaseOverrideActive = true;
         _phaseCountdownEnabled = false;
         _phaseElapsedSeconds = 0d;
         _phaseDurationSeconds = Math.Max(0d, remainingSeconds);
         RenderDay();
+        RenderPhase();
         RenderCycleRemaining();
     }
 
     public void SetCycleRemainingSeconds(double seconds)
     {
+        _testPhaseOverrideActive = true;
         _phaseCountdownEnabled = false;
         _phaseElapsedSeconds = 0d;
         _phaseDurationSeconds = Math.Max(0d, seconds);
         RenderCycleRemaining();
     }
 
+    public void SyncRuntimePhase(int day, bool isDay, double remainingSeconds)
+    {
+        if (_testPhaseOverrideActive)
+        {
+            return;
+        }
+
+        _testPhaseOverrideActive = false;
+        _currentDay = Math.Clamp(day, 1, 15);
+        _isDayPhase = isDay;
+        _phaseCountdownEnabled = true;
+        _phaseDurationSeconds = Math.Max(0d, remainingSeconds);
+        _phaseElapsedSeconds = 0d;
+        RenderDay();
+        RenderPhase();
+        RenderCycleRemaining();
+    }
+
     public void SetHealth(int hp)
     {
-        _health.Text = $"{T("hud.hp")}: {hp}";
+        _health.Text = $"{T("hud.hp")}: {Math.Clamp(hp, 0, 100)}/100";
+        _moraleLabel.Text = $"{T("hud.morale")}: {Math.Clamp(hp, 0, 100)}/100";
+    }
+
+    private string CurrentPhaseDisplayText()
+    {
+        return _isDayPhase ? T("hud.phase.day") : T("hud.phase.night");
     }
 
     public void ApplyConfigAuditView(global::Godot.Collections.Dictionary payload)
@@ -1477,6 +1576,13 @@ public partial class HUD : Control
         _pauseButton.Text = T("hud.pause");
         _oneXButton.Text = T("hud.speed_1x");
         _twoXButton.Text = T("hud.speed_2x");
+        _settingsButton.Text = T("hud.settings");
+        _buildingsTitleLabel.Text = T("hud.buildings");
+        _battleTitleLabel.Text = T("hud.battle");
+        _skillsTitleLabel.Text = T("hud.skills");
+        _battleReservedLabel.Text = T("hud.talent_state_info");
+        _productionLabel.Text = T("hud.production_ready");
+        _skillsHintLabel.Text = T("hud.skill_commands");
         _dismissButton.Text = T("hud.dismiss");
         _configAuditRefreshButton.Text = T("hud.refresh_audit");
         _migrationRetryButton.Text = T("hud.retry_migration");

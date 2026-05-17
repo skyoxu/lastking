@@ -7,18 +7,9 @@ func configure(refs: Dictionary) -> void:
 
 func build_refs() -> Dictionary:
 	return {
-		"title": _screen.get_node("Margin/VBox/Title"),
-		"status": _screen.get_node("Margin/VBox/Status"),
-		"summary": _screen.get_node("Margin/VBox/Summary"),
-		"legend": _screen.get_node("Margin/VBox/Legend"),
-		"metrics_help": _screen.get_node("Margin/VBox/MetricsHelp"),
-		"build_btn": _screen.get_node("Margin/VBox/Controls/BuildBtn"),
-		"wave_btn": _screen.get_node("Margin/VBox/Controls/WaveBtn"),
-		"auto_wave_btn": _screen.get_node("Margin/VBox/Controls/AutoWaveBtn"),
-		"exchange_btn": _screen.get_node("Margin/VBox/Controls/ExchangeBtn"),
-		"cleanup_btn": _screen.get_node("Margin/VBox/Controls/CleanupBtn"),
-		"finish_btn": _screen.get_node("Margin/VBox/Controls/FinishBtn"),
-		"back_btn": _screen.get_node("Margin/VBox/Controls/BackBtn"),
+		"title": _screen.get_node("LegacyPrototypeRoot/VBox/Title"),
+		"status": _screen.get_node("LegacyPrototypeRoot/VBox/Status"),
+		"summary": _screen.get_node("LegacyPrototypeRoot/VBox/Summary"),
 		"background": _screen.get_node("Background"),
 		"enemy_spawn_a": _screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnA"),
 		"enemy_spawn_b": _screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnB"),
