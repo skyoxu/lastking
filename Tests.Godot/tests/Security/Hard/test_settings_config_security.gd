@@ -50,8 +50,8 @@ func _source_scan_gate_result() -> Dictionary:
     for file_path in files:
         var source: String = FileAccess.get_file_as_string(file_path)
         var probe: Dictionary = _source_scan_probe(source)
-        has_config_access = has_config_access and bool(probe["uses_config"])
-        has_hardcoded_balance = has_hardcoded_balance or bool(probe["has_hardcoded_balance"])
+        has_config_access = has_config_access and probe["uses_config"] == true
+        has_hardcoded_balance = has_hardcoded_balance or probe["has_hardcoded_balance"] == true
 
     var passed: bool = has_config_access and not has_hardcoded_balance
     return {
@@ -104,16 +104,16 @@ func _runtime_regression_gate_result() -> Dictionary:
     }
 
 func _combine_gate_results(source_scan: Dictionary, runtime_regression: Dictionary) -> Dictionary:
-    if not bool(source_scan["passed"]):
+    if source_scan["passed"] != true:
         return {"passed": false, "reason_code": source_scan["reason_code"]}
-    if not bool(runtime_regression["passed"]):
+    if runtime_regression["passed"] != true:
         return {"passed": false, "reason_code": runtime_regression["reason_code"]}
     return {"passed": true, "reason_code": "CFG_GATE_OK"}
 
 func test_settings_security_source_scan_fails_when_hardcoded_constants_exist() -> void:
     var probe: Dictionary = _source_scan_probe("var day1_budget = 50")
-    assert_bool(bool(probe["uses_config"])).is_false()
-    assert_bool(bool(probe["has_hardcoded_balance"])).is_true()
+    assert_bool(probe["uses_config"] == true).is_false()
+    assert_bool(probe["has_hardcoded_balance"] == true).is_true()
 
 func _write_balance_file(path: String, payload: Dictionary) -> void:
     var file: FileAccess = FileAccess.open(path, FileAccess.WRITE)
