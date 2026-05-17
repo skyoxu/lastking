@@ -26,12 +26,12 @@ func test_loads_definitions_from_external_json_without_hardcoded_injection() -> 
 		_valid_external_config_json()
 	) as Dictionary
 
-	assert_that(bool(status.get("ok", false))).is_true()
+	assert_that(status.get("ok", false) == true).is_true()
 	assert_that(status.get("ids", [])).is_equal(["first_blood", "perfect_wave"])
 
 
 func test_invalid_external_reload_keeps_previous_external_definitions_unchanged() -> void:
 	var bridge := _new_bridge()
 	var invalid_result = bridge.call("SimulateLoadDefinitionsFromJson", "..\\outside-config.json", _valid_external_config_json()) as Dictionary
-	assert_that(bool(invalid_result.get("ok", true))).is_false()
+	assert_that(invalid_result.get("ok", true) == true).is_false()
 	assert_that(str(invalid_result.get("error", ""))).contains("path traversal")

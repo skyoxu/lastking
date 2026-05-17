@@ -30,7 +30,7 @@ func _state_dict(json_text: String) -> Dictionary:
 func test_serialized_payload_includes_version_and_all_runtime_fields() -> void:
     var bridge = _new_bridge()
 
-    assert_bool(bool(bridge.call("SaveToSlot", AUTOSAVE_PATH, _seed_state_json()))).is_true()
+    assert_bool(bridge.call("SaveToSlot", AUTOSAVE_PATH, _seed_state_json()) == true).is_true()
     var raw := str(bridge.call("LoadRaw", AUTOSAVE_PATH))
     assert_bool(raw.length() > 0).is_true()
 
@@ -61,7 +61,7 @@ func test_roundtrip_restores_state_seed_and_wave_timer_exactly() -> void:
     var day_before := int(bridge.call("CurrentDay"))
     var phase_before := str(bridge.call("CurrentPhase"))
 
-    assert_bool(bool(bridge.call("SaveToSlot", AUTOSAVE_PATH, _seed_state_json()))).is_true()
+    assert_bool(bridge.call("SaveToSlot", AUTOSAVE_PATH, _seed_state_json()) == true).is_true()
 
     var reset_state = JSON.stringify({
         "id": "reset-state",
@@ -73,9 +73,9 @@ func test_roundtrip_restores_state_seed_and_wave_timer_exactly() -> void:
         "y": 0.0
     })
     bridge.call("ResetRuntime", "task25-roundtrip-state-seed-wave", false, 777, 10, 10, 15)
-    assert_bool(bool(bridge.call("SaveToSlot", "user://tmp-reset-slot.save", reset_state))).is_true()
+    assert_bool(bridge.call("SaveToSlot", "user://tmp-reset-slot.save", reset_state) == true).is_true()
 
-    assert_bool(bool(bridge.call("LoadSlot", AUTOSAVE_PATH))).is_true()
+    assert_bool(bridge.call("LoadSlot", AUTOSAVE_PATH) == true).is_true()
     var after_state := _state_dict(str(bridge.call("SnapshotStateJson")))
 
     assert_that(after_state.get("id")).is_equal("seed-wave-state")

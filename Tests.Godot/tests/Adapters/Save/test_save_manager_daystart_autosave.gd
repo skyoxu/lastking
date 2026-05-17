@@ -25,8 +25,8 @@ func _save_slot_writes(bridge: Node) -> Array:
 func test_day_start_triggers_exactly_one_autosave_write_attempt() -> void:
     var bridge = _new_bridge()
 
-    var first = bool(bridge.call("HandleDayStartAutoSave", 1))
-    var second = bool(bridge.call("HandleDayStartAutoSave", 1))
+    var first = bridge.call("HandleDayStartAutoSave", 1) == true
+    var second = bridge.call("HandleDayStartAutoSave", 1) == true
     var writes := _save_slot_writes(bridge)
 
     assert_bool(first).is_true()
@@ -38,23 +38,23 @@ func test_day_start_triggers_exactly_one_autosave_write_attempt() -> void:
 func test_repeated_day_start_keeps_same_autosave_path_and_no_extra_slot_files() -> void:
     var bridge = _new_bridge()
 
-    assert_bool(bool(bridge.call("HandleDayStartAutoSave", 1))).is_true()
-    assert_bool(bool(bridge.call("HandleDayStartAutoSave", 2))).is_true()
-    assert_bool(bool(bridge.call("HandleDayStartAutoSave", 3))).is_true()
+    assert_bool(bridge.call("HandleDayStartAutoSave", 1) == true).is_true()
+    assert_bool(bridge.call("HandleDayStartAutoSave", 2) == true).is_true()
+    assert_bool(bridge.call("HandleDayStartAutoSave", 3) == true).is_true()
 
     var writes := _save_slot_writes(bridge)
     assert_that(writes.size()).is_equal(3)
     for key in writes:
         assert_that(str(key)).is_equal(AUTOSAVE_PATH)
 
-    assert_bool(bool(bridge.call("SlotExists", AUTOSAVE_PATH))).is_true()
-    assert_bool(bool(bridge.call("SlotExists", EXTRA_SLOT_PATH))).is_false()
+    assert_bool(bridge.call("SlotExists", AUTOSAVE_PATH) == true).is_true()
+    assert_bool(bridge.call("SlotExists", EXTRA_SLOT_PATH) == true).is_false()
 
 # ACC:T25.4
 func test_first_day_start_creates_user_autosave_save_file() -> void:
     var bridge = _new_bridge()
 
-    assert_bool(bool(bridge.call("HandleDayStartAutoSave", 1))).is_true()
-    assert_bool(bool(bridge.call("SlotExists", AUTOSAVE_PATH))).is_true()
+    assert_bool(bridge.call("HandleDayStartAutoSave", 1) == true).is_true()
+    assert_bool(bridge.call("SlotExists", AUTOSAVE_PATH) == true).is_true()
     var raw = str(bridge.call("LoadRaw", AUTOSAVE_PATH))
     assert_bool(raw.length() > 0).is_true()

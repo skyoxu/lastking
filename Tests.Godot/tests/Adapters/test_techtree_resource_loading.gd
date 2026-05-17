@@ -42,7 +42,7 @@ func test_load_valid_techtree_json_resource_exposes_exact_runtime_shape() -> voi
     assert_int(typeof(load_result)).is_equal(TYPE_DICTIONARY)
 
     var result = Dictionary(load_result)
-    assert_bool(bool(result.get("ok", false))).is_true()
+    assert_bool(result.get("ok", false) == true).is_true()
 
     var runtime = Dictionary(result.get("runtime", {}))
     var node_ids = Array(runtime.get("node_ids", []))
@@ -79,5 +79,5 @@ func test_manager_rejects_in_memory_payload_to_preserve_resource_loading_ownersh
     assert_int(typeof(reject_result)).is_equal(TYPE_DICTIONARY)
 
     var result = Dictionary(reject_result)
-    assert_bool(bool(result.get("ok", true))).is_false()
+    assert_bool(result.get("ok", true) == true).is_false()
     assert_str(str(result.get("error_code", ""))).is_equal("TECHTREE_RESOURCE_PATH_REQUIRED")
