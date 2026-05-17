@@ -205,6 +205,7 @@ public partial class HUD : Control
         _buildingsTitleLabel = GetNode<Label>("CombatHud/BottomBar/Root/BuildingsPanel/VBox/TitleLabel");
         _battleTitleLabel = GetNode<Label>("CombatHud/BottomBar/Root/BattlePanel/VBox/TitleLabel");
         _skillsTitleLabel = GetNode<Label>("CombatHud/BottomBar/Root/SkillsPanel/VBox/TitleLabel");
+        ConfigurePauseSafeProcessModes();
         SetupLocalization();
         RenderDay();
         RenderPhase();
@@ -215,22 +216,46 @@ public partial class HUD : Control
         _combatCountsLabel.Text = $"{T("hud.allies")}: 0 | {T("hud.enemies")}: 0";
         _enemiesLabel.Text = $"{T("hud.enemies")}: 0";
         _battlePressureSummaryLabel.Text = $"{T("hud.pressure")}: calm";
-        _battleSummaryLabel.Text = $"Day 1 | {CurrentPhaseDisplayText()}";
+        _battleSummaryLabel.Text = $"{T("hud.day")} 1 | {CurrentPhaseDisplayText()}";
         _battleReservedLabel.Text = T("hud.talent_state_info");
         _productionLabel.Text = T("hud.production_ready");
         _skillsHintLabel.Text = T("hud.skill_commands");
-        _towerSlot.Visible = false;
-        _residenceSlot.Visible = false;
+        _towerSlot.Visible = true;
+        _residenceSlot.Visible = true;
+        _towerSlot.Disabled = false;
+        _residenceSlot.Disabled = false;
+        _towerSlot.Text = T("hud.build_slot.tower");
+        _residenceSlot.Text = T("hud.build_slot.residence");
         _speedStateLabel.Text = $"{T("hud.speed_state")}: {T("hud.speed_1x")}";
         _pauseButton.Pressed += OnPausePressed;
         _oneXButton.Pressed += OnOneXPressed;
         _twoXButton.Pressed += OnTwoXPressed;
         _settingsButton.Pressed += () => RequestBattleAction("open_settings");
         _dismissButton.Pressed += OnDismissFeedbackPressed;
+        if (_buildAction is Button buildButton)
+        {
+            buildButton.Pressed += () => RequestBattleAction("build");
+        }
         _buildAction.GuiInput += (@event) => OnBattleActionGuiInput(@event, "build");
+        if (_waveAction is Button waveButton)
+        {
+            waveButton.Pressed += () => RequestBattleAction("wave");
+        }
         _waveAction.GuiInput += (@event) => OnBattleActionGuiInput(@event, "wave");
+        if (_exchangeAction is Button exchangeButton)
+        {
+            exchangeButton.Pressed += () => RequestBattleAction("exchange");
+        }
         _exchangeAction.GuiInput += (@event) => OnBattleActionGuiInput(@event, "exchange");
+        if (_cleanupAction is Button cleanupButton)
+        {
+            cleanupButton.Pressed += () => RequestBattleAction("cleanup");
+        }
         _cleanupAction.GuiInput += (@event) => OnBattleActionGuiInput(@event, "cleanup");
+        if (_finishAction is Button finishButton)
+        {
+            finishButton.Pressed += () => RequestBattleAction("finish");
+        }
         _finishAction.GuiInput += (@event) => OnBattleActionGuiInput(@event, "finish");
         _feedbackLabel.Visible = false;
         _feedbackLabel.Text = string.Empty;
@@ -702,6 +727,8 @@ public partial class HUD : Control
             : _battleSummaryOverride;
         _productionLabel.Text = T("hud.production_ready");
         _skillsHintLabel.Text = T("hud.skill_commands");
+        _towerSlot.Text = T("hud.build_slot.tower");
+        _residenceSlot.Text = T("hud.build_slot.residence");
 
         var phaseStatuses = TryGetBattleHudPhaseStatuses(operationController);
         var buildAvailable = ReadDictionaryBool(phaseStatuses, "build_available", true);
@@ -720,7 +747,10 @@ public partial class HUD : Control
     private void ApplyActionAvailability(bool buildAvailable, bool waveAvailable, bool exchangeAvailable, bool cleanupAvailable, bool finishAvailable)
     {
         _buildAction.Modulate = new Color(1f, 1f, 1f, buildAvailable ? 1f : 0.5f);
-        _waveAction.Modulate = new Color(1f, 1f, 1f, waveAvailable ? 1f : 0.5f);
+        var waveAlpha = _waveCooldownHideAtMs > 0
+            ? 0.5f
+            : waveAvailable ? 1f : 0.5f;
+        _waveAction.Modulate = new Color(1f, 1f, 1f, waveAlpha);
         _exchangeAction.Modulate = new Color(1f, 1f, 1f, exchangeAvailable ? 1f : 0.5f);
         _cleanupAction.Modulate = new Color(1f, 1f, 1f, cleanupAvailable ? 1f : 0.5f);
         _finishAction.Modulate = new Color(1f, 1f, 1f, finishAvailable ? 1f : 0.5f);
@@ -915,6 +945,14 @@ public partial class HUD : Control
             return;
         }
 
+        if (string.Equals(actionCode, "wave", StringComparison.OrdinalIgnoreCase))
+        {
+            _waveCooldownMaskAlpha = 1f;
+            _waveCooldownHideAtMs = Time.GetTicksMsec() + WaveCooldownPulseDurationMs;
+            _waveAction.Modulate = new Color(1f, 1f, 1f, 0.5f);
+            SetCooldownMask(_waveCooldownMask, true, _waveCooldownMaskAlpha);
+        }
+
         EmitSignal(BattleActionRequestedSignal, actionCode);
         TryRouteBattleActionThroughActiveCoordinator(actionCode);
     }
@@ -1051,6 +1089,40 @@ public partial class HUD : Control
         _bottomBar.Visible = active;
         _feedbackLayer.Visible = active;
         MouseFilter = active ? MouseFilterEnum.Pass : MouseFilterEnum.Ignore;
+    }
+
+    private void ConfigurePauseSafeProcessModes()
+    {
+        ProcessMode = ProcessModeEnum.Always;
+        _topBar.ProcessMode = ProcessModeEnum.Always;
+        _bottomBar.ProcessMode = ProcessModeEnum.Always;
+        _feedbackLayer.ProcessMode = ProcessModeEnum.Always;
+        _pauseButton.ProcessMode = ProcessModeEnum.Always;
+        _oneXButton.ProcessMode = ProcessModeEnum.Always;
+        _twoXButton.ProcessMode = ProcessModeEnum.Always;
+        _settingsButton.ProcessMode = ProcessModeEnum.Always;
+        if (_buildAction is Node buildActionNode)
+        {
+            buildActionNode.ProcessMode = ProcessModeEnum.Always;
+        }
+        if (_waveAction is Node waveActionNode)
+        {
+            waveActionNode.ProcessMode = ProcessModeEnum.Always;
+        }
+        if (_exchangeAction is Node exchangeActionNode)
+        {
+            exchangeActionNode.ProcessMode = ProcessModeEnum.Always;
+        }
+        if (_cleanupAction is Node cleanupActionNode)
+        {
+            cleanupActionNode.ProcessMode = ProcessModeEnum.Always;
+        }
+        if (_finishAction is Node finishActionNode)
+        {
+            finishActionNode.ProcessMode = ProcessModeEnum.Always;
+        }
+        _towerSlot.ProcessMode = ProcessModeEnum.Always;
+        _residenceSlot.ProcessMode = ProcessModeEnum.Always;
     }
 
     private void ApplyFormalBattleHudBands()
@@ -1583,6 +1655,8 @@ public partial class HUD : Control
         _battleReservedLabel.Text = T("hud.talent_state_info");
         _productionLabel.Text = T("hud.production_ready");
         _skillsHintLabel.Text = T("hud.skill_commands");
+        _towerSlot.Text = T("hud.build_slot.tower");
+        _residenceSlot.Text = T("hud.build_slot.residence");
         _dismissButton.Text = T("hud.dismiss");
         _configAuditRefreshButton.Text = T("hud.refresh_audit");
         _migrationRetryButton.Text = T("hud.retry_migration");

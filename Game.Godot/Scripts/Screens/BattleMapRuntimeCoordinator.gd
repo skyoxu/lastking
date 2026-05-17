@@ -24,6 +24,9 @@ func configure(refs: Dictionary) -> void:
 
 func initialize_runtime() -> void:
 	_presentation_controller.call("sync_locale_and_texts")
+	var manager: Node = get_node_or_null("/root/GameManager")
+	if manager != null and manager.has_method("SetOneX"):
+		manager.call("SetOneX")
 	var bridge: Node = _current_bridge()
 	if bridge != null and bridge.has_method("ResetForInteractiveRun"):
 		bridge.call("ResetForInteractiveRun")
@@ -90,5 +93,4 @@ func _current_bridge() -> Node:
 		if provided is Node:
 			return provided
 	return null
-
 

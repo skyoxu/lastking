@@ -88,32 +88,32 @@ theme_override_constants/separation = 12
 [node name="DayLabel" type="Label" parent="TopBar/HBox"]
 layout_mode = 2
 theme_override_styles/normal = SubResource("3_metric_chip_style")
-text = "hud.day: 1"
+text = "Day: 1"
 
 [node name="PhaseLabel" type="Label" parent="TopBar/HBox"]
 layout_mode = 2
 theme_override_styles/normal = SubResource("3_metric_chip_style")
-text = "hud.phase: Day"
+text = "Phase: Day"
 
 [node name="CycleRemainingLabel" type="Label" parent="TopBar/HBox"]
 layout_mode = 2
 theme_override_styles/normal = SubResource("3_metric_chip_style")
-text = "hud.cycle_remaining: 240.0s"
+text = "Day Remaining: 240.0s"
 
 [node name="HealthLabel" type="Label" parent="TopBar/HBox"]
 layout_mode = 2
 theme_override_styles/normal = SubResource("3_metric_chip_style")
-text = "hud.hp: 100/100"
+text = "HP: 100/100"
 
 [node name="EnemiesLabel" type="Label" parent="TopBar/HBox"]
 layout_mode = 2
 theme_override_styles/normal = SubResource("3_metric_chip_style")
-text = "hud.enemies: 0"
+text = "Enemies: 0"
 
 [node name="SpeedStateLabel" type="Label" parent="TopBar/HBox"]
 layout_mode = 2
 theme_override_styles/normal = SubResource("3_metric_chip_style")
-text = "hud.speed_state: 1x"
+text = "Speed: 1x"
 
 [node name="Spacer" type="Control" parent="TopBar/HBox"]
 custom_minimum_size = Vector2(24, 0)
@@ -138,7 +138,7 @@ text = "2x"
 
 [node name="SettingsButton" type="Button" parent="TopBar/HBox"]
 layout_mode = 2
-text = "hud.settings"
+text = "Settings"
 
 [node name="CombatHud" type="Control" parent="."]
 layout_mode = 1
@@ -183,7 +183,7 @@ theme_override_constants/separation = 10
 
 [node name="TitleLabel" type="Label" parent="CombatHud/BottomBar/Root/BuildingsPanel/VBox"]
 layout_mode = 2
-text = "hud.buildings"
+text = "Buildings"
 
 [node name="BuildButtons" type="HBoxContainer" parent="CombatHud/BottomBar/Root/BuildingsPanel/VBox"]
 layout_mode = 2
@@ -192,7 +192,7 @@ theme_override_constants/separation = 8
 [node name="BuildAction" type="Button" parent="CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons"]
 custom_minimum_size = Vector2(100, 44)
 layout_mode = 2
-text = "hud.build"
+text = "Build"
 
 [node name="CooldownMask" type="ColorRect" parent="CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/BuildAction"]
 visible = false
@@ -208,19 +208,17 @@ color = Color(0, 0, 0, 0.45)
 [node name="TowerSlot" type="Button" parent="CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons"]
 custom_minimum_size = Vector2(100, 44)
 layout_mode = 2
-disabled = true
-text = "Tower"
+text = "Tower Slot"
 
 [node name="ResidenceSlot" type="Button" parent="CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons"]
 custom_minimum_size = Vector2(100, 44)
 layout_mode = 2
-disabled = true
-text = "Residence"
+text = "Residence Slot"
 
 [node name="ProductionLabel" type="Label" parent="CombatHud/BottomBar/Root/BuildingsPanel/VBox"]
 layout_mode = 2
 autowrap_mode = 3
-text = "hud.production: scripted battle buildings"
+text = "Build towers, barracks, and residence from this panel"
 
 [node name="BattlePanel" type="PanelContainer" parent="CombatHud/BottomBar/Root"]
 custom_minimum_size = Vector2(520, 0)
@@ -234,7 +232,7 @@ theme_override_constants/separation = 10
 
 [node name="TitleLabel" type="Label" parent="CombatHud/BottomBar/Root/BattlePanel/VBox"]
 layout_mode = 2
-text = "hud.battle"
+text = "Battle"
 
 [node name="CountsRow" type="HBoxContainer" parent="CombatHud/BottomBar/Root/BattlePanel/VBox"]
 layout_mode = 2
@@ -243,7 +241,7 @@ theme_override_constants/separation = 8
 [node name="CombatCountsLabel" type="Label" parent="CombatHud/BottomBar/Root/BattlePanel/VBox/CountsRow"]
 layout_mode = 2
 theme_override_styles/normal = SubResource("3_metric_chip_style")
-text = "Enemies: 0/99"
+text = "Allies: 0 | Enemies: 0"
 
 [node name="MoraleLabel" type="Label" parent="CombatHud/BottomBar/Root/BattlePanel/VBox/CountsRow"]
 layout_mode = 2
@@ -258,12 +256,12 @@ text = "Pressure: calm"
 [node name="SummaryLabel" type="Label" parent="CombatHud/BottomBar/Root/BattlePanel/VBox"]
 layout_mode = 2
 autowrap_mode = 3
-text = "hud.summary: day 1 | phase day"
+text = "Day 1 | Day"
 
 [node name="ReservedLabel" type="Label" parent="CombatHud/BottomBar/Root/BattlePanel/VBox"]
 layout_mode = 2
 autowrap_mode = 3
-text = "hud.reserved: talent and state slots reserved"
+text = "Talent and battlefield state info"
 
 [node name="SkillsPanel" type="PanelContainer" parent="CombatHud/BottomBar/Root"]
 custom_minimum_size = Vector2(420, 0)
@@ -277,7 +275,7 @@ theme_override_constants/separation = 10
 
 [node name="TitleLabel" type="Label" parent="CombatHud/BottomBar/Root/SkillsPanel/VBox"]
 layout_mode = 2
-text = "hud.skills"
+text = "Skills"
 
 [node name="SkillButtons" type="HBoxContainer" parent="CombatHud/BottomBar/Root/SkillsPanel/VBox"]
 layout_mode = 2
@@ -350,7 +348,7 @@ color = Color(0, 0, 0, 0.45)
 [node name="HintLabel" type="Label" parent="CombatHud/BottomBar/Root/SkillsPanel/VBox"]
 layout_mode = 2
 autowrap_mode = 3
-text = "hud.skill_hint: battle commands and placeholder skill slots"
+text = "Wave, exchange, cleanup, and finish commands"
 
 [node name="FeedbackLayer" type="Control" parent="."]
 layout_mode = 1

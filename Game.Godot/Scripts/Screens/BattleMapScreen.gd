@@ -24,12 +24,16 @@ var _path_points: PackedVector2Array = PackedVector2Array(
 )
 var _resume_speed_scale_percent: int = 100
 var _resume_was_paused: bool = false
+var _last_locale: String = ""
 
 func _ready() -> void:
 	_apply_formal_screen_frame()
 	_configure_controllers()
 	_hide_legacy_runtime_hud_panels()
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	if _battle_settings_menu != null:
+		_configure_battle_settings_menu_runtime()
+		_apply_battle_settings_texts()
 		_battle_settings_menu.visible = false
 		var return_btn: Button = _battle_settings_menu.get_node_or_null("VBox/Buttons/ReturnToGameBtn")
 		var main_menu_btn: Button = _battle_settings_menu.get_node_or_null("VBox/Buttons/ReturnToMainMenuBtn")
@@ -45,6 +49,7 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	_runtime_coordinator.call("process_runtime_frame", delta)
+	_sync_scene_locale_texts()
 
 func _configure_controllers() -> void:
 	_refs_provider.call("configure", {
@@ -114,7 +119,9 @@ func _configure_controllers() -> void:
 		"feedback_controller": _feedback_controller,
 		"navigation_controller": _navigation_controller,
 		"daily_settlement_modal": refs["daily_settlement_modal"],
+		"daily_settlement_title": refs["daily_settlement_title"],
 		"daily_settlement_summary": refs["daily_settlement_summary"],
+		"daily_evidence_title": refs["daily_evidence_title"],
 		"daily_evidence_hp": refs["daily_evidence_hp"],
 		"daily_evidence_kills": refs["daily_evidence_kills"],
 		"daily_evidence_reward_summary": refs["daily_evidence_reward_summary"],
@@ -125,6 +132,7 @@ func _configure_controllers() -> void:
 		"daily_reward_a": refs["daily_reward_a"],
 		"daily_reward_b": refs["daily_reward_b"],
 		"daily_reward_c": refs["daily_reward_c"],
+		"daily_hint": refs["daily_hint"],
 		"victory_outcome_modal": refs["victory_outcome_modal"],
 		"victory_outcome_title": refs["victory_outcome_title"],
 		"victory_outcome_summary": refs["victory_outcome_summary"],
@@ -137,6 +145,9 @@ func _configure_controllers() -> void:
 		"defeat_outcome_hint": refs["defeat_outcome_hint"],
 		"defeat_return_btn": refs["defeat_return_btn"],
 		"defeat_restart_btn": refs["defeat_restart_btn"],
+		"battle_settings_title": refs["battle_settings_title"],
+		"battle_settings_return_btn": refs["battle_settings_return_btn"],
+		"battle_settings_main_menu_btn": refs["battle_settings_main_menu_btn"],
 	})
 	_outcome_controller.call("set_process_modes")
 	_outcome_controller.call("connect_signals")
@@ -237,6 +248,7 @@ func _on_battlefield_slot_clicked(slot_id: String) -> void:
 		_selection_controller.call("select_formal_building_slot", slot_id)
 
 func open_battle_settings_menu() -> void:
+	_apply_battle_settings_texts()
 	var manager: Node = get_node_or_null("/root/GameManager")
 	if manager != null and manager.has_method("GetSpeedState"):
 		var state: Variant = manager.call("GetSpeedState")
@@ -273,3 +285,47 @@ func _on_return_to_main_menu_pressed() -> void:
 	if manager != null and manager.has_method("SetOneX"):
 		manager.call("SetOneX")
 	_navigation_controller.call("navigate_back_to_main_menu")
+
+func _configure_battle_settings_menu_runtime() -> void:
+	_battle_settings_menu.process_mode = Node.PROCESS_MODE_ALWAYS
+	var backdrop: Control = _battle_settings_menu.get_node_or_null("Backdrop")
+	if backdrop != null:
+		backdrop.process_mode = Node.PROCESS_MODE_ALWAYS
+	var vbox: Control = _battle_settings_menu.get_node_or_null("VBox")
+	if vbox != null:
+		vbox.process_mode = Node.PROCESS_MODE_ALWAYS
+	var return_btn: Button = _battle_settings_menu.get_node_or_null("VBox/Buttons/ReturnToGameBtn")
+	if return_btn != null:
+		return_btn.process_mode = Node.PROCESS_MODE_ALWAYS
+	var main_menu_btn: Button = _battle_settings_menu.get_node_or_null("VBox/Buttons/ReturnToMainMenuBtn")
+	if main_menu_btn != null:
+		main_menu_btn.process_mode = Node.PROCESS_MODE_ALWAYS
+	var settings_panel: Node = _battle_settings_menu.get_node_or_null("VBox/Panel/SettingsPanel")
+	if settings_panel != null:
+		settings_panel.process_mode = Node.PROCESS_MODE_ALWAYS
+
+func _sync_scene_locale_texts() -> void:
+	var locale: String = _normalize_locale(str(TranslationServer.get_locale()))
+	if locale == _last_locale:
+		return
+	_last_locale = locale
+	_apply_battle_settings_texts()
+
+func _apply_battle_settings_texts() -> void:
+	if _battle_settings_menu == null:
+		return
+	var title: Label = _battle_settings_menu.get_node_or_null("VBox/Title")
+	if title != null:
+		title.text = _presentation_controller.call("translate", "battlemap.settings.title")
+	var return_btn: Button = _battle_settings_menu.get_node_or_null("VBox/Buttons/ReturnToGameBtn")
+	if return_btn != null:
+		return_btn.text = _presentation_controller.call("translate", "battlemap.settings.return_to_game")
+	var main_menu_btn: Button = _battle_settings_menu.get_node_or_null("VBox/Buttons/ReturnToMainMenuBtn")
+	if main_menu_btn != null:
+		main_menu_btn.text = _presentation_controller.call("translate", "battlemap.settings.return_to_main_menu")
+
+func _normalize_locale(locale: String) -> String:
+	var v: String = locale.strip_edges().to_lower()
+	if v == "zh" or v.begins_with("zh"):
+		return "zh-CN"
+	return "en-US"
