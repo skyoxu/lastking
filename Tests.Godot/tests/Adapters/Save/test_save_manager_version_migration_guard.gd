@@ -20,7 +20,7 @@ func _seed_slot(bridge: Node) -> void:
         "x": 3.25,
         "y": 7.5
     })
-    assert_bool(bool(bridge.call("SaveToSlot", AUTOSAVE_PATH, state_json))).is_true()
+    assert_bool(bridge.call("SaveToSlot", AUTOSAVE_PATH, state_json) == true).is_true()
 
 func _make_incompatible_payload(raw_json: String) -> String:
     var source := raw_json
@@ -36,9 +36,9 @@ func test_load_validates_version_before_runtime_mutation() -> void:
     var raw = str(bridge.call("LoadRaw", AUTOSAVE_PATH))
     assert_bool(raw.length() > 0).is_true()
     var incompatible = _make_incompatible_payload(raw)
-    assert_bool(bool(bridge.call("SaveRaw", AUTOSAVE_PATH, incompatible))).is_true()
+    assert_bool(bridge.call("SaveRaw", AUTOSAVE_PATH, incompatible) == true).is_true()
 
-    var ok = bool(bridge.call("LoadWithFeedback", AUTOSAVE_PATH))
+    var ok = bridge.call("LoadWithFeedback", AUTOSAVE_PATH) == true
     var reason = str(bridge.call("LastLoadReasonCode"))
     var after_state = str(bridge.call("SnapshotStateJson"))
 
@@ -54,9 +54,9 @@ func test_incompatible_version_is_rejected_with_reason_and_runtime_state_unchang
 
     var raw = str(bridge.call("LoadRaw", AUTOSAVE_PATH))
     var incompatible = _make_incompatible_payload(raw)
-    assert_bool(bool(bridge.call("SaveRaw", AUTOSAVE_PATH, incompatible))).is_true()
+    assert_bool(bridge.call("SaveRaw", AUTOSAVE_PATH, incompatible) == true).is_true()
 
-    var ok = bool(bridge.call("LoadWithFeedback", AUTOSAVE_PATH))
+    var ok = bridge.call("LoadWithFeedback", AUTOSAVE_PATH) == true
     var reason = str(bridge.call("LastLoadReasonCode"))
     var message_key = str(bridge.call("LastFeedbackMessageKey"))
     var after_state = str(bridge.call("SnapshotStateJson"))

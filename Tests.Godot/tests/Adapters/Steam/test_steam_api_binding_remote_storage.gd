@@ -22,8 +22,8 @@ func test_requires_remote_storage_operation_ids_to_verify_real_api_calls() -> vo
 	var load_result = bridge.call("LoadWithCloudSync", "slot_binding", "steam_binding", true) as Dictionary
 	var operation_ids = bridge.call("GetCloudOperationIds") as Array
 
-	assert_that(bool(save_result.get("ok", false))).is_true()
-	assert_that(bool(load_result.get("ok", false))).is_true()
+	assert_that(save_result.get("ok", false) == true).is_true()
+	assert_that(load_result.get("ok", false) == true).is_true()
 	assert_that(str(load_result.get("loaded_from", ""))).is_equal("cloud")
 	assert_that(operation_ids.size()).is_equal(2)
 	assert_that(str(operation_ids[0])).contains("steam-upload-")
@@ -35,7 +35,7 @@ func test_rejects_local_only_mock_backend_even_if_operation_names_match() -> voi
 	var verdict = bridge.call("SaveWithCloudSync", "slot_binding_reject", "steam_binding", payload, true) as Dictionary
 	var operation_ids = bridge.call("GetCloudOperationIds") as Array
 
-	assert_that(bool(verdict.get("ok", true))).is_false()
+	assert_that(verdict.get("ok", true) == true).is_false()
 	assert_that(str(verdict.get("reason_code", ""))).is_equal("steam_remote_storage_required")
 	assert_that(str(verdict.get("backend", ""))).is_equal("LOCAL_MOCK")
 	assert_that(operation_ids.size()).is_equal(1)
@@ -46,8 +46,8 @@ func test_accepts_real_remote_storage_evidence_for_logged_in_account() -> void:
 	var save_result = bridge.call("SaveWithCloudSync", "slot_binding_accept", "steam_binding", payload, true) as Dictionary
 	var operation_ids = bridge.call("GetCloudOperationIds") as Array
 
-	assert_that(bool(save_result.get("ok", false))).is_true()
-	assert_that(bool(save_result.get("uploaded", false))).is_true()
+	assert_that(save_result.get("ok", false) == true).is_true()
+	assert_that(save_result.get("uploaded", false) == true).is_true()
 	assert_that(str(save_result.get("reason_code", ""))).is_equal("ok")
 	assert_that(operation_ids.size()).is_equal(1)
 	assert_that(str(operation_ids[0])).contains("steam-upload-")
@@ -59,11 +59,11 @@ func test_requires_real_api_probe_when_strict_evidence_mode_enabled() -> void:
 	var require_real_evidence := _require_real_steam_evidence_lane()
 
 	if Engine.has_singleton("Steam"):
-		assert_that(bool(result.get("ok", false))).is_true()
-		assert_that(bool(result.get("real_api_checked", false))).is_true()
+		assert_that(result.get("ok", false) == true).is_true()
+		assert_that(result.get("real_api_checked", false) == true).is_true()
 		assert_that(str(result.get("evidence_source", ""))).is_equal("steam_remote_storage_methods")
 	else:
-		assert_that(bool(result.get("ok", true))).is_false()
+		assert_that(result.get("ok", true) == true).is_false()
 		assert_that(str(result.get("reason_code", ""))).is_equal("steam_api_unavailable")
 		assert_that(str(result.get("evidence_source", ""))).contains("steam_singleton")
 		if require_real_evidence:

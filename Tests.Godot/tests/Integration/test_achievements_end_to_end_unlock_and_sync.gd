@@ -49,8 +49,8 @@ func test_unlocks_only_when_deterministic_conditions_are_met() -> void:
 
 	var city_builder := _find_row(rows, "city_builder")
 	var turn_runner := _find_row(rows, "turn_runner")
-	assert_bool(bool(city_builder.get("unlocked", false))).is_true()
-	assert_bool(bool(turn_runner.get("unlocked", false))).is_false()
+	assert_bool(city_builder.get("unlocked", false) == true).is_true()
+	assert_bool(turn_runner.get("unlocked", false) == true).is_false()
 
 
 # acceptance: ACC:T27.2
@@ -94,7 +94,7 @@ func test_achievement_list_reflects_locked_and_unlocked_state() -> void:
 	var initial_rows: Array = initial.get("rows", [])
 	var before_city_builder: Dictionary = _find_row(initial_rows, "city_builder")
 	assert_that(before_city_builder.is_empty()).is_false()
-	assert_that(bool(before_city_builder.get("unlocked", true))).is_false()
+	assert_that(before_city_builder.get("unlocked", true) == true).is_false()
 
 	var updated = bridge.call(
 		"EvaluateVisibilityAndUnlock",
@@ -107,4 +107,4 @@ func test_achievement_list_reflects_locked_and_unlocked_state() -> void:
 	var updated_rows: Array = updated.get("rows", [])
 	var after_city_builder: Dictionary = _find_row(updated_rows, "city_builder")
 	assert_that(after_city_builder.is_empty()).is_false()
-	assert_that(bool(after_city_builder.get("unlocked", false))).is_true()
+	assert_that(after_city_builder.get("unlocked", false) == true).is_true()

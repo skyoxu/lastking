@@ -20,16 +20,16 @@ func _seed_slot(bridge: Node) -> void:
         "x": 12.5,
         "y": -1.5
     })
-    assert_bool(bool(bridge.call("SaveToSlot", AUTOSAVE_PATH, state_json))).is_true()
+    assert_bool(bridge.call("SaveToSlot", AUTOSAVE_PATH, state_json) == true).is_true()
 
 # ACC:T25.7
 # ACC:T45.4
 func test_load_returns_deterministic_failure_feedback_and_unchanged_state_when_autosave_missing() -> void:
     var bridge = _new_bridge()
     var before_state = str(bridge.call("SnapshotStateJson"))
-    assert_bool(bool(bridge.call("DeleteSlot", AUTOSAVE_PATH))).is_true()
+    assert_bool(bridge.call("DeleteSlot", AUTOSAVE_PATH) == true).is_true()
 
-    var ok = bool(bridge.call("LoadWithFeedback", AUTOSAVE_PATH))
+    var ok = bridge.call("LoadWithFeedback", AUTOSAVE_PATH) == true
     var reason = str(bridge.call("LastLoadReasonCode"))
     var message_key = str(bridge.call("LastFeedbackMessageKey"))
     var after_state = str(bridge.call("SnapshotStateJson"))
@@ -46,9 +46,9 @@ func test_load_fails_with_explicit_feedback_and_no_partial_state_on_corrupt_cont
     var bridge = _new_bridge()
     _seed_slot(bridge)
     var before_state = str(bridge.call("SnapshotStateJson"))
-    assert_bool(bool(bridge.call("SaveRaw", AUTOSAVE_PATH, "{ invalid json payload"))).is_true()
+    assert_bool(bridge.call("SaveRaw", AUTOSAVE_PATH, "{ invalid json payload") == true).is_true()
 
-    var ok = bool(bridge.call("LoadWithFeedback", AUTOSAVE_PATH))
+    var ok = bridge.call("LoadWithFeedback", AUTOSAVE_PATH) == true
     var reason = str(bridge.call("LastLoadReasonCode"))
     var message_key = str(bridge.call("LastFeedbackMessageKey"))
     var after_state = str(bridge.call("SnapshotStateJson"))
@@ -66,7 +66,7 @@ func test_load_reports_explicit_deserialization_failure_and_keeps_state_unchange
     var before_state = str(bridge.call("SnapshotStateJson"))
     bridge.call("SimulateNextLoadIoFailure")
 
-    var ok = bool(bridge.call("LoadWithFeedback", AUTOSAVE_PATH))
+    var ok = bridge.call("LoadWithFeedback", AUTOSAVE_PATH) == true
     var reason = str(bridge.call("LastLoadReasonCode"))
     var message_key = str(bridge.call("LastFeedbackMessageKey"))
     var after_state = str(bridge.call("SnapshotStateJson"))

@@ -20,7 +20,7 @@ func test_rejects_write_to_alternate_slot_path() -> void:
     add_child(auto_free(sut))
     sut.call("ResetRuntime", "task45-autosave-slot-path", false, 20250425, 10, 10, 15)
 
-    var accepted := bool(sut.call("SaveToSlot", "user://slot_2.save", JSON.stringify({
+    var accepted := sut.call("SaveToSlot", "user://slot_2.save", JSON.stringify({
         "id": "slot-2",
         "level": 2,
         "score": 10,
@@ -28,13 +28,13 @@ func test_rejects_write_to_alternate_slot_path() -> void:
         "inventory": ["wood"],
         "x": 1.0,
         "y": 2.0
-    })))
+    })) == true
 
     assert_bool(accepted).is_false()
     var writes: Array = sut.call("GetObservedWriteKeys")
     assert_that(writes.size()).is_equal(0)
-    assert_bool(bool(sut.call("SlotExists", "user://slot_2.save"))).is_false()
-    assert_bool(bool(sut.call("SlotExists", AUTOSAVE_PATH))).is_false()
+    assert_bool(sut.call("SlotExists", "user://slot_2.save") == true).is_false()
+    assert_bool(sut.call("SlotExists", AUTOSAVE_PATH) == true).is_false()
 
 # ACC:T45.2
 # acceptance: ACC:T25.4
@@ -44,9 +44,9 @@ func test_day_start_autosave_keeps_single_fixed_path_and_no_extra_slot_files() -
     add_child(auto_free(sut))
     sut.call("ResetRuntime", "task45-daystart-autosave", false, 20250425, 10, 10, 15)
 
-    assert_bool(bool(sut.call("HandleDayStartAutoSave", 1))).is_true()
-    assert_bool(bool(sut.call("HandleDayStartAutoSave", 2))).is_true()
-    assert_bool(bool(sut.call("HandleDayStartAutoSave", 3))).is_true()
+    assert_bool(sut.call("HandleDayStartAutoSave", 1) == true).is_true()
+    assert_bool(sut.call("HandleDayStartAutoSave", 2) == true).is_true()
+    assert_bool(sut.call("HandleDayStartAutoSave", 3) == true).is_true()
 
     var writes: Array = sut.call("GetObservedWriteKeys")
     var slot_writes: Array[String] = []
@@ -59,5 +59,5 @@ func test_day_start_autosave_keeps_single_fixed_path_and_no_extra_slot_files() -
     assert_that(slot_writes.size()).is_equal(3)
     assert_that(unique.size()).is_equal(1)
     assert_str(unique[0]).is_equal(AUTOSAVE_PATH)
-    assert_bool(bool(sut.call("SlotExists", AUTOSAVE_PATH))).is_true()
-    assert_bool(bool(sut.call("SlotExists", "user://autosave_day_2.save"))).is_false()
+    assert_bool(sut.call("SlotExists", AUTOSAVE_PATH) == true).is_true()
+    assert_bool(sut.call("SlotExists", "user://autosave_day_2.save") == true).is_false()

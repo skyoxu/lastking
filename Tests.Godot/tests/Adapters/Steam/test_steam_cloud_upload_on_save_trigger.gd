@@ -23,8 +23,8 @@ func test_save_trigger_uploads_active_save_to_steam_cloud_and_reports_success() 
 	var operation_id := str(bridge.call("LastCloudOperationId"))
 	var operation_ids := bridge.call("GetCloudOperationIds") as Array
 
-	assert_bool(bool(result.get("ok", false))).is_true()
-	assert_bool(bool(result.get("uploaded", false))).is_true()
+	assert_bool(result.get("ok", false) == true).is_true()
+	assert_bool(result.get("uploaded", false) == true).is_true()
 	assert_str(str(result.get("reason_code", ""))).is_equal("ok")
 	assert_str(operation_id).contains("steam-upload-")
 	assert_int(operation_ids.size()).is_equal(1)
@@ -40,7 +40,7 @@ func test_save_trigger_reports_failure_when_backend_is_not_remote_storage() -> v
 	) as Dictionary
 	var operation_ids := bridge.call("GetCloudOperationIds") as Array
 
-	assert_bool(bool(result.get("ok", true))).is_false()
-	assert_bool(bool(result.get("uploaded", true))).is_false()
+	assert_bool(result.get("ok", true) == true).is_false()
+	assert_bool(result.get("uploaded", true) == true).is_false()
 	assert_str(str(result.get("reason_code", ""))).is_equal("steam_remote_storage_required")
 	assert_int(operation_ids.size()).is_equal(1)

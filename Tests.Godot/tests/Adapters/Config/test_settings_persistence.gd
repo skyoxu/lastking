@@ -97,7 +97,7 @@ func test_settings_uses_deterministic_default_values_when_optional_keys_missing(
 
 func _apply_ordered_snapshot(previous_snapshot: Dictionary, payload: String) -> Dictionary:
     var parsed := _try_parse_settings_payload(payload, previous_snapshot)
-    if bool(parsed["ok"]):
+    if parsed["ok"] == true:
         var source := "reload"
         if previous_snapshot.is_empty():
             source = "initial"
