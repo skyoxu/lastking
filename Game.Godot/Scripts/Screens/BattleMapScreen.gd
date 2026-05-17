@@ -80,6 +80,7 @@ func _configure_controllers() -> void:
 		"operation_controller": _operation_controller,
 		"navigation_controller": _navigation_controller,
 		"hud": get_node_or_null("BattleHud"),
+		"selection_controller": _selection_controller,
 	})
 	_runtime_coordinator.call("configure", {
 		"bridge_provider": Callable(_bridge_provider, "resolve_current_bridge"),

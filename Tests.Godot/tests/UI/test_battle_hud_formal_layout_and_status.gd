@@ -248,6 +248,37 @@ func test_battle_hud_bottom_bar_should_present_formal_three_column_layout() -> v
 	assert_bool(tower_slot.disabled).is_false()
 	assert_bool(residence_slot.disabled).is_false()
 
+func test_battle_hud_building_palette_buttons_should_drive_formal_selection_feedback() -> void:
+	var runtime := await _main_runtime()
+	var screen: Control = runtime["screen"]
+	var hud: Control = runtime["hud"]
+	var battlefield_view: Node = screen.get_node("Background")
+	var tower_slot: Button = hud.get_node("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/TowerSlot")
+	var residence_slot: Button = hud.get_node("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/ResidenceSlot")
+
+	hud.call("RequestBattleAction", "select_tower")
+	await _await_frames(2)
+
+	var tower_building: Dictionary = battlefield_view.call("read_slot_visual", "InnerCastleRegionSlot_03_00")
+	var tower_range: Dictionary = battlefield_view.call("read_slot_visual", "InnerCastleRegionSlot_04_00")
+	var tower_blocked_range: Dictionary = battlefield_view.call("read_slot_visual", "InnerCastleRegionSlot_05_00")
+	assert_bool(str(tower_building["selection_owner"]) == "tower_alpha").is_true()
+	assert_bool(str(tower_building["selection_category"]) == "defense").is_true()
+	assert_bool(str(tower_building["feedback_channel"]) == "building_outline").is_true()
+	assert_bool(str(tower_range["feedback_channel"]) == "defense_range").is_true()
+	assert_bool(str(tower_blocked_range["overlay_state"]) == "overlay_illegal").is_true()
+	assert_bool(tower_blocked_range["range_clipped"] == true).is_true()
+
+	hud.call("RequestBattleAction", "select_residence")
+	await _await_frames(2)
+
+	var residence_building: Dictionary = battlefield_view.call("read_slot_visual", "InnerCastleRegionSlot_06_00")
+	var cleared_tower_building: Dictionary = battlefield_view.call("read_slot_visual", "InnerCastleRegionSlot_03_00")
+	assert_bool(str(residence_building["selection_owner"]) == "farm_alpha").is_true()
+	assert_bool(str(residence_building["selection_category"]) == "economy").is_true()
+	assert_bool(str(residence_building["feedback_channel"]) == "economy_glow").is_true()
+	assert_bool(str(cleared_tower_building["overlay_state"]) == "overlay_hidden").is_true()
+
 func test_battle_hud_should_not_expose_raw_localization_keys_in_visible_labels() -> void:
 	var runtime := await _main_runtime()
 	var hud: Control = runtime["hud"]
