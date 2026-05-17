@@ -38,7 +38,7 @@ func test_all_configured_achievements_remain_visible_before_any_unlock_condition
 	var hidden_count := 0
 	for entry_value in entries:
 		var entry: Dictionary = entry_value
-		if bool(entry["hidden"]):
+		if entry["hidden"] == true:
 			hidden_count += 1
 	assert_that(hidden_count).is_equal(0)
 
@@ -55,4 +55,4 @@ func test_session_start_achievement_entries_show_name_and_description_by_default
 		var expected: Dictionary = configured[i]
 		assert_that(str(entry["name"])).is_equal(str(expected["name"]))
 		assert_that(str(entry["description"])).is_equal(str(expected["description"]))
-		assert_that(bool(entry["hidden"])).is_false()
+		assert_that(entry["hidden"] == true).is_false()

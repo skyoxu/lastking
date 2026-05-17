@@ -15,7 +15,7 @@ class AchievementManagerHarness extends RefCounted:
 		_evaluate_unlocks()
 
 	func is_unlocked(achievement_id: String) -> bool:
-		return bool(_unlocked.get(achievement_id, false))
+		return _unlocked.get(achievement_id, false) == true
 
 	func _evaluate_unlocks() -> void:
 		for achievement_id in _day_thresholds_by_id.keys():

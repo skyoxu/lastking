@@ -63,7 +63,7 @@ func test_blocked_route_uses_fallback_even_with_higher_priority_targets() -> voi
 	]
 	var action: Dictionary = probe.call("SelectTarget", candidates)
 
-	assert_bool(bool(action.get("is_fallback_attack", false))).is_true()
+	assert_bool(action.get("is_fallback_attack", false) == true).is_true()
 	assert_str(str(action.get("target_id", ""))).is_equal("wall_near")
 
 # acceptance: ACC:T6.11
@@ -101,7 +101,7 @@ func test_blocked_high_priority_does_not_idle_or_switch_to_unrelated_targets() -
 	]
 	var action: Dictionary = probe.call("SelectTarget", candidates)
 
-	assert_bool(bool(action.get("is_fallback_attack", false))).is_true()
+	assert_bool(action.get("is_fallback_attack", false) == true).is_true()
 	assert_str(str(action.get("target_id", ""))).is_equal("gate_blocker")
 	assert_str(str(action.get("target_id", ""))).is_not_equal("neutral_crate")
 

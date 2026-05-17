@@ -35,7 +35,7 @@ func test_main_scene_wires_real_camera_controller_and_camera_nodes() -> void:
 	assert_object(camera).is_not_null()
 	assert_bool(camera.enabled).is_true()
 	assert_bool(controller.has_method("HasActiveCamera")).is_true()
-	assert_bool(bool(controller.call("HasActiveCamera"))).is_true()
+	assert_bool(controller.call("HasActiveCamera") == true).is_true()
 	_stabilize_controller_for_test(controller)
 
 	var script_value: Variant = controller.get_script()

@@ -100,7 +100,7 @@ func test_main_menu_blocks_start_when_bootstrap_not_ready() -> void:
     var gate = menu.get_node("ContinueGateDialog")
     var boot_label: Label = menu.get_node("BootStatusPanel/VBox/BootStatusLabel")
     assert_str(boot_label.text).contains("Boot Status: Not Ready")
-    assert_bool(bool(gate.visible)).is_false()
+    assert_bool(gate.visible).is_false()
     assert_bool(_event_types.has("ui.menu.start")).is_true()
     assert_bool(_event_types.has("ui.menu.start_degraded")).is_true()
     assert_bool(_event_types.has("ui.menu.start_blocked")).is_false()
@@ -120,12 +120,12 @@ func test_main_menu_blocks_continue_without_snapshot_and_shows_gate_dialog() -> 
     continue_btn.emit_signal("pressed")
     await get_tree().process_frame
     var gate = menu.get_node("ContinueGateDialog")
-    assert_bool(bool(gate.visible)).is_true()
+    assert_bool(gate.visible).is_true()
     assert_bool(_event_types.has("ui.menu.continue")).is_false()
     assert_bool(_event_types.has("ui.menu.continue_blocked")).is_true()
     var blocked_payload := _find_event_payload("ui.menu.continue_blocked")
     assert_str(str(blocked_payload.get("reason", ""))).is_equal("missing_continue_state")
-    assert_bool(bool(menu.visible)).is_true()
+    assert_bool(menu.visible).is_true()
 
 # ACC:T41.5
 func test_main_menu_retry_bootstrap_closes_gate_and_emits_retry_event() -> void:
@@ -144,7 +144,7 @@ func test_main_menu_retry_bootstrap_closes_gate_and_emits_retry_event() -> void:
     var gate = menu.get_node("ContinueGateDialog")
     var boot_label: Label = menu.get_node("BootStatusPanel/VBox/BootStatusLabel")
     var export_label: Label = menu.get_node("BootStatusPanel/VBox/ExportStatusLabel")
-    assert_bool(bool(gate.visible)).is_false()
+    assert_bool(gate.visible).is_false()
     assert_bool(_event_types.has("ui.menu.bootstrap_retry")).is_true()
     assert_str(boot_label.text).is_equal("Boot Status: Ready")
     assert_str(export_label.text).is_equal("Export Status: Ready")
@@ -164,8 +164,8 @@ func test_main_menu_continue_succeeds_with_valid_snapshot() -> void:
     await get_tree().process_frame
     var gate = menu.get_node("ContinueGateDialog")
     assert_bool(_event_types.has("ui.menu.continue")).is_true()
-    assert_bool(bool(gate.visible)).is_false()
-    assert_bool(bool(menu.visible)).is_false()
+    assert_bool(gate.visible).is_false()
+    assert_bool(menu.visible).is_false()
 
 # ACC:T41.7
 func test_main_menu_continue_blocks_invalid_snapshot_payload() -> void:
@@ -185,8 +185,8 @@ func test_main_menu_continue_blocks_invalid_snapshot_payload() -> void:
     assert_bool(_event_types.has("ui.menu.continue_blocked")).is_true()
     var blocked_payload := _find_event_payload("ui.menu.continue_blocked")
     assert_str(str(blocked_payload.get("reason", ""))).is_equal("invalid_continue_state")
-    assert_bool(bool(gate.visible)).is_true()
-    assert_bool(bool(menu.visible)).is_true()
+    assert_bool(gate.visible).is_true()
+    assert_bool(menu.visible).is_true()
 
 # ACC:T41.8
 func test_main_menu_continue_blocks_when_bootstrap_not_ready() -> void:
@@ -206,8 +206,8 @@ func test_main_menu_continue_blocks_when_bootstrap_not_ready() -> void:
     assert_bool(_event_types.has("ui.menu.continue_blocked")).is_true()
     var blocked_payload := _find_event_payload("ui.menu.continue_blocked")
     assert_str(str(blocked_payload.get("reason", ""))).is_equal("bootstrap_override_not_ready")
-    assert_bool(bool(gate.visible)).is_true()
-    assert_bool(bool(menu.visible)).is_true()
+    assert_bool(gate.visible).is_true()
+    assert_bool(menu.visible).is_true()
     OS.set_environment(BOOT_READY_OVERRIDE_ENV, "ready")
 
 # ACC:T41.9
@@ -227,7 +227,7 @@ func test_main_menu_retry_bootstrap_keeps_gate_visible_when_still_not_ready() ->
     var gate = menu.get_node("ContinueGateDialog")
     var boot_label: Label = menu.get_node("BootStatusPanel/VBox/BootStatusLabel")
     assert_str(boot_label.text).contains("Boot Status: Not Ready")
-    assert_bool(bool(gate.visible)).is_true()
+    assert_bool(gate.visible).is_true()
     assert_bool(_event_types.has("ui.menu.bootstrap_retry")).is_true()
     assert_bool(_event_types.has("ui.menu.start")).is_false()
     assert_bool(_event_types.has("ui.menu.continue")).is_false()
@@ -246,7 +246,7 @@ func test_main_menu_ready_status_has_no_missing_sdk_warning() -> void:
     assert_bool(boot_label.text.find("missing_dotnet_sdk") == -1).is_true()
     assert_bool(boot_label.text.find("unsupported_engine_version") == -1).is_true()
     var gate = menu.get_node("ContinueGateDialog")
-    assert_bool(bool(gate.visible)).is_false()
+    assert_bool(gate.visible).is_false()
 
 # ACC:T41.11
 func test_main_menu_boot_surfaces_exist_as_owned_nodes() -> void:
@@ -265,7 +265,7 @@ func test_main_menu_boot_panel_is_runtime_visible_owned_surface() -> void:
     var panel = menu.get_node("BootStatusPanel")
     var boot_label: Label = menu.get_node("BootStatusPanel/VBox/BootStatusLabel")
     var export_label: Label = menu.get_node("BootStatusPanel/VBox/ExportStatusLabel")
-    assert_bool(bool(panel.visible)).is_true()
+    assert_bool(panel.visible).is_true()
     assert_str(boot_label.text).contains("Boot Status:")
     assert_str(export_label.text).contains("Export Status:")
 
@@ -294,4 +294,3 @@ func test_main_menu_chapter7_closure_for_task41_reports_runtime_no_pending_surfa
     var gaps = target_slice.get("gap_to_close", [])
     assert_int(int(pending_surfaces.size())).is_equal(0)
     assert_int(int(gaps.size())).is_equal(0)
-

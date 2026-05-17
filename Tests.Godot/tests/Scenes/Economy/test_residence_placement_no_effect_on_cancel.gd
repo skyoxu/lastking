@@ -34,7 +34,7 @@ func test_cancelled_residence_placement_keeps_gold_and_population_cap_unchanged_
 
 	assert_int(int(runtime.get("Gold"))).is_equal(gold_before)
 	assert_int(int(runtime.get("PopulationCap"))).is_equal(population_cap_before)
-	assert_bool(bool(runtime.get("IsTaxScheduleRunning"))).is_false()
+	assert_bool(runtime.get("IsTaxScheduleRunning") == true).is_false()
 	assert_that(timer is Timer).is_true()
 	assert_bool(timer.is_stopped()).is_true()
 
@@ -51,10 +51,10 @@ func test_invalid_residence_placement_keeps_state_unchanged_and_prevents_tax_tic
 	runtime.call("ApplyBlockedPlacementForTest")
 	runtime.call("AdvanceSeconds", 45)
 
-	assert_bool(bool(runtime.get("LastPlacementAcceptedForTest"))).is_false()
+	assert_bool(runtime.get("LastPlacementAcceptedForTest") == true).is_false()
 	assert_int(int(runtime.get("Gold"))).is_equal(gold_before)
 	assert_int(int(runtime.get("PopulationCap"))).is_equal(population_cap_before)
-	assert_bool(bool(runtime.get("IsTaxScheduleRunning"))).is_false()
+	assert_bool(runtime.get("IsTaxScheduleRunning") == true).is_false()
 	assert_that(timer is Timer).is_true()
 	assert_bool(timer.is_stopped()).is_true()
 

@@ -87,7 +87,7 @@ func _latest_smoke_summaries(limit: int = 2) -> Array:
                 if String(summary.get("sc_test_run_id", "")).strip_edges() != expected_run_id:
                     continue
             var markers: Dictionary = summary.get("markers", {})
-            if bool(markers.get("template_smoke_ready", false)):
+            if markers.get("template_smoke_ready", false) == true:
                 results.append(summary)
                 if results.size() >= limit:
                     break
@@ -258,13 +258,13 @@ func test_main_scene_bindings_are_stable_across_recent_restart_runs() -> void:
         return
     var latest: Dictionary = smoke_summaries[0]
     var latest_markers: Dictionary = latest.get("markers", {})
-    assert_bool(bool(latest_markers.get("template_smoke_ready", false))).is_true()
+    assert_bool(latest_markers.get("template_smoke_ready", false) == true).is_true()
     if smoke_summaries.size() < 2:
         return
     var previous: Dictionary = smoke_summaries[1]
     assert_str(String(latest.get("scene", ""))).is_equal(String(previous.get("scene", "")))
     var previous_markers: Dictionary = previous.get("markers", {})
-    assert_bool(bool(previous_markers.get("template_smoke_ready", false))).is_true()
+    assert_bool(previous_markers.get("template_smoke_ready", false) == true).is_true()
 
     var first: Node = _instantiate_main_scene()
     var second: Node = _instantiate_main_scene()

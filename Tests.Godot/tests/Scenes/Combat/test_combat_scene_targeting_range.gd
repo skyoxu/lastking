@@ -44,7 +44,7 @@ func test_out_of_range_or_invalid_targets_remain_unselected() -> void:
     var decision: Dictionary = enemy_ai.SelectTarget(candidates)
 
     assert_str(str(decision.get("target_id", ""))).is_equal("")
-    assert_bool(bool(decision.get("is_fallback_attack", false))).is_false()
+    assert_bool(decision.get("is_fallback_attack", false) == true).is_false()
 
 
 # acceptance: ACC:T20.10
@@ -59,4 +59,4 @@ func test_only_reachable_enemy_target_is_selected() -> void:
     var decision: Dictionary = enemy_ai.SelectTarget(candidates)
 
     assert_str(str(decision.get("target_id", ""))).is_equal("enemy_reachable")
-    assert_bool(bool(decision.get("is_fallback_attack", false))).is_false()
+    assert_bool(decision.get("is_fallback_attack", false) == true).is_false()
