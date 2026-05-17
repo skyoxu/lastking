@@ -214,12 +214,12 @@ func _collect_export_report() -> Dictionary:
     return _cached_export_report
 
 func _validate_export_execution(report: Dictionary) -> bool:
-    return bool(report.get("launched", false)) \
-        and bool(report.get("startup_reached", false)) \
-        and not bool(report.get("blocked_by_init_error", true)) \
-        and bool(report.get("artifact_fresh", false)) \
-        and bool(report.get("export_command_recorded", false)) \
-        and bool(report.get("produced_by_export", false))
+    return report.get("launched", false) == true \
+        and report.get("startup_reached", false) == true \
+        and report.get("blocked_by_init_error", true) != true \
+        and report.get("artifact_fresh", false) == true \
+        and report.get("export_command_recorded", false) == true \
+        and report.get("produced_by_export", false) == true
 
 # ACC:T1.8
 # ACC:T21.20
@@ -247,10 +247,10 @@ func test_windows_export_preset_scaffold_uses_canonical_candidates_and_exe_artif
     assert_int(int(report.get("export_rc", 1))).is_equal(0)
     assert_int(int(report.get("probe_rc", 1))).is_equal(0)
     assert_bool(String(report.get("export_command_line", "")).findn("--export-debug") >= 0).is_true()
-    assert_bool(bool(report.get("artifact_exists_after", false))).is_true()
-    assert_bool(bool(report.get("artifact_fresh", false))).is_true()
-    assert_bool(bool(report.get("export_command_recorded", false))).is_true()
-    assert_bool(bool(report.get("produced_by_export", false))).is_true()
+    assert_bool(report.get("artifact_exists_after", false) == true).is_true()
+    assert_bool(report.get("artifact_fresh", false) == true).is_true()
+    assert_bool(report.get("export_command_recorded", false) == true).is_true()
+    assert_bool(report.get("produced_by_export", false) == true).is_true()
     assert_bool(_source_contains_probe_copy_fallback()).is_false()
     assert_bool(_validate_export_execution(report)).is_true()
 

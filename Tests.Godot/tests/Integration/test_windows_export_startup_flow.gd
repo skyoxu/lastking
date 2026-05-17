@@ -18,17 +18,17 @@ func _canonical_project_root() -> String:
     return _canonicalize_path(ProjectSettings.globalize_path("res://../").simplify_path())
 
 func _validate_windows_export_execution(report: Dictionary) -> bool:
-    if not bool(report.get("launched", false)):
+    if report.get("launched", false) != true:
         return false
-    if not bool(report.get("startup_reached", false)):
+    if report.get("startup_reached", false) != true:
         return false
-    if bool(report.get("blocked_by_init_error", true)):
+    if report.get("blocked_by_init_error", true) == true:
         return false
-    if not bool(report.get("export_command_recorded", false)):
+    if report.get("export_command_recorded", false) != true:
         return false
-    if not bool(report.get("artifact_fresh", false)):
+    if report.get("artifact_fresh", false) != true:
         return false
-    if not bool(report.get("canonical_roots_single", false)):
+    if report.get("canonical_roots_single", false) != true:
         return false
     return true
 
@@ -323,7 +323,7 @@ func _collect_export_execution_evidence() -> Dictionary:
     var probe_output: String = String(probe.get("output", ""))
     var probe_startup_marker_seen: bool = probe_output.findn("[TEMPLATE_SMOKE_READY]") >= 0
     var smoke_markers: Dictionary = smoke_summary.get("markers", {})
-    var smoke_marker_seen: bool = smoke_log_text.findn("smoke pass (marker)") >= 0 and bool(smoke_markers.get("template_smoke_ready", false))
+    var smoke_marker_seen: bool = smoke_log_text.findn("smoke pass (marker)") >= 0 and smoke_markers.get("template_smoke_ready", false) == true
     var probe_ready_or_smoke_ready: bool = probe_output.findn("[TEMPLATE_SMOKE_READY]") >= 0 or smoke_marker_seen
     var gdunit_cmd: Array = gdunit_step.get("cmd", [])
     var gdunit_in_progress_for_current_run: bool = _is_gdunit_step_in_progress(sc_test_summary, gdunit_step)
@@ -394,8 +394,8 @@ func test_single_canonical_root_is_used_for_bootstrap_compile_layout_export() ->
     assert_bool(report.has("unit_step_rc")).is_true()
     assert_bool(report.has("smoke_step_rc")).is_true()
     assert_bool(report.has("gdunit_step_rc")).is_true()
-    assert_bool(bool(report.get("layout_test_executed", false))).is_true()
-    assert_bool(bool(report.get("canonical_roots_single", false))).is_true()
+    assert_bool(report.get("layout_test_executed", false) == true).is_true()
+    assert_bool(report.get("canonical_roots_single", false) == true).is_true()
     assert_int(int(report.get("canonical_roots_count", 0))).is_equal(1)
 
 # acceptance: ACC:T1.20
@@ -412,11 +412,11 @@ func test_exported_windows_artifact_launch_reaches_baseline_startup_flow() -> vo
     assert_bool(_startup_scene_exists()).is_true()
     var report: Dictionary = _collect_export_execution_evidence()
     assert_str(String(report.get("evidence_run_id", ""))).is_not_empty()
-    assert_bool(bool(report.get("launched", false))).is_true()
-    assert_bool(bool(report.get("startup_reached", false))).is_true()
-    assert_bool(bool(report.get("export_command_recorded", false))).is_true()
+    assert_bool(report.get("launched", false) == true).is_true()
+    assert_bool(report.get("startup_reached", false) == true).is_true()
+    assert_bool(report.get("export_command_recorded", false) == true).is_true()
     assert_bool(String(report.get("export_command_line", "")).findn("--export-debug") >= 0).is_true()
-    assert_bool(bool(report.get("artifact_fresh", false))).is_true()
+    assert_bool(report.get("artifact_fresh", false) == true).is_true()
     assert_bool(_source_contains_probe_copy_fallback()).is_false()
     assert_bool(_validate_windows_export_execution(report)).is_true()
 

@@ -151,16 +151,16 @@ func test_cloud_upload_restart_and_download_restores_same_payload() -> void:
     var payload_json := JSON.stringify({"health": 61, "score": 120, "level": 1, "rev": 3})
     var bridge := _new_cloud_bridge("task26-cloud-restore-upload", "STEAM_REMOTE_STORAGE_REAL", true, "steam_restore")
     var save_result = bridge.call("SaveWithCloudSync", slot, "steam_restore", payload_json, true) as Dictionary
-    assert_bool(bool(save_result.get("ok", false))).is_true()
-    assert_bool(bool(save_result.get("uploaded", false))).is_true()
+    assert_bool(save_result.get("ok", false) == true).is_true()
+    assert_bool(save_result.get("uploaded", false) == true).is_true()
     var uploaded_snapshot := _parse_snapshot(str(bridge.call("SnapshotStateJson")))
-    assert_bool(bool(bridge.call("SaveRaw", slot, JSON.stringify({"health": 1, "score": 1, "level": 1})))).is_true()
+    assert_bool(bridge.call("SaveRaw", slot, JSON.stringify({"health": 1, "score": 1, "level": 1})) == true).is_true()
     bridge.call("ResetRuntimeKeepCloudState", "task26-cloud-restore-restart", false, 20250425, 10, 10, 15)
     var load_result = bridge.call("LoadWithCloudSync", slot, "steam_restore", true) as Dictionary
     var snapshot_text := str(bridge.call("SnapshotStateJson"))
     var snapshot := _parse_snapshot(snapshot_text)
 
-    assert_bool(bool(load_result.get("ok", false))).is_true()
+    assert_bool(load_result.get("ok", false) == true).is_true()
     assert_str(str(load_result.get("loaded_from", ""))).is_equal("cloud")
     _assert_full_payload_match(uploaded_snapshot, snapshot)
 
@@ -170,15 +170,15 @@ func test_cloud_restore_keeps_critical_fields_consistent_after_local_reset() -> 
     var payload_json := JSON.stringify({"health": 72, "score": 8, "level": 1, "rev": 5})
     var bridge := _new_cloud_bridge("task26-cloud-fields-upload", "STEAM_REMOTE_STORAGE_REAL", true, "steam_restore_fields")
     var save_result = bridge.call("SaveWithCloudSync", slot, "steam_restore_fields", payload_json, true) as Dictionary
-    assert_bool(bool(save_result.get("ok", false))).is_true()
+    assert_bool(save_result.get("ok", false) == true).is_true()
     var uploaded_snapshot := _parse_snapshot(str(bridge.call("SnapshotStateJson")))
-    assert_bool(bool(bridge.call("SaveRaw", slot, JSON.stringify({"health": 9, "score": 0, "level": 1})))).is_true()
+    assert_bool(bridge.call("SaveRaw", slot, JSON.stringify({"health": 9, "score": 0, "level": 1})) == true).is_true()
     bridge.call("ResetRuntimeKeepCloudState", "task26-cloud-fields-restart", false, 20250425, 10, 10, 15)
     var load_result = bridge.call("LoadWithCloudSync", slot, "steam_restore_fields", true) as Dictionary
     var snapshot_text := str(bridge.call("SnapshotStateJson"))
     var snapshot := _parse_snapshot(snapshot_text)
 
-    assert_bool(bool(load_result.get("ok", false))).is_true()
+    assert_bool(load_result.get("ok", false) == true).is_true()
     assert_str(str(load_result.get("reason_code", ""))).is_equal("ok")
     _assert_full_payload_match(uploaded_snapshot, snapshot)
 

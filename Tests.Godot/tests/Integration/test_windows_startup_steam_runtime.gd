@@ -8,7 +8,7 @@ func _evaluate_windows_startup_validation(report: Dictionary) -> Dictionary:
                 "accepted": false,
                 "reason": "failing check blocks acceptance"
             }
-    var steam_runtime_check_executed: bool = bool(report.get("steam_runtime_check_executed", false))
+    var steam_runtime_check_executed: bool = report.get("steam_runtime_check_executed", false) == true
     var steam_runtime_launch_count: int = int(report.get("steam_runtime_launch_count", 0))
     if not steam_runtime_check_executed or steam_runtime_launch_count <= 0:
         return {
