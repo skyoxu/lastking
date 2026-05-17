@@ -1,4 +1,4 @@
-[gd_scene load_steps=19 format=3]
+[gd_scene load_steps=20 format=3]
 
 [ext_resource type="Script" path="res://Game.Godot/Scripts/Screens/BattleMapScreen.gd" id="1"]
 [ext_resource type="Script" path="res://Game.Godot/Scripts/Combat/CombatExperienceRuntimeBridge.cs" id="2"]
@@ -18,6 +18,8 @@
 [ext_resource type="PackedScene" path="res://Game.Godot/Scenes/UI/HUD.tscn" id="16"]
 [ext_resource type="PackedScene" path="res://Game.Godot/Scenes/UI/BattleMapDebugOverlay.tscn" id="17"]
 [ext_resource type="Script" path="res://Game.Godot/Scripts/Screens/BattleMapSelectionDataProvider.gd" id="18"]
+[ext_resource type="Script" path="res://Game.Godot/Scripts/Runtime/DayNightRuntimeLoopNode.cs" id="19"]
+[ext_resource type="PackedScene" path="res://Game.Godot/Scenes/UI/SettingsPanel.tscn" id="20"]
 [node name="BattleMapScreen" type="Control"]
 layout_mode = 3
 anchors_preset = 15
@@ -157,7 +159,7 @@ offset_right = 1584.0
 offset_bottom = 624.0
 color = Color(0.847059, 0.286275, 0.286275, 1)
 
-[node name="Margin" type="MarginContainer" parent="."]
+[node name="LegacyPrototypeRoot" type="MarginContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -169,64 +171,32 @@ theme_override_constants/margin_top = 24
 theme_override_constants/margin_right = 24
 theme_override_constants/margin_bottom = 24
 
-[node name="VBox" type="VBoxContainer" parent="Margin"]
+[node name="VBox" type="VBoxContainer" parent="LegacyPrototypeRoot"]
 layout_mode = 2
 
-[node name="Title" type="Label" parent="Margin/VBox"]
+[node name="Title" type="Label" parent="LegacyPrototypeRoot/VBox"]
 visible = false
 layout_mode = 2
 text = "Battle Map Screen"
 
-[node name="Status" type="Label" parent="Margin/VBox"]
+[node name="Status" type="Label" parent="LegacyPrototypeRoot/VBox"]
 visible = false
 layout_mode = 2
 text = "Status"
 
-[node name="Controls" type="HBoxContainer" parent="Margin/VBox"]
-visible = false
-layout_mode = 2
-
-[node name="BuildBtn" type="Button" parent="Margin/VBox/Controls"]
-layout_mode = 2
-text = "Build Setup"
-
-[node name="WaveBtn" type="Button" parent="Margin/VBox/Controls"]
-layout_mode = 2
-text = "Spawn Wave"
-
-[node name="AutoWaveBtn" type="Button" parent="Margin/VBox/Controls"]
-layout_mode = 2
-text = "Toggle Auto Wave"
-
-[node name="ExchangeBtn" type="Button" parent="Margin/VBox/Controls"]
-layout_mode = 2
-text = "Resolve Exchange"
-
-[node name="CleanupBtn" type="Button" parent="Margin/VBox/Controls"]
-layout_mode = 2
-text = "Cleanup Dead"
-
-[node name="FinishBtn" type="Button" parent="Margin/VBox/Controls"]
-layout_mode = 2
-text = "Finish Battle"
-
-[node name="BackBtn" type="Button" parent="Margin/VBox/Controls"]
-layout_mode = 2
-text = "Back Menu"
-
-[node name="Summary" type="Label" parent="Margin/VBox"]
+[node name="Summary" type="Label" parent="LegacyPrototypeRoot/VBox"]
 visible = false
 layout_mode = 2
 autowrap_mode = 3
 text = "Summary"
 
-[node name="Legend" type="Label" parent="Margin/VBox"]
+[node name="Legend" type="Label" parent="LegacyPrototypeRoot/VBox"]
 visible = false
 layout_mode = 2
 autowrap_mode = 3
 text = "Legend"
 
-[node name="MetricsHelp" type="Label" parent="Margin/VBox"]
+[node name="MetricsHelp" type="Label" parent="LegacyPrototypeRoot/VBox"]
 visible = false
 layout_mode = 2
 autowrap_mode = 3
@@ -450,6 +420,70 @@ script = ExtResource("15")
 
 [node name="SelectionDataProvider" type="Node" parent="."]
 script = ExtResource("18")
+
+[node name="DayNightRuntimeLoop" type="Node" parent="."]
+script = ExtResource("19")
+
+[node name="BattleSettingsMenu" type="Control" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+z_index = 250
+
+[node name="Backdrop" type="ColorRect" parent="BattleSettingsMenu"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.72)
+
+[node name="VBox" type="VBoxContainer" parent="BattleSettingsMenu"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -220.0
+offset_top = -180.0
+offset_right = 220.0
+offset_bottom = 180.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="BattleSettingsMenu/VBox"]
+layout_mode = 2
+horizontal_alignment = 1
+text = "Settings"
+
+[node name="Panel" type="PanelContainer" parent="BattleSettingsMenu/VBox"]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 3
+
+[node name="SettingsPanel" parent="BattleSettingsMenu/VBox/Panel" instance=ExtResource("20")]
+visible = true
+layout_mode = 2
+
+[node name="Buttons" type="VBoxContainer" parent="BattleSettingsMenu/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ReturnToGameBtn" type="Button" parent="BattleSettingsMenu/VBox/Buttons"]
+layout_mode = 2
+text = "Return to Game"
+
+[node name="ReturnToMainMenuBtn" type="Button" parent="BattleSettingsMenu/VBox/Buttons"]
+layout_mode = 2
+text = "Return to Main Menu"
 
 [node name="UI_PlacementOverlayController" type="Node" parent="."]
 script = ExtResource("6")
