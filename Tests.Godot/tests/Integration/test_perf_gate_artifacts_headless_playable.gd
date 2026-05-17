@@ -95,14 +95,14 @@ func _validate_artifact_path(relative_path: String) -> Dictionary:
 func test_perf_gate_artifacts_include_headless_playable_runs_threshold_integers_and_verdicts() -> void:
 	var result: Dictionary = _write_fixed_seed_artifacts(20260421, _sample_measurements())
 
-	assert_bool(bool(result.get("written", false))).is_true()
+	assert_bool(result.get("written", false) == true).is_true()
 	assert_str(String(result.get("perf_path", ""))).starts_with("logs/perf/")
 	assert_str(String(result.get("ci_path", ""))).starts_with("logs/ci/")
 
 	for pair in [{"key":"perf","path_key":"perf_path"}, {"key":"ci","path_key":"ci_path"}]:
 		var rel_path: String = String(result.get(String(pair["path_key"]), ""))
 		var validate_result: Dictionary = _validate_artifact_path(rel_path)
-		assert_bool(bool(validate_result.get("valid", false))).is_true()
+		assert_bool(validate_result.get("valid", false) == true).is_true()
 		var artifact: Dictionary = _read_json_file(_repo_root_abs().path_join(rel_path).simplify_path())
 		var runs: Dictionary = artifact.get("runs", {})
 		for run_name in REQUIRED_RUNS:
@@ -119,7 +119,7 @@ func test_non_fixed_seed_run_is_refused_and_previous_artifacts_remain_unchanged(
 	var perf_after_text := FileAccess.get_file_as_string(perf_path)
 	var ci_after_text := FileAccess.get_file_as_string(ci_path)
 
-	assert_bool(bool(rejected.get("written", true))).is_false()
+	assert_bool(rejected.get("written", true) == true).is_false()
 	assert_str(String(rejected.get("reason", ""))).is_equal("seed_not_fixed")
 	assert_that(perf_after_text).is_equal(perf_before_text)
 	assert_that(ci_after_text).is_equal(ci_before_text)
@@ -146,7 +146,7 @@ func test_perf_gate_artifact_read_fails_when_required_threshold_field_is_missing
 	file.close()
 
 	var validate_result: Dictionary = _validate_artifact_path("logs/ci/task-30/perf-gate-broken-missing.json")
-	assert_bool(bool(validate_result.get("valid", true))).is_false()
+	assert_bool(validate_result.get("valid", true) == true).is_false()
 
 func test_perf_gate_artifact_is_invalid_when_windows_playable_run_is_missing() -> void:
 	var broken_path := _repo_root_abs().path_join("logs/ci/task-30/perf-gate-broken-missing-playable.json").simplify_path()
@@ -171,15 +171,15 @@ func test_perf_gate_artifact_is_invalid_when_windows_playable_run_is_missing() -
 	file.close()
 
 	var validate_result: Dictionary = _validate_artifact_path("logs/ci/task-30/perf-gate-broken-missing-playable.json")
-	assert_bool(bool(validate_result.get("valid", true))).is_false()
+	assert_bool(validate_result.get("valid", true) == true).is_false()
 
 func test_perf_gate_artifact_path_validation_rejects_parent_traversal() -> void:
 	var validate_result: Dictionary = _validate_artifact_path("../outside.json")
 
-	assert_bool(bool(validate_result.get("valid", true))).is_false()
+	assert_bool(validate_result.get("valid", true) == true).is_false()
 
 func test_perf_gate_artifact_path_validation_rejects_absolute_path_input() -> void:
 	var absolute_path := _repo_root_abs().path_join("logs/ci/task-30/perf-gate.json").simplify_path()
 	var validate_result: Dictionary = _validate_artifact_path(absolute_path)
 
-	assert_bool(bool(validate_result.get("valid", true))).is_false()
+	assert_bool(validate_result.get("valid", true) == true).is_false()

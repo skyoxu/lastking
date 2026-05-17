@@ -47,7 +47,7 @@ func test_windows_baseline_gate_accepts_threshold_values() -> void:
 		float(metrics.get("one_percent_low_fps", 0.0))
 	) as Dictionary
 
-	assert_bool(bool(result.get("passed", false))).is_true()
+	assert_bool(result.get("passed", false) == true).is_true()
 
 func test_windows_baseline_gate_rejects_metrics_below_targets() -> void:
 	var metrics_path := _write_metrics("logs/ci/task-30/windows-baseline-metrics-fail.json", {
@@ -62,7 +62,7 @@ func test_windows_baseline_gate_rejects_metrics_below_targets() -> void:
 		float(metrics.get("one_percent_low_fps", 0.0))
 	) as Dictionary
 
-	assert_bool(bool(result.get("passed", true))).is_false()
+	assert_bool(result.get("passed", true) == true).is_false()
 
 func test_windows_baseline_gate_rejects_when_metrics_file_missing_or_wrong_type() -> void:
 	var bridge := _new_bridge()
@@ -72,7 +72,7 @@ func test_windows_baseline_gate_rejects_when_metrics_file_missing_or_wrong_type(
 		float(missing_metrics.get("avg_fps", 0.0)),
 		float(missing_metrics.get("one_percent_low_fps", 0.0))
 	) as Dictionary
-	assert_bool(bool(missing_result.get("passed", true))).is_false()
+	assert_bool(missing_result.get("passed", true) == true).is_false()
 
 	var broken_path := _write_metrics("logs/ci/task-30/windows-baseline-metrics-type-error.json", {
 		"avg_fps": "sixty",
@@ -84,4 +84,4 @@ func test_windows_baseline_gate_rejects_when_metrics_file_missing_or_wrong_type(
 		float(broken_metrics.get("avg_fps", 0.0)),
 		float(broken_metrics.get("one_percent_low_fps", 0.0))
 	) as Dictionary
-	assert_bool(bool(broken_result.get("passed", true))).is_false()
+	assert_bool(broken_result.get("passed", true) == true).is_false()

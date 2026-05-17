@@ -25,8 +25,8 @@ func _evaluate_repeatability(run_a: Dictionary, run_b: Dictionary) -> Dictionary
 	var bridge := _new_bridge()
 	return bridge.call(
 		"EvaluateBaselineVariance",
-		bool(run_a.get("camera_locked", false)) and bool(run_b.get("camera_locked", false)),
-		bool(run_a.get("scripted_session", false)) and bool(run_b.get("scripted_session", false)),
+		run_a.get("camera_locked", false) == true and run_b.get("camera_locked", false) == true,
+		run_a.get("scripted_session", false) == true and run_b.get("scripted_session", false) == true,
 		VARIANCE_WINDOW_PERCENT,
 		float(run_a.get("low_1_percent_fps", 0.0)),
 		float(run_a.get("avg_fps", 0.0)),
@@ -40,13 +40,13 @@ func test_locked_camera_repeated_runs_stay_within_declared_variance_window() -> 
 	var second_run: Dictionary = _capture_profile(true, true, 59.5, 44.7)
 	var result: Dictionary = _evaluate_repeatability(first_run, second_run)
 
-	assert_bool(bool(result.get("eligible", false))).is_true()
-	assert_bool(bool(result.get("within_variance", false))).is_true()
+	assert_bool(result.get("eligible", false) == true).is_true()
+	assert_bool(result.get("within_variance", false) == true).is_true()
 
 func test_unlocked_camera_run_is_rejected_for_baseline_repeatability() -> void:
 	var locked_run: Dictionary = _capture_profile(true, true, 60.0, 45.0)
 	var unlocked_run: Dictionary = _capture_profile(false, true, 60.1, 44.9)
 	var result: Dictionary = _evaluate_repeatability(locked_run, unlocked_run)
 
-	assert_bool(bool(result.get("eligible", true))).is_false()
-	assert_bool(bool(result.get("within_variance", true))).is_false()
+	assert_bool(result.get("eligible", true) == true).is_false()
+	assert_bool(result.get("within_variance", true) == true).is_false()
