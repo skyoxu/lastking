@@ -16,15 +16,31 @@ const FORMAL_SCREEN_SIZE := Vector2(1600.0, 900.0)
 @onready var _bridge_provider: Node = $BridgeProvider
 @onready var _hud_coordinator: Node = $HudCoordinator
 @onready var _selection_data_provider: Node = $SelectionDataProvider
+@onready var _day_night_loop: Node = $DayNightRuntimeLoop
+@onready var _battle_settings_menu: Control = $BattleSettingsMenu
 
 var _path_points: PackedVector2Array = PackedVector2Array(
 	[Vector2(120, 120), Vector2(260, 120), Vector2(420, 240), Vector2(640, 240), Vector2(840, 340), Vector2(1080, 340)]
 )
+var _resume_speed_scale_percent: int = 100
+var _resume_was_paused: bool = false
 
 func _ready() -> void:
 	_apply_formal_screen_frame()
 	_configure_controllers()
 	_hide_legacy_runtime_hud_panels()
+	if _battle_settings_menu != null:
+		_battle_settings_menu.visible = false
+		var return_btn: Button = _battle_settings_menu.get_node_or_null("VBox/Buttons/ReturnToGameBtn")
+		var main_menu_btn: Button = _battle_settings_menu.get_node_or_null("VBox/Buttons/ReturnToMainMenuBtn")
+		var close_btn: Button = _battle_settings_menu.get_node_or_null("VBox/Panel/SettingsPanel/VBox/Buttons/CloseBtn")
+		if return_btn != null and not return_btn.pressed.is_connected(_on_return_to_game_pressed):
+			return_btn.pressed.connect(_on_return_to_game_pressed)
+		if main_menu_btn != null and not main_menu_btn.pressed.is_connected(_on_return_to_main_menu_pressed):
+			main_menu_btn.pressed.connect(_on_return_to_main_menu_pressed)
+		if close_btn != null:
+			close_btn.visible = false
+			close_btn.disabled = true
 	_runtime_coordinator.call("initialize_runtime")
 
 func _process(delta: float) -> void:
@@ -45,31 +61,20 @@ func _configure_controllers() -> void:
 		"background": refs["background"],
 		"bridge": _bridge,
 		"wave_timer": _wave_timer,
-		"margin": get_node("Margin"),
+		"margin": get_node("LegacyPrototypeRoot"),
 	})
 	_ownership_coordinator.call("apply_ownership_markers")
 	_presentation_controller.call("configure", {
 		"title": refs["title"],
-		"build_btn": refs["build_btn"],
-		"wave_btn": refs["wave_btn"],
-		"auto_wave_btn": refs["auto_wave_btn"],
-		"exchange_btn": refs["exchange_btn"],
-		"cleanup_btn": refs["cleanup_btn"],
-		"finish_btn": refs["finish_btn"],
-		"back_btn": refs["back_btn"],
-		"legend": refs["legend"],
-		"metrics_help": refs["metrics_help"],
-		"operation_controller": _operation_controller,
 	})
 	_navigation_controller.call("configure", {
 		"screen": self,
-		"back_btn": refs["back_btn"],
 	})
 	_hud_coordinator.call("configure", {
 		"screen": self,
 		"operation_controller": _operation_controller,
 		"navigation_controller": _navigation_controller,
-		"hud": _resolve_runtime_ui_node("HUD"),
+		"hud": get_node_or_null("BattleHud"),
 	})
 	_runtime_coordinator.call("configure", {
 		"bridge_provider": Callable(_bridge_provider, "resolve_current_bridge"),
@@ -78,6 +83,9 @@ func _configure_controllers() -> void:
 		"feedback_controller": _feedback_controller,
 		"operation_controller": _operation_controller,
 		"runtime_coordinator": _runtime_coordinator,
+		"screen": self,
+		"hud": get_node_or_null("BattleHud"),
+		"day_night_loop": _day_night_loop,
 	})
 
 	_feedback_controller.call("configure", self, _bridge, {
@@ -99,7 +107,6 @@ func _configure_controllers() -> void:
 	_outcome_controller.call("configure", self, {
 		"status": refs["status"],
 		"wave_timer": _wave_timer,
-		"auto_wave_btn": refs["auto_wave_btn"],
 		"translate": Callable(_presentation_controller, "translate"),
 		"back_callback": Callable(_navigation_controller, "navigate_back_to_main_menu"),
 		"bridge_provider": Callable(_bridge_provider, "resolve_current_bridge"),
@@ -142,12 +149,6 @@ func _configure_controllers() -> void:
 		"translate": Callable(_presentation_controller, "translate"),
 		"feedback_controller": _feedback_controller,
 		"outcome_controller": _outcome_controller,
-		"build_btn": refs["build_btn"],
-		"wave_btn": refs["wave_btn"],
-		"auto_wave_btn": refs["auto_wave_btn"],
-		"exchange_btn": refs["exchange_btn"],
-		"cleanup_btn": refs["cleanup_btn"],
-		"finish_btn": refs["finish_btn"],
 	})
 	_operation_controller.call("connect_signals")
 	_navigation_controller.call("connect_signals")
@@ -160,11 +161,11 @@ func _configure_controllers() -> void:
 	_connect_battlefield_selection_signals()
 
 func _hide_legacy_runtime_hud_panels() -> void:
-	var huds := []
-	var local_hud := get_node_or_null("BattleHud")
+	var huds: Array = []
+	var local_hud: Node = get_node_or_null("BattleHud")
 	if local_hud != null:
 		huds.append(local_hud)
-	var global_hud := _resolve_runtime_ui_node("HUD")
+	var global_hud: Node = _resolve_runtime_ui_node("HUD")
 	if global_hud != null:
 		huds.append(global_hud)
 
@@ -196,25 +197,27 @@ func _hide_legacy_runtime_hud_panels() -> void:
 				(node as BaseButton).disabled = true
 
 func _resolve_runtime_ui_node(relative_path: String) -> Node:
-	var main := _resolve_main_root()
+	var main: Node = _resolve_main_root()
 	if main != null:
 		return main.get_node_or_null("RuntimeUi/%s" % relative_path)
 	return null
 
 func _apply_formal_screen_frame() -> void:
 	custom_minimum_size = FORMAL_SCREEN_SIZE
-	var main := _resolve_main_root()
+	var main: Node = _resolve_main_root()
 	if main == null:
 		anchor_right = 0.0
 		anchor_bottom = 0.0
 		position = Vector2.ZERO
-		size = FORMAL_SCREEN_SIZE
-	return
+		return
+	anchor_right = 1.0
+	anchor_bottom = 1.0
+	position = Vector2.ZERO
 
 func _resolve_main_root() -> Node:
 	var current: Node = self
 	while current != null:
-		if String(current.name) == "Main":
+		if str(current.name) == "Main":
 			return current
 		current = current.get_parent()
 	return null
@@ -222,13 +225,51 @@ func _resolve_main_root() -> Node:
 func _connect_battlefield_selection_signals() -> void:
 	if not (_selection_controller != null and _selection_controller.has_method("select_formal_building_slot")):
 		return
-	var battlefield_view := get_node_or_null("Background")
+	var battlefield_view: Node = get_node_or_null("Background")
 	if battlefield_view == null:
 		return
-	var callable := Callable(self, "_on_battlefield_slot_clicked")
+	var callable: Callable = Callable(self, "_on_battlefield_slot_clicked")
 	if battlefield_view.has_signal("battlefield_slot_clicked") and not battlefield_view.is_connected("battlefield_slot_clicked", callable):
 		battlefield_view.connect("battlefield_slot_clicked", callable)
 
 func _on_battlefield_slot_clicked(slot_id: String) -> void:
 	if _selection_controller != null and _selection_controller.has_method("select_formal_building_slot"):
 		_selection_controller.call("select_formal_building_slot", slot_id)
+
+func open_battle_settings_menu() -> void:
+	var manager: Node = get_node_or_null("/root/GameManager")
+	if manager != null and manager.has_method("GetSpeedState"):
+		var state: Variant = manager.call("GetSpeedState")
+		if state is Dictionary:
+			_resume_speed_scale_percent = int((state as Dictionary).get("scale_percent", 100))
+			_resume_was_paused = (state as Dictionary).get("is_paused", false) == true
+	if manager != null and manager.has_method("SetPause") and not _resume_was_paused:
+		manager.call("SetPause")
+	if _battle_settings_menu != null:
+		_battle_settings_menu.visible = true
+
+func close_battle_settings_menu() -> void:
+	if _battle_settings_menu != null:
+		_battle_settings_menu.visible = false
+
+func _on_return_to_game_pressed() -> void:
+	close_battle_settings_menu()
+	var manager: Node = get_node_or_null("/root/GameManager")
+	if manager == null:
+		return
+	if _resume_was_paused:
+		if manager.has_method("SetPause"):
+			manager.call("SetPause")
+		return
+	if _resume_speed_scale_percent >= 200:
+		if manager.has_method("SetTwoX"):
+			manager.call("SetTwoX")
+	elif manager.has_method("SetOneX"):
+		manager.call("SetOneX")
+
+func _on_return_to_main_menu_pressed() -> void:
+	close_battle_settings_menu()
+	var manager: Node = get_node_or_null("/root/GameManager")
+	if manager != null and manager.has_method("SetOneX"):
+		manager.call("SetOneX")
+	_navigation_controller.call("navigate_back_to_main_menu")

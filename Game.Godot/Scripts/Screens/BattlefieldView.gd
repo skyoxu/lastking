@@ -77,16 +77,16 @@ func _rebuild_regions() -> void:
 	var offset_x: float = 0.0
 	for region_def_variant in REGION_DEFS:
 		var region_def: Dictionary = region_def_variant
-		var region := ColorRect.new()
-		region.name = String(region_def["name"])
+		var region: ColorRect = ColorRect.new()
+		region.name = str(region_def["name"])
 		region.position = Vector2(offset_x, 0.0)
 		region.size = Vector2(float(region_def["width"]), BATTLEFIELD_SIZE.y)
 		region.color = region_def["color"]
-		region.set_meta("buildable", bool(region_def["buildable"]))
+		region.set_meta("buildable", region_def["buildable"] == true)
 		_map_base_layer.add_child(region)
-		if not bool(region_def["buildable"]):
+		if region_def["buildable"] != true:
 			var boundary: ColorRect = ColorRect.new()
-			boundary.name = "%sBoundary" % String(region_def["name"])
+			boundary.name = "%sBoundary" % str(region_def["name"])
 			boundary.position = region.position
 			boundary.size = region.size
 			boundary.color = Color(0.529412, 0.490196, 0.403922, 0.8)
@@ -102,15 +102,15 @@ func _rebuild_slots() -> void:
 	var offset_x: float = 0.0
 	for region_def_variant in REGION_DEFS:
 		var region_def: Dictionary = region_def_variant
-		if bool(region_def["buildable"]):
+		if region_def["buildable"] == true:
 			var slot_root: Control = Control.new()
-			slot_root.name = String(region_def["slot_root"])
+			slot_root.name = str(region_def["slot_root"])
 			slot_root.position = Vector2(offset_x, 0.0)
 			slot_root.size = Vector2(float(region_def["width"]), BATTLEFIELD_SIZE.y)
 			slot_root.modulate = Color(1.0, 1.0, 1.0, 0.95)
 			slot_root.set_meta("buildable_region", true)
 			_slot_overlay_layer.add_child(slot_root)
-			_populate_slots(slot_root, int(region_def["columns"]), int(region_def["rows"]), String(region_def["name"]))
+			_populate_slots(slot_root, int(region_def["columns"]), int(region_def["rows"]), str(region_def["name"]))
 		offset_x += float(region_def["width"])
 
 
@@ -124,10 +124,10 @@ func _populate_slots(slot_root: Control, columns: int, rows: int, region_name: S
 			slot.set_meta("buildable", true)
 			slot.set_meta("slot_available", true)
 			slot.mouse_filter = Control.MOUSE_FILTER_PASS
-			slot.gui_input.connect(_on_slot_gui_input.bind(String(slot.name)))
+			slot.gui_input.connect(_on_slot_gui_input.bind(str(slot.name)))
 			_apply_slot_visual(slot, _hidden_visual())
 			slot_root.add_child(slot)
-			_slot_nodes[String(slot.name)] = slot
+			_slot_nodes[str(slot.name)] = slot
 
 
 func apply_slot_visual(slot_id: String, visual: Dictionary) -> void:
@@ -150,13 +150,13 @@ func read_slot_visual(slot_id: String) -> Dictionary:
 		"selection_owner": str(slot.get_meta("selection_owner", "")),
 		"selection_category": str(slot.get_meta("selection_category", "")),
 		"outline_tint": str(slot.get_meta("outline_tint", "none")),
-		"range_clipped": bool(slot.get_meta("range_clipped", false)),
+		"range_clipped": slot.get_meta("range_clipped", false) == true,
 	}
 
 
 func clear_all_slot_visuals() -> void:
 	for slot_variant in _slot_nodes.values():
-		var slot := slot_variant as ColorRect
+		var slot: ColorRect = slot_variant as ColorRect
 		if slot != null:
 			_apply_slot_visual(slot, _hidden_visual())
 
@@ -171,7 +171,7 @@ func _apply_slot_visual(slot: ColorRect, visual: Dictionary) -> void:
 	var selection_owner: String = str(visual.get("selection_owner", ""))
 	var selection_category: String = str(visual.get("selection_category", ""))
 	var outline_tint: String = str(visual.get("outline_tint", "none"))
-	var range_clipped: bool = bool(visual.get("range_clipped", false))
+	var range_clipped: bool = visual.get("range_clipped", false) == true
 
 	match overlay_state:
 		"overlay_legal":
@@ -218,13 +218,13 @@ func _hidden_visual() -> Dictionary:
 
 func _on_slot_gui_input(event: InputEvent, slot_id: String) -> void:
 	if event is InputEventMouseButton:
-		var mouse_event := event as InputEventMouseButton
+		var mouse_event: InputEventMouseButton = event as InputEventMouseButton
 		if mouse_event.pressed and mouse_event.button_index == MOUSE_BUTTON_LEFT:
 			emit_signal("battlefield_slot_clicked", slot_id)
 
 
 func _require_control(node_path: NodePath) -> Control:
-	var node := get_node(node_path) as Control
+	var node: Control = get_node(node_path) as Control
 	if node == null:
-		push_error("BattlefieldView missing required control at %s" % String(node_path))
+		push_error("BattlefieldView missing required control at %s" % str(node_path))
 	return node

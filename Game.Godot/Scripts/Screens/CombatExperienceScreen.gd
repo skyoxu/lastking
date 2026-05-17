@@ -48,14 +48,14 @@ func _on_run_all() -> void:
 	_render(_bridge.RunCompleteCombatExperienceForTest())
 
 func _render(result: Dictionary) -> void:
-	var built := bool(result.get("mg_tower_built", false)) and bool(result.get("barracks_built", false))
+	var built := result.get("mg_tower_built", false) == true and result.get("barracks_built", false) == true
 	var friendly := int(result.get("friendly_units_deployed", 0))
 	var enemies := int(result.get("enemy_units_spawned", 0))
 	var projectiles := int(result.get("projectiles_created", 0))
 	var exchanges := int(result.get("combat_exchanges", 0))
 	var retired := int(result.get("dead_units_retired", 0))
 	var active := int(result.get("active_combat_nodes_after_cleanup", 0))
-	var dead_targetable := bool(result.get("dead_unit_targetable_after_cleanup", false))
+	var dead_targetable := result.get("dead_unit_targetable_after_cleanup", false) == true
 
 	_summary.text = "Combat Experience Live\n" \
 		+ "Built: %s\n" % ("yes" if built else "no") \

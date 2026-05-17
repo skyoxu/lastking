@@ -9,18 +9,12 @@ var _status_label: Label = null
 var _translate: Callable
 var _feedback_controller: Node = null
 var _outcome_controller: Node = null
-var _build_btn: Button = null
-var _wave_btn: Button = null
-var _auto_wave_btn: Button = null
-var _exchange_btn: Button = null
-var _cleanup_btn: Button = null
-var _finish_btn: Button = null
 
-var _wave_started := false
-var _combat_resolved := false
-var _cleaned := false
-var _auto_wave := false
-var _outcome_published := false
+var _wave_started: bool = false
+var _combat_resolved: bool = false
+var _cleaned: bool = false
+var _auto_wave: bool = false
+var _outcome_published: bool = false
 
 func configure(refs: Dictionary) -> void:
 	_bridge = refs["bridge"]
@@ -30,26 +24,8 @@ func configure(refs: Dictionary) -> void:
 	_translate = refs["translate"]
 	_feedback_controller = refs["feedback_controller"]
 	_outcome_controller = refs["outcome_controller"]
-	_build_btn = refs["build_btn"]
-	_wave_btn = refs["wave_btn"]
-	_auto_wave_btn = refs["auto_wave_btn"]
-	_exchange_btn = refs["exchange_btn"]
-	_cleanup_btn = refs["cleanup_btn"]
-	_finish_btn = refs["finish_btn"]
 
 func connect_signals() -> void:
-	if _build_btn != null and not _build_btn.pressed.is_connected(_on_build_pressed):
-		_build_btn.pressed.connect(_on_build_pressed)
-	if _wave_btn != null and not _wave_btn.pressed.is_connected(_on_wave_pressed):
-		_wave_btn.pressed.connect(_on_wave_pressed)
-	if _auto_wave_btn != null and not _auto_wave_btn.pressed.is_connected(_on_auto_wave_pressed):
-		_auto_wave_btn.pressed.connect(_on_auto_wave_pressed)
-	if _exchange_btn != null and not _exchange_btn.pressed.is_connected(_on_exchange_pressed):
-		_exchange_btn.pressed.connect(_on_exchange_pressed)
-	if _cleanup_btn != null and not _cleanup_btn.pressed.is_connected(_on_cleanup_pressed):
-		_cleanup_btn.pressed.connect(_on_cleanup_pressed)
-	if _finish_btn != null and not _finish_btn.pressed.is_connected(_on_finish_pressed):
-		_finish_btn.pressed.connect(_on_finish_pressed)
 	if _wave_timer != null and not _wave_timer.timeout.is_connected(_on_wave_timer_timeout_signal):
 		_wave_timer.timeout.connect(_on_wave_timer_timeout_signal)
 
@@ -66,9 +42,9 @@ func is_auto_wave() -> bool:
 	return _auto_wave
 
 func get_hud_phase_statuses() -> Dictionary:
-	var exchange_ready := _wave_started
-	var cleanup_ready := _wave_started
-	var finish_ready := _combat_resolved or _cleaned
+	var exchange_ready: bool = _wave_started
+	var cleanup_ready: bool = _wave_started
+	var finish_ready: bool = _combat_resolved or _cleaned
 	return {
 		"build_status": "Ready",
 		"wave_status": "Ready",
@@ -92,13 +68,13 @@ func reset_flags() -> void:
 		_wave_timer.stop()
 
 func on_build() -> void:
-	var bridge := _current_bridge()
+	var bridge: Node = _current_bridge()
 	if bridge.has_method("BuildPhase"):
 		bridge.call("BuildPhase")
 	if bridge.has_method("TrainFriendlyUnitPhase"):
 		bridge.call("TrainFriendlyUnitPhase")
-	var summary := _try_bridge_summary()
-	var friendly := int(summary.get("friendly_units_deployed", 0))
+	var summary: Dictionary = _try_bridge_summary()
+	var friendly: int = int(summary.get("friendly_units_deployed", 0))
 	_render(summary, "%s (%s=%d)" % [_t("battlemap.status.build_ready"), _t("battlemap.summary.friendly_units"), friendly])
 	_sync(summary)
 
@@ -119,13 +95,12 @@ func on_wave() -> void:
 	_outcome_published = false
 	if _feedback_controller != null:
 		_feedback_controller.call("mark_spawn_pulse", SPAWN_PULSE_DURATION_SEC)
-	var summary := _call_or_fallback("SpawnEnemyWavePhase")
+	var summary: Dictionary = _call_or_fallback("SpawnEnemyWavePhase")
 	_render(summary, _t("battlemap.status.wave_spawned"))
 	_sync(summary)
 
-func on_auto_wave(auto_wave_btn: Button) -> void:
+func on_auto_wave() -> void:
 	_auto_wave = not _auto_wave
-	auto_wave_btn.text = _t("battlemap.btn.auto_stop") if _auto_wave else _t("battlemap.btn.auto_toggle")
 	if _auto_wave:
 		_wave_timer.start()
 		_status_label.text = _t("battlemap.status.auto_on")
@@ -154,7 +129,7 @@ func on_exchange() -> void:
 			_feedback_controller.call("show_local_prompt", "Spawn a wave before resolving combat.")
 		return
 	_combat_resolved = true
-	var summary := _call_or_fallback("ResolveCombatExchangePhase")
+	var summary: Dictionary = _call_or_fallback("ResolveCombatExchangePhase")
 	_render(summary, _t("battlemap.status.exchange_done"))
 	_sync(summary)
 
@@ -175,7 +150,7 @@ func on_cleanup() -> void:
 			_feedback_controller.call("show_local_prompt", "Resolve combat before cleanup.")
 		return
 	_cleaned = true
-	var summary := _call_or_fallback("CleanupDeadUnitsPhase")
+	var summary: Dictionary = _call_or_fallback("CleanupDeadUnitsPhase")
 	_render(summary, _t("battlemap.status.cleanup_done"))
 	_sync(summary)
 
@@ -198,28 +173,10 @@ func on_finish() -> void:
 	if _feedback_controller != null:
 		_feedback_controller.call("clear_spawn_pulse")
 	_outcome_published = true
-	var outcome := _call_or_fallback("PublishOutcomePhase")
+	var outcome: Dictionary = _call_or_fallback("PublishOutcomePhase")
 	_render(outcome, _t("battlemap.status.finished"))
 	if _outcome_controller != null:
 		_outcome_controller.call("open_outcome", outcome)
-
-func _on_build_pressed() -> void:
-	on_build()
-
-func _on_wave_pressed() -> void:
-	on_wave()
-
-func _on_auto_wave_pressed() -> void:
-	on_auto_wave(_auto_wave_btn)
-
-func _on_exchange_pressed() -> void:
-	on_exchange()
-
-func _on_cleanup_pressed() -> void:
-	on_cleanup()
-
-func _on_finish_pressed() -> void:
-	on_finish()
 
 func _on_wave_timer_timeout_signal() -> void:
 	on_wave_timer_timeout()
@@ -233,39 +190,41 @@ func _sync(summary: Dictionary) -> void:
 		_outcome_controller.call("sync_terminal_outcome_from_runtime", summary, _wave_started)
 
 func _is_settlement_open() -> bool:
-	return bool(_outcome_controller.call("is_settlement_open")) if _outcome_controller != null else false
+	return _outcome_controller.call("is_settlement_open") == true if _outcome_controller != null else false
 
 func _is_terminal_visible() -> bool:
-	return bool(_outcome_controller.call("is_terminal_outcome_modal_visible")) if _outcome_controller != null else false
+	return _outcome_controller.call("is_terminal_outcome_modal_visible") == true if _outcome_controller != null else false
 
 func _try_bridge_summary() -> Dictionary:
-	var bridge := _current_bridge()
+	var bridge: Node = _current_bridge()
 	if bridge.has_method("GetSummary"):
-		var result = bridge.call("GetSummary")
+		var result: Variant = bridge.call("GetSummary")
 		if result is Dictionary:
 			return result
 	return _call_or_fallback("")
 
 func _call_or_fallback(method_name: String) -> Dictionary:
-	var bridge := _current_bridge()
+	var bridge: Node = _current_bridge()
 	if not method_name.is_empty() and bridge.has_method(method_name):
-		var result = bridge.call(method_name)
+		var result: Variant = bridge.call(method_name)
 		if result is Dictionary:
 			return result
 	if bridge.has_method("RunCompleteCombatExperienceForTest"):
-		var full = bridge.call("RunCompleteCombatExperienceForTest")
+		var full: Variant = bridge.call("RunCompleteCombatExperienceForTest")
 		if full is Dictionary:
 			return full
 	return {}
 
 func _current_bridge() -> Node:
 	if _bridge_provider.is_valid():
-		var provided = _bridge_provider.call()
+		var provided: Variant = _bridge_provider.call()
 		if provided is Node:
 			return provided
 	return _bridge
 
 func _t(key: String) -> String:
 	if _translate.is_valid():
-		return String(_translate.call(key))
+		return str(_translate.call(key))
 	return key
+
+
