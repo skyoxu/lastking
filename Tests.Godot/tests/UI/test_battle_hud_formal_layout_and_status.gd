@@ -151,10 +151,66 @@ func test_battle_hud_top_bar_speed_controls_should_apply_pause_and_resume() -> v
 	var one_x: Dictionary = manager.call("GetSpeedState")
 	assert_int(int(one_x["scale_percent"])).is_equal(100)
 
+func test_battle_hud_controls_should_keep_pause_safe_process_modes() -> void:
+	var runtime := await _main_runtime()
+	var screen: Control = runtime["screen"]
+	var hud: Control = runtime["hud"]
+	var pause_button: Button = hud.get_node("TopBar/HBox/SpeedControls/PauseButton")
+	var one_x_button: Button = hud.get_node("TopBar/HBox/SpeedControls/OneXButton")
+	var two_x_button: Button = hud.get_node("TopBar/HBox/SpeedControls/TwoXButton")
+	var settings_button: Button = hud.get_node("TopBar/HBox/SettingsButton")
+	var build_action: Button = hud.get_node("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/BuildAction")
+	var wave_action: Button = hud.get_node("CombatHud/BottomBar/Root/SkillsPanel/VBox/SkillButtons/WaveAction")
+	var settings_menu: Control = screen.get_node("BattleSettingsMenu")
+	var return_button: Button = screen.get_node("BattleSettingsMenu/VBox/Buttons/ReturnToGameBtn")
+	var main_menu_button: Button = screen.get_node("BattleSettingsMenu/VBox/Buttons/ReturnToMainMenuBtn")
+
+	assert_int(int(hud.process_mode)).is_equal(Node.PROCESS_MODE_ALWAYS)
+	assert_int(int(pause_button.process_mode)).is_equal(Node.PROCESS_MODE_ALWAYS)
+	assert_int(int(one_x_button.process_mode)).is_equal(Node.PROCESS_MODE_ALWAYS)
+	assert_int(int(two_x_button.process_mode)).is_equal(Node.PROCESS_MODE_ALWAYS)
+	assert_int(int(settings_button.process_mode)).is_equal(Node.PROCESS_MODE_ALWAYS)
+	assert_int(int(build_action.process_mode)).is_equal(Node.PROCESS_MODE_ALWAYS)
+	assert_int(int(wave_action.process_mode)).is_equal(Node.PROCESS_MODE_ALWAYS)
+	assert_int(int(settings_menu.process_mode)).is_equal(Node.PROCESS_MODE_ALWAYS)
+	assert_int(int(return_button.process_mode)).is_equal(Node.PROCESS_MODE_ALWAYS)
+	assert_int(int(main_menu_button.process_mode)).is_equal(Node.PROCESS_MODE_ALWAYS)
+	assert_bool(settings_menu.visible).is_false()
+	assert_bool(return_button.disabled).is_false()
+	assert_bool(main_menu_button.disabled).is_false()
+
 func test_battle_hud_should_auto_advance_day_night_cycle_without_player_input() -> void:
 	var runtime := await _main_runtime()
 	var hud: Control = runtime["hud"]
 	var cycle_label: Label = hud.get_node("TopBar/HBox/CycleRemainingLabel")
+	var before_seconds := _remaining_seconds(cycle_label.text)
+	await _await_frames(10)
+	var after_seconds := _remaining_seconds(cycle_label.text)
+	assert_float(after_seconds).is_less(before_seconds)
+
+func test_battle_hud_should_force_runtime_back_to_active_when_entering_battle_map() -> void:
+	_ensure_event_bus()
+	var manager := _ensure_game_manager()
+	manager.call("ResetRuntimeForTest")
+	manager.call("SetPause")
+	var paused_before: Dictionary = manager.call("GetSpeedState")
+	assert_bool(paused_before["is_paused"] == true).is_true()
+
+	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
+	add_child(auto_free(main))
+	await _await_frames(2)
+
+	var nav: Node = main.get_node("ScreenNavigator")
+	nav.set("UseFadeTransition", false)
+	var ok_enter: bool = nav.call("SwitchTo", "res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn")
+	assert_bool(ok_enter).is_true()
+	await _await_frames(5)
+
+	var screen: Control = main.get_node("RuntimeUi/ScreenRoot/BattleMapScreen")
+	var hud: Control = screen.get_node("BattleHud")
+	var cycle_label: Label = hud.get_node("TopBar/HBox/CycleRemainingLabel")
+	var state_after_enter: Dictionary = manager.call("GetSpeedState")
+	assert_bool(state_after_enter["is_paused"] == true).is_false()
 	var before_seconds := _remaining_seconds(cycle_label.text)
 	await _await_frames(10)
 	var after_seconds := _remaining_seconds(cycle_label.text)
@@ -187,8 +243,50 @@ func test_battle_hud_bottom_bar_should_present_formal_three_column_layout() -> v
 	assert_bool(reserved_label.text.find("reserved") < 0 and reserved_label.text.find("预留") < 0).is_true()
 	assert_bool(hint_label.text.find("placeholder") < 0 and hint_label.text.find("占位") < 0).is_true()
 	assert_bool(combat_counts_label.text.find("/99") < 0).is_true()
-	assert_bool(tower_slot.visible).is_false()
-	assert_bool(residence_slot.visible).is_false()
+	assert_bool(tower_slot.visible).is_true()
+	assert_bool(residence_slot.visible).is_true()
+	assert_bool(tower_slot.disabled).is_false()
+	assert_bool(residence_slot.disabled).is_false()
+
+func test_battle_hud_should_not_expose_raw_localization_keys_in_visible_labels() -> void:
+	var runtime := await _main_runtime()
+	var hud: Control = runtime["hud"]
+	var visible_paths := [
+		"TopBar/HBox/DayLabel",
+		"TopBar/HBox/PhaseLabel",
+		"TopBar/HBox/CycleRemainingLabel",
+		"TopBar/HBox/HealthLabel",
+		"TopBar/HBox/EnemiesLabel",
+		"TopBar/HBox/SpeedStateLabel",
+		"TopBar/HBox/SpeedControls/PauseButton",
+		"TopBar/HBox/SpeedControls/OneXButton",
+		"TopBar/HBox/SpeedControls/TwoXButton",
+		"TopBar/HBox/SettingsButton",
+		"CombatHud/BottomBar/Root/BuildingsPanel/VBox/TitleLabel",
+		"CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/BuildAction",
+		"CombatHud/BottomBar/Root/BuildingsPanel/VBox/ProductionLabel",
+		"CombatHud/BottomBar/Root/BattlePanel/VBox/TitleLabel",
+		"CombatHud/BottomBar/Root/BattlePanel/VBox/CountsRow/CombatCountsLabel",
+		"CombatHud/BottomBar/Root/BattlePanel/VBox/CountsRow/MoraleLabel",
+		"CombatHud/BottomBar/Root/BattlePanel/VBox/CountsRow/BattlePressureLabel",
+		"CombatHud/BottomBar/Root/BattlePanel/VBox/SummaryLabel",
+		"CombatHud/BottomBar/Root/BattlePanel/VBox/ReservedLabel",
+		"CombatHud/BottomBar/Root/SkillsPanel/VBox/TitleLabel",
+		"CombatHud/BottomBar/Root/SkillsPanel/VBox/SkillButtons/WaveAction",
+		"CombatHud/BottomBar/Root/SkillsPanel/VBox/SkillButtons/ExchangeAction",
+		"CombatHud/BottomBar/Root/SkillsPanel/VBox/SkillButtons/CleanupAction",
+		"CombatHud/BottomBar/Root/SkillsPanel/VBox/SkillButtons/FinishAction",
+		"CombatHud/BottomBar/Root/SkillsPanel/VBox/HintLabel",
+	]
+
+	for path in visible_paths:
+		var node := hud.get_node(path)
+		var text := ""
+		if node is Label:
+			text = String((node as Label).text)
+		elif node is Button:
+			text = String((node as Button).text)
+		assert_bool(text.find("hud.") < 0).is_true()
 
 func test_battle_hud_should_open_battle_settings_menu_from_top_bar() -> void:
 	var runtime := await _main_runtime()

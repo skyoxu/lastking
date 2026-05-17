@@ -9,7 +9,9 @@ var _operation_controller: Node = null
 var _feedback_controller: Node = null
 
 var _daily_settlement_modal: PanelContainer = null
+var _daily_settlement_title: Label = null
 var _daily_settlement_summary: Label = null
+var _daily_evidence_title: Label = null
 var _daily_evidence_hp: Label = null
 var _daily_evidence_kills: Label = null
 var _daily_evidence_reward_summary: Label = null
@@ -20,6 +22,7 @@ var _daily_runtime_context_payload: Label = null
 var _daily_reward_a: Button = null
 var _daily_reward_b: Button = null
 var _daily_reward_c: Button = null
+var _daily_hint: Label = null
 var _victory_outcome_modal: PanelContainer = null
 var _victory_outcome_title: Label = null
 var _victory_outcome_summary: Label = null
@@ -32,6 +35,9 @@ var _defeat_outcome_summary: Label = null
 var _defeat_outcome_hint: Label = null
 var _defeat_return_btn: Button = null
 var _defeat_restart_btn: Button = null
+var _battle_settings_title: Label = null
+var _battle_settings_return_btn: Button = null
+var _battle_settings_main_menu_btn: Button = null
 
 var _settlement_modal_open: bool = false
 var _settlement_options: Array[String] = ["Reward A", "Reward B", "Reward C"]
@@ -47,7 +53,9 @@ func configure(screen: Control, refs: Dictionary) -> void:
 	_operation_controller = refs["operation_controller"]
 	_feedback_controller = refs["feedback_controller"]
 	_daily_settlement_modal = refs["daily_settlement_modal"]
+	_daily_settlement_title = refs["daily_settlement_title"]
 	_daily_settlement_summary = refs["daily_settlement_summary"]
+	_daily_evidence_title = refs["daily_evidence_title"]
 	_daily_evidence_hp = refs["daily_evidence_hp"]
 	_daily_evidence_kills = refs["daily_evidence_kills"]
 	_daily_evidence_reward_summary = refs["daily_evidence_reward_summary"]
@@ -58,6 +66,7 @@ func configure(screen: Control, refs: Dictionary) -> void:
 	_daily_reward_a = refs["daily_reward_a"]
 	_daily_reward_b = refs["daily_reward_b"]
 	_daily_reward_c = refs["daily_reward_c"]
+	_daily_hint = refs["daily_hint"]
 	_victory_outcome_modal = refs["victory_outcome_modal"]
 	_victory_outcome_title = refs["victory_outcome_title"]
 	_victory_outcome_summary = refs["victory_outcome_summary"]
@@ -70,6 +79,9 @@ func configure(screen: Control, refs: Dictionary) -> void:
 	_defeat_outcome_hint = refs["defeat_outcome_hint"]
 	_defeat_return_btn = refs["defeat_return_btn"]
 	_defeat_restart_btn = refs["defeat_restart_btn"]
+	_battle_settings_title = refs.get("battle_settings_title", null)
+	_battle_settings_return_btn = refs.get("battle_settings_return_btn", null)
+	_battle_settings_main_menu_btn = refs.get("battle_settings_main_menu_btn", null)
 
 func connect_signals() -> void:
 	_daily_reward_a.pressed.connect(_on_settlement_reward_selected.bind(0))
@@ -185,36 +197,39 @@ func _open_settlement_modal(summary: Dictionary) -> void:
 		return
 	_daily_settlement_modal.visible = true
 	_screen.get_tree().paused = true
+	_daily_settlement_title.text = _t("battlemap.daily_settlement.title")
+	_daily_evidence_title.text = _t("battlemap.daily_settlement.evidence_title")
+	_daily_hint.text = _t("battlemap.daily_settlement.hint")
 	var reward_summary: String = "%s,%s,%s" % [rewards[0], rewards[1], rewards[2]]
 	_daily_settlement_summary.text = "HP=%d | rewards=%d | reward_summary=%s | kills=%d | resources(gold=%d,iron=%d,pop=%d)" % [hp, rewards.size(), reward_summary, kills, gold, iron, pop_cap]
 	var has_hp: bool = summary.has("castle_hp") and typeof(summary.get("castle_hp", null)) != TYPE_NIL
 	_daily_evidence_hp.visible = has_hp
 	if has_hp:
-		_daily_evidence_hp.text = "Final HP: %d" % hp
+		_daily_evidence_hp.text = "%s: %d" % [_t("battlemap.daily_settlement.final_hp"), hp]
 	var has_kills: bool = summary.has("dead_units_retired") and typeof(summary.get("dead_units_retired", null)) != TYPE_NIL
 	_daily_evidence_kills.visible = has_kills
 	if has_kills:
-		_daily_evidence_kills.text = "Kills: %d" % kills
+		_daily_evidence_kills.text = "%s: %d" % [_t("battlemap.daily_settlement.kills"), kills]
 	var has_summary_reward_key: bool = summary.has("reward_summary") and typeof(summary.get("reward_summary", null)) != TYPE_NIL
 	var summary_reward_text: String = str(summary.get("reward_summary", "")).strip_edges()
 	var has_reward_summary: bool = has_summary_reward_key and not summary_reward_text.is_empty()
 	_daily_evidence_reward_summary.visible = has_reward_summary
 	if has_reward_summary:
-		_daily_evidence_reward_summary.text = "Reward Summary: %s" % summary_reward_text
+		_daily_evidence_reward_summary.text = "%s: %s" % [_t("battlemap.daily_settlement.reward_summary"), summary_reward_text]
 	var has_resource_gold: bool = summary.has("resource_gold") and typeof(summary.get("resource_gold", null)) != TYPE_NIL
 	var has_resource_iron: bool = summary.has("resource_iron") and typeof(summary.get("resource_iron", null)) != TYPE_NIL
 	var has_resource_pop: bool = summary.has("resource_population_cap") and typeof(summary.get("resource_population_cap", null)) != TYPE_NIL
 	var has_resources: bool = has_resource_gold and has_resource_iron and has_resource_pop
 	_daily_evidence_resources.visible = has_resources
 	if has_resources:
-		_daily_evidence_resources.text = "Resources: gold=%d, iron=%d, pop=%d" % [gold, iron, pop_cap]
+		_daily_evidence_resources.text = "%s: gold=%d, iron=%d, pop=%d" % [_t("battlemap.daily_settlement.resources"), gold, iron, pop_cap]
 	var defeat_reason_raw: Variant = summary.get("defeat_reason", null)
 	var defeat_reason: String = str(defeat_reason_raw if defeat_reason_raw != null else "").strip_edges()
 	_daily_evidence_defeat_reason.visible = summary.has("defeat_reason") and not defeat_reason.is_empty()
-	_daily_evidence_defeat_reason.text = "Defeat Reason: %s" % defeat_reason
+	_daily_evidence_defeat_reason.text = "%s: %s" % [_t("battlemap.daily_settlement.defeat_reason"), defeat_reason]
 	_daily_runtime_context_payload.visible = false
 	_daily_runtime_context_payload.text = JSON.stringify(_settlement_context_snapshot)
-	_daily_expand_context_btn.text = "Show Runtime Context"
+	_daily_expand_context_btn.text = _t("battlemap.daily_settlement.show_runtime_context")
 	_daily_reward_a.text = rewards[0]
 	_daily_reward_b.text = rewards[1]
 	_daily_reward_c.text = rewards[2]
@@ -225,7 +240,7 @@ func _close_settlement_modal() -> void:
 	_settlement_context_snapshot = {}
 	_daily_settlement_modal.visible = false
 	_daily_runtime_context_payload.visible = false
-	_daily_expand_context_btn.text = "Show Runtime Context"
+	_daily_expand_context_btn.text = _t("battlemap.daily_settlement.show_runtime_context")
 	_screen.get_tree().paused = false
 
 func _on_settlement_context_toggle() -> void:
@@ -233,7 +248,7 @@ func _on_settlement_context_toggle() -> void:
 		return
 	_settlement_context_expanded = not _settlement_context_expanded
 	_daily_runtime_context_payload.visible = _settlement_context_expanded
-	_daily_expand_context_btn.text = "Hide Runtime Context" if _settlement_context_expanded else "Show Runtime Context"
+	_daily_expand_context_btn.text = _t("battlemap.daily_settlement.hide_runtime_context") if _settlement_context_expanded else _t("battlemap.daily_settlement.show_runtime_context")
 	if _settlement_context_expanded:
 		_daily_runtime_context_payload.text = JSON.stringify(_settlement_context_snapshot)
 
@@ -248,9 +263,11 @@ func _open_victory_modal(summary: Dictionary) -> void:
 	var gold: int = int(summary.get("resource_gold", 0))
 	var iron: int = int(summary.get("resource_iron", 0))
 	var pop_cap: int = int(summary.get("resource_population_cap", 0))
-	_victory_outcome_title.text = "Victory"
+	_victory_outcome_title.text = _t("battlemap.outcome.victory.title")
 	_victory_outcome_summary.text = "HP=%d | kills=%d | resources(gold=%d,iron=%d,pop=%d)" % [hp, kills, gold, iron, pop_cap]
-	_victory_outcome_hint.text = "Live battle cannot be resumed from this outcome state."
+	_victory_outcome_hint.text = _t("battlemap.outcome.hint")
+	_victory_return_btn.text = _t("battlemap.return_main_menu")
+	_victory_restart_btn.text = _t("battlemap.restart")
 
 func _close_victory_modal() -> void:
 	_victory_outcome_modal.visible = false
@@ -270,9 +287,11 @@ func _open_defeat_modal(summary: Dictionary) -> void:
 	var iron: int = int(summary.get("resource_iron", 0))
 	var pop_cap: int = int(summary.get("resource_population_cap", 0))
 	var defeat_copy: String = "Wall breached. The run ended."
-	_defeat_outcome_title.text = "Defeat"
+	_defeat_outcome_title.text = _t("battlemap.outcome.defeat.title")
 	_defeat_outcome_summary.text = "%s Castle HP=%d | Wall HP=%d | kills=%d | resources(gold=%d,iron=%d,pop=%d)" % [defeat_copy, hp, wall_hp, kills, gold, iron, pop_cap]
-	_defeat_outcome_hint.text = "Live battle cannot be resumed from this outcome state."
+	_defeat_outcome_hint.text = _t("battlemap.outcome.hint")
+	_defeat_return_btn.text = _t("battlemap.return_main_menu")
+	_defeat_restart_btn.text = _t("battlemap.restart")
 
 func _close_defeat_modal() -> void:
 	_defeat_outcome_modal.visible = false
