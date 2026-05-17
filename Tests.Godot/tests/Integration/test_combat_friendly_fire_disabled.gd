@@ -26,7 +26,7 @@ func _simulate_runtime_hits(probe: Node, attack_mask: int, targets: Array) -> Di
 	for target in targets:
 		var layer := int(target.get("layer", 0))
 		var team := str(target.get("team", ""))
-		var hit := probe.call("CanHitLayer", attack_mask, layer) == true
+		var hit: bool = probe.call("CanHitLayer", attack_mask, layer) == true
 		if not hit:
 			continue
 		if team == "friendly":
