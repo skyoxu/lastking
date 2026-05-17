@@ -1,8 +1,12 @@
-extends "res://addons/gdUnit4/src/GdUnitTestSuite.gd"
+﻿extends "res://addons/gdUnit4/src/GdUnitTestSuite.gd"
 
 func _await_frames(count: int) -> void:
 	for i in range(count):
 		await get_tree().process_frame
+
+func _request_hud_action(screen: Control, action_code: String) -> void:
+	var hud: Node = screen.get_node("BattleHud")
+	hud.call("RequestBattleAction", action_code)
 
 func _main_runtime() -> Dictionary:
 	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
@@ -20,8 +24,8 @@ func _main_runtime() -> Dictionary:
 		"main": main,
 		"screen": screen,
 		"bridge": screen.get_node("CombatExperienceRuntimeBridge"),
-		"status": screen.get_node("Margin/VBox/Status"),
-		"summary": screen.get_node("Margin/VBox/Summary"),
+		"status": screen.get_node("LegacyPrototypeRoot/VBox/Status"),
+		"summary": screen.get_node("LegacyPrototypeRoot/VBox/Summary"),
 	}
 
 # ACC:T65.3
@@ -33,27 +37,22 @@ func test_runtime_ui_semantics_mapping_for_empty_failure_completion() -> void:
 	var status_label: Label = runtime["status"]
 	var summary_label: Label = runtime["summary"]
 	var background: ColorRect = screen.get_node("Background")
-	var build_btn: Button = screen.get_node("Margin/VBox/Controls/BuildBtn")
-	var wave_btn: Button = screen.get_node("Margin/VBox/Controls/WaveBtn")
-	var exchange_btn: Button = screen.get_node("Margin/VBox/Controls/ExchangeBtn")
-	var cleanup_btn: Button = screen.get_node("Margin/VBox/Controls/CleanupBtn")
-	var finish_btn: Button = screen.get_node("Margin/VBox/Controls/FinishBtn")
 
 	assert_object(screen.get_node_or_null("CombatExperienceRuntimeBridge")).is_not_null()
 	assert_object(screen.get_node_or_null("Background")).is_not_null()
-	assert_object(screen.get_node_or_null("Margin/VBox/Status")).is_not_null()
-	assert_object(screen.get_node_or_null("Margin/VBox/Summary")).is_not_null()
+	assert_object(screen.get_node_or_null("LegacyPrototypeRoot/VBox/Status")).is_not_null()
+	assert_object(screen.get_node_or_null("LegacyPrototypeRoot/VBox/Summary")).is_not_null()
 	assert_bool(screen.visible).is_true()
 	assert_bool(background.visible).is_true()
 	assert_bool(status_label.visible).is_false()
 	assert_bool(String(status_label.text).length() > 0).is_true()
 	assert_bool(summary_label.visible).is_false()
 
-	build_btn.emit_signal("pressed")
-	wave_btn.emit_signal("pressed")
-	exchange_btn.emit_signal("pressed")
-	cleanup_btn.emit_signal("pressed")
-	finish_btn.emit_signal("pressed")
+	_request_hud_action(screen, "build")
+	_request_hud_action(screen, "wave")
+	_request_hud_action(screen, "exchange")
+	_request_hud_action(screen, "cleanup")
+	_request_hud_action(screen, "finish")
 	await _await_frames(2)
 	var runtime_summary: Dictionary = bridge.call("GetSummary")
 	assert_bool(summary_label.visible).is_false()
@@ -90,7 +89,7 @@ func test_runtime_bridge_preserves_hud_navigator_runtime_ownership_boundaries() 
 	var screen: Control = runtime["screen"]
 	var bridge: Node = runtime["bridge"]
 	var background: Node = screen.get_node("Background")
-	var margin: Node = screen.get_node("Margin")
+	var margin: Node = screen.get_node("LegacyPrototypeRoot")
 
 	assert_str(str(background.get_meta("ownership_container"))).is_equal("battlefield_presentation")
 	assert_str(str(bridge.get_meta("ownership_container"))).is_equal("runtime_bridge")
@@ -102,8 +101,8 @@ func test_new_visible_node_paths_require_focused_scene_test_coverage() -> void:
 	var screen: Control = runtime["screen"]
 	var bridge: Node = runtime["bridge"]
 	var background := screen.get_node_or_null("Background")
-	var title := screen.get_node_or_null("Margin/VBox/Title")
-	var wave_btn := screen.get_node_or_null("Margin/VBox/Controls/WaveBtn")
+	var title := screen.get_node_or_null("LegacyPrototypeRoot/VBox/Title")
+	var wave_btn := screen.get_node_or_null("BattleHud/CombatHud/BottomBar/Root/SkillsPanel/VBox/SkillButtons/WaveAction")
 	var operation_controller := screen.get_node_or_null("OperationController")
 	var feedback_controller := screen.get_node_or_null("FeedbackController")
 	var outcome_controller := screen.get_node_or_null("OutcomeController")
@@ -152,19 +151,17 @@ func test_t63_local_feedback_surfaces_should_light_up_inside_battlefield_for_wav
 	var runtime := await _main_runtime()
 	var screen: Control = runtime["screen"]
 	var bridge: Node = runtime["bridge"]
-	var wave_btn: Button = screen.get_node("Margin/VBox/Controls/WaveBtn")
-	var exchange_btn: Button = screen.get_node("Margin/VBox/Controls/ExchangeBtn")
 	var hit_flash_overlay: Control = screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/LocalFeedbackLayer/HitFlashOverlay")
 	var wall_pressure_overlay: Control = screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/LocalFeedbackLayer/WallPressureOverlay")
 	var local_prompt_panel: Control = screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/LocalFeedbackLayer/LocalPromptPanel")
 	var local_prompt_label: Label = screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/LocalFeedbackLayer/LocalPromptPanel/PromptLabel")
 
-	wave_btn.emit_signal("pressed")
+	_request_hud_action(screen, "wave")
 	await _await_frames(2)
 	assert_bool(local_prompt_panel.visible).is_true()
 	assert_bool(String(local_prompt_label.text).to_lower().find("wave") >= 0).is_true()
 
-	exchange_btn.emit_signal("pressed")
+	_request_hud_action(screen, "exchange")
 	await _await_frames(2)
 	assert_bool(hit_flash_overlay.visible).is_true()
 
@@ -182,10 +179,9 @@ func test_t66_feedback_ownership_should_keep_runtime_bridge_as_state_authority()
 	var screen: Control = runtime["screen"]
 	var bridge: Node = runtime["bridge"]
 	var summary_label: Label = runtime["summary"]
-	var legend_label: Label = screen.get_node("Margin/VBox/Legend")
-	var metrics_help_label: Label = screen.get_node("Margin/VBox/MetricsHelp")
+	var legend_label: Label = screen.get_node("LegacyPrototypeRoot/VBox/Legend")
+	var metrics_help_label: Label = screen.get_node("LegacyPrototypeRoot/VBox/MetricsHelp")
 	var status_label: Label = runtime["status"]
-	var wave_btn: Button = screen.get_node("Margin/VBox/Controls/WaveBtn")
 
 	var before_summary: Dictionary = bridge.call("GetSummary")
 	var before_status := String(status_label.text)
@@ -197,7 +193,7 @@ func test_t66_feedback_ownership_should_keep_runtime_bridge_as_state_authority()
 	assert_that(after_legacy_override).is_equal(before_summary)
 	assert_str(String(status_label.text)).is_equal(before_status)
 
-	wave_btn.emit_signal("pressed")
+	_request_hud_action(screen, "wave")
 	await _await_frames(1)
 	var after_wave: Dictionary = bridge.call("GetSummary")
 	assert_int(int(after_wave.get("enemy_units_spawned", 0))).is_greater_equal(int(before_summary.get("enemy_units_spawned", 0)) + 2)
@@ -212,10 +208,6 @@ func test_t66_state_transition_semantics_should_stay_bridge_driven_after_legacy_
 	var bridge: Node = runtime["bridge"]
 	var status_label: Label = runtime["status"]
 	var summary_label: Label = runtime["summary"]
-	var wave_btn: Button = screen.get_node("Margin/VBox/Controls/WaveBtn")
-	var exchange_btn: Button = screen.get_node("Margin/VBox/Controls/ExchangeBtn")
-	var cleanup_btn: Button = screen.get_node("Margin/VBox/Controls/CleanupBtn")
-	var finish_btn: Button = screen.get_node("Margin/VBox/Controls/FinishBtn")
 
 	var empty_snapshot: Dictionary = bridge.call("GetSummary")
 	var empty_status := String(status_label.text)
@@ -228,20 +220,20 @@ func test_t66_state_transition_semantics_should_stay_bridge_driven_after_legacy_
 	assert_str(String(status_label.text)).is_equal(empty_status)
 
 	# failure semantics: out-of-order finish should not enter completion.
-	finish_btn.emit_signal("pressed")
+	_request_hud_action(screen, "finish")
 	await _await_frames(1)
 	var failure_status := String(status_label.text)
 	assert_bool(failure_status.to_lower().find("cleanup") >= 0).is_true()
 	assert_bool(failure_status.to_lower().find("finished") < 0).is_true()
 
 	# completion semantics: bridge-driven valid sequence should enter completion deterministically.
-	wave_btn.emit_signal("pressed")
+	_request_hud_action(screen, "wave")
 	await _await_frames(1)
-	exchange_btn.emit_signal("pressed")
+	_request_hud_action(screen, "exchange")
 	await _await_frames(1)
-	cleanup_btn.emit_signal("pressed")
+	_request_hud_action(screen, "cleanup")
 	await _await_frames(1)
-	finish_btn.emit_signal("pressed")
+	_request_hud_action(screen, "finish")
 	await _await_frames(1)
 
 	var completion_status := String(status_label.text)
@@ -271,19 +263,15 @@ func test_t67_daily_settlement_modal_node_paths_should_exist_and_default_hidden(
 	# T70.9: focused scene path must become visible/interactive after settlement trigger.
 	var bridge: Node = runtime["bridge"]
 	var status_label: Label = runtime["status"]
-	var wave_btn: Button = screen.get_node("Margin/VBox/Controls/WaveBtn")
-	var exchange_btn: Button = screen.get_node("Margin/VBox/Controls/ExchangeBtn")
-	var cleanup_btn: Button = screen.get_node("Margin/VBox/Controls/CleanupBtn")
-	var finish_btn: Button = screen.get_node("Margin/VBox/Controls/FinishBtn")
 	assert_bool(bridge.has_method("ForceOutcomeForTest")).is_true()
 	bridge.call("ForceOutcomeForTest", "settlement", 42)
-	wave_btn.emit_signal("pressed")
+	_request_hud_action(screen, "wave")
 	await _await_frames(1)
-	exchange_btn.emit_signal("pressed")
+	_request_hud_action(screen, "exchange")
 	await _await_frames(1)
-	cleanup_btn.emit_signal("pressed")
+	_request_hud_action(screen, "cleanup")
 	await _await_frames(1)
-	finish_btn.emit_signal("pressed")
+	_request_hud_action(screen, "finish")
 	await _await_frames(2)
 	assert_bool((modal as Control).visible).is_true()
 	assert_bool((reward_a as Button).disabled).is_false()
@@ -342,14 +330,13 @@ func test_battle_map_should_hide_player_castle_marker_and_place_enemy_spawns_on_
 
 func test_battle_map_debug_inspector_should_exist_and_report_scene_and_hovered_node() -> void:
 	var runtime := await _main_runtime()
-	var main: Control = runtime["main"]
 	var screen: Control = runtime["screen"]
 	var inspector := screen.get_node_or_null("DebugInspectorOverlay")
 	var scene_label := screen.get_node_or_null("DebugInspectorOverlay/Panel/VBox/SceneLabel")
 	var hover_label := screen.get_node_or_null("DebugInspectorOverlay/Panel/VBox/HoverLabel")
 	var path_label := screen.get_node_or_null("DebugInspectorOverlay/Panel/VBox/PathLabel")
-	var wave_btn: Button = screen.get_node("Margin/VBox/Controls/WaveBtn")
-	var hud_finish: CanvasItem = main.get_node("RuntimeUi/HUD/CombatHud/BottomBar/VBox/Actions/FinishAction")
+	var wave_btn: Button = screen.get_node("BattleHud/CombatHud/BottomBar/Root/SkillsPanel/VBox/SkillButtons/WaveAction")
+	var hud_finish: CanvasItem = screen.get_node("BattleHud/CombatHud/BottomBar/Root/SkillsPanel/VBox/SkillButtons/FinishAction")
 
 	assert_object(inspector).is_not_null()
 	assert_object(scene_label).is_not_null()
@@ -361,21 +348,21 @@ func test_battle_map_debug_inspector_should_exist_and_report_scene_and_hovered_n
 
 	inspector.call("DebugSetHoveredNode", wave_btn)
 	await _await_frames(1)
-	assert_bool(String((hover_label as Label).text).find("WaveBtn") >= 0).is_true()
-	assert_bool(String((path_label as Label).text).find("Margin/VBox/Controls/WaveBtn") >= 0).is_true()
+	assert_bool(String((hover_label as Label).text).find("WaveAction") >= 0).is_true()
+	assert_bool(String((path_label as Label).text).find("BattleHud/CombatHud/BottomBar/Root/SkillsPanel/VBox/SkillButtons/WaveAction") >= 0).is_true()
 
 	inspector.call("DebugSetHoveredNode", hud_finish)
 	await _await_frames(1)
 	assert_bool(String((hover_label as Label).text).find("FinishAction") >= 0).is_true()
-	assert_bool(String((path_label as Label).text).find("RuntimeUi/HUD/CombatHud/BottomBar/VBox/Actions/FinishAction") >= 0).is_true()
+	assert_bool(String((path_label as Label).text).find("BattleHud/CombatHud/BottomBar/Root/SkillsPanel/VBox/SkillButtons/FinishAction") >= 0).is_true()
 
 
 func test_battle_map_should_hide_legacy_summary_legend_and_metrics_help_from_player_view() -> void:
 	var runtime := await _main_runtime()
 	var screen: Control = runtime["screen"]
-	var summary_label: Label = screen.get_node("Margin/VBox/Summary")
-	var legend_label: Label = screen.get_node("Margin/VBox/Legend")
-	var metrics_help_label: Label = screen.get_node("Margin/VBox/MetricsHelp")
+	var summary_label: Label = screen.get_node("LegacyPrototypeRoot/VBox/Summary")
+	var legend_label: Label = screen.get_node("LegacyPrototypeRoot/VBox/Legend")
+	var metrics_help_label: Label = screen.get_node("LegacyPrototypeRoot/VBox/MetricsHelp")
 
 	assert_bool(summary_label.visible).is_false()
 	assert_bool(legend_label.visible).is_false()
@@ -385,6 +372,7 @@ func test_battle_map_should_hide_legacy_summary_legend_and_metrics_help_from_pla
 func test_battle_map_should_hide_legacy_status_from_player_view() -> void:
 	var runtime := await _main_runtime()
 	var screen: Control = runtime["screen"]
-	var status_label: Label = screen.get_node("Margin/VBox/Status")
+	var status_label: Label = screen.get_node("LegacyPrototypeRoot/VBox/Status")
 
 	assert_bool(status_label.visible).is_false()
+
