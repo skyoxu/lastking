@@ -40,7 +40,7 @@ func _run() -> void:
             st = cr.PortsStatus()
             var any_true := false
             for k in st.keys():
-                if bool(st[k]):
+                if st[k] == true:
                     any_true = true
                     break
             if any_true:
@@ -49,7 +49,7 @@ func _run() -> void:
             tries += 1
         for k in st.keys():
             if result["ports"].has(k):
-                result["ports"][k] = bool(st[k])
+                result["ports"][k] = st[k] == true
     else:
         # fallback (best effort; may be blocked by C# interop)
         pass
@@ -101,7 +101,7 @@ func _run() -> void:
                     if btn != null:
                         btn.emit_signal("pressed")
                         await process_frame
-                result["ui"]["menuStartPublishes"] = bool(_sc_published)
+                result["ui"]["menuStartPublishes"] = _sc_published == true
         else:
             result["ui"]["error"] = "Main instantiation returned null"
         sandbox.queue_free()

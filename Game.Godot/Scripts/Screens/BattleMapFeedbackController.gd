@@ -13,14 +13,14 @@ var _hit_flash_overlay: ColorRect = null
 var _wall_pressure_overlay: ColorRect = null
 var _local_prompt_panel: Control = null
 var _local_prompt_label: Label = null
-var _enemy_tokens := {}
+var _enemy_tokens: Dictionary = {}
 var _path_points: PackedVector2Array = PackedVector2Array()
-var _spawn_pulse_time_left := 0.0
-var _hit_flash_time_left := 0.0
-var _wall_pressure_time_left := 0.0
-var _prompt_time_left := 0.0
-var _last_status_text := ""
-var _last_prompt_text := ""
+var _spawn_pulse_time_left: float = 0.0
+var _hit_flash_time_left: float = 0.0
+var _wall_pressure_time_left: float = 0.0
+var _prompt_time_left: float = 0.0
+var _last_status_text: String = ""
+var _last_prompt_text: String = ""
 var _translate: Callable
 
 const HIT_FLASH_DURATION_SEC := 0.65
@@ -84,21 +84,21 @@ func clear_local_prompt() -> void:
 	_apply_local_feedback_visuals()
 
 func _render_actor_tokens() -> void:
-	var bridge := _current_bridge()
+	var bridge: Node = _current_bridge()
 	if bridge == null or not bridge.has_method("GetActorSnapshots"):
 		return
 	var snapshots: Array = bridge.call("GetActorSnapshots")
-	var alive_names := {}
+	var alive_names: Dictionary = {}
 	for item in snapshots:
-		var d := item as Dictionary
+		var d: Dictionary = item as Dictionary
 		if d == null:
 			continue
-		if not bool(d.get("is_moving_enemy", false)):
+		if d.get("is_moving_enemy", false) != true:
 			continue
-		var actor_name := String(d.get("name", ""))
+		var actor_name: String = str(d.get("name", ""))
 		if actor_name.is_empty():
 			continue
-		if not bool(d.get("active", false)):
+		if d.get("active", false) != true:
 			continue
 		alive_names[actor_name] = true
 		var token: ColorRect = _enemy_tokens.get(actor_name, null)
@@ -125,7 +125,7 @@ func _update_spawn_cues(delta: float) -> void:
 	_apply_spawn_cues()
 
 func _update_local_feedback(delta: float) -> void:
-	var visuals_changed := false
+	var visuals_changed: bool = false
 	if _hit_flash_time_left > 0.0:
 		_hit_flash_time_left = maxf(0.0, _hit_flash_time_left - delta)
 		visuals_changed = true
@@ -142,20 +142,20 @@ func _update_local_feedback(delta: float) -> void:
 		_apply_local_feedback_visuals()
 
 func _apply_spawn_cues() -> void:
-	var pulse_active := _spawn_pulse_time_left > 0.0
-	var weak_color := Color(0.847059, 0.286275, 0.286275, 0.55)
-	var pulse_color := Color(0.996078, 0.505882, 0.505882, 0.95)
-	var spawn_color := pulse_color if pulse_active else weak_color
+	var pulse_active: bool = _spawn_pulse_time_left > 0.0
+	var weak_color: Color = Color(0.847059, 0.286275, 0.286275, 0.55)
+	var pulse_color: Color = Color(0.996078, 0.505882, 0.505882, 0.95)
+	var spawn_color: Color = pulse_color if pulse_active else weak_color
 	_enemy_spawn_a.color = spawn_color
 	_enemy_spawn_b.color = spawn_color
 
 func _sync_local_feedback_from_summary(result: Dictionary, status_text: String) -> void:
-	var castle_hp := int(result.get("castle_hp", 100))
-	var wall_hp := int(result.get("wall_hp", 20))
-	var exchanges := int(result.get("combat_exchanges", 0))
-	var enemies := int(result.get("enemy_units_spawned", 0))
-	var defeat_reason := String(result.get("defeat_reason", ""))
-	var status_lower := status_text.to_lower()
+	var castle_hp: int = int(result.get("castle_hp", 100))
+	var wall_hp: int = int(result.get("wall_hp", 20))
+	var exchanges: int = int(result.get("combat_exchanges", 0))
+	var enemies: int = int(result.get("enemy_units_spawned", 0))
+	var defeat_reason: String = str(result.get("defeat_reason", ""))
+	var status_lower: String = status_text.to_lower()
 
 	if exchanges > 0 or defeat_reason == "castle_destroyed":
 		_hit_flash_time_left = HIT_FLASH_DURATION_SEC
@@ -186,36 +186,36 @@ func _apply_local_feedback_visuals() -> void:
 	if _hit_flash_overlay != null:
 		_hit_flash_overlay.visible = _hit_flash_time_left > 0.0
 		if _hit_flash_overlay.visible:
-			var flash_alpha := clampf(_hit_flash_time_left / HIT_FLASH_DURATION_SEC, 0.15, 1.0) * 0.22
+			var flash_alpha: float = clampf(_hit_flash_time_left / HIT_FLASH_DURATION_SEC, 0.15, 1.0) * 0.22
 			_hit_flash_overlay.color = Color(1.0, 0.560784, 0.403922, flash_alpha)
 	if _wall_pressure_overlay != null:
 		_wall_pressure_overlay.visible = _wall_pressure_time_left > 0.0
 		if _wall_pressure_overlay.visible:
-			var pressure_alpha := clampf(_wall_pressure_time_left / WALL_PRESSURE_DURATION_SEC, 0.2, 1.0) * 0.16
+			var pressure_alpha: float = clampf(_wall_pressure_time_left / WALL_PRESSURE_DURATION_SEC, 0.2, 1.0) * 0.16
 			_wall_pressure_overlay.color = Color(0.901961, 0.309804, 0.25098, pressure_alpha)
 	if _local_prompt_panel != null:
 		_local_prompt_panel.visible = _prompt_time_left > 0.0 and _local_prompt_label != null and not _local_prompt_label.text.is_empty()
 
 func _sample_path(progress: float) -> Vector2:
-	var p := clampf(progress, 0.0, 1.0)
+	var p: float = clampf(progress, 0.0, 1.0)
 	var rev: PackedVector2Array = PackedVector2Array()
 	for i in range(_path_points.size() - 1, -1, -1):
 		rev.append(_path_points[i])
-	var seg_count := rev.size() - 1
+	var seg_count: int = rev.size() - 1
 	if seg_count <= 0:
 		return Vector2.ZERO
-	var scaled := p * float(seg_count)
-	var idx := mini(int(floor(scaled)), seg_count - 1)
-	var local_t := scaled - float(idx)
+	var scaled: float = p * float(seg_count)
+	var idx: int = mini(int(floor(scaled)), seg_count - 1)
+	var local_t: float = scaled - float(idx)
 	return rev[idx].lerp(rev[idx + 1], local_t)
 
 func _t(key: String) -> String:
 	if _translate.is_valid():
-		return String(_translate.call(key))
+		return str(_translate.call(key))
 	return key
 
 func _try_bridge_summary() -> Dictionary:
-	var bridge := _current_bridge()
+	var bridge: Node = _current_bridge()
 	if bridge == null:
 		return {}
 	if bridge.has_method("GetSummary"):
@@ -230,7 +230,9 @@ func _try_bridge_summary() -> Dictionary:
 
 func _current_bridge() -> Node:
 	if _bridge_provider.is_valid():
-		var provided = _bridge_provider.call()
+		var provided: Variant = _bridge_provider.call()
 		if provided is Node:
 			return provided
 	return _bridge
+
+

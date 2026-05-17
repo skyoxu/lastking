@@ -54,7 +54,7 @@ func preview_at(world_position: Vector2) -> Dictionary:
 	if not selected_type.is_empty() and _bridge.HasBuildingType(selected_type):
 		var preview = _bridge.Preview(selected_type, snapped_cell)
 		covered_cells = preview.get("covered_cells", [])
-		is_valid = bool(preview.get("is_valid", false))
+		is_valid = preview.get("is_valid", false) == true
 	var on_grid := _is_world_on_grid(world_position)
 	return {
 		"selected_type": selected_type,

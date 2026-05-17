@@ -132,7 +132,7 @@ func _on_domain_event(type: String, _source: String, _data_json: String, _id: St
 		if nav != null and nav.has_method("SwitchTo"):
 			if ResourceLoader.exists("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn"):
 				var ok: Variant = nav.SwitchTo("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn")
-				if bool(ok):
+				if ok == true:
 					var menu = get_node_or_null("/root/Main/RuntimeUi/MainMenu")
 					if menu != null and menu.has_method("HideMenu"):
 						menu.HideMenu()
