@@ -142,7 +142,7 @@ func _latest_smoke_summaries(limit: int = 2) -> Array:
                 if String(summary.get("sc_test_run_id", "")).strip_edges() != expected_run_id:
                     continue
             var markers: Dictionary = summary.get("markers", {})
-            if bool(markers.get("template_smoke_ready", false)):
+            if markers.get("template_smoke_ready", false) == true:
                 results.append(summary)
                 if results.size() >= limit:
                     break
@@ -167,12 +167,12 @@ func test_project_bootstrap_fingerprint_is_stable_across_two_external_restart_pr
     var second_probe: Dictionary = _run_external_headless_startup_probe(startup_scene_path)
     assert_int(int(first_probe.get("rc", 1))).is_equal(0)
     assert_int(int(second_probe.get("rc", 1))).is_equal(0)
-    assert_bool(bool(first_probe.get("headless_arg_present", false))).is_true()
-    assert_bool(bool(first_probe.get("path_arg_present", false))).is_true()
-    assert_bool(bool(first_probe.get("scene_arg_present", false))).is_true()
-    assert_bool(bool(second_probe.get("headless_arg_present", false))).is_true()
-    assert_bool(bool(second_probe.get("path_arg_present", false))).is_true()
-    assert_bool(bool(second_probe.get("scene_arg_present", false))).is_true()
+    assert_bool(first_probe.get("headless_arg_present", false) == true).is_true()
+    assert_bool(first_probe.get("path_arg_present", false) == true).is_true()
+    assert_bool(first_probe.get("scene_arg_present", false) == true).is_true()
+    assert_bool(second_probe.get("headless_arg_present", false) == true).is_true()
+    assert_bool(second_probe.get("path_arg_present", false) == true).is_true()
+    assert_bool(second_probe.get("scene_arg_present", false) == true).is_true()
     assert_bool(String(first_probe.get("output", "")).findn("[TEMPLATE_SMOKE_READY]") >= 0).is_true()
     assert_bool(String(second_probe.get("output", "")).findn("[TEMPLATE_SMOKE_READY]") >= 0).is_true()
 
@@ -196,8 +196,8 @@ func test_project_bootstrap_fingerprint_is_stable_across_two_external_restart_pr
     assert_str(String(latest.get("scene", ""))).is_equal(String(previous.get("scene", "")))
     var latest_markers: Dictionary = latest.get("markers", {})
     var previous_markers: Dictionary = previous.get("markers", {})
-    assert_bool(bool(latest_markers.get("template_smoke_ready", false))).is_true()
-    assert_bool(bool(previous_markers.get("template_smoke_ready", false))).is_true()
+    assert_bool(latest_markers.get("template_smoke_ready", false) == true).is_true()
+    assert_bool(previous_markers.get("template_smoke_ready", false) == true).is_true()
 
 # acceptance: ACC:T1.26
 # acceptance: ACC:T1.23

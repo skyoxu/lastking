@@ -30,7 +30,7 @@ func _project_config_text() -> String:
     return FileAccess.get_file_as_string("res://project.godot")
 
 func _is_csharp_creation_metadata(meta: Dictionary) -> bool:
-    return String(meta.get("creation_mode", "")).to_lower() == "csharp" and bool(meta.get("language_conversion_required", true)) == false
+    return String(meta.get("creation_mode", "")).to_lower() == "csharp" and meta.get("language_conversion_required", true) != true
 
 func _detect_creation_metadata_from_project() -> Dictionary:
     var has_dotnet_section: bool = _project_config_text().find("[dotnet]") >= 0
@@ -103,7 +103,7 @@ func test_csharp_script_type_is_available_for_editor_compile_smoke() -> void:
     assert_bool(evidence.has("conversion_required")).is_true()
     var creation_mode: String = String(evidence.get("creation_mode_at_bootstrap", "")).strip_edges().to_lower()
     assert(creation_mode == "csharp", "creation_mode_at_bootstrap must be csharp")
-    assert_bool(bool(evidence.get("conversion_required", true))).is_false()
+    assert_bool(evidence.get("conversion_required", true) == true).is_false()
     assert_bool(ClassDB.class_exists("CSharpScript")).is_true()
 
 func test_creation_metadata_rejects_non_csharp_mode() -> void:
