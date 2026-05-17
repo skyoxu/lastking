@@ -46,10 +46,10 @@ func _run_combat_round(enemy_ai: Node, events: Array[Dictionary], entities: Dict
 
         var attack_mask := _attack_mask(attacker)
         var target_layer := _target_layer(target)
-        var friendly_fire_prevented: bool = bool(enemy_ai.IsFriendlyFirePrevented(attack_mask, FRIENDLY_LAYER, PLAYER_LAYER))
+        var friendly_fire_prevented: bool = enemy_ai.IsFriendlyFirePrevented(attack_mask, FRIENDLY_LAYER, PLAYER_LAYER) == true
         if friendly_fire_prevented and attacker.team == target.team:
             continue
-        if not bool(enemy_ai.CanHitLayer(attack_mask, target_layer)):
+        if enemy_ai.CanHitLayer(attack_mask, target_layer) != true:
             continue
 
         target.hp = max(target.hp - int(event["damage"]), 0)

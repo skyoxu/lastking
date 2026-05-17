@@ -31,7 +31,7 @@ func test_successful_build_requires_cap_increase_and_tax_schedule_started() -> v
 	runtime.call("ApplyPlacementResult", true)
 
 	assert_int(int(runtime.get("PopulationCap"))).is_equal(8)
-	assert_bool(bool(runtime.get("IsTaxScheduleRunning"))).is_true()
+	assert_bool(runtime.get("IsTaxScheduleRunning") == true).is_true()
 
 	_free_flow(data)
 

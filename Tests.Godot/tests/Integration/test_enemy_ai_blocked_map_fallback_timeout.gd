@@ -48,7 +48,7 @@ func test_blocked_map_fallback_attack_completes_within_timeout_and_emits_diagnos
 	assert_int(int(result.get("enemy_count", 0))).is_equal(DEFAULT_ENEMY_COUNT)
 	assert_int(int(result.get("enemies_reached_fallback_attack", 0))).is_equal(DEFAULT_ENEMY_COUNT)
 	assert_int(int(result.get("deadlock_count", 0))).is_equal(0)
-	assert_bool(bool(result.get("navigation_api_used", false))).is_true()
+	assert_bool(result.get("navigation_api_used", false) == true).is_true()
 	assert_int(diagnostics.size()).is_equal(DEFAULT_ENEMY_COUNT * 2)
 	for enemy_index in range(DEFAULT_ENEMY_COUNT):
 		assert_int(_count_diagnostics_for_enemy(diagnostics, enemy_index, "fallback_decision_0")).is_equal(1)
@@ -71,7 +71,7 @@ func test_blocked_map_fallback_reports_deadlock_when_timeout_prevents_attack() -
 
 	assert_int(int(result.get("enemies_reached_fallback_attack", 0))).is_equal(0)
 	assert_int(int(result.get("deadlock_count", 0))).is_equal(2)
-	assert_bool(bool(result.get("navigation_api_used", false))).is_true()
+	assert_bool(result.get("navigation_api_used", false) == true).is_true()
 	assert_int(diagnostics.size()).is_equal(6)
 	for enemy_index in range(2):
 		assert_int(_count_diagnostics_for_enemy(diagnostics, enemy_index, "fallback_decision_0")).is_equal(1)

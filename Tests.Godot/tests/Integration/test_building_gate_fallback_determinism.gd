@@ -31,7 +31,7 @@ func test_repeated_runs_with_same_seed_keep_results_identical() -> void:
 	assert_that(runtime_a.resources).is_equal(runtime_b.resources)
 	assert_that(runtime_a.placements).is_equal(runtime_b.placements)
 	assert_that(gate_a).is_equal(gate_b)
-	assert_that(bool(confirm_reject_a["accepted"])).is_false()
+	assert_that(confirm_reject_a["accepted"] == true).is_false()
 
 	runtime_a.queue_free()
 	runtime_b.queue_free()
@@ -61,7 +61,7 @@ func test_rejected_placement_keeps_state_unchanged_and_reports_refusal() -> void
 	var placements_before = runtime.placements.duplicate(true)
 
 	var result = runtime.confirm_at(Vector2(20, 20))
-	assert_that(bool(result["accepted"])).is_false()
+	assert_that(result["accepted"] == true).is_false()
 	assert_that(runtime.resources).is_equal(resources_before)
 	assert_that(runtime.placements).is_equal(placements_before)
 	runtime.queue_free()
