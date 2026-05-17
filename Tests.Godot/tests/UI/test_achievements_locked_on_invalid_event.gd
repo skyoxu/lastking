@@ -48,7 +48,7 @@ func test_invalid_unlock_request_keeps_unlock_state_unchanged_and_emits_no_notif
 
 	sut.handle_unlock_request("first_win", false)
 
-	assert_bool(bool(sut.unlocked["first_win"])).is_false()
+	assert_bool(sut.unlocked["first_win"] == true).is_false()
 	assert_int(recorder.notifications.size()).is_equal(0)
 	assert_int(sut.sync_calls.size()).is_equal(0)
 
@@ -61,6 +61,6 @@ func test_event_not_meeting_condition_keeps_achievement_locked_and_emits_no_unlo
 
 	sut.handle_event("enemy_defeated", false, "first_win")
 
-	assert_bool(bool(sut.unlocked["first_win"])).is_false()
+	assert_bool(sut.unlocked["first_win"] == true).is_false()
 	assert_int(recorder.notifications.size()).is_equal(0)
 	assert_int(sut.sync_calls.size()).is_equal(0)

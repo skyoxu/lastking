@@ -62,12 +62,12 @@ func test_selects_highest_reachable_target_in_strict_priority_order() -> void:
 		_candidate_from_navigation("u1", "unit", start, Vector2i(4, 0), grid, 6)
 	]
 	var nav_probe: Dictionary = probe.call("ProbeNavigationPath", Vector2(start.x, start.y), Vector2(4, 0))
-	assert_bool(bool(nav_probe.get("navigation_api_used", false))).is_true()
+	assert_bool(nav_probe.get("navigation_api_used", false) == true).is_true()
 
 	var selected: Dictionary = probe.call("SelectTarget", candidates)
 	assert_str(str(selected.get("target_class", ""))).is_equal("Unit")
 	assert_str(str(selected.get("target_id", ""))).is_equal("u1")
-	assert_bool(bool(selected.get("is_fallback_attack", false))).is_false()
+	assert_bool(selected.get("is_fallback_attack", false) == true).is_false()
 
 # ACC:T6.7
 func test_navigation_constraints_exclude_blocked_or_non_navigable_targets() -> void:
@@ -80,10 +80,10 @@ func test_navigation_constraints_exclude_blocked_or_non_navigable_targets() -> v
 	var blocked_unit := _candidate_from_navigation("u_blocked", "unit", start, Vector2i(3, 0), grid, 1)
 	var valid_wall := _candidate_from_navigation("w_ok", "wall", start, Vector2i(0, 1), grid, 2)
 
-	assert_bool(bool(blocked_unit["reachable"])).is_false()
-	assert_bool(bool(valid_wall["reachable"])).is_true()
+	assert_bool(blocked_unit["reachable"] == true).is_false()
+	assert_bool(valid_wall["reachable"] == true).is_true()
 	var nav_probe: Dictionary = probe.call("ProbeNavigationPath", Vector2(start.x, start.y), Vector2(3, 0))
-	assert_bool(bool(nav_probe.get("navigation_api_used", false))).is_true()
+	assert_bool(nav_probe.get("navigation_api_used", false) == true).is_true()
 	assert_bool(nav_probe.has("path_points")).is_true()
 	assert_bool(int(nav_probe.get("path_points", 0)) >= 0).is_true()
 
@@ -140,12 +140,12 @@ func test_pathfinding_does_not_traverse_blocked_cells_and_uses_fallback_when_no_
 		{"id": "blocker_far", "class": "blocking_structure", "reachable": false, "blocked": true, "path_points": 0, "distance": 6, "blocks_route_to_higher_priority": true, "nav_position": Vector2(1, 5)}
 	]
 	var nav_probe: Dictionary = probe.call("ProbeNavigationPath", Vector2(start.x, start.y), Vector2(3, 0))
-	assert_bool(bool(nav_probe.get("navigation_api_used", false))).is_true()
+	assert_bool(nav_probe.get("navigation_api_used", false) == true).is_true()
 	assert_int(int(nav_probe.get("path_points", 0))).is_equal(0)
 
 	var selected: Dictionary = probe.call("SelectTarget", fallback_candidates)
 	assert_str(str(selected.get("target_id", ""))).is_equal("blocker_near")
-	assert_bool(bool(selected.get("is_fallback_attack", false))).is_true()
+	assert_bool(selected.get("is_fallback_attack", false) == true).is_true()
 
 # ACC:T50.4
 # ACC:T50.7
@@ -161,10 +161,10 @@ func test_projectile_runtime_does_not_create_or_resolve_when_no_firing_solution(
 		1
 	)
 
-	assert_bool(bool(no_solution.get("projectile_created", true))).is_false()
-	assert_bool(bool(no_solution.get("impact_resolved", true))).is_false()
-	assert_bool(bool(no_solution.get("timed_out", true))).is_false()
-	assert_bool(bool(no_solution.get("cleaned_up", true))).is_false()
-	assert_bool(bool(no_solution.get("damage_committed", true))).is_false()
+	assert_bool(no_solution.get("projectile_created", true) == true).is_false()
+	assert_bool(no_solution.get("impact_resolved", true) == true).is_false()
+	assert_bool(no_solution.get("timed_out", true) == true).is_false()
+	assert_bool(no_solution.get("cleaned_up", true) == true).is_false()
+	assert_bool(no_solution.get("damage_committed", true) == true).is_false()
 	assert_int(int(no_solution.get("resolved_damage", -1))).is_equal(0)
 	assert_str(str(no_solution.get("outcome", ""))).is_equal("no_firing_solution")

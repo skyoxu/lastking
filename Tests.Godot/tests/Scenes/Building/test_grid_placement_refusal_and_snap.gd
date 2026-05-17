@@ -7,7 +7,7 @@ func _new_runtime() -> Node:
 	return packed.instantiate()
 
 func _assert_rejected_without_side_effects(result: Dictionary, runtime: Node, resources_before: int, placements_before: int) -> void:
-	assert_that(bool(result["accepted"])).is_false()
+	assert_that(result["accepted"] == true).is_false()
 	assert_that(runtime.resources).is_equal(resources_before)
 	assert_that(runtime.placements.size()).is_equal(placements_before)
 

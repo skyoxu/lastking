@@ -32,7 +32,7 @@ func test_speed_buttons_apply_pause_one_x_and_two_x_immediately() -> void:
 	await get_tree().process_frame
 	var paused: Dictionary = manager.call("GetSpeedState")
 	assert_int(int(paused["scale_percent"])).is_equal(0)
-	assert_bool(bool(paused["is_paused"])).is_true()
+	assert_bool(paused["is_paused"] == true).is_true()
 	assert_float(Engine.time_scale).is_equal(0.0)
 	assert_float(pause_button.modulate.a).is_equal(1.0)
 	assert_bool(speed_state_label.text.find(":") >= 0).is_true()
@@ -42,7 +42,7 @@ func test_speed_buttons_apply_pause_one_x_and_two_x_immediately() -> void:
 	await get_tree().process_frame
 	var one_x: Dictionary = manager.call("GetSpeedState")
 	assert_int(int(one_x["scale_percent"])).is_equal(100)
-	assert_bool(bool(one_x["is_paused"])).is_false()
+	assert_bool(one_x["is_paused"] == true).is_false()
 	assert_float(Engine.time_scale).is_equal(1.0)
 	assert_float(one_x_button.modulate.a).is_equal(1.0)
 	assert_bool(speed_state_label.text.find("1") >= 0).is_true()
@@ -51,7 +51,7 @@ func test_speed_buttons_apply_pause_one_x_and_two_x_immediately() -> void:
 	await get_tree().process_frame
 	var two_x: Dictionary = manager.call("GetSpeedState")
 	assert_int(int(two_x["scale_percent"])).is_equal(200)
-	assert_bool(bool(two_x["is_paused"])).is_false()
+	assert_bool(two_x["is_paused"] == true).is_false()
 	assert_float(Engine.time_scale).is_equal(2.0)
 	assert_float(two_x_button.modulate.a).is_equal(1.0)
 	assert_bool(speed_state_label.text.find("2") >= 0).is_true()
@@ -77,6 +77,6 @@ func test_hud_remains_interactive_while_paused_and_can_resume_speed() -> void:
 	await get_tree().process_frame
 	var resumed: Dictionary = manager.call("GetSpeedState")
 	assert_bool(get_tree().paused).is_false()
-	assert_bool(bool(resumed["is_paused"])).is_false()
+	assert_bool(resumed["is_paused"] == true).is_false()
 	assert_int(int(resumed["scale_percent"])).is_equal(200)
 	assert_float(Engine.time_scale).is_equal(2.0)

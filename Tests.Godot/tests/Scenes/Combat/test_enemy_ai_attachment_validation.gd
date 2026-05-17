@@ -14,7 +14,7 @@ func _is_enemy_ai_attachment_valid(enemy: Node) -> bool:
 		return false
 	if not enemy.has_method("IsEnemyAiAttachedAndActive"):
 		return false
-	return bool(enemy.call("IsEnemyAiAttachedAndActive"))
+	return enemy.call("IsEnemyAiAttachedAndActive") == true
 
 # acceptance: ACC:T6.8
 func test_enemy_ai_attachment_validation_passes_when_enemy_ai_probe_script_is_attached_and_active() -> void:

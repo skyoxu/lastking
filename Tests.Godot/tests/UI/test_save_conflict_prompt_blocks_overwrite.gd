@@ -22,9 +22,9 @@ func test_conflict_requires_prompt_before_any_version_is_applied() -> void:
         "none"
     ) as Dictionary
 
-    assert_bool(bool(outcome.get("prompt_required", false))).is_true()
-    assert_bool(bool(outcome.get("applied_local", true))).is_false()
-    assert_bool(bool(outcome.get("applied_cloud", true))).is_false()
+    assert_bool(outcome.get("prompt_required", false) == true).is_true()
+    assert_bool(outcome.get("applied_local", true) == true).is_false()
+    assert_bool(outcome.get("applied_cloud", true) == true).is_false()
 
 func test_conflict_keeps_local_state_unchanged_until_user_decision() -> void:
     var bridge := _new_bridge()
@@ -40,5 +40,5 @@ func test_conflict_keeps_local_state_unchanged_until_user_decision() -> void:
     ) as Dictionary
     var after := str(bridge.call("LoadRaw", "auto:ui-local"))
 
-    assert_bool(bool(outcome.get("prompt_required", false))).is_true()
+    assert_bool(outcome.get("prompt_required", false) == true).is_true()
     assert_str(after).is_equal(before)

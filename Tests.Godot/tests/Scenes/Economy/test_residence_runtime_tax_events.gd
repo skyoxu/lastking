@@ -49,13 +49,13 @@ func test_residence_tax_timer_starts_only_after_successful_build() -> void:
 
 	assert_that(timer is Timer).is_true()
 	assert_bool(timer.is_stopped()).is_true()
-	assert_bool(bool(runtime.get("IsTaxScheduleRunning"))).is_false()
+	assert_bool(runtime.get("IsTaxScheduleRunning") == true).is_false()
 
 	runtime.call("ApplyPlacementResult", true)
 	await get_tree().process_frame
 
 	assert_bool(timer.is_stopped()).is_false()
-	assert_bool(bool(runtime.get("IsTaxScheduleRunning"))).is_true()
+	assert_bool(runtime.get("IsTaxScheduleRunning") == true).is_true()
 
 	_free_runtime(data)
 

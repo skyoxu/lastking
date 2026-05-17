@@ -13,7 +13,7 @@ class SessionStartAchievementsViewModel:
 		for definition_value in _definitions:
 			var definition: Dictionary = definition_value
 			var achievement_id: String = str(definition.get("id", ""))
-			var is_unlocked: bool = bool(local_state.get(achievement_id, false))
+			var is_unlocked: bool = local_state.get(achievement_id, false) == true
 			rows.append({
 				"id": achievement_id,
 				"unlocked": is_unlocked,
@@ -53,8 +53,8 @@ func test_session_start_rows_reflect_local_lock_and_unlock_state() -> void:
 	var collector: Dictionary = _find_row(rows, "collector")
 	assert_that(first_win.is_empty()).is_false()
 	assert_that(collector.is_empty()).is_false()
-	assert_bool(bool(first_win.get("unlocked", false))).is_true()
-	assert_bool(bool(collector.get("unlocked", true))).is_false()
+	assert_bool(first_win.get("unlocked", false) == true).is_true()
+	assert_bool(collector.get("unlocked", true) == true).is_false()
 
 
 func test_session_start_rows_do_not_hide_any_listed_achievement() -> void:
@@ -64,4 +64,4 @@ func test_session_start_rows_do_not_hide_any_listed_achievement() -> void:
 	assert_that(rows.size()).is_equal(3)
 	for row_value in rows:
 		var row: Dictionary = row_value
-		assert_bool(bool(row.get("hidden", true))).is_false()
+		assert_bool(row.get("hidden", true) == true).is_false()

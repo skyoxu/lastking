@@ -18,7 +18,7 @@ func test_build_mode_exposes_required_building_types_and_preview_snaps_to_grid()
 	assert_that(runtime.list_building_types()).is_equal(expected)
 	runtime.select_building_type("castle")
 	var preview = runtime.preview_at(Vector2(5, 7))
-	assert_that(bool(preview["is_valid"])).is_true()
+	assert_that(preview["is_valid"] == true).is_true()
 	assert_that(preview["snapped_cell"]).is_equal(Vector2i(1, 2))
 	runtime.queue_free()
 
@@ -38,7 +38,7 @@ func test_confirm_valid_placement_snaps_to_grid_and_deducts_cost_once() -> void:
 	add_child(runtime)
 	runtime.select_building_type("wall")
 	var result = runtime.confirm_at(Vector2(8, 12))
-	assert_that(bool(result["accepted"])).is_true()
+	assert_that(result["accepted"] == true).is_true()
 	assert_that(result["placed"]["origin"]).is_equal(Vector2i(2, 3))
 	assert_that(int(result["resources_before"]) - int(result["resources_after"])).is_equal(runtime.get_cost("wall"))
 	runtime.queue_free()
@@ -50,7 +50,7 @@ func test_confirm_rejects_off_grid_position_and_leaves_state_unchanged() -> void
 	runtime.select_building_type("mine")
 	var resources_before = runtime.resources
 	var result = runtime.confirm_at(Vector2(10, 12))
-	assert_that(bool(result["accepted"])).is_false()
+	assert_that(result["accepted"] == true).is_false()
 	assert_that(runtime.resources).is_equal(resources_before)
 	runtime.queue_free()
 
@@ -72,7 +72,7 @@ func test_each_selectable_building_can_be_confirmed_once_with_sufficient_resourc
 	for building_type in runtime.list_building_types():
 		runtime.select_building_type(building_type)
 		var result = runtime.confirm_at(anchors[index])
-		assert_that(bool(result["accepted"])).is_true()
+		assert_that(result["accepted"] == true).is_true()
 		index += 1
 	runtime.queue_free()
 
@@ -100,6 +100,6 @@ func test_confirm_without_selected_type_is_refused_and_no_cost_is_deducted() -> 
 	add_child(runtime)
 	var resources_before = runtime.resources
 	var result = runtime.confirm_at(Vector2(0, 0))
-	assert_that(bool(result["accepted"])).is_false()
+	assert_that(result["accepted"] == true).is_false()
 	assert_that(runtime.resources).is_equal(resources_before)
 	runtime.queue_free()

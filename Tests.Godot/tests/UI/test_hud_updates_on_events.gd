@@ -1,4 +1,4 @@
-﻿extends "res://addons/gdUnit4/src/GdUnitTestSuite.gd"
+extends "res://addons/gdUnit4/src/GdUnitTestSuite.gd"
 
 var _bus: Node
 
@@ -262,7 +262,7 @@ func test_hud_surfaces_render_targeting_and_blocked_pathing_feedback_from_runtim
         }
     ]
     var decision: Dictionary = probe.call("SelectTarget", candidates)
-    assert_bool(bool(decision.get("is_fallback_attack", false))).is_true()
+    assert_bool(decision.get("is_fallback_attack", false) == true).is_true()
     assert_str(str(decision.get("attack_event_target_id", ""))).is_equal("barricade_1")
 
     _publish("core.lastking.ui_feedback.raised", {

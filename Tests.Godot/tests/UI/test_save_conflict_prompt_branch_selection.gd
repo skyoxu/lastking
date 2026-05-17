@@ -25,10 +25,10 @@ func test_local_choice_applies_local_data_without_auto_cloud_overwrite() -> void
         "local"
     ) as Dictionary
 
-    assert_bool(bool(result.get("prompt_required", true))).is_false()
-    assert_bool(bool(result.get("applied_local", false))).is_true()
-    assert_bool(bool(result.get("applied_cloud", true))).is_false()
-    assert_bool(bool(result.get("cloud_overwrite_scheduled", true))).is_false()
+    assert_bool(result.get("prompt_required", true) == true).is_false()
+    assert_bool(result.get("applied_local", false) == true).is_true()
+    assert_bool(result.get("applied_cloud", true) == true).is_false()
+    assert_bool(result.get("cloud_overwrite_scheduled", true) == true).is_false()
     var resolved_revision := str(result.get("resolved_revision", ""))
     var resolved_payload := str(result.get("resolved_payload", ""))
     assert_str(resolved_revision).contains("rev_local")
@@ -50,10 +50,10 @@ func test_cloud_choice_applies_cloud_data_for_current_operation() -> void:
         "cloud"
     ) as Dictionary
 
-    assert_bool(bool(result.get("prompt_required", true))).is_false()
-    assert_bool(bool(result.get("applied_local", true))).is_false()
-    assert_bool(bool(result.get("applied_cloud", false))).is_true()
-    assert_bool(bool(result.get("cloud_overwrite_scheduled", true))).is_false()
+    assert_bool(result.get("prompt_required", true) == true).is_false()
+    assert_bool(result.get("applied_local", true) == true).is_false()
+    assert_bool(result.get("applied_cloud", false) == true).is_true()
+    assert_bool(result.get("cloud_overwrite_scheduled", true) == true).is_false()
     var resolved_revision := str(result.get("resolved_revision", ""))
     var resolved_payload := str(result.get("resolved_payload", ""))
     var snapshot_text := str(bridge.call("SnapshotStateJson"))

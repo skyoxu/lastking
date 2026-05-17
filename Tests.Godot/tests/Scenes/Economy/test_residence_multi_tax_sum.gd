@@ -48,7 +48,7 @@ func test_income_tick_ignores_unbuilt_or_unsettleable_residences() -> void:
 	runtime.call("PlaceResidenceWithLevelForTest", 1)
 	runtime.call("AdvanceSeconds", 15)
 
-	assert_bool(bool(runtime.get("LastPlacementAcceptedForTest"))).is_false()
+	assert_bool(runtime.get("LastPlacementAcceptedForTest") == true).is_false()
 	assert_int(int(runtime.get("Gold"))).is_equal(110)
 	assert_int(int(runtime.get("PopulationCap"))).is_equal(8)
 
