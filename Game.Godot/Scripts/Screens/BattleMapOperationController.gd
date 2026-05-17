@@ -78,14 +78,14 @@ func on_build() -> void:
 
 func on_wave() -> void:
 	if _is_settlement_open():
-		_render_status_only("Settlement modal is open; resolve reward first.")
+		_render_status_only(_t("battlemap.status.settlement_open"))
 		if _feedback_controller != null:
-			_feedback_controller.call("show_local_prompt", "Resolve settlement reward before continuing.")
+			_feedback_controller.call("show_local_prompt", _t("battlemap.prompt.resolve_settlement_before_continue"))
 		return
 	if _is_terminal_visible():
-		_render_status_only("Terminal outcome is open; choose Restart or Return to Main Menu.")
+		_render_status_only(_t("battlemap.status.terminal_outcome_open"))
 		if _feedback_controller != null:
-			_feedback_controller.call("show_local_prompt", "Close terminal outcome before starting a new wave.")
+			_feedback_controller.call("show_local_prompt", _t("battlemap.prompt.close_terminal_before_wave"))
 		return
 	_wave_started = true
 	_combat_resolved = false
@@ -112,19 +112,19 @@ func on_wave_timer_timeout() -> void:
 
 func on_exchange() -> void:
 	if _is_settlement_open():
-		_render_status_only("Settlement modal is open; resolve reward first.")
+		_render_status_only(_t("battlemap.status.settlement_open"))
 		if _feedback_controller != null:
-			_feedback_controller.call("show_local_prompt", "Resolve settlement reward before combat exchange.")
+			_feedback_controller.call("show_local_prompt", _t("battlemap.prompt.resolve_settlement_before_exchange"))
 		return
 	if _is_terminal_visible():
-		_render_status_only("Terminal outcome is open; choose Restart or Return to Main Menu.")
+		_render_status_only(_t("battlemap.status.terminal_outcome_open"))
 		if _feedback_controller != null:
-			_feedback_controller.call("show_local_prompt", "Outcome modal blocks combat exchange.")
+			_feedback_controller.call("show_local_prompt", _t("battlemap.prompt.outcome_blocks_exchange"))
 		return
 	if not _wave_started:
 		_render_status_only(_t("battlemap.status.require_wave"))
 		if _feedback_controller != null:
-			_feedback_controller.call("show_local_prompt", "Spawn a wave before resolving combat.")
+			_feedback_controller.call("show_local_prompt", _t("battlemap.prompt.spawn_wave_before_exchange"))
 		return
 	_combat_resolved = true
 	var summary: Dictionary = _call_or_fallback("ResolveCombatExchangePhase")
@@ -133,19 +133,19 @@ func on_exchange() -> void:
 
 func on_cleanup() -> void:
 	if _is_settlement_open():
-		_render_status_only("Settlement modal is open; resolve reward first.")
+		_render_status_only(_t("battlemap.status.settlement_open"))
 		if _feedback_controller != null:
-			_feedback_controller.call("show_local_prompt", "Resolve settlement reward before cleanup.")
+			_feedback_controller.call("show_local_prompt", _t("battlemap.prompt.resolve_settlement_before_cleanup"))
 		return
 	if _is_terminal_visible():
-		_render_status_only("Terminal outcome is open; choose Restart or Return to Main Menu.")
+		_render_status_only(_t("battlemap.status.terminal_outcome_open"))
 		if _feedback_controller != null:
-			_feedback_controller.call("show_local_prompt", "Outcome modal blocks cleanup.")
+			_feedback_controller.call("show_local_prompt", _t("battlemap.prompt.outcome_blocks_cleanup"))
 		return
 	if not _combat_resolved:
 		_render_status_only(_t("battlemap.status.require_exchange"))
 		if _feedback_controller != null:
-			_feedback_controller.call("show_local_prompt", "Resolve combat before cleanup.")
+			_feedback_controller.call("show_local_prompt", _t("battlemap.prompt.resolve_exchange_before_cleanup"))
 		return
 	_cleaned = true
 	var summary: Dictionary = _call_or_fallback("CleanupDeadUnitsPhase")
@@ -154,19 +154,19 @@ func on_cleanup() -> void:
 
 func on_finish() -> void:
 	if _is_settlement_open():
-		_render_status_only("Settlement modal is open; resolve reward first.")
+		_render_status_only(_t("battlemap.status.settlement_open"))
 		if _feedback_controller != null:
-			_feedback_controller.call("show_local_prompt", "Resolve settlement reward before finishing battle.")
+			_feedback_controller.call("show_local_prompt", _t("battlemap.prompt.resolve_settlement_before_finish"))
 		return
 	if _is_terminal_visible():
-		_render_status_only("Terminal outcome is open; choose Restart or Return to Main Menu.")
+		_render_status_only(_t("battlemap.status.terminal_outcome_open"))
 		if _feedback_controller != null:
-			_feedback_controller.call("show_local_prompt", "Terminal outcome already open.")
+			_feedback_controller.call("show_local_prompt", _t("battlemap.prompt.terminal_already_open"))
 		return
 	if not _cleaned:
 		_render_status_only(_t("battlemap.status.require_cleanup"))
 		if _feedback_controller != null:
-			_feedback_controller.call("show_local_prompt", "Cleanup dead units before finishing battle.")
+			_feedback_controller.call("show_local_prompt", _t("battlemap.prompt.cleanup_before_finish"))
 		return
 	if _feedback_controller != null:
 		_feedback_controller.call("clear_spawn_pulse")
@@ -228,4 +228,3 @@ func _t(key: String) -> String:
 	if _translate.is_valid():
 		return str(_translate.call(key))
 	return key
-

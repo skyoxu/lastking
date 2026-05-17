@@ -4,12 +4,14 @@ var _screen: Control = null
 var _hud: Node = null
 var _operation_controller: Node = null
 var _navigation_controller: Node = null
+var _selection_controller: Node = null
 
 func configure(refs: Dictionary) -> void:
 	_screen = refs.get("screen", null)
 	_operation_controller = refs.get("operation_controller", null)
 	_navigation_controller = refs.get("navigation_controller", null)
 	_hud = refs.get("hud", null)
+	_selection_controller = refs.get("selection_controller", null)
 
 func connect_signals() -> void:
 	_hud = _resolve_hud()
@@ -22,6 +24,26 @@ func connect_signals() -> void:
 
 func route_action(action_code: String) -> void:
 	match action_code:
+		"select_tower":
+			if _selection_controller != null and _selection_controller.has_method("apply_building_selection"):
+				_selection_controller.call("apply_building_selection", {
+					"selection_id": "tower_alpha",
+					"category": "defense",
+					"building_slots": ["InnerCastleRegionSlot_03_00"],
+					"range_slots": ["InnerCastleRegionSlot_04_00"],
+					"blocked_range_slots": ["InnerCastleRegionSlot_05_00"],
+					"linked_unit_slots": ["LeftOuterFieldSlot_01_00"],
+				})
+		"select_residence":
+			if _selection_controller != null and _selection_controller.has_method("apply_building_selection"):
+				_selection_controller.call("apply_building_selection", {
+					"selection_id": "farm_alpha",
+					"category": "economy",
+					"building_slots": ["InnerCastleRegionSlot_06_00"],
+					"range_slots": [],
+					"blocked_range_slots": [],
+					"linked_unit_slots": [],
+				})
 		"build":
 			if _operation_controller != null:
 				_operation_controller.call("on_build")

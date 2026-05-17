@@ -236,6 +236,8 @@ public partial class HUD : Control
         {
             buildButton.Pressed += () => RequestBattleAction("build");
         }
+        _towerSlot.Connect(Button.SignalName.Pressed, Callable.From(() => RequestBattleAction("select_tower")));
+        _residenceSlot.Connect(Button.SignalName.Pressed, Callable.From(() => RequestBattleAction("select_residence")));
         _buildAction.GuiInput += (@event) => OnBattleActionGuiInput(@event, "build");
         if (_waveAction is Button waveButton)
         {

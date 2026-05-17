@@ -108,6 +108,22 @@ func test_action_sequence_complete_flow_keeps_summary_machine_resolvable() -> vo
 	assert_bool((finish_icon as CanvasItem).modulate.a >= 0.99).is_true()
 	assert_bool(bridge.call("GetSummary") is Dictionary).is_true()
 
+func test_blocked_battle_actions_should_not_leave_raw_english_runtime_prompts() -> void:
+	var runtime := await _main_runtime()
+	var screen: Control = runtime["screen"]
+	var hud: Node = screen.get_node("BattleHud")
+	var settings_button: Button = hud.get_node("TopBar/HBox/SettingsButton")
+	var local_prompt: Label = screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/LocalFeedbackLayer/LocalPromptPanel/PromptLabel")
+
+	settings_button.emit_signal("pressed")
+	await _await_frames(1)
+	_request_hud_action(screen, "wave")
+	await _await_frames(2)
+
+	assert_bool(String(local_prompt.text).find("Resolve settlement reward") < 0).is_true()
+	assert_bool(String(local_prompt.text).find("Close terminal outcome") < 0).is_true()
+	assert_bool(String(local_prompt.text).find("Terminal outcome is open") < 0).is_true()
+
 
 func test_action_cards_should_expose_runtime_status_labels_for_each_phase() -> void:
 	var runtime := await _main_runtime()
