@@ -154,7 +154,7 @@ func _root_dir_exists(relative_path: String) -> bool:
     return DirAccess.dir_exists_absolute(ProjectSettings.globalize_path("res://../" + relative_path))
 
 func _canonical_structure_holds() -> bool:
-    return _root_dir_exists("scripts")         and _root_dir_exists("Game.Godot/Scenes")         and _root_dir_exists("Game.Godot/Assets")         and _root_dir_exists("Game.Godot/Scripts/Config")         and not _root_dir_exists("Scenes")         and not _root_dir_exists("Assets")         and not _root_dir_exists("config")
+    return _root_dir_exists("scripts")         and _root_dir_exists("Game.Godot/Scenes")         and _root_dir_exists("Game.Godot/Assets")         and _root_dir_exists("Game.Godot/Scripts/Config")         and _root_dir_exists("config/schemas")         and _root_dir_exists("config/samples")         and not _root_dir_exists("Scenes")         and not _root_dir_exists("Assets")
 
 # ACC:T11.12
 func test_reopen_validation_uses_canonical_t1_root_and_real_main_bindings() -> void:
