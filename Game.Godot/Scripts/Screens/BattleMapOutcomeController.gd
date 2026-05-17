@@ -1,9 +1,7 @@
-extends Node
+﻿extends Node
 
 var _screen: Control = null
-var _status_label: Label = null
 var _wave_timer: Timer = null
-var _auto_wave_btn: Button = null
 var _translate: Callable
 var _back_callback: Callable
 var _bridge_provider: Callable
@@ -35,16 +33,14 @@ var _defeat_outcome_hint: Label = null
 var _defeat_return_btn: Button = null
 var _defeat_restart_btn: Button = null
 
-var _settlement_modal_open := false
+var _settlement_modal_open: bool = false
 var _settlement_options: Array[String] = ["Reward A", "Reward B", "Reward C"]
-var _settlement_context_expanded := false
+var _settlement_context_expanded: bool = false
 var _settlement_context_snapshot: Dictionary = {}
 
 func configure(screen: Control, refs: Dictionary) -> void:
 	_screen = screen
-	_status_label = refs["status"]
 	_wave_timer = refs["wave_timer"]
-	_auto_wave_btn = refs["auto_wave_btn"]
 	_translate = refs["translate"]
 	_back_callback = refs["back_callback"]
 	_bridge_provider = refs["bridge_provider"]
@@ -102,7 +98,7 @@ func SetSettlementOptionsForTest(options: Variant) -> void:
 	if typeof(options) != TYPE_ARRAY:
 		return
 	for option in options:
-		_settlement_options.append(String(option))
+		_settlement_options.append(str(option))
 
 func get_settlement_options() -> Array[String]:
 	return _settlement_options.duplicate()
@@ -114,7 +110,7 @@ func is_terminal_outcome_modal_visible() -> bool:
 	return _victory_outcome_modal.visible or _defeat_outcome_modal.visible
 
 func is_settlement_outcome(summary: Dictionary) -> bool:
-	var outcome := String(summary.get("outcome", "")).to_lower()
+	var outcome: String = str(summary.get("outcome", "")).to_lower()
 	if outcome == "settlement":
 		return true
 	if outcome == "loss":
@@ -122,19 +118,19 @@ func is_settlement_outcome(summary: Dictionary) -> bool:
 	return false
 
 func is_victory_outcome(summary: Dictionary) -> bool:
-	var outcome := String(summary.get("outcome", "")).to_lower()
+	var outcome: String = str(summary.get("outcome", "")).to_lower()
 	return outcome == "win"
 
 func is_defeat_outcome(summary: Dictionary) -> bool:
 	return not defeat_reason_for_summary(summary).is_empty()
 
 func defeat_reason_for_summary(summary: Dictionary) -> String:
-	var explicit_reason := String(summary.get("defeat_reason", "")).to_lower()
+	var explicit_reason: String = str(summary.get("defeat_reason", "")).to_lower()
 	if explicit_reason == "wall_breached" or explicit_reason == "castle_destroyed":
 		return explicit_reason
-	var outcome := String(summary.get("outcome", "")).to_lower()
-	var castle_hp := int(summary.get("castle_hp", 0))
-	var wall_hp := int(summary.get("wall_hp", 1))
+	var outcome: String = str(summary.get("outcome", "")).to_lower()
+	var castle_hp: int = int(summary.get("castle_hp", 0))
+	var wall_hp: int = int(summary.get("wall_hp", 1))
 	if outcome == "loss" and wall_hp <= 0:
 		return "wall_breached"
 	if outcome == "loss" and castle_hp <= 0:
@@ -175,45 +171,45 @@ func _open_settlement_modal(summary: Dictionary) -> void:
 	_settlement_context_snapshot = summary.duplicate(true)
 	_defeat_outcome_modal.visible = false
 	_victory_outcome_modal.visible = false
-	var hp := int(summary.get("castle_hp", 0))
-	var kills := int(summary.get("dead_units_retired", 0))
-	var gold := int(summary.get("resource_gold", 0))
-	var iron := int(summary.get("resource_iron", 0))
-	var pop_cap := int(summary.get("resource_population_cap", 0))
+	var hp: int = int(summary.get("castle_hp", 0))
+	var kills: int = int(summary.get("dead_units_retired", 0))
+	var gold: int = int(summary.get("resource_gold", 0))
+	var iron: int = int(summary.get("resource_iron", 0))
+	var pop_cap: int = int(summary.get("resource_population_cap", 0))
 	var rewards: Array[String] = _settlement_options
 	if rewards.size() != 3:
 		_settlement_modal_open = false
 		_daily_settlement_modal.visible = false
 		_screen.get_tree().paused = false
-		_status_label.text = "Settlement rewards invalid; expected exactly 3 options."
+		_render_status_only("Settlement rewards invalid; expected exactly 3 options.")
 		return
 	_daily_settlement_modal.visible = true
 	_screen.get_tree().paused = true
-	var reward_summary := "%s,%s,%s" % [rewards[0], rewards[1], rewards[2]]
+	var reward_summary: String = "%s,%s,%s" % [rewards[0], rewards[1], rewards[2]]
 	_daily_settlement_summary.text = "HP=%d | rewards=%d | reward_summary=%s | kills=%d | resources(gold=%d,iron=%d,pop=%d)" % [hp, rewards.size(), reward_summary, kills, gold, iron, pop_cap]
-	var has_hp := summary.has("castle_hp") and typeof(summary.get("castle_hp", null)) != TYPE_NIL
+	var has_hp: bool = summary.has("castle_hp") and typeof(summary.get("castle_hp", null)) != TYPE_NIL
 	_daily_evidence_hp.visible = has_hp
 	if has_hp:
 		_daily_evidence_hp.text = "Final HP: %d" % hp
-	var has_kills := summary.has("dead_units_retired") and typeof(summary.get("dead_units_retired", null)) != TYPE_NIL
+	var has_kills: bool = summary.has("dead_units_retired") and typeof(summary.get("dead_units_retired", null)) != TYPE_NIL
 	_daily_evidence_kills.visible = has_kills
 	if has_kills:
 		_daily_evidence_kills.text = "Kills: %d" % kills
-	var has_summary_reward_key := summary.has("reward_summary") and typeof(summary.get("reward_summary", null)) != TYPE_NIL
-	var summary_reward_text := String(summary.get("reward_summary", "")).strip_edges()
-	var has_reward_summary := has_summary_reward_key and not summary_reward_text.is_empty()
+	var has_summary_reward_key: bool = summary.has("reward_summary") and typeof(summary.get("reward_summary", null)) != TYPE_NIL
+	var summary_reward_text: String = str(summary.get("reward_summary", "")).strip_edges()
+	var has_reward_summary: bool = has_summary_reward_key and not summary_reward_text.is_empty()
 	_daily_evidence_reward_summary.visible = has_reward_summary
 	if has_reward_summary:
 		_daily_evidence_reward_summary.text = "Reward Summary: %s" % summary_reward_text
-	var has_resource_gold := summary.has("resource_gold") and typeof(summary.get("resource_gold", null)) != TYPE_NIL
-	var has_resource_iron := summary.has("resource_iron") and typeof(summary.get("resource_iron", null)) != TYPE_NIL
-	var has_resource_pop := summary.has("resource_population_cap") and typeof(summary.get("resource_population_cap", null)) != TYPE_NIL
-	var has_resources := has_resource_gold and has_resource_iron and has_resource_pop
+	var has_resource_gold: bool = summary.has("resource_gold") and typeof(summary.get("resource_gold", null)) != TYPE_NIL
+	var has_resource_iron: bool = summary.has("resource_iron") and typeof(summary.get("resource_iron", null)) != TYPE_NIL
+	var has_resource_pop: bool = summary.has("resource_population_cap") and typeof(summary.get("resource_population_cap", null)) != TYPE_NIL
+	var has_resources: bool = has_resource_gold and has_resource_iron and has_resource_pop
 	_daily_evidence_resources.visible = has_resources
 	if has_resources:
 		_daily_evidence_resources.text = "Resources: gold=%d, iron=%d, pop=%d" % [gold, iron, pop_cap]
-	var defeat_reason_raw = summary.get("defeat_reason", null)
-	var defeat_reason := String(defeat_reason_raw if defeat_reason_raw != null else "").strip_edges()
+	var defeat_reason_raw: Variant = summary.get("defeat_reason", null)
+	var defeat_reason: String = str(defeat_reason_raw if defeat_reason_raw != null else "").strip_edges()
 	_daily_evidence_defeat_reason.visible = summary.has("defeat_reason") and not defeat_reason.is_empty()
 	_daily_evidence_defeat_reason.text = "Defeat Reason: %s" % defeat_reason
 	_daily_runtime_context_payload.visible = false
@@ -247,11 +243,11 @@ func _open_victory_modal(summary: Dictionary) -> void:
 	_defeat_outcome_modal.visible = false
 	_victory_outcome_modal.visible = true
 	_screen.get_tree().paused = true
-	var hp := int(summary.get("castle_hp", 0))
-	var kills := int(summary.get("dead_units_retired", 0))
-	var gold := int(summary.get("resource_gold", 0))
-	var iron := int(summary.get("resource_iron", 0))
-	var pop_cap := int(summary.get("resource_population_cap", 0))
+	var hp: int = int(summary.get("castle_hp", 0))
+	var kills: int = int(summary.get("dead_units_retired", 0))
+	var gold: int = int(summary.get("resource_gold", 0))
+	var iron: int = int(summary.get("resource_iron", 0))
+	var pop_cap: int = int(summary.get("resource_population_cap", 0))
 	_victory_outcome_title.text = "Victory"
 	_victory_outcome_summary.text = "HP=%d | kills=%d | resources(gold=%d,iron=%d,pop=%d)" % [hp, kills, gold, iron, pop_cap]
 	_victory_outcome_hint.text = "Live battle cannot be resumed from this outcome state."
@@ -267,13 +263,13 @@ func _open_defeat_modal(summary: Dictionary) -> void:
 	_victory_outcome_modal.visible = false
 	_defeat_outcome_modal.visible = true
 	_screen.get_tree().paused = true
-	var hp := int(summary.get("castle_hp", 0))
+	var hp: int = int(summary.get("castle_hp", 0))
 	var wall_hp := int(summary.get("wall_hp", 0))
-	var kills := int(summary.get("dead_units_retired", 0))
-	var gold := int(summary.get("resource_gold", 0))
-	var iron := int(summary.get("resource_iron", 0))
-	var pop_cap := int(summary.get("resource_population_cap", 0))
-	var defeat_copy := "Wall breached. The run ended."
+	var kills: int = int(summary.get("dead_units_retired", 0))
+	var gold: int = int(summary.get("resource_gold", 0))
+	var iron: int = int(summary.get("resource_iron", 0))
+	var pop_cap: int = int(summary.get("resource_population_cap", 0))
+	var defeat_copy: String = "Wall breached. The run ended."
 	_defeat_outcome_title.text = "Defeat"
 	_defeat_outcome_summary.text = "%s Castle HP=%d | Wall HP=%d | kills=%d | resources(gold=%d,iron=%d,pop=%d)" % [defeat_copy, hp, wall_hp, kills, gold, iron, pop_cap]
 	_defeat_outcome_hint.text = "Live battle cannot be resumed from this outcome state."
@@ -288,14 +284,14 @@ func _on_settlement_reward_selected(index: int) -> void:
 		return
 	if index < 0 or index >= _settlement_options.size():
 		return
-	_status_label.text = "Settlement resolved with %s" % _settlement_options[index]
+	_render_status_only("Settlement resolved with %s" % _settlement_options[index])
 	_close_settlement_modal()
 
 func _on_victory_return_to_main_menu() -> void:
 	if not _victory_outcome_modal.visible:
 		return
 	_close_victory_modal()
-	_status_label.text = "Victory outcome resolved with Return to Main Menu."
+	_render_status_only("Victory outcome resolved with Return to Main Menu.")
 	_reset_runtime_state()
 	if _back_callback.is_valid():
 		_back_callback.call()
@@ -304,14 +300,14 @@ func _on_victory_restart() -> void:
 	if not _victory_outcome_modal.visible:
 		return
 	_close_victory_modal()
-	_status_label.text = "Victory outcome resolved with Restart."
+	_render_status_only("Victory outcome resolved with Restart.")
 	_restart_runtime_state()
 
 func _on_defeat_return_to_main_menu() -> void:
 	if not _defeat_outcome_modal.visible:
 		return
 	_close_defeat_modal()
-	_status_label.text = "Defeat outcome resolved with Return to Main Menu."
+	_render_status_only("Defeat outcome resolved with Return to Main Menu.")
 	_reset_runtime_state()
 	if _back_callback.is_valid():
 		_back_callback.call()
@@ -320,7 +316,7 @@ func _on_defeat_restart() -> void:
 	if not _defeat_outcome_modal.visible:
 		return
 	_close_defeat_modal()
-	_status_label.text = "Defeat outcome resolved with Restart."
+	_render_status_only("Defeat outcome resolved with Restart.")
 	_restart_runtime_state()
 
 func _reset_runtime_state() -> void:
@@ -329,8 +325,7 @@ func _reset_runtime_state() -> void:
 
 func _restart_runtime_state() -> void:
 	_reset_runtime_state()
-	_auto_wave_btn.text = _t("battlemap.btn.auto_toggle")
-	var bridge := _current_bridge()
+	var bridge: Node = _current_bridge()
 	if bridge != null and bridge.has_method("ResetForInteractiveRun"):
 		bridge.call("ResetForInteractiveRun")
 	if _feedback_controller != null:
@@ -339,24 +334,29 @@ func _restart_runtime_state() -> void:
 
 func _current_bridge() -> Node:
 	if _bridge_provider.is_valid():
-		var provided = _bridge_provider.call()
+		var provided: Variant = _bridge_provider.call()
 		if provided is Node:
 			return provided
 	return null
 
 func _try_bridge_summary() -> Dictionary:
-	var bridge := _current_bridge()
+	var bridge: Node = _current_bridge()
 	if bridge != null and bridge.has_method("GetSummary"):
-		var result = bridge.call("GetSummary")
+		var result: Variant = bridge.call("GetSummary")
 		if result is Dictionary:
 			return result
 	if bridge != null and bridge.has_method("RunCompleteCombatExperienceForTest"):
-		var full = bridge.call("RunCompleteCombatExperienceForTest")
+		var full: Variant = bridge.call("RunCompleteCombatExperienceForTest")
 		if full is Dictionary:
 			return full
 	return {}
 
 func _t(key: String) -> String:
 	if _translate.is_valid():
-		return String(_translate.call(key))
+		return str(_translate.call(key))
 	return key
+
+func _render_status_only(status_text: String) -> void:
+	if _feedback_controller != null:
+		_feedback_controller.call("render_status_only", status_text)
+

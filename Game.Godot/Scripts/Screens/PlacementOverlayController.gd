@@ -1,4 +1,4 @@
-extends Node
+﻿extends Node
 
 signal legality_changed(cells: Array)
 signal overlay_rendered()
@@ -10,8 +10,8 @@ const LEGALITY_FIXED_INVALID := "fixed_invalid"
 const LEGALITY_TEMP_INVALID := "temp_invalid"
 const LEGALITY_WALL := "wall"
 
-var _slot_visuals := {}
-var _placement_context_active := true
+var _slot_visuals: Dictionary = {}
+var _placement_context_active: bool = true
 
 func set_placement_context_active(active: bool) -> void:
 	if _placement_context_active and not active:
@@ -26,8 +26,8 @@ func apply_legality_overlay(legality_by_slot: Dictionary) -> void:
 	if not _placement_context_active:
 		return
 	for slot_id_variant in legality_by_slot.keys():
-		var slot_id := str(slot_id_variant)
-		var legality := str(legality_by_slot[slot_id_variant])
+		var slot_id: String = str(slot_id_variant)
+		var legality: String = str(legality_by_slot[slot_id_variant])
 		_slot_visuals[slot_id] = render_outcome(slot_id, legality)
 
 func read_slot_visual(slot_id: String) -> Dictionary:
@@ -68,3 +68,7 @@ func _overlay_state(valid_overlay: bool, marker: String, frame: String) -> Strin
 	if marker == "none" and frame == "none":
 		return "overlay_hidden"
 	return "overlay_illegal"
+
+
+
+

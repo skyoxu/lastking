@@ -16,6 +16,10 @@ func _advance_hud_cooldown(hud: Node, frames: int, delta := 1.0 / 60.0) -> void:
 		hud.call("AdvanceUiFrameForTest", delta)
 		await get_tree().process_frame
 
+func _request_hud_action(screen: Control, action_code: String) -> void:
+	var hud: Node = screen.get_node("BattleHud")
+	hud.call("RequestBattleAction", action_code)
+
 func _main_runtime() -> Dictionary:
 	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
 	add_child(auto_free(main))
@@ -32,8 +36,8 @@ func _main_runtime() -> Dictionary:
 		"main": main,
 		"screen": screen,
 		"bridge": screen.get_node("CombatExperienceRuntimeBridge"),
-		"status": screen.get_node("Margin/VBox/Status"),
-		"summary": screen.get_node("Margin/VBox/Summary"),
+		"status": screen.get_node("LegacyPrototypeRoot/VBox/Status"),
+		"summary": screen.get_node("LegacyPrototypeRoot/VBox/Summary"),
 	}
 
 func _spawn_cues(screen: Control) -> Array[float]:
@@ -44,8 +48,9 @@ func _spawn_cues(screen: Control) -> Array[float]:
 # ACC:T65.2
 func test_action_availability_blocks_out_of_order_exchange_and_keeps_cues_weak() -> void:
 	var runtime := await _main_runtime()
-	var hud: Node = runtime["main"].get_node("RuntimeUi/HUD")
-	var exchange_icon := hud.get_node_or_null("CombatHud/BottomBar/VBox/Actions/ExchangeAction")
+	var screen: Control = runtime["screen"]
+	var hud: Node = screen.get_node("BattleHud")
+	var exchange_icon := hud.get_node_or_null("CombatHud/BottomBar/Root/SkillsPanel/VBox/SkillButtons/ExchangeAction")
 	assert_object(exchange_icon).is_not_null()
 	assert_float((exchange_icon as CanvasItem).modulate.a).is_equal(0.5)
 
@@ -53,14 +58,13 @@ func test_action_availability_blocks_out_of_order_exchange_and_keeps_cues_weak()
 func test_action_cooldown_pulse_decays_back_to_weak_state() -> void:
 	var runtime := await _main_runtime()
 	var screen: Control = runtime["screen"]
-	var hud: Node = runtime["main"].get_node("RuntimeUi/HUD")
-	var wave_btn: Button = screen.get_node("Margin/VBox/Controls/WaveBtn")
-	var wave_action := hud.get_node_or_null("CombatHud/BottomBar/VBox/Actions/WaveAction")
-	var cooldown_mask := hud.get_node_or_null("CombatHud/BottomBar/VBox/Actions/WaveAction/CooldownMask")
+	var hud: Node = screen.get_node("BattleHud")
+	var wave_action := hud.get_node_or_null("CombatHud/BottomBar/Root/SkillsPanel/VBox/SkillButtons/WaveAction")
+	var cooldown_mask := hud.get_node_or_null("CombatHud/BottomBar/Root/SkillsPanel/VBox/SkillButtons/WaveAction/CooldownMask")
 	assert_object(wave_action).is_not_null()
 	assert_object(cooldown_mask).is_not_null()
 
-	wave_btn.emit_signal("pressed")
+	_request_hud_action(screen, "wave")
 	await _await_frames(2)
 	assert_bool((cooldown_mask as Control).visible).is_true()
 	assert_bool((wave_action as CanvasItem).modulate.a < 1.0).is_true()
@@ -75,31 +79,25 @@ func test_action_sequence_complete_flow_keeps_summary_machine_resolvable() -> vo
 	var runtime := await _main_runtime()
 	var screen: Control = runtime["screen"]
 	var bridge: Node = runtime["bridge"]
-	var hud: Node = runtime["main"].get_node("RuntimeUi/HUD")
+	var hud: Node = screen.get_node("BattleHud")
 	var status: Label = runtime["status"]
-	var summary: Label = runtime["summary"]
 
-	var build_btn: Button = screen.get_node("Margin/VBox/Controls/BuildBtn")
-	var wave_btn: Button = screen.get_node("Margin/VBox/Controls/WaveBtn")
-	var exchange_btn: Button = screen.get_node("Margin/VBox/Controls/ExchangeBtn")
-	var cleanup_btn: Button = screen.get_node("Margin/VBox/Controls/CleanupBtn")
-	var finish_btn: Button = screen.get_node("Margin/VBox/Controls/FinishBtn")
-	var build_icon := hud.get_node_or_null("CombatHud/BottomBar/VBox/Actions/BuildAction")
-	var wave_icon := hud.get_node_or_null("CombatHud/BottomBar/VBox/Actions/WaveAction")
-	var exchange_icon := hud.get_node_or_null("CombatHud/BottomBar/VBox/Actions/ExchangeAction")
-	var cleanup_icon := hud.get_node_or_null("CombatHud/BottomBar/VBox/Actions/CleanupAction")
-	var finish_icon := hud.get_node_or_null("CombatHud/BottomBar/VBox/Actions/FinishAction")
+	var build_icon := hud.get_node_or_null("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/BuildAction")
+	var wave_icon := hud.get_node_or_null("CombatHud/BottomBar/Root/SkillsPanel/VBox/SkillButtons/WaveAction")
+	var exchange_icon := hud.get_node_or_null("CombatHud/BottomBar/Root/SkillsPanel/VBox/SkillButtons/ExchangeAction")
+	var cleanup_icon := hud.get_node_or_null("CombatHud/BottomBar/Root/SkillsPanel/VBox/SkillButtons/CleanupAction")
+	var finish_icon := hud.get_node_or_null("CombatHud/BottomBar/Root/SkillsPanel/VBox/SkillButtons/FinishAction")
 
 	assert_object(build_icon).is_not_null()
 	assert_object(wave_icon).is_not_null()
 	assert_object(exchange_icon).is_not_null()
 	assert_object(cleanup_icon).is_not_null()
 	assert_object(finish_icon).is_not_null()
-	build_btn.emit_signal("pressed")
-	wave_btn.emit_signal("pressed")
-	exchange_btn.emit_signal("pressed")
-	cleanup_btn.emit_signal("pressed")
-	finish_btn.emit_signal("pressed")
+	_request_hud_action(screen, "build")
+	_request_hud_action(screen, "wave")
+	_request_hud_action(screen, "exchange")
+	_request_hud_action(screen, "cleanup")
+	_request_hud_action(screen, "finish")
 	await _await_frames(2)
 
 	assert_bool(String(status.text).find("Battle finished") >= 0 or String(status.text).find("finished") >= 0).is_true()
@@ -114,36 +112,46 @@ func test_action_sequence_complete_flow_keeps_summary_machine_resolvable() -> vo
 func test_action_cards_should_expose_runtime_status_labels_for_each_phase() -> void:
 	var runtime := await _main_runtime()
 	var screen: Control = runtime["screen"]
-	var hud: Node = runtime["main"].get_node("RuntimeUi/HUD")
+	var hud: Node = screen.get_node("BattleHud")
 
-	var build_status: Label = hud.get_node("CombatHud/BottomBar/VBox/Actions/BuildAction/Frame/Content/Status")
-	var wave_status: Label = hud.get_node("CombatHud/BottomBar/VBox/Actions/WaveAction/Frame/Content/Status")
-	var exchange_status: Label = hud.get_node("CombatHud/BottomBar/VBox/Actions/ExchangeAction/Frame/Content/Status")
-	var cleanup_status: Label = hud.get_node("CombatHud/BottomBar/VBox/Actions/CleanupAction/Frame/Content/Status")
-	var finish_status: Label = hud.get_node("CombatHud/BottomBar/VBox/Actions/FinishAction/Frame/Content/Status")
+	var build_action := hud.get_node("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/BuildAction") as Button
+	var wave_action := hud.get_node("CombatHud/BottomBar/Root/SkillsPanel/VBox/SkillButtons/WaveAction") as Button
+	var exchange_action := hud.get_node("CombatHud/BottomBar/Root/SkillsPanel/VBox/SkillButtons/ExchangeAction") as Button
+	var cleanup_action := hud.get_node("CombatHud/BottomBar/Root/SkillsPanel/VBox/SkillButtons/CleanupAction") as Button
+	var finish_action := hud.get_node("CombatHud/BottomBar/Root/SkillsPanel/VBox/SkillButtons/FinishAction") as Button
 
-	assert_str(build_status.text).contains("Ready")
-	assert_str(wave_status.text).contains("Ready")
-	assert_str(exchange_status.text).contains("Locked")
-	assert_str(cleanup_status.text).contains("Locked")
-	assert_str(finish_status.text).contains("Locked")
+	assert_bool(build_action.disabled).is_false()
+	assert_bool(wave_action.disabled).is_false()
+	assert_bool(exchange_action.disabled).is_true()
+	assert_bool(cleanup_action.disabled).is_true()
+	assert_bool(finish_action.disabled).is_true()
+	assert_float(exchange_action.modulate.a).is_equal(0.5)
+	assert_float(cleanup_action.modulate.a).is_equal(0.5)
+	assert_float(finish_action.modulate.a).is_equal(0.5)
 
-	screen.get_node("Margin/VBox/Controls/WaveBtn").emit_signal("pressed")
+	_request_hud_action(screen, "wave")
 	await _await_frames(2)
-	assert_str(wave_status.text).contains("Cooldown")
-	assert_str(exchange_status.text).contains("Ready")
-	assert_str(cleanup_status.text).contains("Ready")
+	assert_bool(wave_action.disabled).is_false()
+	assert_bool(exchange_action.disabled).is_false()
+	assert_bool(cleanup_action.disabled).is_false()
+	assert_bool(finish_action.disabled).is_true()
+	assert_bool(wave_action.modulate.a < 1.0).is_true()
+	assert_float(exchange_action.modulate.a).is_equal(1.0)
+	assert_float(cleanup_action.modulate.a).is_equal(1.0)
 
-	screen.get_node("Margin/VBox/Controls/ExchangeBtn").emit_signal("pressed")
+	_request_hud_action(screen, "exchange")
 	await _await_frames(2)
-	assert_str(exchange_status.text).contains("Done")
-	assert_str(finish_status.text).contains("Ready")
+	assert_bool(exchange_action.disabled).is_false()
+	assert_bool(finish_action.disabled).is_false()
+	assert_float(finish_action.modulate.a).is_equal(1.0)
 
-	screen.get_node("Margin/VBox/Controls/CleanupBtn").emit_signal("pressed")
+	_request_hud_action(screen, "cleanup")
 	await _await_frames(2)
-	assert_str(cleanup_status.text).contains("Done")
+	assert_bool(cleanup_action.disabled).is_false()
+	assert_float(cleanup_action.modulate.a).is_equal(1.0)
 
-	screen.get_node("Margin/VBox/Controls/FinishBtn").emit_signal("pressed")
+	_request_hud_action(screen, "finish")
 	await _await_frames(2)
-	assert_str(finish_status.text).contains("Done")
+	assert_bool(finish_action.disabled).is_false()
+	assert_float(finish_action.modulate.a).is_equal(1.0)
 

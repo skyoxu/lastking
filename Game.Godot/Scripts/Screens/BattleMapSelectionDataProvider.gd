@@ -1,4 +1,4 @@
-extends Node
+﻿extends Node
 
 const BUILDING_DEFINITIONS := {
 	"barracks_alpha": {
@@ -57,24 +57,24 @@ func get_building_definition(selection_id: String) -> Dictionary:
 	return {}
 
 func get_formal_selection_snapshot(slot_id: String) -> Dictionary:
-	var selection_owner := _resolve_selection_owner(slot_id)
+	var selection_owner: String = _resolve_selection_owner(slot_id)
 	if selection_owner.is_empty():
 		return {}
-	var definition := get_building_definition(selection_owner)
+	var definition: Dictionary = get_building_definition(selection_owner)
 	if definition.is_empty():
 		return {}
 
-	var snapshot := definition.duplicate(true)
+	var snapshot: Dictionary = definition.duplicate(true)
 	snapshot["building_slots"] = [slot_id]
 	return snapshot
 
 func _resolve_selection_owner(slot_id: String) -> String:
-	var bridge := _current_bridge()
+	var bridge: Node = _current_bridge()
 	if bridge != null:
-		var slot_is_runtime_managed := false
+		var slot_is_runtime_managed: bool = false
 		for path_variant in RUNTIME_BRIDGE_SLOT_TO_SELECTION_OWNER.keys():
-			var node_path := str(path_variant)
-			var entry := RUNTIME_BRIDGE_SLOT_TO_SELECTION_OWNER[path_variant] as Dictionary
+			var node_path: String = str(path_variant)
+			var entry: Dictionary = RUNTIME_BRIDGE_SLOT_TO_SELECTION_OWNER[path_variant] as Dictionary
 			if entry == null:
 				continue
 			if str(entry.get("slot_id", "")) != slot_id:
@@ -88,7 +88,15 @@ func _resolve_selection_owner(slot_id: String) -> String:
 
 func _current_bridge() -> Node:
 	if _bridge_provider.is_valid():
-		var provided = _bridge_provider.call()
+		var provided: Variant = _bridge_provider.call()
 		if provided is Node:
 			return provided
 	return null
+
+
+
+
+
+
+
+

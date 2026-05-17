@@ -83,25 +83,46 @@ offset_right = -20.0
 offset_bottom = -18.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_constants/separation = 12
 
 [node name="DayLabel" type="Label" parent="TopBar/HBox"]
 layout_mode = 2
+theme_override_styles/normal = SubResource("3_metric_chip_style")
 text = "hud.day: 1"
+
+[node name="PhaseLabel" type="Label" parent="TopBar/HBox"]
+layout_mode = 2
+theme_override_styles/normal = SubResource("3_metric_chip_style")
+text = "hud.phase: Day"
 
 [node name="CycleRemainingLabel" type="Label" parent="TopBar/HBox"]
 layout_mode = 2
+theme_override_styles/normal = SubResource("3_metric_chip_style")
 text = "hud.cycle_remaining: 240.0s"
 
 [node name="HealthLabel" type="Label" parent="TopBar/HBox"]
 layout_mode = 2
-text = "hud.hp: 0"
+theme_override_styles/normal = SubResource("3_metric_chip_style")
+text = "hud.hp: 100/100"
+
+[node name="EnemiesLabel" type="Label" parent="TopBar/HBox"]
+layout_mode = 2
+theme_override_styles/normal = SubResource("3_metric_chip_style")
+text = "hud.enemies: 0"
 
 [node name="SpeedStateLabel" type="Label" parent="TopBar/HBox"]
 layout_mode = 2
+theme_override_styles/normal = SubResource("3_metric_chip_style")
 text = "hud.speed_state: 1x"
+
+[node name="Spacer" type="Control" parent="TopBar/HBox"]
+custom_minimum_size = Vector2(24, 0)
+layout_mode = 2
+size_flags_horizontal = 3
 
 [node name="SpeedControls" type="HBoxContainer" parent="TopBar/HBox"]
 layout_mode = 2
+theme_override_constants/separation = 8
 
 [node name="PauseButton" type="Button" parent="TopBar/HBox/SpeedControls"]
 layout_mode = 2
@@ -114,6 +135,10 @@ text = "1x"
 [node name="TwoXButton" type="Button" parent="TopBar/HBox/SpeedControls"]
 layout_mode = 2
 text = "2x"
+
+[node name="SettingsButton" type="Button" parent="TopBar/HBox"]
+layout_mode = 2
+text = "hud.settings"
 
 [node name="CombatHud" type="Control" parent="."]
 layout_mode = 1
@@ -137,76 +162,39 @@ offset_bottom = 0.0
 grow_vertical = 0
 theme_override_styles/panel = SubResource("1_bottom_bar_style")
 
-[node name="VBox" type="VBoxContainer" parent="CombatHud/BottomBar"]
+[node name="Root" type="HBoxContainer" parent="CombatHud/BottomBar"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 16
+
+[node name="BuildingsPanel" type="PanelContainer" parent="CombatHud/BottomBar/Root"]
+custom_minimum_size = Vector2(420, 0)
 layout_mode = 2
 size_flags_horizontal = 3
-size_flags_vertical = 0
+theme_override_styles/panel = SubResource("2_action_frame_style")
+
+[node name="VBox" type="VBoxContainer" parent="CombatHud/BottomBar/Root/BuildingsPanel"]
+layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="CombatCountsLabel" type="Label" parent="CombatHud/BottomBar/VBox"]
-custom_minimum_size = Vector2(0, 34)
+[node name="TitleLabel" type="Label" parent="CombatHud/BottomBar/Root/BuildingsPanel/VBox"]
 layout_mode = 2
-size_flags_horizontal = 3
-theme_override_colors/font_color = Color(0.956863, 0.913725, 0.768627, 1)
-theme_override_font_sizes/font_size = 18
-theme_override_styles/normal = SubResource("3_metric_chip_style")
-autowrap_mode = 3
-text = "Enemies: 0"
+text = "hud.buildings"
 
-[node name="MoraleLabel" type="Label" parent="CombatHud/BottomBar/VBox"]
-custom_minimum_size = Vector2(0, 29)
+[node name="BuildButtons" type="HBoxContainer" parent="CombatHud/BottomBar/Root/BuildingsPanel/VBox"]
 layout_mode = 2
-size_flags_horizontal = 3
-theme_override_colors/font_color = Color(0.760784, 0.898039, 0.831373, 1)
-theme_override_font_sizes/font_size = 16
-theme_override_styles/normal = SubResource("3_metric_chip_style")
-autowrap_mode = 3
-text = "Castle: 0/100"
+theme_override_constants/separation = 8
 
-[node name="Actions" type="HBoxContainer" parent="CombatHud/BottomBar/VBox"]
+[node name="BuildAction" type="Button" parent="CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons"]
+custom_minimum_size = Vector2(100, 44)
 layout_mode = 2
-size_flags_horizontal = 4
-alignment = 1
-theme_override_constants/separation = 14
+text = "hud.build"
 
-[node name="BuildAction" type="ColorRect" parent="CombatHud/BottomBar/VBox/Actions"]
-custom_minimum_size = Vector2(112, 72)
-layout_mode = 2
-mouse_filter = 0
-color = Color(0.458824, 0.74902, 0.47451, 1)
-
-[node name="Frame" type="PanelContainer" parent="CombatHud/BottomBar/VBox/Actions/BuildAction"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_styles/panel = SubResource("2_action_frame_style")
-
-[node name="Content" type="VBoxContainer" parent="CombatHud/BottomBar/VBox/Actions/BuildAction/Frame"]
-layout_mode = 2
-theme_override_constants/separation = 2
-
-[node name="Key" type="Label" parent="CombatHud/BottomBar/VBox/Actions/BuildAction/Frame/Content"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.152941, 0.192157, 0.160784, 0.95)
-theme_override_font_sizes/font_size = 11
-text = "Phase 1"
-
-[node name="Label" type="Label" parent="CombatHud/BottomBar/VBox/Actions/BuildAction/Frame/Content"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.0901961, 0.121569, 0.105882, 1)
-theme_override_font_sizes/font_size = 16
-text = "Build"
-
-[node name="Status" type="Label" parent="CombatHud/BottomBar/VBox/Actions/BuildAction/Frame/Content"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.0901961, 0.121569, 0.105882, 0.88)
-theme_override_font_sizes/font_size = 11
-text = "Ready"
-
-[node name="CooldownMask" type="ColorRect" parent="CombatHud/BottomBar/VBox/Actions/BuildAction"]
+[node name="CooldownMask" type="ColorRect" parent="CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/BuildAction"]
 visible = false
 layout_mode = 1
 anchors_preset = 15
@@ -214,46 +202,93 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
 color = Color(0, 0, 0, 0.45)
 
-[node name="WaveAction" type="ColorRect" parent="CombatHud/BottomBar/VBox/Actions"]
-custom_minimum_size = Vector2(112, 72)
+[node name="TowerSlot" type="Button" parent="CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons"]
+custom_minimum_size = Vector2(100, 44)
 layout_mode = 2
-mouse_filter = 0
-color = Color(0.909804, 0.541176, 0.309804, 1)
+disabled = true
+text = "Tower"
 
-[node name="Frame" type="PanelContainer" parent="CombatHud/BottomBar/VBox/Actions/WaveAction"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
+[node name="ResidenceSlot" type="Button" parent="CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons"]
+custom_minimum_size = Vector2(100, 44)
+layout_mode = 2
+disabled = true
+text = "Residence"
+
+[node name="ProductionLabel" type="Label" parent="CombatHud/BottomBar/Root/BuildingsPanel/VBox"]
+layout_mode = 2
+autowrap_mode = 3
+text = "hud.production: scripted battle buildings"
+
+[node name="BattlePanel" type="PanelContainer" parent="CombatHud/BottomBar/Root"]
+custom_minimum_size = Vector2(520, 0)
+layout_mode = 2
+size_flags_horizontal = 3
 theme_override_styles/panel = SubResource("2_action_frame_style")
 
-[node name="Content" type="VBoxContainer" parent="CombatHud/BottomBar/VBox/Actions/WaveAction/Frame"]
+[node name="VBox" type="VBoxContainer" parent="CombatHud/BottomBar/Root/BattlePanel"]
 layout_mode = 2
-theme_override_constants/separation = 2
+theme_override_constants/separation = 10
 
-[node name="Key" type="Label" parent="CombatHud/BottomBar/VBox/Actions/WaveAction/Frame/Content"]
+[node name="TitleLabel" type="Label" parent="CombatHud/BottomBar/Root/BattlePanel/VBox"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.243137, 0.137255, 0.0588235, 0.95)
-theme_override_font_sizes/font_size = 11
-text = "Phase 2"
+text = "hud.battle"
 
-[node name="Label" type="Label" parent="CombatHud/BottomBar/VBox/Actions/WaveAction/Frame/Content"]
+[node name="CountsRow" type="HBoxContainer" parent="CombatHud/BottomBar/Root/BattlePanel/VBox"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.211765, 0.109804, 0.0235294, 1)
-theme_override_font_sizes/font_size = 16
+theme_override_constants/separation = 8
+
+[node name="CombatCountsLabel" type="Label" parent="CombatHud/BottomBar/Root/BattlePanel/VBox/CountsRow"]
+layout_mode = 2
+theme_override_styles/normal = SubResource("3_metric_chip_style")
+text = "Enemies: 0/99"
+
+[node name="MoraleLabel" type="Label" parent="CombatHud/BottomBar/Root/BattlePanel/VBox/CountsRow"]
+layout_mode = 2
+theme_override_styles/normal = SubResource("3_metric_chip_style")
+text = "Morale: 100/100"
+
+[node name="BattlePressureLabel" type="Label" parent="CombatHud/BottomBar/Root/BattlePanel/VBox/CountsRow"]
+layout_mode = 2
+theme_override_styles/normal = SubResource("3_metric_chip_style")
+text = "Pressure: calm"
+
+[node name="SummaryLabel" type="Label" parent="CombatHud/BottomBar/Root/BattlePanel/VBox"]
+layout_mode = 2
+autowrap_mode = 3
+text = "hud.summary: day 1 | phase day"
+
+[node name="ReservedLabel" type="Label" parent="CombatHud/BottomBar/Root/BattlePanel/VBox"]
+layout_mode = 2
+autowrap_mode = 3
+text = "hud.reserved: talent and state slots reserved"
+
+[node name="SkillsPanel" type="PanelContainer" parent="CombatHud/BottomBar/Root"]
+custom_minimum_size = Vector2(420, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/panel = SubResource("2_action_frame_style")
+
+[node name="VBox" type="VBoxContainer" parent="CombatHud/BottomBar/Root/SkillsPanel"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="TitleLabel" type="Label" parent="CombatHud/BottomBar/Root/SkillsPanel/VBox"]
+layout_mode = 2
+text = "hud.skills"
+
+[node name="SkillButtons" type="HBoxContainer" parent="CombatHud/BottomBar/Root/SkillsPanel/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="WaveAction" type="Button" parent="CombatHud/BottomBar/Root/SkillsPanel/VBox/SkillButtons"]
+custom_minimum_size = Vector2(90, 44)
+layout_mode = 2
 text = "Wave"
 
-[node name="Status" type="Label" parent="CombatHud/BottomBar/VBox/Actions/WaveAction/Frame/Content"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.211765, 0.109804, 0.0235294, 0.88)
-theme_override_font_sizes/font_size = 11
-text = "Ready"
-
-[node name="CooldownMask" type="ColorRect" parent="CombatHud/BottomBar/VBox/Actions/WaveAction"]
+[node name="CooldownMask" type="ColorRect" parent="CombatHud/BottomBar/Root/SkillsPanel/VBox/SkillButtons/WaveAction"]
 visible = false
 layout_mode = 1
 anchors_preset = 15
@@ -261,46 +296,15 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
 color = Color(0, 0, 0, 0.45)
 
-[node name="ExchangeAction" type="ColorRect" parent="CombatHud/BottomBar/VBox/Actions"]
-custom_minimum_size = Vector2(112, 72)
+[node name="ExchangeAction" type="Button" parent="CombatHud/BottomBar/Root/SkillsPanel/VBox/SkillButtons"]
+custom_minimum_size = Vector2(90, 44)
 layout_mode = 2
-mouse_filter = 0
-color = Color(0.466667, 0.643137, 0.917647, 1)
-
-[node name="Frame" type="PanelContainer" parent="CombatHud/BottomBar/VBox/Actions/ExchangeAction"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_styles/panel = SubResource("2_action_frame_style")
-
-[node name="Content" type="VBoxContainer" parent="CombatHud/BottomBar/VBox/Actions/ExchangeAction/Frame"]
-layout_mode = 2
-theme_override_constants/separation = 2
-
-[node name="Key" type="Label" parent="CombatHud/BottomBar/VBox/Actions/ExchangeAction/Frame/Content"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.0745098, 0.160784, 0.290196, 0.95)
-theme_override_font_sizes/font_size = 11
-text = "Phase 3"
-
-[node name="Label" type="Label" parent="CombatHud/BottomBar/VBox/Actions/ExchangeAction/Frame/Content"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.0352941, 0.105882, 0.211765, 1)
-theme_override_font_sizes/font_size = 16
 text = "Exchange"
 
-[node name="Status" type="Label" parent="CombatHud/BottomBar/VBox/Actions/ExchangeAction/Frame/Content"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.0352941, 0.105882, 0.211765, 0.88)
-theme_override_font_sizes/font_size = 11
-text = "Locked"
-
-[node name="CooldownMask" type="ColorRect" parent="CombatHud/BottomBar/VBox/Actions/ExchangeAction"]
+[node name="CooldownMask" type="ColorRect" parent="CombatHud/BottomBar/Root/SkillsPanel/VBox/SkillButtons/ExchangeAction"]
 visible = false
 layout_mode = 1
 anchors_preset = 15
@@ -308,46 +312,15 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
 color = Color(0, 0, 0, 0.45)
 
-[node name="CleanupAction" type="ColorRect" parent="CombatHud/BottomBar/VBox/Actions"]
-custom_minimum_size = Vector2(112, 72)
+[node name="CleanupAction" type="Button" parent="CombatHud/BottomBar/Root/SkillsPanel/VBox/SkillButtons"]
+custom_minimum_size = Vector2(90, 44)
 layout_mode = 2
-mouse_filter = 0
-color = Color(0.815686, 0.694118, 0.360784, 1)
-
-[node name="Frame" type="PanelContainer" parent="CombatHud/BottomBar/VBox/Actions/CleanupAction"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_styles/panel = SubResource("2_action_frame_style")
-
-[node name="Content" type="VBoxContainer" parent="CombatHud/BottomBar/VBox/Actions/CleanupAction/Frame"]
-layout_mode = 2
-theme_override_constants/separation = 2
-
-[node name="Key" type="Label" parent="CombatHud/BottomBar/VBox/Actions/CleanupAction/Frame/Content"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.227451, 0.168627, 0.0509804, 0.95)
-theme_override_font_sizes/font_size = 11
-text = "Phase 4"
-
-[node name="Label" type="Label" parent="CombatHud/BottomBar/VBox/Actions/CleanupAction/Frame/Content"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.176471, 0.129412, 0.027451, 1)
-theme_override_font_sizes/font_size = 16
 text = "Cleanup"
 
-[node name="Status" type="Label" parent="CombatHud/BottomBar/VBox/Actions/CleanupAction/Frame/Content"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.176471, 0.129412, 0.027451, 0.88)
-theme_override_font_sizes/font_size = 11
-text = "Locked"
-
-[node name="CooldownMask" type="ColorRect" parent="CombatHud/BottomBar/VBox/Actions/CleanupAction"]
+[node name="CooldownMask" type="ColorRect" parent="CombatHud/BottomBar/Root/SkillsPanel/VBox/SkillButtons/CleanupAction"]
 visible = false
 layout_mode = 1
 anchors_preset = 15
@@ -355,46 +328,15 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
 color = Color(0, 0, 0, 0.45)
 
-[node name="FinishAction" type="ColorRect" parent="CombatHud/BottomBar/VBox/Actions"]
-custom_minimum_size = Vector2(112, 72)
+[node name="FinishAction" type="Button" parent="CombatHud/BottomBar/Root/SkillsPanel/VBox/SkillButtons"]
+custom_minimum_size = Vector2(90, 44)
 layout_mode = 2
-mouse_filter = 0
-color = Color(0.780392, 0.403922, 0.403922, 1)
-
-[node name="Frame" type="PanelContainer" parent="CombatHud/BottomBar/VBox/Actions/FinishAction"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_styles/panel = SubResource("2_action_frame_style")
-
-[node name="Content" type="VBoxContainer" parent="CombatHud/BottomBar/VBox/Actions/FinishAction/Frame"]
-layout_mode = 2
-theme_override_constants/separation = 2
-
-[node name="Key" type="Label" parent="CombatHud/BottomBar/VBox/Actions/FinishAction/Frame/Content"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.294118, 0.0745098, 0.0823529, 0.95)
-theme_override_font_sizes/font_size = 11
-text = "Phase 5"
-
-[node name="Label" type="Label" parent="CombatHud/BottomBar/VBox/Actions/FinishAction/Frame/Content"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.243137, 0.0470588, 0.054902, 1)
-theme_override_font_sizes/font_size = 16
 text = "Finish"
 
-[node name="Status" type="Label" parent="CombatHud/BottomBar/VBox/Actions/FinishAction/Frame/Content"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.243137, 0.0470588, 0.054902, 0.88)
-theme_override_font_sizes/font_size = 11
-text = "Locked"
-
-[node name="CooldownMask" type="ColorRect" parent="CombatHud/BottomBar/VBox/Actions/FinishAction"]
+[node name="CooldownMask" type="ColorRect" parent="CombatHud/BottomBar/Root/SkillsPanel/VBox/SkillButtons/FinishAction"]
 visible = false
 layout_mode = 1
 anchors_preset = 15
@@ -402,44 +344,13 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
 color = Color(0, 0, 0, 0.45)
 
-[node name="BackAction" type="ColorRect" parent="CombatHud/BottomBar/VBox/Actions"]
-custom_minimum_size = Vector2(112, 72)
+[node name="HintLabel" type="Label" parent="CombatHud/BottomBar/Root/SkillsPanel/VBox"]
 layout_mode = 2
-mouse_filter = 0
-color = Color(0.486275, 0.486275, 0.541176, 1)
-
-[node name="Frame" type="PanelContainer" parent="CombatHud/BottomBar/VBox/Actions/BackAction"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_styles/panel = SubResource("2_action_frame_style")
-
-[node name="Content" type="VBoxContainer" parent="CombatHud/BottomBar/VBox/Actions/BackAction/Frame"]
-layout_mode = 2
-theme_override_constants/separation = 2
-
-[node name="Key" type="Label" parent="CombatHud/BottomBar/VBox/Actions/BackAction/Frame/Content"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.176471, 0.176471, 0.207843, 0.95)
-theme_override_font_sizes/font_size = 11
-text = "Exit"
-
-[node name="Label" type="Label" parent="CombatHud/BottomBar/VBox/Actions/BackAction/Frame/Content"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.105882, 0.105882, 0.141176, 1)
-theme_override_font_sizes/font_size = 16
-text = "Back"
-
-[node name="Status" type="Label" parent="CombatHud/BottomBar/VBox/Actions/BackAction/Frame/Content"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.105882, 0.105882, 0.141176, 0.88)
-theme_override_font_sizes/font_size = 11
-text = "Menu"
+autowrap_mode = 3
+text = "hud.skill_hint: battle commands and placeholder skill slots"
 
 [node name="FeedbackLayer" type="Control" parent="."]
 layout_mode = 1

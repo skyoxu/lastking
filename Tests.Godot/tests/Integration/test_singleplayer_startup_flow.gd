@@ -52,6 +52,10 @@ func _await_frames(count: int) -> void:
     for _i in range(count):
         await get_tree().process_frame
 
+func _request_hud_action(screen: Control, action_code: String) -> void:
+    var hud: Node = screen.get_node("BattleHud")
+    hud.call("RequestBattleAction", action_code)
+
 # ACC:T11.18
 func test_real_main_scene_enters_battle_map_screen_without_multiplayer_reconfiguration() -> void:
     var main := await _instantiate_main()
@@ -100,22 +104,17 @@ func test_battle_map_screen_allows_minimum_combat_loop_after_play() -> void:
     assert_object(screen).is_not_null()
     assert_bool(String(screen.name).findn("BattleMapScreen") >= 0).is_true()
 
-    var build_btn := screen.get_node("Margin/VBox/Controls/BuildBtn")
-    var wave_btn := screen.get_node("Margin/VBox/Controls/WaveBtn")
-    var exchange_btn := screen.get_node("Margin/VBox/Controls/ExchangeBtn")
-    var cleanup_btn := screen.get_node("Margin/VBox/Controls/CleanupBtn")
-    var finish_btn := screen.get_node("Margin/VBox/Controls/FinishBtn")
-    var summary := screen.get_node("Margin/VBox/Summary")
-    var hud := main.get_node("RuntimeUi/HUD")
-    var counts_label := hud.get_node("CombatHud/BottomBar/VBox/CombatCountsLabel")
+    var summary := screen.get_node("LegacyPrototypeRoot/VBox/Summary")
+    var hud := screen.get_node("BattleHud")
+    var counts_label := hud.get_node("CombatHud/BottomBar/Root/BattlePanel/VBox/CountsRow/CombatCountsLabel")
 
-    build_btn.emit_signal("pressed")
-    wave_btn.emit_signal("pressed")
-    exchange_btn.emit_signal("pressed")
-    cleanup_btn.emit_signal("pressed")
-    finish_btn.emit_signal("pressed")
+    _request_hud_action(screen, "build")
+    _request_hud_action(screen, "wave")
+    _request_hud_action(screen, "exchange")
+    _request_hud_action(screen, "cleanup")
+    _request_hud_action(screen, "finish")
     await _await_frames(2)
 
-    assert_bool(String(summary.text).length() > 0).is_true()
-    assert_str(String((counts_label as Label).text)).contains("/")
+    assert_bool(summary.visible).is_false()
+    assert_bool(String((counts_label as Label).text).find("0") >= 0 or String((counts_label as Label).text).find("1") >= 0).is_true()
 

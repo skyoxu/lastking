@@ -29,7 +29,7 @@ func configure(screen: Control, refs: Dictionary = {}) -> void:
 func register_overlay_controller(path: NodePath, controller: Node) -> void:
 	if _screen == null:
 		return
-	var node_name := String(path.get_concatenated_names()).replace("/", "_")
+	var node_name := str(path.get_concatenated_names()).replace("/", "_")
 	var existing: Node = _screen.get_node_or_null(NodePath(node_name))
 	if existing != null and existing != controller:
 		_screen.remove_child(existing)
