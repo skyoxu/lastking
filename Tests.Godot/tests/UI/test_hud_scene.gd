@@ -1,4 +1,4 @@
-extends "res://addons/gdUnit4/src/GdUnitTestSuite.gd"
+﻿extends "res://addons/gdUnit4/src/GdUnitTestSuite.gd"
 
 # ACC:T9.1
 # ACC:T9.4
@@ -12,6 +12,7 @@ func test_hud_scene_instantiates() -> void:
     await get_tree().process_frame
     assert_bool(scene.visible).is_true()
     var day_label: Label = scene.get_node("TopBar/HBox/DayLabel")
+    var phase_label: Label = scene.get_node("TopBar/HBox/PhaseLabel")
     var cycle_label: Label = scene.get_node("TopBar/HBox/CycleRemainingLabel")
     var hp_label: Label = scene.get_node("TopBar/HBox/HealthLabel")
     var feedback_layer: Control = scene.get_node("FeedbackLayer")
@@ -19,11 +20,13 @@ func test_hud_scene_instantiates() -> void:
     var error_dialog: PanelContainer = scene.get_node("FeedbackLayer/ErrorDialog")
     var dismiss_button: Button = scene.get_node("FeedbackLayer/ErrorDialog/VBox/DismissButton")
     assert_str(day_label.text).is_not_empty()
+    assert_str(phase_label.text).is_not_empty()
     assert_str(cycle_label.text).is_not_empty()
     assert_bool(day_label.text.find("1") >= 0).is_true()
-    assert_bool(cycle_label.text.find("Day") >= 0).is_true()
+    assert_bool(phase_label.text.find("Day") >= 0 or phase_label.text.find("昼") >= 0 or phase_label.text.find("白天") >= 0).is_true()
+    assert_bool(cycle_label.text.find("Remaining") >= 0 or cycle_label.text.find("剩余") >= 0).is_true()
     assert_bool(cycle_label.text.find("240.0s") >= 0).is_true()
-    assert_bool(hp_label.text.find("100") >= 0).is_true()
+    assert_bool(hp_label.text.find("100/100") >= 0).is_true()
     assert_object(feedback_layer).is_not_null()
     assert_object(feedback_label).is_not_null()
     assert_object(error_dialog).is_not_null()
@@ -36,10 +39,12 @@ func test_hud_scene_exposes_expected_labels() -> void:
     add_child(auto_free(scene))
     await get_tree().process_frame
     var day_label = scene.get_node("TopBar/HBox/DayLabel")
+    var phase_label = scene.get_node("TopBar/HBox/PhaseLabel")
     var cycle_label = scene.get_node("TopBar/HBox/CycleRemainingLabel")
     var hp_label = scene.get_node("TopBar/HBox/HealthLabel")
     var speed_state_label = scene.get_node("TopBar/HBox/SpeedStateLabel")
     assert_object(day_label).is_not_null()
+    assert_object(phase_label).is_not_null()
     assert_object(cycle_label).is_not_null()
     assert_object(hp_label).is_not_null()
     assert_object(speed_state_label).is_not_null()
@@ -49,7 +54,7 @@ func test_hud_scene_exposes_expected_labels() -> void:
     for child in hbox.get_children():
         if child is Label:
             label_count += 1
-    assert_int(label_count).is_equal(4)
+    assert_int(label_count).is_equal(6)
 
 
 
@@ -129,4 +134,5 @@ func test_hud_scene_exposes_task44_owned_surfaces_with_runtime_defaults() -> voi
     assert_bool(build_label.text.find("total_gold=n/a") >= 0).is_true()
     assert_bool(progression_label.text.find("tech=n/a") >= 0).is_true()
     assert_bool(progression_label.text.find("reward=n/a") >= 0).is_true()
+
 

@@ -1,4 +1,4 @@
-extends "res://addons/gdUnit4/src/GdUnitTestSuite.gd"
+﻿extends "res://addons/gdUnit4/src/GdUnitTestSuite.gd"
 
 func _hud() -> Node:
 	var hud = preload("res://Game.Godot/Scenes/UI/HUD.tscn").instantiate()
@@ -32,11 +32,13 @@ func _find_master_task_entry(items: Array, task_id: int) -> Dictionary:
 func test_hud_scene_initial_state_is_day1_before_any_phase_switch() -> void:
 	var hud = await _hud()
 	var day_label: Label = hud.get_node("TopBar/HBox/DayLabel")
+	var phase_label: Label = hud.get_node("TopBar/HBox/PhaseLabel")
 	var cycle_label: Label = hud.get_node("TopBar/HBox/CycleRemainingLabel")
 
-	assert_bool(day_label.text.find("Day") >= 0).is_true()
+	assert_str(day_label.text).is_not_empty()
 	assert_bool(day_label.text.find("1") >= 0).is_true()
-	assert_bool(cycle_label.text.find("Day") >= 0).is_true()
+	assert_str(phase_label.text).is_not_empty()
+	assert_str(cycle_label.text).is_not_empty()
 	assert_bool(cycle_label.text.find("240.0s") >= 0).is_true()
 
 # acceptance anchor: ACC:T42.9
@@ -86,3 +88,4 @@ func test_task42_scope_item_mapping_is_explicit_and_complete() -> void:
 	var details_text := str(master_entry.get("details", ""))
 	for scope_item in normalized_master:
 		assert_bool(details_text.find(scope_item) >= 0).is_true()
+
