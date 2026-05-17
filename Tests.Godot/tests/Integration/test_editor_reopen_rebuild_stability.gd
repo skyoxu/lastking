@@ -232,9 +232,9 @@ func test_main_scene_binding_stays_stable_across_real_headless_restart_probes() 
     assert_bool(String(second_probe.get("output", "")).findn("[TEMPLATE_SMOKE_READY]") >= 0).is_true()
     assert_str(String(fingerprint_before.get("main_scene_path", ""))).is_equal(String(fingerprint_after.get("main_scene_path", "")))
     assert_str(String(fingerprint_before.get("root_script_path", ""))).is_equal(String(fingerprint_after.get("root_script_path", "")))
-    assert_bool(bool(fingerprint_after.get("has_input_mapper", false))).is_true()
-    assert_bool(bool(fingerprint_after.get("has_settings_loader", false))).is_true()
-    assert_bool(bool(fingerprint_after.get("has_screen_navigator", false))).is_true()
+    assert_bool(fingerprint_after.get("has_input_mapper", false) == true).is_true()
+    assert_bool(fingerprint_after.get("has_settings_loader", false) == true).is_true()
+    assert_bool(fingerprint_after.get("has_screen_navigator", false) == true).is_true()
 
 # ACC:T11.27
 func test_reopen_stability_evidence_is_bound_to_the_current_sc_test_run() -> void:

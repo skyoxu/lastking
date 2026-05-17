@@ -12,7 +12,7 @@ func test_runtime_speed_timeline_gate_accepts_valid_sequence() -> void:
 	manager.call("SetPause")
 	manager.call("SetOneX")
 
-	assert_bool(bool(manager.call("ValidateRuntimeSpeedTimelineGate"))).is_true()
+	assert_bool(manager.call("ValidateRuntimeSpeedTimelineGate") == true).is_true()
 
 
 # acceptance: ACC:T23.27
@@ -22,4 +22,4 @@ func test_runtime_speed_timeline_gate_rejects_missing_evidence() -> void:
 	await get_tree().process_frame
 	manager.call("ResetRuntimeForTest")
 
-	assert_bool(bool(manager.call("ValidateRuntimeSpeedTimelineGate"))).is_false()
+	assert_bool(manager.call("ValidateRuntimeSpeedTimelineGate") == true).is_false()

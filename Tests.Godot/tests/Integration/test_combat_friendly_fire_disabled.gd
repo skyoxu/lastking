@@ -26,7 +26,7 @@ func _simulate_runtime_hits(probe: Node, attack_mask: int, targets: Array) -> Di
 	for target in targets:
 		var layer := int(target.get("layer", 0))
 		var team := str(target.get("team", ""))
-		var hit := bool(probe.call("CanHitLayer", attack_mask, layer))
+		var hit := probe.call("CanHitLayer", attack_mask, layer) == true
 		if not hit:
 			continue
 		if team == "friendly":
@@ -48,10 +48,10 @@ func test_player_attack_collision_mask_excludes_player_and_friendly_layers() -> 
 	var player_attack_hitbox := _new_player_attack_hitbox()
 	var attack_mask := player_attack_hitbox.collision_mask
 
-	assert_bool(bool(probe.call("CanHitLayer", attack_mask, ENEMY_LAYER))).is_true()
-	assert_bool(bool(probe.call("CanHitLayer", attack_mask, PLAYER_LAYER))).is_false()
-	assert_bool(bool(probe.call("CanHitLayer", attack_mask, FRIENDLY_LAYER))).is_false()
-	assert_bool(bool(probe.call("IsFriendlyFirePrevented", attack_mask, FRIENDLY_LAYER, PLAYER_LAYER))).is_true()
+	assert_bool(probe.call("CanHitLayer", attack_mask, ENEMY_LAYER) == true).is_true()
+	assert_bool(probe.call("CanHitLayer", attack_mask, PLAYER_LAYER) == true).is_false()
+	assert_bool(probe.call("CanHitLayer", attack_mask, FRIENDLY_LAYER) == true).is_false()
+	assert_bool(probe.call("IsFriendlyFirePrevented", attack_mask, FRIENDLY_LAYER, PLAYER_LAYER) == true).is_true()
 
 # acceptance: ACC:T6.9
 # acceptance: ACC:T6.12
@@ -97,7 +97,7 @@ func test_priority_selection_blocked_fallback_and_fixed_seed_are_deterministic()
 
 	var first_pick: Dictionary = probe.call("SelectTarget", candidates)
 	var second_pick: Dictionary = probe.call("SelectTarget", candidates)
-	assert_bool(bool(first_pick.get("is_fallback_attack", false))).is_true()
+	assert_bool(first_pick.get("is_fallback_attack", false) == true).is_true()
 	assert_str(str(first_pick.get("target_id", ""))).is_equal("beta")
 	assert_str(str(first_pick.get("target_id", ""))).is_equal(str(second_pick.get("target_id", "")))
 

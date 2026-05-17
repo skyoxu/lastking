@@ -31,7 +31,7 @@ func _run_seeded_unlock_sequence(seed_value: int, unlock_sequence: Array, unit_t
 		)
 		applied_trace.append({
 			"tech_id": str(item.get("tech_id", "")),
-			"accepted": bool(apply_result.get("accepted", false)),
+			"accepted": apply_result.get("accepted", false) == true,
 			"reason": str(apply_result.get("reason", "")),
 		})
 

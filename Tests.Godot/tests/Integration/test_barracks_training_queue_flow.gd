@@ -33,8 +33,8 @@ func test_training_queue_flow_acceptance_should_pass_on_windows_baseline() -> vo
 
 	var deployed_units: Array = bridge.call("GetDeployedUnitsForTest")
 	assert_int(deployed_units.size()).is_equal(2)
-	assert_bool(bool((deployed_units[0] as Dictionary).get("active_battle_loop_registered", false))).is_true()
-	assert_bool(bool((deployed_units[1] as Dictionary).get("active_battle_loop_registered", false))).is_true()
+	assert_bool((deployed_units[0] as Dictionary).get("active_battle_loop_registered", false) == true).is_true()
+	assert_bool((deployed_units[1] as Dictionary).get("active_battle_loop_registered", false) == true).is_true()
 	assert_str(str((deployed_units[0] as Dictionary).get("owner_id", ""))).is_equal("player-1")
 	assert_str(str((deployed_units[0] as Dictionary).get("faction_id", ""))).is_equal("player")
 	assert_str(str((deployed_units[1] as Dictionary).get("owner_id", ""))).is_equal("player-1")
@@ -124,7 +124,7 @@ func test_queue_completion_payload_fields_are_consumed_without_field_substitutio
 		}))
 
 	var enqueue: Dictionary = bridge.call("EnqueueUpfront", "spearman", 1, 20, 5)
-	assert_bool(bool(enqueue.get("accepted", false))).is_true()
+	assert_bool(enqueue.get("accepted", false) == true).is_true()
 	assert_int(int(enqueue.get("gold", -1))).is_equal(220)
 	assert_int(int(enqueue.get("iron", -1))).is_equal(115)
 
@@ -146,7 +146,7 @@ func test_queue_completion_payload_fields_are_consumed_without_field_substitutio
 	var first := units[0] as Dictionary
 	assert_str(str(first.get("owner_id", ""))).is_equal("player-1")
 	assert_str(str(first.get("faction_id", ""))).is_equal("player")
-	assert_bool(bool(first.get("active_battle_loop_registered", false))).is_true()
+	assert_bool(first.get("active_battle_loop_registered", false) == true).is_true()
 
 	var active_before_fail := int(bridge.call("GetActiveBattleUnitCountForTest"))
 	bridge.call("EnqueueUpfront", "spearman", 1, 20, 5)
@@ -196,7 +196,7 @@ func test_deployed_units_are_owner_and_faction_bound_at_spawn_time() -> void:
 	assert_str(str(first_unit.get("unit_type", ""))).is_equal("spearman")
 	assert_str(str(first_unit.get("owner_id", ""))).is_equal("player-1")
 	assert_str(str(first_unit.get("faction_id", ""))).is_equal("player")
-	assert_bool(bool(first_unit.get("active_battle_loop_registered", false))).is_true()
+	assert_bool(first_unit.get("active_battle_loop_registered", false) == true).is_true()
 
 # ACC:T49.8
 # ACC:T49.9

@@ -115,7 +115,7 @@ func test_runtime_reload_uses_real_config_manager_chain_and_keeps_reason_snapsho
 	var malformed_json := "{ bad json"
 
 	var initial_result: Dictionary = bridge.call("LoadInitialFromJson", baseline_json, "res://Config/task46-baseline.json")
-	assert_bool(bool(initial_result.get("accepted", false))).is_true()
+	assert_bool(initial_result.get("accepted", false) == true).is_true()
 	assert_str(str(initial_result.get("source", ""))).is_equal("initial")
 
 	var baseline_snapshot: Dictionary = bridge.call("CurrentSnapshot")
@@ -123,7 +123,7 @@ func test_runtime_reload_uses_real_config_manager_chain_and_keeps_reason_snapsho
 	assert_int(int(baseline_snapshot.get("spawn_cadence_seconds", -1))).is_equal(10)
 
 	var promoted_result: Dictionary = bridge.call("ReloadFromJson", promoted_json, "res://Config/task46-promoted.json")
-	assert_bool(bool(promoted_result.get("accepted", false))).is_true()
+	assert_bool(promoted_result.get("accepted", false) == true).is_true()
 	assert_str(str(promoted_result.get("source", ""))).is_equal("reload")
 
 	var promoted_snapshot: Dictionary = bridge.call("CurrentSnapshot")
@@ -132,7 +132,7 @@ func test_runtime_reload_uses_real_config_manager_chain_and_keeps_reason_snapsho
 	assert_int(int(promoted_snapshot.get("boss_count", -1))).is_equal(3)
 
 	var fallback_result: Dictionary = bridge.call("ReloadFromJson", malformed_json, "res://Config/task46-malformed.json")
-	assert_bool(bool(fallback_result.get("accepted", true))).is_false()
+	assert_bool(fallback_result.get("accepted", true) == true).is_false()
 	assert_str(str(fallback_result.get("source", ""))).is_equal("fallback")
 	assert_str(str(fallback_result.get("reason_code", ""))).is_equal("CFG_PARSE_ERROR")
 

@@ -48,7 +48,7 @@ func test_target_selection_prefers_lower_path_cost_before_tie_break() -> void:
 
 	var decision: Dictionary = _select_target_with_probe(probe, candidates)
 	assert_str(String(decision.get("target_id", ""))).is_equal("near")
-	assert_bool(bool(decision.get("is_fallback_attack", false))).is_false()
+	assert_bool(decision.get("is_fallback_attack", false) == true).is_false()
 
 func test_blocked_targets_emit_deterministic_fallback_trace() -> void:
 	var probe := _new_probe()
@@ -74,5 +74,5 @@ func test_returns_stable_no_target_when_all_candidates_are_ineligible() -> void:
 	var second := _select_target_with_probe(probe, candidates)
 	assert_str(String(first.get("target_id", ""))).is_equal("")
 	assert_str(String(second.get("target_id", ""))).is_equal("")
-	assert_bool(bool(first.get("is_fallback_attack", false))).is_false()
-	assert_bool(bool(second.get("is_fallback_attack", false))).is_false()
+	assert_bool(first.get("is_fallback_attack", false) == true).is_false()
+	assert_bool(second.get("is_fallback_attack", false) == true).is_false()
