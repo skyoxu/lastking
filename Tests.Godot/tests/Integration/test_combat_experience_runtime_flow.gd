@@ -317,10 +317,10 @@ func test_enemy_runtime_should_stop_at_wall_and_damage_wall_before_castle() -> v
 			break
 
 	assert_bool(not engaged_name.is_empty()).is_true()
-	assert_float(engaged_progress).is_equal(0.78)
+	assert_float(engaged_progress).is_equal_approx(0.78, 0.0001)
 	var wall_before_attack := int((bridge.call("GetSummary") as Dictionary).get("wall_hp", -1))
 
-	for _i in range(4):
+	for _i in range(5):
 		bridge.call("AdvanceSimulation", 0.2)
 
 	var snapshots_after: Array = bridge.call("GetActorSnapshots")
@@ -333,7 +333,7 @@ func test_enemy_runtime_should_stop_at_wall_and_damage_wall_before_castle() -> v
 
 	assert_bool(not engaged_after.is_empty()).is_true()
 	assert_str(String(engaged_after.get("state", ""))).is_equal("attacking_wall")
-	assert_float(float(engaged_after.get("path_progress", -1.0))).is_equal(engaged_progress)
+	assert_float(float(engaged_after.get("path_progress", -1.0))).is_equal_approx(engaged_progress, 0.0001)
 
 	var summary_after: Dictionary = bridge.call("GetSummary")
 	assert_int(int(summary_after.get("wall_hp", -1))).is_less(wall_before_attack)

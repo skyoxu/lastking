@@ -425,10 +425,15 @@ public partial class CombatExperienceRuntimeBridge : Node
                 var nextProgress = Math.Clamp(actor.PathProgress + (float)deltaSeconds * EnemyTravelSpeedPerSecond, 0f, 1f);
                 if (actor.IsAttackingWall || nextProgress >= WallInterceptProgress)
                 {
+                    var enteringWallAttack = !actor.IsAttackingWall;
                     actor.IsAttackingWall = true;
                     actor.PathProgress = WallInterceptProgress;
+                    if (enteringWallAttack)
+                    {
+                        actor.WallAttackCooldownSeconds = WallAttackIntervalSeconds;
+                    }
                     actor.WallAttackCooldownSeconds -= deltaSeconds;
-                    if (actor.WallAttackCooldownSeconds <= 0d)
+                    if (actor.WallAttackCooldownSeconds <= 0.000001d)
                     {
                         actor.WallAttackCooldownSeconds += WallAttackIntervalSeconds;
                         _wallHp = Math.Max(0, _wallHp - WallAttackDamage);
