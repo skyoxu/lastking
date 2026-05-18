@@ -219,13 +219,17 @@ public class Task60OwnershipBoundaryTests
     {
         var operationScript = File.ReadAllText(Path.Combine(FindRepositoryRoot(), BattleMapOperationControllerScriptPath.Replace('/', Path.DirectorySeparatorChar)));
         operationScript.Should().Contain("func connect_signals() -> void:");
-        operationScript.Should().Contain("_build_btn.pressed.connect");
         operationScript.Should().Contain("_wave_timer.timeout.connect");
-        operationScript.Should().Contain("on_auto_wave(_auto_wave_btn)");
+        operationScript.Should().NotContain("_build_btn.pressed.connect");
+        operationScript.Should().NotContain("_wave_btn.pressed.connect");
+        operationScript.Should().NotContain("_exchange_btn.pressed.connect");
+        operationScript.Should().NotContain("_cleanup_btn.pressed.connect");
+        operationScript.Should().NotContain("_finish_btn.pressed.connect");
+        operationScript.Should().Contain("func on_auto_wave() -> void:");
 
         var navigationScript = File.ReadAllText(Path.Combine(FindRepositoryRoot(), BattleMapNavigationControllerScriptPath.Replace('/', Path.DirectorySeparatorChar)));
         navigationScript.Should().Contain("func connect_signals() -> void:");
-        navigationScript.Should().Contain("_back_btn.pressed.connect");
+        navigationScript.Should().NotContain("_back_btn.pressed.connect");
     }
 
     // ACC:T57.4
@@ -257,8 +261,8 @@ public class Task60OwnershipBoundaryTests
         var script = File.ReadAllText(Path.Combine(FindRepositoryRoot(), BattleMapRefsProviderScriptPath.Replace('/', Path.DirectorySeparatorChar)));
         script.Should().Contain("func configure(refs: Dictionary) -> void:");
         script.Should().Contain("func build_refs() -> Dictionary:");
-        script.Should().Contain("\"status\": _screen.get_node(\"Margin/VBox/Status\")");
-        script.Should().Contain("\"auto_wave_btn\": _screen.get_node(\"Margin/VBox/Controls/AutoWaveBtn\")");
+        script.Should().Contain("\"status\": _screen.get_node(\"LegacyPrototypeRoot/VBox/Status\")");
+        script.Should().NotContain("\"auto_wave_btn\":");
         script.Should().Contain("\"enemy_spawn_a\": _screen.get_node(\"Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnA\")");
         script.Should().Contain("\"victory_restart_btn\": _screen.get_node(\"VictoryOutcomeModal/VBox/Actions/RestartBtn\")");
     }
@@ -301,7 +305,7 @@ public class Task60OwnershipBoundaryTests
         runtimeFlow.Should().Contain("assert_int(_hud_count(main)).is_equal(1)");
         runtimeFlow.Should().Contain("assert_object(main.get_node_or_null(\"ScreenNavigator\")).is_not_null()");
         runtimeFlow.Should().Contain("assert_str(str(reopened_screen.get_node(\"CombatExperienceRuntimeBridge\").get_meta(\"ownership_container\"))).is_equal(\"runtime_bridge\")");
-        runtimeFlow.Should().Contain("assert_str(str(reopened_screen.get_node(\"Margin\").get_meta(\"ownership_container\"))).is_equal(\"legacy_prototype\")");
+        runtimeFlow.Should().Contain("assert_str(str(reopened_screen.get_node(\"LegacyPrototypeRoot\").get_meta(\"ownership_container\"))).is_equal(\"legacy_prototype\")");
     }
 
     private static string FindRepositoryRoot()

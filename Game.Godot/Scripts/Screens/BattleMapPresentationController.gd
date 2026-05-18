@@ -25,6 +25,7 @@ func sync_locale_and_texts() -> void:
 func translate(key: String) -> String:
 	if _i18n == null:
 		return key
+	sync_locale_and_texts()
 	var translated: String = str(_i18n.translate(key))
 	return translated if translated != key else key
 

@@ -16,6 +16,8 @@ func navigate_back_to_main_menu() -> void:
 	var local_hud: Node = _screen.get_node_or_null("BattleHud")
 	_set_hud_active(local_hud, false)
 	var menu: Node = _resolve_main_node("RuntimeUi/MainMenu")
+	if menu is Control:
+		(menu as Control).mouse_filter = Control.MOUSE_FILTER_STOP
 	if menu != null and menu.has_method("ShowMenu"):
 		menu.call("ShowMenu")
 	var nav: Node = _resolve_main_node("ScreenNavigator")

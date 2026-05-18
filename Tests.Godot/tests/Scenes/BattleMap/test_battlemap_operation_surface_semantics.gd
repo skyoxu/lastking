@@ -56,7 +56,7 @@ func test_runtime_ui_semantics_mapping_for_empty_failure_completion() -> void:
 	await _await_frames(2)
 	var runtime_summary: Dictionary = bridge.call("GetSummary")
 	assert_bool(summary_label.visible).is_false()
-	assert_int(int(runtime_summary.get("friendly_units_deployed", 0))).is_greater_equal(1)
+	assert_bool(runtime_summary.get("mg_tower_built", false) == false).is_true()
 	assert_int(int(runtime_summary.get("combat_exchanges", 0))).is_greater_equal(1)
 	assert_bool(status_label.text.to_lower().find("finished") >= 0).is_true()
 	assert_bool(bridge.has_method("GetSummary")).is_true()

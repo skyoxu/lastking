@@ -1,7 +1,6 @@
 [gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://Game.Godot/Scripts/Main.gd" id="1_0k4m0"]
-[ext_resource type="PackedScene" path="res://Game.Godot/Scenes/UI/HUD.tscn" id="2"]
 [ext_resource type="PackedScene" path="res://Game.Godot/Scenes/UI/MainMenu.tscn" id="3"]
 [ext_resource type="Theme" path="res://Game.Godot/Themes/default_theme.tres" id="5"]
 [ext_resource type="Script" path="res://Game.Godot/Scripts/Demo/GameEngineDemo.cs" id="6"]
@@ -60,10 +59,6 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 2
-
-[node name="HUD" parent="RuntimeUi" instance=ExtResource("2")]
-visible = false
 mouse_filter = 2
 
 [node name="ScreenNavigator" type="Node" parent="."]

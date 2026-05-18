@@ -124,6 +124,74 @@ func test_blocked_battle_actions_should_not_leave_raw_english_runtime_prompts() 
 	assert_bool(String(local_prompt.text).find("Close terminal outcome") < 0).is_true()
 	assert_bool(String(local_prompt.text).find("Terminal outcome is open") < 0).is_true()
 
+func test_feedback_and_outcome_surfaces_should_not_expose_raw_english_runtime_templates() -> void:
+	var previous_locale := TranslationServer.get_locale()
+	TranslationServer.set_locale("zh-CN")
+	var runtime := await _main_runtime()
+	var screen: Control = runtime["screen"]
+	var bridge: Node = runtime["bridge"]
+	var summary: Label = runtime["summary"]
+	var local_prompt: Label = screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/LocalFeedbackLayer/LocalPromptPanel/PromptLabel")
+	var victory_summary: Label = screen.get_node("VictoryOutcomeModal/VBox/Summary")
+	var defeat_summary: Label = screen.get_node("DefeatOutcomeModal/VBox/Summary")
+	var settlement_summary: Label = screen.get_node("DailySettlementModal/VBox/Summary")
+	var reward_a: Button = screen.get_node("DailySettlementModal/VBox/Rewards/RewardA")
+	var feedback_controller: Node = screen.get_node("FeedbackController")
+	var outcome_controller: Node = screen.get_node("OutcomeController")
+	var presentation_controller: Node = screen.get_node("PresentationController")
+
+	bridge.call("ConfigureDurabilityForTest", 40, 12)
+	feedback_controller.call("render_summary", bridge.call("GetSummary"), "cleanup_done")
+	await _await_frames(2)
+	assert_bool(String(local_prompt.text).find("Wall under attack") < 0).is_true()
+	assert_bool(String(local_prompt.text).find("Cleanup required before battle can finish") < 0).is_true()
+	assert_bool(String(summary.text).find("Castle HP=") < 0).is_true()
+	assert_bool(String(summary.text).find("Allies=") < 0).is_true()
+
+	outcome_controller.call("SetSettlementOptionsForTest", ["Reward A", "Reward B", "Reward C"])
+	outcome_controller.call("open_outcome", {
+		"outcome": "settlement",
+		"castle_hp": 88,
+		"dead_units_retired": 5,
+		"resource_gold": 10,
+		"resource_iron": 7,
+		"resource_population_cap": 3,
+	})
+	await _await_frames(2)
+	assert_bool(String(settlement_summary.text).find("reward_summary=") < 0).is_true()
+	assert_bool(String(settlement_summary.text).find("resources(gold=") < 0).is_true()
+	var expected_reward_a := String(presentation_controller.call("translate", "battlemap.reward.a"))
+	assert_bool(String(reward_a.text).find(expected_reward_a) >= 0).is_true()
+	reward_a.emit_signal("pressed")
+	await _await_frames(2)
+
+	outcome_controller.call("open_outcome", {
+		"outcome": "win",
+		"castle_hp": 93,
+		"dead_units_retired": 4,
+		"resource_gold": 11,
+		"resource_iron": 8,
+		"resource_population_cap": 2,
+	})
+	await _await_frames(2)
+	assert_bool(String(victory_summary.text).find("resources(gold=") < 0).is_true()
+	assert_bool(String(victory_summary.text).find("resources(gold=") < 0).is_true()
+
+	outcome_controller.call("open_outcome", {
+		"outcome": "loss",
+		"defeat_reason": "wall_breached",
+		"castle_hp": 0,
+		"wall_hp": 0,
+		"dead_units_retired": 6,
+		"resource_gold": 0,
+		"resource_iron": 0,
+		"resource_population_cap": 0,
+	})
+	await _await_frames(2)
+	var expected_defeat_summary := String(presentation_controller.call("translate", "battlemap.outcome.defeat.wall_breached"))
+	assert_bool(String(defeat_summary.text).find(expected_defeat_summary) >= 0).is_true()
+	assert_bool(String(defeat_summary.text).find("resources(gold=") < 0).is_true()
+	TranslationServer.set_locale(previous_locale)
 
 func test_action_cards_should_expose_runtime_status_labels_for_each_phase() -> void:
 	var runtime := await _main_runtime()
