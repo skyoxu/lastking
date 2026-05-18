@@ -158,6 +158,8 @@ func test_battle_hud_should_remove_main_menu_and_fullscreen_combat_input_blocker
 	assert_bool(main_menu.visible).is_false()
 	assert_int(int(main_menu.mouse_filter)).is_equal(Control.MOUSE_FILTER_IGNORE)
 	assert_int(int(combat_hud.mouse_filter)).is_equal(Control.MOUSE_FILTER_PASS)
+	assert_float(combat_hud.position.y).is_greater_equal(700.0)
+	assert_float(combat_hud.size.y).is_less_equal(196.0)
 	assert_bool(pause_button.disabled).is_false()
 	assert_bool(settings_button.disabled).is_false()
 
