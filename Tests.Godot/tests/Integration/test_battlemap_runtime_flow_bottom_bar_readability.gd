@@ -103,6 +103,8 @@ func test_integration_validates_bottom_bar_state_and_action_readability() -> voi
 	var summary: Label = runtime["summary"]
 	var battle_status: Label = screen.get_node("BattleHud/CombatHud/BottomBar/Root/BattlePanel/VBox/SummaryLabel")
 	var battle_summary: Label = screen.get_node("BattleHud/CombatHud/BottomBar/Root/BattlePanel/VBox/ReservedLabel")
+	var presentation_controller: Node = screen.get_node("PresentationController")
+	var wave_text := str(presentation_controller.call("translate", "battlemap.status.wave_spawned")).to_lower()
 
 	assert_bool(summary.visible).is_false()
 	assert_bool(status.visible).is_false()
@@ -111,9 +113,9 @@ func test_integration_validates_bottom_bar_state_and_action_readability() -> voi
 	_request_hud_action(screen, "wave")
 	await _await_frames(2)
 	assert_bool(status.visible).is_false()
-	assert_bool(status.text.to_lower().find("wave") >= 0).is_true()
+	assert_bool(status.text.to_lower().find(wave_text) >= 0).is_true()
 	assert_bool(summary.visible).is_false()
-	assert_bool(String(battle_status.text).to_lower().find("wave") >= 0).is_true()
+	assert_bool(String(battle_status.text).to_lower().find(wave_text) >= 0).is_true()
 	assert_bool(String(battle_summary.text).find("HP=") >= 0 or String(battle_summary.text).find("Castle") >= 0).is_true()
 	assert_bool(bridge.call("GetSummary") is Dictionary).is_true()
 
@@ -128,6 +130,8 @@ func test_stateful_bottom_bar_sequence_keeps_operation_surface_and_hud_readable(
 	var battle_status: Label = screen.get_node("BattleHud/CombatHud/BottomBar/Root/BattlePanel/VBox/SummaryLabel")
 	var battle_summary: Label = screen.get_node("BattleHud/CombatHud/BottomBar/Root/BattlePanel/VBox/ReservedLabel")
 	var phase_label: Label = screen.get_node("BattleHud/TopBar/HBox/PhaseLabel")
+	var presentation_controller: Node = screen.get_node("PresentationController")
+	var finished_text := str(presentation_controller.call("translate", "battlemap.status.finished")).to_lower()
 
 	_request_hud_action(screen, "build")
 	_request_hud_action(screen, "wave")
@@ -137,7 +141,7 @@ func test_stateful_bottom_bar_sequence_keeps_operation_surface_and_hud_readable(
 	await _await_frames(3)
 
 	assert_bool(status.visible).is_false()
-	assert_bool(String(status.text).to_lower().find("finish") >= 0).is_true()
+	assert_bool(String(status.text).to_lower().find(finished_text) >= 0).is_true()
 	assert_bool(summary.visible).is_false()
 	assert_bool(String(battle_status.text).length() > 0).is_true()
 	assert_bool(String(battle_summary.text).length() > 0).is_true()
