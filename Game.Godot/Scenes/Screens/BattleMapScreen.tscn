@@ -20,6 +20,7 @@
 [ext_resource type="Script" path="res://Game.Godot/Scripts/Screens/BattleMapSelectionDataProvider.gd" id="18"]
 [ext_resource type="Script" path="res://Game.Godot/Scripts/Runtime/DayNightRuntimeLoopNode.cs" id="19"]
 [ext_resource type="PackedScene" path="res://Game.Godot/Scenes/UI/SettingsPanel.tscn" id="20"]
+[ext_resource type="Script" path="res://Game.Godot/Scripts/Screens/BattleMapBuildPlacementController.gd" id="21"]
 [node name="BattleMapScreen" type="Control"]
 layout_mode = 3
 anchors_preset = 15
@@ -140,6 +141,67 @@ mouse_filter = 2
 layout_mode = 2
 autowrap_mode = 3
 horizontal_alignment = 1
+text = ""
+
+[node name="DragPreview" type="Control" parent="Background/BattlefieldViewport/BattlefieldRoot/LocalFeedbackLayer"]
+visible = false
+custom_minimum_size = Vector2(48, 48)
+offset_right = 48.0
+offset_bottom = 48.0
+mouse_filter = 2
+
+[node name="PreviewFrame" type="ColorRect" parent="Background/BattlefieldViewport/BattlefieldRoot/LocalFeedbackLayer/DragPreview"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.905882, 0.65098, 0.278431, 0.28)
+
+[node name="PreviewSprite" type="TextureRect" parent="Background/BattlefieldViewport/BattlefieldRoot/LocalFeedbackLayer/DragPreview"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 4.0
+offset_top = 4.0
+offset_right = -4.0
+offset_bottom = -4.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+stretch_mode = 5
+
+[node name="DragTooltip" type="PanelContainer" parent="Background/BattlefieldViewport/BattlefieldRoot/LocalFeedbackLayer"]
+visible = false
+custom_minimum_size = Vector2(180, 0)
+offset_right = 180.0
+offset_bottom = 44.0
+mouse_filter = 2
+
+[node name="TooltipLabel" type="Label" parent="Background/BattlefieldViewport/BattlefieldRoot/LocalFeedbackLayer/DragTooltip"]
+layout_mode = 2
+autowrap_mode = 3
+text = ""
+
+[node name="PlacementReasonBubble" type="PanelContainer" parent="Background/BattlefieldViewport/BattlefieldRoot/LocalFeedbackLayer"]
+visible = false
+custom_minimum_size = Vector2(196, 0)
+offset_right = 196.0
+offset_bottom = 64.0
+mouse_filter = 2
+z_index = 5
+
+[node name="BubbleLabel" type="Label" parent="Background/BattlefieldViewport/BattlefieldRoot/LocalFeedbackLayer/PlacementReasonBubble"]
+layout_mode = 2
+offset_left = 10.0
+offset_top = 8.0
+offset_right = 186.0
+offset_bottom = 56.0
+autowrap_mode = 3
+mouse_filter = 2
 text = ""
 
 [node name="Path" type="Line2D" parent="Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer"]
@@ -421,6 +483,9 @@ script = ExtResource("15")
 [node name="SelectionDataProvider" type="Node" parent="."]
 script = ExtResource("18")
 
+[node name="BuildPlacementController" type="Node" parent="."]
+script = ExtResource("21")
+
 [node name="DayNightRuntimeLoop" type="Node" parent="."]
 script = ExtResource("19")
 
@@ -493,3 +558,4 @@ z_index = 200
 
 [node name="DebugInspectorOverlay" parent="." instance=ExtResource("17")]
 z_index = 300
+

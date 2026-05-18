@@ -1,0 +1,6 @@
+Create a single isolated top-down 2D strategy game building preview icon for a castle defense battle map.
+Subject: a compact residence house with warm roof, small chimney, welcoming medieval town silhouette, square footprint, readable from a high angle.
+Style: clean HD hand-painted 2D game asset, production-ready UI/world preview, crisp silhouette, no pixel art, no text, no border, no shadow plate.
+Composition: one building only, centered, full object visible, slight angle but clearly top-down readable, transparent background.
+Color direction: warm roof tiles, pale plaster walls, wood trim, calm civilian atmosphere.
+Output: transparent PNG asset for in-game drag placement preview.

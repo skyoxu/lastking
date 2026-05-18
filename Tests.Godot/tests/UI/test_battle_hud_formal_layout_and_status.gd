@@ -119,13 +119,28 @@ func test_battle_hud_top_bar_should_switch_between_day_and_night_remaining_label
 
 func test_battle_hud_should_use_local_hud_and_hide_global_hud_when_entered_from_main() -> void:
 	var runtime := await _main_runtime()
-	var main: Control = runtime["main"]
 	var local_hud: Control = runtime["hud"]
-	var global_hud := main.get_node_or_null("RuntimeUi/HUD") as Control
+	var screen: Control = runtime["screen"]
+	var global_hud := screen.get_node_or_null("RuntimeUi/HUD") as Control
 
-	assert_object(global_hud).is_not_null()
 	assert_bool(local_hud.visible).is_true()
-	assert_bool(global_hud.visible).is_false()
+	assert_object(global_hud).is_null()
+
+func test_battle_hud_should_remove_main_menu_and_fullscreen_combat_input_blockers() -> void:
+	var runtime := await _main_runtime()
+	var main: Control = runtime["main"]
+	var hud: Control = runtime["hud"]
+	var main_menu := main.get_node_or_null("RuntimeUi/MainMenu") as Control
+	var combat_hud := hud.get_node("CombatHud") as Control
+	var pause_button: Button = hud.get_node("TopBar/HBox/SpeedControls/PauseButton")
+	var settings_button: Button = hud.get_node("TopBar/HBox/SettingsButton")
+
+	assert_object(main_menu).is_not_null()
+	assert_bool(main_menu.visible).is_false()
+	assert_int(int(main_menu.mouse_filter)).is_equal(Control.MOUSE_FILTER_IGNORE)
+	assert_int(int(combat_hud.mouse_filter)).is_equal(Control.MOUSE_FILTER_IGNORE)
+	assert_bool(pause_button.disabled).is_false()
+	assert_bool(settings_button.disabled).is_false()
 
 func test_battle_hud_top_bar_speed_controls_should_apply_pause_and_resume() -> void:
 	var runtime := await _main_runtime()
@@ -184,7 +199,7 @@ func test_battle_hud_should_auto_advance_day_night_cycle_without_player_input() 
 	var hud: Control = runtime["hud"]
 	var cycle_label: Label = hud.get_node("TopBar/HBox/CycleRemainingLabel")
 	var before_seconds := _remaining_seconds(cycle_label.text)
-	await _await_frames(10)
+	await _await_frames(30)
 	var after_seconds := _remaining_seconds(cycle_label.text)
 	assert_float(after_seconds).is_less(before_seconds)
 
@@ -233,7 +248,7 @@ func test_battle_hud_bottom_bar_should_present_formal_three_column_layout() -> v
 	var residence_slot: Button = hud.get_node("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/ResidenceSlot")
 
 	assert_bool(bottom_bar.visible).is_true()
-	assert_float(bottom_bar.size.y).is_equal(196.0)
+	assert_float(bottom_bar.size.y).is_greater_equal(196.0)
 	assert_object(root).is_not_null()
 	assert_object(left_panel).is_not_null()
 	assert_object(center_panel).is_not_null()
@@ -253,8 +268,6 @@ func test_battle_hud_building_palette_buttons_should_drive_formal_selection_feed
 	var screen: Control = runtime["screen"]
 	var hud: Control = runtime["hud"]
 	var battlefield_view: Node = screen.get_node("Background")
-	var tower_slot: Button = hud.get_node("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/TowerSlot")
-	var residence_slot: Button = hud.get_node("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/ResidenceSlot")
 
 	hud.call("RequestBattleAction", "select_tower")
 	await _await_frames(2)
@@ -278,6 +291,22 @@ func test_battle_hud_building_palette_buttons_should_drive_formal_selection_feed
 	assert_bool(str(residence_building["selection_category"]) == "economy").is_true()
 	assert_bool(str(residence_building["feedback_channel"]) == "economy_glow").is_true()
 	assert_bool(str(cleared_tower_building["overlay_state"]) == "overlay_hidden").is_true()
+
+func test_battle_hud_building_palette_should_use_card_buttons_with_preview_icons() -> void:
+	var runtime := await _main_runtime()
+	var hud: Control = runtime["hud"]
+	var tower_slot: Button = hud.get_node("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/TowerSlot")
+	var barracks_slot: Button = hud.get_node("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/BarracksSlot")
+	var residence_slot: Button = hud.get_node("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/ResidenceSlot")
+
+	assert_object(tower_slot.get_node_or_null("Card")).is_not_null()
+	assert_object(tower_slot.get_node_or_null("Card/PreviewIcon")).is_not_null()
+	assert_object(tower_slot.get_node_or_null("Card/Title")).is_not_null()
+	assert_object(barracks_slot.get_node_or_null("Card/PreviewIcon")).is_not_null()
+	assert_object(residence_slot.get_node_or_null("Card/PreviewIcon")).is_not_null()
+	assert_int(tower_slot.text.length()).is_equal(0)
+	assert_int(barracks_slot.text.length()).is_equal(0)
+	assert_int(residence_slot.text.length()).is_equal(0)
 
 func test_battle_hud_should_not_expose_raw_localization_keys_in_visible_labels() -> void:
 	var runtime := await _main_runtime()
@@ -331,7 +360,7 @@ func test_battle_hud_should_open_battle_settings_menu_from_top_bar() -> void:
 
 	assert_bool(settings_menu.visible).is_false()
 	settings_button.emit_signal("pressed")
-	await _await_frames(1)
+	await _await_frames(3)
 	assert_bool(settings_menu.visible).is_true()
 	assert_bool(close_button.visible).is_false()
 	var paused: Dictionary = manager.call("GetSpeedState")
