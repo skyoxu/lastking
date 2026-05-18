@@ -38,11 +38,15 @@ func test_direct_battle_map_screen_should_keep_formal_bottom_bar_at_196px_height
 	add_child(auto_free(screen))
 	await _await_frames(2)
 
+	var combat_hud := screen.get_node_or_null("BattleHud/CombatHud") as Control
 	var bottom_bar := screen.get_node_or_null("BattleHud/CombatHud/BottomBar") as Control
 
+	assert_object(combat_hud).is_not_null()
 	assert_object(bottom_bar).is_not_null()
 	assert_float(bottom_bar.size.y).is_equal(196.0)
-	assert_float(bottom_bar.position.y).is_equal(704.0)
+	assert_float(combat_hud.position.y).is_equal(704.0)
+	assert_float(bottom_bar.position.y).is_equal(0.0)
+	assert_float(bottom_bar.global_position.y).is_equal(704.0)
 
 
 func test_direct_battle_map_screen_should_keep_optional_runtime_panels_hidden_until_runtime_data_arrives() -> void:
