@@ -31,8 +31,8 @@ func test_bottom_bar_shows_enemy_pressure_and_castle_stability_labels_when_opera
 	var hud := await _hud()
 	var screen := await _screen()
 	var bottom_bar := hud.get_node_or_null("CombatHud/BottomBar")
-	var counts_label := hud.get_node_or_null("CombatHud/BottomBar/VBox/CombatCountsLabel")
-	var morale_label := hud.get_node_or_null("CombatHud/BottomBar/VBox/MoraleLabel")
+	var counts_label := hud.get_node_or_null("CombatHud/BottomBar/Root/BattlePanel/VBox/CountsRow/CombatCountsLabel")
+	var morale_label := hud.get_node_or_null("CombatHud/BottomBar/Root/BattlePanel/VBox/CountsRow/MoraleLabel")
 	var bridge: Node = screen.get_node("CombatExperienceRuntimeBridge")
 
 	assert_object(bottom_bar).is_not_null()
@@ -62,8 +62,8 @@ func test_bottom_bar_shows_enemy_pressure_and_castle_stability_labels_when_opera
 
 func test_bottom_bar_rejects_malformed_or_missing_required_displays() -> void:
 	var hud := await _hud()
-	var counts_label := hud.get_node_or_null("CombatHud/BottomBar/VBox/CombatCountsLabel")
-	var morale_label := hud.get_node_or_null("CombatHud/BottomBar/VBox/MoraleLabel")
+	var counts_label := hud.get_node_or_null("CombatHud/BottomBar/Root/BattlePanel/VBox/CountsRow/CombatCountsLabel")
+	var morale_label := hud.get_node_or_null("CombatHud/BottomBar/Root/BattlePanel/VBox/CountsRow/MoraleLabel")
 
 	assert_object(counts_label).is_not_null()
 	assert_object(morale_label).is_not_null()

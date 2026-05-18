@@ -1,11 +1,17 @@
-﻿extends Node
+extends Node
 
 const BUILDING_DEFINITIONS := {
 	"barracks_alpha": {
 		"selection_id": "barracks_alpha",
 		"building_type": "barracks",
+		"display_name_key": "hud.build_slot.barracks",
+		"preview_kind": "barracks",
 		"category": "unit",
 		"placement_zone": "inner_castle",
+		"allowed_regions": ["outer_field"],
+		"gold_cost": 80,
+		"iron_cost": 0,
+		"population_cost": 0,
 		"range_slots": ["InnerCastleRegionSlot_01_00"],
 		"blocked_range_slots": ["InnerCastleRegionSlot_02_00"],
 		"linked_unit_slots": ["LeftOuterFieldSlot_00_00"],
@@ -13,8 +19,14 @@ const BUILDING_DEFINITIONS := {
 	"tower_alpha": {
 		"selection_id": "tower_alpha",
 		"building_type": "mg tower",
+		"display_name_key": "hud.build_slot.tower",
+		"preview_kind": "tower",
 		"category": "defense",
 		"placement_zone": "inner_castle",
+		"allowed_regions": ["inner_castle"],
+		"gold_cost": 60,
+		"iron_cost": 0,
+		"population_cost": 0,
 		"range_slots": ["InnerCastleRegionSlot_04_00"],
 		"blocked_range_slots": ["InnerCastleRegionSlot_05_00"],
 		"linked_unit_slots": ["LeftOuterFieldSlot_01_00"],
@@ -22,8 +34,14 @@ const BUILDING_DEFINITIONS := {
 	"farm_alpha": {
 		"selection_id": "farm_alpha",
 		"building_type": "residence",
+		"display_name_key": "hud.build_slot.residence",
+		"preview_kind": "residence",
 		"category": "economy",
 		"placement_zone": "inner_castle",
+		"allowed_regions": ["inner_castle"],
+		"gold_cost": 30,
+		"iron_cost": 0,
+		"population_cost": 0,
 		"range_slots": [],
 		"blocked_range_slots": [],
 		"linked_unit_slots": [],
@@ -92,6 +110,7 @@ func _current_bridge() -> Node:
 		if provided is Node:
 			return provided
 	return null
+
 
 
 

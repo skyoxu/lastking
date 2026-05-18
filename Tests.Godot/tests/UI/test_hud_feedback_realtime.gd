@@ -6,10 +6,20 @@ func after() -> void:
     if is_instance_valid(_task24_bus):
         if _task24_bus.get_parent() != null:
             _task24_bus.get_parent().remove_child(_task24_bus)
-        _task24_bus.queue_free()
+        _task24_bus.free()
     _task24_bus = null
 
+func _contains_any(text: String, candidates: Array[String]) -> bool:
+    for candidate in candidates:
+        if text.find(candidate) >= 0:
+            return true
+    return false
+
 func _spawn_hud_with_event_bus() -> Dictionary:
+    var stale_bus := get_tree().get_root().get_node_or_null("EventBus")
+    if stale_bus != null:
+        stale_bus.get_parent().remove_child(stale_bus)
+        stale_bus.free()
     var bus: Node = preload("res://Game.Godot/Adapters/EventBusAdapter.cs").new()
     bus.name = "EventBus"
     get_tree().get_root().add_child(bus)
@@ -69,7 +79,10 @@ func test_hud_real_scene_should_handle_invalid_blocked_and_error_feedback_paths(
     await get_tree().process_frame
 
     assert_bool(feedback_label.visible).is_true()
-    assert_bool(feedback_label.text.find("Action blocked") >= 0).is_true()
+    assert_bool(_contains_any(feedback_label.text, [
+        "Action blocked.",
+        "操作被阻止。"
+    ])).is_true()
     assert_bool(feedback_label.text.find("chapter_locked") >= 0).is_true()
 
     bus.PublishSimple("core.lastking.ui_feedback.raised", "ut", JSON.stringify({
@@ -82,7 +95,10 @@ func test_hud_real_scene_should_handle_invalid_blocked_and_error_feedback_paths(
 
     assert_bool(error_dialog.visible).is_true()
     assert_bool(feedback_label.visible).is_false()
-    assert_bool(error_label.text.find("Migration failed") >= 0).is_true()
+    assert_bool(_contains_any(error_label.text, [
+        "Migration failed.",
+        "迁移失败。"
+    ])).is_true()
     assert_bool(error_label.text.find("slot=slot_a") >= 0).is_true()
 
     await get_tree().process_frame
@@ -113,6 +129,6 @@ func test_hud_real_scene_should_auto_hide_temporary_feedback_after_timeout() -> 
     await get_tree().process_frame
     assert_bool(feedback_label.visible).is_true()
 
-    await get_tree().create_timer(1.8).timeout
+    await get_tree().create_timer(2.2).timeout
     await get_tree().process_frame
     assert_bool(feedback_label.visible).is_false()

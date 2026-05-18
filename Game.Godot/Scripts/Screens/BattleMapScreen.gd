@@ -16,6 +16,7 @@ const FORMAL_SCREEN_SIZE := Vector2(1600.0, 900.0)
 @onready var _bridge_provider: Node = $BridgeProvider
 @onready var _hud_coordinator: Node = $HudCoordinator
 @onready var _selection_data_provider: Node = $SelectionDataProvider
+@onready var _build_placement_controller: Node = $BuildPlacementController
 @onready var _day_night_loop: Node = $DayNightRuntimeLoop
 @onready var _battle_settings_menu: Control = $BattleSettingsMenu
 
@@ -28,6 +29,7 @@ var _last_locale: String = ""
 
 func _ready() -> void:
 	_apply_formal_screen_frame()
+	_suspend_main_runtime_layers()
 	_configure_controllers()
 	_hide_legacy_runtime_hud_panels()
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -50,6 +52,17 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	_runtime_coordinator.call("process_runtime_frame", delta)
 	_sync_scene_locale_texts()
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventMouseMotion:
+		var motion_event := event as InputEventMouseMotion
+		if _build_placement_controller != null and _build_placement_controller.has_method("update_drag_pointer_position"):
+			_build_placement_controller.call("update_drag_pointer_position", motion_event.position)
+	if event is InputEventMouseButton:
+		var mouse_event := event as InputEventMouseButton
+		if mouse_event.button_index == MOUSE_BUTTON_LEFT and not mouse_event.pressed:
+			if _build_placement_controller != null and _build_placement_controller.has_method("handle_pointer_release_without_slot"):
+				_build_placement_controller.call("handle_pointer_release_without_slot")
 
 func _configure_controllers() -> void:
 	_refs_provider.call("configure", {
@@ -81,6 +94,7 @@ func _configure_controllers() -> void:
 		"navigation_controller": _navigation_controller,
 		"hud": get_node_or_null("BattleHud"),
 		"selection_controller": _selection_controller,
+		"build_placement_controller": _build_placement_controller,
 	})
 	_runtime_coordinator.call("configure", {
 		"bridge_provider": Callable(_bridge_provider, "resolve_current_bridge"),
@@ -170,6 +184,15 @@ func _configure_controllers() -> void:
 		"presentation_controller": _presentation_controller,
 		"formal_selection_data_provider": _selection_data_provider,
 	})
+	_build_placement_controller.call("configure", {
+		"screen": self,
+		"selection_controller": _selection_controller,
+		"feedback_controller": _feedback_controller,
+		"selection_data_provider": _selection_data_provider,
+		"bridge_provider": Callable(_bridge_provider, "resolve_current_bridge"),
+		"battlefield_view": get_node_or_null("Background"),
+		"translate": Callable(_presentation_controller, "translate"),
+	})
 	_connect_battlefield_selection_signals()
 
 func _hide_legacy_runtime_hud_panels() -> void:
@@ -214,6 +237,12 @@ func _resolve_runtime_ui_node(relative_path: String) -> Node:
 		return main.get_node_or_null("RuntimeUi/%s" % relative_path)
 	return null
 
+func _suspend_main_runtime_layers() -> void:
+	var main_menu: Control = _resolve_runtime_ui_node("MainMenu")
+	if main_menu != null:
+		main_menu.visible = false
+		main_menu.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
 func _apply_formal_screen_frame() -> void:
 	custom_minimum_size = FORMAL_SCREEN_SIZE
 	var main: Node = _resolve_main_root()
@@ -240,13 +269,31 @@ func _connect_battlefield_selection_signals() -> void:
 	var battlefield_view: Node = get_node_or_null("Background")
 	if battlefield_view == null:
 		return
-	var callable: Callable = Callable(self, "_on_battlefield_slot_clicked")
-	if battlefield_view.has_signal("battlefield_slot_clicked") and not battlefield_view.is_connected("battlefield_slot_clicked", callable):
-		battlefield_view.connect("battlefield_slot_clicked", callable)
+	var clicked_callable: Callable = Callable(self, "_on_battlefield_slot_clicked")
+	if battlefield_view.has_signal("battlefield_slot_clicked") and not battlefield_view.is_connected("battlefield_slot_clicked", clicked_callable):
+		battlefield_view.connect("battlefield_slot_clicked", clicked_callable)
+	var hovered_callable: Callable = Callable(self, "_on_battlefield_slot_hovered")
+	if battlefield_view.has_signal("battlefield_slot_hovered") and not battlefield_view.is_connected("battlefield_slot_hovered", hovered_callable):
+		battlefield_view.connect("battlefield_slot_hovered", hovered_callable)
+	var released_callable: Callable = Callable(self, "_on_battlefield_slot_released")
+	if battlefield_view.has_signal("battlefield_slot_released") and not battlefield_view.is_connected("battlefield_slot_released", released_callable):
+		battlefield_view.connect("battlefield_slot_released", released_callable)
 
 func _on_battlefield_slot_clicked(slot_id: String) -> void:
+	if _build_placement_controller != null and _build_placement_controller.has_method("handle_battlefield_slot_clicked"):
+		var handled: Variant = _build_placement_controller.call("handle_battlefield_slot_clicked", slot_id)
+		if handled == true:
+			return
 	if _selection_controller != null and _selection_controller.has_method("select_formal_building_slot"):
 		_selection_controller.call("select_formal_building_slot", slot_id)
+
+func _on_battlefield_slot_hovered(slot_id: String) -> void:
+	if _build_placement_controller != null and _build_placement_controller.has_method("handle_battlefield_slot_hovered"):
+		_build_placement_controller.call("handle_battlefield_slot_hovered", slot_id)
+
+func _on_battlefield_slot_released(slot_id: String) -> void:
+	if _build_placement_controller != null and _build_placement_controller.has_method("handle_battlefield_slot_released"):
+		_build_placement_controller.call("handle_battlefield_slot_released", slot_id)
 
 func open_battle_settings_menu() -> void:
 	_apply_battle_settings_texts()
@@ -330,3 +377,4 @@ func _normalize_locale(locale: String) -> String:
 	if v == "zh" or v.begins_with("zh"):
 		return "zh-CN"
 	return "en-US"
+

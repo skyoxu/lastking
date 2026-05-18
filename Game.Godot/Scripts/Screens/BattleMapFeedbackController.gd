@@ -172,17 +172,17 @@ func _sync_local_feedback_from_summary(result: Dictionary, status_text: String) 
 		_wall_pressure_time_left = WALL_PRESSURE_DURATION_SEC
 
 	if defeat_reason == "wall_breached":
-		show_local_prompt("Wall under attack. Reinforce immediately.", PROMPT_DURATION_SEC)
+		show_local_prompt(_t("battlemap.prompt.wall_under_attack"), PROMPT_DURATION_SEC)
 	elif defeat_reason == "castle_destroyed":
-		show_local_prompt("Castle collapsing. Combat lost.", PROMPT_DURATION_SEC)
+		show_local_prompt(_t("battlemap.prompt.castle_collapsing"), PROMPT_DURATION_SEC)
 	elif status_lower.find("cleanup") >= 0:
-		show_local_prompt("Cleanup required before battle can finish.", PROMPT_DURATION_SEC)
+		show_local_prompt(_t("battlemap.prompt.cleanup_required"), PROMPT_DURATION_SEC)
 	elif status_lower.find("wave") >= 0 and enemies > 0:
-		show_local_prompt("Wave entered battlefield. Hold the line.", PROMPT_DURATION_SEC)
+		show_local_prompt(_t("battlemap.prompt.wave_entered"), PROMPT_DURATION_SEC)
 	elif status_lower.find("finished") >= 0:
-		show_local_prompt("Battle resolved. Review outcome.", PROMPT_DURATION_SEC)
+		show_local_prompt(_t("battlemap.prompt.battle_resolved"), PROMPT_DURATION_SEC)
 	elif castle_hp <= 50 and wall_hp <= 15:
-		show_local_prompt("Reinforce frontline before the wall breaks.", PROMPT_DURATION_SEC)
+		show_local_prompt(_t("battlemap.prompt.reinforce_frontline"), PROMPT_DURATION_SEC)
 	elif _prompt_time_left <= 0.0:
 		clear_local_prompt()
 
@@ -250,7 +250,18 @@ func _compose_formal_summary(result: Dictionary) -> String:
 	var enemies: int = int(result.get("enemy_units_spawned", 0))
 	var friendly: int = int(result.get("friendly_units_deployed", 0))
 	var exchanges: int = int(result.get("combat_exchanges", 0))
-	return "Castle HP=%d | Wall HP=%d | Allies=%d | Enemies=%d | Exchanges=%d" % [castle_hp, wall_hp, friendly, enemies, exchanges]
+	return "%s=%d | %s=%d | %s=%d | %s=%d | %s=%d" % [
+		_t("battlemap.summary.castle_hp"),
+		castle_hp,
+		_t("battlemap.summary.wall_hp"),
+		wall_hp,
+		_t("battlemap.summary.friendly_units"),
+		friendly,
+		_t("battlemap.summary.enemy_units_spawned"),
+		enemies,
+		_t("battlemap.summary.combat_exchanges"),
+		exchanges,
+	]
 
 func _current_bridge() -> Node:
 	if _bridge_provider.is_valid():
@@ -258,4 +269,3 @@ func _current_bridge() -> Node:
 		if provided is Node:
 			return provided
 	return _bridge
-
