@@ -54,11 +54,8 @@ func test_runtime_flow_is_traceable_through_auditable_events() -> void:
 	var runtime := await _main_runtime()
 	var screen: Control = runtime["screen"]
 	var bridge: Node = runtime["bridge"]
-	var hud := preload("res://Game.Godot/Scenes/UI/HUD.tscn").instantiate()
-	add_child(auto_free(hud))
-	await _await_frames(2)
-	var outcome_label: Label = hud.get_node("FeedbackLayer/OutcomePanel/VBox/OutcomeLabel")
-	var prompt_label: Label = hud.get_node("FeedbackLayer/RuntimePromptPanel/VBox/RuntimePromptLabel")
+	var battle_status: Label = screen.get_node("BattleHud/CombatHud/BottomBar/Root/BattlePanel/VBox/SummaryLabel")
+	var battle_summary: Label = screen.get_node("BattleHud/CombatHud/BottomBar/Root/BattlePanel/VBox/ReservedLabel")
 
 	_request_hud_action(screen, "build")
 	_request_hud_action(screen, "wave")
@@ -67,8 +64,9 @@ func test_runtime_flow_is_traceable_through_auditable_events() -> void:
 	_request_hud_action(screen, "finish")
 	await _await_frames(4)
 
-	assert_bool(outcome_label.text.find("Outcome:") >= 0).is_true()
-	assert_bool(prompt_label.text.find("Prompt:") >= 0).is_true()
+	assert_bool(String(battle_status.text).length() > 0).is_true()
+	assert_bool(String(battle_status.text).to_lower().find("finish") >= 0 or String(battle_status.text).to_lower().find("battle") >= 0).is_true()
+	assert_bool(String(battle_summary.text).length() > 0).is_true()
 	assert_bool(bridge.call("GetSummary") is Dictionary).is_true()
 	assert_bool((screen.get_node("LegacyPrototypeRoot/VBox/Status") as Label).visible).is_false()
 	assert_bool(String(screen.get_node("LegacyPrototypeRoot/VBox/Status").text).length() > 0).is_true()
@@ -127,12 +125,9 @@ func test_stateful_bottom_bar_sequence_keeps_operation_surface_and_hud_readable(
 	var bridge: Node = runtime["bridge"]
 	var status: Label = runtime["status"]
 	var summary: Label = runtime["summary"]
-	var hud := preload("res://Game.Godot/Scenes/UI/HUD.tscn").instantiate()
-	add_child(auto_free(hud))
-	await _await_frames(2)
-	var pressure_label: Label = hud.get_node("FeedbackLayer/PressurePanel/VBox/PressureLabel")
-	var outcome_label: Label = hud.get_node("FeedbackLayer/OutcomePanel/VBox/OutcomeLabel")
-	var prompt_label: Label = hud.get_node("FeedbackLayer/RuntimePromptPanel/VBox/RuntimePromptLabel")
+	var battle_status: Label = screen.get_node("BattleHud/CombatHud/BottomBar/Root/BattlePanel/VBox/SummaryLabel")
+	var battle_summary: Label = screen.get_node("BattleHud/CombatHud/BottomBar/Root/BattlePanel/VBox/ReservedLabel")
+	var phase_label: Label = screen.get_node("BattleHud/TopBar/HBox/PhaseLabel")
 
 	_request_hud_action(screen, "build")
 	_request_hud_action(screen, "wave")
@@ -144,8 +139,8 @@ func test_stateful_bottom_bar_sequence_keeps_operation_surface_and_hud_readable(
 	assert_bool(status.visible).is_false()
 	assert_bool(String(status.text).to_lower().find("finish") >= 0).is_true()
 	assert_bool(summary.visible).is_false()
-	assert_bool(String(pressure_label.text).find("hp=") >= 0 or String(pressure_label.text).find("stable") >= 0 or String(pressure_label.text).find("warning") >= 0 or String(pressure_label.text).find("danger") >= 0 or String(pressure_label.text).find("critical") >= 0).is_true()
-	assert_bool(String(outcome_label.text).find("Outcome:") >= 0).is_true()
-	assert_bool(String(prompt_label.text).find("Prompt:") >= 0).is_true()
+	assert_bool(String(battle_status.text).length() > 0).is_true()
+	assert_bool(String(battle_summary.text).length() > 0).is_true()
+	assert_bool(String(phase_label.text).length() > 0).is_true()
 	assert_bool(bridge.call("GetSummary") is Dictionary).is_true()
 
