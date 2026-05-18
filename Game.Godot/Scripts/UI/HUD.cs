@@ -155,7 +155,7 @@ public partial class HUD : Control
     private string _residenceAffordabilityReason = string.Empty;
     private static readonly Vector2 FormalTopBarPosition = new(8f, 0f);
     private static readonly Vector2 FormalTopBarSize = new(1584f, 80f);
-    private static readonly Vector2 FormalBottomBarPosition = new(8f, 704f);
+    private static readonly Vector2 FormalBottomBarPosition = new(8f, 0f);
     private static readonly Vector2 FormalBottomBarSize = new(1584f, 196f);
 
     public override void _Ready()

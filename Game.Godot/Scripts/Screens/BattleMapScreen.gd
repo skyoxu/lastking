@@ -366,21 +366,48 @@ func _on_return_to_main_menu_pressed() -> void:
 
 func _configure_battle_settings_menu_runtime() -> void:
 	_battle_settings_menu.process_mode = Node.PROCESS_MODE_ALWAYS
+	_battle_settings_menu.mouse_filter = Control.MOUSE_FILTER_STOP
 	var backdrop: Control = _battle_settings_menu.get_node_or_null("Backdrop")
 	if backdrop != null:
 		backdrop.process_mode = Node.PROCESS_MODE_ALWAYS
+		backdrop.mouse_filter = Control.MOUSE_FILTER_STOP
 	var vbox: Control = _battle_settings_menu.get_node_or_null("VBox")
 	if vbox != null:
 		vbox.process_mode = Node.PROCESS_MODE_ALWAYS
+		vbox.mouse_filter = Control.MOUSE_FILTER_PASS
+	var panel: Control = _battle_settings_menu.get_node_or_null("VBox/Panel")
+	if panel != null:
+		panel.process_mode = Node.PROCESS_MODE_ALWAYS
+		panel.mouse_filter = Control.MOUSE_FILTER_PASS
+		panel.clip_contents = true
 	var return_btn: Button = _battle_settings_menu.get_node_or_null("VBox/Buttons/ReturnToGameBtn")
 	if return_btn != null:
 		return_btn.process_mode = Node.PROCESS_MODE_ALWAYS
 	var main_menu_btn: Button = _battle_settings_menu.get_node_or_null("VBox/Buttons/ReturnToMainMenuBtn")
 	if main_menu_btn != null:
 		main_menu_btn.process_mode = Node.PROCESS_MODE_ALWAYS
-	var settings_panel: Node = _battle_settings_menu.get_node_or_null("VBox/Panel/SettingsPanel")
+	var buttons_box: Control = _battle_settings_menu.get_node_or_null("VBox/Buttons")
+	if buttons_box != null:
+		buttons_box.process_mode = Node.PROCESS_MODE_ALWAYS
+		buttons_box.mouse_filter = Control.MOUSE_FILTER_PASS
+	var settings_panel: Control = _battle_settings_menu.get_node_or_null("VBox/Panel/SettingsPanel")
 	if settings_panel != null:
 		settings_panel.process_mode = Node.PROCESS_MODE_ALWAYS
+		settings_panel.mouse_filter = Control.MOUSE_FILTER_PASS
+		settings_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+		settings_panel.offset_left = 0.0
+		settings_panel.offset_top = 0.0
+		settings_panel.offset_right = 0.0
+		settings_panel.offset_bottom = 0.0
+		settings_panel.custom_minimum_size = Vector2.ZERO
+		var settings_vbox: Control = settings_panel.get_node_or_null("VBox")
+		if settings_vbox != null:
+			settings_vbox.set_anchors_preset(Control.PRESET_FULL_RECT)
+			settings_vbox.offset_left = 16.0
+			settings_vbox.offset_top = 16.0
+			settings_vbox.offset_right = -16.0
+			settings_vbox.offset_bottom = -16.0
+			settings_vbox.mouse_filter = Control.MOUSE_FILTER_PASS
 
 func _sync_scene_locale_texts() -> void:
 	var locale: String = _normalize_locale(str(TranslationServer.get_locale()))

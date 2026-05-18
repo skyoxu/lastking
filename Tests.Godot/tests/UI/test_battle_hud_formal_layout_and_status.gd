@@ -405,6 +405,25 @@ func test_battle_hud_should_open_battle_settings_menu_from_top_bar() -> void:
 	await _await_frames(1)
 	assert_bool(settings_menu.visible).is_false()
 
+func test_battle_settings_menu_should_keep_embedded_settings_panel_inside_panel_bounds() -> void:
+	var runtime := await _main_runtime()
+	var screen: Control = runtime["screen"]
+	var hud: Control = runtime["hud"]
+	var settings_button: Button = hud.get_node("TopBar/HBox/SettingsButton")
+	var panel: Control = screen.get_node("BattleSettingsMenu/VBox/Panel")
+	var settings_panel: Control = screen.get_node("BattleSettingsMenu/VBox/Panel/SettingsPanel")
+	var settings_vbox: Control = screen.get_node("BattleSettingsMenu/VBox/Panel/SettingsPanel/VBox")
+	var return_button: Button = screen.get_node("BattleSettingsMenu/VBox/Buttons/ReturnToGameBtn")
+
+	settings_button.emit_signal("pressed")
+	await _await_frames(2)
+
+	assert_bool(settings_vbox.global_position.x >= panel.global_position.x).is_true()
+	assert_bool(settings_vbox.global_position.y >= panel.global_position.y).is_true()
+	assert_bool(return_button.global_position.y >= panel.global_position.y + panel.size.y).is_true()
+	assert_bool(settings_panel.global_position.y + settings_panel.size.y <= return_button.global_position.y).is_true()
+	assert_int(int(settings_panel.mouse_filter)).is_equal(Control.MOUSE_FILTER_PASS)
+
 func test_battle_hud_settings_menu_should_resume_previous_speed_state_when_returning() -> void:
 	var runtime := await _main_runtime()
 	var screen: Control = runtime["screen"]
