@@ -217,6 +217,15 @@ func get_slot_position(slot_id: String) -> Vector2:
 		return slot.position
 	return parent_control.position + slot.position
 
+func get_slot_id_at_screen_position(screen_position: Vector2) -> String:
+	for slot_id_variant in _slot_nodes.keys():
+		var slot: ColorRect = _slot_nodes.get(slot_id_variant, null) as ColorRect
+		if slot == null:
+			continue
+		if slot.get_global_rect().has_point(screen_position):
+			return str(slot_id_variant)
+	return ""
+
 
 func clear_all_slot_visuals() -> void:
 	_hide_reason_bubble()

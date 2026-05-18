@@ -408,6 +408,11 @@ public partial class CombatExperienceRuntimeBridge : Node
             return;
         }
 
+        if (!string.IsNullOrWhiteSpace(_defeatReason))
+        {
+            return;
+        }
+
         foreach (var actor in _actors.Values)
         {
             if (!actor.Active || !actor.IsMovingEnemy)
@@ -432,6 +437,7 @@ public partial class CombatExperienceRuntimeBridge : Node
                             _defeatReason = "wall_breached";
                             actor.IsAttackingWall = false;
                             actor.WallAttackCooldownSeconds = 0d;
+                            return;
                         }
                     }
                     continue;
