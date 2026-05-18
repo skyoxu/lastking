@@ -264,9 +264,7 @@ func _apply_slot_visual(slot: ColorRect, visual: Dictionary) -> void:
 		reason_label.visible = false
 		reason_label.text = ""
 
-	if not reason_text.is_empty() and overlay_state == "overlay_illegal":
-		_show_reason_bubble(slot, reason_text)
-	elif _placement_reason_bubble != null and _placement_reason_bubble.visible:
+	if _placement_reason_bubble != null and _placement_reason_bubble.visible:
 		var bubble_slot_id := str(_placement_reason_bubble.get_meta("slot_id", ""))
 		if bubble_slot_id == str(slot.name):
 			_hide_reason_bubble()

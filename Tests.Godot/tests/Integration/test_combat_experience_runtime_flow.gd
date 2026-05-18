@@ -285,6 +285,60 @@ func test_runtime_bridge_entrypoints_remain_reachable_after_ownership_isolation(
 	assert_bool(bridge.has_node("Battlefield/MgTower")).is_true()
 	assert_bool(bridge.has_node("Battlefield/Barracks")).is_true()
 
+func test_enemy_runtime_should_stop_at_wall_and_damage_wall_before_castle() -> void:
+	var bridge_script := load(COMBAT_EXPERIENCE_BRIDGE)
+	assert_object(bridge_script).is_not_null()
+
+	var bridge: Node = bridge_script.new()
+	add_child(auto_free(bridge))
+	await get_tree().process_frame
+
+	bridge.call("ResetForInteractiveRun")
+	bridge.call("SpawnEnemyWavePhase")
+	var summary_before: Dictionary = bridge.call("GetSummary")
+	assert_int(int(summary_before.get("wall_hp", -1))).is_equal(20)
+	assert_int(int(summary_before.get("castle_hp", -1))).is_equal(100)
+
+	var engaged_name := ""
+	var engaged_progress := -1.0
+	for _i in range(40):
+		bridge.call("AdvanceSimulation", 0.2)
+		var snapshots: Array = bridge.call("GetActorSnapshots")
+		for item in snapshots:
+			var snapshot := item as Dictionary
+			if snapshot == null:
+				continue
+			if String(snapshot.get("state", "")) != "attacking_wall":
+				continue
+			engaged_name = String(snapshot.get("name", ""))
+			engaged_progress = float(snapshot.get("path_progress", 0.0))
+			break
+		if not engaged_name.is_empty():
+			break
+
+	assert_bool(not engaged_name.is_empty()).is_true()
+	assert_float(engaged_progress).is_equal(0.78)
+	var wall_before_attack := int((bridge.call("GetSummary") as Dictionary).get("wall_hp", -1))
+
+	for _i in range(4):
+		bridge.call("AdvanceSimulation", 0.2)
+
+	var snapshots_after: Array = bridge.call("GetActorSnapshots")
+	var engaged_after: Dictionary = {}
+	for item in snapshots_after:
+		var snapshot := item as Dictionary
+		if snapshot != null and String(snapshot.get("name", "")) == engaged_name:
+			engaged_after = snapshot
+			break
+
+	assert_bool(not engaged_after.is_empty()).is_true()
+	assert_str(String(engaged_after.get("state", ""))).is_equal("attacking_wall")
+	assert_float(float(engaged_after.get("path_progress", -1.0))).is_equal(engaged_progress)
+
+	var summary_after: Dictionary = bridge.call("GetSummary")
+	assert_int(int(summary_after.get("wall_hp", -1))).is_less(wall_before_attack)
+	assert_int(int(summary_after.get("castle_hp", -1))).is_equal(100)
+
 
 # ACC:T57.2
 # ACC:T64.3
@@ -623,7 +677,7 @@ func test_daily_settlement_modal_should_block_progress_until_reward_is_selected(
 	var expand_context_btn: Button = screen.get_node("DailySettlementModal/VBox/EvidencePanel/ExpandContextBtn")
 	var runtime_context_payload: Label = screen.get_node("DailySettlementModal/VBox/EvidencePanel/RuntimeContextPayload")
 	var rewards_box: VBoxContainer = screen.get_node("DailySettlementModal/VBox/Rewards")
-	var hud := main.get_node("RuntimeUi/HUD")
+	var hud := screen.get_node("BattleHud")
 	var outcome_label: Label = hud.get_node("FeedbackLayer/OutcomePanel/VBox/OutcomeLabel")
 
 	# Drive battle to completion so non-terminal settlement modal opens.

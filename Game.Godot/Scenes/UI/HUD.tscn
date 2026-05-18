@@ -16,9 +16,9 @@ corner_radius_bottom_left = 14
 shadow_color = Color(0, 0, 0, 0.35)
 shadow_size = 6
 content_margin_left = 20.0
-content_margin_top = 16.0
+content_margin_top = 8.0
 content_margin_right = 20.0
-content_margin_bottom = 15.0
+content_margin_bottom = 8.0
 
 [sub_resource type="StyleBoxFlat" id="2_action_frame_style"]
 bg_color = Color(0.101961, 0.129412, 0.156863, 0.72)
@@ -105,6 +105,11 @@ layout_mode = 2
 theme_override_styles/normal = SubResource("3_metric_chip_style")
 text = "HP: 100/100"
 
+[node name="ResourcesLabel" type="Label" parent="TopBar/HBox"]
+layout_mode = 2
+theme_override_styles/normal = SubResource("3_metric_chip_style")
+text = "Resources: Gold 0 | Iron 0 | Pop 0"
+
 [node name="EnemiesLabel" type="Label" parent="TopBar/HBox"]
 layout_mode = 2
 theme_override_styles/normal = SubResource("3_metric_chip_style")
@@ -170,7 +175,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 16
+theme_override_constants/separation = 8
 
 [node name="BuildingsPanel" type="PanelContainer" parent="CombatHud/BottomBar/Root"]
 custom_minimum_size = Vector2(420, 0)
@@ -180,7 +185,7 @@ theme_override_styles/panel = SubResource("2_action_frame_style")
 
 [node name="VBox" type="VBoxContainer" parent="CombatHud/BottomBar/Root/BuildingsPanel"]
 layout_mode = 2
-theme_override_constants/separation = 10
+theme_override_constants/separation = 4
 
 [node name="TitleLabel" type="Label" parent="CombatHud/BottomBar/Root/BuildingsPanel/VBox"]
 layout_mode = 2
@@ -191,7 +196,7 @@ layout_mode = 2
 theme_override_constants/separation = 8
 
 [node name="BuildAction" type="Button" parent="CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons"]
-custom_minimum_size = Vector2(100, 44)
+custom_minimum_size = Vector2(88, 34)
 layout_mode = 2
 text = "Build"
 
@@ -207,7 +212,7 @@ mouse_filter = 2
 color = Color(0, 0, 0, 0.45)
 
 [node name="TowerSlot" type="Button" parent="CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons"]
-custom_minimum_size = Vector2(124, 116)
+custom_minimum_size = Vector2(108, 78)
 layout_mode = 2
 size_flags_horizontal = 3
 text = ""
@@ -220,9 +225,9 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/margin_left = 10
-theme_override_constants/margin_top = 10
-theme_override_constants/margin_right = 10
-theme_override_constants/margin_bottom = 10
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 4
 mouse_filter = 2
 
 [node name="PreviewIcon" type="TextureRect" parent="CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/TowerSlot/Card"]
@@ -238,8 +243,15 @@ mouse_filter = 2
 horizontal_alignment = 1
 text = "Tower"
 
+[node name="Meta" type="Label" parent="CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/TowerSlot/Card"]
+layout_mode = 2
+mouse_filter = 2
+horizontal_alignment = 1
+autowrap_mode = 3
+text = "Inner | G60"
+
 [node name="BarracksSlot" type="Button" parent="CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons"]
-custom_minimum_size = Vector2(124, 116)
+custom_minimum_size = Vector2(108, 78)
 layout_mode = 2
 size_flags_horizontal = 3
 text = ""
@@ -252,9 +264,9 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/margin_left = 10
-theme_override_constants/margin_top = 10
-theme_override_constants/margin_right = 10
-theme_override_constants/margin_bottom = 10
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 4
 mouse_filter = 2
 
 [node name="PreviewIcon" type="TextureRect" parent="CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/BarracksSlot/Card"]
@@ -270,8 +282,15 @@ mouse_filter = 2
 horizontal_alignment = 1
 text = "Barracks"
 
+[node name="Meta" type="Label" parent="CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/BarracksSlot/Card"]
+layout_mode = 2
+mouse_filter = 2
+horizontal_alignment = 1
+autowrap_mode = 3
+text = "Outer | G80"
+
 [node name="ResidenceSlot" type="Button" parent="CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons"]
-custom_minimum_size = Vector2(124, 116)
+custom_minimum_size = Vector2(108, 78)
 layout_mode = 2
 size_flags_horizontal = 3
 text = ""
@@ -284,9 +303,9 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/margin_left = 10
-theme_override_constants/margin_top = 10
-theme_override_constants/margin_right = 10
-theme_override_constants/margin_bottom = 10
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 4
 mouse_filter = 2
 
 [node name="PreviewIcon" type="TextureRect" parent="CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/ResidenceSlot/Card"]
@@ -301,6 +320,13 @@ layout_mode = 2
 mouse_filter = 2
 horizontal_alignment = 1
 text = "Residence"
+
+[node name="Meta" type="Label" parent="CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/ResidenceSlot/Card"]
+layout_mode = 2
+mouse_filter = 2
+horizontal_alignment = 1
+autowrap_mode = 3
+text = "Inner | G30"
 
 [node name="ProductionLabel" type="Label" parent="CombatHud/BottomBar/Root/BuildingsPanel/VBox"]
 layout_mode = 2
@@ -320,7 +346,7 @@ theme_override_styles/panel = SubResource("2_action_frame_style")
 
 [node name="VBox" type="VBoxContainer" parent="CombatHud/BottomBar/Root/BattlePanel"]
 layout_mode = 2
-theme_override_constants/separation = 10
+theme_override_constants/separation = 4
 
 [node name="TitleLabel" type="Label" parent="CombatHud/BottomBar/Root/BattlePanel/VBox"]
 layout_mode = 2
@@ -363,7 +389,7 @@ theme_override_styles/panel = SubResource("2_action_frame_style")
 
 [node name="VBox" type="VBoxContainer" parent="CombatHud/BottomBar/Root/SkillsPanel"]
 layout_mode = 2
-theme_override_constants/separation = 10
+theme_override_constants/separation = 4
 
 [node name="TitleLabel" type="Label" parent="CombatHud/BottomBar/Root/SkillsPanel/VBox"]
 layout_mode = 2
@@ -374,7 +400,7 @@ layout_mode = 2
 theme_override_constants/separation = 8
 
 [node name="WaveAction" type="Button" parent="CombatHud/BottomBar/Root/SkillsPanel/VBox/SkillButtons"]
-custom_minimum_size = Vector2(90, 44)
+custom_minimum_size = Vector2(80, 34)
 layout_mode = 2
 text = "Wave"
 
@@ -390,7 +416,7 @@ mouse_filter = 2
 color = Color(0, 0, 0, 0.45)
 
 [node name="ExchangeAction" type="Button" parent="CombatHud/BottomBar/Root/SkillsPanel/VBox/SkillButtons"]
-custom_minimum_size = Vector2(90, 44)
+custom_minimum_size = Vector2(80, 34)
 layout_mode = 2
 text = "Exchange"
 
@@ -406,7 +432,7 @@ mouse_filter = 2
 color = Color(0, 0, 0, 0.45)
 
 [node name="CleanupAction" type="Button" parent="CombatHud/BottomBar/Root/SkillsPanel/VBox/SkillButtons"]
-custom_minimum_size = Vector2(90, 44)
+custom_minimum_size = Vector2(80, 34)
 layout_mode = 2
 text = "Cleanup"
 
@@ -422,7 +448,7 @@ mouse_filter = 2
 color = Color(0, 0, 0, 0.45)
 
 [node name="FinishAction" type="Button" parent="CombatHud/BottomBar/Root/SkillsPanel/VBox/SkillButtons"]
-custom_minimum_size = Vector2(90, 44)
+custom_minimum_size = Vector2(80, 34)
 layout_mode = 2
 text = "Finish"
 
