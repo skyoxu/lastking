@@ -42,7 +42,7 @@ func test_direct_battle_map_screen_should_keep_formal_bottom_bar_at_196px_height
 
 	assert_object(bottom_bar).is_not_null()
 	assert_float(bottom_bar.size.y).is_equal(196.0)
-	assert_float(bottom_bar.global_position.y).is_equal(704.0)
+	assert_float(bottom_bar.position.y).is_equal(704.0)
 
 
 func test_direct_battle_map_screen_should_keep_optional_runtime_panels_hidden_until_runtime_data_arrives() -> void:
@@ -139,7 +139,7 @@ func test_direct_battle_map_screen_should_route_local_hud_actions_into_runtime_c
 	assert_bool(operation_controller.call("is_combat_resolved")).is_true()
 
 
-func test_main_entry_should_keep_global_hud_visible_and_local_battle_hud_hidden() -> void:
+func test_main_entry_should_mount_only_local_battle_hud_inside_screenroot() -> void:
 	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
 	add_child(auto_free(main))
 	await _await_frames(2)
@@ -152,17 +152,10 @@ func test_main_entry_should_keep_global_hud_visible_and_local_battle_hud_hidden(
 
 	var global_hud := main.get_node_or_null("RuntimeUi/HUD") as Control
 	var local_hud := main.get_node_or_null("RuntimeUi/ScreenRoot/BattleMapScreen/BattleHud") as Control
-	var global_top_bar := main.get_node_or_null("RuntimeUi/HUD/TopBar") as Control
-	var global_bottom_bar := main.get_node_or_null("RuntimeUi/HUD/CombatHud/BottomBar") as Control
 
-	assert_object(global_hud).is_not_null()
 	assert_object(local_hud).is_not_null()
-	assert_object(global_top_bar).is_not_null()
-	assert_object(global_bottom_bar).is_not_null()
-	assert_bool(global_hud.visible).is_true()
-	assert_bool(global_top_bar.visible).is_true()
-	assert_bool(global_bottom_bar.visible).is_true()
-	assert_bool(local_hud.visible).is_false()
+	assert_object(global_hud).is_null()
+	assert_bool(local_hud.visible).is_true()
 
 
 func test_main_entry_should_keep_local_battle_feedback_panels_hidden_in_screenroot_instance() -> void:
@@ -190,7 +183,7 @@ func test_main_entry_should_keep_local_battle_feedback_panels_hidden_in_screenro
 	assert_object(progression_panel).is_not_null()
 	assert_object(outcome_panel).is_not_null()
 	assert_object(prompt_panel).is_not_null()
-	assert_bool(local_hud.visible).is_false()
+	assert_bool(local_hud.visible).is_true()
 	assert_bool(resource_panel.visible).is_false()
 	assert_bool(build_panel.visible).is_false()
 	assert_bool(progression_panel.visible).is_false()

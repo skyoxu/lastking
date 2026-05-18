@@ -77,21 +77,6 @@ func _frame_snapshot(screen: Control) -> Dictionary:
 func _battlemap_player_bands(screen: Control) -> Dictionary:
 	var local_top := screen.get_node("BattleHud/TopBar")
 	var local_bottom := screen.get_node("BattleHud/CombatHud/BottomBar")
-	var main := _resolve_main_root(screen)
-	if main != null:
-		var global_top := main.get_node_or_null("RuntimeUi/HUD/TopBar") as Control
-		var global_bottom := main.get_node_or_null("RuntimeUi/HUD/CombatHud/BottomBar") as Control
-		if global_top != null and global_bottom != null and global_top.visible and global_bottom.visible:
-			return {
-				"top": global_top,
-				"middle": screen.get_node("Background/BattlefieldViewport"),
-				"bottom": global_bottom,
-			}
-		return {
-			"top": local_top,
-			"middle": screen.get_node("Background/BattlefieldViewport"),
-			"bottom": local_bottom,
-		}
 	return {
 		"top": local_top,
 		"middle": screen.get_node("Background/BattlefieldViewport"),
@@ -374,9 +359,9 @@ func test_1600x900_frame_keeps_three_player_visible_bands_simultaneously_visible
 	assert_float(background.global_position.x).is_equal(_T59_SIDE_GUTTER)
 	assert_float(battlefield_top).is_equal(_T59_TOP_HUD_HEIGHT)
 	assert_float(battlefield_bottom).is_equal(_T59_TOP_HUD_HEIGHT + _T59_BATTLEFIELD_SIZE.y)
-	assert_float(title.global_position.y).is_equal(0.0)
+	assert_float(title.position.y).is_equal(0.0)
 	assert_float(title.size.y).is_equal(_T59_TOP_HUD_HEIGHT)
-	assert_float(status.global_position.y).is_equal(_T59_TOP_HUD_HEIGHT + _T59_BATTLEFIELD_SIZE.y)
+	assert_float(status.position.y).is_equal(_T59_TOP_HUD_HEIGHT + _T59_BATTLEFIELD_SIZE.y)
 	assert_float(status.size.y).is_equal(_T59_BOTTOM_HUD_HEIGHT)
 	assert_bool(title.global_position.y < battlefield_bottom).is_true()
 	assert_bool(status.global_position.y > title.global_position.y).is_true()
@@ -1246,7 +1231,9 @@ func test_t70_designated_integration_flow_should_cover_outcome_evidence_and_tran
 	await _await_frames(1)
 	assert_bool(modal.visible).is_false()
 	assert_bool(get_tree().paused).is_false()
-	assert_bool(String(status_label.text).to_lower().find("settlement resolved") >= 0).is_true()
+	var presentation_controller: Node = screen.get_node("PresentationController")
+	var settlement_resolved_text := str(presentation_controller.call("translate", "battlemap.status.settlement_resolved")).to_lower()
+	assert_bool(String(status_label.text).to_lower().find(settlement_resolved_text) >= 0).is_true()
 	assert_that(bridge.call("GetSummary")).is_equal(summary_before_resolve)
 
 
