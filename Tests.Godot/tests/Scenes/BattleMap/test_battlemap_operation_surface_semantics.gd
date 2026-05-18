@@ -26,6 +26,7 @@ func _main_runtime() -> Dictionary:
 		"bridge": screen.get_node("CombatExperienceRuntimeBridge"),
 		"status": screen.get_node("LegacyPrototypeRoot/VBox/Status"),
 		"summary": screen.get_node("LegacyPrototypeRoot/VBox/Summary"),
+		"presentation": screen.get_node("PresentationController"),
 	}
 
 # ACC:T65.3
@@ -36,7 +37,9 @@ func test_runtime_ui_semantics_mapping_for_empty_failure_completion() -> void:
 	var bridge: Node = runtime["bridge"]
 	var status_label: Label = runtime["status"]
 	var summary_label: Label = runtime["summary"]
+	var presentation_controller: Node = runtime["presentation"]
 	var background: ColorRect = screen.get_node("Background")
+	var finished_text := str(presentation_controller.call("translate", "battlemap.status.finished")).to_lower()
 
 	assert_object(screen.get_node_or_null("CombatExperienceRuntimeBridge")).is_not_null()
 	assert_object(screen.get_node_or_null("Background")).is_not_null()
@@ -58,7 +61,7 @@ func test_runtime_ui_semantics_mapping_for_empty_failure_completion() -> void:
 	assert_bool(summary_label.visible).is_false()
 	assert_bool(runtime_summary.get("mg_tower_built", false) == false).is_true()
 	assert_int(int(runtime_summary.get("combat_exchanges", 0))).is_greater_equal(1)
-	assert_bool(status_label.text.to_lower().find("finished") >= 0).is_true()
+	assert_bool(status_label.text.to_lower().find(finished_text) >= 0).is_true()
 	assert_bool(bridge.has_method("GetSummary")).is_true()
 	assert_bool(bridge.has_method("GetSummary")).is_true()
 	assert_bool(bridge.has_method("BuildPhase")).is_true()
@@ -155,11 +158,14 @@ func test_t63_local_feedback_surfaces_should_light_up_inside_battlefield_for_wav
 	var wall_pressure_overlay: Control = screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/LocalFeedbackLayer/WallPressureOverlay")
 	var local_prompt_panel: Control = screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/LocalFeedbackLayer/LocalPromptPanel")
 	var local_prompt_label: Label = screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/LocalFeedbackLayer/LocalPromptPanel/PromptLabel")
+	var presentation_controller: Node = runtime["presentation"]
+	var wave_prompt_text := str(presentation_controller.call("translate", "battlemap.prompt.wave_entered")).to_lower()
+	var reinforce_prompt_text := str(presentation_controller.call("translate", "battlemap.prompt.reinforce_frontline")).to_lower()
 
 	_request_hud_action(screen, "wave")
 	await _await_frames(2)
 	assert_bool(local_prompt_panel.visible).is_true()
-	assert_bool(String(local_prompt_label.text).to_lower().find("wave") >= 0).is_true()
+	assert_bool(String(local_prompt_label.text).to_lower().find(wave_prompt_text) >= 0).is_true()
 
 	_request_hud_action(screen, "exchange")
 	await _await_frames(2)
@@ -170,7 +176,7 @@ func test_t63_local_feedback_surfaces_should_light_up_inside_battlefield_for_wav
 	await _await_frames(2)
 	assert_bool(wall_pressure_overlay.visible).is_true()
 	assert_bool(local_prompt_panel.visible).is_true()
-	assert_bool(String(local_prompt_label.text).to_lower().find("reinforce") >= 0 or String(local_prompt_label.text).to_lower().find("wall") >= 0).is_true()
+	assert_bool(String(local_prompt_label.text).to_lower().find(reinforce_prompt_text) >= 0).is_true()
 
 
 # ACC:T66.5
@@ -208,11 +214,16 @@ func test_t66_state_transition_semantics_should_stay_bridge_driven_after_legacy_
 	var bridge: Node = runtime["bridge"]
 	var status_label: Label = runtime["status"]
 	var summary_label: Label = runtime["summary"]
+	var presentation_controller: Node = runtime["presentation"]
+	var loaded_text := str(presentation_controller.call("translate", "battlemap.status.loaded")).to_lower()
+	var require_cleanup_text := str(presentation_controller.call("translate", "battlemap.status.require_cleanup")).to_lower()
+	var finished_text := str(presentation_controller.call("translate", "battlemap.status.finished")).to_lower()
 
 	var empty_snapshot: Dictionary = bridge.call("GetSummary")
 	var empty_status := String(status_label.text)
 	assert_int(int(empty_snapshot.get("enemy_units_spawned", 0))).is_equal(0)
-	assert_bool(empty_status.to_lower().find("finished") < 0).is_true()
+	assert_bool(empty_status.to_lower().find(loaded_text) >= 0).is_true()
+	assert_bool(empty_status.to_lower().find(finished_text) < 0).is_true()
 
 	summary_label.text = "LEGACY_OVERRIDE_SHOULD_NOT_DRIVE_STATE"
 	await _await_frames(1)
@@ -223,8 +234,8 @@ func test_t66_state_transition_semantics_should_stay_bridge_driven_after_legacy_
 	_request_hud_action(screen, "finish")
 	await _await_frames(1)
 	var failure_status := String(status_label.text)
-	assert_bool(failure_status.to_lower().find("cleanup") >= 0).is_true()
-	assert_bool(failure_status.to_lower().find("finished") < 0).is_true()
+	assert_bool(failure_status.to_lower().find(require_cleanup_text) >= 0).is_true()
+	assert_bool(failure_status.to_lower().find(finished_text) < 0).is_true()
 
 	# completion semantics: bridge-driven valid sequence should enter completion deterministically.
 	_request_hud_action(screen, "wave")
@@ -238,7 +249,7 @@ func test_t66_state_transition_semantics_should_stay_bridge_driven_after_legacy_
 
 	var completion_status := String(status_label.text)
 	var completion_snapshot: Dictionary = bridge.call("GetSummary")
-	assert_bool(completion_status.to_lower().find("finished") >= 0).is_true()
+	assert_bool(completion_status.to_lower().find(finished_text) >= 0).is_true()
 	assert_int(int(completion_snapshot.get("enemy_units_spawned", 0))).is_greater_equal(2)
 	assert_int(int(completion_snapshot.get("combat_exchanges", 0))).is_greater_equal(1)
 
@@ -281,7 +292,8 @@ func test_t67_daily_settlement_modal_node_paths_should_exist_and_default_hidden(
 	await _await_frames(1)
 	assert_bool((modal as Control).visible).is_false()
 	assert_bool(get_tree().paused).is_false()
-	assert_bool(String(status_label.text).to_lower().find("settlement resolved") >= 0).is_true()
+	var settlement_resolved_text := str((runtime["presentation"] as Node).call("translate", "battlemap.status.settlement_resolved")).to_lower()
+	assert_bool(String(status_label.text).to_lower().find(settlement_resolved_text) >= 0).is_true()
 	assert_that(bridge.call("GetSummary")).is_equal(summary_before_select)
 
 

@@ -512,28 +512,27 @@ func test_battle_map_coordinator_guards_should_block_out_of_order_actions_and_pr
 
 	var bridge: Node = screen.get_node("CombatExperienceRuntimeBridge")
 	var status_label: Label = screen.get_node("LegacyPrototypeRoot/VBox/Status")
+	var presentation_controller: Node = screen.get_node("PresentationController")
+	var require_wave_text := str(presentation_controller.call("translate", "battlemap.status.require_wave")).to_lower()
+	var require_exchange_text := str(presentation_controller.call("translate", "battlemap.status.require_exchange")).to_lower()
+	var require_cleanup_text := str(presentation_controller.call("translate", "battlemap.status.require_cleanup")).to_lower()
+	var finished_text := str(presentation_controller.call("translate", "battlemap.status.finished")).to_lower()
 	var summary_before := _bridge_summary_metrics(bridge)
 
 	_request_hud_action(screen, "exchange")
 	await _await_frames(1)
 	var status_after_exchange := String(status_label.text)
-	assert_bool(status_after_exchange.find("wave") >= 0).is_true()
+	assert_bool(status_after_exchange.to_lower().find(require_wave_text) >= 0).is_true()
 
 	_request_hud_action(screen, "cleanup")
 	await _await_frames(1)
 	var status_after_cleanup := String(status_label.text)
-	var status_after_cleanup_lc := status_after_cleanup.to_lower()
-	var cleanup_status_mentions_exchange: bool = (
-		status_after_cleanup_lc.find("exchange") >= 0
-		or status_after_cleanup_lc.find("combat") >= 0
-		or status_after_cleanup.find("exchange") >= 0
-	)
-	assert_bool(cleanup_status_mentions_exchange).is_true()
+	assert_bool(status_after_cleanup.to_lower().find(require_exchange_text) >= 0).is_true()
 
 	_request_hud_action(screen, "finish")
 	await _await_frames(1)
 	var status_after_finish := String(status_label.text)
-	assert_bool(status_after_finish.to_lower().find("cleanup") >= 0).is_true()
+	assert_bool(status_after_finish.to_lower().find(require_cleanup_text) >= 0).is_true()
 
 	var summary_after_invalid := _bridge_summary_metrics(bridge)
 	assert_that(summary_after_invalid).is_equal(summary_before)
@@ -547,7 +546,7 @@ func test_battle_map_coordinator_guards_should_block_out_of_order_actions_and_pr
 	_request_hud_action(screen, "finish")
 	await _await_frames(1)
 	var status_after_valid_flow := String(status_label.text)
-	assert_bool(status_after_valid_flow.find("finished") >= 0).is_true()
+	assert_bool(status_after_valid_flow.to_lower().find(finished_text) >= 0).is_true()
 	_assert_task56_ownership_map(screen)
 
 
@@ -568,13 +567,18 @@ func test_battle_map_runtime_state_should_distinguish_empty_progressed_and_compl
 	var bridge: Node = screen.get_node("CombatExperienceRuntimeBridge")
 	var status_label: Label = screen.get_node("LegacyPrototypeRoot/VBox/Status")
 	var summary_label: Label = screen.get_node("LegacyPrototypeRoot/VBox/Summary")
+	var presentation_controller: Node = screen.get_node("PresentationController")
+	var loaded_text := str(presentation_controller.call("translate", "battlemap.status.loaded")).to_lower()
+	var require_cleanup_text := str(presentation_controller.call("translate", "battlemap.status.require_cleanup")).to_lower()
+	var finished_text := str(presentation_controller.call("translate", "battlemap.status.finished")).to_lower()
+	var wave_text := str(presentation_controller.call("translate", "battlemap.status.wave_spawned")).to_lower()
 
 	var empty_status := String(status_label.text)
 	var empty_summary := String(summary_label.text)
 	var empty_metrics := _bridge_summary_metrics(bridge)
 	var empty_feedback := _local_feedback_state(screen)
-	assert_bool(empty_status.find("loaded") >= 0).is_true()
-	assert_bool(empty_status.find("finished") < 0).is_true()
+	assert_bool(empty_status.to_lower().find(loaded_text) >= 0).is_true()
+	assert_bool(empty_status.to_lower().find(finished_text) < 0).is_true()
 	assert_bool(empty_status.length() > 0).is_true()
 	assert_bool(empty_summary.length() > 0).is_true()
 	assert_bool(empty_feedback["prompt_visible"] == true).is_false()
@@ -592,8 +596,8 @@ func test_battle_map_runtime_state_should_distinguish_empty_progressed_and_compl
 	var failure_status_lc := failure_status.to_lower()
 	assert_bool(failure_status.length() > 0).is_true()
 	assert_bool(failure_status != empty_status).is_true()
-	assert_bool(failure_status_lc.find("cleanup") >= 0).is_true()
-	assert_bool(failure_status_lc.find("finished") < 0).is_true()
+	assert_bool(failure_status_lc.find(require_cleanup_text) >= 0).is_true()
+	assert_bool(failure_status_lc.find(finished_text) < 0).is_true()
 	await _await_frames(2)
 	assert_str(status_label.text).is_equal(failure_status)
 
@@ -1074,6 +1078,9 @@ func test_legacy_labels_should_not_be_authoritative_source_for_runtime_feedback(
 	var summary_label: Label = screen.get_node("LegacyPrototypeRoot/VBox/Summary")
 	var legend_label: Label = screen.get_node("LegacyPrototypeRoot/VBox/Legend")
 	var metrics_help_label: Label = screen.get_node("LegacyPrototypeRoot/VBox/MetricsHelp")
+	var presentation_controller: Node = screen.get_node("PresentationController")
+	var wave_text := str(presentation_controller.call("translate", "battlemap.status.wave_spawned")).to_lower()
+	var finished_text := str(presentation_controller.call("translate", "battlemap.status.finished")).to_lower()
 
 	var baseline_summary := _bridge_summary_metrics(bridge)
 	var baseline_status_text := String(status_label.text)
@@ -1095,7 +1102,7 @@ func test_legacy_labels_should_not_be_authoritative_source_for_runtime_feedback(
 	var after_wave := _bridge_summary_metrics(bridge)
 	var wave_feedback := _local_feedback_state(screen)
 	assert_int(int(after_wave.get("enemy_units_spawned", 0))).is_greater_equal(int(baseline_summary.get("enemy_units_spawned", 0)) + 2)
-	assert_bool(String(status_label.text).to_lower().find("wave") >= 0).is_true()
+	assert_bool(String(status_label.text).to_lower().find(wave_text) >= 0).is_true()
 	assert_bool(wave_feedback["prompt_visible"] == true).is_true()
 	assert_bool(String(wave_feedback["prompt_text"]).length() > 0).is_true()
 
@@ -1107,7 +1114,7 @@ func test_legacy_labels_should_not_be_authoritative_source_for_runtime_feedback(
 	await _await_frames(1)
 	var terminal_summary := _bridge_summary_metrics(bridge)
 	assert_int(int(terminal_summary.get("combat_exchanges", 0))).is_greater_equal(1)
-	assert_bool(String(status_label.text).to_lower().find("finished") >= 0).is_true()
+	assert_bool(String(status_label.text).to_lower().find(finished_text) >= 0).is_true()
 	assert_str(String(summary_label.text)).is_equal(baseline_static_summary)
 
 func test_combat_bridge_single_source_updates_actor_snapshots_and_castle_hp() -> void:
