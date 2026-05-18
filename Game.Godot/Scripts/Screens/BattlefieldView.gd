@@ -8,6 +8,8 @@ const COOL_SLOT_COLOR := Color(0.372549, 0.666667, 0.94902, 0.45)
 const GREY_SLOT_COLOR := Color(0.552941, 0.552941, 0.552941, 0.32)
 const RED_SLOT_COLOR := Color(0.862745, 0.286275, 0.286275, 0.38)
 signal battlefield_slot_clicked(slot_id: String)
+signal battlefield_slot_hovered(slot_id: String)
+signal battlefield_slot_released(slot_id: String)
 const REGION_DEFS := [
 	{
 		"name": "LeftOuterField",
@@ -54,11 +56,15 @@ const REGION_DEFS := [
 @onready var _map_base_layer: Control = _require_control("BattlefieldViewport/BattlefieldRoot/MapBaseLayer")
 @onready var _boundary_layer: Control = _require_control("BattlefieldViewport/BattlefieldRoot/BoundaryLayer")
 @onready var _slot_overlay_layer: Control = _require_control("BattlefieldViewport/BattlefieldRoot/SlotOverlayLayer")
+@onready var _local_feedback_layer: Control = _require_control("BattlefieldViewport/BattlefieldRoot/LocalFeedbackLayer")
 
 var _slot_nodes: Dictionary = {}
+var _placement_reason_bubble: Control = null
+var _placement_reason_label: Label = null
 
 
 func _ready() -> void:
+	_resolve_reason_bubble()
 	ensure_layout()
 
 
@@ -123,7 +129,26 @@ func _populate_slots(slot_root: Control, columns: int, rows: int, region_name: S
 			slot.size = SLOT_SIZE
 			slot.set_meta("buildable", true)
 			slot.set_meta("slot_available", true)
+			slot.set_meta("region_name", region_name)
 			slot.mouse_filter = Control.MOUSE_FILTER_PASS
+			var outline := ColorRect.new()
+			outline.name = "Outline"
+			outline.visible = false
+			outline.position = Vector2.ZERO
+			outline.size = SLOT_SIZE
+			outline.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			slot.add_child(outline)
+			var reason_label := Label.new()
+			reason_label.name = "ReasonLabel"
+			reason_label.visible = false
+			reason_label.position = Vector2(3.0, 2.0)
+			reason_label.size = Vector2(SLOT_SIZE.x - 6.0, SLOT_SIZE.y - 4.0)
+			reason_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			reason_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+			reason_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			reason_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			reason_label.add_theme_font_size_override("font_size", 9)
+			slot.add_child(reason_label)
 			slot.gui_input.connect(_on_slot_gui_input.bind(str(slot.name)))
 			_apply_slot_visual(slot, _hidden_visual())
 			slot_root.add_child(slot)
@@ -153,8 +178,48 @@ func read_slot_visual(slot_id: String) -> Dictionary:
 		"range_clipped": slot.get_meta("range_clipped", false) == true,
 	}
 
+func get_all_slot_ids() -> Array[String]:
+	var slot_ids: Array[String] = []
+	for slot_id_variant in _slot_nodes.keys():
+		slot_ids.append(str(slot_id_variant))
+	slot_ids.sort()
+	return slot_ids
+
+func get_slot_region_kind(slot_id: String) -> String:
+	var slot: ColorRect = _slot_nodes.get(slot_id, null) as ColorRect
+	if slot == null:
+		return ""
+	var region_name: String = str(slot.get_meta("region_name", ""))
+	if region_name == "InnerCastleRegion":
+		return "inner_castle"
+	if region_name == "LeftOuterField" or region_name == "RightOuterField":
+		return "outer_field"
+	return "wall"
+
+func is_slot_available(slot_id: String) -> bool:
+	var slot: ColorRect = _slot_nodes.get(slot_id, null) as ColorRect
+	if slot == null:
+		return false
+	return slot.get_meta("slot_available", false) == true
+
+func set_slot_available(slot_id: String, available: bool) -> void:
+	var slot: ColorRect = _slot_nodes.get(slot_id, null) as ColorRect
+	if slot == null:
+		return
+	slot.set_meta("slot_available", available)
+
+func get_slot_position(slot_id: String) -> Vector2:
+	var slot: ColorRect = _slot_nodes.get(slot_id, null) as ColorRect
+	if slot == null:
+		return Vector2.ZERO
+	var parent_control := slot.get_parent() as Control
+	if parent_control == null:
+		return slot.position
+	return parent_control.position + slot.position
+
 
 func clear_all_slot_visuals() -> void:
+	_hide_reason_bubble()
 	for slot_variant in _slot_nodes.values():
 		var slot: ColorRect = slot_variant as ColorRect
 		if slot != null:
@@ -189,6 +254,23 @@ func _apply_slot_visual(slot: ColorRect, visual: Dictionary) -> void:
 		_:
 			slot.color = BASE_SLOT_COLOR
 
+	var outline := slot.get_node_or_null("Outline") as ColorRect
+	if outline != null:
+		outline.visible = frame != "none" or outline_tint != "none"
+		outline.color = _outline_color_for_tint(outline_tint if outline_tint != "none" else overlay_tint, overlay_state)
+
+	var reason_label := slot.get_node_or_null("ReasonLabel") as Label
+	if reason_label != null:
+		reason_label.visible = false
+		reason_label.text = ""
+
+	if not reason_text.is_empty() and overlay_state == "overlay_illegal":
+		_show_reason_bubble(slot, reason_text)
+	elif _placement_reason_bubble != null and _placement_reason_bubble.visible:
+		var bubble_slot_id := str(_placement_reason_bubble.get_meta("slot_id", ""))
+		if bubble_slot_id == str(slot.name):
+			_hide_reason_bubble()
+
 	slot.set_meta("overlay_state", overlay_state)
 	slot.set_meta("overlay_tint", overlay_tint)
 	slot.set_meta("marker", marker)
@@ -199,6 +281,23 @@ func _apply_slot_visual(slot: ColorRect, visual: Dictionary) -> void:
 	slot.set_meta("selection_category", selection_category)
 	slot.set_meta("outline_tint", outline_tint)
 	slot.set_meta("range_clipped", range_clipped)
+
+func _outline_color_for_tint(tint: String, overlay_state: String) -> Color:
+	match tint:
+		"warm":
+			return Color(0.972549, 0.788235, 0.360784, 0.9)
+		"cool":
+			return Color(0.447059, 0.733333, 1.0, 0.9)
+		"grey":
+			return Color(0.694118, 0.694118, 0.694118, 0.85)
+		"red":
+			return Color(0.941176, 0.423529, 0.372549, 0.95)
+		_:
+			if overlay_state == "overlay_illegal":
+				return Color(0.941176, 0.423529, 0.372549, 0.95)
+			if overlay_state == "overlay_legal":
+				return Color(0.866667, 0.843137, 0.627451, 0.78)
+			return Color(1.0, 1.0, 1.0, 0.0)
 
 
 func _hidden_visual() -> Dictionary:
@@ -217,10 +316,14 @@ func _hidden_visual() -> Dictionary:
 
 
 func _on_slot_gui_input(event: InputEvent, slot_id: String) -> void:
+	if event is InputEventMouseMotion:
+		emit_signal("battlefield_slot_hovered", slot_id)
 	if event is InputEventMouseButton:
 		var mouse_event: InputEventMouseButton = event as InputEventMouseButton
-		if mouse_event.pressed and mouse_event.button_index == MOUSE_BUTTON_LEFT:
+		if mouse_event.button_index == MOUSE_BUTTON_LEFT and mouse_event.pressed:
 			emit_signal("battlefield_slot_clicked", slot_id)
+		elif mouse_event.button_index == MOUSE_BUTTON_LEFT and not mouse_event.pressed:
+			emit_signal("battlefield_slot_released", slot_id)
 
 
 func _require_control(node_path: NodePath) -> Control:
@@ -228,3 +331,34 @@ func _require_control(node_path: NodePath) -> Control:
 	if node == null:
 		push_error("BattlefieldView missing required control at %s" % str(node_path))
 	return node
+
+
+func _resolve_reason_bubble() -> void:
+	if _placement_reason_bubble != null and _placement_reason_label != null:
+		return
+	_placement_reason_bubble = _local_feedback_layer.get_node_or_null("PlacementReasonBubble")
+	_placement_reason_label = _local_feedback_layer.get_node_or_null("PlacementReasonBubble/BubbleLabel")
+
+func _show_reason_bubble(slot: ColorRect, reason_text: String) -> void:
+	_resolve_reason_bubble()
+	if _placement_reason_bubble == null or _placement_reason_label == null:
+		return
+	_placement_reason_label.text = reason_text
+	_placement_reason_bubble.visible = true
+	_placement_reason_bubble.set_meta("slot_id", str(slot.name))
+	var bubble_size: Vector2 = _placement_reason_bubble.size
+	if bubble_size == Vector2.ZERO:
+		bubble_size = _placement_reason_bubble.custom_minimum_size
+	var slot_top_left: Vector2 = get_slot_position(str(slot.name))
+	var default_position: Vector2 = slot_top_left + Vector2(SLOT_SIZE.x + 12.0, 0.0)
+	var max_x: float = max(0.0, BATTLEFIELD_SIZE.x - max(bubble_size.x, _placement_reason_bubble.custom_minimum_size.x) - 8.0)
+	var max_y: float = max(0.0, BATTLEFIELD_SIZE.y - max(bubble_size.y, 56.0) - 8.0)
+	_placement_reason_bubble.position = Vector2(min(default_position.x, max_x), min(slot_top_left.y, max_y))
+
+func _hide_reason_bubble() -> void:
+	_resolve_reason_bubble()
+	if _placement_reason_bubble == null or _placement_reason_label == null:
+		return
+	_placement_reason_bubble.visible = false
+	_placement_reason_bubble.remove_meta("slot_id")
+	_placement_reason_label.text = ""

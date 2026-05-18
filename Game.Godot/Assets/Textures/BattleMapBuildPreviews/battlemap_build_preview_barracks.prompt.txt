@@ -1,0 +1,6 @@
+Create a single isolated top-down 2D strategy game building preview icon for a castle defense battle map.
+Subject: a small barracks building with sturdy timber roof, training yard feel, compact military silhouette, square footprint, readable from a high angle.
+Style: clean HD hand-painted 2D game asset, production-ready UI/world preview, crisp silhouette, no pixel art, no text, no border, no shadow plate.
+Composition: one building only, centered, full object visible, slight angle but clearly top-down readable, transparent background.
+Color direction: muted iron, warm timber, dark canvas details, subtle disciplined military look.
+Output: transparent PNG asset for in-game drag placement preview.

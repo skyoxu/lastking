@@ -8,6 +8,7 @@ using Game.Godot.Adapters;
 using Game.Godot.Scripts.Runtime;
 using Game.Core.Services;
 using Godot;
+using System.IO;
 using GDictionary = Godot.Collections.Dictionary;
 
 namespace Game.Godot.Scripts.UI;
@@ -42,11 +43,19 @@ public partial class HUD : Control
     private Label _battleSummaryLabel = default!;
     private Label _battleReservedLabel = default!;
     private Label _productionLabel = default!;
+    private Label _buildStatusLabel = default!;
     private Label _skillsHintLabel = default!;
     private Control _buildAction = default!;
     private Control _buildCooldownMask = default!;
     private Button _towerSlot = default!;
+    private Button _barracksSlot = default!;
     private Button _residenceSlot = default!;
+    private TextureRect _towerPreviewIcon = default!;
+    private TextureRect _barracksPreviewIcon = default!;
+    private TextureRect _residencePreviewIcon = default!;
+    private Label _towerTitleLabel = default!;
+    private Label _barracksTitleLabel = default!;
+    private Label _residenceTitleLabel = default!;
     private Control _waveAction = default!;
     private Control _waveCooldownMask = default!;
     private Control _exchangeAction = default!;
@@ -131,6 +140,9 @@ public partial class HUD : Control
     private bool _battleHudActive;
     private string _battleStatusOverride = string.Empty;
     private string _battleSummaryOverride = string.Empty;
+    private string _buildContextTitleOverride = string.Empty;
+    private string _buildContextDetailOverride = string.Empty;
+    private string _activeBuildSelectionId = string.Empty;
     private static readonly Vector2 FormalTopBarPosition = new(8f, 0f);
     private static readonly Vector2 FormalTopBarSize = new(1584f, 80f);
     private static readonly Vector2 FormalBottomBarPosition = new(8f, 704f);
@@ -159,11 +171,19 @@ public partial class HUD : Control
         _battleSummaryLabel = GetNode<Label>("CombatHud/BottomBar/Root/BattlePanel/VBox/SummaryLabel");
         _battleReservedLabel = GetNode<Label>("CombatHud/BottomBar/Root/BattlePanel/VBox/ReservedLabel");
         _productionLabel = GetNode<Label>("CombatHud/BottomBar/Root/BuildingsPanel/VBox/ProductionLabel");
+        _buildStatusLabel = GetNode<Label>("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildStatusLabel");
         _skillsHintLabel = GetNode<Label>("CombatHud/BottomBar/Root/SkillsPanel/VBox/HintLabel");
         _buildAction = GetNode<Control>("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/BuildAction");
         _buildCooldownMask = GetNode<Control>("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/BuildAction/CooldownMask");
         _towerSlot = GetNode<Button>("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/TowerSlot");
+        _barracksSlot = GetNode<Button>("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/BarracksSlot");
         _residenceSlot = GetNode<Button>("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/ResidenceSlot");
+        _towerPreviewIcon = GetNode<TextureRect>("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/TowerSlot/Card/PreviewIcon");
+        _barracksPreviewIcon = GetNode<TextureRect>("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/BarracksSlot/Card/PreviewIcon");
+        _residencePreviewIcon = GetNode<TextureRect>("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/ResidenceSlot/Card/PreviewIcon");
+        _towerTitleLabel = GetNode<Label>("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/TowerSlot/Card/Title");
+        _barracksTitleLabel = GetNode<Label>("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/BarracksSlot/Card/Title");
+        _residenceTitleLabel = GetNode<Label>("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/ResidenceSlot/Card/Title");
         _waveAction = GetNode<Control>("CombatHud/BottomBar/Root/SkillsPanel/VBox/SkillButtons/WaveAction");
         _waveCooldownMask = GetNode<Control>("CombatHud/BottomBar/Root/SkillsPanel/VBox/SkillButtons/WaveAction/CooldownMask");
         _exchangeAction = GetNode<Control>("CombatHud/BottomBar/Root/SkillsPanel/VBox/SkillButtons/ExchangeAction");
@@ -219,13 +239,19 @@ public partial class HUD : Control
         _battleSummaryLabel.Text = $"{T("hud.day")} 1 | {CurrentPhaseDisplayText()}";
         _battleReservedLabel.Text = T("hud.talent_state_info");
         _productionLabel.Text = T("hud.production_ready");
+        _buildStatusLabel.Text = T("hud.build_status_default");
         _skillsHintLabel.Text = T("hud.skill_commands");
         _towerSlot.Visible = true;
+        _barracksSlot.Visible = true;
         _residenceSlot.Visible = true;
         _towerSlot.Disabled = false;
+        _barracksSlot.Disabled = false;
         _residenceSlot.Disabled = false;
-        _towerSlot.Text = T("hud.build_slot.tower");
-        _residenceSlot.Text = T("hud.build_slot.residence");
+        _towerSlot.Text = string.Empty;
+        _barracksSlot.Text = string.Empty;
+        _residenceSlot.Text = string.Empty;
+        RefreshBuildSlotLabelsAndIcons();
+        SyncBuildPaletteVisualState();
         _speedStateLabel.Text = $"{T("hud.speed_state")}: {T("hud.speed_1x")}";
         _pauseButton.Pressed += OnPausePressed;
         _oneXButton.Pressed += OnOneXPressed;
@@ -237,7 +263,11 @@ public partial class HUD : Control
             buildButton.Pressed += () => RequestBattleAction("build");
         }
         _towerSlot.Connect(Button.SignalName.Pressed, Callable.From(() => RequestBattleAction("select_tower")));
+        _barracksSlot.Connect(Button.SignalName.Pressed, Callable.From(() => RequestBattleAction("select_barracks")));
         _residenceSlot.Connect(Button.SignalName.Pressed, Callable.From(() => RequestBattleAction("select_residence")));
+        _towerSlot.Connect(BaseButton.SignalName.ButtonDown, Callable.From(() => RequestBattleAction("drag_tower")));
+        _barracksSlot.Connect(BaseButton.SignalName.ButtonDown, Callable.From(() => RequestBattleAction("drag_barracks")));
+        _residenceSlot.Connect(BaseButton.SignalName.ButtonDown, Callable.From(() => RequestBattleAction("drag_residence")));
         _buildAction.GuiInput += (@event) => OnBattleActionGuiInput(@event, "build");
         if (_waveAction is Button waveButton)
         {
@@ -313,16 +343,8 @@ public partial class HUD : Control
     {
         SyncBattleHudActiveState();
         ApplyFormalBattleHudBands();
-        var locale = NormalizeLocale(TranslationServer.GetLocale());
-        if (!string.Equals(locale, _localizedLocale, StringComparison.OrdinalIgnoreCase))
-        {
-            _localizedLocale = locale;
-            _i18n?.Call("switch_locale", _localizedLocale);
-            ApplyLocalizedStaticTexts();
-            RenderDay();
-            RenderPhase();
-            RenderCycleRemaining();
-        }
+        SyncLocalizedHudTexts();
+        ForceBuildButtonsTextless();
 
         RefreshSpeedControlsFromRuntime();
         RefreshBottomBarFromRuntime();
@@ -727,10 +749,18 @@ public partial class HUD : Control
         _battleReservedLabel.Text = string.IsNullOrWhiteSpace(_battleSummaryOverride)
             ? T("hud.talent_state_info")
             : _battleSummaryOverride;
-        _productionLabel.Text = T("hud.production_ready");
+        _productionLabel.Text = string.IsNullOrWhiteSpace(_buildContextTitleOverride)
+            ? T("hud.production_ready")
+            : _buildContextTitleOverride;
+        _buildStatusLabel.Text = string.IsNullOrWhiteSpace(_buildContextDetailOverride)
+            ? T("hud.build_status_default")
+            : _buildContextDetailOverride;
         _skillsHintLabel.Text = T("hud.skill_commands");
-        _towerSlot.Text = T("hud.build_slot.tower");
-        _residenceSlot.Text = T("hud.build_slot.residence");
+        _towerSlot.Text = string.Empty;
+        _barracksSlot.Text = string.Empty;
+        _residenceSlot.Text = string.Empty;
+        RefreshBuildSlotLabelsAndIcons();
+        SyncBuildPaletteVisualState();
 
         var phaseStatuses = TryGetBattleHudPhaseStatuses(operationController);
         var buildAvailable = ReadDictionaryBool(phaseStatuses, "build_available", true);
@@ -993,6 +1023,28 @@ public partial class HUD : Control
         RefreshBottomBarFromRuntime();
     }
 
+    public void SetBuildContextMessages(string title, string detail)
+    {
+        _buildContextTitleOverride = title?.Trim() ?? string.Empty;
+        _buildContextDetailOverride = detail?.Trim() ?? string.Empty;
+        RefreshBottomBarFromRuntime();
+    }
+
+    public void SetActiveBuildSelection(string selectionId)
+    {
+        _activeBuildSelectionId = selectionId?.Trim() ?? string.Empty;
+        SyncBuildPaletteVisualState();
+    }
+
+    public void ClearBuildContextMessages()
+    {
+        _buildContextTitleOverride = string.Empty;
+        _buildContextDetailOverride = string.Empty;
+        _activeBuildSelectionId = string.Empty;
+        SyncBuildPaletteVisualState();
+        RefreshBottomBarFromRuntime();
+    }
+
     public void ClearBattleSurfaceMessages()
     {
         _battleStatusOverride = string.Empty;
@@ -1124,6 +1176,7 @@ public partial class HUD : Control
             finishActionNode.ProcessMode = ProcessModeEnum.Always;
         }
         _towerSlot.ProcessMode = ProcessModeEnum.Always;
+        _barracksSlot.ProcessMode = ProcessModeEnum.Always;
         _residenceSlot.ProcessMode = ProcessModeEnum.Always;
     }
 
@@ -1629,6 +1682,22 @@ public partial class HUD : Control
         return "n/a";
     }
 
+    private void SyncLocalizedHudTexts()
+    {
+        var locale = NormalizeLocale(TranslationServer.GetLocale());
+        if (string.Equals(locale, _localizedLocale, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        _localizedLocale = locale;
+        _i18n?.Call("switch_locale", _localizedLocale);
+        ApplyLocalizedStaticTexts();
+        RenderDay();
+        RenderPhase();
+        RenderCycleRemaining();
+    }
+
     private void SetupLocalization()
     {
         var script = GD.Load<Script>("res://Game.Godot/Scripts/Localization/LocalizationManager.gd");
@@ -1655,13 +1724,191 @@ public partial class HUD : Control
         _battleTitleLabel.Text = T("hud.battle");
         _skillsTitleLabel.Text = T("hud.skills");
         _battleReservedLabel.Text = T("hud.talent_state_info");
-        _productionLabel.Text = T("hud.production_ready");
+        if (string.IsNullOrWhiteSpace(_buildContextTitleOverride))
+        {
+            _productionLabel.Text = T("hud.production_ready");
+        }
+        if (string.IsNullOrWhiteSpace(_buildContextDetailOverride))
+        {
+            _buildStatusLabel.Text = T("hud.build_status_default");
+        }
         _skillsHintLabel.Text = T("hud.skill_commands");
-        _towerSlot.Text = T("hud.build_slot.tower");
-        _residenceSlot.Text = T("hud.build_slot.residence");
+        _towerSlot.Text = string.Empty;
+        _barracksSlot.Text = string.Empty;
+        _residenceSlot.Text = string.Empty;
+        RefreshBuildSlotLabelsAndIcons();
+        SyncBuildPaletteVisualState();
         _dismissButton.Text = T("hud.dismiss");
         _configAuditRefreshButton.Text = T("hud.refresh_audit");
         _migrationRetryButton.Text = T("hud.retry_migration");
+    }
+
+    private void RefreshBuildSlotLabelsAndIcons()
+    {
+        _towerSlot.Text = string.Empty;
+        _barracksSlot.Text = string.Empty;
+        _residenceSlot.Text = string.Empty;
+        _towerTitleLabel.Text = T("hud.build_slot.tower");
+        _barracksTitleLabel.Text = T("hud.build_slot.barracks");
+        _residenceTitleLabel.Text = T("hud.build_slot.residence");
+        ApplyBuildSlotPreviewIcon(_towerPreviewIcon, "res://Game.Godot/Assets/Textures/BattleMapBuildPreviews/battlemap_build_preview_tower.png", "tower");
+        ApplyBuildSlotPreviewIcon(_barracksPreviewIcon, "res://Game.Godot/Assets/Textures/BattleMapBuildPreviews/battlemap_build_preview_barracks.png", "barracks");
+        ApplyBuildSlotPreviewIcon(_residencePreviewIcon, "res://Game.Godot/Assets/Textures/BattleMapBuildPreviews/battlemap_build_preview_residence.png", "residence");
+    }
+
+    private void ForceBuildButtonsTextless()
+    {
+        if (_towerSlot.Text.Length != 0)
+        {
+            _towerSlot.Text = string.Empty;
+        }
+
+        if (_barracksSlot.Text.Length != 0)
+        {
+            _barracksSlot.Text = string.Empty;
+        }
+
+        if (_residenceSlot.Text.Length != 0)
+        {
+            _residenceSlot.Text = string.Empty;
+        }
+    }
+
+    private void SyncBuildPaletteVisualState()
+    {
+        ApplyBuildSlotVisualState(_towerSlot, "tower_alpha");
+        ApplyBuildSlotVisualState(_barracksSlot, "barracks_alpha");
+        ApplyBuildSlotVisualState(_residenceSlot, "farm_alpha");
+    }
+
+    private void ApplyBuildSlotVisualState(Button button, string selectionId)
+    {
+        var hasActiveSelection = !string.IsNullOrWhiteSpace(_activeBuildSelectionId);
+        var isActive = hasActiveSelection && string.Equals(_activeBuildSelectionId, selectionId, StringComparison.Ordinal);
+        if (isActive)
+        {
+            button.Modulate = new Color(1f, 1f, 1f, 1f);
+            button.SelfModulate = new Color(1.08f, 1.02f, 0.9f, 1f);
+            button.Scale = new Vector2(1.03f, 1.03f);
+            return;
+        }
+
+        button.Modulate = new Color(1f, 1f, 1f, hasActiveSelection ? 0.56f : 1f);
+        button.SelfModulate = Colors.White;
+        button.Scale = Vector2.One;
+    }
+
+    private static void ApplyBuildSlotPreviewIcon(TextureRect icon, string texturePath, string previewKind)
+    {
+        if (icon == null)
+        {
+            return;
+        }
+
+        icon.Texture = LoadBuildPreviewTexture(texturePath, previewKind);
+        icon.ExpandMode = TextureRect.ExpandModeEnum.FitWidthProportional;
+        icon.StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered;
+    }
+
+    private static Texture2D LoadBuildPreviewTexture(string texturePath, string previewKind)
+    {
+        var globalPath = ProjectSettings.GlobalizePath(texturePath);
+        if (File.Exists(globalPath))
+        {
+            var image = Image.LoadFromFile(globalPath);
+            if (image != null && !image.IsEmpty())
+            {
+                return ImageTexture.CreateFromImage(image);
+            }
+        }
+
+        return CreateFallbackBuildPreviewTexture(previewKind);
+    }
+
+    private static Texture2D CreateFallbackBuildPreviewTexture(string previewKind)
+    {
+        var image = Image.Create(48, 48, false, Image.Format.Rgba8);
+        image.Fill(new Color(0.094118f, 0.12549f, 0.164706f, 0.92f));
+        for (var x = 0; x < 48; x++)
+        {
+            for (var y = 0; y < 48; y++)
+            {
+                if (x <= 1 || x >= 46 || y <= 1 || y >= 46)
+                {
+                    image.SetPixel(x, y, new Color(0.905882f, 0.807843f, 0.603922f, 0.92f));
+                }
+            }
+        }
+
+        switch (previewKind)
+        {
+            case "barracks":
+                FillRect(image, new Rect2I(10, 31, 28, 7), new Color(0.384314f, 0.282353f, 0.219608f, 1f));
+                FillRect(image, new Rect2I(12, 19, 24, 12), new Color(0.517647f, 0.639216f, 0.737255f, 1f));
+                FillTriangle(image, new Vector2I(8, 20), new Vector2I(24, 9), new Vector2I(40, 20), new Color(0.721569f, 0.32549f, 0.286275f, 1f));
+                FillRect(image, new Rect2I(21, 22, 6, 9), new Color(0.219608f, 0.254902f, 0.313726f, 1f));
+                break;
+            case "residence":
+                FillRect(image, new Rect2I(11, 31, 26, 7), new Color(0.517647f, 0.372549f, 0.243137f, 1f));
+                FillRect(image, new Rect2I(13, 20, 22, 12), new Color(0.839216f, 0.760784f, 0.603922f, 1f));
+                FillTriangle(image, new Vector2I(10, 21), new Vector2I(24, 9), new Vector2I(38, 21), new Color(0.745098f, 0.313726f, 0.227451f, 1f));
+                FillRect(image, new Rect2I(21, 24, 6, 8), new Color(0.4f, 0.27451f, 0.192157f, 1f));
+                break;
+            default:
+                FillRect(image, new Rect2I(16, 13, 16, 22), new Color(0.490196f, 0.552941f, 0.65098f, 1f));
+                FillRect(image, new Rect2I(13, 34, 22, 6), new Color(0.694118f, 0.517647f, 0.286275f, 1f));
+                FillTriangle(image, new Vector2I(13, 16), new Vector2I(24, 7), new Vector2I(35, 16), new Color(0.819608f, 0.658824f, 0.301961f, 1f));
+                FillRect(image, new Rect2I(22, 22, 4, 8), new Color(0.219608f, 0.254902f, 0.313726f, 1f));
+                break;
+        }
+
+        return ImageTexture.CreateFromImage(image);
+    }
+
+    private static void FillRect(Image image, Rect2I rect, Color color)
+    {
+        for (var x = rect.Position.X; x < rect.Position.X + rect.Size.X; x++)
+        {
+            for (var y = rect.Position.Y; y < rect.Position.Y + rect.Size.Y; y++)
+            {
+                if (x >= 0 && x < image.GetWidth() && y >= 0 && y < image.GetHeight())
+                {
+                    image.SetPixel(x, y, color);
+                }
+            }
+        }
+    }
+
+    private static void FillTriangle(Image image, Vector2I a, Vector2I b, Vector2I c, Color color)
+    {
+        var minX = Math.Min(a.X, Math.Min(b.X, c.X));
+        var maxX = Math.Max(a.X, Math.Max(b.X, c.X));
+        var minY = Math.Min(a.Y, Math.Min(b.Y, c.Y));
+        var maxY = Math.Max(a.Y, Math.Max(b.Y, c.Y));
+        for (var x = minX; x <= maxX; x++)
+        {
+            for (var y = minY; y <= maxY; y++)
+            {
+                if (PointInTriangle(new Vector2(x + 0.5f, y + 0.5f), a, b, c) && x >= 0 && x < image.GetWidth() && y >= 0 && y < image.GetHeight())
+                {
+                    image.SetPixel(x, y, color);
+                }
+            }
+        }
+    }
+
+    private static bool PointInTriangle(Vector2 point, Vector2I a, Vector2I b, Vector2I c)
+    {
+        var denominator = ((b.Y - c.Y) * (a.X - c.X)) + ((c.X - b.X) * (a.Y - c.Y));
+        if (Mathf.IsZeroApprox(denominator))
+        {
+            return false;
+        }
+
+        var w1 = (((b.Y - c.Y) * (point.X - c.X)) + ((c.X - b.X) * (point.Y - c.Y))) / denominator;
+        var w2 = (((c.Y - a.Y) * (point.X - c.X)) + ((a.X - c.X) * (point.Y - c.Y))) / denominator;
+        var w3 = 1f - w1 - w2;
+        return w1 >= 0f && w2 >= 0f && w3 >= 0f;
     }
 
     private string T(string key)
@@ -1691,3 +1938,4 @@ public partial class HUD : Control
         return "en-US";
     }
 }
+

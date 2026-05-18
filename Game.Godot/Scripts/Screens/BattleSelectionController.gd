@@ -19,6 +19,7 @@ var _formal_selection_data_provider: Node = null
 var _overlay_slot_visuals: Dictionary = {}
 var _selection_slot_visuals: Dictionary = {}
 var _selection_context_active: bool = true
+var _hover_overlay_context: Dictionary = {}
 
 func configure(screen: Control, refs: Dictionary = {}) -> void:
 	_screen = screen
@@ -58,6 +59,10 @@ func apply_legality_overlay(legality_by_slot: Dictionary) -> void:
 		_overlay_slot_visuals[slot_id] = _read_overlay_slot_visual(slot_id)
 	_sync_runtime_visuals()
 
+func apply_hover_overlay_context(legality_by_slot: Dictionary, payload: Dictionary) -> void:
+	_hover_overlay_context = payload.duplicate(true)
+	apply_legality_overlay(legality_by_slot)
+
 func read_slot_visual(slot_id: String) -> Dictionary:
 	var selection_visual: Variant = _selection_slot_visuals.get(slot_id, null)
 	if selection_visual is Dictionary:
@@ -75,6 +80,7 @@ func set_placement_context_active(active: bool) -> void:
 	if not active:
 		_overlay_slot_visuals.clear()
 		_selection_slot_visuals.clear()
+		_hover_overlay_context.clear()
 	_sync_runtime_visuals()
 
 func apply_building_selection(snapshot: Dictionary) -> void:
@@ -85,6 +91,7 @@ func apply_building_selection(snapshot: Dictionary) -> void:
 
 func clear_building_selection() -> void:
 	_selection_slot_visuals.clear()
+	_hover_overlay_context.clear()
 	_sync_runtime_visuals()
 
 func select_formal_building_slot(slot_id: String) -> void:
@@ -102,9 +109,13 @@ func _build_selection_slot_visuals(snapshot: Dictionary) -> Dictionary:
 	var selection_id := str(snapshot.get("selection_id", ""))
 	var category := str(snapshot.get("category", ""))
 	var building_slots := _string_array(snapshot.get("building_slots", []))
+	var hidden_slots := _string_array(snapshot.get("hidden_slots", []))
 	var range_slots := _string_array(snapshot.get("range_slots", []))
 	var blocked_range_slots := _string_array(snapshot.get("blocked_range_slots", []))
 	var linked_unit_slots := _string_array(snapshot.get("linked_unit_slots", []))
+
+	for slot_id in hidden_slots:
+		slot_visuals[slot_id] = _hidden_visual()
 
 	for slot_id in building_slots:
 		var building_channel: String = "building_outline"
@@ -212,7 +223,21 @@ func _sync_runtime_visuals() -> void:
 		slot_ids[str(slot_id_variant)] = true
 	for slot_id_variant in slot_ids.keys():
 		var slot_id := str(slot_id_variant)
-		battlefield_view.call("apply_slot_visual", slot_id, read_slot_visual(slot_id))
+		var visual := read_slot_visual(slot_id)
+		if _should_apply_hover_reason(slot_id, visual):
+			visual["reason_text"] = str(_hover_overlay_context.get("reason_text", ""))
+			visual["frame"] = "red"
+			visual["outline_tint"] = "red"
+		battlefield_view.call("apply_slot_visual", slot_id, visual)
+
+func _should_apply_hover_reason(slot_id: String, visual: Dictionary) -> bool:
+	if _hover_overlay_context.is_empty():
+		return false
+	if slot_id != str(_hover_overlay_context.get("hovered_slot_id", "")):
+		return false
+	if str(_hover_overlay_context.get("reason_text", "")).is_empty():
+		return false
+	return str(visual.get("overlay_state", "")) == "overlay_illegal"
 
 func _read_overlay_slot_visual(slot_id: String) -> Dictionary:
 	var controller: Node = get_overlay_controller()
