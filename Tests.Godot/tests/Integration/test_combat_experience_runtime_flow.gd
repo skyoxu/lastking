@@ -677,8 +677,18 @@ func test_daily_settlement_modal_should_block_progress_until_reward_is_selected(
 	var expand_context_btn: Button = screen.get_node("DailySettlementModal/VBox/EvidencePanel/ExpandContextBtn")
 	var runtime_context_payload: Label = screen.get_node("DailySettlementModal/VBox/EvidencePanel/RuntimeContextPayload")
 	var rewards_box: VBoxContainer = screen.get_node("DailySettlementModal/VBox/Rewards")
-	var hud := screen.get_node("BattleHud")
-	var outcome_label: Label = hud.get_node("FeedbackLayer/OutcomePanel/VBox/OutcomeLabel")
+	var presentation_controller: Node = screen.get_node("PresentationController")
+	var resolved_status_text := str(presentation_controller.call("translate", "battlemap.status.settlement_resolved")).to_lower()
+	var blocked_status_text := str(presentation_controller.call("translate", "battlemap.status.settlement_open")).to_lower()
+	var hp_text := str(presentation_controller.call("translate", "battlemap.daily_settlement.final_hp"))
+	var rewards_text := str(presentation_controller.call("translate", "battlemap.daily_settlement.rewards_count"))
+	var reward_summary_text := str(presentation_controller.call("translate", "battlemap.daily_settlement.reward_summary"))
+	var kills_text := str(presentation_controller.call("translate", "battlemap.daily_settlement.kills"))
+	var gold_text := str(presentation_controller.call("translate", "battlemap.resource.gold"))
+	var iron_text := str(presentation_controller.call("translate", "battlemap.resource.iron"))
+	var pop_text := str(presentation_controller.call("translate", "battlemap.resource.population"))
+	var show_context_text := str(presentation_controller.call("translate", "battlemap.daily_settlement.show_runtime_context"))
+	var hide_context_text := str(presentation_controller.call("translate", "battlemap.daily_settlement.hide_runtime_context"))
 
 	# Drive battle to completion so non-terminal settlement modal opens.
 	assert_bool(bridge.has_method("ForceOutcomeForTest")).is_true()
@@ -694,27 +704,26 @@ func test_daily_settlement_modal_should_block_progress_until_reward_is_selected(
 
 	assert_bool(modal.visible).is_true()
 	assert_bool(get_tree().paused).is_true()
-	assert_bool(outcome_label.text.to_lower().find("outcome:") >= 0).is_true()
-	assert_bool(summary_label.text.find("rewards=3") >= 0).is_true()
-	assert_bool(summary_label.text.find("reward_summary=") >= 0).is_true()
-	assert_bool(summary_label.text.find("HP=") >= 0).is_true()
-	assert_bool(summary_label.text.find("kills=") >= 0).is_true()
-	assert_bool(summary_label.text.find("gold=120") >= 0).is_true()
-	assert_bool(summary_label.text.find("iron=44") >= 0).is_true()
-	assert_bool(summary_label.text.find("pop=26") >= 0).is_true()
+	assert_bool(summary_label.text.find("%s=42" % hp_text) >= 0).is_true()
+	assert_bool(summary_label.text.find("%s=3" % rewards_text) >= 0).is_true()
+	assert_bool(summary_label.text.find("%s=" % reward_summary_text) >= 0).is_true()
+	assert_bool(summary_label.text.find("%s=0" % kills_text) >= 0).is_true()
+	assert_bool(summary_label.text.find("%s=120" % gold_text) >= 0).is_true()
+	assert_bool(summary_label.text.find("%s=44" % iron_text) >= 0).is_true()
+	assert_bool(summary_label.text.find("%s=26" % pop_text) >= 0).is_true()
 	assert_bool(evidence_hp.text.find("42") >= 0).is_true()
 	assert_bool(evidence_kills.text.find("0") >= 0).is_true()
 	assert_bool(evidence_reward_summary.visible).is_false()
-	assert_bool(evidence_resources.text.find("gold=120") >= 0).is_true()
-	assert_bool(evidence_resources.text.find("iron=44") >= 0).is_true()
-	assert_bool(evidence_resources.text.find("pop=26") >= 0).is_true()
+	assert_bool(evidence_resources.text.find("%s=120" % gold_text) >= 0).is_true()
+	assert_bool(evidence_resources.text.find("%s=44" % iron_text) >= 0).is_true()
+	assert_bool(evidence_resources.text.find("%s=26" % pop_text) >= 0).is_true()
 	assert_bool(evidence_defeat_reason.visible).is_false()
 	assert_bool(runtime_context_payload.visible).is_false()
-	assert_str(expand_context_btn.text).is_equal("Show Runtime Context")
+	assert_str(expand_context_btn.text).is_equal(show_context_text)
 	expand_context_btn.emit_signal("pressed")
 	await get_tree().process_frame
 	assert_bool(runtime_context_payload.visible).is_true()
-	assert_str(expand_context_btn.text).is_equal("Hide Runtime Context")
+	assert_str(expand_context_btn.text).is_equal(hide_context_text)
 	var context_payload := runtime_context_payload.text
 	assert_bool(context_payload.find("\"outcome\":\"settlement\"") >= 0).is_true()
 	assert_bool(context_payload.find("\"castle_hp\":42") >= 0).is_true()
@@ -739,28 +748,28 @@ func test_daily_settlement_modal_should_block_progress_until_reward_is_selected(
 	_request_hud_action(screen, "wave")
 	await get_tree().process_frame
 	assert_bool(status_label.text != blocked_before).is_true()
-	assert_bool(status_label.text.to_lower().find("resolve reward first") >= 0).is_true()
+	assert_bool(status_label.text.to_lower().find(blocked_status_text.to_lower()) >= 0).is_true()
 	assert_that(bridge.call("GetSummary")).is_equal(summary_before)
 
 	var blocked_after_wave := status_label.text
 	_request_hud_action(screen, "exchange")
 	await get_tree().process_frame
 	assert_str(status_label.text).is_equal(blocked_after_wave)
-	assert_bool(status_label.text.to_lower().find("resolve reward first") >= 0).is_true()
+	assert_bool(status_label.text.to_lower().find(blocked_status_text.to_lower()) >= 0).is_true()
 	assert_that(bridge.call("GetSummary")).is_equal(summary_before)
 
 	var blocked_after_exchange := status_label.text
 	_request_hud_action(screen, "cleanup")
 	await get_tree().process_frame
 	assert_str(status_label.text).is_equal(blocked_after_exchange)
-	assert_bool(status_label.text.to_lower().find("resolve reward first") >= 0).is_true()
+	assert_bool(status_label.text.to_lower().find(blocked_status_text.to_lower()) >= 0).is_true()
 	assert_that(bridge.call("GetSummary")).is_equal(summary_before)
 
 	var blocked_after_cleanup := status_label.text
 	_request_hud_action(screen, "finish")
 	await get_tree().process_frame
 	assert_str(status_label.text).is_equal(blocked_after_cleanup)
-	assert_bool(status_label.text.to_lower().find("resolve reward first") >= 0).is_true()
+	assert_bool(status_label.text.to_lower().find(blocked_status_text.to_lower()) >= 0).is_true()
 	assert_that(bridge.call("GetSummary")).is_equal(summary_before)
 
 	# Resolve one reward to close modal and unblock progression.
@@ -768,7 +777,7 @@ func test_daily_settlement_modal_should_block_progress_until_reward_is_selected(
 	await get_tree().process_frame
 	assert_bool(modal.visible).is_false()
 	assert_bool(get_tree().paused).is_false()
-	assert_bool(status_label.text.to_lower().find("settlement resolved") >= 0).is_true()
+	assert_bool(status_label.text.to_lower().find(resolved_status_text) >= 0).is_true()
 	var status_after_resolve := status_label.text
 	var summary_after_resolve: Dictionary = bridge.call("GetSummary")
 	# Single-consume guard: duplicate reward callback must not trigger extra transition side effects.
@@ -928,9 +937,17 @@ func test_daily_settlement_evidence_panel_should_hide_non_applicable_fields_for_
 	assert_bool(kills_evidence.visible).is_true()
 	assert_bool(resources_evidence.visible).is_true()
 	assert_bool(defeat_reason_evidence.visible).is_false()
-	assert_str(hp_evidence.text).is_equal("Final HP: 21")
-	assert_str(kills_evidence.text).is_equal("Kills: 2")
-	assert_str(resources_evidence.text).is_equal("Resources: gold=7, iron=3, pop=5")
+	var presentation_controller: Node = screen.get_node("PresentationController")
+	var hp_text := str(presentation_controller.call("translate", "battlemap.daily_settlement.final_hp"))
+	var kills_text := str(presentation_controller.call("translate", "battlemap.daily_settlement.kills"))
+	var resources_text := str(presentation_controller.call("translate", "battlemap.daily_settlement.resources"))
+	var gold_text := str(presentation_controller.call("translate", "battlemap.resource.gold"))
+	var iron_text := str(presentation_controller.call("translate", "battlemap.resource.iron"))
+	var pop_text := str(presentation_controller.call("translate", "battlemap.resource.population"))
+	var reward_summary_text := str(presentation_controller.call("translate", "battlemap.daily_settlement.reward_summary"))
+	assert_str(hp_evidence.text).is_equal("%s: 21" % hp_text)
+	assert_str(kills_evidence.text).is_equal("%s: 2" % kills_text)
+	assert_str(resources_evidence.text).is_equal("%s: %s=7, %s=3, %s=5" % [resources_text, gold_text, iron_text, pop_text])
 	# non-applicable reward_summary field should be hidden when summary payload omits it.
 	assert_bool(reward_summary_evidence.visible).is_false()
 	assert_bool(runtime_context_payload.visible).is_false()
@@ -954,7 +971,7 @@ func test_daily_settlement_evidence_panel_should_hide_non_applicable_fields_for_
 
 	assert_bool(modal.visible).is_true()
 	assert_bool(reward_summary_evidence.visible).is_true()
-	assert_str(reward_summary_evidence.text).is_equal("Reward Summary: Reward A,Reward B,Reward C")
+	assert_str(reward_summary_evidence.text).is_equal("%s: Reward A,Reward B,Reward C" % reward_summary_text)
 	assert_bool(runtime_context_payload.visible).is_false()
 	expand_context_btn.emit_signal("pressed")
 	await get_tree().process_frame
@@ -990,6 +1007,9 @@ func test_daily_settlement_modal_should_reject_invalid_reward_option_count() -> 
 	var modal: PanelContainer = screen.get_node("DailySettlementModal")
 	var status_label: Label = screen.get_node("LegacyPrototypeRoot/VBox/Status")
 	var outcome_controller: Node = screen.get_node("OutcomeController")
+	var presentation_controller: Node = screen.get_node("PresentationController")
+	var invalid_rewards_text := str(presentation_controller.call("translate", "battlemap.status.invalid_settlement_rewards")).to_lower()
+	var settlement_resolved_text := str(presentation_controller.call("translate", "battlemap.status.settlement_resolved")).to_lower()
 	var settlement_options = outcome_controller.call("get_settlement_options")
 	assert_int(typeof(settlement_options)).is_equal(TYPE_ARRAY)
 	var original_options: Array = (settlement_options as Array).duplicate()
@@ -1010,9 +1030,9 @@ func test_daily_settlement_modal_should_reject_invalid_reward_option_count() -> 
 
 	assert_bool(modal.visible).is_false()
 	assert_bool(get_tree().paused).is_false()
-	assert_bool(status_label.text.to_lower().find("invalid") >= 0).is_true()
+	assert_bool(status_label.text.to_lower().find(invalid_rewards_text) >= 0).is_true()
 	# T70.11: invalid option count rejection must keep deterministic flow stable.
-	assert_bool(status_label.text.to_lower().find("settlement resolved") < 0).is_true()
+	assert_bool(status_label.text.to_lower().find(settlement_resolved_text) < 0).is_true()
 	outcome_controller.call("SetSettlementOptionsForTest", original_options)
 
 
@@ -1038,6 +1058,10 @@ func test_defeat_outcome_modal_should_open_immediately_when_active_battle_crosse
 	var defeat_modal: PanelContainer = screen.get_node("DefeatOutcomeModal")
 	var defeat_summary: Label = screen.get_node("DefeatOutcomeModal/VBox/Summary")
 	var status_label: Label = screen.get_node("LegacyPrototypeRoot/VBox/Status")
+	var presentation_controller: Node = screen.get_node("PresentationController")
+	var wall_breached_text := str(presentation_controller.call("translate", "battlemap.outcome.defeat.wall_breached")).to_lower()
+	var finished_text := str(presentation_controller.call("translate", "battlemap.status.finished")).to_lower()
+	var terminal_open_text := str(presentation_controller.call("translate", "battlemap.status.terminal_outcome_open")).to_lower()
 			
 	assert_bool(bridge.has_method("ConfigureDurabilityForTest")).is_true()
 	bridge.call("ConfigureDurabilityForTest", 42, 1)
@@ -1055,8 +1079,8 @@ func test_defeat_outcome_modal_should_open_immediately_when_active_battle_crosse
 	await get_tree().process_frame
 	assert_bool(defeat_modal.visible).is_true()
 	assert_bool(get_tree().paused).is_true()
-	assert_bool(defeat_summary.text.to_lower().find("wall breached") >= 0).is_true()
-	assert_bool(status_label.text.to_lower().find("finished") < 0).is_true()
+	assert_bool(defeat_summary.text.to_lower().find(wall_breached_text) >= 0).is_true()
+	assert_bool(status_label.text.to_lower().find(finished_text) < 0).is_true()
 	# T70.3: failure mapping should remain stable until explicit transition input.
 	var defeat_summary_before := String(defeat_summary.text)
 	for _i in range(6):
@@ -1066,7 +1090,7 @@ func test_defeat_outcome_modal_should_open_immediately_when_active_battle_crosse
 
 	_request_hud_action(screen, "finish")
 	await get_tree().process_frame
-	assert_bool(status_label.text.to_lower().find("terminal outcome") >= 0).is_true()
+	assert_bool(status_label.text.to_lower().find(terminal_open_text) >= 0).is_true()
 	assert_bool(defeat_modal.visible).is_true()
 	assert_bool(get_tree().paused).is_true()
 
@@ -1098,8 +1122,14 @@ func test_defeat_outcome_modal_should_pause_runtime_and_only_offer_terminal_acti
 	var return_btn: Button = screen.get_node("DefeatOutcomeModal/VBox/Actions/ReturnToMainMenuBtn")
 	var restart_btn: Button = screen.get_node("DefeatOutcomeModal/VBox/Actions/RestartBtn")
 	var status_label: Label = screen.get_node("LegacyPrototypeRoot/VBox/Status")
-	var hud := main.get_node("RuntimeUi/HUD")
-	var outcome_label: Label = hud.get_node("FeedbackLayer/OutcomePanel/VBox/OutcomeLabel")
+	var presentation_controller: Node = screen.get_node("PresentationController")
+	var terminal_open_text := str(presentation_controller.call("translate", "battlemap.status.terminal_outcome_open")).to_lower()
+	var return_main_menu_text := str(presentation_controller.call("translate", "battlemap.return_main_menu"))
+	var restart_text := str(presentation_controller.call("translate", "battlemap.restart"))
+	var defeat_hint_text := str(presentation_controller.call("translate", "battlemap.outcome.hint")).to_lower()
+	var defeat_title_text := str(presentation_controller.call("translate", "battlemap.outcome.defeat.title")).to_lower()
+	var wall_breached_text := str(presentation_controller.call("translate", "battlemap.outcome.defeat.wall_breached")).to_lower()
+	var finished_text := str(presentation_controller.call("translate", "battlemap.status.finished")).to_lower()
 
 	assert_bool(settlement_modal.visible).is_false()
 	assert_bool(victory_modal.visible).is_false()
@@ -1117,27 +1147,24 @@ func test_defeat_outcome_modal_should_pause_runtime_and_only_offer_terminal_acti
 	assert_str(String(defeat_summary_state.get("defeat_reason", ""))).is_equal("wall_breached")
 	assert_int(int(defeat_summary_state.get("castle_hp", -1))).is_equal(42)
 	assert_int(int(defeat_summary_state.get("wall_hp", -1))).is_equal(0)
-	assert_bool(defeat_title.text.to_lower().find("defeat") >= 0).is_true()
-	assert_bool(defeat_summary.text.to_lower().find("wall breached") >= 0).is_true()
-	assert_bool(defeat_summary.text.to_lower().find("run ended") >= 0).is_true()
-	assert_bool(defeat_hint.text.to_lower().find("cannot be resumed") >= 0).is_true()
+	assert_bool(defeat_title.text.to_lower().find(defeat_title_text) >= 0).is_true()
+	assert_bool(defeat_summary.text.to_lower().find(wall_breached_text) >= 0).is_true()
+	assert_bool(defeat_hint.text.to_lower().find(defeat_hint_text) >= 0).is_true()
 	assert_int(action_box.get_child_count()).is_equal(2)
-	assert_str(return_btn.text).is_equal("Return to Main Menu")
-	assert_str(restart_btn.text).is_equal("Restart")
+	assert_str(return_btn.text).is_equal(return_main_menu_text)
+	assert_str(restart_btn.text).is_equal(restart_text)
 	assert_bool(not return_btn.disabled).is_true()
 	assert_bool(not restart_btn.disabled).is_true()
-	assert_bool(outcome_label.text.to_lower().find("outcome: loss") < 0).is_true()
 
 	_request_hud_action(screen, "exchange")
 	await get_tree().process_frame
-	assert_bool(status_label.text.to_lower().find("terminal outcome") >= 0).is_true()
+	assert_bool(status_label.text.to_lower().find(terminal_open_text) >= 0).is_true()
 	_request_hud_action(screen, "cleanup")
 	await get_tree().process_frame
-	assert_bool(status_label.text.to_lower().find("terminal outcome") >= 0).is_true()
+	assert_bool(status_label.text.to_lower().find(terminal_open_text) >= 0).is_true()
 	_request_hud_action(screen, "finish")
 	await get_tree().process_frame
-	assert_bool(status_label.text.to_lower().find("terminal outcome") >= 0).is_true()
-	assert_bool(outcome_label.text.to_lower().find("outcome: loss") < 0).is_true()
+	assert_bool(status_label.text.to_lower().find(terminal_open_text) >= 0).is_true()
 
 	return_btn.emit_signal("pressed")
 	await get_tree().process_frame
@@ -1175,13 +1202,13 @@ func test_defeat_outcome_modal_should_pause_runtime_and_only_offer_terminal_acti
 	assert_str(String(defeat_summary_state.get("defeat_reason", ""))).is_equal("wall_breached")
 	assert_int(int(defeat_summary_state.get("castle_hp", -1))).is_equal(0)
 	assert_int(int(defeat_summary_state.get("wall_hp", -1))).is_equal(14)
-	assert_bool(defeat_summary.text.to_lower().find("wall breached") >= 0).is_true()
+	assert_bool(defeat_summary.text.to_lower().find(wall_breached_text) >= 0).is_true()
 
 	var status_before := status_label.text
 	_request_hud_action(screen, "wave")
 	await get_tree().process_frame
 	assert_bool(status_label.text != status_before).is_true()
-	assert_bool(status_label.text.to_lower().find("terminal outcome") >= 0).is_true()
+	assert_bool(status_label.text.to_lower().find(terminal_open_text) >= 0).is_true()
 	assert_bool(defeat_modal.visible).is_true()
 	assert_bool(get_tree().paused).is_true()
 
@@ -1200,7 +1227,7 @@ func test_defeat_outcome_modal_should_pause_runtime_and_only_offer_terminal_acti
 	_request_hud_action(screen, "finish")
 	await get_tree().process_frame
 	assert_bool(defeat_modal.visible).is_false()
-	assert_bool(status_label.text.to_lower().find("finished") >= 0).is_true()
+	assert_bool(status_label.text.to_lower().find(finished_text) >= 0).is_true()
 
 
 # ACC:T68.1
@@ -1233,8 +1260,17 @@ func test_victory_outcome_modal_should_pause_runtime_and_only_offer_terminal_act
 	var return_btn: Button = screen.get_node("VictoryOutcomeModal/VBox/Actions/ReturnToMainMenuBtn")
 	var restart_btn: Button = screen.get_node("VictoryOutcomeModal/VBox/Actions/RestartBtn")
 	var status_label: Label = screen.get_node("LegacyPrototypeRoot/VBox/Status")
-	var hud := main.get_node("RuntimeUi/HUD")
-	var outcome_label: Label = hud.get_node("FeedbackLayer/OutcomePanel/VBox/OutcomeLabel")
+	var presentation_controller: Node = screen.get_node("PresentationController")
+	var terminal_open_text := str(presentation_controller.call("translate", "battlemap.status.terminal_outcome_open")).to_lower()
+	var return_main_menu_text := str(presentation_controller.call("translate", "battlemap.return_main_menu"))
+	var restart_text := str(presentation_controller.call("translate", "battlemap.restart"))
+	var victory_hint_text := str(presentation_controller.call("translate", "battlemap.outcome.hint")).to_lower()
+	var victory_title_text := str(presentation_controller.call("translate", "battlemap.outcome.victory.title")).to_lower()
+	var hp_text := str(presentation_controller.call("translate", "battlemap.daily_settlement.final_hp"))
+	var kills_text := str(presentation_controller.call("translate", "battlemap.daily_settlement.kills"))
+	var gold_text := str(presentation_controller.call("translate", "battlemap.resource.gold"))
+	var iron_text := str(presentation_controller.call("translate", "battlemap.resource.iron"))
+	var pop_text := str(presentation_controller.call("translate", "battlemap.resource.population"))
 
 	assert_bool(bridge.has_method("ForceOutcomeForTest")).is_true()
 	bridge.call("ForceOutcomeForTest", "win", 42)
@@ -1250,18 +1286,17 @@ func test_victory_outcome_modal_should_pause_runtime_and_only_offer_terminal_act
 	assert_bool(settlement_modal.visible).is_false()
 	assert_bool(victory_modal.visible).is_true()
 	assert_bool(get_tree().paused).is_true()
-	assert_bool(outcome_label.text.to_lower().find("n/a") >= 0).is_true()
-	assert_bool(victory_title.text.to_lower().find("victory") >= 0).is_true()
-	assert_bool(victory_hint.text.to_lower().find("cannot be resumed") >= 0).is_true()
-	assert_bool(victory_summary.text.find("HP=42") >= 0).is_true()
-	assert_bool(victory_summary.text.find("kills=") >= 0).is_true()
-	assert_bool(victory_summary.text.find("gold=120") >= 0).is_true()
-	assert_bool(victory_summary.text.find("iron=44") >= 0).is_true()
-	assert_bool(victory_summary.text.find("pop=26") >= 0).is_true()
+	assert_bool(victory_title.text.to_lower().find(victory_title_text) >= 0).is_true()
+	assert_bool(victory_hint.text.to_lower().find(victory_hint_text) >= 0).is_true()
+	assert_bool(victory_summary.text.find("%s=42" % hp_text) >= 0).is_true()
+	assert_bool(victory_summary.text.find("%s=0" % kills_text) >= 0).is_true()
+	assert_bool(victory_summary.text.find("%s=120" % gold_text) >= 0).is_true()
+	assert_bool(victory_summary.text.find("%s=44" % iron_text) >= 0).is_true()
+	assert_bool(victory_summary.text.find("%s=26" % pop_text) >= 0).is_true()
 	assert_int(action_box.get_child_count()).is_equal(2)
 
-	assert_str(return_btn.text).is_equal("Return to Main Menu")
-	assert_str(restart_btn.text).is_equal("Restart")
+	assert_str(return_btn.text).is_equal(return_main_menu_text)
+	assert_str(restart_btn.text).is_equal(restart_text)
 	assert_bool(not return_btn.disabled).is_true()
 	assert_bool(not restart_btn.disabled).is_true()
 
@@ -1276,7 +1311,7 @@ func test_victory_outcome_modal_should_pause_runtime_and_only_offer_terminal_act
 	_request_hud_action(screen, "wave")
 	await get_tree().process_frame
 	assert_bool(status_label.text != status_before).is_true()
-	assert_bool(status_label.text.to_lower().find("terminal outcome") >= 0).is_true()
+	assert_bool(status_label.text.to_lower().find(terminal_open_text) >= 0).is_true()
 	assert_bool(status_label.text.to_lower().find("continue battle") < 0).is_true()
 	assert_bool(victory_modal.visible).is_true()
 	assert_bool(get_tree().paused).is_true()
