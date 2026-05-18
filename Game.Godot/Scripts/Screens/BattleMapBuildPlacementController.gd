@@ -127,6 +127,17 @@ func update_drag_pointer_position(pointer_position: Vector2) -> bool:
 		_update_drag_preview()
 	return true
 
+func sync_drag_pointer(pointer_position: Vector2, hovered_slot_id: String) -> bool:
+	if not _drag_active:
+		return false
+	_pointer_position = pointer_position
+	var next_slot_id := hovered_slot_id.strip_edges()
+	if _hovered_slot_id != next_slot_id:
+		_hovered_slot_id = next_slot_id
+		_apply_current_legality_overlay()
+	_update_drag_preview()
+	return true
+
 func has_active_placement() -> bool:
 	return not _active_selection_id.is_empty()
 

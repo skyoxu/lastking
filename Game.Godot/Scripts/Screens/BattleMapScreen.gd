@@ -1,6 +1,7 @@
 extends Control
 
 const FORMAL_SCREEN_SIZE := Vector2(1600.0, 900.0)
+const GAME_MANAGER_SCRIPT := preload("res://Game.Godot/Scripts/Runtime/GameManager.cs")
 
 @onready var _bridge: Node = $CombatExperienceRuntimeBridge
 @onready var _wave_timer: Timer = $WaveTimer
@@ -28,6 +29,7 @@ var _resume_was_paused: bool = false
 var _last_locale: String = ""
 
 func _ready() -> void:
+	_ensure_runtime_singletons()
 	_apply_formal_screen_frame()
 	_suspend_main_runtime_layers()
 	_configure_controllers()
@@ -53,15 +55,30 @@ func _process(delta: float) -> void:
 	_runtime_coordinator.call("process_runtime_frame", delta)
 	_sync_scene_locale_texts()
 
+func _input(event: InputEvent) -> void:
+	_handle_pointer_input(event)
+
 func _unhandled_input(event: InputEvent) -> void:
+	_handle_pointer_input(event)
+
+func debug_handle_pointer_input(event: InputEvent) -> void:
+	_handle_pointer_input(event)
+
+func _handle_pointer_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
 		var motion_event := event as InputEventMouseMotion
-		if _build_placement_controller != null and _build_placement_controller.has_method("update_drag_pointer_position"):
+		if _build_placement_controller != null and _build_placement_controller.has_method("sync_drag_pointer"):
+			_build_placement_controller.call("sync_drag_pointer", motion_event.position, _slot_id_under_pointer(motion_event.position))
+		elif _build_placement_controller != null and _build_placement_controller.has_method("update_drag_pointer_position"):
 			_build_placement_controller.call("update_drag_pointer_position", motion_event.position)
 	if event is InputEventMouseButton:
 		var mouse_event := event as InputEventMouseButton
 		if mouse_event.button_index == MOUSE_BUTTON_LEFT and not mouse_event.pressed:
-			if _build_placement_controller != null and _build_placement_controller.has_method("handle_pointer_release_without_slot"):
+			var hovered_slot_id := _slot_id_under_pointer(mouse_event.position)
+			if not hovered_slot_id.is_empty():
+				if _build_placement_controller != null and _build_placement_controller.has_method("handle_battlefield_slot_released"):
+					_build_placement_controller.call("handle_battlefield_slot_released", hovered_slot_id)
+			elif _build_placement_controller != null and _build_placement_controller.has_method("handle_pointer_release_without_slot"):
 				_build_placement_controller.call("handle_pointer_release_without_slot")
 
 func _configure_controllers() -> void:
@@ -255,6 +272,13 @@ func _apply_formal_screen_frame() -> void:
 	anchor_bottom = 1.0
 	position = Vector2.ZERO
 
+func _ensure_runtime_singletons() -> void:
+	var manager: Node = get_node_or_null("/root/GameManager")
+	if manager == null and GAME_MANAGER_SCRIPT != null:
+		manager = GAME_MANAGER_SCRIPT.new()
+		manager.name = "GameManager"
+		get_tree().root.add_child(manager)
+
 func _resolve_main_root() -> Node:
 	var current: Node = self
 	while current != null:
@@ -262,6 +286,12 @@ func _resolve_main_root() -> Node:
 			return current
 		current = current.get_parent()
 	return null
+
+func _slot_id_under_pointer(screen_position: Vector2) -> String:
+	var battlefield_view: Node = get_node_or_null("Background")
+	if battlefield_view != null and battlefield_view.has_method("get_slot_id_at_screen_position"):
+		return str(battlefield_view.call("get_slot_id_at_screen_position", screen_position))
+	return ""
 
 func _connect_battlefield_selection_signals() -> void:
 	if not (_selection_controller != null and _selection_controller.has_method("select_formal_building_slot")):

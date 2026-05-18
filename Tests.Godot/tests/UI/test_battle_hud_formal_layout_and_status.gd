@@ -157,9 +157,23 @@ func test_battle_hud_should_remove_main_menu_and_fullscreen_combat_input_blocker
 	assert_object(main_menu).is_not_null()
 	assert_bool(main_menu.visible).is_false()
 	assert_int(int(main_menu.mouse_filter)).is_equal(Control.MOUSE_FILTER_IGNORE)
-	assert_int(int(combat_hud.mouse_filter)).is_equal(Control.MOUSE_FILTER_IGNORE)
+	assert_int(int(combat_hud.mouse_filter)).is_equal(Control.MOUSE_FILTER_PASS)
 	assert_bool(pause_button.disabled).is_false()
 	assert_bool(settings_button.disabled).is_false()
+
+func test_battle_screen_modal_layers_should_stack_above_hud_and_legacy_root_should_ignore_pointer() -> void:
+	var runtime := await _main_runtime()
+	var screen: Control = runtime["screen"]
+	var hud: Control = runtime["hud"]
+	var legacy_root: Control = screen.get_node("LegacyPrototypeRoot")
+	var settlement_modal: Control = screen.get_node("DailySettlementModal")
+	var victory_modal: Control = screen.get_node("VictoryOutcomeModal")
+	var defeat_modal: Control = screen.get_node("DefeatOutcomeModal")
+
+	assert_int(int(legacy_root.mouse_filter)).is_equal(Control.MOUSE_FILTER_IGNORE)
+	assert_int(settlement_modal.z_index).is_greater(int(hud.z_index))
+	assert_int(victory_modal.z_index).is_greater(int(hud.z_index))
+	assert_int(defeat_modal.z_index).is_greater(int(hud.z_index))
 
 func test_battle_hud_top_bar_speed_controls_should_apply_pause_and_resume() -> void:
 	var runtime := await _main_runtime()
