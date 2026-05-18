@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Game.Core.Contracts;
 using Game.Core.Contracts.Lastking;
+using System.Globalization;
 using Game.Godot.Adapters;
 using Game.Godot.Scripts.Runtime;
 using Game.Core.Services;
@@ -33,6 +34,7 @@ public partial class HUD : Control
     private Label _phase = default!;
     private Label _cycleRemaining = default!;
     private Label _health = default!;
+    private Label _resourcesLabel = default!;
     private Label _speedStateLabel = default!;
     private Button _settingsButton = default!;
     private PanelContainer _bottomBar = default!;
@@ -54,8 +56,11 @@ public partial class HUD : Control
     private TextureRect _barracksPreviewIcon = default!;
     private TextureRect _residencePreviewIcon = default!;
     private Label _towerTitleLabel = default!;
+    private Label _towerMetaLabel = default!;
     private Label _barracksTitleLabel = default!;
+    private Label _barracksMetaLabel = default!;
     private Label _residenceTitleLabel = default!;
+    private Label _residenceMetaLabel = default!;
     private Control _waveAction = default!;
     private Control _waveCooldownMask = default!;
     private Control _exchangeAction = default!;
@@ -143,6 +148,11 @@ public partial class HUD : Control
     private string _buildContextTitleOverride = string.Empty;
     private string _buildContextDetailOverride = string.Empty;
     private string _activeBuildSelectionId = string.Empty;
+    private bool _buildPlacementModeActive;
+    private GodotObject? _buildSelectionProvider;
+    private string _towerAffordabilityReason = string.Empty;
+    private string _barracksAffordabilityReason = string.Empty;
+    private string _residenceAffordabilityReason = string.Empty;
     private static readonly Vector2 FormalTopBarPosition = new(8f, 0f);
     private static readonly Vector2 FormalTopBarSize = new(1584f, 80f);
     private static readonly Vector2 FormalBottomBarPosition = new(8f, 704f);
@@ -161,6 +171,7 @@ public partial class HUD : Control
         _phase = GetNode<Label>("TopBar/HBox/PhaseLabel");
         _cycleRemaining = GetNode<Label>("TopBar/HBox/CycleRemainingLabel");
         _health = GetNode<Label>("TopBar/HBox/HealthLabel");
+        _resourcesLabel = GetNode<Label>("TopBar/HBox/ResourcesLabel");
         _speedStateLabel = GetNode<Label>("TopBar/HBox/SpeedStateLabel");
         _settingsButton = GetNode<Button>("TopBar/HBox/SettingsButton");
         _enemiesLabel = GetNode<Label>("TopBar/HBox/EnemiesLabel");
@@ -182,8 +193,11 @@ public partial class HUD : Control
         _barracksPreviewIcon = GetNode<TextureRect>("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/BarracksSlot/Card/PreviewIcon");
         _residencePreviewIcon = GetNode<TextureRect>("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/ResidenceSlot/Card/PreviewIcon");
         _towerTitleLabel = GetNode<Label>("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/TowerSlot/Card/Title");
+        _towerMetaLabel = GetNode<Label>("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/TowerSlot/Card/Meta");
         _barracksTitleLabel = GetNode<Label>("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/BarracksSlot/Card/Title");
+        _barracksMetaLabel = GetNode<Label>("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/BarracksSlot/Card/Meta");
         _residenceTitleLabel = GetNode<Label>("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/ResidenceSlot/Card/Title");
+        _residenceMetaLabel = GetNode<Label>("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/ResidenceSlot/Card/Meta");
         _waveAction = GetNode<Control>("CombatHud/BottomBar/Root/SkillsPanel/VBox/SkillButtons/WaveAction");
         _waveCooldownMask = GetNode<Control>("CombatHud/BottomBar/Root/SkillsPanel/VBox/SkillButtons/WaveAction/CooldownMask");
         _exchangeAction = GetNode<Control>("CombatHud/BottomBar/Root/SkillsPanel/VBox/SkillButtons/ExchangeAction");
@@ -231,6 +245,7 @@ public partial class HUD : Control
         RenderPhase();
         RenderCycleRemaining();
         _health.Text = $"{T("hud.hp")}: 100/100";
+        _resourcesLabel.Text = $"{T("hud.resources")}: {T("battlemap.resource.gold")} 0 | {T("battlemap.resource.iron")} 0 | {T("battlemap.resource.population")} 0";
         _moraleLabel.Text = $"{T("hud.morale")}: 100/100";
         _bottomBar.Visible = true;
         _combatCountsLabel.Text = $"{T("hud.allies")}: 0 | {T("hud.enemies")}: 0";
@@ -260,7 +275,7 @@ public partial class HUD : Control
         _dismissButton.Pressed += OnDismissFeedbackPressed;
         if (_buildAction is Button buildButton)
         {
-            buildButton.Pressed += () => RequestBattleAction("build");
+            buildButton.Pressed += OnBuildActionPressed;
         }
         _towerSlot.Connect(Button.SignalName.Pressed, Callable.From(() => RequestBattleAction("select_tower")));
         _barracksSlot.Connect(Button.SignalName.Pressed, Callable.From(() => RequestBattleAction("select_barracks")));
@@ -330,9 +345,11 @@ public partial class HUD : Control
         _activeFeedbackMessageKey = string.Empty;
         _hasPendingErrorDialog = false;
         _feedbackHideAtMs = 0f;
+        _buildPlacementModeActive = false;
         SetBattleHudActive(Visible);
 
         _bus = GetNodeOrNull<EventBusAdapter>("/root/EventBus");
+        _buildSelectionProvider = ResolveActiveBattleScreen()?.GetNodeOrNull<Node>("SelectionDataProvider");
         if (_bus != null)
         {
             _bus.Connect(EventBusAdapter.SignalName.DomainEventEmitted, new Callable(this, nameof(OnDomainEventEmitted)));
@@ -741,6 +758,10 @@ public partial class HUD : Control
         var runtimeCastleHp = ReadSummaryInt(runtimeSummary, "castle_hp", _lastCastleHpChanged?.CurrentHp ?? 100);
         var clampedCastleHp = Math.Clamp(runtimeCastleHp, 0, 100);
         _health.Text = $"{T("hud.hp")}: {clampedCastleHp}/100";
+        var gold = ReadSummaryInt(runtimeSummary, "resource_gold", _lastResourcesChanged?.Gold ?? 0);
+        var iron = ReadSummaryInt(runtimeSummary, "resource_iron", _lastResourcesChanged?.Iron ?? 0);
+        var population = ReadSummaryInt(runtimeSummary, "resource_population_cap", _lastResourcesChanged?.PopulationCap ?? 0);
+        _resourcesLabel.Text = $"{T("hud.resources")}: {T("battlemap.resource.gold")} {gold.ToString(CultureInfo.InvariantCulture)} | {T("battlemap.resource.iron")} {iron.ToString(CultureInfo.InvariantCulture)} | {T("battlemap.resource.population")} {population.ToString(CultureInfo.InvariantCulture)}";
         _moraleLabel.Text = $"{T("hud.morale")}: {clampedCastleHp}/100";
         _battlePressureSummaryLabel.Text = $"{T("hud.pressure")}: {_currentPressureState}";
         _battleSummaryLabel.Text = string.IsNullOrWhiteSpace(_battleStatusOverride)
@@ -756,6 +777,7 @@ public partial class HUD : Control
             ? T("hud.build_status_default")
             : _buildContextDetailOverride;
         _skillsHintLabel.Text = T("hud.skill_commands");
+        SyncBuildCardAffordability(runtimeSummary);
         _towerSlot.Text = string.Empty;
         _barracksSlot.Text = string.Empty;
         _residenceSlot.Text = string.Empty;
@@ -778,6 +800,14 @@ public partial class HUD : Control
 
     private void ApplyActionAvailability(bool buildAvailable, bool waveAvailable, bool exchangeAvailable, bool cleanupAvailable, bool finishAvailable)
     {
+        if (_buildPlacementModeActive)
+        {
+            waveAvailable = false;
+            exchangeAvailable = false;
+            cleanupAvailable = false;
+            finishAvailable = false;
+        }
+
         _buildAction.Modulate = new Color(1f, 1f, 1f, buildAvailable ? 1f : 0.5f);
         var waveAlpha = _waveCooldownHideAtMs > 0
             ? 0.5f
@@ -1030,6 +1060,13 @@ public partial class HUD : Control
         RefreshBottomBarFromRuntime();
     }
 
+    public void SetBuildPlacementMode(bool active)
+    {
+        _buildPlacementModeActive = active;
+        ApplyBuildActionLabel();
+        RefreshBottomBarFromRuntime();
+    }
+
     public void SetActiveBuildSelection(string selectionId)
     {
         _activeBuildSelectionId = selectionId?.Trim() ?? string.Empty;
@@ -1049,6 +1086,11 @@ public partial class HUD : Control
     {
         _battleStatusOverride = string.Empty;
         _battleSummaryOverride = string.Empty;
+        RefreshBottomBarFromRuntime();
+    }
+
+    public void RefreshBottomBarFromRuntimeForTest()
+    {
         RefreshBottomBarFromRuntime();
     }
 
@@ -1723,6 +1765,7 @@ public partial class HUD : Control
         _buildingsTitleLabel.Text = T("hud.buildings");
         _battleTitleLabel.Text = T("hud.battle");
         _skillsTitleLabel.Text = T("hud.skills");
+        ApplyBuildActionLabel();
         _battleReservedLabel.Text = T("hud.talent_state_info");
         if (string.IsNullOrWhiteSpace(_buildContextTitleOverride))
         {
@@ -1743,17 +1786,172 @@ public partial class HUD : Control
         _migrationRetryButton.Text = T("hud.retry_migration");
     }
 
+    private void OnBuildActionPressed()
+    {
+        RequestBattleAction(_buildPlacementModeActive ? "cancel_build" : "build");
+    }
+
+    private void ApplyBuildActionLabel()
+    {
+        if (_buildAction is not Button buildButton)
+        {
+            return;
+        }
+
+        buildButton.Text = _buildPlacementModeActive
+            ? T("hud.cancel_build")
+            : T("hud.build");
+    }
+
     private void RefreshBuildSlotLabelsAndIcons()
     {
+        var runtimeSummary = TryGetActiveBattleSummary();
         _towerSlot.Text = string.Empty;
         _barracksSlot.Text = string.Empty;
         _residenceSlot.Text = string.Empty;
-        _towerTitleLabel.Text = T("hud.build_slot.tower");
-        _barracksTitleLabel.Text = T("hud.build_slot.barracks");
-        _residenceTitleLabel.Text = T("hud.build_slot.residence");
-        ApplyBuildSlotPreviewIcon(_towerPreviewIcon, "res://Game.Godot/Assets/Textures/BattleMapBuildPreviews/battlemap_build_preview_tower.png", "tower");
-        ApplyBuildSlotPreviewIcon(_barracksPreviewIcon, "res://Game.Godot/Assets/Textures/BattleMapBuildPreviews/battlemap_build_preview_barracks.png", "barracks");
-        ApplyBuildSlotPreviewIcon(_residencePreviewIcon, "res://Game.Godot/Assets/Textures/BattleMapBuildPreviews/battlemap_build_preview_residence.png", "residence");
+        ApplyBuildSlotMetadata("tower_alpha", _towerTitleLabel, _towerMetaLabel, "res://Game.Godot/Assets/Textures/BattleMapBuildPreviews/battlemap_build_preview_tower.png", _towerPreviewIcon, "tower", runtimeSummary);
+        ApplyBuildSlotMetadata("barracks_alpha", _barracksTitleLabel, _barracksMetaLabel, "res://Game.Godot/Assets/Textures/BattleMapBuildPreviews/battlemap_build_preview_barracks.png", _barracksPreviewIcon, "barracks", runtimeSummary);
+        ApplyBuildSlotMetadata("farm_alpha", _residenceTitleLabel, _residenceMetaLabel, "res://Game.Godot/Assets/Textures/BattleMapBuildPreviews/battlemap_build_preview_residence.png", _residencePreviewIcon, "residence", runtimeSummary);
+    }
+
+    private void ApplyBuildSlotMetadata(string selectionId, Label titleLabel, Label metaLabel, string texturePath, TextureRect icon, string previewKind, GDictionary runtimeSummary)
+    {
+        var definition = GetBuildSelectionDefinition(selectionId);
+        titleLabel.Text = ReadBuildDefinitionText(definition, "display_name_key", $"hud.build_slot.{previewKind}") switch
+        {
+            var key when key.StartsWith("hud.", StringComparison.OrdinalIgnoreCase) => T(key),
+            var text => text,
+        };
+        metaLabel.Text = ComposeBuildMetaText(definition, runtimeSummary);
+        ApplyBuildSlotPreviewIcon(icon, texturePath, previewKind);
+    }
+
+    private GDictionary GetBuildSelectionDefinition(string selectionId)
+    {
+        _buildSelectionProvider ??= ResolveActiveBattleScreen()?.GetNodeOrNull<Node>("SelectionDataProvider");
+        if (_buildSelectionProvider is not Node provider || !provider.HasMethod("get_building_definition"))
+        {
+            return new GDictionary();
+        }
+
+        var value = provider.Call("get_building_definition", selectionId);
+        return value.VariantType == Variant.Type.Dictionary
+            ? value.AsGodotDictionary()
+            : new GDictionary();
+    }
+
+    private string ComposeBuildMetaText(GDictionary definition, GDictionary runtimeSummary)
+    {
+        var regionText = BuildRegionShortText(definition);
+        var goldCost = ReadBuildDefinitionInt(definition, "gold_cost", 0);
+        var ironCost = ReadBuildDefinitionInt(definition, "iron_cost", 0);
+        var populationCost = ReadBuildDefinitionInt(definition, "population_cost", 0);
+
+        var costParts = new List<string>();
+        if (goldCost > 0)
+        {
+            costParts.Add($"{T("battlemap.resource.gold")} {goldCost.ToString(CultureInfo.InvariantCulture)}");
+        }
+        if (ironCost > 0)
+        {
+            costParts.Add($"{T("battlemap.resource.iron")} {ironCost.ToString(CultureInfo.InvariantCulture)}");
+        }
+        if (populationCost > 0)
+        {
+            costParts.Add($"{T("battlemap.resource.population")} {populationCost.ToString(CultureInfo.InvariantCulture)}");
+        }
+
+        var costText = costParts.Count == 0
+            ? $"{T("battlemap.resource.gold")} 0"
+            : string.Join(" | ", costParts);
+        var gapText = ComposeBuildResourceGapText(runtimeSummary, goldCost, ironCost, populationCost);
+        return string.IsNullOrWhiteSpace(gapText)
+            ? $"{regionText} | {costText}"
+            : $"{regionText} | {costText}\n{gapText}";
+    }
+
+    private string ComposeBuildResourceGapText(GDictionary runtimeSummary, int goldCost, int ironCost, int populationCost)
+    {
+        var missingParts = new List<string>();
+        var gold = ReadSummaryInt(runtimeSummary, "resource_gold", 0);
+        var iron = ReadSummaryInt(runtimeSummary, "resource_iron", 0);
+        var population = ReadSummaryInt(runtimeSummary, "resource_population_cap", 0);
+        if (gold < goldCost)
+        {
+            missingParts.Add($"{T("battlemap.resource.gold")} {(goldCost - gold).ToString(CultureInfo.InvariantCulture)}");
+        }
+        if (iron < ironCost)
+        {
+            missingParts.Add($"{T("battlemap.resource.iron")} {(ironCost - iron).ToString(CultureInfo.InvariantCulture)}");
+        }
+        if (population < populationCost)
+        {
+            missingParts.Add($"{T("battlemap.resource.population")} {(populationCost - population).ToString(CultureInfo.InvariantCulture)}");
+        }
+
+        return missingParts.Count == 0
+            ? string.Empty
+            : $"{T("hud.missing")}: {string.Join(" | ", missingParts)}";
+    }
+
+    private string BuildRegionShortText(GDictionary definition)
+    {
+        if (definition.Count == 0 || !definition.ContainsKey("allowed_regions"))
+        {
+            return T("battlemap.build_region.inner_castle");
+        }
+
+        var regions = definition["allowed_regions"];
+        if (regions.VariantType != Variant.Type.Array)
+        {
+            return T("battlemap.build_region.inner_castle");
+        }
+
+        foreach (var item in regions.AsGodotArray())
+        {
+            var value = item.ToString();
+            if (string.Equals(value, "outer_field", StringComparison.Ordinal))
+            {
+                return T("battlemap.build_region.outer_field");
+            }
+        }
+
+        return T("battlemap.build_region.inner_castle");
+    }
+
+    private static int ReadBuildDefinitionInt(GDictionary definition, string key, int fallback)
+    {
+        if (definition.Count == 0 || !definition.ContainsKey(key))
+        {
+            return fallback;
+        }
+
+        var value = definition[key];
+        return value.VariantType switch
+        {
+            Variant.Type.Int => value.AsInt32(),
+            Variant.Type.Float => (int)value.AsDouble(),
+            Variant.Type.String when int.TryParse(value.AsString(), out var parsed) => parsed,
+            _ => fallback,
+        };
+    }
+
+    private static string ReadBuildDefinitionText(GDictionary definition, string key, string fallback)
+    {
+        if (definition.Count == 0 || !definition.ContainsKey(key))
+        {
+            return fallback;
+        }
+
+        var value = definition[key];
+        if (value.VariantType == Variant.Type.String)
+        {
+            var text = value.AsString();
+            return string.IsNullOrWhiteSpace(text) ? fallback : text;
+        }
+
+        var plain = value.ToString();
+        return string.IsNullOrWhiteSpace(plain) ? fallback : plain;
     }
 
     private void ForceBuildButtonsTextless()
@@ -1776,26 +1974,57 @@ public partial class HUD : Control
 
     private void SyncBuildPaletteVisualState()
     {
-        ApplyBuildSlotVisualState(_towerSlot, "tower_alpha");
-        ApplyBuildSlotVisualState(_barracksSlot, "barracks_alpha");
-        ApplyBuildSlotVisualState(_residenceSlot, "farm_alpha");
+        ApplyBuildSlotVisualState(_towerSlot, "tower_alpha", string.IsNullOrWhiteSpace(_towerAffordabilityReason));
+        ApplyBuildSlotVisualState(_barracksSlot, "barracks_alpha", string.IsNullOrWhiteSpace(_barracksAffordabilityReason));
+        ApplyBuildSlotVisualState(_residenceSlot, "farm_alpha", string.IsNullOrWhiteSpace(_residenceAffordabilityReason));
     }
 
-    private void ApplyBuildSlotVisualState(Button button, string selectionId)
+    private void ApplyBuildSlotVisualState(Button button, string selectionId, bool affordable)
     {
         var hasActiveSelection = !string.IsNullOrWhiteSpace(_activeBuildSelectionId);
         var isActive = hasActiveSelection && string.Equals(_activeBuildSelectionId, selectionId, StringComparison.Ordinal);
+        button.Disabled = !affordable;
         if (isActive)
         {
-            button.Modulate = new Color(1f, 1f, 1f, 1f);
+            button.Modulate = affordable ? new Color(1f, 1f, 1f, 1f) : new Color(1f, 1f, 1f, 0.42f);
             button.SelfModulate = new Color(1.08f, 1.02f, 0.9f, 1f);
             button.Scale = new Vector2(1.03f, 1.03f);
             return;
         }
 
-        button.Modulate = new Color(1f, 1f, 1f, hasActiveSelection ? 0.56f : 1f);
+        var baseAlpha = affordable ? (hasActiveSelection ? 0.56f : 1f) : 0.42f;
+        button.Modulate = new Color(1f, 1f, 1f, baseAlpha);
         button.SelfModulate = Colors.White;
         button.Scale = Vector2.One;
+    }
+
+    private void SyncBuildCardAffordability(GDictionary runtimeSummary)
+    {
+        _towerAffordabilityReason = ResolveBuildAffordabilityReason(runtimeSummary, "tower_alpha");
+        _barracksAffordabilityReason = ResolveBuildAffordabilityReason(runtimeSummary, "barracks_alpha");
+        _residenceAffordabilityReason = ResolveBuildAffordabilityReason(runtimeSummary, "farm_alpha");
+    }
+
+    private string ResolveBuildAffordabilityReason(GDictionary runtimeSummary, string selectionId)
+    {
+        var definition = GetBuildSelectionDefinition(selectionId);
+        if (definition.Count == 0)
+        {
+            return string.Empty;
+        }
+
+        var gold = ReadSummaryInt(runtimeSummary, "resource_gold", 0);
+        var iron = ReadSummaryInt(runtimeSummary, "resource_iron", 0);
+        var population = ReadSummaryInt(runtimeSummary, "resource_population_cap", 0);
+        var goldCost = ReadBuildDefinitionInt(definition, "gold_cost", 0);
+        var ironCost = ReadBuildDefinitionInt(definition, "iron_cost", 0);
+        var populationCost = ReadBuildDefinitionInt(definition, "population_cost", 0);
+        if (gold < goldCost || iron < ironCost || population < populationCost)
+        {
+            return T("battlemap.build_error.insufficient_resources");
+        }
+
+        return string.Empty;
     }
 
     private static void ApplyBuildSlotPreviewIcon(TextureRect icon, string texturePath, string previewKind)

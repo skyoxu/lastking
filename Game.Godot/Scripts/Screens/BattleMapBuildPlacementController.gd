@@ -51,6 +51,7 @@ func handle_action(action_code: String) -> bool:
 	match action_code:
 		"build":
 			cancel_active_placement()
+			_push_build_mode_to_hud(false)
 			_show_prompt("battlemap.prompt.choose_building_to_place", "Choose a building to place.")
 			return true
 		"select_tower":
@@ -140,6 +141,7 @@ func get_drag_preview_state() -> Dictionary:
 		"selection_id": _active_selection_id,
 		"slot_id": _hovered_slot_id,
 		"visual_state": _current_preview_visual_state(),
+		"invalid_badge_visible": false,
 		"position": _drag_preview.position if _drag_preview != null else Vector2.ZERO,
 		"tooltip_text": _drag_tooltip_label.text if _drag_tooltip_label != null else "",
 		"preview_kind": _preview_kind_for_selection(_active_selection_id),
@@ -157,6 +159,7 @@ func cancel_active_placement() -> void:
 		_selection_controller.call("set_placement_context_active", true)
 	if _selection_controller != null and _selection_controller.has_method("clear_building_selection"):
 		_selection_controller.call("clear_building_selection")
+	_push_build_mode_to_hud(false)
 	_push_active_build_selection_to_hud("")
 	_clear_build_context()
 	_update_drag_preview()
@@ -173,6 +176,7 @@ func _begin_placement(selection_id: String, drag_active: bool) -> bool:
 	_hovered_slot_id = ""
 	_pointer_position = Vector2.ZERO
 	_sync_occupied_slots_from_bridge()
+	_push_build_mode_to_hud(true)
 	if _selection_controller != null and _selection_controller.has_method("set_placement_context_active"):
 		_selection_controller.call("set_placement_context_active", true)
 	if _selection_controller != null and _selection_controller.has_method("clear_building_selection"):
@@ -261,7 +265,6 @@ func _update_drag_tooltip(state: String) -> void:
 		return
 	var building_name := _building_display_name()
 	var status_text := ""
-	var detail_text := _build_context_detail_text()
 	match state:
 		"legal":
 			status_text = _t("battlemap.drag_status.valid", "Valid")
@@ -269,7 +272,7 @@ func _update_drag_tooltip(state: String) -> void:
 			status_text = _t("battlemap.drag_status.invalid", "Invalid")
 		_:
 			status_text = _t("battlemap.drag_status.drag", "Drag")
-	_drag_tooltip_label.text = "%s\n%s\n%s" % [building_name, status_text, detail_text]
+	_drag_tooltip_label.text = "%s\n%s" % [building_name, status_text]
 	_drag_tooltip.visible = true
 	_drag_tooltip.position = _drag_preview.position + Vector2(56.0, 0.0)
 
@@ -508,7 +511,15 @@ func _preview_kind_for_selection(selection_id: String) -> String:
 func _push_active_build_selection_to_hud(selection_id: String) -> void:
 	if _battle_hud != null and _battle_hud.has_method("SetActiveBuildSelection"):
 		_battle_hud.call("SetActiveBuildSelection", selection_id)
+	if _battle_hud != null and _battle_hud.has_method("RefreshBottomBarFromRuntimeForTest"):
+		_battle_hud.call("RefreshBottomBarFromRuntimeForTest")
 	_apply_build_palette_visual_state(selection_id)
+
+func _push_build_mode_to_hud(active: bool) -> void:
+	if _battle_hud != null and _battle_hud.has_method("SetBuildPlacementMode"):
+		_battle_hud.call("SetBuildPlacementMode", active)
+	if _battle_hud != null and _battle_hud.has_method("RefreshBottomBarFromRuntimeForTest"):
+		_battle_hud.call("RefreshBottomBarFromRuntimeForTest")
 
 func _apply_build_palette_visual_state(selection_id: String) -> void:
 	if _battle_hud == null:
@@ -587,6 +598,8 @@ func _build_error_key_for_reason_code(reason_code: String) -> String:
 	match reason_code:
 		"tile_occupied", "blocked_tile":
 			return "battlemap.build_error.slot_occupied"
+		"insufficient_resources":
+			return "battlemap.build_error.insufficient_resources"
 		"wall_blocked":
 			return "battlemap.build_error.wall_blocked"
 		"invalid_target", "invalid_input", "invalid_terrain":
@@ -598,6 +611,8 @@ func _build_error_fallback(reason_key: String) -> String:
 	match reason_key:
 		"battlemap.build_error.slot_occupied":
 			return "That slot is already occupied."
+		"battlemap.build_error.insufficient_resources":
+			return "Not enough resources to place this building."
 		"battlemap.build_error.wall_blocked":
 			return "Buildings cannot be placed on wall tiles."
 		"battlemap.build_error.wrong_region":

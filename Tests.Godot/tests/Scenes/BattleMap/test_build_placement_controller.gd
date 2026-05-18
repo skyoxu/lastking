@@ -94,11 +94,13 @@ func test_drag_preview_should_switch_between_legal_and_illegal_visual_states() -
 	await _await_frames(1)
 	var legal_preview: Dictionary = controller.call("get_drag_preview_state")
 	assert_str(str(legal_preview.get("visual_state", ""))).is_equal("legal")
+	assert_bool(legal_preview.get("invalid_badge_visible", true) == false).is_true()
 
 	controller.call("handle_battlefield_slot_hovered", "LeftOuterFieldSlot_01_00")
 	await _await_frames(1)
 	var illegal_preview: Dictionary = controller.call("get_drag_preview_state")
 	assert_str(str(illegal_preview.get("visual_state", ""))).is_equal("illegal")
+	assert_bool(illegal_preview.get("invalid_badge_visible", true) == false).is_true()
 
 func test_drag_preview_should_follow_pointer_then_snap_to_hovered_slot() -> void:
 	var runtime := await _screen_runtime()
@@ -206,9 +208,51 @@ func test_dragging_building_should_highlight_active_build_palette_button() -> vo
 	assert_float(barracks_slot.modulate.a).is_equal(1.0)
 	assert_float(residence_slot.modulate.a).is_equal(1.0)
 
+func test_build_cards_should_disable_when_runtime_resources_are_insufficient() -> void:
+	var runtime := await _screen_runtime()
+	var screen: Control = runtime["screen"]
+	var hud: Control = runtime["hud"]
+	var bridge: Node = runtime["bridge"]
+	var tower_slot: Button = hud.get_node("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/TowerSlot")
+	var barracks_slot: Button = hud.get_node("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/BarracksSlot")
+	var residence_slot: Button = hud.get_node("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/ResidenceSlot")
+
+	bridge.call("ConfigureResourcesForTest", 40, 44, 26)
+	hud.call("RefreshBottomBarFromRuntimeForTest")
+	await _await_frames(2)
+
+	assert_bool(tower_slot.disabled).is_true()
+	assert_bool(barracks_slot.disabled).is_true()
+	assert_bool(residence_slot.disabled).is_false()
+
+	bridge.call("ConfigureResourcesForTest", 120, 44, 26)
+	hud.call("RefreshBottomBarFromRuntimeForTest")
+	await _await_frames(2)
+
+	assert_bool(tower_slot.disabled).is_false()
+	assert_bool(barracks_slot.disabled).is_false()
+	assert_bool(residence_slot.disabled).is_false()
+
+func test_build_cards_should_show_missing_resource_gap_when_runtime_resources_are_insufficient() -> void:
+	var runtime := await _screen_runtime()
+	var hud: Control = runtime["hud"]
+	var bridge: Node = runtime["bridge"]
+	var tower_meta: Label = hud.get_node("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/TowerSlot/Card/Meta")
+	var barracks_meta: Label = hud.get_node("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/BarracksSlot/Card/Meta")
+	var residence_meta: Label = hud.get_node("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/ResidenceSlot/Card/Meta")
+
+	bridge.call("ConfigureResourcesForTest", 40, 44, 26)
+	hud.call("RefreshBottomBarFromRuntimeForTest")
+	await _await_frames(2)
+
+	assert_str(tower_meta.text).contains("20")
+	assert_str(barracks_meta.text).contains("40")
+	assert_bool(residence_meta.text.find("Missing") < 0 and residence_meta.text.find("缺少") < 0).is_true()
+
 func test_invalid_drag_release_should_report_specific_reason_for_region_and_occupied_slot() -> void:
 	var runtime := await _screen_runtime()
 	var screen: Control = runtime["screen"]
+	var hud: Control = runtime["hud"]
 	var bridge: Node = runtime["bridge"]
 	var controller: Node = screen.get_node("BuildPlacementController")
 	var prompt_label: Label = screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/LocalFeedbackLayer/LocalPromptPanel/PromptLabel")
@@ -227,6 +271,7 @@ func test_invalid_drag_release_should_report_specific_reason_for_region_and_occu
 	controller.call("handle_battlefield_slot_released", "InnerCastleRegionSlot_03_00")
 	await _await_frames(2)
 	assert_bool(bridge.call("GetSummary").get("mg_tower_built", false) == true).is_true()
+	assert_int(int(bridge.call("GetSummary").get("resource_gold", -1))).is_equal(60)
 
 	controller.call("begin_drag_building", "tower_alpha")
 	controller.call("handle_battlefield_slot_hovered", "InnerCastleRegionSlot_03_00")
@@ -235,12 +280,20 @@ func test_invalid_drag_release_should_report_specific_reason_for_region_and_occu
 	await _await_frames(2)
 	assert_str(prompt_label.text).contains(str(presentation_controller.call("translate", "battlemap.build_error.slot_occupied")))
 
-func test_drag_hover_should_publish_slot_reason_overlay_for_invalid_cells() -> void:
+	bridge.call("ConfigureResourcesForTest", 20, 44, 26)
+	hud.call("RefreshBottomBarFromRuntimeForTest")
+	controller.call("begin_drag_building", "tower_alpha")
+	controller.call("handle_battlefield_slot_hovered", "InnerCastleRegionSlot_04_00")
+	await _await_frames(1)
+	controller.call("handle_battlefield_slot_released", "InnerCastleRegionSlot_04_00")
+	await _await_frames(2)
+	assert_str(prompt_label.text).contains(str(presentation_controller.call("translate", "battlemap.build_error.insufficient_resources")))
+
+func test_drag_hover_should_keep_invalid_cells_as_red_overlay_without_reason_bubble() -> void:
 	var runtime := await _screen_runtime()
 	var screen: Control = runtime["screen"]
 	var battlefield: Node = runtime["battlefield"]
 	var controller: Node = screen.get_node("BuildPlacementController")
-	var presentation_controller: Node = screen.get_node("PresentationController")
 	var bubble: Control = screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/LocalFeedbackLayer/PlacementReasonBubble")
 	var bubble_label: Label = screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/LocalFeedbackLayer/PlacementReasonBubble/BubbleLabel")
 
@@ -249,8 +302,8 @@ func test_drag_hover_should_publish_slot_reason_overlay_for_invalid_cells() -> v
 	await _await_frames(1)
 	var wrong_region_visual: Dictionary = battlefield.call("read_slot_visual", "LeftOuterFieldSlot_00_00")
 	assert_str(str(wrong_region_visual.get("overlay_state", ""))).is_equal("overlay_illegal")
-	assert_bool(bubble.visible).is_true()
-	assert_str(bubble_label.text).contains(str(presentation_controller.call("translate", "battlemap.build_error.wrong_region")))
+	assert_bool(bubble.visible).is_false()
+	assert_str(bubble_label.text).is_empty()
 
 	controller.call("handle_battlefield_slot_hovered", "InnerCastleRegionSlot_03_00")
 	controller.call("handle_battlefield_slot_released", "InnerCastleRegionSlot_03_00")
@@ -258,7 +311,36 @@ func test_drag_hover_should_publish_slot_reason_overlay_for_invalid_cells() -> v
 	controller.call("begin_drag_building", "tower_alpha")
 	controller.call("handle_battlefield_slot_hovered", "InnerCastleRegionSlot_03_00")
 	await _await_frames(1)
-	assert_str(bubble_label.text).contains(str(presentation_controller.call("translate", "battlemap.build_error.slot_occupied")))
+	var occupied_visual: Dictionary = battlefield.call("read_slot_visual", "InnerCastleRegionSlot_03_00")
+	assert_str(str(occupied_visual.get("overlay_state", ""))).is_equal("overlay_illegal")
+	assert_bool(bubble.visible).is_false()
+	assert_str(bubble_label.text).is_empty()
+
+func test_build_drag_mode_should_switch_build_button_to_cancel_and_lock_other_actions() -> void:
+	var runtime := await _screen_runtime()
+	var screen: Control = runtime["screen"]
+	var hud: Control = runtime["hud"]
+	var controller: Node = screen.get_node("BuildPlacementController")
+	var build_action: Button = hud.get_node("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/BuildAction")
+	var wave_action: Button = hud.get_node("CombatHud/BottomBar/Root/SkillsPanel/VBox/SkillButtons/WaveAction")
+	var exchange_action: Button = hud.get_node("CombatHud/BottomBar/Root/SkillsPanel/VBox/SkillButtons/ExchangeAction")
+	var cleanup_action: Button = hud.get_node("CombatHud/BottomBar/Root/SkillsPanel/VBox/SkillButtons/CleanupAction")
+	var finish_action: Button = hud.get_node("CombatHud/BottomBar/Root/SkillsPanel/VBox/SkillButtons/FinishAction")
+
+	controller.call("begin_drag_building", "tower_alpha")
+	await _await_frames(2)
+
+	assert_bool(build_action.text.find("Cancel") >= 0 or build_action.text.find("取消") >= 0).is_true()
+	assert_bool(wave_action.disabled).is_true()
+	assert_bool(exchange_action.disabled).is_true()
+	assert_bool(cleanup_action.disabled).is_true()
+	assert_bool(finish_action.disabled).is_true()
+
+	controller.call("cancel_active_placement")
+	await _await_frames(2)
+
+	assert_bool(build_action.text.find("Build") >= 0 or build_action.text.find("建造") >= 0).is_true()
+	assert_bool(wave_action.disabled).is_false()
 
 func test_drag_release_outside_slot_should_cancel_drag_without_placing() -> void:
 	var runtime := await _screen_runtime()

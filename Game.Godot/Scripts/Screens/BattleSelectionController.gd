@@ -65,12 +65,32 @@ func apply_hover_overlay_context(legality_by_slot: Dictionary, payload: Dictiona
 
 func read_slot_visual(slot_id: String) -> Dictionary:
 	var selection_visual: Variant = _selection_slot_visuals.get(slot_id, null)
+	var overlay_visual: Variant = _overlay_slot_visuals.get(slot_id, null)
+	if selection_visual is Dictionary and overlay_visual is Dictionary:
+		return _merge_slot_visuals(
+			(selection_visual as Dictionary).duplicate(true),
+			(overlay_visual as Dictionary).duplicate(true)
+		)
 	if selection_visual is Dictionary:
 		return (selection_visual as Dictionary).duplicate(true)
-	var overlay_visual: Variant = _overlay_slot_visuals.get(slot_id, null)
 	if overlay_visual is Dictionary:
 		return (overlay_visual as Dictionary).duplicate(true)
 	return _hidden_visual()
+
+func _merge_slot_visuals(selection_visual: Dictionary, overlay_visual: Dictionary) -> Dictionary:
+	var overlay_state := str(overlay_visual.get("overlay_state", "overlay_hidden"))
+	if overlay_state == "overlay_hidden":
+		return selection_visual
+	var merged := selection_visual.duplicate(true)
+	merged["overlay_state"] = overlay_state
+	merged["overlay_tint"] = str(overlay_visual.get("overlay_tint", merged.get("overlay_tint", "none")))
+	merged["marker"] = str(overlay_visual.get("marker", merged.get("marker", "none")))
+	merged["frame"] = str(overlay_visual.get("frame", merged.get("frame", "none")))
+	merged["range_clipped"] = overlay_visual.get("range_clipped", false) == true or merged.get("range_clipped", false) == true
+	var overlay_reason := str(overlay_visual.get("reason_text", ""))
+	if not overlay_reason.is_empty():
+		merged["reason_text"] = overlay_reason
+	return merged
 
 func set_placement_context_active(active: bool) -> void:
 	_selection_context_active = active
@@ -231,13 +251,7 @@ func _sync_runtime_visuals() -> void:
 		battlefield_view.call("apply_slot_visual", slot_id, visual)
 
 func _should_apply_hover_reason(slot_id: String, visual: Dictionary) -> bool:
-	if _hover_overlay_context.is_empty():
-		return false
-	if slot_id != str(_hover_overlay_context.get("hovered_slot_id", "")):
-		return false
-	if str(_hover_overlay_context.get("reason_text", "")).is_empty():
-		return false
-	return str(visual.get("overlay_state", "")) == "overlay_illegal"
+	return false
 
 func _read_overlay_slot_visual(slot_id: String) -> Dictionary:
 	var controller: Node = get_overlay_controller()

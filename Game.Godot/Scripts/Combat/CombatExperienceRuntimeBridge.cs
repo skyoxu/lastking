@@ -9,6 +9,20 @@ namespace Lastking.Game.Godot.Scripts.Combat;
 
 public partial class CombatExperienceRuntimeBridge : Node
 {
+    private readonly struct BuildCost
+    {
+        public BuildCost(int gold, int iron, int population)
+        {
+            Gold = gold;
+            Iron = iron;
+            Population = population;
+        }
+
+        public int Gold { get; }
+        public int Iron { get; }
+        public int Population { get; }
+    }
+
     private sealed class RuntimeActor
     {
         public required string NodeName { get; init; }
@@ -17,6 +31,8 @@ public partial class CombatExperienceRuntimeBridge : Node
         public bool Active { get; set; } = true;
         public float PathProgress { get; set; }
         public bool IsMovingEnemy { get; set; }
+        public bool IsAttackingWall { get; set; }
+        public double WallAttackCooldownSeconds { get; set; }
     }
 
     private Node _battlefield = default!;
@@ -34,8 +50,21 @@ public partial class CombatExperienceRuntimeBridge : Node
     private string _defeatReason = string.Empty;
     private string _forcedOutcomeOverride = string.Empty;
     private readonly System.Collections.Generic.List<string> _activeDamageNumberNames = new();
+    private readonly System.Collections.Generic.Dictionary<string, string> _placedBuildingSlots = new(StringComparer.Ordinal);
+    private static readonly System.Collections.Generic.Dictionary<string, BuildCost> BuildCosts = new(StringComparer.Ordinal)
+    {
+        ["tower_alpha"] = new BuildCost(gold: 60, iron: 0, population: 0),
+        ["barracks_alpha"] = new BuildCost(gold: 80, iron: 0, population: 0),
+        ["farm_alpha"] = new BuildCost(gold: 30, iron: 0, population: 0),
+    };
+    private static readonly BuildCost FriendlyTrainingCost = new(gold: 20, iron: 0, population: 0);
     private int _friendlyUnitSeq;
     private int _enemyUnitSeq;
+    private const float EnemyTravelSpeedPerSecond = 0.12f;
+    private const float WallInterceptProgress = 0.78f;
+    private const double WallAttackIntervalSeconds = 1.0d;
+    private const int WallAttackDamage = 5;
+    private const int CastleAttackDamage = 5;
     private const string SettingsConfigPath = "user://settings.cfg";
     private const string SettingsSection = "settings";
     private const string DamageNumbersEnabledKey = "combat_damage_numbers_enabled";
@@ -70,9 +99,10 @@ public partial class CombatExperienceRuntimeBridge : Node
         _friendlyUnitSeq = 0;
         _enemyUnitSeq = 0;
         _activeDamageNumberNames.Clear();
-        _resourceGold = 0;
-        _resourceIron = 0;
-        _resourcePopulationCap = 0;
+        _placedBuildingSlots.Clear();
+        _resourceGold = 120;
+        _resourceIron = 44;
+        _resourcePopulationCap = 26;
         _outcome = "win";
         _defeatReason = string.Empty;
         _forcedOutcomeOverride = string.Empty;
@@ -99,13 +129,110 @@ public partial class CombatExperienceRuntimeBridge : Node
         return GetSummary();
     }
 
+    public GDictionary PlaceBuildingAtSlot(string selectionId, string slotId)
+    {
+        EnsureBattlefield();
+
+        if (string.IsNullOrWhiteSpace(selectionId) || string.IsNullOrWhiteSpace(slotId))
+        {
+            return new GDictionary
+            {
+                ["placed"] = false,
+                ["reason"] = "invalid_input",
+            };
+        }
+
+        if (_placedBuildingSlots.ContainsKey(slotId))
+        {
+            return new GDictionary
+            {
+                ["placed"] = false,
+                ["reason"] = "tile_occupied",
+                ["summary"] = GetSummary(),
+            };
+        }
+
+        var nodeName = selectionId switch
+        {
+            "tower_alpha" => "MgTower",
+            "barracks_alpha" => "Barracks",
+            "farm_alpha" => "Residence",
+            _ => string.Empty,
+        };
+
+        if (string.IsNullOrWhiteSpace(nodeName))
+        {
+            return new GDictionary
+            {
+                ["placed"] = false,
+                ["reason"] = "invalid_target",
+            };
+        }
+
+        if (!BuildCosts.TryGetValue(selectionId, out var cost))
+        {
+            return new GDictionary
+            {
+                ["placed"] = false,
+                ["reason"] = "invalid_target",
+                ["summary"] = GetSummary(),
+            };
+        }
+
+        if (_resourceGold < cost.Gold || _resourceIron < cost.Iron || _resourcePopulationCap < cost.Population)
+        {
+            return new GDictionary
+            {
+                ["placed"] = false,
+                ["reason"] = "insufficient_resources",
+                ["summary"] = GetSummary(),
+            };
+        }
+
+        if (!HasNode($"Battlefield/{nodeName}"))
+        {
+            AddMarker(nodeName);
+        }
+
+        _resourceGold -= cost.Gold;
+        _resourceIron -= cost.Iron;
+        _resourcePopulationCap -= cost.Population;
+        _placedBuildingSlots[slotId] = selectionId;
+        return new GDictionary
+        {
+            ["placed"] = true,
+            ["node_name"] = nodeName,
+            ["slot_id"] = slotId,
+            ["summary"] = GetSummary(),
+        };
+    }
+
     public GDictionary TrainFriendlyUnitPhase()
     {
         EnsureBattlefield();
+        if (_resourceGold < FriendlyTrainingCost.Gold
+            || _resourceIron < FriendlyTrainingCost.Iron
+            || _resourcePopulationCap < FriendlyTrainingCost.Population)
+        {
+            return new GDictionary
+            {
+                ["trained"] = false,
+                ["reason"] = "insufficient_resources",
+                ["summary"] = GetSummary(),
+            };
+        }
+
+        _resourceGold -= FriendlyTrainingCost.Gold;
+        _resourceIron -= FriendlyTrainingCost.Iron;
+        _resourcePopulationCap -= FriendlyTrainingCost.Population;
         _friendlyUnitSeq += 1;
         AddActor($"FriendlyUnit{_friendlyUnitSeq}", teamId: 1, hp: 35);
 
-        return GetSummary();
+        return new GDictionary
+        {
+            ["trained"] = true,
+            ["summary"] = GetSummary(),
+        };
     }
 
     public GDictionary SpawnEnemyWavePhase()
@@ -165,15 +292,14 @@ public partial class CombatExperienceRuntimeBridge : Node
 
     public GDictionary PublishOutcomePhase()
     {
-        _resourceGold = 120;
-        _resourceIron = 44;
-        _resourcePopulationCap = 26;
         SyncTerminalOutcomeState();
         _outcome = string.IsNullOrWhiteSpace(_forcedOutcomeOverride)
             ? (_defeatReason.Length == 0 ? "win" : "loss")
             : _forcedOutcomeOverride;
         Publish(EventTypes.LastkingCastleHpChanged, "{\"Day\":9,\"PreviousHp\":100,\"CurrentHp\":42}");
-        Publish(EventTypes.LastkingResourcesChanged, "{\"RunId\":\"combat-e2e\",\"DayNumber\":9,\"Gold\":120,\"Iron\":44,\"PopulationCap\":26}");
+        Publish(
+            EventTypes.LastkingResourcesChanged,
+            $"{{\"RunId\":\"combat-e2e\",\"DayNumber\":9,\"Gold\":{_resourceGold},\"Iron\":{_resourceIron},\"PopulationCap\":{_resourcePopulationCap}}}");
         Publish(EventTypes.LastkingUiFeedbackRaised, "{\"Code\":\"run_continue_blocked\",\"MessageKey\":\"ui.blocked_action.combat_exchange\",\"Details\":\"combat_exchange projectiles=2 retired=1\"}");
         Publish(EventTypes.RunStateTransitioned, $"{{\"outcome\":\"{_outcome}\",\"day\":9}}");
         return GetSummary();
@@ -231,6 +357,14 @@ public partial class CombatExperienceRuntimeBridge : Node
         return GetSummary();
     }
 
+    public GDictionary ConfigureResourcesForTest(int gold, int iron, int populationCap)
+    {
+        _resourceGold = Math.Max(0, gold);
+        _resourceIron = Math.Max(0, iron);
+        _resourcePopulationCap = Math.Max(0, populationCap);
+        return GetSummary();
+    }
+
     public GDictionary GetSummary()
     {
         var activeCombatNodes = CountActiveCombatNodes();
@@ -256,6 +390,17 @@ public partial class CombatExperienceRuntimeBridge : Node
         };
     }
 
+    public GDictionary GetPlacedBuildingSlots()
+    {
+        var slots = new GDictionary();
+        foreach (var pair in _placedBuildingSlots)
+        {
+            slots[pair.Key] = pair.Value;
+        }
+
+        return slots;
+    }
+
     public void AdvanceSimulation(double deltaSeconds)
     {
         if (deltaSeconds <= 0)
@@ -270,27 +415,41 @@ public partial class CombatExperienceRuntimeBridge : Node
                 continue;
             }
 
-            actor.PathProgress = Math.Clamp(actor.PathProgress + (float)deltaSeconds * 0.12f, 0f, 1f);
+            if (_wallHp > 0)
+            {
+                var nextProgress = Math.Clamp(actor.PathProgress + (float)deltaSeconds * EnemyTravelSpeedPerSecond, 0f, 1f);
+                if (actor.IsAttackingWall || nextProgress >= WallInterceptProgress)
+                {
+                    actor.IsAttackingWall = true;
+                    actor.PathProgress = WallInterceptProgress;
+                    actor.WallAttackCooldownSeconds -= deltaSeconds;
+                    if (actor.WallAttackCooldownSeconds <= 0d)
+                    {
+                        actor.WallAttackCooldownSeconds += WallAttackIntervalSeconds;
+                        _wallHp = Math.Max(0, _wallHp - WallAttackDamage);
+                        if (_wallHp <= 0)
+                        {
+                            _defeatReason = "wall_breached";
+                            actor.IsAttackingWall = false;
+                            actor.WallAttackCooldownSeconds = 0d;
+                        }
+                    }
+                    continue;
+                }
+            }
+
+            actor.IsAttackingWall = false;
+            actor.WallAttackCooldownSeconds = 0d;
+            actor.PathProgress = Math.Clamp(actor.PathProgress + (float)deltaSeconds * EnemyTravelSpeedPerSecond, 0f, 1f);
             if (actor.PathProgress >= 1f)
             {
                 actor.Active = false;
                 var node = _battlefield.GetNodeOrNull<Node>(actor.NodeName);
                 node?.QueueFree();
-                if (_wallHp > 0)
+                _castleHp = Math.Max(0, _castleHp - CastleAttackDamage);
+                if (_castleHp <= 0)
                 {
-                    _wallHp = Math.Max(0, _wallHp - 5);
-                    if (_wallHp <= 0)
-                    {
-                        _defeatReason = "wall_breached";
-                    }
-                }
-                else
-                {
-                    _castleHp = Math.Max(0, _castleHp - 5);
-                    if (_castleHp <= 0)
-                    {
-                        _defeatReason = "castle_destroyed";
-                    }
+                    _defeatReason = "castle_destroyed";
                 }
             }
         }
@@ -343,6 +502,7 @@ public partial class CombatExperienceRuntimeBridge : Node
                 ["active"] = actor.Active,
                 ["path_progress"] = actor.PathProgress,
                 ["is_moving_enemy"] = actor.IsMovingEnemy,
+                ["state"] = actor.IsAttackingWall ? "attacking_wall" : "advancing",
             });
         }
 
@@ -367,6 +527,7 @@ public partial class CombatExperienceRuntimeBridge : Node
         }
 
         _actors.Clear();
+        _placedBuildingSlots.Clear();
     }
 
     private void AddMarker(string name)
@@ -527,3 +688,4 @@ public partial class CombatExperienceRuntimeBridge : Node
         bus?.PublishSimple(type, "combat-experience-runtime", payload);
     }
 }
+
