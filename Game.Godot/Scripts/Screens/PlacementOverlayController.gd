@@ -40,11 +40,11 @@ func render_outcome(_slot_id: String, legality: String) -> Dictionary:
 		LEGALITY_VALID_INNER:
 			return _visual(true, "warm", "none", "none", "")
 		LEGALITY_VALID_OUTER:
-			return _visual(true, "cool", "none", "none", "")
+			return _visual(true, "warm", "none", "none", "")
 		LEGALITY_OUTSIDE_VALID:
 			return _visual(false, "none", "none", "none", "")
 		LEGALITY_FIXED_INVALID:
-			return _visual(false, "grey", "lock", "grey", "")
+			return _visual(false, "red", "none", "red", "")
 		LEGALITY_TEMP_INVALID:
 			return _visual(false, "none", "none", "red", "")
 		LEGALITY_WALL:

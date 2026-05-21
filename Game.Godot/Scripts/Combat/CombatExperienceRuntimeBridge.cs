@@ -1,8 +1,12 @@
 using System;
+using System.Linq;
+using Game.Core.Services;
 using Game.Core.Contracts;
 using Game.Godot.Adapters;
 using Godot;
 using Godot.Collections;
+using System.IO;
+using System.Text.Json;
 using GDictionary = Godot.Collections.Dictionary;
 
 namespace Lastking.Game.Godot.Scripts.Combat;
@@ -33,16 +37,66 @@ public partial class CombatExperienceRuntimeBridge : Node
         public bool IsMovingEnemy { get; set; }
         public bool IsAttackingWall { get; set; }
         public double WallAttackCooldownSeconds { get; set; }
+        public int WallAttackDamage { get; set; }
+        public float MoveSpeedProgressPerSecond { get; set; }
+        public float AttackRangePx { get; set; }
+        public double AttackIntervalSeconds { get; set; }
+        public string VisualTier { get; set; } = "grunt";
+        public bool IsElite { get; set; }
+        public bool IsBoss { get; set; }
+    }
+
+    private sealed class RuntimeEnemyProfile
+    {
+        public required int Health { get; init; }
+        public required int Damage { get; init; }
+        public required float MoveSpeedProgressPerSecond { get; init; }
+        public required float AttackRangePx { get; init; }
+        public required double AttackIntervalSeconds { get; init; }
+        public required string VisualTier { get; init; }
+        public required bool IsElite { get; init; }
+        public required bool IsBoss { get; init; }
+    }
+
+    private readonly struct TowerPlacementRuntime
+    {
+        public TowerPlacementRuntime(string slotId, string nodeName, Vector2 center)
+        {
+            SlotId = slotId;
+            NodeName = nodeName;
+            Center = center;
+        }
+
+        public string SlotId { get; }
+        public string NodeName { get; }
+        public Vector2 Center { get; }
+    }
+
+    private readonly struct TowerCombatProfile
+    {
+        public TowerCombatProfile(float rangePx, double attackIntervalSeconds, int attackDamage, string targetingMode)
+        {
+            RangePx = rangePx;
+            AttackIntervalSeconds = attackIntervalSeconds;
+            AttackDamage = attackDamage;
+            TargetingMode = targetingMode;
+        }
+
+        public float RangePx { get; }
+        public double AttackIntervalSeconds { get; }
+        public int AttackDamage { get; }
+        public string TargetingMode { get; }
     }
 
     private Node _battlefield = default!;
     private readonly System.Collections.Generic.Dictionary<string, RuntimeActor> _actors = new(StringComparer.Ordinal);
+    private readonly System.Collections.Generic.Dictionary<string, string> _placedBuildingNodeNames = new(StringComparer.Ordinal);
     private int _projectilesCreated;
     private int _combatExchanges;
     private int _deadUnitsRetired;
     private int _enemyUnitsSpawned;
     private int _castleHp = 100;
-    private int _wallHp = 20;
+    private int _wallHp = 100;
     private int _resourceGold;
     private int _resourceIron;
     private int _resourcePopulationCap;
@@ -51,9 +105,11 @@ public partial class CombatExperienceRuntimeBridge : Node
     private string _forcedOutcomeOverride = string.Empty;
     private readonly System.Collections.Generic.List<string> _activeDamageNumberNames = new();
     private readonly System.Collections.Generic.Dictionary<string, string> _placedBuildingSlots = new(StringComparer.Ordinal);
+    private readonly System.Collections.Generic.List<GDictionary> _towerShotEvents = new();
     private static readonly System.Collections.Generic.Dictionary<string, BuildCost> BuildCosts = new(StringComparer.Ordinal)
     {
         ["tower_alpha"] = new BuildCost(gold: 60, iron: 0, population: 0),
+        ["tower_beta"] = new BuildCost(gold: 90, iron: 10, population: 0),
         ["barracks_alpha"] = new BuildCost(gold: 80, iron: 0, population: 0),
         ["farm_alpha"] = new BuildCost(gold: 30, iron: 0, population: 0),
     };
@@ -61,14 +117,48 @@ public partial class CombatExperienceRuntimeBridge : Node
     private int _friendlyUnitSeq;
     private int _enemyUnitSeq;
     private const float EnemyTravelSpeedPerSecond = 0.12f;
-    private const float WallInterceptProgress = 0.78f;
-    private const double WallAttackIntervalSeconds = 1.0d;
+    private const double WallAttackIntervalSeconds = 2.0d;
     private const int WallAttackDamage = 5;
     private const int CastleAttackDamage = 5;
+    private static readonly Vector2[] PathPoints =
+    {
+        new(1488f, 312f),
+        new(96f, 312f),
+    };
+    private static readonly System.Collections.Generic.Dictionary<string, Vector2> RuntimeMarkerPositions = new(StringComparer.Ordinal)
+    {
+        ["MgTower"] = new Vector2(792f, 24f),
+        ["Barracks"] = new Vector2(648f, 24f),
+        ["Residence"] = new Vector2(936f, 24f),
+    };
+    private const float LeftWallCenterX = 600f;
+    private const float RightWallCenterX = 984f;
     private const string SettingsConfigPath = "user://settings.cfg";
     private const string SettingsSection = "settings";
     private const string DamageNumbersEnabledKey = "combat_damage_numbers_enabled";
     private const string LegacyDamageNumbersEnabledKey = "damage_numbers_enabled";
+    private string _enemyRuntimeConfigJson = string.Empty;
+    private readonly ConfigManager _enemyRuntimeConfigManager = new();
+    private readonly EnemyConfigRuntimeResolver _enemyConfigResolver = new();
+    private bool _battleMapAutoSpawnEnabled = true;
+    private int _battleMapSpawnCadenceSeconds = 8;
+    private int _battleMapConfiguredWaveSize = 2;
+    private readonly System.Collections.Generic.List<string[]> _battleMapWaveSequence = new();
+    private int _battleMapWaveCursor;
+    private const string BattleMapRuntimeConfigPath = "res://Game.Godot/Config/battlemap-runtime.config.json";
+    private readonly System.Collections.Generic.Dictionary<string, double> _towerAttackCooldownSecondsByNodeName = new(StringComparer.Ordinal);
+    private string _lastTowerTargetName = string.Empty;
+    private readonly System.Collections.Generic.Dictionary<string, string> _lastTowerTargetNameByNodeName = new(StringComparer.Ordinal);
+    private static readonly TowerCombatProfile MgTowerProfile = new(
+        rangePx: 300f,
+        attackIntervalSeconds: 2.0d,
+        attackDamage: 25,
+        targetingMode: "frontline_finisher_split");
+    private static readonly TowerCombatProfile SniperTowerProfile = new(
+        rangePx: 420f,
+        attackIntervalSeconds: 1.2d,
+        attackDamage: 14,
+        targetingMode: "frontline_pressure_split");
 
     public override void _Ready()
     {
@@ -89,13 +179,14 @@ public partial class CombatExperienceRuntimeBridge : Node
 
     public void ResetForInteractiveRun()
     {
+        LoadBattleMapRuntimeConfig();
         ResetBattlefield();
         _projectilesCreated = 0;
         _combatExchanges = 0;
         _deadUnitsRetired = 0;
         _enemyUnitsSpawned = 0;
         _castleHp = 100;
-        _wallHp = 20;
+        _wallHp = 100;
         _friendlyUnitSeq = 0;
         _enemyUnitSeq = 0;
         _activeDamageNumberNames.Clear();
@@ -106,6 +197,15 @@ public partial class CombatExperienceRuntimeBridge : Node
         _outcome = "win";
         _defeatReason = string.Empty;
         _forcedOutcomeOverride = string.Empty;
+        _towerAttackCooldownSecondsByNodeName.Clear();
+        _lastTowerTargetName = string.Empty;
+        _lastTowerTargetNameByNodeName.Clear();
+        _towerShotEvents.Clear();
+        _battleMapWaveCursor = 0;
+        if (_enemyRuntimeConfigManager.Snapshot.CastleStartHp > 0)
+        {
+            _castleHp = _enemyRuntimeConfigManager.Snapshot.CastleStartHp;
+        }
     }
 
     public GDictionary BuildPhase()
@@ -152,13 +252,7 @@ public partial class CombatExperienceRuntimeBridge : Node
             };
         }
 
-        var nodeName = selectionId switch
-        {
-            "tower_alpha" => "MgTower",
-            "barracks_alpha" => "Barracks",
-            "farm_alpha" => "Residence",
-            _ => string.Empty,
-        };
+        var nodeName = ResolvePlacedBuildingNodeName(selectionId, slotId);
 
         if (string.IsNullOrWhiteSpace(nodeName))
         {
@@ -191,13 +285,14 @@ public partial class CombatExperienceRuntimeBridge : Node
 
         if (!HasNode($"Battlefield/{nodeName}"))
         {
-            AddMarker(nodeName);
+            AddMarker(nodeName, ResolveMarkerPosition(nodeName, slotId));
         }
 
         _resourceGold -= cost.Gold;
         _resourceIron -= cost.Iron;
         _resourcePopulationCap -= cost.Population;
         _placedBuildingSlots[slotId] = selectionId;
+        _placedBuildingNodeNames[slotId] = nodeName;
         return new GDictionary
         {
             ["placed"] = true,
@@ -238,15 +333,27 @@ public partial class CombatExperienceRuntimeBridge : Node
     public GDictionary SpawnEnemyWavePhase()
     {
         EnsureBattlefield();
-        _enemyUnitSeq += 1;
-        AddActor($"EnemyUnit{_enemyUnitSeq}", teamId: 2, hp: 30, movingEnemy: true);
-        _enemyUnitsSpawned += 1;
-        _enemyUnitSeq += 1;
-        AddActor($"EnemyUnit{_enemyUnitSeq}", teamId: 2, hp: 20, movingEnemy: true);
-        _enemyUnitsSpawned += 1;
+        var spawnedCount = 0;
+        foreach (var enemyProfile in ResolveCurrentWaveProfiles())
+        {
+            _enemyUnitSeq += 1;
+            AddActor($"EnemyUnit{_enemyUnitSeq}", teamId: 2, hp: enemyProfile.Health, movingEnemy: true, enemyProfile: enemyProfile);
+            _enemyUnitsSpawned += 1;
+            spawnedCount += 1;
+        }
 
-        Publish(EventTypes.LastkingWaveSpawned, "{\"day\":9,\"count\":2}");
+        Publish(EventTypes.LastkingWaveSpawned, $"{{\"day\":9,\"count\":{spawnedCount}}}");
         return GetSummary();
+    }
+
+    public int GetSpawnCadenceSeconds()
+    {
+        return Math.Max(1, _battleMapSpawnCadenceSeconds);
+    }
+
+    public bool IsAutoSpawnEnabled()
+    {
+        return _battleMapAutoSpawnEnabled;
     }
 
     public GDictionary ResolveCombatExchangePhase()
@@ -370,7 +477,7 @@ public partial class CombatExperienceRuntimeBridge : Node
         var activeCombatNodes = CountActiveCombatNodes();
         return new GDictionary
         {
-            ["mg_tower_built"] = HasNode("Battlefield/MgTower"),
+            ["mg_tower_built"] = GetTowerNodeNames().Count > 0,
             ["barracks_built"] = HasNode("Battlefield/Barracks"),
             ["residence_built"] = HasNode("Battlefield/Residence"),
             ["friendly_units_deployed"] = CountActiveActorsByTeam(1),
@@ -401,6 +508,33 @@ public partial class CombatExperienceRuntimeBridge : Node
         return slots;
     }
 
+    public GDictionary GetPlacedBuildingNodeNames()
+    {
+        var nodes = new GDictionary();
+        foreach (var pair in _placedBuildingSlots)
+        {
+            var nodeName = _placedBuildingNodeNames.TryGetValue(pair.Key, out var storedNodeName)
+                && !string.IsNullOrWhiteSpace(storedNodeName)
+                ? storedNodeName
+                : ResolvePlacedBuildingNodeName(pair.Value, pair.Key);
+            nodes[pair.Key] = nodeName;
+        }
+
+        return nodes;
+    }
+
+    public global::Godot.Collections.Array ConsumeTowerShotEvents()
+    {
+        var events = new global::Godot.Collections.Array();
+        foreach (var shotEvent in _towerShotEvents)
+        {
+            events.Add(shotEvent);
+        }
+
+        _towerShotEvents.Clear();
+        return events;
+    }
+
     public void AdvanceSimulation(double deltaSeconds)
     {
         if (deltaSeconds <= 0)
@@ -413,6 +547,8 @@ public partial class CombatExperienceRuntimeBridge : Node
             return;
         }
 
+        AdvanceTowerAutoAttack(deltaSeconds);
+
         foreach (var actor in _actors.Values)
         {
             if (!actor.Active || !actor.IsMovingEnemy)
@@ -422,21 +558,27 @@ public partial class CombatExperienceRuntimeBridge : Node
 
             if (_wallHp > 0)
             {
-                var nextProgress = Math.Clamp(actor.PathProgress + (float)deltaSeconds * EnemyTravelSpeedPerSecond, 0f, 1f);
-                if (actor.IsAttackingWall || nextProgress >= WallInterceptProgress)
+                var speedPerSecond = actor.IsMovingEnemy && actor.AttackIntervalSeconds >= 0d
+                    ? ResolveTravelSpeedProgressPerSecond(actor)
+                    : EnemyTravelSpeedPerSecond;
+                var nextProgress = Math.Clamp(actor.PathProgress + (float)deltaSeconds * speedPerSecond, 0f, 1f);
+                var attackEngageProgress = ResolveWallAttackEngageProgress(actor.PathProgress, nextProgress, actor.AttackRangePx);
+                if (actor.IsAttackingWall || attackEngageProgress.HasValue)
                 {
                     var enteringWallAttack = !actor.IsAttackingWall;
                     actor.IsAttackingWall = true;
-                    actor.PathProgress = WallInterceptProgress;
+                    actor.PathProgress = attackEngageProgress ?? actor.PathProgress;
+                    SyncActorNodePosition(actor);
                     if (enteringWallAttack)
                     {
-                        actor.WallAttackCooldownSeconds = WallAttackIntervalSeconds;
+                        actor.WallAttackCooldownSeconds = actor.AttackIntervalSeconds;
+                        continue;
                     }
                     actor.WallAttackCooldownSeconds -= deltaSeconds;
                     if (actor.WallAttackCooldownSeconds <= 0.000001d)
                     {
-                        actor.WallAttackCooldownSeconds += WallAttackIntervalSeconds;
-                        _wallHp = Math.Max(0, _wallHp - WallAttackDamage);
+                        actor.WallAttackCooldownSeconds += actor.AttackIntervalSeconds;
+                        _wallHp = Math.Max(0, _wallHp - actor.WallAttackDamage);
                         if (_wallHp <= 0)
                         {
                             _defeatReason = "wall_breached";
@@ -451,7 +593,8 @@ public partial class CombatExperienceRuntimeBridge : Node
 
             actor.IsAttackingWall = false;
             actor.WallAttackCooldownSeconds = 0d;
-            actor.PathProgress = Math.Clamp(actor.PathProgress + (float)deltaSeconds * EnemyTravelSpeedPerSecond, 0f, 1f);
+            actor.PathProgress = Math.Clamp(actor.PathProgress + (float)deltaSeconds * ResolveTravelSpeedProgressPerSecond(actor), 0f, 1f);
+            SyncActorNodePosition(actor);
             if (actor.PathProgress >= 1f)
             {
                 actor.Active = false;
@@ -505,6 +648,7 @@ public partial class CombatExperienceRuntimeBridge : Node
         var snapshots = new global::Godot.Collections.Array();
         foreach (var actor in _actors.Values)
         {
+            var world = SamplePath(actor.PathProgress);
             snapshots.Add(new GDictionary
             {
                 ["name"] = actor.NodeName,
@@ -512,12 +656,78 @@ public partial class CombatExperienceRuntimeBridge : Node
                 ["hp"] = actor.Hp,
                 ["active"] = actor.Active,
                 ["path_progress"] = actor.PathProgress,
+                ["world_x"] = world.X,
+                ["world_y"] = world.Y,
                 ["is_moving_enemy"] = actor.IsMovingEnemy,
                 ["state"] = actor.IsAttackingWall ? "attacking_wall" : "advancing",
+                ["attack_range_px"] = actor.AttackRangePx,
+                ["attack_interval_seconds"] = actor.AttackIntervalSeconds,
+                ["visual_tier"] = actor.VisualTier,
+                ["is_elite"] = actor.IsElite,
+                ["is_boss"] = actor.IsBoss,
             });
         }
 
         return snapshots;
+    }
+
+    public float GetTowerRangePx()
+    {
+        return MgTowerProfile.RangePx;
+    }
+
+    public GDictionary GetTowerCombatDebugSnapshot()
+    {
+        var towerNodeNames = GetTowerNodeNames();
+        var targetName = _lastTowerTargetName;
+        var targetHp = -1;
+        var targetActive = false;
+        if (!string.IsNullOrWhiteSpace(targetName) && _actors.TryGetValue(targetName, out var actor))
+        {
+            targetHp = actor.Hp;
+            targetActive = actor.Active;
+        }
+
+        var towerNodes = new global::Godot.Collections.Array();
+        foreach (var towerNodeName in towerNodeNames)
+        {
+            towerNodes.Add(towerNodeName);
+        }
+
+        var towerTargets = new global::Godot.Collections.Array();
+        foreach (var towerNodeName in towerNodeNames)
+        {
+            var targetNameByTower = _lastTowerTargetNameByNodeName.TryGetValue(towerNodeName, out var storedTargetName)
+                ? storedTargetName
+                : string.Empty;
+            var cooldownByTower = _towerAttackCooldownSecondsByNodeName.TryGetValue(towerNodeName, out var storedCooldown)
+                ? storedCooldown
+                : 0d;
+            var towerProfile = ResolveTowerCombatProfile(towerNodeName);
+            towerTargets.Add(new GDictionary
+            {
+                ["tower_name"] = towerNodeName,
+                ["target_name"] = string.IsNullOrWhiteSpace(targetNameByTower) ? "n/a" : targetNameByTower,
+                ["cooldown_seconds"] = cooldownByTower,
+                ["range_px"] = towerProfile.RangePx,
+                ["attack_damage"] = towerProfile.AttackDamage,
+                ["attack_interval_seconds"] = towerProfile.AttackIntervalSeconds,
+                ["targeting_mode"] = towerProfile.TargetingMode,
+            });
+        }
+
+        return new GDictionary
+        {
+            ["target_name"] = string.IsNullOrWhiteSpace(targetName) ? "n/a" : targetName,
+            ["target_hp"] = targetHp,
+            ["target_active"] = targetActive,
+            ["projectiles_created"] = _projectilesCreated,
+            ["active_enemy_count"] = CountActiveActorsByTeam(2),
+            ["tower_cooldown_seconds"] = ResolveTowerCooldownSeconds(),
+            ["tower_count"] = towerNodeNames.Count,
+            ["tower_nodes"] = towerNodes,
+            ["tower_targets"] = towerTargets,
+        };
     }
 
     private void EnsureBattlefield()
@@ -539,11 +749,20 @@ public partial class CombatExperienceRuntimeBridge : Node
 
         _actors.Clear();
         _placedBuildingSlots.Clear();
+        _placedBuildingNodeNames.Clear();
     }
 
-    private void AddMarker(string name)
+    private void AddMarker(string name, Vector2? positionOverride = null)
     {
         var marker = new Node2D { Name = name };
+        if (positionOverride.HasValue)
+        {
+            marker.Position = positionOverride.Value;
+        }
+        else if (RuntimeMarkerPositions.TryGetValue(name, out var position))
+        {
+            marker.Position = position;
+        }
         _battlefield.AddChild(marker);
     }
 
@@ -558,9 +777,144 @@ public partial class CombatExperienceRuntimeBridge : Node
             Hp = hp,
             IsMovingEnemy = movingEnemy,
             PathProgress = 0f,
+            WallAttackDamage = WallAttackDamage,
+            MoveSpeedProgressPerSecond = EnemyTravelSpeedPerSecond,
+            AttackRangePx = 0f,
+            AttackIntervalSeconds = WallAttackIntervalSeconds,
         };
         _actors[name] = actor;
+        SyncActorNodePosition(actor);
         return actor;
+    }
+
+    private RuntimeActor AddActor(string name, int teamId, int hp, bool movingEnemy, RuntimeEnemyProfile enemyProfile)
+    {
+        var actor = AddActor(name, teamId, hp, movingEnemy);
+        actor.WallAttackDamage = enemyProfile.Damage;
+        actor.MoveSpeedProgressPerSecond = enemyProfile.MoveSpeedProgressPerSecond;
+        actor.AttackRangePx = enemyProfile.AttackRangePx;
+        actor.AttackIntervalSeconds = enemyProfile.AttackIntervalSeconds;
+        actor.VisualTier = enemyProfile.VisualTier;
+        actor.IsElite = enemyProfile.IsElite;
+        actor.IsBoss = enemyProfile.IsBoss;
+        SyncActorNodePosition(actor);
+        return actor;
+    }
+
+    private void SyncActorNodePosition(RuntimeActor actor)
+    {
+        var node = _battlefield.GetNodeOrNull<Node2D>(actor.NodeName);
+        if (node == null)
+        {
+            return;
+        }
+
+        node.Position = SamplePath(actor.PathProgress);
+    }
+
+    private static float? ResolveWallInterceptProgress(float currentProgress, float nextProgress)
+    {
+        var startPoint = SamplePath(currentProgress);
+        var endPoint = SamplePath(nextProgress);
+
+        if (TryResolveInterceptForWallX(startPoint, endPoint, LeftWallCenterX, out var leftT))
+        {
+            return Math.Clamp(currentProgress + ((nextProgress - currentProgress) * leftT), 0f, 1f);
+        }
+
+        if (TryResolveInterceptForWallX(startPoint, endPoint, RightWallCenterX, out var rightT))
+        {
+            return Math.Clamp(currentProgress + ((nextProgress - currentProgress) * rightT), 0f, 1f);
+        }
+
+        return null;
+    }
+
+    private static float? ResolveWallAttackEngageProgress(float currentProgress, float nextProgress, float attackRangePx)
+    {
+        var startPoint = SamplePath(currentProgress);
+        var endPoint = SamplePath(nextProgress);
+        var bestProgress = ResolveWallRangeEngageProgressForX(currentProgress, nextProgress, startPoint, endPoint, LeftWallCenterX, attackRangePx);
+        var rightProgress = ResolveWallRangeEngageProgressForX(currentProgress, nextProgress, startPoint, endPoint, RightWallCenterX, attackRangePx);
+        if (!bestProgress.HasValue)
+        {
+            return rightProgress;
+        }
+
+        if (!rightProgress.HasValue)
+        {
+            return bestProgress;
+        }
+
+        return Math.Max(bestProgress.Value, rightProgress.Value);
+    }
+
+    private static float? ResolveWallRangeEngageProgressForX(
+        float currentProgress,
+        float nextProgress,
+        Vector2 startPoint,
+        Vector2 endPoint,
+        float wallX,
+        float attackRangePx)
+    {
+        var deltaX = endPoint.X - startPoint.X;
+        if (Math.Abs(deltaX) <= 0.0001f)
+        {
+            return null;
+        }
+
+        var targetX = deltaX < 0f
+            ? wallX + Math.Max(0f, attackRangePx)
+            : wallX - Math.Max(0f, attackRangePx);
+        var minX = Math.Min(startPoint.X, endPoint.X);
+        var maxX = Math.Max(startPoint.X, endPoint.X);
+        if (targetX < minX || targetX > maxX)
+        {
+            return null;
+        }
+
+        var segmentT = (targetX - startPoint.X) / deltaX;
+        if (segmentT < 0f || segmentT > 1f)
+        {
+            return null;
+        }
+
+        return Math.Clamp(currentProgress + ((nextProgress - currentProgress) * segmentT), 0f, 1f);
+    }
+
+    private static bool TryResolveInterceptForWallX(Vector2 startPoint, Vector2 endPoint, float wallX, out float segmentT)
+    {
+        segmentT = 0f;
+        var minX = Math.Min(startPoint.X, endPoint.X);
+        var maxX = Math.Max(startPoint.X, endPoint.X);
+        if (wallX < minX || wallX > maxX)
+        {
+            return false;
+        }
+
+        var deltaX = endPoint.X - startPoint.X;
+        if (Math.Abs(deltaX) <= 0.0001f)
+        {
+            return false;
+        }
+
+        segmentT = (wallX - startPoint.X) / deltaX;
+        return segmentT >= 0f && segmentT <= 1f;
+    }
+
+    private static Vector2 SamplePath(float progress)
+    {
+        var p = Math.Clamp(progress, 0f, 1f);
+        var segmentCount = PathPoints.Length - 1;
+        if (segmentCount <= 0)
+        {
+            return Vector2.Zero;
+        }
+
+        var scaled = p * segmentCount;
+        var index = Math.Min((int)Math.Floor(scaled), segmentCount - 1);
+        var localT = scaled - index;
+        return PathPoints[index].Lerp(PathPoints[index + 1], localT);
     }
 
     private int FireProjectile(string sourceNodeName, string targetNodeName, int damage)
@@ -570,11 +924,20 @@ public partial class CombatExperienceRuntimeBridge : Node
             return 0;
         }
 
+        var sourceNode = _battlefield.GetNodeOrNull<Node2D>(sourceNodeName);
+        var targetNode = _battlefield.GetNodeOrNull<Node2D>(targetNodeName);
         var projectile = new Node2D { Name = "Projectile" };
         _battlefield.AddChild(projectile);
         if (_actors.TryGetValue(targetNodeName, out var target))
         {
+            var previousHp = target.Hp;
             target.Hp = Math.Max(0, target.Hp - damage);
+            if (target.Hp <= 0)
+            {
+                target.Active = false;
+                target.IsAttackingWall = false;
+                target.WallAttackCooldownSeconds = 0d;
+            }
             if (AreDamageNumbersEnabled())
             {
                 var damageNumberName = $"DamageNumber{_projectilesCreated + 1}";
@@ -582,10 +945,103 @@ public partial class CombatExperienceRuntimeBridge : Node
                 _battlefield.AddChild(damageNumber);
                 _activeDamageNumberNames.Add(damageNumberName);
             }
+
+            _towerShotEvents.Add(new GDictionary
+            {
+                ["source_name"] = sourceNodeName,
+                ["target_name"] = targetNodeName,
+                ["source_x"] = sourceNode?.GlobalPosition.X ?? 0f,
+                ["source_y"] = sourceNode?.GlobalPosition.Y ?? 0f,
+                ["target_x"] = targetNode?.GlobalPosition.X ?? 0f,
+                ["target_y"] = targetNode?.GlobalPosition.Y ?? 0f,
+                ["damage"] = Math.Max(0, previousHp - target.Hp),
+                ["target_hp"] = target.Hp,
+            });
         }
 
         projectile.QueueFree();
         return 1;
+    }
+
+    private void AdvanceTowerAutoAttack(double deltaSeconds)
+    {
+        if (deltaSeconds <= 0d)
+        {
+            return;
+        }
+
+        var towerPlacements = GetTowerPlacements();
+        if (towerPlacements.Count == 0)
+        {
+            _lastTowerTargetName = string.Empty;
+            _towerAttackCooldownSecondsByNodeName.Clear();
+            _lastTowerTargetNameByNodeName.Clear();
+            return;
+        }
+
+        var activeTowerNames = new System.Collections.Generic.HashSet<string>(
+            towerPlacements.Select(tower => tower.NodeName),
+            StringComparer.Ordinal);
+        foreach (var staleTowerName in _towerAttackCooldownSecondsByNodeName.Keys.Where(name => !activeTowerNames.Contains(name)).ToArray())
+        {
+            _towerAttackCooldownSecondsByNodeName.Remove(staleTowerName);
+        }
+        foreach (var staleTowerName in _lastTowerTargetNameByNodeName.Keys.Where(name => !activeTowerNames.Contains(name)).ToArray())
+        {
+            _lastTowerTargetNameByNodeName.Remove(staleTowerName);
+        }
+
+        var reservedTargets = new System.Collections.Generic.HashSet<string>(StringComparer.Ordinal);
+
+        foreach (var towerPlacement in towerPlacements)
+        {
+            var towerNodeName = towerPlacement.NodeName;
+            if (!HasNode($"Battlefield/{towerNodeName}"))
+            {
+                AddMarker(towerNodeName, towerPlacement.Center);
+            }
+            var cooldown = _towerAttackCooldownSecondsByNodeName.TryGetValue(towerNodeName, out var storedCooldown)
+                ? storedCooldown
+                : 0d;
+            var towerProfile = ResolveTowerCombatProfile(towerNodeName);
+            if (cooldown > 0d)
+            {
+                cooldown = Math.Max(0d, cooldown - deltaSeconds);
+            }
+
+            var targetName = FindNearestEnemyInRange(towerNodeName, towerProfile.RangePx, reservedTargets);
+            if (string.IsNullOrWhiteSpace(targetName))
+            {
+                targetName = FindNearestEnemyInRange(towerNodeName, towerProfile.RangePx);
+            }
+            if (string.IsNullOrWhiteSpace(targetName))
+            {
+                _lastTowerTargetNameByNodeName.Remove(towerNodeName);
+                _towerAttackCooldownSecondsByNodeName[towerNodeName] = cooldown;
+                continue;
+            }
+
+            _lastTowerTargetName = targetName;
+            _lastTowerTargetNameByNodeName[towerNodeName] = targetName;
+            reservedTargets.Add(targetName);
+
+            if (cooldown > 0.000001d)
+            {
+                _towerAttackCooldownSecondsByNodeName[towerNodeName] = cooldown;
+                continue;
+            }
+
+            var fired = FireProjectile(towerNodeName, targetName, towerProfile.AttackDamage);
+            if (fired <= 0)
+            {
+                _towerAttackCooldownSecondsByNodeName[towerNodeName] = cooldown;
+                continue;
+            }
+
+            _projectilesCreated += fired;
+            _combatExchanges += fired;
+            _towerAttackCooldownSecondsByNodeName[towerNodeName] = towerProfile.AttackIntervalSeconds;
+        }
     }
 
     private void RetireAllDeadActors()
@@ -691,6 +1147,525 @@ public partial class CombatExperienceRuntimeBridge : Node
         }
 
         return null;
+    }
+
+    private string? FindNearestEnemyInRange(
+        string sourceNodeName,
+        float rangePx,
+        System.Collections.Generic.ISet<string>? excludedTargetNames = null)
+    {
+        var sourceNode = _battlefield.GetNodeOrNull<Node2D>(sourceNodeName);
+        if (sourceNode == null)
+        {
+            return null;
+        }
+
+        var rangeSquared = rangePx * rangePx;
+        string? bestTarget = null;
+        var bestTargetProgress = float.MinValue;
+        var bestTargetHp = int.MaxValue;
+        var bestDistanceSquared = float.MaxValue;
+        foreach (var pair in _actors)
+        {
+            var actor = pair.Value;
+            if (!actor.Active || actor.TeamId != 2)
+            {
+                continue;
+            }
+
+            if (excludedTargetNames != null && excludedTargetNames.Contains(actor.NodeName))
+            {
+                continue;
+            }
+
+            var actorNode = _battlefield.GetNodeOrNull<Node2D>(actor.NodeName);
+            if (actorNode == null)
+            {
+                continue;
+            }
+
+            var distanceSquared = sourceNode.Position.DistanceSquaredTo(actorNode.Position);
+            if (distanceSquared > rangeSquared)
+            {
+                continue;
+            }
+
+            if (actor.PathProgress < bestTargetProgress)
+            {
+                continue;
+            }
+
+            if (actor.PathProgress > bestTargetProgress)
+            {
+                bestTargetProgress = actor.PathProgress;
+                bestTargetHp = actor.Hp;
+                bestDistanceSquared = distanceSquared;
+                bestTarget = actor.NodeName;
+                continue;
+            }
+
+            if (actor.Hp > bestTargetHp)
+            {
+                continue;
+            }
+
+            if (actor.Hp == bestTargetHp && distanceSquared >= bestDistanceSquared)
+            {
+                continue;
+            }
+
+            bestTargetHp = actor.Hp;
+            bestDistanceSquared = distanceSquared;
+            bestTarget = actor.NodeName;
+        }
+
+        return bestTarget;
+    }
+
+    private string ResolvePlacedBuildingNodeName(string selectionId, string slotId)
+    {
+        return selectionId switch
+        {
+            "tower_alpha" => _placedBuildingNodeNames.Values.Contains("MgTower", StringComparer.Ordinal)
+                ? $"MgTower_{SanitizeSlotId(slotId)}"
+                : "MgTower",
+            "tower_beta" => _placedBuildingNodeNames.Values.Contains("SniperTower", StringComparer.Ordinal)
+                ? $"SniperTower_{SanitizeSlotId(slotId)}"
+                : "SniperTower",
+            "barracks_alpha" => "Barracks",
+            "farm_alpha" => "Residence",
+            _ => string.Empty,
+        };
+    }
+
+    private Vector2 ResolveMarkerPosition(string nodeName, string slotId)
+    {
+        if (TryResolveSlotCenter(slotId, out var slotCenter))
+        {
+            return slotCenter;
+        }
+
+        if (RuntimeMarkerPositions.TryGetValue(nodeName, out var position))
+        {
+            return position;
+        }
+
+        return Vector2.Zero;
+    }
+
+    private static string SanitizeSlotId(string slotId)
+    {
+        return string.IsNullOrWhiteSpace(slotId)
+            ? "Slot"
+            : slotId.Replace('/', '_').Replace(':', '_');
+    }
+
+    private static bool TryResolveSlotCenter(string slotId, out Vector2 center)
+    {
+        center = Vector2.Zero;
+        if (string.IsNullOrWhiteSpace(slotId))
+        {
+            return false;
+        }
+
+        var parts = slotId.Split('_');
+        if (parts.Length < 3)
+        {
+            return false;
+        }
+
+        if (!int.TryParse(parts[^2], out var column) || !int.TryParse(parts[^1], out var row))
+        {
+            return false;
+        }
+
+        float regionOffsetX = 0f;
+        if (slotId.StartsWith("LeftOuterFieldSlot_", StringComparison.Ordinal))
+        {
+            regionOffsetX = 0f;
+        }
+        else if (slotId.StartsWith("InnerCastleRegionSlot_", StringComparison.Ordinal))
+        {
+            regionOffsetX = 624f;
+        }
+        else if (slotId.StartsWith("RightOuterFieldSlot_", StringComparison.Ordinal))
+        {
+            regionOffsetX = 1008f;
+        }
+        else
+        {
+            return false;
+        }
+
+        center = new Vector2(regionOffsetX + (column * 48f) + 24f, (row * 48f) + 24f);
+        return true;
+    }
+
+    private System.Collections.Generic.List<string> GetTowerNodeNames()
+    {
+        var towerNodeNames = new System.Collections.Generic.List<string>();
+        foreach (var towerPlacement in GetTowerPlacements())
+        {
+            towerNodeNames.Add(towerPlacement.NodeName);
+        }
+
+        if (towerNodeNames.Count == 0 && HasNode("Battlefield/MgTower"))
+        {
+            towerNodeNames.Add("MgTower");
+        }
+
+        return towerNodeNames;
+    }
+
+    private double ResolveTowerCooldownSeconds()
+    {
+        if (_towerAttackCooldownSecondsByNodeName.Count == 0)
+        {
+            return 0d;
+        }
+
+        return _towerAttackCooldownSecondsByNodeName.Values.Max();
+    }
+
+    private string ResolveSlotIdForTowerNodeName(string towerNodeName)
+    {
+        foreach (var pair in _placedBuildingNodeNames)
+        {
+            if (string.Equals(pair.Value, towerNodeName, StringComparison.Ordinal))
+            {
+                return pair.Key;
+            }
+        }
+
+        if (string.Equals(towerNodeName, "MgTower", StringComparison.Ordinal))
+        {
+            foreach (var pair in _placedBuildingSlots)
+            {
+                if (string.Equals(pair.Value, "tower_alpha", StringComparison.Ordinal))
+                {
+                    return pair.Key;
+                }
+            }
+        }
+
+        return string.Empty;
+    }
+
+    private System.Collections.Generic.List<TowerPlacementRuntime> GetTowerPlacements()
+    {
+        var placements = new System.Collections.Generic.List<TowerPlacementRuntime>();
+        foreach (var pair in _placedBuildingSlots)
+        {
+            if (!IsTowerSelectionId(pair.Value))
+            {
+                continue;
+            }
+
+            var nodeName = _placedBuildingNodeNames.TryGetValue(pair.Key, out var storedNodeName)
+                && !string.IsNullOrWhiteSpace(storedNodeName)
+                ? storedNodeName
+                : ResolvePlacedBuildingNodeName(pair.Value, pair.Key);
+            var center = ResolveMarkerPosition(nodeName, pair.Key);
+            placements.Add(new TowerPlacementRuntime(pair.Key, nodeName, center));
+        }
+
+        if (placements.Count == 0 && HasNode("Battlefield/MgTower"))
+        {
+            placements.Add(new TowerPlacementRuntime(string.Empty, "MgTower", ResolveMarkerPosition("MgTower", string.Empty)));
+        }
+        if (placements.Count == 0 && HasNode("Battlefield/SniperTower"))
+        {
+            placements.Add(new TowerPlacementRuntime(string.Empty, "SniperTower", ResolveMarkerPosition("SniperTower", string.Empty)));
+        }
+
+        return placements;
+    }
+
+    private static TowerCombatProfile ResolveTowerCombatProfile(string towerNodeName)
+    {
+        if (towerNodeName.StartsWith("SniperTower", StringComparison.Ordinal))
+        {
+            return SniperTowerProfile;
+        }
+
+        if (towerNodeName.StartsWith("MgTower", StringComparison.Ordinal))
+        {
+            return MgTowerProfile;
+        }
+
+        return MgTowerProfile;
+    }
+
+    private static bool IsTowerSelectionId(string selectionId)
+    {
+        return string.Equals(selectionId, "tower_alpha", StringComparison.Ordinal)
+            || string.Equals(selectionId, "tower_beta", StringComparison.Ordinal);
+    }
+
+    public void LoadEnemyRuntimeConfigForTest(string configJson)
+    {
+        _enemyRuntimeConfigJson = configJson ?? string.Empty;
+        if (!string.IsNullOrWhiteSpace(_enemyRuntimeConfigJson))
+        {
+            _enemyRuntimeConfigManager.LoadInitialFromJson(_enemyRuntimeConfigJson, "memory://combat-experience-runtime-enemy-config.json");
+        }
+    }
+
+    private void LoadBattleMapRuntimeConfig()
+    {
+        _enemyRuntimeConfigJson = string.Empty;
+        _battleMapAutoSpawnEnabled = true;
+        _battleMapSpawnCadenceSeconds = 8;
+        _battleMapConfiguredWaveSize = 2;
+        _battleMapWaveSequence.Clear();
+
+        var absolutePath = ProjectSettings.GlobalizePath(BattleMapRuntimeConfigPath);
+        if (!File.Exists(absolutePath))
+        {
+            return;
+        }
+
+        var json = File.ReadAllText(absolutePath);
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return;
+        }
+
+        _enemyRuntimeConfigJson = json;
+        _enemyRuntimeConfigManager.LoadInitialFromJson(json, BattleMapRuntimeConfigPath);
+        _battleMapSpawnCadenceSeconds = Math.Max(1, _enemyRuntimeConfigManager.Snapshot.SpawnCadenceSeconds);
+
+        using var document = JsonDocument.Parse(json);
+        var root = document.RootElement;
+        if (root.ValueKind != JsonValueKind.Object)
+        {
+            return;
+        }
+
+        if (TryGetPropertyIgnoreCase(root, "battlemap_runtime", out var runtimeSection) && runtimeSection.ValueKind == JsonValueKind.Object)
+        {
+            if (TryGetBool(runtimeSection, "auto_spawn_enabled", out var autoSpawnEnabled))
+            {
+                _battleMapAutoSpawnEnabled = autoSpawnEnabled;
+            }
+
+            if (TryGetInt(runtimeSection, "wave_size", out var waveSize))
+            {
+                _battleMapConfiguredWaveSize = Math.Max(1, waveSize);
+            }
+
+            if (TryGetPropertyIgnoreCase(runtimeSection, "wave_sequence", out var waveSequence) && waveSequence.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var waveEntry in waveSequence.EnumerateArray())
+                {
+                    if (waveEntry.ValueKind != JsonValueKind.Array)
+                    {
+                        continue;
+                    }
+
+                    var enemyIds = waveEntry.EnumerateArray()
+                        .Where(item => item.ValueKind == JsonValueKind.String)
+                        .Select(item => item.GetString() ?? string.Empty)
+                        .Where(item => !string.IsNullOrWhiteSpace(item))
+                        .ToArray();
+                    if (enemyIds.Length > 0)
+                    {
+                        _battleMapWaveSequence.Add(enemyIds);
+                    }
+                }
+            }
+        }
+    }
+
+    private RuntimeEnemyProfile[] ResolveActiveEnemyProfiles()
+    {
+        if (!string.IsNullOrWhiteSpace(_enemyRuntimeConfigJson))
+        {
+            var resolved = _enemyConfigResolver.Resolve(_enemyRuntimeConfigManager, _enemyRuntimeConfigJson)
+                .Select(ToRuntimeEnemyProfile)
+                .ToArray();
+            if (resolved.Length > 0)
+            {
+                return resolved;
+            }
+        }
+
+        return new[]
+        {
+            BuildDefaultEnemyProfile(30),
+            BuildDefaultEnemyProfile(20),
+        };
+    }
+
+    private RuntimeEnemyProfile[] ResolveCurrentWaveProfiles()
+    {
+        var resolvedProfiles = ResolveActiveEnemyProfiles();
+        if (_battleMapWaveSequence.Count > 0)
+        {
+            var waveIndex = Math.Clamp(_battleMapWaveCursor, 0, _battleMapWaveSequence.Count - 1);
+            var configuredWave = _battleMapWaveSequence[waveIndex];
+            if (_battleMapWaveCursor < _battleMapWaveSequence.Count)
+            {
+                _battleMapWaveCursor += 1;
+            }
+
+            if (configuredWave.Length == 0)
+            {
+                return Array.Empty<RuntimeEnemyProfile>();
+            }
+
+            if (resolvedProfiles.Length == 0)
+            {
+                return Array.Empty<RuntimeEnemyProfile>();
+            }
+
+            var byId = resolvedProfiles.ToDictionary(
+                profile => ResolveProfileId(profile),
+                profile => profile,
+                StringComparer.OrdinalIgnoreCase);
+            var result = new System.Collections.Generic.List<RuntimeEnemyProfile>();
+            foreach (var enemyId in configuredWave)
+            {
+                if (byId.TryGetValue(enemyId, out var profile))
+                {
+                    result.Add(profile);
+                }
+            }
+            return result.ToArray();
+        }
+
+        if (resolvedProfiles.Length == 0)
+        {
+            return new[]
+            {
+                BuildDefaultEnemyProfile(30),
+                BuildDefaultEnemyProfile(20),
+            };
+        }
+
+        var fallbackWaveSize = Math.Max(1, _battleMapConfiguredWaveSize);
+        var fallbackProfiles = new System.Collections.Generic.List<RuntimeEnemyProfile>();
+        for (var index = 0; index < fallbackWaveSize; index++)
+        {
+            fallbackProfiles.Add(resolvedProfiles[index % resolvedProfiles.Length]);
+        }
+        return fallbackProfiles.ToArray();
+    }
+
+    private static string ResolveProfileId(RuntimeEnemyProfile profile)
+    {
+        if (profile.IsBoss)
+        {
+            return "boss";
+        }
+
+        if (profile.IsElite)
+        {
+            return "elite";
+        }
+
+        return "grunt";
+    }
+
+    private static RuntimeEnemyProfile ToRuntimeEnemyProfile(EnemyRuntimeStats stats)
+    {
+        var moveSpeedProgressPerSecond = Math.Max(0.0001f, (float)(stats.Speed / 100m));
+        var attackIntervalSeconds = Math.Max(0.1d, stats.AttackIntervalMs / 1000d);
+        return new RuntimeEnemyProfile
+        {
+            Health = Math.Max(1, DecimalToInt(stats.Health)),
+            Damage = Math.Max(1, DecimalToInt(stats.Damage)),
+            MoveSpeedProgressPerSecond = moveSpeedProgressPerSecond,
+            AttackRangePx = Math.Max(0f, (float)stats.AttackRange),
+            AttackIntervalSeconds = attackIntervalSeconds,
+            VisualTier = stats.IsBoss ? "boss" : stats.IsElite ? "elite" : "grunt",
+            IsElite = stats.IsElite,
+            IsBoss = stats.IsBoss,
+        };
+    }
+
+    private static RuntimeEnemyProfile BuildDefaultEnemyProfile(int health)
+    {
+        return new RuntimeEnemyProfile
+        {
+            Health = health,
+            Damage = WallAttackDamage,
+            MoveSpeedProgressPerSecond = EnemyTravelSpeedPerSecond,
+            AttackRangePx = 80f,
+            AttackIntervalSeconds = WallAttackIntervalSeconds,
+            VisualTier = "grunt",
+            IsElite = false,
+            IsBoss = false,
+        };
+    }
+
+    private static int DecimalToInt(decimal value)
+    {
+        return Convert.ToInt32(Math.Round(value, MidpointRounding.AwayFromZero));
+    }
+
+    private static bool TryGetPropertyIgnoreCase(JsonElement root, string propertyName, out JsonElement value)
+    {
+        if (root.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var property in root.EnumerateObject())
+            {
+                if (string.Equals(property.Name, propertyName, StringComparison.OrdinalIgnoreCase))
+                {
+                    value = property.Value;
+                    return true;
+                }
+            }
+        }
+
+        value = default;
+        return false;
+    }
+
+    private static bool TryGetInt(JsonElement root, string propertyName, out int value)
+    {
+        value = 0;
+        if (!TryGetPropertyIgnoreCase(root, propertyName, out var property))
+        {
+            return false;
+        }
+
+        if (property.ValueKind == JsonValueKind.Number && property.TryGetInt32(out value))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    private static bool TryGetBool(JsonElement root, string propertyName, out bool value)
+    {
+        value = false;
+        if (!TryGetPropertyIgnoreCase(root, propertyName, out var property))
+        {
+            return false;
+        }
+
+        if (property.ValueKind == JsonValueKind.True)
+        {
+            value = true;
+            return true;
+        }
+
+        if (property.ValueKind == JsonValueKind.False)
+        {
+            value = false;
+            return true;
+        }
+
+        return false;
+    }
+
+    private static float ResolveTravelSpeedProgressPerSecond(RuntimeActor actor)
+    {
+        return actor.IsMovingEnemy
+            ? Math.Max(0.0001f, actor.MoveSpeedProgressPerSecond)
+            : EnemyTravelSpeedPerSecond;
     }
 
     private void Publish(string type, string payload)

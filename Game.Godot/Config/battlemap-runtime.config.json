@@ -1,0 +1,76 @@
+{
+  "time": {
+    "day_seconds": 240,
+    "night_seconds": 120
+  },
+  "waves": {
+    "normal": {
+      "day1_budget": 50,
+      "daily_growth": 1.2
+    }
+  },
+  "channels": {
+    "elite": "elite",
+    "boss": "boss"
+  },
+  "spawn": {
+    "cadence_seconds": 8
+  },
+  "boss": {
+    "count": 2
+  },
+  "battle": {
+    "castle_start_hp": 100
+  },
+  "battlemap_runtime": {
+    "auto_spawn_enabled": true,
+    "wave_size": 3,
+    "wave_sequence": [
+      ["grunt", "grunt", "grunt"],
+      ["grunt", "grunt", "elite"],
+      ["grunt", "elite", "elite"],
+      ["elite", "elite", "boss"]
+    ]
+  },
+  "enemies": [
+    {
+      "id": "grunt",
+      "hp": 30,
+      "dmg": 5,
+      "move_speed": 12,
+      "range": 80,
+      "attack_interval": 2000,
+      "spawn_weight": 100,
+      "min_day": 1,
+      "max_day": 99,
+      "is_elite": false,
+      "is_boss": false
+    },
+    {
+      "id": "elite",
+      "hp": 52,
+      "dmg": 8,
+      "move_speed": 10,
+      "range": 80,
+      "attack_interval": 1800,
+      "spawn_weight": 50,
+      "min_day": 1,
+      "max_day": 99,
+      "is_elite": true,
+      "is_boss": false
+    },
+    {
+      "id": "boss",
+      "hp": 120,
+      "dmg": 12,
+      "move_speed": 8,
+      "range": 90,
+      "attack_interval": 1600,
+      "spawn_weight": 15,
+      "min_day": 1,
+      "max_day": 99,
+      "is_elite": false,
+      "is_boss": true
+    }
+  ]
+}

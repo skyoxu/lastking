@@ -24,6 +24,7 @@ var _drag_preview_texture_path: String = ""
 
 const BUILD_PREVIEW_TEXTURES := {
 	"tower_alpha": "res://Game.Godot/Assets/Textures/BattleMapBuildPreviews/battlemap_build_preview_tower.png",
+	"tower_beta": "res://Game.Godot/Assets/Textures/BattleMapBuildPreviews/battlemap_build_preview_tower.png",
 	"barracks_alpha": "res://Game.Godot/Assets/Textures/BattleMapBuildPreviews/battlemap_build_preview_barracks.png",
 	"farm_alpha": "res://Game.Godot/Assets/Textures/BattleMapBuildPreviews/battlemap_build_preview_residence.png",
 }
@@ -33,6 +34,8 @@ var _occupied_slots: Dictionary = {}
 var _drag_active: bool = false
 var _hovered_slot_id: String = ""
 var _pointer_position: Vector2 = Vector2.ZERO
+var _pending_cancel_after_place: bool = false
+var _post_release_probe_id: int = 0
 
 func configure(refs: Dictionary) -> void:
 	_selection_controller = refs.get("selection_controller", null)
@@ -56,6 +59,8 @@ func handle_action(action_code: String) -> bool:
 			return true
 		"select_tower":
 			return _begin_placement("tower_alpha", false)
+		"select_tower_beta":
+			return _begin_placement("tower_beta", false)
 		"select_residence":
 			return _begin_placement("farm_alpha", false)
 		"select_barracks":
@@ -87,20 +92,25 @@ func handle_battlefield_slot_hovered(slot_id: String) -> bool:
 func handle_battlefield_slot_released(slot_id: String) -> bool:
 	if _active_selection_id.is_empty():
 		return false
+	print("[BuildPlacement] release slot=%s selection=%s drag=%s" % [slot_id, _active_selection_id, str(_drag_active)])
 	var evaluation := _evaluate_slot_legality(_active_selection_id, slot_id)
 	var legality: String = str(evaluation.get("legality", ""))
 	if legality == LEGALITY_VALID_INNER or legality == LEGALITY_VALID_OUTER:
 		var bridge: Node = _current_bridge()
 		var placement_result: Dictionary = {}
 		if bridge != null and bridge.has_method("PlaceBuildingAtSlot"):
+			print("[BuildPlacement] calling PlaceBuildingAtSlot")
 			var result: Variant = bridge.call("PlaceBuildingAtSlot", _active_selection_id, slot_id)
+			print("[BuildPlacement] PlaceBuildingAtSlot returned type=%s" % [str(typeof(result))])
 			if result is Dictionary:
 				placement_result = result
 				if placement_result.get("placed", false) == true:
+					print("[BuildPlacement] placement accepted")
 					_occupied_slots[slot_id] = _active_selection_id
 					if _battlefield_view != null and _battlefield_view.has_method("set_slot_available"):
 						_battlefield_view.call("set_slot_available", slot_id, false)
-					cancel_active_placement()
+					_schedule_cancel_active_placement()
+					_schedule_post_release_probe()
 					return true
 		var failure_reason_code := str(placement_result.get("reason", ""))
 		var failure_reason_key := _build_error_key_for_reason_code(failure_reason_code)
@@ -141,6 +151,15 @@ func sync_drag_pointer(pointer_position: Vector2, hovered_slot_id: String) -> bo
 func has_active_placement() -> bool:
 	return not _active_selection_id.is_empty()
 
+func reset_runtime_state() -> void:
+	_occupied_slots.clear()
+	if _battlefield_view != null and _battlefield_view.has_method("get_all_slot_ids") and _battlefield_view.has_method("set_slot_available"):
+		var slot_ids: Array[String] = _string_array(_battlefield_view.call("get_all_slot_ids"))
+		for slot_id in slot_ids:
+			_battlefield_view.call("set_slot_available", slot_id, true)
+	cancel_active_placement()
+	_sync_occupied_slots_from_bridge()
+
 func get_drag_preview_state() -> Dictionary:
 	var preview_texture_path := ""
 	var has_texture := false
@@ -161,19 +180,56 @@ func get_drag_preview_state() -> Dictionary:
 	}
 
 func cancel_active_placement() -> void:
+	print("[BuildPlacement] cancel_active_placement")
+	_pending_cancel_after_place = false
 	_active_selection_id = ""
 	_drag_active = false
 	_hovered_slot_id = ""
 	_pointer_position = Vector2.ZERO
 	if _selection_controller != null and _selection_controller.has_method("set_placement_context_active"):
+		print("[BuildPlacement] cancel -> set_placement_context_active(false)")
 		_selection_controller.call("set_placement_context_active", false)
-		_selection_controller.call("set_placement_context_active", true)
 	if _selection_controller != null and _selection_controller.has_method("clear_building_selection"):
+		print("[BuildPlacement] cancel -> clear_building_selection")
 		_selection_controller.call("clear_building_selection")
+	print("[BuildPlacement] cancel -> push build mode false")
 	_push_build_mode_to_hud(false)
+	print("[BuildPlacement] cancel -> clear active selection in hud")
 	_push_active_build_selection_to_hud("")
+	print("[BuildPlacement] cancel -> clear build context")
 	_clear_build_context()
+	print("[BuildPlacement] cancel -> update drag preview")
 	_update_drag_preview()
+	print("[BuildPlacement] cancel complete")
+
+func _schedule_cancel_active_placement() -> void:
+	if _pending_cancel_after_place:
+		return
+	_pending_cancel_after_place = true
+	call_deferred("_finish_cancel_active_placement")
+
+func _finish_cancel_active_placement() -> void:
+	if not _pending_cancel_after_place:
+		return
+	_pending_cancel_after_place = false
+	cancel_active_placement()
+
+func _schedule_post_release_probe() -> void:
+	_post_release_probe_id += 1
+	var probe_id := _post_release_probe_id
+	if _screen != null and _screen.has_method("debug_arm_post_place_probe"):
+		_screen.call("debug_arm_post_place_probe")
+	if _battle_hud != null and _battle_hud.has_method("DebugArmPostPlaceProbe"):
+		_battle_hud.call("DebugArmPostPlaceProbe")
+	call_deferred("_run_post_release_probe", probe_id, 0)
+
+func _run_post_release_probe(probe_id: int, stage: int) -> void:
+	if probe_id != _post_release_probe_id:
+		return
+	print("[BuildPlacement] post_release_probe stage=%d" % stage)
+	if stage >= 3:
+		return
+	call_deferred("_run_post_release_probe", probe_id, stage + 1)
 
 func _begin_placement(selection_id: String, drag_active: bool) -> bool:
 	if _selection_data_provider == null or _battlefield_view == null:
@@ -192,7 +248,6 @@ func _begin_placement(selection_id: String, drag_active: bool) -> bool:
 		_selection_controller.call("set_placement_context_active", true)
 	if _selection_controller != null and _selection_controller.has_method("clear_building_selection"):
 		_selection_controller.call("clear_building_selection")
-	_apply_formal_selection_feedback(selection_id)
 	_push_active_build_selection_to_hud(selection_id)
 	_apply_current_legality_overlay()
 	_push_build_context_message("")
@@ -291,6 +346,8 @@ func _building_display_name() -> String:
 	match _active_selection_id:
 		"tower_alpha":
 			return _t("battlemap.building.tower", "Tower")
+		"tower_beta":
+			return _t("battlemap.building.sniper_tower", "Sniper Tower")
 		"barracks_alpha":
 			return _t("battlemap.building.barracks", "Barracks")
 		"farm_alpha":
@@ -316,6 +373,10 @@ func _formal_selection_snapshot_for_selection(selection_id: String) -> Dictionar
 	match selection_id:
 		"tower_alpha":
 			snapshot["building_slots"] = ["InnerCastleRegionSlot_03_00"]
+		"tower_beta":
+			snapshot["building_slots"] = ["InnerCastleRegionSlot_06_05"]
+			snapshot["range_slots"] = ["InnerCastleRegionSlot_05_00"]
+			snapshot["blocked_range_slots"] = ["InnerCastleRegionSlot_06_00"]
 		"barracks_alpha":
 			snapshot["building_slots"] = ["InnerCastleRegionSlot_00_00"]
 		"farm_alpha":
@@ -512,6 +573,8 @@ func _preview_kind_for_selection(selection_id: String) -> String:
 	match selection_id:
 		"tower_alpha":
 			return "tower"
+		"tower_beta":
+			return "tower_beta"
 		"barracks_alpha":
 			return "barracks"
 		"farm_alpha":
@@ -520,22 +583,16 @@ func _preview_kind_for_selection(selection_id: String) -> String:
 			return "building"
 
 func _push_active_build_selection_to_hud(selection_id: String) -> void:
-	if _battle_hud != null and _battle_hud.has_method("SetActiveBuildSelection"):
-		_battle_hud.call("SetActiveBuildSelection", selection_id)
-	if _battle_hud != null and _battle_hud.has_method("RefreshBottomBarFromRuntimeForTest"):
-		_battle_hud.call("RefreshBottomBarFromRuntimeForTest")
 	_apply_build_palette_visual_state(selection_id)
 
 func _push_build_mode_to_hud(active: bool) -> void:
-	if _battle_hud != null and _battle_hud.has_method("SetBuildPlacementMode"):
-		_battle_hud.call("SetBuildPlacementMode", active)
-	if _battle_hud != null and _battle_hud.has_method("RefreshBottomBarFromRuntimeForTest"):
-		_battle_hud.call("RefreshBottomBarFromRuntimeForTest")
+	_set_build_action_label(active)
 
 func _apply_build_palette_visual_state(selection_id: String) -> void:
 	if _battle_hud == null:
 		return
 	_apply_build_button_state(_battle_hud.get_node_or_null("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/TowerSlot"), selection_id, "tower_alpha")
+	_apply_build_button_state(_battle_hud.get_node_or_null("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/SniperTowerSlot"), selection_id, "tower_beta")
 	_apply_build_button_state(_battle_hud.get_node_or_null("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/BarracksSlot"), selection_id, "barracks_alpha")
 	_apply_build_button_state(_battle_hud.get_node_or_null("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/ResidenceSlot"), selection_id, "farm_alpha")
 
@@ -548,7 +605,7 @@ func _apply_build_button_state(button_node: Node, active_selection_id: String, b
 	if is_active:
 		button.modulate = Color(1.0, 1.0, 1.0, 1.0)
 		button.self_modulate = Color(1.08, 1.02, 0.9, 1.0)
-		button.scale = Vector2(1.03, 1.03)
+		button.scale = Vector2.ONE
 		return
 	button.modulate = Color(1.0, 1.0, 1.0, 0.56 if has_active_selection else 1.0)
 	button.self_modulate = Color(1.0, 1.0, 1.0, 1.0)
@@ -571,18 +628,36 @@ func _push_hover_reason_overlay(legality_by_slot: Dictionary, evaluation: Dictio
 	_selection_controller.call("apply_hover_overlay_context", legality_by_slot, payload)
 
 func _clear_build_context() -> void:
-	if _battle_hud != null and _battle_hud.has_method("ClearBuildContextMessages"):
-		_battle_hud.call("ClearBuildContextMessages")
+	_set_build_context_labels("", "")
 
 func _push_build_context_message(reason_key: String) -> void:
-	if _battle_hud == null or not _battle_hud.has_method("SetBuildContextMessages") or _active_selection_id.is_empty():
+	if _battle_hud == null or _active_selection_id.is_empty():
 		return
 	var title_text := "%s | %s" % [
 		_building_display_name(),
 		_allowed_region_text(_active_selection_id),
 	]
 	var detail_text := _build_context_detail_text(reason_key)
-	_battle_hud.call("SetBuildContextMessages", title_text, detail_text)
+	_set_build_context_labels(title_text, detail_text)
+
+func _set_build_action_label(active: bool) -> void:
+	if _battle_hud == null:
+		return
+	var build_action_node := _battle_hud.get_node_or_null("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/BuildAction")
+	var build_button := build_action_node as Button
+	if build_button == null:
+		return
+	build_button.text = _t("hud.cancel_build", "Cancel Build") if active else _t("hud.build", "Build")
+
+func _set_build_context_labels(title_text: String, detail_text: String) -> void:
+	if _battle_hud == null:
+		return
+	var production_label := _battle_hud.get_node_or_null("CombatHud/BottomBar/Root/BuildingsPanel/VBox/ProductionLabel") as Label
+	var build_status_label := _battle_hud.get_node_or_null("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildStatusLabel") as Label
+	if production_label != null:
+		production_label.text = title_text if not title_text.is_empty() else _t("hud.production_ready", "Production Ready")
+	if build_status_label != null:
+		build_status_label.text = detail_text if not detail_text.is_empty() else _t("hud.build_status_default", "Choose a building to start placement.")
 
 func _allowed_region_text(selection_id: String) -> String:
 	if _selection_data_provider == null:
