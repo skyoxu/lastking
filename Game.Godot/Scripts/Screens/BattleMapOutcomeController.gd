@@ -93,15 +93,57 @@ func connect_signals() -> void:
 	_defeat_return_btn.pressed.connect(_on_defeat_return_to_main_menu)
 	_defeat_restart_btn.pressed.connect(_on_defeat_restart)
 
+func cleanup() -> void:
+	if _daily_reward_a != null and _daily_reward_a.pressed.is_connected(_on_settlement_reward_selected.bind(0)):
+		_daily_reward_a.pressed.disconnect(_on_settlement_reward_selected.bind(0))
+	if _daily_reward_b != null and _daily_reward_b.pressed.is_connected(_on_settlement_reward_selected.bind(1)):
+		_daily_reward_b.pressed.disconnect(_on_settlement_reward_selected.bind(1))
+	if _daily_reward_c != null and _daily_reward_c.pressed.is_connected(_on_settlement_reward_selected.bind(2)):
+		_daily_reward_c.pressed.disconnect(_on_settlement_reward_selected.bind(2))
+	if _daily_expand_context_btn != null and _daily_expand_context_btn.pressed.is_connected(_on_settlement_context_toggle):
+		_daily_expand_context_btn.pressed.disconnect(_on_settlement_context_toggle)
+	if _victory_return_btn != null and _victory_return_btn.pressed.is_connected(_on_victory_return_to_main_menu):
+		_victory_return_btn.pressed.disconnect(_on_victory_return_to_main_menu)
+	if _victory_restart_btn != null and _victory_restart_btn.pressed.is_connected(_on_victory_restart):
+		_victory_restart_btn.pressed.disconnect(_on_victory_restart)
+	if _defeat_return_btn != null and _defeat_return_btn.pressed.is_connected(_on_defeat_return_to_main_menu):
+		_defeat_return_btn.pressed.disconnect(_on_defeat_return_to_main_menu)
+	if _defeat_restart_btn != null and _defeat_restart_btn.pressed.is_connected(_on_defeat_restart):
+		_defeat_restart_btn.pressed.disconnect(_on_defeat_restart)
+
 func set_process_modes() -> void:
+	_daily_settlement_modal.top_level = true
+	_daily_settlement_modal.z_index = 520
 	_daily_settlement_modal.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	var daily_backdrop: CanvasItem = _screen.get_node_or_null("DailySettlementModal/Backdrop")
+	if daily_backdrop != null:
+		daily_backdrop.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	var daily_vbox: Control = _screen.get_node_or_null("DailySettlementModal/VBox")
+	if daily_vbox != null:
+		daily_vbox.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
 	_daily_reward_a.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
 	_daily_reward_b.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
 	_daily_reward_c.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	_victory_outcome_modal.top_level = true
+	_victory_outcome_modal.z_index = 520
 	_victory_outcome_modal.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	var victory_backdrop: CanvasItem = _screen.get_node_or_null("VictoryOutcomeModal/Backdrop")
+	if victory_backdrop != null:
+		victory_backdrop.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	var victory_vbox: Control = _screen.get_node_or_null("VictoryOutcomeModal/VBox")
+	if victory_vbox != null:
+		victory_vbox.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
 	_victory_return_btn.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
 	_victory_restart_btn.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	_defeat_outcome_modal.top_level = true
+	_defeat_outcome_modal.z_index = 520
 	_defeat_outcome_modal.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	var defeat_backdrop: CanvasItem = _screen.get_node_or_null("DefeatOutcomeModal/Backdrop")
+	if defeat_backdrop != null:
+		defeat_backdrop.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	var defeat_vbox: Control = _screen.get_node_or_null("DefeatOutcomeModal/VBox")
+	if defeat_vbox != null:
+		defeat_vbox.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
 	_defeat_return_btn.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
 	_defeat_restart_btn.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
 
@@ -183,7 +225,7 @@ func _open_settlement_modal(summary: Dictionary) -> void:
 	_settlement_context_snapshot = summary.duplicate(true)
 	_defeat_outcome_modal.visible = false
 	_victory_outcome_modal.visible = false
-	var hp: int = int(summary.get("castle_hp", 0))
+	var castle_hp: int = int(summary.get("castle_hp", 100))
 	var kills: int = int(summary.get("dead_units_retired", 0))
 	var gold: int = int(summary.get("resource_gold", 0))
 	var iron: int = int(summary.get("resource_iron", 0))
@@ -206,7 +248,7 @@ func _open_settlement_modal(summary: Dictionary) -> void:
 	var reward_summary: String = "%s,%s,%s" % [reward_a_text, reward_b_text, reward_c_text]
 	_daily_settlement_summary.text = "%s=%d | %s=%d | %s=%s | %s=%d | %s=%d %s=%d %s=%d" % [
 		_t("battlemap.daily_settlement.final_hp"),
-		hp,
+		castle_hp,
 		_t("battlemap.daily_settlement.rewards_count"),
 		rewards.size(),
 		_t("battlemap.daily_settlement.reward_summary"),
@@ -220,10 +262,10 @@ func _open_settlement_modal(summary: Dictionary) -> void:
 		_t("battlemap.resource.population"),
 		pop_cap,
 	]
-	var has_hp: bool = summary.has("castle_hp") and typeof(summary.get("castle_hp", null)) != TYPE_NIL
-	_daily_evidence_hp.visible = has_hp
-	if has_hp:
-		_daily_evidence_hp.text = "%s: %d" % [_t("battlemap.daily_settlement.final_hp"), hp]
+	var has_castle_hp: bool = summary.has("castle_hp") and typeof(summary.get("castle_hp", null)) != TYPE_NIL
+	_daily_evidence_hp.visible = has_castle_hp
+	if has_castle_hp:
+		_daily_evidence_hp.text = "%s: %d" % [_t("battlemap.daily_settlement.final_hp"), castle_hp]
 	var has_kills: bool = summary.has("dead_units_retired") and typeof(summary.get("dead_units_retired", null)) != TYPE_NIL
 	_daily_evidence_kills.visible = has_kills
 	if has_kills:
@@ -284,7 +326,7 @@ func _open_victory_modal(summary: Dictionary) -> void:
 	_defeat_outcome_modal.visible = false
 	_victory_outcome_modal.visible = true
 	_screen.get_tree().paused = true
-	var hp: int = int(summary.get("castle_hp", 0))
+	var castle_hp: int = int(summary.get("castle_hp", 100))
 	var kills: int = int(summary.get("dead_units_retired", 0))
 	var gold: int = int(summary.get("resource_gold", 0))
 	var iron: int = int(summary.get("resource_iron", 0))
@@ -292,7 +334,7 @@ func _open_victory_modal(summary: Dictionary) -> void:
 	_victory_outcome_title.text = _t("battlemap.outcome.victory.title")
 	_victory_outcome_summary.text = "%s=%d | %s=%d | %s=%d %s=%d %s=%d" % [
 		_t("battlemap.daily_settlement.final_hp"),
-		hp,
+		castle_hp,
 		_t("battlemap.daily_settlement.kills"),
 		kills,
 		_t("battlemap.resource.gold"),
@@ -317,7 +359,6 @@ func _open_defeat_modal(summary: Dictionary) -> void:
 	_victory_outcome_modal.visible = false
 	_defeat_outcome_modal.visible = true
 	_screen.get_tree().paused = true
-	var hp: int = int(summary.get("castle_hp", 0))
 	var wall_hp := int(summary.get("wall_hp", 0))
 	var kills: int = int(summary.get("dead_units_retired", 0))
 	var gold: int = int(summary.get("resource_gold", 0))
@@ -325,10 +366,8 @@ func _open_defeat_modal(summary: Dictionary) -> void:
 	var pop_cap: int = int(summary.get("resource_population_cap", 0))
 	var defeat_copy: String = _t("battlemap.outcome.defeat.wall_breached")
 	_defeat_outcome_title.text = _t("battlemap.outcome.defeat.title")
-	_defeat_outcome_summary.text = "%s %s=%d | %s=%d | %s=%d | %s=%d %s=%d %s=%d" % [
+	_defeat_outcome_summary.text = "%s %s=%d/100 | %s=%d | %s=%d %s=%d %s=%d" % [
 		defeat_copy,
-		_t("battlemap.summary.castle_hp"),
-		hp,
 		_t("battlemap.summary.wall_hp"),
 		wall_hp,
 		_t("battlemap.daily_settlement.kills"),
@@ -398,7 +437,15 @@ func _restart_runtime_state() -> void:
 	var bridge: Node = _current_bridge()
 	if bridge != null and bridge.has_method("ResetForInteractiveRun"):
 		bridge.call("ResetForInteractiveRun")
+	var build_placement_controller: Node = _screen.get_node_or_null("BuildPlacementController")
+	if build_placement_controller != null and build_placement_controller.has_method("reset_runtime_state"):
+		build_placement_controller.call("reset_runtime_state")
+	var selection_controller: Node = _screen.get_node_or_null("SelectionController")
+	if selection_controller != null and selection_controller.has_method("clear_building_selection"):
+		selection_controller.call("clear_building_selection")
 	if _feedback_controller != null:
+		if _feedback_controller.has_method("reset_runtime_state"):
+			_feedback_controller.call("reset_runtime_state")
 		_feedback_controller.call("clear_spawn_pulse")
 		_feedback_controller.call("render_summary", _try_bridge_summary(), _t("battlemap.status.loaded"))
 

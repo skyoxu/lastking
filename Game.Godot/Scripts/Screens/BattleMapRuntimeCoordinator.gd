@@ -32,6 +32,8 @@ func initialize_runtime() -> void:
 		bridge.call("ResetForInteractiveRun")
 	if _operation_controller != null and _operation_controller.has_method("reset_flags"):
 		_operation_controller.call("reset_flags")
+	if _operation_controller != null and _operation_controller.has_method("apply_runtime_spawn_config"):
+		_operation_controller.call("apply_runtime_spawn_config")
 	if _day_night_loop != null:
 		_day_night_loop.set("PauseLoop", false)
 	_outcome_controller.call("close_all")
@@ -42,16 +44,35 @@ func initialize_runtime() -> void:
 func process_runtime_frame(delta: float) -> void:
 	_presentation_controller.call("sync_locale_and_texts")
 	var bridge: Node = _current_bridge()
+	var probe_wave_frame: bool = _operation_controller != null and _operation_controller.has_method("consume_post_wave_probe_tick") and _operation_controller.call("consume_post_wave_probe_tick") == true
+	if probe_wave_frame:
+		print("[Runtime] post_wave_frame start")
 	if bridge != null and bridge.has_method("AdvanceSimulation"):
+		if probe_wave_frame:
+			print("[Runtime] post_wave_frame -> AdvanceSimulation")
 		bridge.call("AdvanceSimulation", delta)
+		if probe_wave_frame:
+			print("[Runtime] post_wave_frame <- AdvanceSimulation")
 	if _day_night_loop != null and _day_night_loop.has_method("SimulateProcessStep"):
 		var paused: bool = _is_runtime_paused()
 		_day_night_loop.set("PauseLoop", paused)
 		if not paused:
+			if probe_wave_frame:
+				print("[Runtime] post_wave_frame -> SimulateProcessStep")
 			_day_night_loop.call("SimulateProcessStep", delta)
+			if probe_wave_frame:
+				print("[Runtime] post_wave_frame <- SimulateProcessStep")
+	if probe_wave_frame:
+		print("[Runtime] post_wave_frame -> sync hud")
 	_sync_battle_hud_runtime_state()
+	if probe_wave_frame:
+		print("[Runtime] post_wave_frame <- sync hud")
 	_outcome_controller.call("sync_terminal_outcome_from_bridge", _operation_controller.call("is_wave_started"))
+	if probe_wave_frame:
+		print("[Runtime] post_wave_frame -> feedback")
 	_feedback_controller.call("process_frame", delta)
+	if probe_wave_frame:
+		print("[Runtime] post_wave_frame end")
 
 func _sync_battle_hud_runtime_state() -> void:
 	if _hud == null:
@@ -59,10 +80,19 @@ func _sync_battle_hud_runtime_state() -> void:
 	if _hud == null:
 		return
 	var bridge: Node = _current_bridge()
-	if bridge != null and bridge.has_method("GetSummary") and _hud.has_method("SetHealth"):
+	var summary_dict: Dictionary = {}
+	if bridge != null and bridge.has_method("GetSummary"):
 		var summary: Variant = bridge.call("GetSummary")
 		if summary is Dictionary:
-			_hud.call("SetHealth", int((summary as Dictionary).get("castle_hp", 100)))
+			summary_dict = summary as Dictionary
+	if not summary_dict.is_empty():
+		if _hud.has_method("SetHealth"):
+			_hud.call("SetHealth", int(summary_dict.get("castle_hp", 100)))
+		if _hud.has_method("SetBattleWallHp"):
+			_hud.call("SetBattleWallHp", int(summary_dict.get("wall_hp", 100)))
+		_sync_direct_hud_runtime_labels(summary_dict)
+		if _feedback_controller != null and _feedback_controller.has_method("render_summary"):
+			_feedback_controller.call("render_summary", summary_dict, _presentation_controller.call("translate", "battlemap.status.loaded"))
 	if _day_night_loop == null:
 		return
 	var current_day: int = int(_day_night_loop.get("CurrentDay"))
@@ -72,6 +102,25 @@ func _sync_battle_hud_runtime_state() -> void:
 	var remaining: float = max(0.0, duration - elapsed)
 	if _hud.has_method("SyncRuntimePhase"):
 		_hud.call("SyncRuntimePhase", current_day, is_day, remaining)
+
+func _sync_direct_hud_runtime_labels(summary: Dictionary) -> void:
+	var resources_label := _hud.get_node_or_null("TopBar/HBox/ResourcesLabel") as Label
+	if resources_label != null:
+		resources_label.text = "%s: %s %d | %s %d | %s %d" % [
+			str(_presentation_controller.call("translate", "hud.resources")),
+			str(_presentation_controller.call("translate", "battlemap.resource.gold")),
+			int(summary.get("resource_gold", 0)),
+			str(_presentation_controller.call("translate", "battlemap.resource.iron")),
+			int(summary.get("resource_iron", 0)),
+			str(_presentation_controller.call("translate", "battlemap.resource.population")),
+			int(summary.get("resource_population_cap", 0)),
+		]
+	var enemies_label := _hud.get_node_or_null("TopBar/HBox/EnemiesLabel") as Label
+	if enemies_label != null:
+		enemies_label.text = "%s: %d" % [
+			str(_presentation_controller.call("translate", "hud.enemies")),
+			int(summary.get("enemy_units_spawned", 0)),
+		]
 
 func _is_runtime_paused() -> bool:
 	var manager: Node = get_node_or_null("/root/GameManager")
@@ -93,4 +142,3 @@ func _current_bridge() -> Node:
 		if provided is Node:
 			return provided
 	return null
-
