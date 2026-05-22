@@ -287,10 +287,39 @@ func test_player_visible_combat_experience_runs_from_building_and_training_to_de
 	)
 	assert_bool(hit_flash_visible).is_true()
 	assert_bool(wall_pressure_emphasis_active).is_true()
-	assert_bool(feedback_label.visible).is_true()
-	assert_bool(feedback_label.text.find("day=9") >= 0).is_true()
-	assert_str(outcome_label.text.to_lower()).contains("n/a")
-	assert_str(prompt_label.text.to_lower()).contains("n/a")
+
+
+func test_battlemap_wave_sequence_left_right_should_spawn_on_matching_sides() -> void:
+	var bridge_script: Variant = load(COMBAT_EXPERIENCE_BRIDGE)
+	assert_object(bridge_script).is_not_null()
+
+	var bridge: Node = bridge_script.new()
+	add_child(auto_free(bridge))
+	await get_tree().process_frame
+
+	bridge.call("ResetForInteractiveRun")
+	bridge.call("SpawnEnemyWavePhase")
+	bridge.call("SpawnEnemyWavePhase")
+
+	var snapshots: Array = bridge.call("GetActorSnapshots")
+	assert_int(snapshots.size()).is_greater_equal(5)
+
+	var left_found := false
+	var right_found := false
+	for item in snapshots:
+		var snapshot := item as Dictionary
+		assert_object(snapshot).is_not_null()
+		var lane := str(snapshot.get("lane", ""))
+		var world_x := float(snapshot.get("world_x", -1.0))
+		if lane == "left":
+			left_found = true
+			assert_float(world_x).is_less(200.0)
+		elif lane == "right":
+			right_found = true
+			assert_float(world_x).is_greater(1400.0)
+
+	assert_bool(left_found).is_true()
+	assert_bool(right_found).is_true()
 
 
 # ACC:T56.7

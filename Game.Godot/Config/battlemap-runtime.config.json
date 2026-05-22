@@ -26,10 +26,22 @@
     "auto_spawn_enabled": true,
     "wave_size": 3,
     "wave_sequence": [
-      ["grunt", "grunt", "grunt"],
-      ["grunt", "grunt", "elite"],
-      ["grunt", "elite", "elite"],
-      ["elite", "elite", "boss"]
+      {
+        "left": [],
+        "right": ["grunt", "grunt", "grunt"]
+      },
+      {
+        "left": ["grunt"],
+        "right": ["grunt", "elite"]
+      },
+      {
+        "left": ["grunt", "elite"],
+        "right": ["elite"]
+      },
+      {
+        "left": ["boss"],
+        "right": ["elite", "elite"]
+      }
     ]
   },
   "enemies": [
