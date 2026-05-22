@@ -84,14 +84,22 @@ func configure(screen: Control, refs: Dictionary) -> void:
 	_battle_settings_main_menu_btn = refs.get("battle_settings_main_menu_btn", null)
 
 func connect_signals() -> void:
-	_daily_reward_a.pressed.connect(_on_settlement_reward_selected.bind(0))
-	_daily_reward_b.pressed.connect(_on_settlement_reward_selected.bind(1))
-	_daily_reward_c.pressed.connect(_on_settlement_reward_selected.bind(2))
-	_daily_expand_context_btn.pressed.connect(_on_settlement_context_toggle)
-	_victory_return_btn.pressed.connect(_on_victory_return_to_main_menu)
-	_victory_restart_btn.pressed.connect(_on_victory_restart)
-	_defeat_return_btn.pressed.connect(_on_defeat_return_to_main_menu)
-	_defeat_restart_btn.pressed.connect(_on_defeat_restart)
+	if _daily_reward_a != null:
+		_daily_reward_a.pressed.connect(_on_settlement_reward_selected.bind(0))
+	if _daily_reward_b != null:
+		_daily_reward_b.pressed.connect(_on_settlement_reward_selected.bind(1))
+	if _daily_reward_c != null:
+		_daily_reward_c.pressed.connect(_on_settlement_reward_selected.bind(2))
+	if _daily_expand_context_btn != null:
+		_daily_expand_context_btn.pressed.connect(_on_settlement_context_toggle)
+	if _victory_return_btn != null:
+		_victory_return_btn.pressed.connect(_on_victory_return_to_main_menu)
+	if _victory_restart_btn != null:
+		_victory_restart_btn.pressed.connect(_on_victory_restart)
+	if _defeat_return_btn != null:
+		_defeat_return_btn.pressed.connect(_on_defeat_return_to_main_menu)
+	if _defeat_restart_btn != null:
+		_defeat_restart_btn.pressed.connect(_on_defeat_restart)
 
 func cleanup() -> void:
 	if _daily_reward_a != null and _daily_reward_a.pressed.is_connected(_on_settlement_reward_selected.bind(0)):
@@ -112,40 +120,50 @@ func cleanup() -> void:
 		_defeat_restart_btn.pressed.disconnect(_on_defeat_restart)
 
 func set_process_modes() -> void:
-	_daily_settlement_modal.top_level = true
-	_daily_settlement_modal.z_index = 520
-	_daily_settlement_modal.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	if _daily_settlement_modal != null:
+		_daily_settlement_modal.top_level = true
+		_daily_settlement_modal.z_index = 520
+		_daily_settlement_modal.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
 	var daily_backdrop: CanvasItem = _screen.get_node_or_null("DailySettlementModal/Backdrop")
 	if daily_backdrop != null:
 		daily_backdrop.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
 	var daily_vbox: Control = _screen.get_node_or_null("DailySettlementModal/VBox")
 	if daily_vbox != null:
 		daily_vbox.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
-	_daily_reward_a.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
-	_daily_reward_b.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
-	_daily_reward_c.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
-	_victory_outcome_modal.top_level = true
-	_victory_outcome_modal.z_index = 520
-	_victory_outcome_modal.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	if _daily_reward_a != null:
+		_daily_reward_a.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	if _daily_reward_b != null:
+		_daily_reward_b.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	if _daily_reward_c != null:
+		_daily_reward_c.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	if _victory_outcome_modal != null:
+		_victory_outcome_modal.top_level = true
+		_victory_outcome_modal.z_index = 520
+		_victory_outcome_modal.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
 	var victory_backdrop: CanvasItem = _screen.get_node_or_null("VictoryOutcomeModal/Backdrop")
 	if victory_backdrop != null:
 		victory_backdrop.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
 	var victory_vbox: Control = _screen.get_node_or_null("VictoryOutcomeModal/VBox")
 	if victory_vbox != null:
 		victory_vbox.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
-	_victory_return_btn.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
-	_victory_restart_btn.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
-	_defeat_outcome_modal.top_level = true
-	_defeat_outcome_modal.z_index = 520
-	_defeat_outcome_modal.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	if _victory_return_btn != null:
+		_victory_return_btn.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	if _victory_restart_btn != null:
+		_victory_restart_btn.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	if _defeat_outcome_modal != null:
+		_defeat_outcome_modal.top_level = true
+		_defeat_outcome_modal.z_index = 520
+		_defeat_outcome_modal.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
 	var defeat_backdrop: CanvasItem = _screen.get_node_or_null("DefeatOutcomeModal/Backdrop")
 	if defeat_backdrop != null:
 		defeat_backdrop.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
 	var defeat_vbox: Control = _screen.get_node_or_null("DefeatOutcomeModal/VBox")
 	if defeat_vbox != null:
 		defeat_vbox.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
-	_defeat_return_btn.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
-	_defeat_restart_btn.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	if _defeat_return_btn != null:
+		_defeat_return_btn.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	if _defeat_restart_btn != null:
+		_defeat_restart_btn.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
 
 func SetSettlementOptionsForTest(options: Variant) -> void:
 	_settlement_options.clear()
@@ -161,7 +179,9 @@ func is_settlement_open() -> bool:
 	return _settlement_modal_open
 
 func is_terminal_outcome_modal_visible() -> bool:
-	return _victory_outcome_modal.visible or _defeat_outcome_modal.visible
+	var victory_visible: bool = _victory_outcome_modal != null and _victory_outcome_modal.visible
+	var defeat_visible: bool = _defeat_outcome_modal != null and _defeat_outcome_modal.visible
+	return victory_visible or defeat_visible
 
 func is_settlement_outcome(summary: Dictionary) -> bool:
 	var outcome: String = str(summary.get("outcome", "")).to_lower()
@@ -220,11 +240,15 @@ func close_all() -> void:
 	_close_defeat_modal()
 
 func _open_settlement_modal(summary: Dictionary) -> void:
+	if _daily_settlement_modal == null:
+		return
 	_settlement_modal_open = true
 	_settlement_context_expanded = false
 	_settlement_context_snapshot = summary.duplicate(true)
-	_defeat_outcome_modal.visible = false
-	_victory_outcome_modal.visible = false
+	if _defeat_outcome_modal != null:
+		_defeat_outcome_modal.visible = false
+	if _victory_outcome_modal != null:
+		_victory_outcome_modal.visible = false
 	var castle_hp: int = int(summary.get("castle_hp", 100))
 	var kills: int = int(summary.get("dead_units_retired", 0))
 	var gold: int = int(summary.get("resource_gold", 0))
@@ -233,8 +257,10 @@ func _open_settlement_modal(summary: Dictionary) -> void:
 	var rewards: Array[String] = _settlement_options
 	if rewards.size() != 3:
 		_settlement_modal_open = false
-		_daily_settlement_modal.visible = false
-		_screen.get_tree().paused = false
+		if _daily_settlement_modal != null:
+			_daily_settlement_modal.visible = false
+		if _screen != null and _screen.get_tree() != null:
+			_screen.get_tree().paused = false
 		_render_status_only(_t("battlemap.status.invalid_settlement_rewards"))
 		return
 	_daily_settlement_modal.visible = true
@@ -242,9 +268,9 @@ func _open_settlement_modal(summary: Dictionary) -> void:
 	_daily_settlement_title.text = _t("battlemap.daily_settlement.title")
 	_daily_evidence_title.text = _t("battlemap.daily_settlement.evidence_title")
 	_daily_hint.text = _t("battlemap.daily_settlement.hint")
-	var reward_a_text := _display_reward_text(rewards[0])
-	var reward_b_text := _display_reward_text(rewards[1])
-	var reward_c_text := _display_reward_text(rewards[2])
+	var reward_a_text: String = _display_reward_text(rewards[0])
+	var reward_b_text: String = _display_reward_text(rewards[1])
+	var reward_c_text: String = _display_reward_text(rewards[2])
 	var reward_summary: String = "%s,%s,%s" % [reward_a_text, reward_b_text, reward_c_text]
 	_daily_settlement_summary.text = "%s=%d | %s=%d | %s=%s | %s=%d | %s=%d %s=%d %s=%d" % [
 		_t("battlemap.daily_settlement.final_hp"),
@@ -306,10 +332,14 @@ func _close_settlement_modal() -> void:
 	_settlement_modal_open = false
 	_settlement_context_expanded = false
 	_settlement_context_snapshot = {}
-	_daily_settlement_modal.visible = false
-	_daily_runtime_context_payload.visible = false
-	_daily_expand_context_btn.text = _t("battlemap.daily_settlement.show_runtime_context")
-	_screen.get_tree().paused = false
+	if _daily_settlement_modal != null:
+		_daily_settlement_modal.visible = false
+	if _daily_runtime_context_payload != null:
+		_daily_runtime_context_payload.visible = false
+	if _daily_expand_context_btn != null:
+		_daily_expand_context_btn.text = _t("battlemap.daily_settlement.show_runtime_context")
+	if _screen != null and _screen.get_tree() != null:
+		_screen.get_tree().paused = false
 
 func _on_settlement_context_toggle() -> void:
 	if not _settlement_modal_open:
@@ -321,11 +351,16 @@ func _on_settlement_context_toggle() -> void:
 		_daily_runtime_context_payload.text = JSON.stringify(_settlement_context_snapshot)
 
 func _open_victory_modal(summary: Dictionary) -> void:
+	if _victory_outcome_modal == null:
+		return
 	_settlement_modal_open = false
-	_daily_settlement_modal.visible = false
-	_defeat_outcome_modal.visible = false
+	if _daily_settlement_modal != null:
+		_daily_settlement_modal.visible = false
+	if _defeat_outcome_modal != null:
+		_defeat_outcome_modal.visible = false
 	_victory_outcome_modal.visible = true
-	_screen.get_tree().paused = true
+	if _screen != null and _screen.get_tree() != null:
+		_screen.get_tree().paused = true
 	var castle_hp: int = int(summary.get("castle_hp", 100))
 	var kills: int = int(summary.get("dead_units_retired", 0))
 	var gold: int = int(summary.get("resource_gold", 0))
@@ -349,17 +384,23 @@ func _open_victory_modal(summary: Dictionary) -> void:
 	_victory_restart_btn.text = _t("battlemap.restart")
 
 func _close_victory_modal() -> void:
-	_victory_outcome_modal.visible = false
-	if _screen.get_tree() != null:
+	if _victory_outcome_modal != null:
+		_victory_outcome_modal.visible = false
+	if _screen != null and _screen.get_tree() != null:
 		_screen.get_tree().paused = false
 
 func _open_defeat_modal(summary: Dictionary) -> void:
+	if _defeat_outcome_modal == null:
+		return
 	_settlement_modal_open = false
-	_daily_settlement_modal.visible = false
-	_victory_outcome_modal.visible = false
+	if _daily_settlement_modal != null:
+		_daily_settlement_modal.visible = false
+	if _victory_outcome_modal != null:
+		_victory_outcome_modal.visible = false
 	_defeat_outcome_modal.visible = true
-	_screen.get_tree().paused = true
-	var wall_hp := int(summary.get("wall_hp", 0))
+	if _screen != null and _screen.get_tree() != null:
+		_screen.get_tree().paused = true
+	var wall_hp: int = int(summary.get("wall_hp", 0))
 	var kills: int = int(summary.get("dead_units_retired", 0))
 	var gold: int = int(summary.get("resource_gold", 0))
 	var iron: int = int(summary.get("resource_iron", 0))
@@ -384,8 +425,9 @@ func _open_defeat_modal(summary: Dictionary) -> void:
 	_defeat_restart_btn.text = _t("battlemap.restart")
 
 func _close_defeat_modal() -> void:
-	_defeat_outcome_modal.visible = false
-	if _screen.get_tree() != null:
+	if _defeat_outcome_modal != null:
+		_defeat_outcome_modal.visible = false
+	if _screen != null and _screen.get_tree() != null:
 		_screen.get_tree().paused = false
 
 func _on_settlement_reward_selected(index: int) -> void:
@@ -478,7 +520,7 @@ func _render_status_only(status_text: String) -> void:
 		_feedback_controller.call("render_status_only", status_text)
 
 func _display_reward_text(raw_value: String) -> String:
-	var key := raw_value.strip_edges()
+	var key: String = raw_value.strip_edges()
 	match key:
 		"Reward A":
 			key = "battlemap.reward.a"

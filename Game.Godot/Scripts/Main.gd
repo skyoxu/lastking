@@ -6,13 +6,15 @@ var _hp: int = 100
 var _i18n: Variant = null
 
 func _enter_tree() -> void:
-	_ensure_event_bus()
+	pass
 
 func _ready() -> void:
+	_ensure_event_bus()
 	_i18n = load("res://Game.Godot/Scripts/Localization/LocalizationManager.gd").new()
 	_i18n.configure_locale_resource("en-US", "res://Game.Godot/Localization/en-US.json")
 	_i18n.configure_locale_resource("zh-CN", "res://Game.Godot/Localization/zh-CN.json")
 	_i18n.switch_locale(_normalize_locale(str(TranslationServer.get_locale())))
+	_normalize_runtime_ui_layering()
 	print("[TEMPLATE_SMOKE_READY] Main scene initialized")
 	var db = get_node_or_null("/root/SqlDb")
 	if db != null:
@@ -88,7 +90,7 @@ func _ensure_event_bus() -> void:
 	if event_bus == null:
 		return
 	event_bus.name = "EventBus"
-	root.add_child(event_bus)
+	root.call_deferred("add_child", event_bus)
 
 func _on_add_score() -> void:
 	_score += 10
@@ -143,3 +145,20 @@ func _normalize_locale(locale: String) -> String:
 func _t(key: String) -> String:
 	var text: String = str(_i18n.translate(key))
 	return text if text != key else key
+
+func _normalize_runtime_ui_layering() -> void:
+	var runtime_ui: Node = get_node_or_null("RuntimeUi")
+	if runtime_ui == null:
+		return
+	var screen_root: Node = runtime_ui.get_node_or_null("ScreenRoot")
+	var main_menu: Node = runtime_ui.get_node_or_null("MainMenu")
+	var overlays: Node = runtime_ui.get_node_or_null("Overlays")
+	var settings_panel: Node = runtime_ui.get_node_or_null("SettingsPanel")
+	if screen_root != null:
+		runtime_ui.move_child(screen_root, 0)
+	if main_menu != null:
+		runtime_ui.move_child(main_menu, 1)
+	if overlays != null:
+		runtime_ui.move_child(overlays, 2)
+	if settings_panel != null:
+		runtime_ui.move_child(settings_panel, 3)

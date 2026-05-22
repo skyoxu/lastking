@@ -249,6 +249,7 @@ func _begin_placement(selection_id: String, drag_active: bool) -> bool:
 	if _selection_controller != null and _selection_controller.has_method("clear_building_selection"):
 		_selection_controller.call("clear_building_selection")
 	_push_active_build_selection_to_hud(selection_id)
+	_apply_formal_selection_feedback(selection_id)
 	_apply_current_legality_overlay()
 	_push_build_context_message("")
 	_update_drag_preview()
@@ -373,6 +374,8 @@ func _formal_selection_snapshot_for_selection(selection_id: String) -> Dictionar
 	match selection_id:
 		"tower_alpha":
 			snapshot["building_slots"] = ["InnerCastleRegionSlot_03_00"]
+			snapshot["range_slots"] = ["InnerCastleRegionSlot_04_00"]
+			snapshot["blocked_range_slots"] = ["InnerCastleRegionSlot_05_00"]
 		"tower_beta":
 			snapshot["building_slots"] = ["InnerCastleRegionSlot_06_05"]
 			snapshot["range_slots"] = ["InnerCastleRegionSlot_05_00"]

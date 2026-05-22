@@ -21,6 +21,10 @@ public partial class ScreenNavigator : Node
         {
             GD.PushWarning("[Navigator] ScreenRoot not found; navigation disabled.");
         }
+        else
+        {
+            _root.MouseFilter = Control.MouseFilterEnum.Ignore;
+        }
         _overlays = GetNodeOrNull<Control>(OverlaysPath);
     }
 
@@ -50,23 +54,27 @@ public partial class ScreenNavigator : Node
             return;
         }
 
+        Node? releasedCurrent = null;
         if (_current != null)
         {
             if (GodotObject.IsInstanceValid(_current))
             {
-                if (_current.HasMethod("Exit")) _current.CallDeferred("Exit");
+                if (_current.HasMethod("Exit")) _current.Call("Exit");
                 _current.QueueFree();
+                releasedCurrent = _current;
             }
             _current = null;
         }
 
         foreach (var child in _root.GetChildren())
         {
-            if (child is Node node && GodotObject.IsInstanceValid(node))
+            if (child is Node node && GodotObject.IsInstanceValid(node) && !ReferenceEquals(node, releasedCurrent))
             {
                 node.QueueFree();
             }
         }
+
+        _root.MouseFilter = Control.MouseFilterEnum.Ignore;
     }
 
     private void DoSwitch(PackedScene packed)
@@ -76,15 +84,16 @@ public partial class ScreenNavigator : Node
         {
             if (GodotObject.IsInstanceValid(_current))
             {
-                if (_current.HasMethod("Exit")) _current.CallDeferred("Exit");
+                if (_current.HasMethod("Exit")) _current.Call("Exit");
                 _current.QueueFree();
             }
             _current = null;
         }
         var inst = packed.Instantiate<Control>();
         _root!.AddChild(inst);
+        _root.MouseFilter = Control.MouseFilterEnum.Pass;
         _current = inst;
-        if (_current.HasMethod("Enter")) _current.CallDeferred("Enter");
+        if (_current.HasMethod("Enter")) _current.Call("Enter");
     }
 
     private async System.Threading.Tasks.Task FadeAndSwitch(PackedScene packed)

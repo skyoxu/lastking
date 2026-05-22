@@ -100,10 +100,10 @@ layout_mode = 2
 theme_override_styles/normal = SubResource("3_metric_chip_style")
 text = "Day Remaining: 240.0s"
 
-[node name="HealthLabel" type="Label" parent="TopBar/HBox"]
+[node name="WallLabel" type="Label" parent="TopBar/HBox"]
 layout_mode = 2
 theme_override_styles/normal = SubResource("3_metric_chip_style")
-text = "HP: 100/100"
+text = "Wall: 100/100"
 
 [node name="ResourcesLabel" type="Label" parent="TopBar/HBox"]
 layout_mode = 2
@@ -147,26 +147,20 @@ text = "Settings"
 
 [node name="CombatHud" type="Control" parent="."]
 layout_mode = 1
-anchors_preset = 12
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_top = -196.0
-grow_vertical = 0
+anchors_preset = 0
+offset_top = 704.0
+offset_right = 1600.0
+offset_bottom = 900.0
 mouse_filter = 1
 
 [node name="BottomBar" type="PanelContainer" parent="CombatHud"]
 layout_mode = 1
-anchors_preset = 12
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
+anchors_preset = 0
 custom_minimum_size = Vector2(1584, 196)
 offset_left = 8.0
-offset_top = -196.0
-offset_right = -8.0
-offset_bottom = 0.0
-grow_vertical = 0
+offset_top = 0.0
+offset_right = 1592.0
+offset_bottom = 196.0
 theme_override_styles/panel = SubResource("1_bottom_bar_style")
 
 [node name="Root" type="HBoxContainer" parent="CombatHud/BottomBar"]
@@ -250,6 +244,45 @@ mouse_filter = 2
 horizontal_alignment = 1
 autowrap_mode = 3
 text = "Inner | G60"
+
+[node name="SniperTowerSlot" type="Button" parent="CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons"]
+custom_minimum_size = Vector2(108, 78)
+layout_mode = 2
+size_flags_horizontal = 3
+text = ""
+
+[node name="Card" type="MarginContainer" parent="CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/SniperTowerSlot"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 4
+mouse_filter = 2
+
+[node name="PreviewIcon" type="TextureRect" parent="CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/SniperTowerSlot/Card"]
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+size_flags_horizontal = 4
+mouse_filter = 2
+stretch_mode = 5
+
+[node name="Title" type="Label" parent="CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/SniperTowerSlot/Card"]
+layout_mode = 2
+mouse_filter = 2
+horizontal_alignment = 1
+text = "Sniper Tower"
+
+[node name="Meta" type="Label" parent="CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/SniperTowerSlot/Card"]
+layout_mode = 2
+mouse_filter = 2
+horizontal_alignment = 1
+autowrap_mode = 3
+text = "Inner | G90 I10"
 
 [node name="BarracksSlot" type="Button" parent="CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons"]
 custom_minimum_size = Vector2(108, 78)

@@ -1309,7 +1309,7 @@ func _try_bridge_summary() -> Dictionary:
 			return full
 	return {}
 
-func _push_formal_battle_hud_messages(result: Dictionary, status_text: String) -> void:
+func _push_formal_battle_hud_messages(_result: Dictionary, _status_text: String) -> void:
 	return
 
 func _compose_formal_summary(result: Dictionary) -> String:

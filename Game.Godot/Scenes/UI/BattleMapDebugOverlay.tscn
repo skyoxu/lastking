@@ -43,3 +43,33 @@ text = "Element: n/a"
 layout_mode = 2
 autowrap_mode = 3
 text = "Node: n/a"
+
+[node name="TowerTargetLabel" type="Label" parent="Panel/VBox"]
+layout_mode = 2
+autowrap_mode = 3
+text = "TowerTarget: n/a"
+
+[node name="TowerTargetHpLabel" type="Label" parent="Panel/VBox"]
+layout_mode = 2
+autowrap_mode = 3
+text = "TargetHp: n/a"
+
+[node name="TowerShotsLabel" type="Label" parent="Panel/VBox"]
+layout_mode = 2
+autowrap_mode = 3
+text = "Shots: 0"
+
+[node name="TowerEnemyCountLabel" type="Label" parent="Panel/VBox"]
+layout_mode = 2
+autowrap_mode = 3
+text = "ActiveEnemies: 0"
+
+[node name="TowerNodesLabel" type="Label" parent="Panel/VBox"]
+layout_mode = 2
+autowrap_mode = 3
+text = "TowerNodes: n/a"
+
+[node name="TowerDetailsLabel" type="Label" parent="Panel/VBox"]
+layout_mode = 2
+autowrap_mode = 3
+text = "TowerDetails: n/a"

@@ -250,7 +250,7 @@ func _sync_runtime_visuals() -> void:
 			visual["outline_tint"] = "red"
 		battlefield_view.call("apply_slot_visual", slot_id, visual)
 
-func _should_apply_hover_reason(slot_id: String, visual: Dictionary) -> bool:
+func _should_apply_hover_reason(_slot_id: String, _visual: Dictionary) -> bool:
 	return false
 
 func _read_overlay_slot_visual(slot_id: String) -> Dictionary:

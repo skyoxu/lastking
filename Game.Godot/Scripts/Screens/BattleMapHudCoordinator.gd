@@ -29,6 +29,9 @@ func route_action(action_code: String) -> void:
 		"select_tower":
 			if _build_placement_controller != null and _build_placement_controller.has_method("handle_action"):
 				_build_placement_controller.call("handle_action", action_code)
+		"select_tower_beta":
+			if _build_placement_controller != null and _build_placement_controller.has_method("handle_action"):
+				_build_placement_controller.call("handle_action", action_code)
 		"select_residence":
 			if _build_placement_controller != null and _build_placement_controller.has_method("handle_action"):
 				_build_placement_controller.call("handle_action", action_code)
@@ -38,6 +41,9 @@ func route_action(action_code: String) -> void:
 		"drag_tower":
 			if _build_placement_controller != null and _build_placement_controller.has_method("begin_drag_building"):
 				_build_placement_controller.call("begin_drag_building", "tower_alpha")
+		"drag_tower_beta":
+			if _build_placement_controller != null and _build_placement_controller.has_method("begin_drag_building"):
+				_build_placement_controller.call("begin_drag_building", "tower_beta")
 		"drag_barracks":
 			if _build_placement_controller != null and _build_placement_controller.has_method("begin_drag_building"):
 				_build_placement_controller.call("begin_drag_building", "barracks_alpha")
