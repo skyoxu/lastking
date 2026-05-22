@@ -127,9 +127,9 @@ public partial class CombatExperienceRuntimeBridge : Node
     };
     private static readonly System.Collections.Generic.Dictionary<string, Vector2> RuntimeMarkerPositions = new(StringComparer.Ordinal)
     {
-        ["MgTower"] = new Vector2(792f, 24f),
-        ["Barracks"] = new Vector2(648f, 24f),
-        ["Residence"] = new Vector2(936f, 24f),
+        ["MgTower"] = new Vector2(792f, 312f),
+        ["Barracks"] = new Vector2(648f, 312f),
+        ["Residence"] = new Vector2(936f, 312f),
     };
     private const float LeftWallCenterX = 600f;
     private const float RightWallCenterX = 984f;
@@ -138,6 +138,7 @@ public partial class CombatExperienceRuntimeBridge : Node
     private const string DamageNumbersEnabledKey = "combat_damage_numbers_enabled";
     private const string LegacyDamageNumbersEnabledKey = "damage_numbers_enabled";
     private string _enemyRuntimeConfigJson = string.Empty;
+    private bool _testEnemyRuntimeConfigOverrideActive;
     private readonly ConfigManager _enemyRuntimeConfigManager = new();
     private readonly EnemyConfigRuntimeResolver _enemyConfigResolver = new();
     private bool _battleMapAutoSpawnEnabled = true;
@@ -168,7 +169,16 @@ public partial class CombatExperienceRuntimeBridge : Node
     public GDictionary RunCompleteCombatExperienceForTest()
     {
         ResetForInteractiveRun();
-        BuildPhase();
+        EnsureBattlefield();
+        if (!HasNode("Battlefield/MgTower"))
+        {
+            AddMarker("MgTower");
+        }
+
+        if (!HasNode("Battlefield/Barracks"))
+        {
+            AddMarker("Barracks");
+        }
         TrainFriendlyUnitPhase();
         SpawnEnemyWavePhase();
         ResolveCombatExchangePhase();
@@ -349,6 +359,17 @@ public partial class CombatExperienceRuntimeBridge : Node
     public int GetSpawnCadenceSeconds()
     {
         return Math.Max(1, _battleMapSpawnCadenceSeconds);
+    }
+
+    public int GetConfiguredWaveSize()
+    {
+        if (_battleMapWaveSequence.Count > 0)
+        {
+            var waveIndex = Math.Clamp(_battleMapWaveCursor, 0, _battleMapWaveSequence.Count - 1);
+            return _battleMapWaveSequence[waveIndex].Length;
+        }
+
+        return Math.Max(1, _battleMapConfiguredWaveSize);
     }
 
     public bool IsAutoSpawnEnabled()
@@ -533,6 +554,21 @@ public partial class CombatExperienceRuntimeBridge : Node
 
         _towerShotEvents.Clear();
         return events;
+    }
+
+    public GDictionary DebugDescribeResolvedEnemyProfiles()
+    {
+        var profiles = ResolveActiveEnemyProfiles();
+        var firstRange = profiles.Length > 0 ? profiles[0].AttackRangePx : -1f;
+        var firstInterval = profiles.Length > 0 ? profiles[0].AttackIntervalSeconds : -1d;
+        return new GDictionary
+        {
+            ["override_active"] = _testEnemyRuntimeConfigOverrideActive,
+            ["config_json_set"] = !string.IsNullOrWhiteSpace(_enemyRuntimeConfigJson),
+            ["profile_count"] = profiles.Length,
+            ["first_range_px"] = firstRange,
+            ["first_interval_seconds"] = firstInterval,
+        };
     }
 
     public void AdvanceSimulation(double deltaSeconds)
@@ -1405,6 +1441,7 @@ public partial class CombatExperienceRuntimeBridge : Node
     public void LoadEnemyRuntimeConfigForTest(string configJson)
     {
         _enemyRuntimeConfigJson = configJson ?? string.Empty;
+        _testEnemyRuntimeConfigOverrideActive = !string.IsNullOrWhiteSpace(_enemyRuntimeConfigJson);
         if (!string.IsNullOrWhiteSpace(_enemyRuntimeConfigJson))
         {
             _enemyRuntimeConfigManager.LoadInitialFromJson(_enemyRuntimeConfigJson, "memory://combat-experience-runtime-enemy-config.json");
@@ -1413,6 +1450,15 @@ public partial class CombatExperienceRuntimeBridge : Node
 
     private void LoadBattleMapRuntimeConfig()
     {
+        if (_testEnemyRuntimeConfigOverrideActive)
+        {
+            _battleMapAutoSpawnEnabled = true;
+            _battleMapSpawnCadenceSeconds = Math.Max(1, _enemyRuntimeConfigManager.Snapshot.SpawnCadenceSeconds);
+            _battleMapConfiguredWaveSize = 2;
+            _battleMapWaveSequence.Clear();
+            return;
+        }
+
         _enemyRuntimeConfigJson = string.Empty;
         _battleMapAutoSpawnEnabled = true;
         _battleMapSpawnCadenceSeconds = 8;
@@ -1511,12 +1557,12 @@ public partial class CombatExperienceRuntimeBridge : Node
 
             if (configuredWave.Length == 0)
             {
-                return Array.Empty<RuntimeEnemyProfile>();
+                return global::System.Array.Empty<RuntimeEnemyProfile>();
             }
 
             if (resolvedProfiles.Length == 0)
             {
-                return Array.Empty<RuntimeEnemyProfile>();
+                return global::System.Array.Empty<RuntimeEnemyProfile>();
             }
 
             var byId = resolvedProfiles.ToDictionary(
