@@ -1,6 +1,6 @@
 extends Node
 
-const SPAWN_PULSE_DURATION_SEC := 4.0
+const SPAWN_PULSE_DURATION_SEC: float = 4.0
 
 var _bridge: Node = null
 var _bridge_provider: Callable
@@ -77,7 +77,7 @@ func apply_runtime_spawn_config() -> void:
 	if bridge == null:
 		return
 	if _wave_timer != null and bridge.has_method("GetSpawnCadenceSeconds"):
-		var cadence_seconds := max(1, int(bridge.call("GetSpawnCadenceSeconds")))
+		var cadence_seconds: int = max(1, int(bridge.call("GetSpawnCadenceSeconds")))
 		_wave_timer.wait_time = float(cadence_seconds)
 	if bridge.has_method("IsAutoSpawnEnabled"):
 		_auto_wave = bridge.call("IsAutoSpawnEnabled") == true

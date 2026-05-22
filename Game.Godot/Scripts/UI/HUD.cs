@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Text.Json;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,22 +18,23 @@ public partial class HUD : Control
 {
     private const string BattleActionRequestedSignal = "BattleActionRequested";
 
-    [Signal]
     public delegate void BattleActionRequestedEventHandler(string actionCode);
 
-    private static readonly JsonDocumentOptions EventJsonOptions = new() { MaxDepth = 16 };
+    private static JsonDocumentOptions EventJsonOptions => new() { MaxDepth = 16 };
+    private static Dictionary<string, Texture2D>? _buildPreviewTextureCache;
     private const double DefaultDayDurationSeconds = 240d;
     private const double DefaultNightDurationSeconds = 120d;
     private const ulong WaveCooldownPulseDurationMs = 1500;
-    private readonly HudAfterActionComposer _afterActionComposer = new();
-    private readonly RuntimePressureStateMapper _pressureStateMapper = new();
+    private HudAfterActionComposer? _afterActionComposer;
+    private RuntimePressureStateMapper? _pressureStateMapper;
 
     private EventBusAdapter? _bus;
     private Control _topBar = default!;
+    private Control _combatHud = default!;
     private Label _day = default!;
     private Label _phase = default!;
     private Label _cycleRemaining = default!;
-    private Label _health = default!;
+    private Label _wall = default!;
     private Label _resourcesLabel = default!;
     private Label _speedStateLabel = default!;
     private Button _settingsButton = default!;
@@ -50,13 +51,17 @@ public partial class HUD : Control
     private Control _buildAction = default!;
     private Control _buildCooldownMask = default!;
     private Button _towerSlot = default!;
+    private Button _sniperTowerSlot = default!;
     private Button _barracksSlot = default!;
     private Button _residenceSlot = default!;
     private TextureRect _towerPreviewIcon = default!;
+    private TextureRect _sniperTowerPreviewIcon = default!;
     private TextureRect _barracksPreviewIcon = default!;
     private TextureRect _residencePreviewIcon = default!;
     private Label _towerTitleLabel = default!;
     private Label _towerMetaLabel = default!;
+    private Label _sniperTowerTitleLabel = default!;
+    private Label _sniperTowerMetaLabel = default!;
     private Label _barracksTitleLabel = default!;
     private Label _barracksMetaLabel = default!;
     private Label _residenceTitleLabel = default!;
@@ -151,15 +156,54 @@ public partial class HUD : Control
     private bool _buildPlacementModeActive;
     private GodotObject? _buildSelectionProvider;
     private string _towerAffordabilityReason = string.Empty;
+    private string _sniperTowerAffordabilityReason = string.Empty;
     private string _barracksAffordabilityReason = string.Empty;
     private string _residenceAffordabilityReason = string.Empty;
+    private bool _formalBattleHudBandsApplied;
+    private bool _bottomBarRefreshPending;
+    private int _postPlaceProbeFrames;
     private static readonly Vector2 FormalTopBarPosition = new(8f, 0f);
     private static readonly Vector2 FormalTopBarSize = new(1584f, 80f);
     private static readonly Vector2 FormalBottomBarPosition = new(8f, 0f);
+    private static readonly Vector2 FormalCombatHudPosition = new(0f, 704f);
+    private static readonly Vector2 FormalCombatHudSize = new(1600f, 196f);
     private static readonly Vector2 FormalBottomBarSize = new(1584f, 196f);
+
+    private static bool DebugFlagEnabled(string name)
+    {
+        var raw = OS.GetEnvironment(name);
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return false;
+        }
+
+        return string.Equals(raw.Trim(), "1", StringComparison.Ordinal) ||
+               string.Equals(raw.Trim(), "true", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool HardMinimalHudMode()
+    {
+        return DebugFlagEnabled("LASTKING_HUD_HARD_MINIMAL");
+    }
+
+    private static Dictionary<string, Texture2D> BuildPreviewTextureCache => _buildPreviewTextureCache ??= new(StringComparer.Ordinal);
+
+    private HudAfterActionComposer AfterActionComposer => _afterActionComposer ??= new HudAfterActionComposer();
+
+    private RuntimePressureStateMapper PressureStateMapper => _pressureStateMapper ??= new RuntimePressureStateMapper();
 
     public override void _Ready()
     {
+        if (HardMinimalHudMode())
+        {
+            ProcessMode = ProcessModeEnum.Always;
+            MouseFilter = MouseFilterEnum.Pass;
+            return;
+        }
+        if (DebugFlagEnabled("LASTKING_HUD_READY_TRACE"))
+        {
+            GD.Print("[HUD._Ready] enter");
+        }
         ProcessMode = ProcessModeEnum.Always;
         MouseFilter = MouseFilterEnum.Pass;
         if (!HasSignal(BattleActionRequestedSignal))
@@ -170,11 +214,16 @@ public partial class HUD : Control
         _day = GetNode<Label>("TopBar/HBox/DayLabel");
         _phase = GetNode<Label>("TopBar/HBox/PhaseLabel");
         _cycleRemaining = GetNode<Label>("TopBar/HBox/CycleRemainingLabel");
-        _health = GetNode<Label>("TopBar/HBox/HealthLabel");
+        _wall = GetNode<Label>("TopBar/HBox/WallLabel");
         _resourcesLabel = GetNode<Label>("TopBar/HBox/ResourcesLabel");
         _speedStateLabel = GetNode<Label>("TopBar/HBox/SpeedStateLabel");
         _settingsButton = GetNode<Button>("TopBar/HBox/SettingsButton");
         _enemiesLabel = GetNode<Label>("TopBar/HBox/EnemiesLabel");
+        if (DebugFlagEnabled("LASTKING_HUD_READY_TRACE"))
+        {
+            GD.Print("[HUD._Ready] topbar nodes bound");
+        }
+        _combatHud = GetNode<Control>("CombatHud");
         _bottomBar = GetNode<PanelContainer>("CombatHud/BottomBar");
         _combatCountsLabel = GetNode<Label>("CombatHud/BottomBar/Root/BattlePanel/VBox/CountsRow/CombatCountsLabel");
         _moraleLabel = GetNode<Label>("CombatHud/BottomBar/Root/BattlePanel/VBox/CountsRow/MoraleLabel");
@@ -187,13 +236,17 @@ public partial class HUD : Control
         _buildAction = GetNode<Control>("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/BuildAction");
         _buildCooldownMask = GetNode<Control>("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/BuildAction/CooldownMask");
         _towerSlot = GetNode<Button>("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/TowerSlot");
+        _sniperTowerSlot = GetNode<Button>("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/SniperTowerSlot");
         _barracksSlot = GetNode<Button>("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/BarracksSlot");
         _residenceSlot = GetNode<Button>("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/ResidenceSlot");
         _towerPreviewIcon = GetNode<TextureRect>("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/TowerSlot/Card/PreviewIcon");
+        _sniperTowerPreviewIcon = GetNode<TextureRect>("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/SniperTowerSlot/Card/PreviewIcon");
         _barracksPreviewIcon = GetNode<TextureRect>("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/BarracksSlot/Card/PreviewIcon");
         _residencePreviewIcon = GetNode<TextureRect>("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/ResidenceSlot/Card/PreviewIcon");
         _towerTitleLabel = GetNode<Label>("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/TowerSlot/Card/Title");
         _towerMetaLabel = GetNode<Label>("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/TowerSlot/Card/Meta");
+        _sniperTowerTitleLabel = GetNode<Label>("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/SniperTowerSlot/Card/Title");
+        _sniperTowerMetaLabel = GetNode<Label>("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/SniperTowerSlot/Card/Meta");
         _barracksTitleLabel = GetNode<Label>("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/BarracksSlot/Card/Title");
         _barracksMetaLabel = GetNode<Label>("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/BarracksSlot/Card/Meta");
         _residenceTitleLabel = GetNode<Label>("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/ResidenceSlot/Card/Title");
@@ -206,6 +259,10 @@ public partial class HUD : Control
         _cleanupCooldownMask = GetNode<Control>("CombatHud/BottomBar/Root/SkillsPanel/VBox/SkillButtons/CleanupAction/CooldownMask");
         _finishAction = GetNode<Control>("CombatHud/BottomBar/Root/SkillsPanel/VBox/SkillButtons/FinishAction");
         _finishCooldownMask = GetNode<Control>("CombatHud/BottomBar/Root/SkillsPanel/VBox/SkillButtons/FinishAction/CooldownMask");
+        if (DebugFlagEnabled("LASTKING_HUD_READY_TRACE"))
+        {
+            GD.Print("[HUD._Ready] combat nodes bound");
+        }
         _feedbackLayer = GetNode<Control>("FeedbackLayer");
         _feedbackLabel = GetNode<Label>("FeedbackLayer/FeedbackLabel");
         _pressurePanel = GetNode<PanelContainer>("FeedbackLayer/PressurePanel");
@@ -233,42 +290,89 @@ public partial class HUD : Control
         _buildSummaryLabel = GetNode<Label>("FeedbackLayer/BuildPanel/VBox/BuildSummaryLabel");
         _progressionPanel = GetNode<PanelContainer>("FeedbackLayer/ProgressionPanel");
         _progressionSummaryLabel = GetNode<Label>("FeedbackLayer/ProgressionPanel/VBox/ProgressionSummaryLabel");
+        if (DebugFlagEnabled("LASTKING_HUD_READY_TRACE"))
+        {
+            GD.Print("[HUD._Ready] feedback nodes bound");
+        }
         _pauseButton = GetNode<Button>("TopBar/HBox/SpeedControls/PauseButton");
         _oneXButton = GetNode<Button>("TopBar/HBox/SpeedControls/OneXButton");
         _twoXButton = GetNode<Button>("TopBar/HBox/SpeedControls/TwoXButton");
         _buildingsTitleLabel = GetNode<Label>("CombatHud/BottomBar/Root/BuildingsPanel/VBox/TitleLabel");
         _battleTitleLabel = GetNode<Label>("CombatHud/BottomBar/Root/BattlePanel/VBox/TitleLabel");
         _skillsTitleLabel = GetNode<Label>("CombatHud/BottomBar/Root/SkillsPanel/VBox/TitleLabel");
-        ConfigurePauseSafeProcessModes();
-        SetupLocalization();
-        RenderDay();
-        RenderPhase();
-        RenderCycleRemaining();
-        _health.Text = $"{T("hud.hp")}: 100/100";
-        _resourcesLabel.Text = $"{T("hud.resources")}: {T("battlemap.resource.gold")} 0 | {T("battlemap.resource.iron")} 0 | {T("battlemap.resource.population")} 0";
-        _moraleLabel.Text = $"{T("hud.morale")}: 100/100";
-        _bottomBar.Visible = true;
-        _combatCountsLabel.Text = $"{T("hud.allies")}: 0 | {T("hud.enemies")}: 0";
-        _enemiesLabel.Text = $"{T("hud.enemies")}: 0";
-        _battlePressureSummaryLabel.Text = $"{T("hud.pressure")}: calm";
-        _battleSummaryLabel.Text = $"{T("hud.day")} 1 | {CurrentPhaseDisplayText()}";
-        _battleReservedLabel.Text = T("hud.talent_state_info");
-        _productionLabel.Text = T("hud.production_ready");
-        _buildStatusLabel.Text = T("hud.build_status_default");
-        _skillsHintLabel.Text = T("hud.skill_commands");
-        _towerSlot.Visible = true;
-        _barracksSlot.Visible = true;
-        _residenceSlot.Visible = true;
-        _towerSlot.Disabled = false;
-        _barracksSlot.Disabled = false;
-        _residenceSlot.Disabled = false;
-        _towerSlot.Text = string.Empty;
-        _barracksSlot.Text = string.Empty;
-        _residenceSlot.Text = string.Empty;
-        RefreshBuildSlotLabelsAndIcons();
-        SyncBuildPaletteVisualState();
-        _speedStateLabel.Text = $"{T("hud.speed_state")}: {T("hud.speed_1x")}";
-        _pauseButton.Pressed += OnPausePressed;
+        if (DebugFlagEnabled("LASTKING_HUD_READY_TRACE"))
+        {
+            GD.Print("[HUD._Ready] trailing nodes bound");
+            GD.Print("[HUD._Ready] nodes bound");
+        }
+
+        if (DebugFlagEnabled("LASTKING_HUD_MIN_READY"))
+        {
+            return;
+        }
+
+        if (!DebugFlagEnabled("LASTKING_HUD_SKIP_PAUSE_SAFE_MODES"))
+        {
+            ConfigurePauseSafeProcessModes();
+        }
+        if (DebugFlagEnabled("LASTKING_HUD_READY_TRACE"))
+        {
+            GD.Print("[HUD._Ready] after pause safe modes");
+        }
+        if (!DebugFlagEnabled("LASTKING_HUD_SKIP_LOCALIZED_BOOTSTRAP"))
+        {
+            if (!DebugFlagEnabled("LASTKING_HUD_SKIP_LOCALIZATION_SETUP"))
+            {
+                SetupLocalization();
+            }
+            if (!DebugFlagEnabled("LASTKING_HUD_SKIP_LOCALIZED_TEXT_BOOTSTRAP"))
+            {
+                RenderDay();
+                RenderPhase();
+                RenderCycleRemaining();
+                _wall.Text = $"{T("battlemap.summary.wall_hp")}: 100/100";
+                _resourcesLabel.Text = $"{T("hud.resources")}: {T("battlemap.resource.gold")} 0 | {T("battlemap.resource.iron")} 0 | {T("battlemap.resource.population")} 0";
+                _moraleLabel.Text = $"{T("hud.morale")}: 100/100";
+                _bottomBar.Visible = true;
+                _combatCountsLabel.Text = $"{T("hud.allies")}: 0 | {T("hud.enemies")}: 0";
+                _enemiesLabel.Text = $"{T("hud.enemies")}: 0";
+                _battlePressureSummaryLabel.Text = $"{T("hud.pressure")}: calm";
+                _battleSummaryLabel.Text = $"{T("hud.day")} 1 | {CurrentPhaseDisplayText()}";
+                _battleReservedLabel.Text = T("hud.talent_state_info");
+                _productionLabel.Text = T("hud.production_ready");
+                _buildStatusLabel.Text = T("hud.build_status_default");
+                _skillsHintLabel.Text = T("hud.skill_commands");
+                _speedStateLabel.Text = $"{T("hud.speed_state")}: {T("hud.speed_1x")}";
+            }
+        }
+        if (DebugFlagEnabled("LASTKING_HUD_READY_TRACE"))
+        {
+            GD.Print("[HUD._Ready] after localized bootstrap");
+        }
+
+        if (!DebugFlagEnabled("LASTKING_HUD_SKIP_BUILD_PANEL_BOOTSTRAP"))
+        {
+            _towerSlot.Visible = true;
+            _sniperTowerSlot.Visible = true;
+            _barracksSlot.Visible = true;
+            _residenceSlot.Visible = true;
+            _towerSlot.Disabled = false;
+            _sniperTowerSlot.Disabled = false;
+            _barracksSlot.Disabled = false;
+            _residenceSlot.Disabled = false;
+            _towerSlot.Text = string.Empty;
+            _sniperTowerSlot.Text = string.Empty;
+            _barracksSlot.Text = string.Empty;
+            _residenceSlot.Text = string.Empty;
+            if (!DebugFlagEnabled("LASTKING_HUD_SKIP_BUILD_LABEL_BOOTSTRAP"))
+            {
+                RefreshBuildSlotLabelsAndIcons();
+                SyncBuildPaletteVisualState();
+            }
+        }
+        if (!DebugFlagEnabled("LASTKING_HUD_SKIP_BINDINGS"))
+        {
+            _pauseButton.Pressed += OnPausePressed;
         _oneXButton.Pressed += OnOneXPressed;
         _twoXButton.Pressed += OnTwoXPressed;
         _settingsButton.Pressed += () => RequestBattleAction("open_settings");
@@ -278,9 +382,11 @@ public partial class HUD : Control
             buildButton.Pressed += OnBuildActionPressed;
         }
         _towerSlot.Connect(Button.SignalName.Pressed, Callable.From(() => RequestBattleAction("select_tower")));
+        _sniperTowerSlot.Connect(Button.SignalName.Pressed, Callable.From(() => RequestBattleAction("select_tower_beta")));
         _barracksSlot.Connect(Button.SignalName.Pressed, Callable.From(() => RequestBattleAction("select_barracks")));
         _residenceSlot.Connect(Button.SignalName.Pressed, Callable.From(() => RequestBattleAction("select_residence")));
         _towerSlot.Connect(BaseButton.SignalName.ButtonDown, Callable.From(() => RequestBattleAction("drag_tower")));
+        _sniperTowerSlot.Connect(BaseButton.SignalName.ButtonDown, Callable.From(() => RequestBattleAction("drag_tower_beta")));
         _barracksSlot.Connect(BaseButton.SignalName.ButtonDown, Callable.From(() => RequestBattleAction("drag_barracks")));
         _residenceSlot.Connect(BaseButton.SignalName.ButtonDown, Callable.From(() => RequestBattleAction("drag_residence")));
         _buildAction.GuiInput += (@event) => OnBattleActionGuiInput(@event, "build");
@@ -304,82 +410,223 @@ public partial class HUD : Control
             finishButton.Pressed += () => RequestBattleAction("finish");
         }
         _finishAction.GuiInput += (@event) => OnBattleActionGuiInput(@event, "finish");
-        _feedbackLabel.Visible = false;
-        _feedbackLabel.Text = string.Empty;
-        _feedbackLayer.Visible = true;
-        _feedbackLayer.MouseFilter = MouseFilterEnum.Ignore;
-        _pressurePanel.Visible = false;
-        _pressureLabel.Text = $"{T("hud.pressure")}: n/a";
-        _cameraControlOverlay.Visible = false;
-        _cameraStatusLabel.Text = $"{T("hud.camera")}: {T("hud.camera.idle")}";
-        _errorDialog.Visible = false;
-        _errorMessageLabel.Text = string.Empty;
-        _configAuditPanel.Visible = false;
-        _migrationStatusDialog.Visible = false;
-        _reportMetadataPanel.Visible = false;
-        _outcomePanel.Visible = false;
-        _runtimePromptPanel.Visible = false;
-        _resourcePanel.Visible = false;
-        _buildPanel.Visible = false;
-        _progressionPanel.Visible = false;
-        _configAuditSummaryLabel.Text = $"{T("hud.config")}: n/a | {T("hud.schema")}: n/a | {T("hud.fallback")}: n/a";
-        _migrationStatusLabel.Text = $"{T("hud.migration")}: n/a";
-        _reportMetadataLabel.Text = $"{T("hud.metadata")}: n/a";
-        _outcomeLabel.Text = $"{T("hud.outcome")}: n/a";
-        _runtimePromptLabel.Text = $"{T("hud.prompt")}: n/a";
-        _resourceSummaryLabel.Text = $"{T("hud.resources")}: gold=n/a iron=n/a pop=n/a";
-        _buildSummaryLabel.Text = $"{T("hud.build")}: tax=n/a total_gold=n/a";
-        _progressionSummaryLabel.Text = $"{T("hud.progression")}: tech=n/a reward=n/a";
-        ApplyActionAvailability(
-            buildAvailable: true,
-            waveAvailable: true,
-            exchangeAvailable: false,
-            cleanupAvailable: false,
-            finishAvailable: false);
-        SetCooldownMask(_buildCooldownMask, false, 0f);
-        SetCooldownMask(_waveCooldownMask, false, 0f);
-        SetCooldownMask(_exchangeCooldownMask, false, 0f);
-        SetCooldownMask(_cleanupCooldownMask, false, 0f);
-        SetCooldownMask(_finishCooldownMask, false, 0f);
-        _activeFeedbackCode = string.Empty;
-        _activeFeedbackMessageKey = string.Empty;
-        _hasPendingErrorDialog = false;
-        _feedbackHideAtMs = 0f;
-        _buildPlacementModeActive = false;
-        SetBattleHudActive(Visible);
+        }
 
-        _bus = GetNodeOrNull<EventBusAdapter>("/root/EventBus");
-        _buildSelectionProvider = ResolveActiveBattleScreen()?.GetNodeOrNull<Node>("SelectionDataProvider");
-        if (_bus != null)
+        if (DebugFlagEnabled("LASTKING_HUD_READY_TRACE"))
         {
-            _bus.Connect(EventBusAdapter.SignalName.DomainEventEmitted, new Callable(this, nameof(OnDomainEventEmitted)));
+            GD.Print("[HUD._Ready] after build panel bootstrap");
+        }
+
+        if (!DebugFlagEnabled("LASTKING_HUD_SKIP_READY_RUNTIME_SURFACE"))
+        {
+            _feedbackLabel.Visible = false;
+            _feedbackLabel.Text = string.Empty;
+            _feedbackLayer.Visible = true;
+            _feedbackLayer.MouseFilter = MouseFilterEnum.Ignore;
+            _pressurePanel.Visible = false;
+            _pressureLabel.Text = $"{T("hud.pressure")}: n/a";
+            _cameraControlOverlay.Visible = false;
+            _cameraStatusLabel.Text = $"{T("hud.camera")}: {T("hud.camera.idle")}";
+            _errorDialog.Visible = false;
+            _errorMessageLabel.Text = string.Empty;
+            _configAuditPanel.Visible = false;
+            _migrationStatusDialog.Visible = false;
+            _reportMetadataPanel.Visible = false;
+            _outcomePanel.Visible = false;
+            _runtimePromptPanel.Visible = false;
+            _resourcePanel.Visible = false;
+            _buildPanel.Visible = false;
+            _progressionPanel.Visible = false;
+            _configAuditSummaryLabel.Text = $"{T("hud.config")}: n/a | {T("hud.schema")}: n/a | {T("hud.fallback")}: n/a";
+            _migrationStatusLabel.Text = $"{T("hud.migration")}: n/a";
+            _reportMetadataLabel.Text = $"{T("hud.metadata")}: n/a";
+            _outcomeLabel.Text = $"{T("hud.outcome")}: n/a";
+            _runtimePromptLabel.Text = $"{T("hud.prompt")}: n/a";
+            _resourceSummaryLabel.Text = $"{T("hud.resources")}: gold=n/a iron=n/a pop=n/a";
+            _buildSummaryLabel.Text = $"{T("hud.build")}: tax=n/a total_gold=n/a";
+            _progressionSummaryLabel.Text = $"{T("hud.progression")}: tech=n/a reward=n/a";
+            ApplyActionAvailability(
+                buildAvailable: true,
+                waveAvailable: true,
+                exchangeAvailable: false,
+                cleanupAvailable: false,
+                finishAvailable: false);
+            SetCooldownMask(_buildCooldownMask, false, 0f);
+            SetCooldownMask(_waveCooldownMask, false, 0f);
+            SetCooldownMask(_exchangeCooldownMask, false, 0f);
+            SetCooldownMask(_cleanupCooldownMask, false, 0f);
+            SetCooldownMask(_finishCooldownMask, false, 0f);
+            _activeFeedbackCode = string.Empty;
+            _activeFeedbackMessageKey = string.Empty;
+            _hasPendingErrorDialog = false;
+            _feedbackHideAtMs = 0f;
+            _buildPlacementModeActive = false;
+            if (!DebugFlagEnabled("LASTKING_HUD_SKIP_SET_ACTIVE"))
+            {
+                SetBattleHudActive(Visible);
+            }
+        }
+
+        if (DebugFlagEnabled("LASTKING_HUD_READY_TRACE"))
+        {
+            GD.Print("[HUD._Ready] after runtime surface bootstrap");
+        }
+
+        if (!DebugFlagEnabled("LASTKING_HUD_SKIP_SELECTION_PROVIDER_BOOTSTRAP"))
+        {
+            _buildSelectionProvider = ResolveActiveBattleScreen()?.GetNodeOrNull<Node>("SelectionDataProvider");
+        }
+        if (DebugFlagEnabled("LASTKING_HUD_READY_TRACE"))
+        {
+            GD.Print("[HUD._Ready] after selection provider bootstrap");
+        }
+
+        if (!DebugFlagEnabled("LASTKING_HUD_SKIP_EVENTBUS"))
+        {
+            _bus = GetNodeOrNull<EventBusAdapter>("/root/EventBus");
+            if (_bus != null)
+            {
+                _bus.Connect(EventBusAdapter.SignalName.DomainEventEmitted, new Callable(this, nameof(OnDomainEventEmitted)));
+            }
+        }
+        if (DebugFlagEnabled("LASTKING_HUD_READY_TRACE"))
+        {
+            GD.Print("[HUD._Ready] complete");
         }
     }
 
     public override void _Process(double delta)
     {
-        SyncBattleHudActiveState();
-        ApplyFormalBattleHudBands();
-        SyncLocalizedHudTexts();
-        ForceBuildButtonsTextless();
+        if (HardMinimalHudMode())
+        {
+            return;
+        }
+        if (_postPlaceProbeFrames > 0)
+        {
+            GD.Print($"[HUD] post_place_frame start remaining={_postPlaceProbeFrames}");
+        }
 
-        RefreshSpeedControlsFromRuntime();
-        RefreshBottomBarFromRuntime();
-        TickCooldownMasks(Math.Max(0d, delta));
+        if (!AreRuntimeHudNodesReady())
+        {
+            return;
+        }
+
+        if (IsBattleMapHudContext() && !IsBattleRuntimeReady())
+        {
+            _formalBattleHudBandsApplied = false;
+            if (_battleHudActive)
+            {
+                ApplyBattleHudActiveState(false);
+            }
+            return;
+        }
+
+        if (!DebugFlagEnabled("LASTKING_HUD_SKIP_ACTIVE_STATE"))
+        {
+            if (_postPlaceProbeFrames > 0)
+            {
+                GD.Print("[HUD] post_place_frame -> SyncBattleHudActiveState");
+            }
+            SyncBattleHudActiveState();
+        }
+
+        if (!DebugFlagEnabled("LASTKING_HUD_SKIP_FORMAL_BANDS"))
+        {
+            if (_postPlaceProbeFrames > 0)
+            {
+                GD.Print("[HUD] post_place_frame -> ApplyFormalBattleHudBands");
+            }
+            ApplyFormalBattleHudBands();
+        }
+
+        if (!DebugFlagEnabled("LASTKING_HUD_SKIP_LOCALIZATION_SYNC"))
+        {
+            SyncLocalizedHudTexts();
+        }
+
+        if (!DebugFlagEnabled("LASTKING_HUD_SKIP_TEXTLESS"))
+        {
+            ForceBuildButtonsTextless();
+        }
+
+        if (!DebugFlagEnabled("LASTKING_HUD_SKIP_SPEED_REFRESH"))
+        {
+            if (_postPlaceProbeFrames > 0)
+            {
+                GD.Print("[HUD] post_place_frame -> RefreshSpeedControlsFromRuntime");
+            }
+            RefreshSpeedControlsFromRuntime();
+        }
+
+        if (!DebugFlagEnabled("LASTKING_HUD_SKIP_COOLDOWNS"))
+        {
+            if (_postPlaceProbeFrames > 0)
+            {
+                GD.Print("[HUD] post_place_frame -> TickCooldownMasks");
+            }
+            TickCooldownMasks(Math.Max(0d, delta));
+        }
+
+        if (!DebugFlagEnabled("LASTKING_HUD_SKIP_BOTTOMBAR_REFRESH"))
+        {
+            if (_postPlaceProbeFrames > 0)
+            {
+                GD.Print("[HUD] post_place_frame -> FlushBottomBarRefresh");
+            }
+            FlushBottomBarRefresh();
+        }
 
         if (_testPhaseOverrideActive || !_phaseCountdownEnabled || delta <= 0d)
         {
-            UpdateFeedbackVisibility();
+            if (!DebugFlagEnabled("LASTKING_HUD_SKIP_FEEDBACK_VISIBILITY"))
+            {
+                if (_postPlaceProbeFrames > 0)
+                {
+                    GD.Print("[HUD] post_place_frame -> UpdateFeedbackVisibility early");
+                }
+                UpdateFeedbackVisibility();
+            }
+            if (_postPlaceProbeFrames > 0)
+            {
+                GD.Print($"[HUD] post_place_frame end remaining={_postPlaceProbeFrames}");
+                _postPlaceProbeFrames -= 1;
+            }
             return;
         }
 
         _phaseElapsedSeconds = Math.Max(0d, _phaseElapsedSeconds + delta);
-        RenderCycleRemaining();
-        UpdateFeedbackVisibility();
+        if (!DebugFlagEnabled("LASTKING_HUD_SKIP_PHASE_RENDER"))
+        {
+            RenderCycleRemaining();
+        }
+
+        if (!DebugFlagEnabled("LASTKING_HUD_SKIP_FEEDBACK_VISIBILITY"))
+        {
+            if (_postPlaceProbeFrames > 0)
+            {
+                GD.Print("[HUD] post_place_frame -> UpdateFeedbackVisibility");
+            }
+            UpdateFeedbackVisibility();
+        }
+
+        if (_postPlaceProbeFrames > 0)
+        {
+            GD.Print($"[HUD] post_place_frame end remaining={_postPlaceProbeFrames}");
+            _postPlaceProbeFrames -= 1;
+        }
+    }
+
+    public void DebugArmPostPlaceProbe()
+    {
+        _postPlaceProbeFrames = 4;
     }
 
     public override void _ExitTree()
     {
+        if (HardMinimalHudMode())
+        {
+            return;
+        }
         if (_bus == null || !GodotObject.IsInstanceValid(_bus))
         {
             return;
@@ -483,7 +730,6 @@ public partial class HUD : Control
             var hp = ReadInt(doc.RootElement, "current_hp", "CurrentHp", "value", "health");
             if (hp.HasValue)
             {
-                _health.Text = $"{T("hud.hp")}: {Math.Clamp(hp.Value, 0, 100)}/100";
                 UpdatePressureLabelFromHp(hp.Value);
                 var hpRunId = ReadString(doc.RootElement, "RunId", "run_id") ?? "runtime";
                 var hpDay = ReadInt(doc.RootElement, "DayNumber", "day", "Day") ?? _currentDay;
@@ -614,7 +860,7 @@ public partial class HUD : Control
         _waveCooldownHideAtMs = 0;
         SetCooldownMask(_waveCooldownMask, false, 0f);
         _waveAction.Modulate = new Color(1f, 1f, 1f, 1f);
-        RefreshBottomBarFromRuntime();
+        RequestBottomBarRefresh();
         var details = day.HasValue ? $"day={day.Value}" : string.Empty;
         if (string.Equals(outcome, "win", StringComparison.OrdinalIgnoreCase))
         {
@@ -644,7 +890,7 @@ public partial class HUD : Control
             DateTimeOffset.UtcNow);
         _waveCooldownMaskAlpha = 1f;
         _waveCooldownHideAtMs = Time.GetTicksMsec() + WaveCooldownPulseDurationMs;
-        RefreshBottomBarFromRuntime();
+        RequestBottomBarRefresh();
         _waveAction.Modulate = new Color(1f, 1f, 1f, 0.5f);
         SetCooldownMask(_waveCooldownMask, true, _waveCooldownMaskAlpha);
         RenderPressureSummary();
@@ -684,7 +930,7 @@ public partial class HUD : Control
         if (gold.HasValue || iron.HasValue || popCap.HasValue)
         {
         }
-        RefreshBottomBarFromRuntime();
+        RequestBottomBarRefresh();
     }
 
     private void HandleTaxCollectedEvent(JsonElement payload)
@@ -699,7 +945,7 @@ public partial class HUD : Control
             taxDelta ?? 0,
             totalGold ?? 0,
             DateTimeOffset.UtcNow);
-        RefreshBottomBarFromRuntime();
+        RequestBottomBarRefresh();
     }
 
     private void HandleTechAppliedEvent(JsonElement payload)
@@ -715,7 +961,7 @@ public partial class HUD : Control
             previous ?? 0,
             current ?? 0,
             DateTimeOffset.UtcNow);
-        RefreshBottomBarFromRuntime();
+        RequestBottomBarRefresh();
     }
 
     private void RenderRuntimePrompt(string messageKey, string details, string fallbackCode)
@@ -726,10 +972,10 @@ public partial class HUD : Control
 
     private void UpdatePressureLabelFromHp(int hp)
     {
-        _currentPressureState = _pressureStateMapper.MapCastleHp(hp);
+        _currentPressureState = PressureStateMapper.MapCastleHp(hp);
         _pressurePanel.Visible = !IsBattleMapHudContext();
         _pressureLabel.Text = $"{T("hud.pressure")}: {_currentPressureState} (hp={hp})";
-        RefreshBottomBarFromRuntime();
+        RequestBottomBarRefresh();
     }
 
     private void RenderPressureSummary()
@@ -743,44 +989,48 @@ public partial class HUD : Control
 
         _pressurePanel.Visible = !IsBattleMapHudContext();
         _pressureLabel.Text = $"{T("hud.pressure")}: {_currentPressureState} (hp={_lastCastleHpChanged.CurrentHp})";
-        RefreshBottomBarFromRuntime();
+        RequestBottomBarRefresh();
     }
 
     private void RefreshBottomBarFromRuntime()
     {
+        _bottomBarRefreshPending = false;
         HideLegacyFeedbackPanelsForBattleMap();
+        if (IsBattleMapHudContext() && !IsBattleRuntimeReady())
+        {
+            return;
+        }
         var runtimeSummary = TryGetActiveBattleSummary();
         var operationController = TryGetActiveOperationController();
         var current = ReadSummaryInt(runtimeSummary, "enemy_units_spawned", _lastWaveSpawned?.SpawnCount ?? 0);
         var friendlyUnits = ReadSummaryInt(runtimeSummary, "friendly_units_deployed", 0);
-        _combatCountsLabel.Text = $"{T("hud.allies")}: {friendlyUnits} | {T("hud.enemies")}: {current}";
-        _enemiesLabel.Text = $"{T("hud.enemies")}: {current}";
+        SetLabelTextIfChanged(_combatCountsLabel, $"{T("hud.allies")}: {friendlyUnits} | {T("hud.enemies")}: {current}");
+        SetLabelTextIfChanged(_enemiesLabel, $"{T("hud.enemies")}: {current}");
         var runtimeCastleHp = ReadSummaryInt(runtimeSummary, "castle_hp", _lastCastleHpChanged?.CurrentHp ?? 100);
         var clampedCastleHp = Math.Clamp(runtimeCastleHp, 0, 100);
-        _health.Text = $"{T("hud.hp")}: {clampedCastleHp}/100";
+        var runtimeWallHp = ReadSummaryInt(runtimeSummary, "wall_hp", 100);
+        var clampedWallHp = Math.Clamp(runtimeWallHp, 0, 100);
+        SetLabelTextIfChanged(_wall, $"{T("battlemap.summary.wall_hp")}: {clampedWallHp}/100");
         var gold = ReadSummaryInt(runtimeSummary, "resource_gold", _lastResourcesChanged?.Gold ?? 0);
         var iron = ReadSummaryInt(runtimeSummary, "resource_iron", _lastResourcesChanged?.Iron ?? 0);
         var population = ReadSummaryInt(runtimeSummary, "resource_population_cap", _lastResourcesChanged?.PopulationCap ?? 0);
-        _resourcesLabel.Text = $"{T("hud.resources")}: {T("battlemap.resource.gold")} {gold.ToString(CultureInfo.InvariantCulture)} | {T("battlemap.resource.iron")} {iron.ToString(CultureInfo.InvariantCulture)} | {T("battlemap.resource.population")} {population.ToString(CultureInfo.InvariantCulture)}";
-        _moraleLabel.Text = $"{T("hud.morale")}: {clampedCastleHp}/100";
-        _battlePressureSummaryLabel.Text = $"{T("hud.pressure")}: {_currentPressureState}";
-        _battleSummaryLabel.Text = string.IsNullOrWhiteSpace(_battleStatusOverride)
+        SetLabelTextIfChanged(_resourcesLabel, $"{T("hud.resources")}: {T("battlemap.resource.gold")} {gold.ToString(CultureInfo.InvariantCulture)} | {T("battlemap.resource.iron")} {iron.ToString(CultureInfo.InvariantCulture)} | {T("battlemap.resource.population")} {population.ToString(CultureInfo.InvariantCulture)}");
+        SetLabelTextIfChanged(_moraleLabel, $"{T("hud.morale")}: {clampedCastleHp}/100");
+        SetLabelTextIfChanged(_battlePressureSummaryLabel, $"{T("hud.pressure")}: {_currentPressureState}");
+        SetLabelTextIfChanged(_battleSummaryLabel, string.IsNullOrWhiteSpace(_battleStatusOverride)
             ? $"{T("hud.day")} {_currentDay} | {CurrentPhaseDisplayText()}"
-            : _battleStatusOverride;
-        _battleReservedLabel.Text = string.IsNullOrWhiteSpace(_battleSummaryOverride)
+            : _battleStatusOverride);
+        SetLabelTextIfChanged(_battleReservedLabel, string.IsNullOrWhiteSpace(_battleSummaryOverride)
             ? T("hud.talent_state_info")
-            : _battleSummaryOverride;
-        _productionLabel.Text = string.IsNullOrWhiteSpace(_buildContextTitleOverride)
+            : _battleSummaryOverride);
+        SetLabelTextIfChanged(_productionLabel, string.IsNullOrWhiteSpace(_buildContextTitleOverride)
             ? T("hud.production_ready")
-            : _buildContextTitleOverride;
-        _buildStatusLabel.Text = string.IsNullOrWhiteSpace(_buildContextDetailOverride)
+            : _buildContextTitleOverride);
+        SetLabelTextIfChanged(_buildStatusLabel, string.IsNullOrWhiteSpace(_buildContextDetailOverride)
             ? T("hud.build_status_default")
-            : _buildContextDetailOverride;
-        _skillsHintLabel.Text = T("hud.skill_commands");
+            : _buildContextDetailOverride);
+        SetLabelTextIfChanged(_skillsHintLabel, T("hud.skill_commands"));
         SyncBuildCardAffordability(runtimeSummary);
-        _towerSlot.Text = string.Empty;
-        _barracksSlot.Text = string.Empty;
-        _residenceSlot.Text = string.Empty;
         RefreshBuildSlotLabelsAndIcons();
         SyncBuildPaletteVisualState();
 
@@ -798,6 +1048,26 @@ public partial class HUD : Control
             finishAvailable);
     }
 
+    private void RequestBottomBarRefresh()
+    {
+        GD.Print("[HUD] RequestBottomBarRefresh");
+        _bottomBarRefreshPending = true;
+    }
+
+    private void FlushBottomBarRefresh()
+    {
+        if (_bottomBarRefreshPending)
+        {
+            GD.Print("[HUD] FlushBottomBarRefresh pending=true");
+        }
+        if (!_bottomBarRefreshPending)
+        {
+            return;
+        }
+
+        RefreshBottomBarFromRuntime();
+    }
+
     private void ApplyActionAvailability(bool buildAvailable, bool waveAvailable, bool exchangeAvailable, bool cleanupAvailable, bool finishAvailable)
     {
         if (_buildPlacementModeActive)
@@ -808,33 +1078,33 @@ public partial class HUD : Control
             finishAvailable = false;
         }
 
-        _buildAction.Modulate = new Color(1f, 1f, 1f, buildAvailable ? 1f : 0.5f);
+        SetCanvasItemModulateIfChanged(_buildAction, new Color(1f, 1f, 1f, buildAvailable ? 1f : 0.5f));
         var waveAlpha = _waveCooldownHideAtMs > 0
             ? 0.5f
             : waveAvailable ? 1f : 0.5f;
-        _waveAction.Modulate = new Color(1f, 1f, 1f, waveAlpha);
-        _exchangeAction.Modulate = new Color(1f, 1f, 1f, exchangeAvailable ? 1f : 0.5f);
-        _cleanupAction.Modulate = new Color(1f, 1f, 1f, cleanupAvailable ? 1f : 0.5f);
-        _finishAction.Modulate = new Color(1f, 1f, 1f, finishAvailable ? 1f : 0.5f);
+        SetCanvasItemModulateIfChanged(_waveAction, new Color(1f, 1f, 1f, waveAlpha));
+        SetCanvasItemModulateIfChanged(_exchangeAction, new Color(1f, 1f, 1f, exchangeAvailable ? 1f : 0.5f));
+        SetCanvasItemModulateIfChanged(_cleanupAction, new Color(1f, 1f, 1f, cleanupAvailable ? 1f : 0.5f));
+        SetCanvasItemModulateIfChanged(_finishAction, new Color(1f, 1f, 1f, finishAvailable ? 1f : 0.5f));
         if (_buildAction is BaseButton buildButton)
         {
-            buildButton.Disabled = !buildAvailable;
+            SetButtonDisabledIfChanged(buildButton, !buildAvailable);
         }
         if (_waveAction is BaseButton waveButton)
         {
-            waveButton.Disabled = !waveAvailable;
+            SetButtonDisabledIfChanged(waveButton, !waveAvailable);
         }
         if (_exchangeAction is BaseButton exchangeButton)
         {
-            exchangeButton.Disabled = !exchangeAvailable;
+            SetButtonDisabledIfChanged(exchangeButton, !exchangeAvailable);
         }
         if (_cleanupAction is BaseButton cleanupButton)
         {
-            cleanupButton.Disabled = !cleanupAvailable;
+            SetButtonDisabledIfChanged(cleanupButton, !cleanupAvailable);
         }
         if (_finishAction is BaseButton finishButton)
         {
-            finishButton.Disabled = !finishAvailable;
+            SetButtonDisabledIfChanged(finishButton, !finishAvailable);
         }
     }
 
@@ -890,6 +1160,11 @@ public partial class HUD : Control
             return new GDictionary();
         }
 
+        if (!IsBattleRuntimeReady())
+        {
+            return new GDictionary();
+        }
+
         var bridge = screen.GetNodeOrNull<Node>("CombatExperienceRuntimeBridge");
         if (bridge == null || !bridge.HasMethod("GetSummary"))
         {
@@ -906,6 +1181,11 @@ public partial class HUD : Control
     {
         var screen = ResolveActiveBattleScreen();
         if (screen == null)
+        {
+            return null;
+        }
+
+        if (!IsBattleRuntimeReady())
         {
             return null;
         }
@@ -1044,49 +1324,59 @@ public partial class HUD : Control
     public void SetBattleStatusMessage(string text)
     {
         _battleStatusOverride = text?.Trim() ?? string.Empty;
-        RefreshBottomBarFromRuntime();
+        RequestBottomBarRefresh();
     }
 
     public void SetBattleSummaryMessage(string text)
     {
         _battleSummaryOverride = text?.Trim() ?? string.Empty;
-        RefreshBottomBarFromRuntime();
+        RequestBottomBarRefresh();
+    }
+
+    public void SetBattleWallHp(int hp)
+    {
+        var clampedWallHp = Math.Clamp(hp, 0, 100);
+        SetLabelTextIfChanged(_wall, $"{T("battlemap.summary.wall_hp")}: {clampedWallHp}/100");
     }
 
     public void SetBuildContextMessages(string title, string detail)
     {
+        GD.Print($"[HUD] SetBuildContextMessages title={title} detail={detail}");
         _buildContextTitleOverride = title?.Trim() ?? string.Empty;
         _buildContextDetailOverride = detail?.Trim() ?? string.Empty;
-        RefreshBottomBarFromRuntime();
+        RequestBottomBarRefresh();
     }
 
     public void SetBuildPlacementMode(bool active)
     {
+        GD.Print($"[HUD] SetBuildPlacementMode active={active}");
         _buildPlacementModeActive = active;
         ApplyBuildActionLabel();
-        RefreshBottomBarFromRuntime();
+        RequestBottomBarRefresh();
     }
 
     public void SetActiveBuildSelection(string selectionId)
     {
+        GD.Print($"[HUD] SetActiveBuildSelection selectionId={selectionId}");
         _activeBuildSelectionId = selectionId?.Trim() ?? string.Empty;
         SyncBuildPaletteVisualState();
     }
 
     public void ClearBuildContextMessages()
     {
+        GD.Print("[HUD] ClearBuildContextMessages");
         _buildContextTitleOverride = string.Empty;
         _buildContextDetailOverride = string.Empty;
         _activeBuildSelectionId = string.Empty;
         SyncBuildPaletteVisualState();
-        RefreshBottomBarFromRuntime();
+        RequestBottomBarRefresh();
     }
 
     public void ClearBattleSurfaceMessages()
     {
         _battleStatusOverride = string.Empty;
         _battleSummaryOverride = string.Empty;
-        RefreshBottomBarFromRuntime();
+        RequestBottomBarRefresh();
     }
 
     public void RefreshBottomBarFromRuntimeForTest()
@@ -1094,8 +1384,42 @@ public partial class HUD : Control
         RefreshBottomBarFromRuntime();
     }
 
+    private bool AreRuntimeHudNodesReady()
+    {
+        return _topBar != null && _bottomBar != null && _feedbackLayer != null && _combatHud != null;
+    }
+
+    private bool IsBattleRuntimeReady()
+    {
+        var screen = ResolveActiveBattleScreen();
+        if (screen == null || !GodotObject.IsInstanceValid(screen))
+        {
+            return false;
+        }
+
+        if (!screen.HasMethod("is_battle_runtime_ready"))
+        {
+            return false;
+        }
+
+        try
+        {
+            var value = screen.Call("is_battle_runtime_ready");
+            return value.VariantType == Variant.Type.Bool && value.AsBool();
+        }
+        catch (ObjectDisposedException)
+        {
+            return false;
+        }
+    }
+
     private void SyncBattleHudActiveState()
     {
+        if (!AreRuntimeHudNodesReady())
+        {
+            return;
+        }
+
         var shouldBeActive = ShouldBattleHudBeActive();
         if (_battleHudActive == shouldBeActive
             && Visible == shouldBeActive
@@ -1112,6 +1436,10 @@ public partial class HUD : Control
     private bool ShouldBattleHudBeActive()
     {
         var owningBattleScreen = ResolveOwningBattleScreen();
+        if (owningBattleScreen != null && !IsBattleRuntimeReady())
+        {
+            return false;
+        }
         var main = ResolveMainRoot();
         if (main != null)
         {
@@ -1181,9 +1509,18 @@ public partial class HUD : Control
     {
         _battleHudActive = active;
         Visible = active;
-        _topBar.Visible = active;
-        _bottomBar.Visible = active;
-        _feedbackLayer.Visible = active;
+        if (_topBar != null)
+        {
+            _topBar.Visible = active;
+        }
+        if (_bottomBar != null)
+        {
+            _bottomBar.Visible = active;
+        }
+        if (_feedbackLayer != null)
+        {
+            _feedbackLayer.Visible = active;
+        }
         MouseFilter = active ? MouseFilterEnum.Pass : MouseFilterEnum.Ignore;
     }
 
@@ -1218,24 +1555,109 @@ public partial class HUD : Control
             finishActionNode.ProcessMode = ProcessModeEnum.Always;
         }
         _towerSlot.ProcessMode = ProcessModeEnum.Always;
+        _sniperTowerSlot.ProcessMode = ProcessModeEnum.Always;
         _barracksSlot.ProcessMode = ProcessModeEnum.Always;
         _residenceSlot.ProcessMode = ProcessModeEnum.Always;
     }
 
     private void ApplyFormalBattleHudBands()
     {
-        if (!_battleHudActive || !IsBattleMapHudContext())
+        if (!_battleHudActive || !IsBattleMapHudContext() || !IsBattleRuntimeReady())
+        {
+            _formalBattleHudBandsApplied = false;
+            return;
+        }
+
+        if (_formalBattleHudBandsApplied)
         {
             return;
         }
 
+        _topBar.SetAnchorsPreset(LayoutPreset.TopLeft);
         _topBar.Position = FormalTopBarPosition;
         _topBar.Size = FormalTopBarSize;
         _topBar.CustomMinimumSize = FormalTopBarSize;
 
-        _bottomBar.Position = FormalBottomBarPosition;
-        _bottomBar.Size = FormalBottomBarSize;
+        _combatHud.AnchorLeft = 0f;
+        _combatHud.AnchorTop = 0f;
+        _combatHud.AnchorRight = 0f;
+        _combatHud.AnchorBottom = 0f;
+        _combatHud.OffsetLeft = FormalCombatHudPosition.X;
+        _combatHud.OffsetTop = FormalCombatHudPosition.Y;
+        _combatHud.OffsetRight = FormalCombatHudPosition.X + FormalCombatHudSize.X;
+        _combatHud.OffsetBottom = FormalCombatHudPosition.Y + FormalCombatHudSize.Y;
+        _combatHud.CustomMinimumSize = FormalCombatHudSize;
+
+        _bottomBar.AnchorLeft = 0f;
+        _bottomBar.AnchorTop = 0f;
+        _bottomBar.AnchorRight = 0f;
+        _bottomBar.AnchorBottom = 0f;
+        _bottomBar.OffsetLeft = FormalBottomBarPosition.X;
+        _bottomBar.OffsetTop = FormalBottomBarPosition.Y;
+        _bottomBar.OffsetRight = FormalBottomBarPosition.X + FormalBottomBarSize.X;
+        _bottomBar.OffsetBottom = FormalBottomBarPosition.Y + FormalBottomBarSize.Y;
         _bottomBar.CustomMinimumSize = FormalBottomBarSize;
+        _formalBattleHudBandsApplied = true;
+    }
+
+    private static void SetCanvasItemModulateIfChanged(CanvasItem item, Color next)
+    {
+        if (item.Modulate.IsEqualApprox(next))
+        {
+            return;
+        }
+
+        item.Modulate = next;
+    }
+
+    private static void SetCanvasItemSelfModulateIfChanged(CanvasItem item, Color next)
+    {
+        if (item.SelfModulate.IsEqualApprox(next))
+        {
+            return;
+        }
+
+        item.SelfModulate = next;
+    }
+
+    private static void SetControlScaleIfChanged(Control control, Vector2 next)
+    {
+        if (control.Scale.IsEqualApprox(next))
+        {
+            return;
+        }
+
+        control.Scale = next;
+    }
+
+    private static void SetButtonDisabledIfChanged(BaseButton button, bool disabled)
+    {
+        if (button.Disabled == disabled)
+        {
+            return;
+        }
+
+        button.Disabled = disabled;
+    }
+
+    private static void SetLabelTextIfChanged(Label label, string next)
+    {
+        if (string.Equals(label.Text, next, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        label.Text = next;
+    }
+
+    private static void SetButtonTextIfChanged(Button button, string next)
+    {
+        if (string.Equals(button.Text, next, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        button.Text = next;
     }
 
     private static bool IsBattleActionInput(InputEvent @event)
@@ -1496,34 +1918,34 @@ public partial class HUD : Control
         var manager = ResolveGameManager();
         if (manager == null)
         {
-            _pauseButton.Disabled = true;
-            _oneXButton.Disabled = true;
-            _twoXButton.Disabled = true;
-            _pauseButton.Text = T("hud.pause");
-            _oneXButton.Text = T("hud.speed_1x");
-            _twoXButton.Text = T("hud.speed_2x");
+            SetButtonDisabledIfChanged(_pauseButton, true);
+            SetButtonDisabledIfChanged(_oneXButton, true);
+            SetButtonDisabledIfChanged(_twoXButton, true);
+            SetButtonTextIfChanged(_pauseButton, T("hud.pause"));
+            SetButtonTextIfChanged(_oneXButton, T("hud.speed_1x"));
+            SetButtonTextIfChanged(_twoXButton, T("hud.speed_2x"));
             return;
         }
 
-        _pauseButton.Disabled = false;
-        _oneXButton.Disabled = false;
-        _twoXButton.Disabled = false;
+        SetButtonDisabledIfChanged(_pauseButton, false);
+        SetButtonDisabledIfChanged(_oneXButton, false);
+        SetButtonDisabledIfChanged(_twoXButton, false);
 
         var state = manager.GetSpeedState();
         var isPaused = state.ContainsKey("is_paused") && state["is_paused"].AsBool();
         var scalePercent = state.ContainsKey("scale_percent") ? state["scale_percent"].AsInt32() : 100;
 
-        _pauseButton.Text = isPaused ? T("hud.speed_paused") : T("hud.pause");
-        _oneXButton.Text = !isPaused && scalePercent == 100 ? T("hud.speed_1x_active") : T("hud.speed_1x");
-        _twoXButton.Text = !isPaused && scalePercent == 200 ? T("hud.speed_2x_active") : T("hud.speed_2x");
-        _speedStateLabel.Text = isPaused
+        SetButtonTextIfChanged(_pauseButton, isPaused ? T("hud.speed_paused") : T("hud.pause"));
+        SetButtonTextIfChanged(_oneXButton, !isPaused && scalePercent == 100 ? T("hud.speed_1x_active") : T("hud.speed_1x"));
+        SetButtonTextIfChanged(_twoXButton, !isPaused && scalePercent == 200 ? T("hud.speed_2x_active") : T("hud.speed_2x"));
+        SetLabelTextIfChanged(_speedStateLabel, isPaused
             ? $"{T("hud.speed_state")}: {T("hud.speed_paused")}"
             : scalePercent == 200
                 ? $"{T("hud.speed_state")}: {T("hud.speed_2x")}"
-                : $"{T("hud.speed_state")}: {T("hud.speed_1x")}";
-        _pauseButton.Modulate = isPaused ? new Color(1f, 1f, 1f, 1f) : new Color(1f, 1f, 1f, 0.72f);
-        _oneXButton.Modulate = !isPaused && scalePercent == 100 ? new Color(1f, 1f, 1f, 1f) : new Color(1f, 1f, 1f, 0.72f);
-        _twoXButton.Modulate = !isPaused && scalePercent == 200 ? new Color(1f, 1f, 1f, 1f) : new Color(1f, 1f, 1f, 0.72f);
+                : $"{T("hud.speed_state")}: {T("hud.speed_1x")}");
+        SetCanvasItemModulateIfChanged(_pauseButton, isPaused ? new Color(1f, 1f, 1f, 1f) : new Color(1f, 1f, 1f, 0.72f));
+        SetCanvasItemModulateIfChanged(_oneXButton, !isPaused && scalePercent == 100 ? new Color(1f, 1f, 1f, 1f) : new Color(1f, 1f, 1f, 0.72f));
+        SetCanvasItemModulateIfChanged(_twoXButton, !isPaused && scalePercent == 200 ? new Color(1f, 1f, 1f, 1f) : new Color(1f, 1f, 1f, 0.72f));
     }
 
     private static int? ReadInt(JsonElement element, params string[] keys)
@@ -1598,19 +2020,19 @@ public partial class HUD : Control
 
     private void RenderDay()
     {
-        _day.Text = $"{T("hud.day")}: {_currentDay}";
+        SetLabelTextIfChanged(_day, $"{T("hud.day")}: {_currentDay}");
     }
 
     private void RenderPhase()
     {
-        _phase.Text = $"{T("hud.phase")}: {CurrentPhaseDisplayText()}";
+        SetLabelTextIfChanged(_phase, $"{T("hud.phase")}: {CurrentPhaseDisplayText()}");
     }
 
     private void RenderCycleRemaining()
     {
         var remaining = Math.Max(0d, _phaseDurationSeconds - _phaseElapsedSeconds);
         var remainingLabelKey = _isDayPhase ? "hud.day_remaining" : "hud.night_remaining";
-        _cycleRemaining.Text = $"{T(remainingLabelKey)}: {remaining:0.0}s";
+        SetLabelTextIfChanged(_cycleRemaining, $"{T(remainingLabelKey)}: {remaining:0.0}s");
     }
 
     public void SetDay(int day)
@@ -1651,7 +2073,7 @@ public partial class HUD : Control
         _testPhaseOverrideActive = false;
         _currentDay = Math.Clamp(day, 1, 15);
         _isDayPhase = isDay;
-        _phaseCountdownEnabled = true;
+        _phaseCountdownEnabled = false;
         _phaseDurationSeconds = Math.Max(0d, remainingSeconds);
         _phaseElapsedSeconds = 0d;
         RenderDay();
@@ -1661,8 +2083,7 @@ public partial class HUD : Control
 
     public void SetHealth(int hp)
     {
-        _health.Text = $"{T("hud.hp")}: {Math.Clamp(hp, 0, 100)}/100";
-        _moraleLabel.Text = $"{T("hud.morale")}: {Math.Clamp(hp, 0, 100)}/100";
+        SetLabelTextIfChanged(_moraleLabel, $"{T("hud.morale")}: {Math.Clamp(hp, 0, 100)}/100");
     }
 
     private string CurrentPhaseDisplayText()
@@ -1758,32 +2179,39 @@ public partial class HUD : Control
 
     private void ApplyLocalizedStaticTexts()
     {
-        _pauseButton.Text = T("hud.pause");
-        _oneXButton.Text = T("hud.speed_1x");
-        _twoXButton.Text = T("hud.speed_2x");
-        _settingsButton.Text = T("hud.settings");
-        _buildingsTitleLabel.Text = T("hud.buildings");
-        _battleTitleLabel.Text = T("hud.battle");
-        _skillsTitleLabel.Text = T("hud.skills");
+        SetButtonTextIfChanged(_pauseButton, T("hud.pause"));
+        SetButtonTextIfChanged(_oneXButton, T("hud.speed_1x"));
+        SetButtonTextIfChanged(_twoXButton, T("hud.speed_2x"));
+        SetButtonTextIfChanged(_settingsButton, T("hud.settings"));
+        SetLabelTextIfChanged(_buildingsTitleLabel, T("hud.buildings"));
+        SetLabelTextIfChanged(_battleTitleLabel, T("hud.battle"));
+        SetLabelTextIfChanged(_skillsTitleLabel, T("hud.skills"));
         ApplyBuildActionLabel();
-        _battleReservedLabel.Text = T("hud.talent_state_info");
+        SetLabelTextIfChanged(_battleReservedLabel, T("hud.talent_state_info"));
         if (string.IsNullOrWhiteSpace(_buildContextTitleOverride))
         {
-            _productionLabel.Text = T("hud.production_ready");
+            SetLabelTextIfChanged(_productionLabel, T("hud.production_ready"));
         }
         if (string.IsNullOrWhiteSpace(_buildContextDetailOverride))
         {
-            _buildStatusLabel.Text = T("hud.build_status_default");
+            SetLabelTextIfChanged(_buildStatusLabel, T("hud.build_status_default"));
         }
-        _skillsHintLabel.Text = T("hud.skill_commands");
-        _towerSlot.Text = string.Empty;
-        _barracksSlot.Text = string.Empty;
-        _residenceSlot.Text = string.Empty;
-        RefreshBuildSlotLabelsAndIcons();
-        SyncBuildPaletteVisualState();
-        _dismissButton.Text = T("hud.dismiss");
-        _configAuditRefreshButton.Text = T("hud.refresh_audit");
-        _migrationRetryButton.Text = T("hud.retry_migration");
+        SetLabelTextIfChanged(_skillsHintLabel, T("hud.skill_commands"));
+        SetButtonTextIfChanged(_towerSlot, string.Empty);
+        SetButtonTextIfChanged(_sniperTowerSlot, string.Empty);
+        SetButtonTextIfChanged(_barracksSlot, string.Empty);
+        SetButtonTextIfChanged(_residenceSlot, string.Empty);
+        if (!DebugFlagEnabled("LASTKING_HUD_SKIP_LOCALIZED_BUILD_METADATA"))
+        {
+            RefreshBuildSlotLabelsAndIcons();
+        }
+        if (!DebugFlagEnabled("LASTKING_HUD_SKIP_LOCALIZED_BUILD_VISUAL_STATE"))
+        {
+            SyncBuildPaletteVisualState();
+        }
+        SetButtonTextIfChanged(_dismissButton, T("hud.dismiss"));
+        SetButtonTextIfChanged(_configAuditRefreshButton, T("hud.refresh_audit"));
+        SetButtonTextIfChanged(_migrationRetryButton, T("hud.retry_migration"));
     }
 
     private void OnBuildActionPressed()
@@ -1798,18 +2226,25 @@ public partial class HUD : Control
             return;
         }
 
-        buildButton.Text = _buildPlacementModeActive
+        var nextText = _buildPlacementModeActive
             ? T("hud.cancel_build")
             : T("hud.build");
+        if (!string.Equals(buildButton.Text, nextText, StringComparison.Ordinal))
+        {
+            buildButton.Text = nextText;
+        }
     }
 
     private void RefreshBuildSlotLabelsAndIcons()
     {
+        if (!IsBattleRuntimeReady())
+        {
+            return;
+        }
+
         var runtimeSummary = TryGetActiveBattleSummary();
-        _towerSlot.Text = string.Empty;
-        _barracksSlot.Text = string.Empty;
-        _residenceSlot.Text = string.Empty;
         ApplyBuildSlotMetadata("tower_alpha", _towerTitleLabel, _towerMetaLabel, "res://Game.Godot/Assets/Textures/BattleMapBuildPreviews/battlemap_build_preview_tower.png", _towerPreviewIcon, "tower", runtimeSummary);
+        ApplyBuildSlotMetadata("tower_beta", _sniperTowerTitleLabel, _sniperTowerMetaLabel, "res://Game.Godot/Assets/Textures/BattleMapBuildPreviews/battlemap_build_preview_tower.png", _sniperTowerPreviewIcon, "sniper_tower", runtimeSummary);
         ApplyBuildSlotMetadata("barracks_alpha", _barracksTitleLabel, _barracksMetaLabel, "res://Game.Godot/Assets/Textures/BattleMapBuildPreviews/battlemap_build_preview_barracks.png", _barracksPreviewIcon, "barracks", runtimeSummary);
         ApplyBuildSlotMetadata("farm_alpha", _residenceTitleLabel, _residenceMetaLabel, "res://Game.Godot/Assets/Textures/BattleMapBuildPreviews/battlemap_build_preview_residence.png", _residencePreviewIcon, "residence", runtimeSummary);
     }
@@ -1817,17 +2252,23 @@ public partial class HUD : Control
     private void ApplyBuildSlotMetadata(string selectionId, Label titleLabel, Label metaLabel, string texturePath, TextureRect icon, string previewKind, GDictionary runtimeSummary)
     {
         var definition = GetBuildSelectionDefinition(selectionId);
-        titleLabel.Text = ReadBuildDefinitionText(definition, "display_name_key", $"hud.build_slot.{previewKind}") switch
+        var nextTitle = ReadBuildDefinitionText(definition, "display_name_key", $"hud.build_slot.{previewKind}") switch
         {
             var key when key.StartsWith("hud.", StringComparison.OrdinalIgnoreCase) => T(key),
             var text => text,
         };
-        metaLabel.Text = ComposeBuildMetaText(definition, runtimeSummary);
+        SetLabelTextIfChanged(titleLabel, nextTitle);
+        SetLabelTextIfChanged(metaLabel, ComposeBuildMetaText(definition, runtimeSummary));
         ApplyBuildSlotPreviewIcon(icon, texturePath, previewKind);
     }
 
     private GDictionary GetBuildSelectionDefinition(string selectionId)
     {
+        if (!IsBattleRuntimeReady())
+        {
+            return new GDictionary();
+        }
+
         _buildSelectionProvider ??= ResolveActiveBattleScreen()?.GetNodeOrNull<Node>("SelectionDataProvider");
         if (_buildSelectionProvider is not Node provider || !provider.HasMethod("get_building_definition"))
         {
@@ -1961,6 +2402,11 @@ public partial class HUD : Control
             _towerSlot.Text = string.Empty;
         }
 
+        if (_sniperTowerSlot.Text.Length != 0)
+        {
+            _sniperTowerSlot.Text = string.Empty;
+        }
+
         if (_barracksSlot.Text.Length != 0)
         {
             _barracksSlot.Text = string.Empty;
@@ -1975,6 +2421,7 @@ public partial class HUD : Control
     private void SyncBuildPaletteVisualState()
     {
         ApplyBuildSlotVisualState(_towerSlot, "tower_alpha", string.IsNullOrWhiteSpace(_towerAffordabilityReason));
+        ApplyBuildSlotVisualState(_sniperTowerSlot, "tower_beta", string.IsNullOrWhiteSpace(_sniperTowerAffordabilityReason));
         ApplyBuildSlotVisualState(_barracksSlot, "barracks_alpha", string.IsNullOrWhiteSpace(_barracksAffordabilityReason));
         ApplyBuildSlotVisualState(_residenceSlot, "farm_alpha", string.IsNullOrWhiteSpace(_residenceAffordabilityReason));
     }
@@ -1983,24 +2430,25 @@ public partial class HUD : Control
     {
         var hasActiveSelection = !string.IsNullOrWhiteSpace(_activeBuildSelectionId);
         var isActive = hasActiveSelection && string.Equals(_activeBuildSelectionId, selectionId, StringComparison.Ordinal);
-        button.Disabled = !affordable;
+        SetButtonDisabledIfChanged(button, !affordable);
         if (isActive)
         {
-            button.Modulate = affordable ? new Color(1f, 1f, 1f, 1f) : new Color(1f, 1f, 1f, 0.42f);
-            button.SelfModulate = new Color(1.08f, 1.02f, 0.9f, 1f);
-            button.Scale = new Vector2(1.03f, 1.03f);
+            SetCanvasItemModulateIfChanged(button, affordable ? new Color(1f, 1f, 1f, 1f) : new Color(1f, 1f, 1f, 0.42f));
+            SetCanvasItemSelfModulateIfChanged(button, new Color(1.08f, 1.02f, 0.9f, 1f));
+            SetControlScaleIfChanged(button, Vector2.One);
             return;
         }
 
         var baseAlpha = affordable ? (hasActiveSelection ? 0.56f : 1f) : 0.42f;
-        button.Modulate = new Color(1f, 1f, 1f, baseAlpha);
-        button.SelfModulate = Colors.White;
-        button.Scale = Vector2.One;
+        SetCanvasItemModulateIfChanged(button, new Color(1f, 1f, 1f, baseAlpha));
+        SetCanvasItemSelfModulateIfChanged(button, Colors.White);
+        SetControlScaleIfChanged(button, Vector2.One);
     }
 
     private void SyncBuildCardAffordability(GDictionary runtimeSummary)
     {
         _towerAffordabilityReason = ResolveBuildAffordabilityReason(runtimeSummary, "tower_alpha");
+        _sniperTowerAffordabilityReason = ResolveBuildAffordabilityReason(runtimeSummary, "tower_beta");
         _barracksAffordabilityReason = ResolveBuildAffordabilityReason(runtimeSummary, "barracks_alpha");
         _residenceAffordabilityReason = ResolveBuildAffordabilityReason(runtimeSummary, "farm_alpha");
     }
@@ -2034,29 +2482,50 @@ public partial class HUD : Control
             return;
         }
 
-        icon.Texture = LoadBuildPreviewTexture(texturePath, previewKind);
-        icon.ExpandMode = TextureRect.ExpandModeEnum.FitWidthProportional;
-        icon.StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered;
+        var texture = LoadBuildPreviewTexture(texturePath, previewKind);
+        if (!ReferenceEquals(icon.Texture, texture))
+        {
+            icon.Texture = texture;
+        }
+        if (icon.ExpandMode != TextureRect.ExpandModeEnum.FitWidthProportional)
+        {
+            icon.ExpandMode = TextureRect.ExpandModeEnum.FitWidthProportional;
+        }
+        if (icon.StretchMode != TextureRect.StretchModeEnum.KeepAspectCentered)
+        {
+            icon.StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered;
+        }
     }
 
     private static Texture2D LoadBuildPreviewTexture(string texturePath, string previewKind)
     {
+        var cacheKey = $"{texturePath}|{previewKind}";
+        if (BuildPreviewTextureCache.TryGetValue(cacheKey, out var cachedTexture) && GodotObject.IsInstanceValid(cachedTexture))
+        {
+            return cachedTexture;
+        }
+
+        Texture2D resolvedTexture;
         var globalPath = ProjectSettings.GlobalizePath(texturePath);
         if (File.Exists(globalPath))
         {
             var image = Image.LoadFromFile(globalPath);
             if (image != null && !image.IsEmpty())
             {
-                return ImageTexture.CreateFromImage(image);
+                resolvedTexture = ImageTexture.CreateFromImage(image);
+                BuildPreviewTextureCache[cacheKey] = resolvedTexture;
+                return resolvedTexture;
             }
         }
 
-        return CreateFallbackBuildPreviewTexture(previewKind);
+        resolvedTexture = CreateFallbackBuildPreviewTexture(previewKind);
+        BuildPreviewTextureCache[cacheKey] = resolvedTexture;
+        return resolvedTexture;
     }
 
     private static Texture2D CreateFallbackBuildPreviewTexture(string previewKind)
     {
-        var image = Image.Create(48, 48, false, Image.Format.Rgba8);
+        var image = Image.CreateEmpty(48, 48, false, Image.Format.Rgba8);
         image.Fill(new Color(0.094118f, 0.12549f, 0.164706f, 0.92f));
         for (var x = 0; x < 48; x++)
         {
@@ -2167,4 +2636,5 @@ public partial class HUD : Control
         return "en-US";
     }
 }
+
 

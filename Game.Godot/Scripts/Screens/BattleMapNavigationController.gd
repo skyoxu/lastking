@@ -11,6 +11,9 @@ func connect_signals() -> void:
 func navigate_back_to_main_menu() -> void:
 	if _screen == null:
 		return
+	var main_root: Node = _resolve_main_root()
+	if main_root == null:
+		return
 	var hud: Node = _resolve_main_node("RuntimeUi/HUD")
 	_set_hud_active(hud, false)
 	var local_hud: Node = _screen.get_node_or_null("BattleHud")
@@ -24,15 +27,21 @@ func navigate_back_to_main_menu() -> void:
 	if nav != null and nav.has_method("ClearCurrentScreen"):
 		nav.call("ClearCurrentScreen")
 
-func _resolve_main_node(relative_path: String) -> Node:
+func _resolve_main_root() -> Node:
 	if _screen == null:
 		return null
 	var current: Node = _screen
 	while current != null:
 		if str(current.name) == "Main":
-			return current.get_node_or_null(relative_path)
+			return current
 		current = current.get_parent()
 	return null
+
+func _resolve_main_node(relative_path: String) -> Node:
+	var main_root: Node = _resolve_main_root()
+	if main_root == null:
+		return null
+	return main_root.get_node_or_null(relative_path)
 
 func _set_hud_active(hud: Node, active: bool) -> void:
 	if hud == null or not (hud is CanvasItem):

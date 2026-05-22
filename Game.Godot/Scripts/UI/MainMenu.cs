@@ -77,8 +77,17 @@ public partial class MainMenu : Control
         }
     }
 
-    public void ShowMenu() => Visible = true;
-    public void HideMenu() => Visible = false;
+    public void ShowMenu()
+    {
+        Visible = true;
+        SetScreenRootMouseFilter(Control.MouseFilterEnum.Ignore);
+    }
+
+    public void HideMenu()
+    {
+        Visible = false;
+        SetScreenRootMouseFilter(Control.MouseFilterEnum.Pass);
+    }
 
     private void Publish(string type, string source, string dataJson = "")
     {
@@ -239,6 +248,15 @@ public partial class MainMenu : Control
         return string.IsNullOrWhiteSpace(_bootstrapNotReadyReason)
             ? TranslateKey("menu.startup.not_ready")
             : $"{TranslateKey("menu.startup.not_ready")}: {_bootstrapNotReadyReason}";
+    }
+
+    private void SetScreenRootMouseFilter(Control.MouseFilterEnum mouseFilter)
+    {
+        var screenRoot = GetNodeOrNull<Control>("/root/Main/RuntimeUi/ScreenRoot");
+        if (screenRoot != null)
+        {
+            screenRoot.MouseFilter = mouseFilter;
+        }
     }
 
     private (bool canContinue, string reason) HasContinueSnapshot()

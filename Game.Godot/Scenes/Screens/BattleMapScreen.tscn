@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=3]
+[gd_scene load_steps=22 format=3]
 
 [ext_resource type="Script" path="res://Game.Godot/Scripts/Screens/BattleMapScreen.gd" id="1"]
 [ext_resource type="Script" path="res://Game.Godot/Scripts/Combat/CombatExperienceRuntimeBridge.cs" id="2"]
@@ -19,8 +19,8 @@
 [ext_resource type="PackedScene" path="res://Game.Godot/Scenes/UI/BattleMapDebugOverlay.tscn" id="17"]
 [ext_resource type="Script" path="res://Game.Godot/Scripts/Screens/BattleMapSelectionDataProvider.gd" id="18"]
 [ext_resource type="Script" path="res://Game.Godot/Scripts/Runtime/DayNightRuntimeLoopNode.cs" id="19"]
-[ext_resource type="PackedScene" path="res://Game.Godot/Scenes/UI/SettingsPanel.tscn" id="20"]
 [ext_resource type="Script" path="res://Game.Godot/Scripts/Screens/BattleMapBuildPlacementController.gd" id="21"]
+[ext_resource type="Script" path="res://Game.Godot/Scripts/Screens/BattleMapCombatDebugGeometryController.gd" id="22"]
 [node name="BattleMapScreen" type="Control"]
 layout_mode = 3
 anchors_preset = 15
@@ -89,6 +89,16 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
+[node name="BuildingVisualLayer" type="Control" parent="Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+z_index = 2
+
 [node name="LocalFeedbackLayer" type="Control" parent="Background/BattlefieldViewport/BattlefieldRoot"]
 layout_mode = 1
 anchors_preset = 15
@@ -97,6 +107,16 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+
+[node name="AttackEffectLayer" type="Control" parent="Background/BattlefieldViewport/BattlefieldRoot/LocalFeedbackLayer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+z_index = 6
 
 [node name="HitFlashOverlay" type="ColorRect" parent="Background/BattlefieldViewport/BattlefieldRoot/LocalFeedbackLayer"]
 visible = false
@@ -119,6 +139,62 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 color = Color(0.901961, 0.309804, 0.25098, 0.16)
+
+[node name="WallHitFlashOverlay" type="Control" parent="Background/BattlefieldViewport/BattlefieldRoot/LocalFeedbackLayer"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="LeftFlash" type="ColorRect" parent="Background/BattlefieldViewport/BattlefieldRoot/LocalFeedbackLayer/WallHitFlashOverlay"]
+offset_left = 552.0
+offset_right = 648.0
+offset_bottom = 624.0
+mouse_filter = 2
+color = Color(1, 0.858824, 0.611765, 0.42)
+
+[node name="RightFlash" type="ColorRect" parent="Background/BattlefieldViewport/BattlefieldRoot/LocalFeedbackLayer/WallHitFlashOverlay"]
+offset_left = 936.0
+offset_right = 1032.0
+offset_bottom = 624.0
+mouse_filter = 2
+color = Color(1, 0.858824, 0.611765, 0.42)
+
+[node name="WallCrackOverlay" type="Control" parent="Background/BattlefieldViewport/BattlefieldRoot/LocalFeedbackLayer"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="LeftCrackTiles" type="Control" parent="Background/BattlefieldViewport/BattlefieldRoot/LocalFeedbackLayer/WallCrackOverlay"]
+offset_left = 576.0
+offset_right = 624.0
+offset_bottom = 624.0
+mouse_filter = 2
+
+[node name="RightCrackTiles" type="Control" parent="Background/BattlefieldViewport/BattlefieldRoot/LocalFeedbackLayer/WallCrackOverlay"]
+offset_left = 960.0
+offset_right = 1008.0
+offset_bottom = 624.0
+mouse_filter = 2
+
+[node name="WallDamageLayer" type="Control" parent="Background/BattlefieldViewport/BattlefieldRoot/LocalFeedbackLayer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+z_index = 4
 
 [node name="LocalPromptPanel" type="PanelContainer" parent="Background/BattlefieldViewport/BattlefieldRoot/LocalFeedbackLayer"]
 visible = false
@@ -213,13 +289,13 @@ default_color = Color(0.909804, 0.752941, 0.482353, 1)
 [node name="EnemySpawnA" type="ColorRect" parent="Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer"]
 offset_right = 48.0
 offset_bottom = 624.0
-color = Color(0.847059, 0.286275, 0.286275, 1)
+color = Color(0.231373, 0.0862745, 0.0862745, 0.18)
 
 [node name="EnemySpawnB" type="ColorRect" parent="Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer"]
 offset_left = 1536.0
 offset_right = 1584.0
 offset_bottom = 624.0
-color = Color(0.847059, 0.286275, 0.286275, 1)
+color = Color(0.231373, 0.0862745, 0.0862745, 0.18)
 
 [node name="LegacyPrototypeRoot" type="MarginContainer" parent="."]
 layout_mode = 1
@@ -279,14 +355,33 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
+mouse_filter = 0
+z_index = 260
+
+[node name="Backdrop" type="ColorRect" parent="DailySettlementModal"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+color = Color(0, 0, 0, 0.8)
+
+[node name="VBox" type="VBoxContainer" parent="DailySettlementModal"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
 offset_left = -250.0
 offset_top = -180.0
 offset_right = 250.0
 offset_bottom = 180.0
-z_index = 260
-
-[node name="VBox" type="VBoxContainer" parent="DailySettlementModal"]
-layout_mode = 2
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
 theme_override_constants/separation = 10
 
 [node name="Title" type="Label" parent="DailySettlementModal/VBox"]
@@ -371,14 +466,33 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
+mouse_filter = 0
+z_index = 260
+
+[node name="Backdrop" type="ColorRect" parent="VictoryOutcomeModal"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+color = Color(0, 0, 0, 0.82)
+
+[node name="VBox" type="VBoxContainer" parent="VictoryOutcomeModal"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
 offset_left = -250.0
 offset_top = -180.0
 offset_right = 250.0
 offset_bottom = 180.0
-z_index = 260
-
-[node name="VBox" type="VBoxContainer" parent="VictoryOutcomeModal"]
-layout_mode = 2
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
 theme_override_constants/separation = 10
 
 [node name="Title" type="Label" parent="VictoryOutcomeModal/VBox"]
@@ -415,14 +529,33 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
+mouse_filter = 0
+z_index = 260
+
+[node name="Backdrop" type="ColorRect" parent="DefeatOutcomeModal"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+color = Color(0, 0, 0, 0.82)
+
+[node name="VBox" type="VBoxContainer" parent="DefeatOutcomeModal"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
 offset_left = -250.0
 offset_top = -180.0
 offset_right = 250.0
 offset_bottom = 180.0
-z_index = 260
-
-[node name="VBox" type="VBoxContainer" parent="DefeatOutcomeModal"]
-layout_mode = 2
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
 theme_override_constants/separation = 10
 
 [node name="Title" type="Label" parent="DefeatOutcomeModal/VBox"]
@@ -450,6 +583,9 @@ text = "Return to Main Menu"
 [node name="RestartBtn" type="Button" parent="DefeatOutcomeModal/VBox/Actions"]
 layout_mode = 2
 text = "Restart"
+
+[node name="BattleHud" parent="." instance=ExtResource("16")]
+z_index = 200
 
 [node name="CombatExperienceRuntimeBridge" type="Node" parent="."]
 script = ExtResource("2")
@@ -496,6 +632,9 @@ script = ExtResource("18")
 [node name="BuildPlacementController" type="Node" parent="."]
 script = ExtResource("21")
 
+[node name="CombatDebugGeometryController" type="Node" parent="."]
+script = ExtResource("22")
+
 [node name="DayNightRuntimeLoop" type="Node" parent="."]
 script = ExtResource("19")
 
@@ -526,10 +665,10 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -220.0
-offset_top = -180.0
-offset_right = 220.0
-offset_bottom = 180.0
+offset_left = -240.0
+offset_top = -360.0
+offset_right = 240.0
+offset_bottom = 360.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 12
@@ -541,12 +680,47 @@ text = "Settings"
 
 [node name="Panel" type="PanelContainer" parent="BattleSettingsMenu/VBox"]
 layout_mode = 2
-size_flags_horizontal = 4
+custom_minimum_size = Vector2(480, 620)
+size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="SettingsPanel" parent="BattleSettingsMenu/VBox/Panel" instance=ExtResource("20")]
-visible = true
+[node name="SettingsContent" type="MarginContainer" parent="BattleSettingsMenu/VBox/Panel"]
 layout_mode = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="VBox" type="VBoxContainer" parent="BattleSettingsMenu/VBox/Panel/SettingsContent"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="SummaryTitle" type="Label" parent="BattleSettingsMenu/VBox/Panel/SettingsContent/VBox"]
+layout_mode = 2
+text = "Battle Runtime"
+
+[node name="SummaryBody" type="Label" parent="BattleSettingsMenu/VBox/Panel/SettingsContent/VBox"]
+layout_mode = 2
+autowrap_mode = 3
+text = "Pause is handled from the top HUD. Use Return to Game to resume, or Return to Main Menu to exit the battle."
+
+[node name="ControlsTitle" type="Label" parent="BattleSettingsMenu/VBox/Panel/SettingsContent/VBox"]
+layout_mode = 2
+text = "Controls"
+
+[node name="ControlsBody" type="Label" parent="BattleSettingsMenu/VBox/Panel/SettingsContent/VBox"]
+layout_mode = 2
+autowrap_mode = 3
+text = "Build: place towers, barracks, and residence cards.\nWave: spawn the next enemy wave.\nExchange: resolve combat.\nCleanup: retire defeated units.\nFinish: close the current battle day."
+
+[node name="StatusTitle" type="Label" parent="BattleSettingsMenu/VBox/Panel/SettingsContent/VBox"]
+layout_mode = 2
+text = "Battle State"
+
+[node name="StatusBody" type="Label" parent="BattleSettingsMenu/VBox/Panel/SettingsContent/VBox"]
+layout_mode = 2
+autowrap_mode = 3
+text = "Wall durability and day/night progression continue from the live battle runtime."
 
 [node name="Buttons" type="VBoxContainer" parent="BattleSettingsMenu/VBox"]
 layout_mode = 2
@@ -562,9 +736,6 @@ text = "Return to Main Menu"
 
 [node name="UI_PlacementOverlayController" type="Node" parent="."]
 script = ExtResource("6")
-
-[node name="BattleHud" parent="." instance=ExtResource("16")]
-z_index = 200
 
 [node name="DebugInspectorOverlay" parent="." instance=ExtResource("17")]
 z_index = 300

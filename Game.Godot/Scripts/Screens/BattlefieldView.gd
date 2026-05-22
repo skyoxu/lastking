@@ -61,6 +61,7 @@ const REGION_DEFS := [
 var _slot_nodes: Dictionary = {}
 var _placement_reason_bubble: Control = null
 var _placement_reason_label: Label = null
+var _wall_tile_texture: Texture2D = null
 
 
 func _ready() -> void:
@@ -79,6 +80,7 @@ func _rebuild_regions() -> void:
 		child.queue_free()
 	for child in _boundary_layer.get_children():
 		child.queue_free()
+	_wall_tile_texture = _create_wall_tile_texture()
 
 	var offset_x: float = 0.0
 	for region_def_variant in REGION_DEFS:
@@ -97,6 +99,7 @@ func _rebuild_regions() -> void:
 			boundary.size = region.size
 			boundary.color = Color(0.529412, 0.490196, 0.403922, 0.8)
 			_boundary_layer.add_child(boundary)
+			_add_wall_tiles(str(region_def["name"]), region.position, region.size)
 		offset_x += float(region_def["width"])
 
 
@@ -329,8 +332,6 @@ func _on_slot_gui_input(event: InputEvent, slot_id: String) -> void:
 		var mouse_event: InputEventMouseButton = event as InputEventMouseButton
 		if mouse_event.button_index == MOUSE_BUTTON_LEFT and mouse_event.pressed:
 			emit_signal("battlefield_slot_clicked", slot_id)
-		elif mouse_event.button_index == MOUSE_BUTTON_LEFT and not mouse_event.pressed:
-			emit_signal("battlefield_slot_released", slot_id)
 
 
 func _require_control(node_path: NodePath) -> Control:
@@ -345,6 +346,43 @@ func _resolve_reason_bubble() -> void:
 		return
 	_placement_reason_bubble = _local_feedback_layer.get_node_or_null("PlacementReasonBubble")
 	_placement_reason_label = _local_feedback_layer.get_node_or_null("PlacementReasonBubble/BubbleLabel")
+
+func _add_wall_tiles(region_name: String, region_position: Vector2, region_size: Vector2) -> void:
+	if region_name != "LeftWall" and region_name != "RightWall":
+		return
+	var root := Control.new()
+	root.name = "%sTiles" % region_name
+	root.position = region_position
+	root.size = region_size
+	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_boundary_layer.add_child(root)
+	var rows: int = int(region_size.y / SLOT_SIZE.y)
+	for row in range(rows):
+		var tile := TextureRect.new()
+		tile.name = "%sTile_%02d" % [region_name, row]
+		tile.position = Vector2(0.0, row * SLOT_SIZE.y)
+		tile.size = SLOT_SIZE
+		tile.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		tile.stretch_mode = TextureRect.STRETCH_SCALE
+		tile.texture = _wall_tile_texture
+		root.add_child(tile)
+
+func _create_wall_tile_texture() -> Texture2D:
+	var image := Image.create(int(SLOT_SIZE.x), int(SLOT_SIZE.y), false, Image.FORMAT_RGBA8)
+	image.fill(Color(0.384314, 0.337255, 0.278431, 1.0))
+	for y in range(int(SLOT_SIZE.y)):
+		for x in range(int(SLOT_SIZE.x)):
+			var px: Color = image.get_pixel(x, y)
+			if y % 12 == 0 or y % 12 == 1:
+				px = Color(0.756863, 0.686275, 0.576471, 1.0)
+			elif x == 0 or x == int(SLOT_SIZE.x) - 1 or y == int(SLOT_SIZE.y) - 1:
+				px = Color(0.188235, 0.160784, 0.137255, 1.0)
+			elif x % 24 == 0 or x % 24 == 1:
+				px = Color(0.52549, 0.454902, 0.380392, 1.0)
+			elif ((x + y) % 11) == 0:
+				px = Color(0.847059, 0.760784, 0.639216, 1.0)
+			image.set_pixel(x, y, px)
+	return ImageTexture.create_from_image(image)
 
 func _show_reason_bubble(slot: ColorRect, reason_text: String) -> void:
 	_resolve_reason_bubble()
