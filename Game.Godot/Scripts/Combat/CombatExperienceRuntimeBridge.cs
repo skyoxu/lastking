@@ -44,10 +44,12 @@ public partial class CombatExperienceRuntimeBridge : Node
         public string VisualTier { get; set; } = "grunt";
         public bool IsElite { get; set; }
         public bool IsBoss { get; set; }
+        public SpawnLane Lane { get; set; } = SpawnLane.Right;
     }
 
     private sealed class RuntimeEnemyProfile
     {
+        public required string EnemyId { get; init; }
         public required int Health { get; init; }
         public required int Damage { get; init; }
         public required float MoveSpeedProgressPerSecond { get; init; }
@@ -56,6 +58,34 @@ public partial class CombatExperienceRuntimeBridge : Node
         public required string VisualTier { get; init; }
         public required bool IsElite { get; init; }
         public required bool IsBoss { get; init; }
+    }
+
+    private readonly struct BattleMapWaveSpawn
+    {
+        public BattleMapWaveSpawn(string enemyId, SpawnLane lane)
+        {
+            EnemyId = enemyId;
+            Lane = lane;
+        }
+
+        public string EnemyId { get; }
+        public SpawnLane Lane { get; }
+    }
+
+    private sealed class BattleMapWaveDefinition
+    {
+        public BattleMapWaveDefinition(System.Collections.Generic.IReadOnlyList<BattleMapWaveSpawn> spawns)
+        {
+            Spawns = spawns;
+        }
+
+        public System.Collections.Generic.IReadOnlyList<BattleMapWaveSpawn> Spawns { get; }
+    }
+
+    private enum SpawnLane
+    {
+        Left = 0,
+        Right = 1,
     }
 
     private readonly struct TowerPlacementRuntime
@@ -120,10 +150,15 @@ public partial class CombatExperienceRuntimeBridge : Node
     private const double WallAttackIntervalSeconds = 2.0d;
     private const int WallAttackDamage = 5;
     private const int CastleAttackDamage = 5;
-    private static readonly Vector2[] PathPoints =
+    private static readonly Vector2[] RightLanePathPoints =
     {
         new(1488f, 312f),
         new(96f, 312f),
+    };
+    private static readonly Vector2[] LeftLanePathPoints =
+    {
+        new(96f, 312f),
+        new(1488f, 312f),
     };
     private static readonly System.Collections.Generic.Dictionary<string, Vector2> RuntimeMarkerPositions = new(StringComparer.Ordinal)
     {
@@ -144,7 +179,7 @@ public partial class CombatExperienceRuntimeBridge : Node
     private bool _battleMapAutoSpawnEnabled = true;
     private int _battleMapSpawnCadenceSeconds = 8;
     private int _battleMapConfiguredWaveSize = 2;
-    private readonly System.Collections.Generic.List<string[]> _battleMapWaveSequence = new();
+    private readonly System.Collections.Generic.List<BattleMapWaveDefinition> _battleMapWaveSequence = new();
     private int _battleMapWaveCursor;
     private const string BattleMapRuntimeConfigPath = "res://Game.Godot/Config/battlemap-runtime.config.json";
     private readonly System.Collections.Generic.Dictionary<string, double> _towerAttackCooldownSecondsByNodeName = new(StringComparer.Ordinal);
@@ -344,10 +379,11 @@ public partial class CombatExperienceRuntimeBridge : Node
     {
         EnsureBattlefield();
         var spawnedCount = 0;
-        foreach (var enemyProfile in ResolveCurrentWaveProfiles())
+        foreach (var spawn in ResolveCurrentWaveSpawns())
         {
+            var enemyProfile = spawn.Profile;
             _enemyUnitSeq += 1;
-            AddActor($"EnemyUnit{_enemyUnitSeq}", teamId: 2, hp: enemyProfile.Health, movingEnemy: true, enemyProfile: enemyProfile);
+            AddActor($"EnemyUnit{_enemyUnitSeq}", teamId: 2, hp: enemyProfile.Health, movingEnemy: true, enemyProfile: enemyProfile, lane: spawn.Lane);
             _enemyUnitsSpawned += 1;
             spawnedCount += 1;
         }
@@ -366,7 +402,7 @@ public partial class CombatExperienceRuntimeBridge : Node
         if (_battleMapWaveSequence.Count > 0)
         {
             var waveIndex = Math.Clamp(_battleMapWaveCursor, 0, _battleMapWaveSequence.Count - 1);
-            return _battleMapWaveSequence[waveIndex].Length;
+            return _battleMapWaveSequence[waveIndex].Spawns.Count;
         }
 
         return Math.Max(1, _battleMapConfiguredWaveSize);
@@ -598,7 +634,7 @@ public partial class CombatExperienceRuntimeBridge : Node
                     ? ResolveTravelSpeedProgressPerSecond(actor)
                     : EnemyTravelSpeedPerSecond;
                 var nextProgress = Math.Clamp(actor.PathProgress + (float)deltaSeconds * speedPerSecond, 0f, 1f);
-                var attackEngageProgress = ResolveWallAttackEngageProgress(actor.PathProgress, nextProgress, actor.AttackRangePx);
+                var attackEngageProgress = ResolveWallAttackEngageProgress(actor.PathProgress, nextProgress, actor.AttackRangePx, actor.Lane);
                 if (actor.IsAttackingWall || attackEngageProgress.HasValue)
                 {
                     var enteringWallAttack = !actor.IsAttackingWall;
@@ -684,7 +720,7 @@ public partial class CombatExperienceRuntimeBridge : Node
         var snapshots = new global::Godot.Collections.Array();
         foreach (var actor in _actors.Values)
         {
-            var world = SamplePath(actor.PathProgress);
+            var world = SamplePath(actor.PathProgress, actor.Lane);
             snapshots.Add(new GDictionary
             {
                 ["name"] = actor.NodeName,
@@ -701,6 +737,7 @@ public partial class CombatExperienceRuntimeBridge : Node
                 ["visual_tier"] = actor.VisualTier,
                 ["is_elite"] = actor.IsElite,
                 ["is_boss"] = actor.IsBoss,
+                ["lane"] = actor.Lane == SpawnLane.Left ? "left" : "right",
             });
         }
 
@@ -802,7 +839,7 @@ public partial class CombatExperienceRuntimeBridge : Node
         _battlefield.AddChild(marker);
     }
 
-    private RuntimeActor AddActor(string name, int teamId, int hp, bool movingEnemy = false)
+    private RuntimeActor AddActor(string name, int teamId, int hp, bool movingEnemy = false, SpawnLane lane = SpawnLane.Right)
     {
         var node = new Node2D { Name = name };
         _battlefield.AddChild(node);
@@ -817,15 +854,16 @@ public partial class CombatExperienceRuntimeBridge : Node
             MoveSpeedProgressPerSecond = EnemyTravelSpeedPerSecond,
             AttackRangePx = 0f,
             AttackIntervalSeconds = WallAttackIntervalSeconds,
+            Lane = lane,
         };
         _actors[name] = actor;
         SyncActorNodePosition(actor);
         return actor;
     }
 
-    private RuntimeActor AddActor(string name, int teamId, int hp, bool movingEnemy, RuntimeEnemyProfile enemyProfile)
+    private RuntimeActor AddActor(string name, int teamId, int hp, bool movingEnemy, RuntimeEnemyProfile enemyProfile, SpawnLane lane)
     {
-        var actor = AddActor(name, teamId, hp, movingEnemy);
+        var actor = AddActor(name, teamId, hp, movingEnemy, lane);
         actor.WallAttackDamage = enemyProfile.Damage;
         actor.MoveSpeedProgressPerSecond = enemyProfile.MoveSpeedProgressPerSecond;
         actor.AttackRangePx = enemyProfile.AttackRangePx;
@@ -845,13 +883,13 @@ public partial class CombatExperienceRuntimeBridge : Node
             return;
         }
 
-        node.Position = SamplePath(actor.PathProgress);
+        node.Position = SamplePath(actor.PathProgress, actor.Lane);
     }
 
-    private static float? ResolveWallInterceptProgress(float currentProgress, float nextProgress)
+    private static float? ResolveWallInterceptProgress(float currentProgress, float nextProgress, SpawnLane lane)
     {
-        var startPoint = SamplePath(currentProgress);
-        var endPoint = SamplePath(nextProgress);
+        var startPoint = SamplePath(currentProgress, lane);
+        var endPoint = SamplePath(nextProgress, lane);
 
         if (TryResolveInterceptForWallX(startPoint, endPoint, LeftWallCenterX, out var leftT))
         {
@@ -866,10 +904,10 @@ public partial class CombatExperienceRuntimeBridge : Node
         return null;
     }
 
-    private static float? ResolveWallAttackEngageProgress(float currentProgress, float nextProgress, float attackRangePx)
+    private static float? ResolveWallAttackEngageProgress(float currentProgress, float nextProgress, float attackRangePx, SpawnLane lane)
     {
-        var startPoint = SamplePath(currentProgress);
-        var endPoint = SamplePath(nextProgress);
+        var startPoint = SamplePath(currentProgress, lane);
+        var endPoint = SamplePath(nextProgress, lane);
         var bestProgress = ResolveWallRangeEngageProgressForX(currentProgress, nextProgress, startPoint, endPoint, LeftWallCenterX, attackRangePx);
         var rightProgress = ResolveWallRangeEngageProgressForX(currentProgress, nextProgress, startPoint, endPoint, RightWallCenterX, attackRangePx);
         if (!bestProgress.HasValue)
@@ -938,10 +976,11 @@ public partial class CombatExperienceRuntimeBridge : Node
         return segmentT >= 0f && segmentT <= 1f;
     }
 
-    private static Vector2 SamplePath(float progress)
+    private static Vector2 SamplePath(float progress, SpawnLane lane)
     {
         var p = Math.Clamp(progress, 0f, 1f);
-        var segmentCount = PathPoints.Length - 1;
+        var pathPoints = lane == SpawnLane.Left ? LeftLanePathPoints : RightLanePathPoints;
+        var segmentCount = pathPoints.Length - 1;
         if (segmentCount <= 0)
         {
             return Vector2.Zero;
@@ -950,7 +989,7 @@ public partial class CombatExperienceRuntimeBridge : Node
         var scaled = p * segmentCount;
         var index = Math.Min((int)Math.Floor(scaled), segmentCount - 1);
         var localT = scaled - index;
-        return PathPoints[index].Lerp(PathPoints[index + 1], localT);
+        return pathPoints[index].Lerp(pathPoints[index + 1], localT);
     }
 
     private int FireProjectile(string sourceNodeName, string targetNodeName, int damage)
@@ -1450,35 +1489,41 @@ public partial class CombatExperienceRuntimeBridge : Node
 
     private void LoadBattleMapRuntimeConfig()
     {
-        if (_testEnemyRuntimeConfigOverrideActive)
-        {
-            _battleMapAutoSpawnEnabled = true;
-            _battleMapSpawnCadenceSeconds = Math.Max(1, _enemyRuntimeConfigManager.Snapshot.SpawnCadenceSeconds);
-            _battleMapConfiguredWaveSize = 2;
-            _battleMapWaveSequence.Clear();
-            return;
-        }
-
+        var overrideJson = _enemyRuntimeConfigJson;
         _enemyRuntimeConfigJson = string.Empty;
         _battleMapAutoSpawnEnabled = true;
         _battleMapSpawnCadenceSeconds = 8;
         _battleMapConfiguredWaveSize = 2;
         _battleMapWaveSequence.Clear();
 
-        var absolutePath = ProjectSettings.GlobalizePath(BattleMapRuntimeConfigPath);
-        if (!File.Exists(absolutePath))
+        string json;
+        if (_testEnemyRuntimeConfigOverrideActive)
         {
-            return;
+            json = overrideJson;
+            _enemyRuntimeConfigJson = overrideJson;
+        }
+        else
+        {
+            var absolutePath = ProjectSettings.GlobalizePath(BattleMapRuntimeConfigPath);
+            if (!File.Exists(absolutePath))
+            {
+                return;
+            }
+
+            json = File.ReadAllText(absolutePath);
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return;
+            }
+
+            _enemyRuntimeConfigJson = json;
         }
 
-        var json = File.ReadAllText(absolutePath);
-        if (string.IsNullOrWhiteSpace(json))
-        {
-            return;
-        }
-
-        _enemyRuntimeConfigJson = json;
-        _enemyRuntimeConfigManager.LoadInitialFromJson(json, BattleMapRuntimeConfigPath);
+        _enemyRuntimeConfigManager.LoadInitialFromJson(
+            json,
+            _testEnemyRuntimeConfigOverrideActive
+                ? "memory://combat-experience-runtime-enemy-config.json"
+                : BattleMapRuntimeConfigPath);
         _battleMapSpawnCadenceSeconds = Math.Max(1, _enemyRuntimeConfigManager.Snapshot.SpawnCadenceSeconds);
 
         using var document = JsonDocument.Parse(json);
@@ -1504,22 +1549,62 @@ public partial class CombatExperienceRuntimeBridge : Node
             {
                 foreach (var waveEntry in waveSequence.EnumerateArray())
                 {
-                    if (waveEntry.ValueKind != JsonValueKind.Array)
+                    if (waveEntry.ValueKind == JsonValueKind.Array)
+                    {
+                        var enemyIds = waveEntry.EnumerateArray()
+                            .Where(item => item.ValueKind == JsonValueKind.String)
+                            .Select(item => item.GetString() ?? string.Empty)
+                            .Where(item => !string.IsNullOrWhiteSpace(item))
+                            .Select(item => new BattleMapWaveSpawn(item, SpawnLane.Right))
+                            .ToArray();
+                        if (enemyIds.Length > 0)
+                        {
+                            _battleMapWaveSequence.Add(new BattleMapWaveDefinition(enemyIds));
+                        }
+                        continue;
+                    }
+                    if (waveEntry.ValueKind != JsonValueKind.Object)
                     {
                         continue;
                     }
 
-                    var enemyIds = waveEntry.EnumerateArray()
-                        .Where(item => item.ValueKind == JsonValueKind.String)
-                        .Select(item => item.GetString() ?? string.Empty)
-                        .Where(item => !string.IsNullOrWhiteSpace(item))
-                        .ToArray();
-                    if (enemyIds.Length > 0)
+                    var spawns = new System.Collections.Generic.List<BattleMapWaveSpawn>();
+                    AppendWaveLaneSpawns(waveEntry, "left", SpawnLane.Left, spawns);
+                    AppendWaveLaneSpawns(waveEntry, "right", SpawnLane.Right, spawns);
+                    if (spawns.Count > 0)
                     {
-                        _battleMapWaveSequence.Add(enemyIds);
+                        _battleMapWaveSequence.Add(new BattleMapWaveDefinition(spawns.ToArray()));
                     }
                 }
             }
+        }
+    }
+
+    private static void AppendWaveLaneSpawns(
+        JsonElement waveEntry,
+        string propertyName,
+        SpawnLane lane,
+        System.Collections.Generic.ICollection<BattleMapWaveSpawn> result)
+    {
+        if (!TryGetPropertyIgnoreCase(waveEntry, propertyName, out var laneEntries) || laneEntries.ValueKind != JsonValueKind.Array)
+        {
+            return;
+        }
+
+        foreach (var entry in laneEntries.EnumerateArray())
+        {
+            if (entry.ValueKind != JsonValueKind.String)
+            {
+                continue;
+            }
+
+            var enemyId = entry.GetString() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(enemyId))
+            {
+                continue;
+            }
+
+            result.Add(new BattleMapWaveSpawn(enemyId, lane));
         }
     }
 
@@ -1543,7 +1628,19 @@ public partial class CombatExperienceRuntimeBridge : Node
         };
     }
 
-    private RuntimeEnemyProfile[] ResolveCurrentWaveProfiles()
+    private readonly struct WaveSpawnRuntime
+    {
+        public WaveSpawnRuntime(RuntimeEnemyProfile profile, SpawnLane lane)
+        {
+            Profile = profile;
+            Lane = lane;
+        }
+
+        public RuntimeEnemyProfile Profile { get; }
+        public SpawnLane Lane { get; }
+    }
+
+    private WaveSpawnRuntime[] ResolveCurrentWaveSpawns()
     {
         var resolvedProfiles = ResolveActiveEnemyProfiles();
         if (_battleMapWaveSequence.Count > 0)
@@ -1555,26 +1652,26 @@ public partial class CombatExperienceRuntimeBridge : Node
                 _battleMapWaveCursor += 1;
             }
 
-            if (configuredWave.Length == 0)
+            if (configuredWave.Spawns.Count == 0)
             {
-                return global::System.Array.Empty<RuntimeEnemyProfile>();
+                return global::System.Array.Empty<WaveSpawnRuntime>();
             }
 
             if (resolvedProfiles.Length == 0)
             {
-                return global::System.Array.Empty<RuntimeEnemyProfile>();
+                return global::System.Array.Empty<WaveSpawnRuntime>();
             }
 
             var byId = resolvedProfiles.ToDictionary(
                 profile => ResolveProfileId(profile),
                 profile => profile,
                 StringComparer.OrdinalIgnoreCase);
-            var result = new System.Collections.Generic.List<RuntimeEnemyProfile>();
-            foreach (var enemyId in configuredWave)
+            var result = new System.Collections.Generic.List<WaveSpawnRuntime>();
+            foreach (var spawn in configuredWave.Spawns)
             {
-                if (byId.TryGetValue(enemyId, out var profile))
+                if (byId.TryGetValue(spawn.EnemyId, out var profile))
                 {
-                    result.Add(profile);
+                    result.Add(new WaveSpawnRuntime(profile, spawn.Lane));
                 }
             }
             return result.ToArray();
@@ -1584,33 +1681,23 @@ public partial class CombatExperienceRuntimeBridge : Node
         {
             return new[]
             {
-                BuildDefaultEnemyProfile(30),
-                BuildDefaultEnemyProfile(20),
+                new WaveSpawnRuntime(BuildDefaultEnemyProfile(30), SpawnLane.Right),
+                new WaveSpawnRuntime(BuildDefaultEnemyProfile(20), SpawnLane.Right),
             };
         }
 
         var fallbackWaveSize = Math.Max(1, _battleMapConfiguredWaveSize);
-        var fallbackProfiles = new System.Collections.Generic.List<RuntimeEnemyProfile>();
+        var fallbackProfiles = new System.Collections.Generic.List<WaveSpawnRuntime>();
         for (var index = 0; index < fallbackWaveSize; index++)
         {
-            fallbackProfiles.Add(resolvedProfiles[index % resolvedProfiles.Length]);
+            fallbackProfiles.Add(new WaveSpawnRuntime(resolvedProfiles[index % resolvedProfiles.Length], SpawnLane.Right));
         }
         return fallbackProfiles.ToArray();
     }
 
     private static string ResolveProfileId(RuntimeEnemyProfile profile)
     {
-        if (profile.IsBoss)
-        {
-            return "boss";
-        }
-
-        if (profile.IsElite)
-        {
-            return "elite";
-        }
-
-        return "grunt";
+        return profile.EnemyId;
     }
 
     private static RuntimeEnemyProfile ToRuntimeEnemyProfile(EnemyRuntimeStats stats)
@@ -1619,6 +1706,7 @@ public partial class CombatExperienceRuntimeBridge : Node
         var attackIntervalSeconds = Math.Max(0.1d, stats.AttackIntervalMs / 1000d);
         return new RuntimeEnemyProfile
         {
+            EnemyId = stats.EnemyId,
             Health = Math.Max(1, DecimalToInt(stats.Health)),
             Damage = Math.Max(1, DecimalToInt(stats.Damage)),
             MoveSpeedProgressPerSecond = moveSpeedProgressPerSecond,
@@ -1634,6 +1722,7 @@ public partial class CombatExperienceRuntimeBridge : Node
     {
         return new RuntimeEnemyProfile
         {
+            EnemyId = "grunt",
             Health = health,
             Damage = WallAttackDamage,
             MoveSpeedProgressPerSecond = EnemyTravelSpeedPerSecond,
