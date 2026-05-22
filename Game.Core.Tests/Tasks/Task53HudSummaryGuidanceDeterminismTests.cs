@@ -83,7 +83,7 @@ public sealed class Task53HudSummaryGuidanceDeterminismTests
         first.ResourceText.Should().Be("Resources: gold=120 iron=44 pop=26");
         first.BuildText.Should().Be("Build: tax=15 total_gold=135 residence=res-1");
         first.ProgressionText.Should().Be("Progression: tech=tech_rate_i:attack_speed 100->110 reward=gold+100, tech+1, unit+tank");
-        first.OutcomeText.Should().Be("Outcome: win day=9 pressure=high (hp=42) spawned=5");
+        first.OutcomeText.Should().Be("Outcome: win day=9 pressure=warning (hp=42) spawned=5");
         first.PromptText.Should().Be("Prompt: training: reinforce frontline");
     }
 
