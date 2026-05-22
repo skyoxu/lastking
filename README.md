@@ -29,6 +29,8 @@
 3. Restore and build:
    - `dotnet restore Game.sln`
    - `dotnet build Game.sln -c Debug`
+   - If you changed `Game.Godot/**/*.cs`, also build the Godot runtime assembly:
+     - `py -3 scripts/python/dev_cli.py run-godot-runtime-build --configuration Debug`
 4. Optional local hard checks:
    - `py -3 scripts/python/dev_cli.py run-local-hard-checks --godot-bin "$env:GODOT_BIN"`
 
@@ -82,6 +84,8 @@ Recovery stop-loss rules:
 - Local hard checks:
   - `py -3 scripts/python/dev_cli.py run-local-hard-checks --godot-bin "<godot-bin>"`
   - `py -3 scripts/python/dev_cli.py run-local-hard-checks --godot-bin "$env:GODOT_BIN"`
+- Godot runtime C# assembly build:
+  - `py -3 scripts/python/dev_cli.py run-godot-runtime-build --configuration Debug`
 - Task recovery (canonical):
   - `py -3 scripts/python/dev_cli.py resume-task --task-id <task-id>`
   - `py -3 scripts/python/dev_cli.py inspect-run --kind pipeline --task-id <task-id>`

@@ -15,6 +15,21 @@ Use `docs/workflows/script-entrypoints-index.md` when you need the full executab
 
 ## Repo Bootstrap And Recovery
 
+### `py -3 scripts/python/dev_cli.py run-godot-runtime-build --configuration Debug`
+
+Use when:
+- you changed any `Game.Godot/**/*.cs` file
+- Godot scene/runtime behavior does not match the latest C# source edits
+- you need to refresh the assembly loaded from `.godot/mono/temp/bin/Debug/lastking.dll`
+
+Prerequisites:
+- `.NET 8 SDK`
+
+Why this is stable:
+- it is the canonical entrypoint for rebuilding the Godot runtime C# assembly
+- it avoids the common mistake of building `Game.sln` without rebuilding `lastking.csproj`
+- it targets the assembly that Godot actually loads during local scene/runtime execution
+
 ### `py -3 scripts/python/dev_cli.py run-local-hard-checks`
 
 Use when:

@@ -238,6 +238,7 @@ func test_build_cards_should_show_missing_resource_gap_when_runtime_resources_ar
 	var hud: Control = runtime["hud"]
 	var bridge: Node = runtime["bridge"]
 	var tower_meta: Label = hud.get_node("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/TowerSlot/Card/Meta")
+	var sniper_tower_meta: Label = hud.get_node("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/SniperTowerSlot/Card/Meta")
 	var barracks_meta: Label = hud.get_node("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/BarracksSlot/Card/Meta")
 	var residence_meta: Label = hud.get_node("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/ResidenceSlot/Card/Meta")
 
@@ -246,8 +247,34 @@ func test_build_cards_should_show_missing_resource_gap_when_runtime_resources_ar
 	await _await_frames(2)
 
 	assert_str(tower_meta.text).contains("20")
+	assert_str(sniper_tower_meta.text).contains("50")
 	assert_str(barracks_meta.text).contains("40")
-	assert_bool(residence_meta.text.find("Missing") < 0 and residence_meta.text.find("缺少") < 0).is_true()
+	assert_bool(residence_meta.text.find("Missing") < 0).is_true()
+
+func test_formal_hud_should_expose_sniper_tower_build_slot_and_actions() -> void:
+	var runtime := await _screen_runtime()
+	var hud: Control = runtime["hud"]
+	var screen: Control = runtime["screen"]
+	var controller: Node = screen.get_node("BuildPlacementController")
+	var sniper_slot: Button = hud.get_node("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/SniperTowerSlot")
+	var sniper_title: Label = hud.get_node("CombatHud/BottomBar/Root/BuildingsPanel/VBox/BuildButtons/SniperTowerSlot/Card/Title")
+
+	assert_object(sniper_slot).is_not_null()
+	assert_bool(sniper_slot.visible).is_true()
+	assert_bool(sniper_title.text.strip_edges().is_empty()).is_false()
+
+	hud.call("RequestBattleAction", "select_tower_beta")
+	await _await_frames(2)
+	var selection_preview: Dictionary = controller.call("get_drag_preview_state")
+	assert_str(str(selection_preview.get("selection_id", ""))).is_equal("tower_beta")
+
+	controller.call("cancel_active_placement")
+	await _await_frames(1)
+	hud.call("RequestBattleAction", "drag_tower_beta")
+	await _await_frames(2)
+	var drag_preview: Dictionary = controller.call("get_drag_preview_state")
+	assert_str(str(drag_preview.get("selection_id", ""))).is_equal("tower_beta")
+	assert_bool(drag_preview.get("visible", false) == true).is_true()
 
 func test_invalid_drag_release_should_report_specific_reason_for_region_and_occupied_slot() -> void:
 	var runtime := await _screen_runtime()

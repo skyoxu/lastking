@@ -57,7 +57,7 @@ func test_battle_hud_top_bar_should_present_formal_metric_panels() -> void:
 	var day_label: Label = hud.get_node("TopBar/HBox/DayLabel")
 	var phase_label: Label = hud.get_node("TopBar/HBox/PhaseLabel")
 	var cycle_label: Label = hud.get_node("TopBar/HBox/CycleRemainingLabel")
-	var hp_label: Label = hud.get_node("TopBar/HBox/HealthLabel")
+	var hp_label: Label = hud.get_node("TopBar/HBox/WallLabel")
 	var speed_controls: HBoxContainer = hud.get_node("TopBar/HBox/SpeedControls")
 
 	assert_bool(hud.visible).is_true()
@@ -71,17 +71,17 @@ func test_battle_hud_top_bar_should_present_formal_metric_panels() -> void:
 	assert_str(hp_label.text).contains("100/100")
 	assert_int(int(bridge.call("GetSummary").get("castle_hp", -1))).is_equal(100)
 
-func test_battle_hud_top_bar_should_track_battlemap_castle_hp_instead_of_default_zero() -> void:
+func test_battle_hud_top_bar_should_track_battlemap_wall_hp_instead_of_default_zero() -> void:
 	var runtime := await _main_runtime()
 	var hud: Control = runtime["hud"]
 	var screen: Control = runtime["screen"]
 	var bridge: Node = screen.get_node("CombatExperienceRuntimeBridge")
-	var hp_label: Label = hud.get_node("TopBar/HBox/HealthLabel")
+	var hp_label: Label = hud.get_node("TopBar/HBox/WallLabel")
 
 	assert_str(hp_label.text).contains("100/100")
 	bridge.call("ConfigureDurabilityForTest", 42, 18)
 	await _await_frames(2)
-	assert_str(hp_label.text).contains("42/100")
+	assert_str(hp_label.text).contains("18/100")
 
 func test_battle_hud_top_bar_should_track_enemy_count_in_formal_status_bar() -> void:
 	var runtime := await _main_runtime()
@@ -89,11 +89,12 @@ func test_battle_hud_top_bar_should_track_enemy_count_in_formal_status_bar() -> 
 	var screen: Control = runtime["screen"]
 	var bridge: Node = screen.get_node("CombatExperienceRuntimeBridge")
 	var enemies_label: Label = hud.get_node("TopBar/HBox/EnemiesLabel")
+	var expected_wave_size := int(bridge.call("GetConfiguredWaveSize"))
 
 	assert_bool(enemies_label.text.find("0") >= 0).is_true()
 	bridge.call("SpawnEnemyWavePhase")
 	await _await_frames(2)
-	assert_bool(enemies_label.text.find("2") >= 0).is_true()
+	assert_bool(enemies_label.text.find(str(expected_wave_size)) >= 0).is_true()
 
 func test_battle_hud_top_bar_should_show_runtime_resources_in_formal_status_bar() -> void:
 	var runtime := await _main_runtime()
@@ -107,7 +108,6 @@ func test_battle_hud_top_bar_should_show_runtime_resources_in_formal_status_bar(
 	assert_str(resources_label.text).contains("26")
 
 	bridge.call("ConfigureResourcesForTest", 70, 12, 19)
-	hud.call("RefreshBottomBarFromRuntimeForTest")
 	await _await_frames(2)
 
 	assert_str(resources_label.text).contains("70")
@@ -350,7 +350,7 @@ func test_battle_hud_should_not_expose_raw_localization_keys_in_visible_labels()
 		"TopBar/HBox/DayLabel",
 		"TopBar/HBox/PhaseLabel",
 		"TopBar/HBox/CycleRemainingLabel",
-		"TopBar/HBox/HealthLabel",
+		"TopBar/HBox/WallLabel",
 		"TopBar/HBox/EnemiesLabel",
 		"TopBar/HBox/SpeedStateLabel",
 		"TopBar/HBox/SpeedControls/PauseButton",
@@ -391,13 +391,13 @@ func test_battle_hud_should_open_battle_settings_menu_from_top_bar() -> void:
 	var settings_button: Button = hud.get_node("TopBar/HBox/SettingsButton")
 	var settings_menu: Control = screen.get_node("BattleSettingsMenu")
 	var return_button: Button = screen.get_node("BattleSettingsMenu/VBox/Buttons/ReturnToGameBtn")
-	var close_button: Button = screen.get_node("BattleSettingsMenu/VBox/Panel/SettingsPanel/VBox/Buttons/CloseBtn")
+	var summary_title: Label = screen.get_node("BattleSettingsMenu/VBox/Panel/SettingsContent/VBox/SummaryTitle")
 
 	assert_bool(settings_menu.visible).is_false()
 	settings_button.emit_signal("pressed")
 	await _await_frames(3)
 	assert_bool(settings_menu.visible).is_true()
-	assert_bool(close_button.visible).is_false()
+	assert_bool(summary_title.text.length() > 0).is_true()
 	var paused: Dictionary = manager.call("GetSpeedState")
 	assert_bool(paused["is_paused"] == true).is_true()
 
@@ -411,8 +411,8 @@ func test_battle_settings_menu_should_keep_embedded_settings_panel_inside_panel_
 	var hud: Control = runtime["hud"]
 	var settings_button: Button = hud.get_node("TopBar/HBox/SettingsButton")
 	var panel: Control = screen.get_node("BattleSettingsMenu/VBox/Panel")
-	var settings_panel: Control = screen.get_node("BattleSettingsMenu/VBox/Panel/SettingsPanel")
-	var settings_vbox: Control = screen.get_node("BattleSettingsMenu/VBox/Panel/SettingsPanel/VBox")
+	var settings_content: Control = screen.get_node("BattleSettingsMenu/VBox/Panel/SettingsContent")
+	var settings_vbox: Control = screen.get_node("BattleSettingsMenu/VBox/Panel/SettingsContent/VBox")
 	var return_button: Button = screen.get_node("BattleSettingsMenu/VBox/Buttons/ReturnToGameBtn")
 
 	settings_button.emit_signal("pressed")
@@ -421,8 +421,8 @@ func test_battle_settings_menu_should_keep_embedded_settings_panel_inside_panel_
 	assert_bool(settings_vbox.global_position.x >= panel.global_position.x).is_true()
 	assert_bool(settings_vbox.global_position.y >= panel.global_position.y).is_true()
 	assert_bool(return_button.global_position.y >= panel.global_position.y + panel.size.y).is_true()
-	assert_bool(settings_panel.global_position.y + settings_panel.size.y <= return_button.global_position.y).is_true()
-	assert_int(int(settings_panel.mouse_filter)).is_equal(Control.MOUSE_FILTER_PASS)
+	assert_bool(settings_content.global_position.y + settings_content.size.y <= return_button.global_position.y).is_true()
+	assert_int(int(settings_content.mouse_filter)).is_equal(Control.MOUSE_FILTER_PASS)
 
 func test_battle_hud_settings_menu_should_resume_previous_speed_state_when_returning() -> void:
 	var runtime := await _main_runtime()

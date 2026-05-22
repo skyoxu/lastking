@@ -178,6 +178,66 @@ func test_t63_local_feedback_surfaces_should_light_up_inside_battlefield_for_wav
 	assert_bool(local_prompt_panel.visible).is_true()
 	assert_bool(String(local_prompt_label.text).to_lower().find(reinforce_prompt_text) >= 0).is_true()
 
+# ACC:T68.wall_feedback.1
+# ACC:T68.wall_feedback.2
+func test_wall_damage_feedback_should_expose_formal_crack_and_damage_layers_and_activate_on_low_wall_hp() -> void:
+	var runtime := await _main_runtime()
+	var screen: Control = runtime["screen"]
+	var bridge: Node = runtime["bridge"]
+	var feedback_controller: Node = screen.get_node("FeedbackController")
+	var crack_overlay := screen.get_node_or_null("Background/BattlefieldViewport/BattlefieldRoot/LocalFeedbackLayer/WallCrackOverlay")
+	var wall_damage_layer := screen.get_node_or_null("Background/BattlefieldViewport/BattlefieldRoot/LocalFeedbackLayer/WallDamageLayer")
+
+	assert_object(crack_overlay).is_not_null()
+	assert_object(wall_damage_layer).is_not_null()
+	assert_bool((crack_overlay as CanvasItem).visible).is_false()
+	assert_int((wall_damage_layer as Node).get_child_count()).is_equal(0)
+
+	bridge.call("ConfigureDurabilityForTest", 100, 50)
+	feedback_controller.call("render_summary", bridge.call("GetSummary"), "Wall under pressure")
+	await _await_frames(2)
+
+	assert_bool((crack_overlay as CanvasItem).visible).is_true()
+	assert_int((wall_damage_layer as Node).get_child_count()).is_greater_equal(1)
+	var left_crack_tiles := screen.get_node_or_null("Background/BattlefieldViewport/BattlefieldRoot/LocalFeedbackLayer/WallCrackOverlay/LeftCrackTiles")
+	var right_crack_tiles := screen.get_node_or_null("Background/BattlefieldViewport/BattlefieldRoot/LocalFeedbackLayer/WallCrackOverlay/RightCrackTiles")
+	assert_object(left_crack_tiles).is_not_null()
+	assert_object(right_crack_tiles).is_not_null()
+	var visible_crack_tiles := 0
+	for child in (left_crack_tiles as Node).get_children():
+		if child is TextureRect and (child as TextureRect).visible:
+			visible_crack_tiles += 1
+	for child in (right_crack_tiles as Node).get_children():
+		if child is TextureRect and (child as TextureRect).visible:
+			visible_crack_tiles += 1
+	assert_int(visible_crack_tiles).is_greater(0)
+
+
+func test_battlefield_should_render_base_wall_tiles_on_both_wall_columns() -> void:
+	var runtime := await _main_runtime()
+	var screen: Control = runtime["screen"]
+	var left_wall_tiles := screen.get_node_or_null("Background/BattlefieldViewport/BattlefieldRoot/BoundaryLayer/LeftWallTiles")
+	var right_wall_tiles := screen.get_node_or_null("Background/BattlefieldViewport/BattlefieldRoot/BoundaryLayer/RightWallTiles")
+
+	assert_object(left_wall_tiles).is_not_null()
+	assert_object(right_wall_tiles).is_not_null()
+	assert_int((left_wall_tiles as Node).get_child_count()).is_equal(13)
+	assert_int((right_wall_tiles as Node).get_child_count()).is_equal(13)
+
+	for child in (left_wall_tiles as Node).get_children():
+		assert_object(child).is_instanceof(TextureRect)
+		var tile := child as TextureRect
+		assert_float(tile.size.x).is_equal(48.0)
+		assert_float(tile.size.y).is_equal(48.0)
+		assert_object(tile.texture).is_not_null()
+
+	for child in (right_wall_tiles as Node).get_children():
+		assert_object(child).is_instanceof(TextureRect)
+		var tile := child as TextureRect
+		assert_float(tile.size.x).is_equal(48.0)
+		assert_float(tile.size.y).is_equal(48.0)
+		assert_object(tile.texture).is_not_null()
+
 
 # ACC:T66.5
 func test_t66_feedback_ownership_should_keep_runtime_bridge_as_state_authority() -> void:
