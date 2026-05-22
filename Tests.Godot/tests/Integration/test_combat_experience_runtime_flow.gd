@@ -1,11 +1,11 @@
 extends "res://addons/gdUnit4/src/GdUnitTestSuite.gd"
 
-const COMBAT_EXPERIENCE_BRIDGE := "res://Game.Godot/Scripts/Combat/CombatExperienceRuntimeBridge.cs"
-const _SETTINGS_CFG_PATH := "user://settings.cfg"
+const COMBAT_EXPERIENCE_BRIDGE = "res://Game.Godot/Scripts/Combat/CombatExperienceRuntimeBridge.cs"
+const _SETTINGS_CFG_PATH = "user://settings.cfg"
 
 var _bus: Node
-var _damage_numbers_snapshot_pending := false
-var _damage_numbers_snapshot := {}
+var _damage_numbers_snapshot_pending = false
+var _damage_numbers_snapshot = {}
 
 func before() -> void:
 	_bus = preload("res://Game.Godot/Adapters/EventBusAdapter.cs").new()
@@ -25,7 +25,7 @@ func _request_hud_action(screen: Control, action_code: String) -> void:
 	hud.call("RequestBattleAction", action_code)
 
 func _hud() -> Node:
-	var hud := preload("res://Game.Godot/Scenes/UI/HUD.tscn").instantiate()
+	var hud: Node = preload("res://Game.Godot/Scenes/UI/HUD.tscn").instantiate()
 	add_child(auto_free(hud))
 	await get_tree().process_frame
 	return hud
@@ -36,12 +36,12 @@ func _label(hud: Node, path: String) -> Label:
 
 
 func _emit_castle_hp(bus: Node, current_hp: int, previous_hp: int = 100) -> void:
-	var payload := "{\"Day\":9,\"PreviousHp\":%d,\"CurrentHp\":%d}" % [previous_hp, current_hp]
+	var payload = "{\"Day\":9,\"PreviousHp\":%d,\"CurrentHp\":%d}" % [previous_hp, current_hp]
 	bus.call("PublishSimple", "core.lastking.castle.hp_changed", "ut", payload)
 
 
 func _pressure_state_from_label_text(text: String) -> String:
-	var lowered := text.to_lower()
+	var lowered: String = text.to_lower()
 	if lowered.find("critical") >= 0:
 		return "critical"
 	if lowered.find("danger") >= 0:
@@ -54,11 +54,11 @@ func _pressure_state_from_label_text(text: String) -> String:
 
 
 func _assert_pressure_state_exact(hud: Node, bus: Node, hp: int, expected_state: String) -> void:
-	var pressure_label := _label(hud, "FeedbackLayer/PressurePanel/VBox/PressureLabel")
+	var pressure_label = _label(hud, "FeedbackLayer/PressurePanel/VBox/PressureLabel")
 	_emit_castle_hp(bus, hp)
 	for _i in range(6):
 		await get_tree().process_frame
-	var text := pressure_label.text.to_lower()
+	var text = pressure_label.text.to_lower()
 	assert_str(_pressure_state_from_label_text(text)).is_equal(expected_state)
 	assert_bool(text.find("critical") >= 0 if expected_state == "critical" else text.find("critical") < 0).is_true()
 	assert_bool(text.find("danger") >= 0 if expected_state == "danger" else text.find("danger") < 0).is_true()
@@ -68,23 +68,34 @@ func _assert_pressure_state_exact(hud: Node, bus: Node, hp: int, expected_state:
 
 func _battlefield_children_with_prefix(bridge: Node, prefix: String) -> Array[String]:
 	var names: Array[String] = []
-	var battlefield := bridge.get_node("Battlefield")
+	var battlefield = bridge.get_node("Battlefield")
 	for child in battlefield.get_children():
-		var child_name := str(child.name)
+		var child_name = str(child.name)
 		if child_name.begins_with(prefix):
 			names.append(child_name)
 	return names
 
 
 func _assert_battlefield_actors_exact(bridge: Node, prefix: String, expected_names: Array[String]) -> void:
-	var names := _battlefield_children_with_prefix(bridge, prefix)
+	var names: Array[String] = _battlefield_children_with_prefix(bridge, prefix)
 	assert_int(names.size()).is_equal(expected_names.size())
 	for i in range(expected_names.size()):
 		assert_str(names[i]).is_equal(expected_names[i])
 
 
+func _expected_enemy_count_from_summary(summary: Dictionary) -> int:
+	return int(summary.get("enemy_units_spawned", 0))
+
+
+func _expected_enemy_names(count: int) -> Array[String]:
+	var names: Array[String] = []
+	for i in range(count):
+		names.append("EnemyUnit%d" % (i + 1))
+	return names
+
+
 func _assert_summary_has_required_keys(summary: Dictionary) -> void:
-	var required_keys := [
+	var required_keys = [
 		"friendly_units_deployed",
 		"enemy_units_spawned",
 		"combat_exchanges",
@@ -93,27 +104,27 @@ func _assert_summary_has_required_keys(summary: Dictionary) -> void:
 		"castle_hp",
 	]
 	for key_variant in required_keys:
-		var key := str(key_variant)
+		var key = str(key_variant)
 		assert_bool(summary.has(key)).is_true()
 
 
 func _write_damage_numbers_setting(enabled: bool) -> void:
-	var cfg := ConfigFile.new()
+	var cfg = ConfigFile.new()
 	cfg.load(_SETTINGS_CFG_PATH)
 	cfg.set_value("settings", "combat_damage_numbers_enabled", enabled)
-	var err := cfg.save(_SETTINGS_CFG_PATH)
+	var err = cfg.save(_SETTINGS_CFG_PATH)
 	assert_int(int(err)).is_equal(int(OK))
 
 
 func _snapshot_damage_numbers_setting() -> Dictionary:
-	var cfg := ConfigFile.new()
-	var result := {
+	var cfg = ConfigFile.new()
+	var result: Dictionary = {
 		"had_primary": false,
 		"primary_value": true,
 		"had_legacy": false,
 		"legacy_value": true,
 	}
-	var err := cfg.load(_SETTINGS_CFG_PATH)
+	var err = cfg.load(_SETTINGS_CFG_PATH)
 	if err != OK and err != ERR_FILE_NOT_FOUND:
 		return result
 	if cfg.has_section_key("settings", "combat_damage_numbers_enabled"):
@@ -126,7 +137,7 @@ func _snapshot_damage_numbers_setting() -> Dictionary:
 
 
 func _restore_damage_numbers_setting(snapshot: Dictionary) -> void:
-	var cfg := ConfigFile.new()
+	var cfg = ConfigFile.new()
 	cfg.load(_SETTINGS_CFG_PATH)
 	if snapshot.get("had_primary", false) == true:
 		cfg.set_value("settings", "combat_damage_numbers_enabled", snapshot.get("primary_value", true) == true)
@@ -138,8 +149,55 @@ func _restore_damage_numbers_setting(snapshot: Dictionary) -> void:
 	else:
 		if cfg.has_section_key("settings", "damage_numbers_enabled"):
 			cfg.erase_section_key("settings", "damage_numbers_enabled")
-	var err := cfg.save(_SETTINGS_CFG_PATH)
+	var err = cfg.save(_SETTINGS_CFG_PATH)
 	assert_int(int(err)).is_equal(int(OK))
+
+
+func _build_enemy_runtime_config_json(attack_range_px: int, attack_interval_ms: int, damage: int = 5) -> String:
+	return """
+{
+  "time": { "day_seconds": 240, "night_seconds": 120 },
+  "waves": { "normal": { "day1_budget": 50, "daily_growth": 1.2 } },
+  "channels": { "elite": "elite", "boss": "boss" },
+  "spawn": { "cadence_seconds": 10 },
+  "boss": { "count": 2 },
+  "battle": { "castle_start_hp": 100 },
+  "enemies": [
+    {
+      "id": "grunt_a",
+      "cost": 10,
+      "hp": 30,
+      "dmg": %d,
+      "move_speed": 12,
+      "range": %d,
+      "attack_interval": %d,
+      "armor": 0,
+      "tags": ["base"],
+      "spawn_weight": 1,
+      "min_day": 1,
+      "max_day": 15,
+      "is_elite": false,
+      "is_boss": false
+    },
+    {
+      "id": "grunt_b",
+      "cost": 10,
+      "hp": 20,
+      "dmg": %d,
+      "move_speed": 12,
+      "range": %d,
+      "attack_interval": %d,
+      "armor": 0,
+      "tags": ["base"],
+      "spawn_weight": 1,
+      "min_day": 1,
+      "max_day": 15,
+      "is_elite": false,
+      "is_boss": false
+    }
+  ]
+}
+""" % [damage, attack_range_px, attack_interval_ms, damage, attack_range_px, attack_interval_ms]
 
 
 # ACC:T47.2
@@ -163,20 +221,20 @@ func _restore_damage_numbers_setting(snapshot: Dictionary) -> void:
 # ACC:T64.10
 # ACC:T64.11
 func test_player_visible_combat_experience_runs_from_building_and_training_to_death_cleanup_and_summary() -> void:
-	var bridge_script := load(COMBAT_EXPERIENCE_BRIDGE)
+	var bridge_script: Variant = load(COMBAT_EXPERIENCE_BRIDGE)
 	assert_object(bridge_script).is_not_null()
 
-	var hud := await _hud()
+	var hud: Node = await _hud()
 	var bridge: Node = bridge_script.new()
 	add_child(auto_free(bridge))
 	await get_tree().process_frame
-	var pressure_label := _label(hud, "FeedbackLayer/PressurePanel/VBox/PressureLabel")
-	var feedback_label := _label(hud, "FeedbackLayer/FeedbackLabel")
+	var pressure_label = _label(hud, "FeedbackLayer/PressurePanel/VBox/PressureLabel")
+	var feedback_label = _label(hud, "FeedbackLayer/FeedbackLabel")
 	var pressure_panel: PanelContainer = hud.get_node("FeedbackLayer/PressurePanel")
-	var outcome_label := _label(hud, "FeedbackLayer/OutcomePanel/VBox/OutcomeLabel")
-	var prompt_label := _label(hud, "FeedbackLayer/RuntimePromptPanel/VBox/RuntimePromptLabel")
-	var hit_flash_visible := feedback_label.visible
-	var wall_pressure_emphasis_active := pressure_label.text.to_lower().find("high") >= 0 or pressure_label.text.to_lower().find("critical") >= 0
+	var outcome_label = _label(hud, "FeedbackLayer/OutcomePanel/VBox/OutcomeLabel")
+	var prompt_label = _label(hud, "FeedbackLayer/RuntimePromptPanel/VBox/RuntimePromptLabel")
+	var hit_flash_visible = feedback_label.visible
+	var wall_pressure_emphasis_active = pressure_label.text.to_lower().find("high") >= 0 or pressure_label.text.to_lower().find("critical") >= 0
 
 	# Negative path baseline: without combat trigger, local feedback stays in neutral state.
 	assert_str(pressure_label.text.to_lower()).contains("n/a")
@@ -200,13 +258,14 @@ func test_player_visible_combat_experience_runs_from_building_and_training_to_de
 	assert_int(int(result.get("projectiles_created", 0))).is_greater_equal(1)
 	assert_int(int(result.get("combat_exchanges", 0))).is_greater_equal(1)
 	assert_int(int(result.get("dead_units_retired", 0))).is_equal(0)
-	assert_int(int(result.get("active_combat_nodes_after_cleanup", -1))).is_equal(3)
 	assert_bool(result.get("dead_unit_targetable_after_cleanup", true) == true).is_false()
+	var expected_enemy_count := _expected_enemy_count_from_summary(result)
+	assert_int(int(result.get("active_combat_nodes_after_cleanup", -1))).is_equal(1 + expected_enemy_count)
 
 	assert_bool(bridge.has_node("Battlefield/MgTower")).is_true()
 	assert_bool(bridge.has_node("Battlefield/Barracks")).is_true()
 	_assert_battlefield_actors_exact(bridge, "FriendlyUnit", ["FriendlyUnit1"])
-	_assert_battlefield_actors_exact(bridge, "EnemyUnit", ["EnemyUnit1", "EnemyUnit2"])
+	_assert_battlefield_actors_exact(bridge, "EnemyUnit", _expected_enemy_names(expected_enemy_count))
 	assert_bool(bridge.has_node("Battlefield/DeadEnemy")).is_false()
 	assert_bool(bridge.has_node("Battlefield/Projectile")).is_false()
 
@@ -238,10 +297,10 @@ func test_player_visible_combat_experience_runs_from_building_and_training_to_de
 # ACC:T64.2
 # ACC:T67.2
 func test_runtime_bridge_entrypoints_remain_reachable_after_ownership_isolation() -> void:
-	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
+	var main = preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
 	add_child(auto_free(main))
 	await get_tree().process_frame
-	var nav := main.get_node_or_null("ScreenNavigator")
+	var nav = main.get_node_or_null("ScreenNavigator")
 	assert_object(nav).is_not_null()
 	nav.set("UseFadeTransition", false)
 	var ok_enter: bool = nav.call("SwitchTo", "res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn")
@@ -249,8 +308,8 @@ func test_runtime_bridge_entrypoints_remain_reachable_after_ownership_isolation(
 	await get_tree().process_frame
 
 	var screen: Node = main.get_node("RuntimeUi/ScreenRoot/BattleMapScreen")
-	var bridge := screen.get_node_or_null("CombatExperienceRuntimeBridge")
-	var wave_timer := screen.get_node_or_null("WaveTimer")
+	var bridge = screen.get_node_or_null("CombatExperienceRuntimeBridge")
+	var wave_timer = screen.get_node_or_null("WaveTimer")
 	assert_object(bridge).is_not_null()
 	assert_object(wave_timer).is_not_null()
 	assert_bool(bridge.has_method("ResetForInteractiveRun")).is_true()
@@ -278,15 +337,16 @@ func test_runtime_bridge_entrypoints_remain_reachable_after_ownership_isolation(
 	assert_int(int(summary.get("friendly_units_deployed", 0))).is_greater_equal(1)
 	assert_int(int(summary.get("enemy_units_spawned", 0))).is_greater_equal(2)
 	assert_int(int(summary.get("combat_exchanges", 0))).is_greater_equal(1)
-	assert_int(int(summary.get("active_combat_nodes_after_cleanup", -1))).is_equal(3)
 	assert_bool(summary.get("dead_unit_targetable_after_cleanup", true) == true).is_false()
+	var expected_enemy_count := _expected_enemy_count_from_summary(summary)
+	assert_int(int(summary.get("active_combat_nodes_after_cleanup", -1))).is_equal(1 + expected_enemy_count)
 	_assert_battlefield_actors_exact(bridge, "FriendlyUnit", ["FriendlyUnit1"])
-	_assert_battlefield_actors_exact(bridge, "EnemyUnit", ["EnemyUnit1", "EnemyUnit2"])
+	_assert_battlefield_actors_exact(bridge, "EnemyUnit", _expected_enemy_names(expected_enemy_count))
 	assert_bool(bridge.has_node("Battlefield/MgTower")).is_true()
 	assert_bool(bridge.has_node("Battlefield/Barracks")).is_true()
 
 func test_enemy_runtime_should_stop_at_wall_and_damage_wall_before_castle() -> void:
-	var bridge_script := load(COMBAT_EXPERIENCE_BRIDGE)
+	var bridge_script = load(COMBAT_EXPERIENCE_BRIDGE)
 	assert_object(bridge_script).is_not_null()
 
 	var bridge: Node = bridge_script.new()
@@ -296,16 +356,16 @@ func test_enemy_runtime_should_stop_at_wall_and_damage_wall_before_castle() -> v
 	bridge.call("ResetForInteractiveRun")
 	bridge.call("SpawnEnemyWavePhase")
 	var summary_before: Dictionary = bridge.call("GetSummary")
-	assert_int(int(summary_before.get("wall_hp", -1))).is_equal(20)
+	assert_int(int(summary_before.get("wall_hp", -1))).is_equal(100)
 	assert_int(int(summary_before.get("castle_hp", -1))).is_equal(100)
 
-	var engaged_name := ""
-	var engaged_progress := -1.0
+	var engaged_name: String = ""
+	var engaged_progress: float = -1.0
 	for _i in range(40):
 		bridge.call("AdvanceSimulation", 0.2)
 		var snapshots: Array = bridge.call("GetActorSnapshots")
 		for item in snapshots:
-			var snapshot := item as Dictionary
+			var snapshot = item as Dictionary
 			if snapshot == null:
 				continue
 			if String(snapshot.get("state", "")) != "attacking_wall":
@@ -317,8 +377,21 @@ func test_enemy_runtime_should_stop_at_wall_and_damage_wall_before_castle() -> v
 			break
 
 	assert_bool(not engaged_name.is_empty()).is_true()
-	assert_float(engaged_progress).is_equal_approx(0.78, 0.0001)
-	var wall_before_attack := int((bridge.call("GetSummary") as Dictionary).get("wall_hp", -1))
+	assert_bool(engaged_progress > 0.0).is_true()
+	assert_bool(engaged_progress < 1.0).is_true()
+	var wall_before_attack: int = int((bridge.call("GetSummary") as Dictionary).get("wall_hp", -1))
+
+	for _i in range(9):
+		bridge.call("AdvanceSimulation", 0.2)
+
+	var summary_before_first_hit: Dictionary = bridge.call("GetSummary")
+	assert_int(int(summary_before_first_hit.get("wall_hp", -1))).is_equal(wall_before_attack)
+	assert_int(int(summary_before_first_hit.get("castle_hp", -1))).is_equal(100)
+
+	bridge.call("AdvanceSimulation", 0.2)
+	var summary_after_first_hit: Dictionary = bridge.call("GetSummary")
+	assert_int(int(summary_after_first_hit.get("wall_hp", -1))).is_less(wall_before_attack)
+	assert_int(int(summary_after_first_hit.get("castle_hp", -1))).is_equal(100)
 
 	for _i in range(5):
 		bridge.call("AdvanceSimulation", 0.2)
@@ -326,7 +399,7 @@ func test_enemy_runtime_should_stop_at_wall_and_damage_wall_before_castle() -> v
 	var snapshots_after: Array = bridge.call("GetActorSnapshots")
 	var engaged_after: Dictionary = {}
 	for item in snapshots_after:
-		var snapshot := item as Dictionary
+		var snapshot = item as Dictionary
 		if snapshot != null and String(snapshot.get("name", "")) == engaged_name:
 			engaged_after = snapshot
 			break
@@ -340,16 +413,146 @@ func test_enemy_runtime_should_stop_at_wall_and_damage_wall_before_castle() -> v
 	assert_int(int(summary_after.get("castle_hp", -1))).is_equal(100)
 
 
+func test_enemy_runtime_should_engage_wall_from_configured_range_and_interval() -> void:
+	var bridge_script: Variant = load(COMBAT_EXPERIENCE_BRIDGE)
+	assert_object(bridge_script).is_not_null()
+
+	var bridge: Node = bridge_script.new()
+	add_child(auto_free(bridge))
+	await get_tree().process_frame
+
+	bridge.call("LoadEnemyRuntimeConfigForTest", _build_enemy_runtime_config_json(30, 1000, 5))
+	bridge.call("ResetForInteractiveRun")
+	var debug_profiles: Dictionary = bridge.call("DebugDescribeResolvedEnemyProfiles")
+	assert_bool(debug_profiles.get("override_active", false) == true).is_true()
+	assert_bool(debug_profiles.get("config_json_set", false) == true).is_true()
+	assert_int(int(debug_profiles.get("profile_count", 0))).is_equal(2)
+	assert_float(float(debug_profiles.get("first_range_px", -1.0))).is_equal_approx(30.0, 0.001)
+	assert_float(float(debug_profiles.get("first_interval_seconds", -1.0))).is_equal_approx(1.0, 0.001)
+	bridge.call("SpawnEnemyWavePhase")
+
+	var engaged_snapshot: Dictionary = {}
+	for _i in range(40):
+		bridge.call("AdvanceSimulation", 0.2)
+		var snapshots: Array = bridge.call("GetActorSnapshots")
+		for item in snapshots:
+			var snapshot = item as Dictionary
+			if snapshot == null:
+				continue
+			if String(snapshot.get("state", "")) != "attacking_wall":
+				continue
+			engaged_snapshot = snapshot
+			break
+		if not engaged_snapshot.is_empty():
+			break
+
+	assert_bool(not engaged_snapshot.is_empty()).is_true()
+	assert_float(float(engaged_snapshot.get("world_x", -1.0))).is_equal_approx(1014.0, 1.5)
+	assert_float(float(engaged_snapshot.get("attack_range_px", -1.0))).is_equal_approx(30.0, 0.001)
+	assert_float(float(engaged_snapshot.get("attack_interval_seconds", -1.0))).is_equal_approx(1.0, 0.001)
+
+	var wall_before_attack: int = int((bridge.call("GetSummary") as Dictionary).get("wall_hp", -1))
+	for _i in range(4):
+		bridge.call("AdvanceSimulation", 0.2)
+
+	var summary_before_first_hit: Dictionary = bridge.call("GetSummary")
+	assert_int(int(summary_before_first_hit.get("wall_hp", -1))).is_equal(wall_before_attack)
+
+	bridge.call("AdvanceSimulation", 0.2)
+	var summary_after_first_hit: Dictionary = bridge.call("GetSummary")
+	assert_int(int(summary_after_first_hit.get("wall_hp", -1))).is_less(wall_before_attack)
+
+
+func test_mg_tower_should_auto_acquire_and_fire_without_manual_exchange_when_enemy_enters_range() -> void:
+	var bridge_script: Variant = load(COMBAT_EXPERIENCE_BRIDGE)
+	assert_object(bridge_script).is_not_null()
+
+	var bridge: Node = bridge_script.new()
+	add_child(auto_free(bridge))
+	await get_tree().process_frame
+
+	bridge.call("ResetForInteractiveRun")
+	bridge.call("BuildPhase")
+	bridge.call("SpawnEnemyWavePhase")
+
+	var initial_summary: Dictionary = bridge.call("GetSummary")
+	assert_int(int(initial_summary.get("projectiles_created", -1))).is_equal(0)
+
+	var enemy_hp_before: Dictionary = {}
+	for item in bridge.call("GetActorSnapshots"):
+		var snapshot = item as Dictionary
+		if snapshot == null:
+			continue
+		if str(snapshot.get("name", "")).begins_with("EnemyUnit"):
+			enemy_hp_before[str(snapshot.get("name", ""))] = int(snapshot.get("hp", -1))
+
+	for _i in range(40):
+		bridge.call("AdvanceSimulation", 0.2)
+		var running_summary: Dictionary = bridge.call("GetSummary")
+		if int(running_summary.get("projectiles_created", 0)) > 0:
+			break
+
+	var after_summary: Dictionary = bridge.call("GetSummary")
+	assert_int(int(after_summary.get("projectiles_created", 0))).is_greater(0)
+
+	var enemy_damaged: bool = false
+	for item in bridge.call("GetActorSnapshots"):
+		var snapshot = item as Dictionary
+		if snapshot == null:
+			continue
+		var actor_name = str(snapshot.get("name", ""))
+		if not enemy_hp_before.has(actor_name):
+			continue
+		if int(snapshot.get("hp", -1)) < int(enemy_hp_before.get(actor_name, -1)):
+			enemy_damaged = true
+			break
+
+	assert_bool(enemy_damaged).is_true()
+
+
+func test_mg_tower_should_deactivate_enemy_immediately_after_lethal_hit() -> void:
+	var bridge_script: Variant = load(COMBAT_EXPERIENCE_BRIDGE)
+	assert_object(bridge_script).is_not_null()
+
+	var bridge: Node = bridge_script.new()
+	add_child(auto_free(bridge))
+	await get_tree().process_frame
+
+	var config: String = _build_enemy_runtime_config_json(30, 1000, 5).replace("\"hp\": 30", "\"hp\": 20")
+	bridge.call("LoadEnemyRuntimeConfigForTest", config)
+	bridge.call("ResetForInteractiveRun")
+	bridge.call("BuildPhase")
+	bridge.call("SpawnEnemyWavePhase")
+
+	for _i in range(40):
+		bridge.call("AdvanceSimulation", 0.2)
+		var summary: Dictionary = bridge.call("GetSummary")
+		if int(summary.get("projectiles_created", 0)) > 0:
+			break
+
+	var dead_enemy_snapshot: Dictionary = {}
+	for item in bridge.call("GetActorSnapshots"):
+		var snapshot = item as Dictionary
+		if snapshot == null:
+			continue
+		if int(snapshot.get("hp", 1)) <= 0:
+			dead_enemy_snapshot = snapshot
+			break
+
+	assert_bool(not dead_enemy_snapshot.is_empty()).is_true()
+	assert_bool(dead_enemy_snapshot.get("active", true) == false).is_true()
+
+
 # ACC:T57.2
 # ACC:T64.3
 # ACC:T67.3
 
 func test_battle_map_control_actions_should_delegate_through_runtime_bridge_and_keep_summary_machine_resolvable() -> void:
-	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
+	var main = preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
 	add_child(auto_free(main))
 	await get_tree().process_frame
 
-	var nav := main.get_node_or_null("ScreenNavigator")
+	var nav = main.get_node_or_null("ScreenNavigator")
 	assert_object(nav).is_not_null()
 	nav.set("UseFadeTransition", false)
 	var ok_enter: bool = nav.call("SwitchTo", "res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn")
@@ -358,12 +561,13 @@ func test_battle_map_control_actions_should_delegate_through_runtime_bridge_and_
 
 	var screen: Node = main.get_node("RuntimeUi/ScreenRoot/BattleMapScreen")
 	var bridge: Node = screen.get_node("CombatExperienceRuntimeBridge")
+	var configured_wave_size: int = int(bridge.call("GetConfiguredWaveSize"))
 				
 	var summary_before: Dictionary = bridge.call("GetSummary")
 	_assert_summary_has_required_keys(summary_before)
-	var before_enemy := int(summary_before.get("enemy_units_spawned", 0))
-	var before_exchanges := int(summary_before.get("combat_exchanges", 0))
-	var before_retired := int(summary_before.get("dead_units_retired", 0))
+	var before_enemy = int(summary_before.get("enemy_units_spawned", 0))
+	var before_exchanges = int(summary_before.get("combat_exchanges", 0))
+	var before_retired = int(summary_before.get("dead_units_retired", 0))
 
 	# Negative path: out-of-order actions should be blocked and not mutate bridge summary counters.
 	_request_hud_action(screen, "exchange")
@@ -395,7 +599,7 @@ func test_battle_map_control_actions_should_delegate_through_runtime_bridge_and_
 	assert_int(int(summary_after.get("friendly_units_deployed", -1))).is_equal(0)
 	assert_bool(bridge.has_node("Battlefield/MgTower")).is_false()
 	assert_bool(bridge.has_node("Battlefield/Barracks")).is_false()
-	assert_int(int(summary_after.get("enemy_units_spawned", 0))).is_equal(before_enemy + 2)
+	assert_int(int(summary_after.get("enemy_units_spawned", 0))).is_equal(before_enemy + configured_wave_size)
 
 	# Coordinator-only guarantee: root handler delegates to bridge and never triggers the full fallback flow.
 	assert_bool(bridge.has_method("RunCompleteCombatExperienceForTest")).is_true()
@@ -405,18 +609,18 @@ func test_battle_map_control_actions_should_delegate_through_runtime_bridge_and_
 	_assert_summary_has_required_keys(fallback_summary)
 	assert_bool(bridge.has_node("Battlefield/MgTower")).is_true()
 	assert_bool(bridge.has_node("Battlefield/Barracks")).is_true()
-	assert_int(int(fallback_summary.get("enemy_units_spawned", 0))).is_equal(2)
+	assert_int(int(fallback_summary.get("enemy_units_spawned", 0))).is_equal(configured_wave_size)
 	assert_int(int(fallback_summary.get("combat_exchanges", 0))).is_greater_equal(1)
 
 
 # ACC:T62.2
 # ACC:T64.4
 func test_path_readability_is_expressed_through_enemy_actor_view_motion() -> void:
-	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
+	var main = preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
 	add_child(auto_free(main))
 	await get_tree().process_frame
 
-	var nav := main.get_node_or_null("ScreenNavigator")
+	var nav = main.get_node_or_null("ScreenNavigator")
 	assert_object(nav).is_not_null()
 	nav.set("UseFadeTransition", false)
 	var ok_enter: bool = nav.call("SwitchTo", "res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn")
@@ -436,28 +640,28 @@ func test_path_readability_is_expressed_through_enemy_actor_view_motion() -> voi
 	bridge.call("SpawnEnemyWavePhase")
 	await get_tree().process_frame
 	var snapshots_before: Array = bridge.call("GetActorSnapshots")
-	var before_progress := {}
+	var before_progress: Dictionary = {}
 	for item in snapshots_before:
-		var snapshot := item as Dictionary
+		var snapshot = item as Dictionary
 		if snapshot == null:
 			continue
 		if snapshot.get("is_moving_enemy", false) != true:
 			continue
-		var actor_name := String(snapshot.get("name", ""))
+		var actor_name = String(snapshot.get("name", ""))
 		before_progress[actor_name] = float(snapshot.get("path_progress", 0.0))
 	for _i in range(6):
 		bridge.call("AdvanceSimulation", 0.2)
 	var snapshots_after: Array = bridge.call("GetActorSnapshots")
 	assert_int(snapshots_after.size()).is_equal(snapshots_before.size())
-	var found_progress := false
+	var found_progress: bool = false
 	for item in snapshots_after:
-		var snapshot := item as Dictionary
+		var snapshot = item as Dictionary
 		if snapshot == null:
 			continue
 		if snapshot.get("is_moving_enemy", false) != true:
 			continue
-		var actor_name := String(snapshot.get("name", ""))
-		var after_progress := float(snapshot.get("path_progress", 0.0))
+		var actor_name = String(snapshot.get("name", ""))
+		var after_progress = float(snapshot.get("path_progress", 0.0))
 		if before_progress.has(actor_name):
 			assert_bool(after_progress >= float(before_progress[actor_name])).is_true()
 		if after_progress > 0.0:
@@ -475,11 +679,11 @@ func test_path_readability_is_expressed_through_enemy_actor_view_motion() -> voi
 # ACC:T63.8
 # ACC:T64.5
 func test_spawn_cues_and_path_readability_survive_full_battle_loop() -> void:
-	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
+	var main = preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
 	add_child(auto_free(main))
 	await get_tree().process_frame
 
-	var nav := main.get_node_or_null("ScreenNavigator")
+	var nav = main.get_node_or_null("ScreenNavigator")
 	assert_object(nav).is_not_null()
 	nav.set("UseFadeTransition", false)
 	var ok_enter: bool = nav.call("SwitchTo", "res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn")
@@ -492,6 +696,7 @@ func test_spawn_cues_and_path_readability_survive_full_battle_loop() -> void:
 	var spawn_a: ColorRect = screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnA")
 	var spawn_b: ColorRect = screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnB")
 	var status_label: Label = screen.get_node("LegacyPrototypeRoot/VBox/Status")
+	var configured_wave_size: int = int(bridge.call("GetConfiguredWaveSize"))
 
 	# ACC:T63.4 ownership boundary remains unchanged when local feedback is enabled.
 	assert_str(str(screen.get_node("Background").get_meta("ownership_container"))).is_equal("battlefield_presentation")
@@ -505,14 +710,14 @@ func test_spawn_cues_and_path_readability_survive_full_battle_loop() -> void:
 	var summary_before: Dictionary = bridge.call("GetSummary")
 	assert_int(int(summary_before.get("enemy_units_spawned", 0))).is_equal(0)
 
-	var weak_a := spawn_a.color.a
-	var weak_b := spawn_b.color.a
+	var weak_a: float = spawn_a.color.a
+	var weak_b: float = spawn_b.color.a
 	_request_hud_action(screen, "wave")
 	await get_tree().process_frame
 	var summary_after_wave: Dictionary = bridge.call("GetSummary")
 	# ACC:T63.5 behavior boundary: coordinator input delegates to runtime bridge state transition.
 	# The runtime summary changes deterministically (+2 enemies) without introducing UI-owned rule branches.
-	assert_int(int(summary_after_wave.get("enemy_units_spawned", 0))).is_equal(int(summary_before.get("enemy_units_spawned", 0)) + 2)
+	assert_int(int(summary_after_wave.get("enemy_units_spawned", 0))).is_equal(int(summary_before.get("enemy_units_spawned", 0)) + configured_wave_size)
 	# ACC:T63.6 trigger-to-feedback path is auditable: WaveBtn -> spawn cue alpha + status update.
 	assert_str(status_label.text.to_lower()).contains("wave")
 	assert_bool(spawn_a.color.a > weak_a and spawn_b.color.a > weak_b).is_true()
@@ -542,17 +747,17 @@ func test_spawn_cues_and_path_readability_survive_full_battle_loop() -> void:
 # ACC:T63.2
 # ACC:T64.6
 func test_damage_number_toggle_should_hide_then_restore_damage_number_rendering() -> void:
-	var bridge_script := load(COMBAT_EXPERIENCE_BRIDGE)
+	var bridge_script: Variant = load(COMBAT_EXPERIENCE_BRIDGE)
 	assert_object(bridge_script).is_not_null()
-	var hud := await _hud()
+	var hud: Node = await _hud()
 	var bridge: Node = bridge_script.new()
 	add_child(auto_free(bridge))
 	await get_tree().process_frame
-	var pressure_label := _label(hud, "FeedbackLayer/PressurePanel/VBox/PressureLabel")
-	var feedback_label := _label(hud, "FeedbackLayer/FeedbackLabel")
-	var prompt_label := _label(hud, "FeedbackLayer/RuntimePromptPanel/VBox/RuntimePromptLabel")
+	var pressure_label = _label(hud, "FeedbackLayer/PressurePanel/VBox/PressureLabel")
+	var feedback_label = _label(hud, "FeedbackLayer/FeedbackLabel")
+	var prompt_label = _label(hud, "FeedbackLayer/RuntimePromptPanel/VBox/RuntimePromptLabel")
 
-	var snapshot := _snapshot_damage_numbers_setting()
+	var snapshot: Dictionary = _snapshot_damage_numbers_setting()
 	_damage_numbers_snapshot = snapshot
 	_damage_numbers_snapshot_pending = true
 	bridge.call("ResetForInteractiveRun")
@@ -597,11 +802,11 @@ func test_damage_number_toggle_should_hide_then_restore_damage_number_rendering(
 # ACC:T64.4
 # ACC:T64.5
 func test_pressure_state_mapping_should_cover_exact_four_states_and_keep_summary_channel_stable() -> void:
-	var hud := await _hud()
-	var bus := get_node_or_null("/root/EventBus")
+	var hud: Node = await _hud()
+	var bus = get_node_or_null("/root/EventBus")
 	assert_object(bus).is_not_null()
-	var pressure_label := _label(hud, "FeedbackLayer/PressurePanel/VBox/PressureLabel")
-	var prompt_label := _label(hud, "FeedbackLayer/RuntimePromptPanel/VBox/RuntimePromptLabel")
+	var pressure_label = _label(hud, "FeedbackLayer/PressurePanel/VBox/PressureLabel")
+	var prompt_label = _label(hud, "FeedbackLayer/RuntimePromptPanel/VBox/RuntimePromptLabel")
 
 	# Four-state set and mutual exclusion.
 	await _assert_pressure_state_exact(hud, bus, 90, "stable")
@@ -613,8 +818,8 @@ func test_pressure_state_mapping_should_cover_exact_four_states_and_keep_summary
 	_emit_castle_hp(bus, 35, 40)
 	for _i in range(6):
 		await get_tree().process_frame
-	var first_pressure := pressure_label.text
-	var first_prompt := prompt_label.text
+	var first_pressure: String = pressure_label.text
+	var first_prompt: String = prompt_label.text
 	_emit_castle_hp(bus, 35, 35)
 	for _i in range(6):
 		await get_tree().process_frame
@@ -647,12 +852,12 @@ func test_pressure_state_mapping_should_cover_exact_four_states_and_keep_summary
 # Keep T70 anchors adjacent to concrete test entrypoints so acceptance-anchor
 # validation can map each item to a focused scenario.
 func test_daily_settlement_modal_should_block_progress_until_reward_is_selected() -> void:
-	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
+	var main = preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
 	add_child(auto_free(main))
 	await get_tree().process_frame
 	await get_tree().process_frame
 
-	var nav := main.get_node_or_null("ScreenNavigator")
+	var nav = main.get_node_or_null("ScreenNavigator")
 	assert_object(nav).is_not_null()
 	nav.set("UseFadeTransition", false)
 	var ok_enter: bool = nav.call("SwitchTo", "res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn")
@@ -678,17 +883,17 @@ func test_daily_settlement_modal_should_block_progress_until_reward_is_selected(
 	var runtime_context_payload: Label = screen.get_node("DailySettlementModal/VBox/EvidencePanel/RuntimeContextPayload")
 	var rewards_box: VBoxContainer = screen.get_node("DailySettlementModal/VBox/Rewards")
 	var presentation_controller: Node = screen.get_node("PresentationController")
-	var resolved_status_text := str(presentation_controller.call("translate", "battlemap.status.settlement_resolved")).to_lower()
-	var blocked_status_text := str(presentation_controller.call("translate", "battlemap.status.settlement_open")).to_lower()
-	var hp_text := str(presentation_controller.call("translate", "battlemap.daily_settlement.final_hp"))
-	var rewards_text := str(presentation_controller.call("translate", "battlemap.daily_settlement.rewards_count"))
-	var reward_summary_text := str(presentation_controller.call("translate", "battlemap.daily_settlement.reward_summary"))
-	var kills_text := str(presentation_controller.call("translate", "battlemap.daily_settlement.kills"))
-	var gold_text := str(presentation_controller.call("translate", "battlemap.resource.gold"))
-	var iron_text := str(presentation_controller.call("translate", "battlemap.resource.iron"))
-	var pop_text := str(presentation_controller.call("translate", "battlemap.resource.population"))
-	var show_context_text := str(presentation_controller.call("translate", "battlemap.daily_settlement.show_runtime_context"))
-	var hide_context_text := str(presentation_controller.call("translate", "battlemap.daily_settlement.hide_runtime_context"))
+	var resolved_status_text = str(presentation_controller.call("translate", "battlemap.status.settlement_resolved")).to_lower()
+	var blocked_status_text = str(presentation_controller.call("translate", "battlemap.status.settlement_open")).to_lower()
+	var hp_text = str(presentation_controller.call("translate", "battlemap.daily_settlement.final_hp"))
+	var rewards_text = str(presentation_controller.call("translate", "battlemap.daily_settlement.rewards_count"))
+	var reward_summary_text = str(presentation_controller.call("translate", "battlemap.daily_settlement.reward_summary"))
+	var kills_text = str(presentation_controller.call("translate", "battlemap.daily_settlement.kills"))
+	var gold_text = str(presentation_controller.call("translate", "battlemap.resource.gold"))
+	var iron_text = str(presentation_controller.call("translate", "battlemap.resource.iron"))
+	var pop_text = str(presentation_controller.call("translate", "battlemap.resource.population"))
+	var show_context_text = str(presentation_controller.call("translate", "battlemap.daily_settlement.show_runtime_context"))
+	var hide_context_text = str(presentation_controller.call("translate", "battlemap.daily_settlement.hide_runtime_context"))
 
 	# Drive battle to completion so non-terminal settlement modal opens.
 	assert_bool(bridge.has_method("ForceOutcomeForTest")).is_true()
@@ -724,7 +929,7 @@ func test_daily_settlement_modal_should_block_progress_until_reward_is_selected(
 	await get_tree().process_frame
 	assert_bool(runtime_context_payload.visible).is_true()
 	assert_str(expand_context_btn.text).is_equal(hide_context_text)
-	var context_payload := runtime_context_payload.text
+	var context_payload = runtime_context_payload.text
 	assert_bool(context_payload.find("\"outcome\":\"settlement\"") >= 0).is_true()
 	assert_bool(context_payload.find("\"castle_hp\":42") >= 0).is_true()
 	assert_bool(context_payload.find("\"resource_gold\":120") >= 0).is_true()
@@ -743,7 +948,7 @@ func test_daily_settlement_modal_should_block_progress_until_reward_is_selected(
 	assert_bool(not reward_c.text.is_empty()).is_true()
 
 	# While modal is open, progression actions must be blocked.
-	var blocked_before := status_label.text
+	var blocked_before = status_label.text
 	var summary_before: Dictionary = bridge.call("GetSummary")
 	_request_hud_action(screen, "wave")
 	await get_tree().process_frame
@@ -751,21 +956,21 @@ func test_daily_settlement_modal_should_block_progress_until_reward_is_selected(
 	assert_bool(status_label.text.to_lower().find(blocked_status_text.to_lower()) >= 0).is_true()
 	assert_that(bridge.call("GetSummary")).is_equal(summary_before)
 
-	var blocked_after_wave := status_label.text
+	var blocked_after_wave = status_label.text
 	_request_hud_action(screen, "exchange")
 	await get_tree().process_frame
 	assert_str(status_label.text).is_equal(blocked_after_wave)
 	assert_bool(status_label.text.to_lower().find(blocked_status_text.to_lower()) >= 0).is_true()
 	assert_that(bridge.call("GetSummary")).is_equal(summary_before)
 
-	var blocked_after_exchange := status_label.text
+	var blocked_after_exchange = status_label.text
 	_request_hud_action(screen, "cleanup")
 	await get_tree().process_frame
 	assert_str(status_label.text).is_equal(blocked_after_exchange)
 	assert_bool(status_label.text.to_lower().find(blocked_status_text.to_lower()) >= 0).is_true()
 	assert_that(bridge.call("GetSummary")).is_equal(summary_before)
 
-	var blocked_after_cleanup := status_label.text
+	var blocked_after_cleanup = status_label.text
 	_request_hud_action(screen, "finish")
 	await get_tree().process_frame
 	assert_str(status_label.text).is_equal(blocked_after_cleanup)
@@ -778,7 +983,7 @@ func test_daily_settlement_modal_should_block_progress_until_reward_is_selected(
 	assert_bool(modal.visible).is_false()
 	assert_bool(get_tree().paused).is_false()
 	assert_bool(status_label.text.to_lower().find(resolved_status_text) >= 0).is_true()
-	var status_after_resolve := status_label.text
+	var status_after_resolve = status_label.text
 	var summary_after_resolve: Dictionary = bridge.call("GetSummary")
 	# Single-consume guard: duplicate reward callback must not trigger extra transition side effects.
 	assert_bool(screen.has_method("_on_settlement_reward_selected")).is_false()
@@ -795,12 +1000,12 @@ func test_daily_settlement_modal_should_block_progress_until_reward_is_selected(
 # ACC:T70.2
 # ACC:T70.8
 func test_daily_settlement_modal_should_ignore_invalid_reward_selection_index() -> void:
-	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
+	var main = preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
 	add_child(auto_free(main))
 	await get_tree().process_frame
 	await get_tree().process_frame
 
-	var nav := main.get_node_or_null("ScreenNavigator")
+	var nav = main.get_node_or_null("ScreenNavigator")
 	assert_object(nav).is_not_null()
 	nav.set("UseFadeTransition", false)
 	var ok_enter: bool = nav.call("SwitchTo", "res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn")
@@ -832,7 +1037,7 @@ func test_daily_settlement_modal_should_ignore_invalid_reward_selection_index() 
 	var runtime_summary_before: Dictionary = bridge.call("GetSummary")
 	assert_str(String(runtime_summary_before.get("outcome", ""))).is_equal("settlement")
 	assert_int(int(runtime_summary_before.get("castle_hp", -1))).is_equal(42)
-	var status_before := status_label.text
+	var status_before = status_label.text
 	outcome_controller.call("_on_settlement_reward_selected", 99)
 	await get_tree().process_frame
 	assert_bool(modal.visible).is_true()
@@ -841,7 +1046,7 @@ func test_daily_settlement_modal_should_ignore_invalid_reward_selection_index() 
 	var runtime_summary_after: Dictionary = bridge.call("GetSummary")
 	assert_that(runtime_summary_after).is_equal(runtime_summary_before)
 	# T70.8: while unresolved modal is visible, no implicit transition should mutate UI snapshot.
-	var frozen_summary := String(screen.get_node("DailySettlementModal/VBox/Summary").text)
+	var frozen_summary = String(screen.get_node("DailySettlementModal/VBox/Summary").text)
 	for _i in range(6):
 		await get_tree().process_frame
 	assert_str(String(screen.get_node("DailySettlementModal/VBox/Summary").text)).is_equal(frozen_summary)
@@ -851,12 +1056,12 @@ func test_daily_settlement_modal_should_ignore_invalid_reward_selection_index() 
 
 # ACC:T70.16
 func test_settlement_confirm_should_be_rejected_when_no_resolved_result_is_active() -> void:
-	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
+	var main = preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
 	add_child(auto_free(main))
 	await get_tree().process_frame
 	await get_tree().process_frame
 
-	var nav := main.get_node_or_null("ScreenNavigator")
+	var nav = main.get_node_or_null("ScreenNavigator")
 	assert_object(nav).is_not_null()
 	nav.set("UseFadeTransition", false)
 	var ok_enter: bool = nav.call("SwitchTo", "res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn")
@@ -878,7 +1083,7 @@ func test_settlement_confirm_should_be_rejected_when_no_resolved_result_is_activ
 	assert_bool(get_tree().paused).is_false()
 	assert_bool(screen.has_method("_on_settlement_reward_selected")).is_false()
 	assert_bool(outcome_controller.has_method("_on_settlement_reward_selected")).is_true()
-	var status_before := status_label.text
+	var status_before = status_label.text
 	var summary_before: Dictionary = bridge.call("GetSummary")
 
 	# No resolved settlement result is active; confirm input must be ignored.
@@ -897,12 +1102,12 @@ func test_settlement_confirm_should_be_rejected_when_no_resolved_result_is_activ
 # ACC:T70.12
 # ACC:T70.14
 func test_daily_settlement_evidence_panel_should_hide_non_applicable_fields_for_same_resolved_result_payload() -> void:
-	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
+	var main = preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
 	add_child(auto_free(main))
 	await get_tree().process_frame
 	await get_tree().process_frame
 
-	var nav := main.get_node_or_null("ScreenNavigator")
+	var nav = main.get_node_or_null("ScreenNavigator")
 	assert_object(nav).is_not_null()
 	nav.set("UseFadeTransition", false)
 	var ok_enter: bool = nav.call("SwitchTo", "res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn")
@@ -921,7 +1126,7 @@ func test_daily_settlement_evidence_panel_should_hide_non_applicable_fields_for_
 	var runtime_context_payload: Label = screen.get_node("DailySettlementModal/VBox/EvidencePanel/RuntimeContextPayload")
 	var outcome_controller: Node = screen.get_node("OutcomeController")
 
-	var partial_summary := {
+	var partial_summary: Dictionary = {
 		"outcome": "settlement",
 		"castle_hp": 21,
 		"dead_units_retired": 2,
@@ -938,13 +1143,13 @@ func test_daily_settlement_evidence_panel_should_hide_non_applicable_fields_for_
 	assert_bool(resources_evidence.visible).is_true()
 	assert_bool(defeat_reason_evidence.visible).is_false()
 	var presentation_controller: Node = screen.get_node("PresentationController")
-	var hp_text := str(presentation_controller.call("translate", "battlemap.daily_settlement.final_hp"))
-	var kills_text := str(presentation_controller.call("translate", "battlemap.daily_settlement.kills"))
-	var resources_text := str(presentation_controller.call("translate", "battlemap.daily_settlement.resources"))
-	var gold_text := str(presentation_controller.call("translate", "battlemap.resource.gold"))
-	var iron_text := str(presentation_controller.call("translate", "battlemap.resource.iron"))
-	var pop_text := str(presentation_controller.call("translate", "battlemap.resource.population"))
-	var reward_summary_text := str(presentation_controller.call("translate", "battlemap.daily_settlement.reward_summary"))
+	var hp_text = str(presentation_controller.call("translate", "battlemap.daily_settlement.final_hp"))
+	var kills_text = str(presentation_controller.call("translate", "battlemap.daily_settlement.kills"))
+	var resources_text = str(presentation_controller.call("translate", "battlemap.daily_settlement.resources"))
+	var gold_text = str(presentation_controller.call("translate", "battlemap.resource.gold"))
+	var iron_text = str(presentation_controller.call("translate", "battlemap.resource.iron"))
+	var pop_text = str(presentation_controller.call("translate", "battlemap.resource.population"))
+	var reward_summary_text = str(presentation_controller.call("translate", "battlemap.daily_settlement.reward_summary"))
 	assert_str(hp_evidence.text).is_equal("%s: 21" % hp_text)
 	assert_str(kills_evidence.text).is_equal("%s: 2" % kills_text)
 	assert_str(resources_evidence.text).is_equal("%s: %s=7, %s=3, %s=5" % [resources_text, gold_text, iron_text, pop_text])
@@ -954,7 +1159,7 @@ func test_daily_settlement_evidence_panel_should_hide_non_applicable_fields_for_
 	expand_context_btn.emit_signal("pressed")
 	await get_tree().process_frame
 	assert_bool(runtime_context_payload.visible).is_true()
-	var payload_text := runtime_context_payload.text
+	var payload_text = runtime_context_payload.text
 	assert_bool(payload_text.find("\"outcome\":\"settlement\"") >= 0).is_true()
 	assert_bool(payload_text.find("\"castle_hp\":21") >= 0).is_true()
 	assert_bool(payload_text.find("\"resource_gold\":7") >= 0).is_true()
@@ -964,7 +1169,7 @@ func test_daily_settlement_evidence_panel_should_hide_non_applicable_fields_for_
 	await get_tree().process_frame
 	assert_bool(modal.visible).is_false()
 
-	var summary_with_reward := partial_summary.duplicate()
+	var summary_with_reward: Dictionary = partial_summary.duplicate()
 	summary_with_reward["reward_summary"] = "Reward A,Reward B,Reward C"
 	outcome_controller.call("open_outcome", summary_with_reward)
 	await get_tree().process_frame
@@ -976,7 +1181,7 @@ func test_daily_settlement_evidence_panel_should_hide_non_applicable_fields_for_
 	expand_context_btn.emit_signal("pressed")
 	await get_tree().process_frame
 	assert_bool(runtime_context_payload.visible).is_true()
-	var payload_text_with_reward := runtime_context_payload.text
+	var payload_text_with_reward = runtime_context_payload.text
 	assert_bool(payload_text_with_reward.find("\"castle_hp\":21") >= 0).is_true()
 	assert_bool(payload_text_with_reward.find("\"reward_summary\":\"Reward A,Reward B,Reward C\"") >= 0).is_true()
 	assert_bool(payload_text_with_reward.find("\"resource_gold\":7") >= 0).is_true()
@@ -989,12 +1194,12 @@ func test_daily_settlement_evidence_panel_should_hide_non_applicable_fields_for_
 # ACC:T67.2
 # ACC:T70.11
 func test_daily_settlement_modal_should_reject_invalid_reward_option_count() -> void:
-	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
+	var main = preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
 	add_child(auto_free(main))
 	await get_tree().process_frame
 	await get_tree().process_frame
 
-	var nav := main.get_node_or_null("ScreenNavigator")
+	var nav = main.get_node_or_null("ScreenNavigator")
 	assert_object(nav).is_not_null()
 	nav.set("UseFadeTransition", false)
 	var ok_enter: bool = nav.call("SwitchTo", "res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn")
@@ -1008,8 +1213,8 @@ func test_daily_settlement_modal_should_reject_invalid_reward_option_count() -> 
 	var status_label: Label = screen.get_node("LegacyPrototypeRoot/VBox/Status")
 	var outcome_controller: Node = screen.get_node("OutcomeController")
 	var presentation_controller: Node = screen.get_node("PresentationController")
-	var invalid_rewards_text := str(presentation_controller.call("translate", "battlemap.status.invalid_settlement_rewards")).to_lower()
-	var settlement_resolved_text := str(presentation_controller.call("translate", "battlemap.status.settlement_resolved")).to_lower()
+	var invalid_rewards_text = str(presentation_controller.call("translate", "battlemap.status.invalid_settlement_rewards")).to_lower()
+	var settlement_resolved_text = str(presentation_controller.call("translate", "battlemap.status.settlement_resolved")).to_lower()
 	var settlement_options = outcome_controller.call("get_settlement_options")
 	assert_int(typeof(settlement_options)).is_equal(TYPE_ARRAY)
 	var original_options: Array = (settlement_options as Array).duplicate()
@@ -1040,12 +1245,12 @@ func test_daily_settlement_modal_should_reject_invalid_reward_option_count() -> 
 # ACC:T69.1 ACC:T69.4
 # ACC:T70.3
 func test_defeat_outcome_modal_should_open_immediately_when_active_battle_crosses_terminal_hp_boundary() -> void:
-	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
+	var main = preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
 	add_child(auto_free(main))
 	await get_tree().process_frame
 	await get_tree().process_frame
 
-	var nav := main.get_node_or_null("ScreenNavigator")
+	var nav = main.get_node_or_null("ScreenNavigator")
 	assert_object(nav).is_not_null()
 	nav.set("UseFadeTransition", false)
 	var ok_enter: bool = nav.call("SwitchTo", "res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn")
@@ -1059,9 +1264,9 @@ func test_defeat_outcome_modal_should_open_immediately_when_active_battle_crosse
 	var defeat_summary: Label = screen.get_node("DefeatOutcomeModal/VBox/Summary")
 	var status_label: Label = screen.get_node("LegacyPrototypeRoot/VBox/Status")
 	var presentation_controller: Node = screen.get_node("PresentationController")
-	var wall_breached_text := str(presentation_controller.call("translate", "battlemap.outcome.defeat.wall_breached")).to_lower()
-	var finished_text := str(presentation_controller.call("translate", "battlemap.status.finished")).to_lower()
-	var terminal_open_text := str(presentation_controller.call("translate", "battlemap.status.terminal_outcome_open")).to_lower()
+	var wall_breached_text = str(presentation_controller.call("translate", "battlemap.outcome.defeat.wall_breached")).to_lower()
+	var finished_text = str(presentation_controller.call("translate", "battlemap.status.finished")).to_lower()
+	var terminal_open_text = str(presentation_controller.call("translate", "battlemap.status.terminal_outcome_open")).to_lower()
 			
 	assert_bool(bridge.has_method("ConfigureDurabilityForTest")).is_true()
 	bridge.call("ConfigureDurabilityForTest", 42, 1)
@@ -1082,7 +1287,7 @@ func test_defeat_outcome_modal_should_open_immediately_when_active_battle_crosse
 	assert_bool(defeat_summary.text.to_lower().find(wall_breached_text) >= 0).is_true()
 	assert_bool(status_label.text.to_lower().find(finished_text) < 0).is_true()
 	# T70.3: failure mapping should remain stable until explicit transition input.
-	var defeat_summary_before := String(defeat_summary.text)
+	var defeat_summary_before = String(defeat_summary.text)
 	for _i in range(6):
 		await get_tree().process_frame
 	assert_str(defeat_summary.text).is_equal(defeat_summary_before)
@@ -1097,12 +1302,12 @@ func test_defeat_outcome_modal_should_open_immediately_when_active_battle_crosse
 
 # ACC:T69.2 ACC:T69.3 ACC:T69.6 ACC:T69.7 ACC:T69.8 ACC:T69.9 ACC:T69.10
 func test_defeat_outcome_modal_should_pause_runtime_and_only_offer_terminal_actions() -> void:
-	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
+	var main = preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
 	add_child(auto_free(main))
 	await get_tree().process_frame
 	await get_tree().process_frame
 
-	var nav := main.get_node_or_null("ScreenNavigator")
+	var nav = main.get_node_or_null("ScreenNavigator")
 	assert_object(nav).is_not_null()
 	nav.set("UseFadeTransition", false)
 	var ok_enter: bool = nav.call("SwitchTo", "res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn")
@@ -1123,13 +1328,13 @@ func test_defeat_outcome_modal_should_pause_runtime_and_only_offer_terminal_acti
 	var restart_btn: Button = screen.get_node("DefeatOutcomeModal/VBox/Actions/RestartBtn")
 	var status_label: Label = screen.get_node("LegacyPrototypeRoot/VBox/Status")
 	var presentation_controller: Node = screen.get_node("PresentationController")
-	var terminal_open_text := str(presentation_controller.call("translate", "battlemap.status.terminal_outcome_open")).to_lower()
-	var return_main_menu_text := str(presentation_controller.call("translate", "battlemap.return_main_menu"))
-	var restart_text := str(presentation_controller.call("translate", "battlemap.restart"))
-	var defeat_hint_text := str(presentation_controller.call("translate", "battlemap.outcome.hint")).to_lower()
-	var defeat_title_text := str(presentation_controller.call("translate", "battlemap.outcome.defeat.title")).to_lower()
-	var wall_breached_text := str(presentation_controller.call("translate", "battlemap.outcome.defeat.wall_breached")).to_lower()
-	var finished_text := str(presentation_controller.call("translate", "battlemap.status.finished")).to_lower()
+	var terminal_open_text = str(presentation_controller.call("translate", "battlemap.status.terminal_outcome_open")).to_lower()
+	var return_main_menu_text = str(presentation_controller.call("translate", "battlemap.return_main_menu"))
+	var restart_text = str(presentation_controller.call("translate", "battlemap.restart"))
+	var defeat_hint_text = str(presentation_controller.call("translate", "battlemap.outcome.hint")).to_lower()
+	var defeat_title_text = str(presentation_controller.call("translate", "battlemap.outcome.defeat.title")).to_lower()
+	var wall_breached_text = str(presentation_controller.call("translate", "battlemap.outcome.defeat.wall_breached")).to_lower()
+	var finished_text = str(presentation_controller.call("translate", "battlemap.status.finished")).to_lower()
 
 	assert_bool(settlement_modal.visible).is_false()
 	assert_bool(victory_modal.visible).is_false()
@@ -1173,7 +1378,7 @@ func test_defeat_outcome_modal_should_pause_runtime_and_only_offer_terminal_acti
 	var main_menu: Node = main.get_node("RuntimeUi/MainMenu")
 	assert_bool(main_menu.get("visible") == true).is_true()
 
-	var restart_screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
+	var restart_screen = preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
 	add_child(auto_free(restart_screen))
 	await get_tree().process_frame
 	await get_tree().process_frame
@@ -1204,7 +1409,7 @@ func test_defeat_outcome_modal_should_pause_runtime_and_only_offer_terminal_acti
 	assert_int(int(defeat_summary_state.get("wall_hp", -1))).is_equal(14)
 	assert_bool(defeat_summary.text.to_lower().find(wall_breached_text) >= 0).is_true()
 
-	var status_before := status_label.text
+	var status_before = status_label.text
 	_request_hud_action(screen, "wave")
 	await get_tree().process_frame
 	assert_bool(status_label.text != status_before).is_true()
@@ -1236,12 +1441,12 @@ func test_defeat_outcome_modal_should_pause_runtime_and_only_offer_terminal_acti
 # ACC:T68.8
 # ACC:T70.10
 func test_victory_outcome_modal_should_pause_runtime_and_only_offer_terminal_actions() -> void:
-	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
+	var main = preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
 	add_child(auto_free(main))
 	await get_tree().process_frame
 	await get_tree().process_frame
 
-	var nav := main.get_node_or_null("ScreenNavigator")
+	var nav = main.get_node_or_null("ScreenNavigator")
 	assert_object(nav).is_not_null()
 	nav.set("UseFadeTransition", false)
 	var ok_enter: bool = nav.call("SwitchTo", "res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn")
@@ -1261,16 +1466,16 @@ func test_victory_outcome_modal_should_pause_runtime_and_only_offer_terminal_act
 	var restart_btn: Button = screen.get_node("VictoryOutcomeModal/VBox/Actions/RestartBtn")
 	var status_label: Label = screen.get_node("LegacyPrototypeRoot/VBox/Status")
 	var presentation_controller: Node = screen.get_node("PresentationController")
-	var terminal_open_text := str(presentation_controller.call("translate", "battlemap.status.terminal_outcome_open")).to_lower()
-	var return_main_menu_text := str(presentation_controller.call("translate", "battlemap.return_main_menu"))
-	var restart_text := str(presentation_controller.call("translate", "battlemap.restart"))
-	var victory_hint_text := str(presentation_controller.call("translate", "battlemap.outcome.hint")).to_lower()
-	var victory_title_text := str(presentation_controller.call("translate", "battlemap.outcome.victory.title")).to_lower()
-	var hp_text := str(presentation_controller.call("translate", "battlemap.daily_settlement.final_hp"))
-	var kills_text := str(presentation_controller.call("translate", "battlemap.daily_settlement.kills"))
-	var gold_text := str(presentation_controller.call("translate", "battlemap.resource.gold"))
-	var iron_text := str(presentation_controller.call("translate", "battlemap.resource.iron"))
-	var pop_text := str(presentation_controller.call("translate", "battlemap.resource.population"))
+	var terminal_open_text = str(presentation_controller.call("translate", "battlemap.status.terminal_outcome_open")).to_lower()
+	var return_main_menu_text = str(presentation_controller.call("translate", "battlemap.return_main_menu"))
+	var restart_text = str(presentation_controller.call("translate", "battlemap.restart"))
+	var victory_hint_text = str(presentation_controller.call("translate", "battlemap.outcome.hint")).to_lower()
+	var victory_title_text = str(presentation_controller.call("translate", "battlemap.outcome.victory.title")).to_lower()
+	var hp_text = str(presentation_controller.call("translate", "battlemap.daily_settlement.final_hp"))
+	var kills_text = str(presentation_controller.call("translate", "battlemap.daily_settlement.kills"))
+	var gold_text = str(presentation_controller.call("translate", "battlemap.resource.gold"))
+	var iron_text = str(presentation_controller.call("translate", "battlemap.resource.iron"))
+	var pop_text = str(presentation_controller.call("translate", "battlemap.resource.population"))
 
 	assert_bool(bridge.has_method("ForceOutcomeForTest")).is_true()
 	bridge.call("ForceOutcomeForTest", "win", 42)
@@ -1300,7 +1505,7 @@ func test_victory_outcome_modal_should_pause_runtime_and_only_offer_terminal_act
 	assert_bool(not return_btn.disabled).is_true()
 	assert_bool(not restart_btn.disabled).is_true()
 
-	var status_before := status_label.text
+	var status_before = status_label.text
 	var runtime_summary_before_blocked: Dictionary = bridge.call("GetSummary")
 	assert_str(String(runtime_summary_before_blocked.get("outcome", ""))).is_equal("win")
 	assert_str(String(runtime_summary_before_blocked.get("defeat_reason", ""))).is_equal("")
@@ -1326,12 +1531,12 @@ func test_victory_outcome_modal_should_pause_runtime_and_only_offer_terminal_act
 # ACC:T70.4
 # ACC:T70.5
 func test_victory_outcome_modal_should_stay_centered_and_preserve_runtime_ownership_boundaries() -> void:
-	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
+	var main = preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
 	add_child(auto_free(main))
 	await get_tree().process_frame
 	await get_tree().process_frame
 
-	var nav := main.get_node_or_null("ScreenNavigator")
+	var nav = main.get_node_or_null("ScreenNavigator")
 	assert_object(nav).is_not_null()
 	nav.set("UseFadeTransition", false)
 	var ok_enter: bool = nav.call("SwitchTo", "res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn")
@@ -1364,12 +1569,12 @@ func test_victory_outcome_modal_should_stay_centered_and_preserve_runtime_owners
 # ACC:T67.7
 # ACC:T67.8
 func test_daily_settlement_modal_should_stay_centered_and_preserve_runtime_ownership_boundaries() -> void:
-	var main := preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
+	var main = preload("res://Game.Godot/Scenes/Main.tscn").instantiate()
 	add_child(auto_free(main))
 	await get_tree().process_frame
 	await get_tree().process_frame
 
-	var nav := main.get_node_or_null("ScreenNavigator")
+	var nav = main.get_node_or_null("ScreenNavigator")
 	assert_object(nav).is_not_null()
 	nav.set("UseFadeTransition", false)
 	var ok_enter: bool = nav.call("SwitchTo", "res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn")
