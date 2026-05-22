@@ -62,6 +62,54 @@ public sealed class EnemyStatConfigBindingTests
         updatedProjection.Health.Should().Be(125m);
     }
 
+    [Fact]
+    public void ShouldResolveAttackRangeAndInterval_WhenEnemyRuntimeConfigUsesBattleMapFields()
+    {
+        const string enemyId = "grunt_range";
+        var manager = new ConfigManager();
+        var configJson = """
+                         {
+                           "time": { "day_seconds": 240, "night_seconds": 120 },
+                           "waves": { "normal": { "day1_budget": 50, "daily_growth": 1.2 } },
+                           "channels": { "elite": "elite", "boss": "boss" },
+                           "spawn": { "cadence_seconds": 10 },
+                           "boss": { "count": 2 },
+                           "battle": { "castle_start_hp": 100 },
+                           "enemies": [
+                             {
+                               "id": "grunt_range",
+                               "cost": 10,
+                               "hp": 30,
+                               "dmg": 5,
+                               "move_speed": 12,
+                               "range": 30,
+                               "attack_interval": 1000,
+                               "armor": 0,
+                               "tags": ["base"],
+                               "spawn_weight": 1,
+                               "min_day": 1,
+                               "max_day": 15,
+                               "is_elite": false,
+                               "is_boss": false
+                             }
+                           ]
+                         }
+                         """;
+
+        var load = manager.LoadInitialFromJson(configJson, "memory://enemy-range-runtime.json");
+        load.Accepted.Should().BeTrue();
+
+        var resolver = new EnemyConfigRuntimeResolver();
+        var runtimeStats = resolver.Resolve(manager, configJson)
+            .Single(item => string.Equals(item.EnemyId, enemyId, StringComparison.Ordinal));
+
+        runtimeStats.Health.Should().Be(30m);
+        runtimeStats.Damage.Should().Be(5m);
+        runtimeStats.Speed.Should().Be(12m);
+        runtimeStats.AttackRange.Should().Be(30m);
+        runtimeStats.AttackIntervalMs.Should().Be(1000);
+    }
+
     private static RuntimeEnemyProjection ObserveRuntimeEnemyProjection(string configJson, string enemyId)
     {
         var manager = new ConfigManager();
