@@ -18,7 +18,7 @@ func test_hud_scene_instantiates_with_formal_battle_hud_bands() -> void:
 	var day_label := scene.get_node("TopBar/HBox/DayLabel") as Label
 	var phase_label := scene.get_node("TopBar/HBox/PhaseLabel") as Label
 	var cycle_label := scene.get_node("TopBar/HBox/CycleRemainingLabel") as Label
-	var hp_label := scene.get_node("TopBar/HBox/HealthLabel") as Label
+	var hp_label := scene.get_node("TopBar/HBox/WallLabel") as Label
 	var resources_label := scene.get_node("TopBar/HBox/ResourcesLabel") as Label
 	var enemies_label := scene.get_node("TopBar/HBox/EnemiesLabel") as Label
 	var speed_state_label := scene.get_node("TopBar/HBox/SpeedStateLabel") as Label

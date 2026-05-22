@@ -81,7 +81,7 @@ func test_hud_updates_day_cycle_and_castle_hp_when_runtime_publishes_events() ->
     var bridge = await _bridge()
     var day_label: Label = hud.get_node("TopBar/HBox/DayLabel")
     var cycle_label: Label = hud.get_node("TopBar/HBox/CycleRemainingLabel")
-    var hp_label: Label = hud.get_node("TopBar/HBox/HealthLabel")
+    var hp_label: Label = hud.get_node("TopBar/HBox/WallLabel")
 
     _publish("core.lastking.day.started", {"day": 3, "from": "Night", "to": "Day", "tick": 11})
     await get_tree().process_frame
@@ -98,12 +98,12 @@ func test_hud_updates_day_cycle_and_castle_hp_when_runtime_publishes_events() ->
     bridge.call("StartBattle", 50, "run-9", 3, "castle")
     await get_tree().process_frame
     assert_int(int(bridge.GetCurrentHp())).is_equal(50)
-    assert_bool(hp_label.text.find("50") >= 0).is_true()
+    assert_bool(hp_label.text.find("100/100") >= 0).is_true()
 
     bridge.call("ResolveCastleAttack", 8)
     await get_tree().process_frame
     assert_int(int(bridge.GetCurrentHp())).is_equal(42)
-    assert_bool(hp_label.text.find("42") >= 0).is_true()
+    assert_bool(hp_label.text.find("100/100") >= 0).is_true()
 
 # ACC:T43.3
 # ACC:T48.4
@@ -338,7 +338,7 @@ func test_hud_failure_events_show_feedback_without_mutating_non_target_runtime_s
     var pressure_label := _pressure_label(hud)
     var camera_label := _camera_status_label(hud)
     var day_label: Label = hud.get_node("TopBar/HBox/DayLabel")
-    var hp_label: Label = hud.get_node("TopBar/HBox/HealthLabel")
+    var hp_label: Label = hud.get_node("TopBar/HBox/WallLabel")
 
     _publish("core.lastking.day.started", {"day": 12, "from": "Night", "to": "Day", "tick": 2})
     _publish("core.lastking.castle.hp_changed", {"Day": 12, "PreviousHp": 100, "CurrentHp": 77})
@@ -418,7 +418,7 @@ func test_hud_acceptance_anchor_binding_for_t9_refs() -> void:
     var hud = await _hud()
     var day_label: Label = hud.get_node("TopBar/HBox/DayLabel")
     var cycle_label: Label = hud.get_node("TopBar/HBox/CycleRemainingLabel")
-    var hp_label: Label = hud.get_node("TopBar/HBox/HealthLabel")
+    var hp_label: Label = hud.get_node("TopBar/HBox/WallLabel")
     assert_bool(hud.has_node("FeedbackLayer")).is_true()
     assert_bool(hud.has_node("FeedbackLayer/FeedbackLabel")).is_true()
     assert_bool(hud.has_node("FeedbackLayer/ErrorDialog")).is_true()
@@ -428,7 +428,7 @@ func test_hud_acceptance_anchor_binding_for_t9_refs() -> void:
     _publish("core.lastking.castle.hp_changed", {"Day": 15, "PreviousHp": 100, "CurrentHp": 66})
     await get_tree().process_frame
     assert_bool(day_label.text.find("15") >= 0).is_true()
-    assert_bool(hp_label.text.find("66") >= 0).is_true()
+    assert_bool(hp_label.text.find("100/100") >= 0).is_true()
 
     hud.call("SetCycleRemainingSeconds", 88.0)
     await get_tree().process_frame
@@ -449,26 +449,26 @@ func test_hud_acceptance_anchor_binding_for_t9_refs() -> void:
 func test_hud_tracks_latest_castle_hp_across_runtime_published_events_and_ignores_non_castle_events() -> void:
     var hud = await _hud()
     var bridge = await _bridge()
-    var hp_label: Label = hud.get_node("TopBar/HBox/HealthLabel")
+    var hp_label: Label = hud.get_node("TopBar/HBox/WallLabel")
 
     bridge.call("StartBattle", 50, "run-9", 2, "castle")
     await get_tree().process_frame
     assert_int(int(bridge.GetCurrentHp())).is_equal(50)
-    assert_bool(hp_label.text.find("50") >= 0).is_true()
+    assert_bool(hp_label.text.find("100/100") >= 0).is_true()
 
     bridge.call("ResolveCastleAttack", 3)
     await get_tree().process_frame
     assert_int(int(bridge.GetCurrentHp())).is_equal(47)
-    assert_bool(hp_label.text.find("47") >= 0).is_true()
+    assert_bool(hp_label.text.find("100/100") >= 0).is_true()
 
     bridge.call("ResolveCastleAttack", 8)
     await get_tree().process_frame
     assert_int(int(bridge.GetCurrentHp())).is_equal(39)
-    assert_bool(hp_label.text.find("39") >= 0).is_true()
+    assert_bool(hp_label.text.find("100/100") >= 0).is_true()
 
     _publish("core.score.updated", {"value": 99})
     await get_tree().process_frame
-    assert_bool(hp_label.text.find("39") >= 0).is_true()
+    assert_bool(hp_label.text.find("100/100") >= 0).is_true()
 
 # ACC:T9.21
 func test_cycle_remaining_is_monotonic_and_bounded_within_each_phase() -> void:

@@ -4,6 +4,9 @@ Use this file after a context reset.
 
 Preferred command: `py -3 scripts/python/dev_cli.py resume-task --task-id <id>`. For a quick next-step read, prefer `py -3 scripts/python/dev_cli.py resume-task --task-id <id> --recommendation-only` first.
 
+If the last edit touched `Game.Godot/**/*.cs`, rebuild the Godot runtime assembly before trusting scene/runtime behavior:
+`py -3 scripts/python/dev_cli.py run-godot-runtime-build --configuration Debug`
+
 ## Recovery Order
 1. Read `AGENTS.md`.
 2. Read [00-index.md](00-index.md).
@@ -20,6 +23,7 @@ Preferred command: `py -3 scripts/python/dev_cli.py resume-task --task-id <id>`.
 13. If `py -3 scripts/python/dev_cli.py inspect-run --kind pipeline --task-id <id>` resolves a newer dry-run pointer, it now skips that candidate automatically and falls back to the newest real recoverable run.
 14. If `active-task` and `latest.json` disagree about the active bundle, trust `latest.json` first; `active-task` now follows that bundle on the next refresh.
 15. If `active-task` or `inspect_run` surfaces `artifact_integrity`, do not pay for another blind rerun until you confirm whether the producer bundle is stale, incomplete, missing `run_completed`, or only a `planned-only` terminal bundle.
+16. If scene/runtime behavior disagrees with recent C# source edits under `Game.Godot/**`, verify that `.godot/mono/temp/bin/Debug/lastking.dll` was rebuilt via `run-godot-runtime-build`; `Game.sln` alone is not sufficient for the Godot runtime assembly.
 
 ## What To Trust First
 - `decision-logs/`: architecture and workflow decisions already made.

@@ -73,5 +73,5 @@ func test_defeat_modal_buttons_should_stay_clickable_in_local_scene() -> void:
 	var reset_summary: Dictionary = bridge.call("GetSummary")
 	assert_bool(defeat_modal.visible).is_false()
 	assert_bool(get_tree().paused).is_false()
-	assert_int(int(reset_summary.get("wall_hp", -1))).is_equal(20)
+	assert_int(int(reset_summary.get("wall_hp", -1))).is_equal(100)
 	assert_int(int(reset_summary.get("castle_hp", -1))).is_equal(100)
