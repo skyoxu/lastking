@@ -6,7 +6,11 @@ public sealed record EnemyRuntimeStats(
     string EnemyId,
     decimal Health,
     decimal Damage,
-    decimal Speed);
+    decimal Speed,
+    decimal AttackRange,
+    int AttackIntervalMs,
+    bool IsElite,
+    bool IsBoss);
 
 public sealed class EnemyConfigRuntimeResolver
 {
@@ -49,14 +53,19 @@ public sealed class EnemyConfigRuntimeResolver
                 continue;
             }
 
-            if (!TryReadDecimal(item, "health", out var health)
-                || !TryReadDecimal(item, "damage", out var damage)
-                || !TryReadDecimal(item, "speed", out var speed))
+            if (!TryReadDecimalAny(item, new[] { "health", "hp" }, out var health)
+                || !TryReadDecimalAny(item, new[] { "damage", "dmg" }, out var damage)
+                || !TryReadDecimalAny(item, new[] { "speed", "move_speed" }, out var speed))
             {
                 continue;
             }
 
-            stats.Add(new EnemyRuntimeStats(enemyId, health, damage, speed));
+            var attackRange = ReadDecimalOrDefault(item, defaultValue: 0m, "range", "attack_range");
+            var attackIntervalMs = ReadIntOrDefault(item, defaultValue: 2000, "attack_interval", "attack_interval_ms");
+            var isElite = ReadBoolOrDefault(item, defaultValue: false, "is_elite");
+            var isBoss = ReadBoolOrDefault(item, defaultValue: false, "is_boss");
+
+            stats.Add(new EnemyRuntimeStats(enemyId, health, damage, speed, attackRange, attackIntervalMs, isElite, isBoss));
         }
 
         return stats;
@@ -92,6 +101,79 @@ public sealed class EnemyConfigRuntimeResolver
         }
 
         return false;
+    }
+
+    private static bool TryReadDecimalAny(JsonElement root, IReadOnlyList<string> propertyNames, out decimal value)
+    {
+        foreach (var propertyName in propertyNames)
+        {
+            if (TryReadDecimal(root, propertyName, out value))
+            {
+                return true;
+            }
+        }
+
+        value = 0m;
+        return false;
+    }
+
+    private static decimal ReadDecimalOrDefault(JsonElement root, decimal defaultValue, params string[] propertyNames)
+    {
+        foreach (var propertyName in propertyNames)
+        {
+            if (TryReadDecimal(root, propertyName, out var value))
+            {
+                return value;
+            }
+        }
+
+        return defaultValue;
+    }
+
+    private static int ReadIntOrDefault(JsonElement root, int defaultValue, params string[] propertyNames)
+    {
+        foreach (var propertyName in propertyNames)
+        {
+            if (!TryGetPropertyIgnoreCase(root, propertyName, out var property))
+            {
+                continue;
+            }
+
+            if (property.ValueKind == JsonValueKind.Number && property.TryGetInt32(out var intValue))
+            {
+                return intValue;
+            }
+
+            if (property.ValueKind == JsonValueKind.Number && property.TryGetDouble(out var doubleValue))
+            {
+                return Convert.ToInt32(Math.Round(doubleValue, MidpointRounding.AwayFromZero));
+            }
+        }
+
+        return defaultValue;
+    }
+
+    private static bool ReadBoolOrDefault(JsonElement root, bool defaultValue, params string[] propertyNames)
+    {
+        foreach (var propertyName in propertyNames)
+        {
+            if (!TryGetPropertyIgnoreCase(root, propertyName, out var property))
+            {
+                continue;
+            }
+
+            if (property.ValueKind == JsonValueKind.True)
+            {
+                return true;
+            }
+
+            if (property.ValueKind == JsonValueKind.False)
+            {
+                return false;
+            }
+        }
+
+        return defaultValue;
     }
 
     private static bool TryGetPropertyIgnoreCase(JsonElement root, string propertyName, out JsonElement value)
