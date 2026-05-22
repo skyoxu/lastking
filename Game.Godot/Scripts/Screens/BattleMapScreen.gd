@@ -1,7 +1,7 @@
 extends Control
 
-const FORMAL_SCREEN_SIZE := Vector2(1600.0, 900.0)
-const GAME_MANAGER_SCRIPT := preload("res://Game.Godot/Scripts/Runtime/GameManager.cs")
+const FORMAL_SCREEN_SIZE: Vector2 = Vector2(1600.0, 900.0)
+const GAME_MANAGER_SCRIPT: Script = preload("res://Game.Godot/Scripts/Runtime/GameManager.cs")
 
 @onready var _bridge: Node = $CombatExperienceRuntimeBridge
 @onready var _wave_timer: Timer = $WaveTimer
@@ -19,9 +19,9 @@ const GAME_MANAGER_SCRIPT := preload("res://Game.Godot/Scripts/Runtime/GameManag
 @onready var _selection_data_provider: Node = $SelectionDataProvider
 @onready var _build_placement_controller: Node = $BuildPlacementController
 @onready var _day_night_loop: Node = $DayNightRuntimeLoop
-@onready var _battle_settings_menu: Control = $BattleSettingsMenu
+@onready var _battle_settings_menu: Control = get_node_or_null("BattleSettingsMenu")
 @onready var _combat_debug_geometry_controller: Node = $CombatDebugGeometryController
-@onready var _battle_hud: Control = $BattleHud
+@onready var _battle_hud: Control = get_node_or_null("BattleHud")
 
 var _path_points: PackedVector2Array = PackedVector2Array(
 	[
@@ -31,7 +31,6 @@ var _path_points: PackedVector2Array = PackedVector2Array(
 )
 var _resume_speed_scale_percent: int = 100
 var _resume_was_paused: bool = false
-var _last_locale: String = ""
 var _battle_runtime_ready: bool = false
 var _post_place_probe_frames: int = 0
 
@@ -53,7 +52,7 @@ func _initialize_battle_screen() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	if _debug_component_enabled("battle_settings_menu") and _battle_settings_menu != null:
 		_configure_battle_settings_menu_runtime()
-		_apply_battle_settings_texts()
+		_presentation_controller.call("sync_locale_and_texts")
 		_battle_settings_menu.visible = false
 		var return_btn: Button = _battle_settings_menu.get_node_or_null("VBox/Buttons/ReturnToGameBtn")
 		var main_menu_btn: Button = _battle_settings_menu.get_node_or_null("VBox/Buttons/ReturnToMainMenuBtn")
@@ -85,7 +84,7 @@ func _process(delta: float) -> void:
 			print("[BattleMapScreen] post_place_frame <- runtime coordinator")
 	if _debug_component_enabled("debug_geometry"):
 		_combat_debug_geometry_controller.call("process_frame", delta)
-	_sync_scene_locale_texts()
+	_presentation_controller.call("sync_locale_and_texts")
 	if _post_place_probe_frames > 0:
 		print("[BattleMapScreen] post_place_frame end remaining=%d" % _post_place_probe_frames)
 		_post_place_probe_frames -= 1
@@ -111,20 +110,20 @@ func debug_handle_pointer_input(event: InputEvent) -> void:
 
 func _handle_pointer_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
-		var motion_event := event as InputEventMouseMotion
+		var motion_event: InputEventMouseMotion = event as InputEventMouseMotion
 		if _build_placement_controller != null and _build_placement_controller.has_method("sync_drag_pointer"):
 			_build_placement_controller.call("sync_drag_pointer", motion_event.position, _slot_id_under_pointer(motion_event.position))
 		elif _build_placement_controller != null and _build_placement_controller.has_method("update_drag_pointer_position"):
 			_build_placement_controller.call("update_drag_pointer_position", motion_event.position)
 	if event is InputEventMouseButton:
-		var mouse_event := event as InputEventMouseButton
+		var mouse_event: InputEventMouseButton = event as InputEventMouseButton
 		if mouse_event.button_index == MOUSE_BUTTON_RIGHT and mouse_event.pressed:
 			if _build_placement_controller != null and _build_placement_controller.has_method("has_active_placement") and _build_placement_controller.call("has_active_placement") == true:
 				_build_placement_controller.call("cancel_active_placement")
 				get_viewport().set_input_as_handled()
 				return
 		if mouse_event.button_index == MOUSE_BUTTON_LEFT and not mouse_event.pressed:
-			var hovered_slot_id := _slot_id_under_pointer(mouse_event.position)
+			var hovered_slot_id: String = _slot_id_under_pointer(mouse_event.position)
 			print("[BattleMapScreen] release detected pos=%s slot=%s" % [str(mouse_event.position), hovered_slot_id])
 			if not hovered_slot_id.is_empty():
 				if _build_placement_controller != null and _build_placement_controller.has_method("handle_battlefield_slot_released"):
@@ -140,11 +139,11 @@ func _debug_component_enabled(component_name: String) -> bool:
 		return OS.has_environment("LASTKING_BATTLEMAP_ENABLE_DEBUG_GEOMETRY") and not OS.get_environment("LASTKING_BATTLEMAP_ENABLE_DEBUG_GEOMETRY").strip_edges().is_empty()
 	if not OS.has_environment("LASTKING_BATTLEMAP_DISABLE_COMPONENTS"):
 		return true
-	var raw := OS.get_environment("LASTKING_BATTLEMAP_DISABLE_COMPONENTS").strip_edges()
+	var raw: String = OS.get_environment("LASTKING_BATTLEMAP_DISABLE_COMPONENTS").strip_edges()
 	if raw.is_empty():
 		return true
 	for token_variant in raw.split(",", false):
-		var token := str(token_variant).strip_edges().to_lower()
+		var token: String = str(token_variant).strip_edges().to_lower()
 		if token == component_name.to_lower():
 			return false
 	return true
@@ -169,6 +168,7 @@ func _configure_controllers() -> void:
 	_ownership_coordinator.call("apply_ownership_markers")
 	_presentation_controller.call("configure", {
 		"title": refs["title"],
+		"battle_settings_menu": _battle_settings_menu,
 	})
 	_navigation_controller.call("configure", {
 		"screen": self,
@@ -316,7 +316,7 @@ func _hide_legacy_runtime_hud_panels() -> void:
 	if global_hud != null:
 		huds.append(global_hud)
 
-	var hidden_paths := [
+	var hidden_paths: Array = [
 		"FeedbackLayer/PressurePanel",
 		"FeedbackLayer/CameraControlOverlay",
 		"FeedbackLayer/ConfigAuditPanel",
@@ -328,7 +328,7 @@ func _hide_legacy_runtime_hud_panels() -> void:
 		"FeedbackLayer/BuildPanel",
 		"FeedbackLayer/ProgressionPanel",
 	]
-	var disabled_button_paths := [
+	var disabled_button_paths: Array = [
 		"FeedbackLayer/ConfigAuditPanel/VBox/RefreshButton",
 		"FeedbackLayer/MigrationStatusDialog/VBox/RetryButton",
 	]
@@ -372,7 +372,7 @@ func _ensure_runtime_singletons() -> void:
 	if manager == null and GAME_MANAGER_SCRIPT != null:
 		manager = GAME_MANAGER_SCRIPT.new()
 		manager.name = "GameManager"
-		var root := get_tree().root
+		var root: Window = get_tree().root
 		if root != null:
 			root.add_child(manager)
 
@@ -437,7 +437,7 @@ func _on_battlefield_slot_released(slot_id: String) -> void:
 		_build_placement_controller.call("handle_battlefield_slot_released", slot_id)
 
 func open_battle_settings_menu() -> void:
-	_apply_battle_settings_texts()
+	_presentation_controller.call("sync_locale_and_texts")
 	var manager: Node = get_node_or_null("/root/GameManager")
 	if manager != null and manager.has_method("GetSpeedState"):
 		var state: Variant = manager.call("GetSpeedState")
@@ -510,50 +510,6 @@ func _configure_battle_settings_menu_runtime() -> void:
 	if settings_content != null:
 		settings_content.process_mode = Node.PROCESS_MODE_ALWAYS
 		settings_content.mouse_filter = Control.MOUSE_FILTER_PASS
-
-func _sync_scene_locale_texts() -> void:
-	var locale: String = _normalize_locale(str(TranslationServer.get_locale()))
-	if locale == _last_locale:
-		return
-	_last_locale = locale
-	_apply_battle_settings_texts()
-
-func _apply_battle_settings_texts() -> void:
-	if _battle_settings_menu == null:
-		return
-	var title: Label = _battle_settings_menu.get_node_or_null("VBox/Title")
-	if title != null:
-		title.text = _presentation_controller.call("translate", "battlemap.settings.title")
-	var summary_title: Label = _battle_settings_menu.get_node_or_null("VBox/Panel/SettingsContent/VBox/SummaryTitle")
-	if summary_title != null:
-		summary_title.text = _presentation_controller.call("translate", "battlemap.settings.summary_title")
-	var summary_body: Label = _battle_settings_menu.get_node_or_null("VBox/Panel/SettingsContent/VBox/SummaryBody")
-	if summary_body != null:
-		summary_body.text = _presentation_controller.call("translate", "battlemap.settings.summary_body")
-	var controls_title: Label = _battle_settings_menu.get_node_or_null("VBox/Panel/SettingsContent/VBox/ControlsTitle")
-	if controls_title != null:
-		controls_title.text = _presentation_controller.call("translate", "battlemap.settings.controls_title")
-	var controls_body: Label = _battle_settings_menu.get_node_or_null("VBox/Panel/SettingsContent/VBox/ControlsBody")
-	if controls_body != null:
-		controls_body.text = _presentation_controller.call("translate", "battlemap.settings.controls_body")
-	var status_title: Label = _battle_settings_menu.get_node_or_null("VBox/Panel/SettingsContent/VBox/StatusTitle")
-	if status_title != null:
-		status_title.text = _presentation_controller.call("translate", "battlemap.settings.status_title")
-	var status_body: Label = _battle_settings_menu.get_node_or_null("VBox/Panel/SettingsContent/VBox/StatusBody")
-	if status_body != null:
-		status_body.text = _presentation_controller.call("translate", "battlemap.settings.status_body")
-	var return_btn: Button = _battle_settings_menu.get_node_or_null("VBox/Buttons/ReturnToGameBtn")
-	if return_btn != null:
-		return_btn.text = _presentation_controller.call("translate", "battlemap.settings.return_to_game")
-	var main_menu_btn: Button = _battle_settings_menu.get_node_or_null("VBox/Buttons/ReturnToMainMenuBtn")
-	if main_menu_btn != null:
-		main_menu_btn.text = _presentation_controller.call("translate", "battlemap.settings.return_to_main_menu")
-
-func _normalize_locale(locale: String) -> String:
-	var v: String = locale.strip_edges().to_lower()
-	if v == "zh" or v.begins_with("zh"):
-		return "zh-CN"
-	return "en-US"
 
 func is_battle_runtime_ready() -> bool:
 	return _battle_runtime_ready

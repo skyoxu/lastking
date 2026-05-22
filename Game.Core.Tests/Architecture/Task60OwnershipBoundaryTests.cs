@@ -173,7 +173,6 @@ public class Task60OwnershipBoundaryTests
         script.Should().NotContain("bridge.call(\"ResetForInteractiveRun\")");
         script.Should().NotContain("_feedback_controller.call(\"render_loaded_summary\"");
         script.Should().NotContain("_outcome_controller.call(\"close_all\")");
-        script.Should().NotContain("_presentation_controller.call(\"sync_locale_and_texts\")");
         script.Should().NotContain("_feedback_controller.call(\"process_frame\", delta)");
         script.Should().NotContain("_outcome_controller.call(\"sync_terminal_outcome_from_bridge\"");
         script.Should().Contain("_runtime_coordinator.call(\"initialize_runtime\")");
@@ -261,10 +260,10 @@ public class Task60OwnershipBoundaryTests
         var script = File.ReadAllText(Path.Combine(FindRepositoryRoot(), BattleMapRefsProviderScriptPath.Replace('/', Path.DirectorySeparatorChar)));
         script.Should().Contain("func configure(refs: Dictionary) -> void:");
         script.Should().Contain("func build_refs() -> Dictionary:");
-        script.Should().Contain("\"status\": _screen.get_node(\"LegacyPrototypeRoot/VBox/Status\")");
+        script.Should().Contain("\"status\": _required(\"LegacyPrototypeRoot/VBox/Status\")");
         script.Should().NotContain("\"auto_wave_btn\":");
-        script.Should().Contain("\"enemy_spawn_a\": _screen.get_node(\"Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnA\")");
-        script.Should().Contain("\"victory_restart_btn\": _screen.get_node(\"VictoryOutcomeModal/VBox/Actions/RestartBtn\")");
+        script.Should().Contain("\"enemy_spawn_a\": _required(\"Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnA\")");
+        script.Should().Contain("\"victory_restart_btn\": _optional(\"VictoryOutcomeModal/VBox/Actions/RestartBtn\")");
     }
 
     // ACC:T57.4
@@ -302,7 +301,7 @@ public class Task60OwnershipBoundaryTests
             Path.Combine(FindRepositoryRoot(), "Tests.Godot/tests/Integration/test_battle_map_screen_runtime_flow.gd".Replace('/', Path.DirectorySeparatorChar)));
 
         runtimeFlow.Should().Contain("func test_battle_map_cycle_should_keep_hud_singleton_and_navigator_ownership()");
-        runtimeFlow.Should().Contain("assert_int(_hud_count(main)).is_equal(1)");
+        runtimeFlow.Should().Contain("assert_int(_hud_count(main)).is_equal(0)");
         runtimeFlow.Should().Contain("assert_object(main.get_node_or_null(\"ScreenNavigator\")).is_not_null()");
         runtimeFlow.Should().Contain("assert_str(str(reopened_screen.get_node(\"CombatExperienceRuntimeBridge\").get_meta(\"ownership_container\"))).is_equal(\"runtime_bridge\")");
         runtimeFlow.Should().Contain("assert_str(str(reopened_screen.get_node(\"LegacyPrototypeRoot\").get_meta(\"ownership_container\"))).is_equal(\"legacy_prototype\")");

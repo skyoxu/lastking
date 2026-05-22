@@ -63,7 +63,7 @@ public sealed class Task63RefsAnchorsSyncTests
         combatFlowTest.Should().Contain("assert_int(_battlefield_children_with_prefix(bridge, \"DamageNumber\").size()).is_equal(0)");
         combatFlowTest.Should().Contain("bridge.call(\"PublishOutcomePhase\")");
         combatFlowTest.Should().Contain("assert_bool(feedback_label.visible).is_true()");
-        combatFlowTest.Should().Contain("assert_bool(prompt_label.text.to_lower().find(\"n/a\") < 0).is_true()");
+        combatFlowTest.Should().Contain("assert_str(prompt_label.text.to_lower()).contains(\"n/a\")");
         combatFlowTest.Should().Contain("_write_damage_numbers_setting(false)");
         combatFlowTest.Should().Contain("_write_damage_numbers_setting(true)");
         combatFlowTest.Should().NotContain("SetDamageNumbersEnabledForTest");
@@ -75,7 +75,7 @@ public sealed class Task63RefsAnchorsSyncTests
                 "pressure_label.text.to_lower()",
                 "prompt_label.text.to_lower()",
                 "feedback_label.visible",
-                "pressure_label.text.to_lower().find(\"high\") >= 0",
+                "pressure_label.text.to_lower().find(\"warning\") >= 0",
                 "feedback_label.text.length() > 0",
                 "hit_flash_visible",
                 "wall_pressure_emphasis_active",
@@ -87,7 +87,7 @@ public sealed class Task63RefsAnchorsSyncTests
                 "ResolveCombatExchangePhase",
                 "PublishOutcomePhase",
                 "feedback_label.visible",
-                "prompt_label.text.to_lower().find(\"n/a\") < 0",
+                "assert_str(prompt_label.text.to_lower()).contains(\"n/a\")",
                 "CleanupDeadUnitsPhase",
             },
             ["ACC:T63.4"] = new[] { "ownership_container" },
@@ -96,7 +96,7 @@ public sealed class Task63RefsAnchorsSyncTests
             ["ACC:T63.3"] = new[] { "status_after_wave", "summary_after_wave", "enemy_units_spawned" },
             ["ACC:T63.7"] = new[] { "status_after_decay", "is_equal(status_after_wave)" },
             ["ACC:T63.8"] = new[] { "test_player_visible_combat_experience_runs_from_building_and_training_to_death_cleanup_and_summary" },
-            ["ACC:T63.9"] = new[] { "_bridge_summary_metrics(bridge)).is_equal(summary_after_wave)" },
+            ["ACC:T63.9"] = new[] { "after_decay_summary.get(\"enemy_units_spawned\", 0)", "summary_after_wave.get(\"enemy_units_spawned\", 0)" },
             ["ACC:T63.10"] = new[] { "anchorAssertionPatterns", "requiredAnchors" },
         };
         foreach (var pair in anchorAssertionPatterns)

@@ -45,8 +45,8 @@ public sealed class Task66RefsAnchorsSyncTests
         integration.Should().Contain("legend_label.text = \"LEGACY_OVERRIDE_LEGEND\"");
         integration.Should().Contain("metrics_help_label.text = \"LEGACY_OVERRIDE_METRICS_HELP\"");
         integration.Should().Contain("assert_that(after_legacy_override).is_equal(baseline_summary)");
-        integration.Should().Contain("String(status_label.text).to_lower().find(\"wave\")");
-        integration.Should().Contain("String(status_label.text).to_lower().find(\"finished\")");
+        integration.Should().Contain("String(status_label.text).to_lower().find(wave_text)");
+        integration.Should().Contain("String(status_label.text).to_lower().find(finished_text)");
 
         scene.Should().Contain("func test_t66_feedback_ownership_should_keep_runtime_bridge_as_state_authority() -> void:");
         scene.Should().Contain("func test_t66_state_transition_semantics_should_stay_bridge_driven_after_legacy_text_override() -> void:");
@@ -64,7 +64,7 @@ public sealed class Task66RefsAnchorsSyncTests
             {
                 "assert_str(String(status_label.text)).is_equal(status_before)",
             }),
-            ["ACC:T66.3"] = ("integration", "test_1440x900_frame_keeps_three_player_visible_bands_simultaneously_visible", new[]
+            ["ACC:T66.3"] = ("integration", "test_1600x900_frame_keeps_three_player_visible_bands_simultaneously_visible", new[]
             {
                 "_is_visible_inside_viewport",
             }),
@@ -83,12 +83,12 @@ public sealed class Task66RefsAnchorsSyncTests
             }),
             ["ACC:T66.7"] = ("scene", "test_t66_state_transition_semantics_should_stay_bridge_driven_after_legacy_text_override", new[]
             {
-                "finish_btn.emit_signal(\"pressed\")",
-                "failure_status.to_lower().find(\"cleanup\")",
+                "_request_hud_action(screen, \"finish\")",
+                "failure_status.to_lower().find(require_cleanup_text)",
             }),
             ["ACC:T66.8"] = ("scene", "test_t66_state_transition_semantics_should_stay_bridge_driven_after_legacy_text_override", new[]
             {
-                "completion_status.to_lower().find(\"finished\")",
+                "completion_status.to_lower().find(finished_text)",
             }),
             ["ACC:T66.9"] = ("scene", "test_t66_state_transition_semantics_should_stay_bridge_driven_after_legacy_text_override", new[]
             {

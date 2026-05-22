@@ -44,7 +44,7 @@ public sealed class Task68RefsAnchorsSyncTests
         integration.Should().Contain("func test_victory_outcome_modal_should_stay_centered_and_preserve_runtime_ownership_boundaries() -> void:");
         integration.Should().Contain("VictoryOutcomeModal/VBox/Actions/ReturnToMainMenuBtn");
         integration.Should().Contain("VictoryOutcomeModal/VBox/Actions/RestartBtn");
-        integration.Should().Contain("status_label.text.to_lower().find(\"terminal outcome\")");
+        integration.Should().Contain("status_label.text.to_lower().find(terminal_open_text)");
 
         scene.Should().Contain("func test_t68_victory_outcome_modal_node_paths_should_exist_and_default_hidden() -> void:");
         scene.Should().Contain("VictoryOutcomeModal/VBox/Actions/ReturnToMainMenuBtn");
@@ -59,8 +59,8 @@ public sealed class Task68RefsAnchorsSyncTests
             }),
             ["ACC:T68.2"] = ("integration", "test_victory_outcome_modal_should_pause_runtime_and_only_offer_terminal_actions", new[]
             {
-                "assert_str(return_btn.text).is_equal(\"Return to Main Menu\")",
-                "assert_str(restart_btn.text).is_equal(\"Restart\")",
+                "assert_str(return_btn.text).is_equal(return_main_menu_text)",
+                "assert_str(restart_btn.text).is_equal(restart_text)",
             }),
             ["ACC:T68.3"] = ("integration", "test_victory_outcome_modal_should_pause_runtime_and_only_offer_terminal_actions", new[]
             {
@@ -68,7 +68,7 @@ public sealed class Task68RefsAnchorsSyncTests
             }),
             ["ACC:T68.4"] = ("integration", "test_victory_outcome_modal_should_pause_runtime_and_only_offer_terminal_actions", new[]
             {
-                "assert_bool(victory_hint.text.to_lower().find(\"cannot be resumed\") >= 0).is_true()",
+                "assert_bool(victory_hint.text.to_lower().find(victory_hint_text) >= 0).is_true()",
             }),
             ["ACC:T68.5"] = ("sync", "ShouldKeepTask68AcceptanceRefsAndAnchorsSynchronized_WhenValidatingEvidenceMapping", new[]
             {
@@ -77,8 +77,8 @@ public sealed class Task68RefsAnchorsSyncTests
             }),
             ["ACC:T68.6"] = ("integration", "test_victory_outcome_modal_should_pause_runtime_and_only_offer_terminal_actions", new[]
             {
-                "assert_bool(victory_summary.text.find(\"HP=42\") >= 0).is_true()",
-                "assert_bool(victory_summary.text.find(\"kills=\") >= 0).is_true()",
+                "assert_bool(victory_summary.text.find(\"%s=42\" % hp_text) >= 0).is_true()",
+                "assert_bool(victory_summary.text.find(\"%s=0\" % kills_text) >= 0).is_true()",
             }),
             ["ACC:T68.7"] = ("integration", "test_victory_outcome_modal_should_stay_centered_and_preserve_runtime_ownership_boundaries", new[]
             {
