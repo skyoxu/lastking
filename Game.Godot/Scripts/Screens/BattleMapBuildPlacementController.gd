@@ -249,7 +249,6 @@ func _begin_placement(selection_id: String, drag_active: bool) -> bool:
 	if _selection_controller != null and _selection_controller.has_method("clear_building_selection"):
 		_selection_controller.call("clear_building_selection")
 	_push_active_build_selection_to_hud(selection_id)
-	_apply_formal_selection_feedback(selection_id)
 	_apply_current_legality_overlay()
 	_push_build_context_message("")
 	_update_drag_preview()
@@ -400,7 +399,7 @@ func _build_legality_overlay(selection_id: String) -> Dictionary:
 		if legality == LEGALITY_VALID_INNER or legality == LEGALITY_VALID_OUTER:
 			legality_by_slot[slot_id] = legality
 		elif not legality.is_empty():
-			legality_by_slot[slot_id] = LEGALITY_FIXED_INVALID
+			legality_by_slot[slot_id] = "wall"
 	return legality_by_slot
 
 func _evaluate_slot_legality(selection_id: String, slot_id: String) -> Dictionary:

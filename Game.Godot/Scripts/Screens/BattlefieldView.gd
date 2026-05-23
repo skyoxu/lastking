@@ -62,6 +62,7 @@ var _slot_nodes: Dictionary = {}
 var _placement_reason_bubble: Control = null
 var _placement_reason_label: Label = null
 var _wall_tile_texture: Texture2D = null
+var _selection_range_ring: Control = null
 
 
 func _ready() -> void:
@@ -332,6 +333,42 @@ func _on_slot_gui_input(event: InputEvent, slot_id: String) -> void:
 		var mouse_event: InputEventMouseButton = event as InputEventMouseButton
 		if mouse_event.button_index == MOUSE_BUTTON_LEFT and mouse_event.pressed:
 			emit_signal("battlefield_slot_clicked", slot_id)
+
+func show_selection_range_ring(center_point: Vector2, radius_px: float, tint: String = "cool") -> void:
+	if radius_px <= 0.0:
+		hide_selection_range_ring()
+		return
+	_ensure_selection_range_ring()
+	if _selection_range_ring == null:
+		return
+	_selection_range_ring.set("center_point", center_point)
+	_selection_range_ring.set("radius_px", radius_px)
+	_selection_range_ring.modulate = _range_ring_color_for_tint(tint)
+	_selection_range_ring.visible = true
+	_selection_range_ring.queue_redraw()
+
+func hide_selection_range_ring() -> void:
+	if _selection_range_ring != null and is_instance_valid(_selection_range_ring):
+		_selection_range_ring.visible = false
+
+func _ensure_selection_range_ring() -> void:
+	if _selection_range_ring != null and is_instance_valid(_selection_range_ring):
+		return
+	if _local_feedback_layer == null:
+		return
+	_selection_range_ring = Control.new()
+	_selection_range_ring.name = "SelectionRangeRing"
+	_selection_range_ring.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_selection_range_ring.z_index = 27
+	_selection_range_ring.set_script(load("res://Game.Godot/Scripts/Screens/BattleMapCombatDebugRangeRing.gd"))
+	_local_feedback_layer.add_child(_selection_range_ring)
+
+func _range_ring_color_for_tint(tint: String) -> Color:
+	match tint:
+		"warm":
+			return Color(0.980392, 0.764706, 0.356863, 0.92)
+		_:
+			return Color(0.447059, 0.733333, 1.0, 0.92)
 
 
 func _require_control(node_path: NodePath) -> Control:

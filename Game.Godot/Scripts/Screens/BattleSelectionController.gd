@@ -107,11 +107,13 @@ func apply_building_selection(snapshot: Dictionary) -> void:
 	if not _selection_context_active:
 		return
 	_selection_slot_visuals = _build_selection_slot_visuals(snapshot)
+	_push_selection_range_ring(snapshot)
 	_sync_runtime_visuals()
 
 func clear_building_selection() -> void:
 	_selection_slot_visuals.clear()
 	_hover_overlay_context.clear()
+	_push_selection_range_ring({})
 	_sync_runtime_visuals()
 
 func select_formal_building_slot(slot_id: String) -> void:
@@ -123,6 +125,43 @@ func select_formal_building_slot(slot_id: String) -> void:
 			apply_building_selection((snapshot_variant as Dictionary).duplicate(true))
 			return
 	clear_building_selection()
+
+func _push_selection_range_ring(snapshot: Dictionary) -> void:
+	var battlefield_view: Node = get_battlefield_view()
+	if battlefield_view == null:
+		return
+	if snapshot.is_empty():
+		if battlefield_view.has_method("hide_selection_range_ring"):
+			battlefield_view.call("hide_selection_range_ring")
+		return
+	if not battlefield_view.has_method("show_selection_range_ring"):
+		return
+	var building_slots := _string_array(snapshot.get("building_slots", []))
+	if building_slots.is_empty():
+		battlefield_view.call("hide_selection_range_ring")
+		return
+	var slot_id := str(building_slots[0])
+	var center := _slot_center(slot_id)
+	if center.is_zero_approx():
+		battlefield_view.call("hide_selection_range_ring")
+		return
+	var radius_px := float(snapshot.get("range_px", 0.0))
+	if radius_px <= 0.0:
+		battlefield_view.call("hide_selection_range_ring")
+		return
+	var category := str(snapshot.get("category", ""))
+	var tint := "cool"
+	if category == CATEGORY_ECONOMY:
+		tint = "warm"
+	battlefield_view.call("show_selection_range_ring", center, radius_px, tint)
+
+func _slot_center(slot_id: String) -> Vector2:
+	var battlefield_view: Node = get_battlefield_view()
+	if battlefield_view != null and battlefield_view.has_method("get_slot_position"):
+		var pos: Variant = battlefield_view.call("get_slot_position", slot_id)
+		if pos is Vector2:
+			return (pos as Vector2) + Vector2(24.0, 24.0)
+	return Vector2.ZERO
 
 func _build_selection_slot_visuals(snapshot: Dictionary) -> Dictionary:
 	var slot_visuals: Dictionary = {}
@@ -140,13 +179,15 @@ func _build_selection_slot_visuals(snapshot: Dictionary) -> Dictionary:
 	for slot_id in building_slots:
 		var building_channel: String = "building_outline"
 		var building_tint: String = "cool"
+		var building_frame: String = "cool"
 		if category == CATEGORY_ECONOMY:
 			building_channel = "economy_glow"
 			building_tint = "warm"
+			building_frame = "warm"
 		_assign_selection_visual(slot_visuals, slot_id, _selection_visual(
 			building_tint,
 			"none",
-			"none",
+			building_frame,
 			building_channel,
 			selection_id,
 			category,
@@ -154,34 +195,29 @@ func _build_selection_slot_visuals(snapshot: Dictionary) -> Dictionary:
 		))
 
 	var range_channel: String = ""
-	if category == CATEGORY_DEFENSE:
-		range_channel = "defense_range"
-	elif category == CATEGORY_UNIT:
+	if category == CATEGORY_UNIT:
 		range_channel = "unit_range"
-	for slot_id in range_slots:
-		if range_channel.is_empty():
-			continue
-		_assign_selection_visual(slot_visuals, slot_id, _selection_visual(
-			"cool",
-			"none",
-			"none",
-			range_channel,
-			selection_id,
-			category,
-			false
-		))
-	for slot_id in blocked_range_slots:
-		if range_channel.is_empty():
-			continue
-		_assign_selection_visual(slot_visuals, slot_id, _selection_visual(
-			"red",
-			"blocker",
-			"red",
-			range_channel,
-			selection_id,
-			category,
-			true
-		))
+	if not range_channel.is_empty():
+		for slot_id in range_slots:
+			_assign_selection_visual(slot_visuals, slot_id, _selection_visual(
+				"cool",
+				"none",
+				"none",
+				range_channel,
+				selection_id,
+				category,
+				false
+			))
+		for slot_id in blocked_range_slots:
+			_assign_selection_visual(slot_visuals, slot_id, _selection_visual(
+				"red",
+				"blocker",
+				"red",
+				range_channel,
+				selection_id,
+				category,
+				true
+			))
 
 	for slot_id in linked_unit_slots:
 		_assign_selection_visual(slot_visuals, slot_id, _selection_visual(
