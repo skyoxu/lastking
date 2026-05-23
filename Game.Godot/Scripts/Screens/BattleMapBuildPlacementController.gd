@@ -589,6 +589,8 @@ func _push_active_build_selection_to_hud(selection_id: String) -> void:
 	_apply_build_palette_visual_state(selection_id)
 
 func _push_build_mode_to_hud(active: bool) -> void:
+	if _battle_hud != null:
+		_battle_hud.call("SetBuildPlacementMode", active)
 	_set_build_action_label(active)
 
 func _apply_build_palette_visual_state(selection_id: String) -> void:

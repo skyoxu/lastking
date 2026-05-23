@@ -80,6 +80,10 @@ const RUNTIME_BRIDGE_SLOT_TO_SELECTION_OWNER := {
 		"slot_id": "InnerCastleRegionSlot_03_00",
 		"selection_id": "tower_alpha",
 	},
+	"Battlefield/SniperTower": {
+		"slot_id": "InnerCastleRegionSlot_06_05",
+		"selection_id": "tower_beta",
+	},
 	"Battlefield/Residence": {
 		"slot_id": "InnerCastleRegionSlot_06_00",
 		"selection_id": "farm_alpha",
@@ -104,14 +108,17 @@ func get_formal_selection_snapshot(slot_id: String) -> Dictionary:
 	var definition: Dictionary = get_building_definition(selection_owner)
 	if definition.is_empty():
 		return {}
-
-	var snapshot: Dictionary = definition.duplicate(true)
-	snapshot["building_slots"] = [slot_id]
-	return snapshot
+	return _formal_selection_snapshot_for(selection_owner, slot_id, definition)
 
 func _resolve_selection_owner(slot_id: String) -> String:
 	var bridge: Node = _current_bridge()
 	if bridge != null:
+		if bridge.has_method("GetPlacedBuildingSlots"):
+			var placed_variant: Variant = bridge.call("GetPlacedBuildingSlots")
+			if placed_variant is Dictionary:
+				var placed_slots: Dictionary = placed_variant as Dictionary
+				if placed_slots.has(slot_id):
+					return str(placed_slots[slot_id])
 		var slot_is_runtime_managed: bool = false
 		for path_variant in RUNTIME_BRIDGE_SLOT_TO_SELECTION_OWNER.keys():
 			var node_path: String = str(path_variant)
@@ -126,6 +133,26 @@ func _resolve_selection_owner(slot_id: String) -> String:
 		if slot_is_runtime_managed:
 			return ""
 	return ""
+
+func _formal_selection_snapshot_for(selection_id: String, slot_id: String, definition: Dictionary) -> Dictionary:
+	var snapshot: Dictionary = definition.duplicate(true)
+	snapshot["building_slots"] = [slot_id]
+	match selection_id:
+		"tower_alpha":
+			snapshot["range_slots"] = ["InnerCastleRegionSlot_04_00"]
+			snapshot["blocked_range_slots"] = ["InnerCastleRegionSlot_05_00"]
+		"tower_beta":
+			snapshot["range_slots"] = ["InnerCastleRegionSlot_05_00"]
+			snapshot["blocked_range_slots"] = ["InnerCastleRegionSlot_06_00"]
+		"barracks_alpha":
+			snapshot["range_slots"] = ["InnerCastleRegionSlot_01_00"]
+			snapshot["blocked_range_slots"] = ["InnerCastleRegionSlot_02_00"]
+			snapshot["linked_unit_slots"] = ["LeftOuterFieldSlot_00_00"]
+		"farm_alpha":
+			snapshot["hidden_slots"] = ["InnerCastleRegionSlot_03_00"]
+		_:
+			pass
+	return snapshot
 
 func _current_bridge() -> Node:
 	if _bridge_provider.is_valid():

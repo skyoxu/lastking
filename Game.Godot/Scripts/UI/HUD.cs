@@ -1353,6 +1353,7 @@ public partial class HUD : Control
         _buildPlacementModeActive = active;
         ApplyBuildActionLabel();
         RequestBottomBarRefresh();
+        RefreshBottomBarFromRuntime();
     }
 
     public void SetActiveBuildSelection(string selectionId)
