@@ -117,6 +117,17 @@ func _handle_pointer_input(event: InputEvent) -> void:
 			_build_placement_controller.call("update_drag_pointer_position", motion_event.position)
 	if event is InputEventMouseButton:
 		var mouse_event: InputEventMouseButton = event as InputEventMouseButton
+		if mouse_event.button_index == MOUSE_BUTTON_LEFT and mouse_event.pressed:
+			var pressed_slot_id: String = _slot_id_under_pointer(mouse_event.position)
+			if not pressed_slot_id.is_empty():
+				var has_active_placement: bool = false
+				if _build_placement_controller != null and _build_placement_controller.has_method("has_active_placement"):
+					has_active_placement = _build_placement_controller.call("has_active_placement") == true
+				if not has_active_placement and _selection_controller != null and _selection_controller.has_method("select_formal_building_slot"):
+					_enable_formal_selection_context()
+					_selection_controller.call("select_formal_building_slot", pressed_slot_id)
+					get_viewport().set_input_as_handled()
+					return
 		if mouse_event.button_index == MOUSE_BUTTON_RIGHT and mouse_event.pressed:
 			if _build_placement_controller != null and _build_placement_controller.has_method("has_active_placement") and _build_placement_controller.call("has_active_placement") == true:
 				_build_placement_controller.call("cancel_active_placement")
@@ -426,7 +437,12 @@ func _on_battlefield_slot_clicked(slot_id: String) -> void:
 		if handled == true:
 			return
 	if _selection_controller != null and _selection_controller.has_method("select_formal_building_slot"):
+		_enable_formal_selection_context()
 		_selection_controller.call("select_formal_building_slot", slot_id)
+
+func _enable_formal_selection_context() -> void:
+	if _selection_controller != null and _selection_controller.has_method("set_placement_context_active"):
+		_selection_controller.call("set_placement_context_active", true)
 
 func _on_battlefield_slot_hovered(slot_id: String) -> void:
 	if _build_placement_controller != null and _build_placement_controller.has_method("handle_battlefield_slot_hovered"):

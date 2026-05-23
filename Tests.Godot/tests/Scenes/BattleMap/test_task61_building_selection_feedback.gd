@@ -675,7 +675,47 @@ func test_scene_clicking_runtime_battle_tower_should_show_formal_selection_range
 	assert_that(building["selection_owner"]).is_equal("tower_alpha")
 	assert_that(building["selection_category"]).is_equal("defense")
 	assert_that(building["feedback_channel"]).is_equal("building_outline")
-	assert_that(visible_range["feedback_channel"]).is_equal("defense_range")
-	assert_that(visible_range["overlay_state"]).is_equal("overlay_legal")
-	assert_that(blocked_range["overlay_state"]).is_equal("overlay_illegal")
-	assert_that(blocked_range["range_clipped"] == true).is_true()
+	assert_that(visible_range["overlay_state"]).is_equal("overlay_hidden")
+	assert_that(blocked_range["overlay_state"]).is_equal("overlay_hidden")
+
+# acceptance: ACC:T61.1
+# acceptance: ACC:T61.6
+# acceptance: ACC:T61.10
+func test_scene_clicking_runtime_battle_tower_should_recover_selection_context_and_show_strong_highlight() -> void:
+	var screen := BATTLE_MAP_SCREEN.instantiate()
+	add_child(auto_free(screen))
+	await get_tree().process_frame
+
+	var bridge := screen.get_node("CombatExperienceRuntimeBridge")
+	var build_controller := screen.get_node("BuildPlacementController")
+	var selection_controller := screen.get_node("SelectionController")
+	assert_object(bridge).is_not_null()
+	assert_object(build_controller).is_not_null()
+	assert_object(selection_controller).is_not_null()
+
+	var placement: Dictionary = bridge.call("PlaceBuildingAtSlot", "tower_alpha", "InnerCastleRegionSlot_03_00")
+	assert_that(placement["placed"]).is_equal(true)
+	await get_tree().process_frame
+
+	build_controller.call("begin_drag_building", "tower_alpha")
+	await get_tree().process_frame
+	build_controller.call("cancel_active_placement")
+	await get_tree().process_frame
+
+	screen.call("_on_battlefield_slot_clicked", "InnerCastleRegionSlot_03_00")
+	await get_tree().process_frame
+
+	var building := _runtime_slot_snapshot(screen, "InnerCastleRegionSlot_03_00")
+	var visible_range := _runtime_slot_snapshot(screen, "InnerCastleRegionSlot_04_00")
+	var blocked_range := _runtime_slot_snapshot(screen, "InnerCastleRegionSlot_05_00")
+	var range_ring := screen.get_node_or_null("Background/BattlefieldViewport/BattlefieldRoot/LocalFeedbackLayer/SelectionRangeRing")
+
+	assert_that(building["selection_owner"]).is_equal("tower_alpha")
+	assert_that(building["feedback_channel"]).is_equal("building_outline")
+	assert_that(building["frame"]).is_equal("cool")
+	assert_that(building["outline_tint"]).is_equal("cool")
+	assert_object(range_ring).is_not_null()
+	assert_that(range_ring.visible).is_equal(true)
+	assert_that(float(range_ring.get("radius_px"))).is_equal(300.0)
+	assert_that(visible_range["overlay_state"]).is_equal("overlay_hidden")
+	assert_that(blocked_range["overlay_state"]).is_equal("overlay_hidden")
