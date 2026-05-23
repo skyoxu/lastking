@@ -5,10 +5,13 @@ var _event_types: Array[String] = []
 
 
 func before() -> void:
-	_bus = preload("res://Game.Godot/Adapters/EventBusAdapter.cs").new()
-	_bus.name = "EventBus"
-	get_tree().get_root().add_child(auto_free(_bus))
-	_bus.connect("DomainEventEmitted", Callable(self, "_on_evt"))
+	_bus = get_tree().get_root().get_node_or_null("EventBus")
+	if _bus == null:
+		_bus = preload("res://Game.Godot/Adapters/EventBusAdapter.cs").new()
+		_bus.name = "EventBus"
+		get_tree().get_root().add_child(auto_free(_bus))
+	if not _bus.is_connected("DomainEventEmitted", Callable(self, "_on_evt")):
+		_bus.connect("DomainEventEmitted", Callable(self, "_on_evt"))
 
 
 func _on_evt(type, _source, _data_json, _id, _spec, _ct, _ts) -> void:
