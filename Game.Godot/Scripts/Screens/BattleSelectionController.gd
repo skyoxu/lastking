@@ -118,7 +118,7 @@ func clear_building_selection() -> void:
 
 func select_formal_building_slot(slot_id: String) -> void:
 	if not _selection_context_active:
-		return
+		set_placement_context_active(true)
 	if _formal_selection_data_provider != null and _formal_selection_data_provider.has_method("get_formal_selection_snapshot"):
 		var snapshot_variant = _formal_selection_data_provider.call("get_formal_selection_snapshot", slot_id)
 		if snapshot_variant is Dictionary and not (snapshot_variant as Dictionary).is_empty():
