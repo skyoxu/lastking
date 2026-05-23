@@ -5419,7 +5419,7 @@
     "taskmaster_id": 67,
     "title": "Implement Daily Settlement Outcome Modal",
     "description": "Add the non-terminal daily settlement modal with pause behavior, reward entry, and phase summary context.",
-    "status": "pending",
+    "status": "done",
     "priority": "P1",
     "layer": "adapter",
     "adr_refs": [
