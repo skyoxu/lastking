@@ -202,7 +202,8 @@ func render_summary(result: Dictionary, status_text: String) -> void:
 	if not _feedback_ready:
 		return
 	_status_label.text = status_text
-	_summary_label.text = _t("battlemap.summary.title")
+	_summary_label.text = _compose_formal_summary(result)
+	_push_formal_battle_hud_messages(result, status_text)
 	_last_status_text = status_text
 	_sync_local_feedback_from_summary(result, status_text)
 
@@ -1309,8 +1310,13 @@ func _try_bridge_summary() -> Dictionary:
 			return full
 	return {}
 
-func _push_formal_battle_hud_messages(_result: Dictionary, _status_text: String) -> void:
-	return
+func _push_formal_battle_hud_messages(result: Dictionary, status_text: String) -> void:
+	if _battle_hud == null or not is_instance_valid(_battle_hud):
+		return
+	if _battle_hud.has_method("SetBattleStatusMessage"):
+		_battle_hud.call("SetBattleStatusMessage", status_text)
+	if _battle_hud.has_method("SetBattleSummaryMessage"):
+		_battle_hud.call("SetBattleSummaryMessage", _compose_formal_summary(result))
 
 func _compose_formal_summary(result: Dictionary) -> String:
 	var wall_hp: int = int(result.get("wall_hp", 100))

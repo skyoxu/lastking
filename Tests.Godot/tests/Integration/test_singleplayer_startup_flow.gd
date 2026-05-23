@@ -104,7 +104,7 @@ func test_battle_map_screen_allows_minimum_combat_loop_after_play() -> void:
     assert_object(screen).is_not_null()
     assert_bool(String(screen.name).findn("BattleMapScreen") >= 0).is_true()
 
-    var summary := screen.get_node("LegacyPrototypeRoot/VBox/Summary")
+    var summary := screen.get_node("BattleHud/CombatHud/BottomBar/Root/BattlePanel/VBox/ReservedLabel")
     var hud := screen.get_node("BattleHud")
     var counts_label := hud.get_node("CombatHud/BottomBar/Root/BattlePanel/VBox/CountsRow/CombatCountsLabel")
 
@@ -115,6 +115,6 @@ func test_battle_map_screen_allows_minimum_combat_loop_after_play() -> void:
     _request_hud_action(screen, "finish")
     await _await_frames(2)
 
-    assert_bool(summary.visible).is_false()
+    assert_bool(summary.visible).is_true()
     assert_bool(String((counts_label as Label).text).find("0") >= 0 or String((counts_label as Label).text).find("1") >= 0).is_true()
 

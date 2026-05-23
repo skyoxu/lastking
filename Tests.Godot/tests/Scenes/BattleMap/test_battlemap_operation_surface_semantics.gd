@@ -25,7 +25,7 @@ func _main_runtime() -> Dictionary:
 		"screen": screen,
 		"bridge": screen.get_node("CombatExperienceRuntimeBridge"),
 		"status": screen.get_node("LegacyPrototypeRoot/VBox/Status"),
-		"summary": screen.get_node("LegacyPrototypeRoot/VBox/Summary"),
+		"summary": screen.get_node("BattleHud/CombatHud/BottomBar/Root/BattlePanel/VBox/ReservedLabel"),
 		"presentation": screen.get_node("PresentationController"),
 	}
 
@@ -44,12 +44,12 @@ func test_runtime_ui_semantics_mapping_for_empty_failure_completion() -> void:
 	assert_object(screen.get_node_or_null("CombatExperienceRuntimeBridge")).is_not_null()
 	assert_object(screen.get_node_or_null("Background")).is_not_null()
 	assert_object(screen.get_node_or_null("LegacyPrototypeRoot/VBox/Status")).is_not_null()
-	assert_object(screen.get_node_or_null("LegacyPrototypeRoot/VBox/Summary")).is_not_null()
+	assert_object(screen.get_node_or_null("BattleHud/CombatHud/BottomBar/Root/BattlePanel/VBox/ReservedLabel")).is_not_null()
 	assert_bool(screen.visible).is_true()
 	assert_bool(background.visible).is_true()
 	assert_bool(status_label.visible).is_false()
 	assert_bool(String(status_label.text).length() > 0).is_true()
-	assert_bool(summary_label.visible).is_false()
+	assert_bool(summary_label.visible).is_true()
 
 	_request_hud_action(screen, "build")
 	_request_hud_action(screen, "wave")
@@ -58,7 +58,7 @@ func test_runtime_ui_semantics_mapping_for_empty_failure_completion() -> void:
 	_request_hud_action(screen, "finish")
 	await _await_frames(2)
 	var runtime_summary: Dictionary = bridge.call("GetSummary")
-	assert_bool(summary_label.visible).is_false()
+	assert_bool(summary_label.visible).is_true()
 	assert_bool(runtime_summary.get("mg_tower_built", false) == false).is_true()
 	assert_int(int(runtime_summary.get("combat_exchanges", 0))).is_greater_equal(1)
 	assert_bool(status_label.text.to_lower().find(finished_text) >= 0).is_true()
@@ -245,19 +245,17 @@ func test_t66_feedback_ownership_should_keep_runtime_bridge_as_state_authority()
 	var screen: Control = runtime["screen"]
 	var bridge: Node = runtime["bridge"]
 	var summary_label: Label = runtime["summary"]
-	var legend_label: Label = screen.get_node("LegacyPrototypeRoot/VBox/Legend")
-	var metrics_help_label: Label = screen.get_node("LegacyPrototypeRoot/VBox/MetricsHelp")
 	var status_label: Label = runtime["status"]
 
 	var before_summary: Dictionary = bridge.call("GetSummary")
 	var before_status := String(status_label.text)
 	summary_label.text = "LEGACY_TEXT_ONLY_OVERRIDE"
-	legend_label.text = "LEGACY_LEGEND_ONLY_OVERRIDE"
-	metrics_help_label.text = "LEGACY_METRICS_ONLY_OVERRIDE"
 	await _await_frames(1)
 	var after_legacy_override: Dictionary = bridge.call("GetSummary")
 	assert_that(after_legacy_override).is_equal(before_summary)
 	assert_str(String(status_label.text)).is_equal(before_status)
+	assert_object(screen.get_node_or_null("LegacyPrototypeRoot/VBox/Legend")).is_null()
+	assert_object(screen.get_node_or_null("LegacyPrototypeRoot/VBox/MetricsHelp")).is_null()
 
 	_request_hud_action(screen, "wave")
 	await _await_frames(1)
@@ -432,13 +430,9 @@ func test_battle_map_debug_inspector_should_exist_and_report_scene_and_hovered_n
 func test_battle_map_should_hide_legacy_summary_legend_and_metrics_help_from_player_view() -> void:
 	var runtime := await _main_runtime()
 	var screen: Control = runtime["screen"]
-	var summary_label: Label = screen.get_node("LegacyPrototypeRoot/VBox/Summary")
-	var legend_label: Label = screen.get_node("LegacyPrototypeRoot/VBox/Legend")
-	var metrics_help_label: Label = screen.get_node("LegacyPrototypeRoot/VBox/MetricsHelp")
-
-	assert_bool(summary_label.visible).is_false()
-	assert_bool(legend_label.visible).is_false()
-	assert_bool(metrics_help_label.visible).is_false()
+	assert_object(screen.get_node_or_null("LegacyPrototypeRoot/VBox/Summary")).is_null()
+	assert_object(screen.get_node_or_null("LegacyPrototypeRoot/VBox/Legend")).is_null()
+	assert_object(screen.get_node_or_null("LegacyPrototypeRoot/VBox/MetricsHelp")).is_null()
 
 
 func test_battle_map_should_hide_legacy_status_from_player_view() -> void:
