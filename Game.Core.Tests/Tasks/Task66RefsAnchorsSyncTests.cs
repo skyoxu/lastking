@@ -42,16 +42,16 @@ public sealed class Task66RefsAnchorsSyncTests
 
         integration.Should().Contain("func test_legacy_labels_should_not_be_authoritative_source_for_runtime_feedback() -> void:");
         integration.Should().Contain("summary_label.text = \"LEGACY_OVERRIDE_SUMMARY\"");
-        integration.Should().Contain("legend_label.text = \"LEGACY_OVERRIDE_LEGEND\"");
-        integration.Should().Contain("metrics_help_label.text = \"LEGACY_OVERRIDE_METRICS_HELP\"");
         integration.Should().Contain("assert_that(after_legacy_override).is_equal(baseline_summary)");
         integration.Should().Contain("String(status_label.text).to_lower().find(wave_text)");
         integration.Should().Contain("String(status_label.text).to_lower().find(finished_text)");
+        integration.Should().Contain("assert_object(screen.get_node_or_null(\"LegacyPrototypeRoot/VBox/Legend\")).is_null()");
+        integration.Should().Contain("assert_object(screen.get_node_or_null(\"LegacyPrototypeRoot/VBox/MetricsHelp\")).is_null()");
 
         scene.Should().Contain("func test_t66_feedback_ownership_should_keep_runtime_bridge_as_state_authority() -> void:");
         scene.Should().Contain("func test_t66_state_transition_semantics_should_stay_bridge_driven_after_legacy_text_override() -> void:");
-        scene.Should().Contain("legend_label.text = \"LEGACY_LEGEND_ONLY_OVERRIDE\"");
-        scene.Should().Contain("metrics_help_label.text = \"LEGACY_METRICS_ONLY_OVERRIDE\"");
+        scene.Should().Contain("summary_label.text = \"LEGACY_TEXT_ONLY_OVERRIDE\"");
+        scene.Should().Contain("summary_label.text = \"LEGACY_OVERRIDE_SHOULD_NOT_DRIVE_STATE\"");
 
         var mapping = new Dictionary<string, (string fileKey, string functionName, string[] patterns)>
         {
@@ -78,8 +78,8 @@ public sealed class Task66RefsAnchorsSyncTests
             }),
             ["ACC:T66.6"] = ("integration", "test_legacy_labels_should_not_be_authoritative_source_for_runtime_feedback", new[]
             {
-                "legend_label.text = \"LEGACY_OVERRIDE_LEGEND\"",
-                "metrics_help_label.text = \"LEGACY_OVERRIDE_METRICS_HELP\"",
+                "assert_object(screen.get_node_or_null(\"LegacyPrototypeRoot/VBox/Legend\")).is_null()",
+                "assert_object(screen.get_node_or_null(\"LegacyPrototypeRoot/VBox/MetricsHelp\")).is_null()",
             }),
             ["ACC:T66.7"] = ("scene", "test_t66_state_transition_semantics_should_stay_bridge_driven_after_legacy_text_override", new[]
             {

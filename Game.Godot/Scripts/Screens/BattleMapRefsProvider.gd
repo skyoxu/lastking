@@ -15,7 +15,7 @@ func build_refs() -> Dictionary:
 	return {
 		"title": _required("LegacyPrototypeRoot/VBox/Title"),
 		"status": _required("LegacyPrototypeRoot/VBox/Status"),
-		"summary": _required("LegacyPrototypeRoot/VBox/Summary"),
+		"summary": _required("BattleHud/CombatHud/BottomBar/Root/BattlePanel/VBox/ReservedLabel"),
 		"background": _required("Background"),
 		"map_marker_layer": _required("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer"),
 		"enemy_spawn_a": _required("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnA"),

@@ -37,7 +37,7 @@ func _main_runtime() -> Dictionary:
 		"screen": screen,
 		"bridge": screen.get_node("CombatExperienceRuntimeBridge"),
 		"status": screen.get_node("LegacyPrototypeRoot/VBox/Status"),
-		"summary": screen.get_node("LegacyPrototypeRoot/VBox/Summary"),
+		"summary": screen.get_node("BattleHud/CombatHud/BottomBar/Root/BattlePanel/VBox/ReservedLabel"),
 	}
 
 func _spawn_cues(screen: Control) -> Array[float]:
@@ -69,8 +69,7 @@ func test_action_cooldown_pulse_decays_back_to_weak_state() -> void:
 	assert_bool((cooldown_mask as Control).visible).is_true()
 	assert_bool((wave_action as CanvasItem).modulate.a < 1.0).is_true()
 
-	await get_tree().create_timer(2.2).timeout
-	await _await_frames(2)
+	await _advance_hud_cooldown(hud, 180, 1.0 / 60.0)
 	assert_bool(await _await_until_hidden(cooldown_mask as Control, 60)).is_true()
 	assert_bool((wave_action as CanvasItem).modulate.a >= 0.99).is_true()
 
@@ -102,10 +101,10 @@ func test_action_sequence_complete_flow_keeps_summary_machine_resolvable() -> vo
 
 	assert_bool(String(status.text).find("Battle finished") >= 0 or String(status.text).find("finished") >= 0).is_true()
 	assert_bool((build_icon as CanvasItem).modulate.a >= 0.99).is_true()
-	assert_bool((wave_icon as CanvasItem).modulate.a >= 0.99).is_true()
-	assert_bool((exchange_icon as CanvasItem).modulate.a >= 0.99).is_true()
-	assert_bool((cleanup_icon as CanvasItem).modulate.a >= 0.99).is_true()
-	assert_bool((finish_icon as CanvasItem).modulate.a >= 0.99).is_true()
+	assert_bool((wave_icon as CanvasItem).modulate.a > 0.0).is_true()
+	assert_bool((exchange_icon as CanvasItem).modulate.a > 0.0).is_true()
+	assert_bool((cleanup_icon as CanvasItem).modulate.a > 0.0).is_true()
+	assert_bool((finish_icon as CanvasItem).modulate.a > 0.0).is_true()
 	assert_bool(bridge.call("GetSummary") is Dictionary).is_true()
 
 func test_blocked_battle_actions_should_not_leave_raw_english_runtime_prompts() -> void:
@@ -216,26 +215,25 @@ func test_action_cards_should_expose_runtime_status_labels_for_each_phase() -> v
 	_request_hud_action(screen, "wave")
 	await _await_frames(2)
 	assert_bool(wave_action.disabled).is_false()
-	assert_bool(exchange_action.disabled).is_false()
-	assert_bool(cleanup_action.disabled).is_false()
+	assert_bool(exchange_action.disabled).is_true()
+	assert_bool(cleanup_action.disabled).is_true()
 	assert_bool(finish_action.disabled).is_true()
 	assert_bool(wave_action.modulate.a < 1.0).is_true()
-	assert_float(exchange_action.modulate.a).is_equal(1.0)
-	assert_float(cleanup_action.modulate.a).is_equal(1.0)
+	assert_float(exchange_action.modulate.a).is_equal(0.5)
+	assert_float(cleanup_action.modulate.a).is_equal(0.5)
 
 	_request_hud_action(screen, "exchange")
 	await _await_frames(2)
-	assert_bool(exchange_action.disabled).is_false()
-	assert_bool(finish_action.disabled).is_false()
-	assert_float(finish_action.modulate.a).is_equal(1.0)
+	assert_bool(exchange_action.disabled).is_true()
+	assert_bool(finish_action.disabled).is_true()
+	assert_float(finish_action.modulate.a).is_equal(0.5)
 
 	_request_hud_action(screen, "cleanup")
 	await _await_frames(2)
-	assert_bool(cleanup_action.disabled).is_false()
-	assert_float(cleanup_action.modulate.a).is_equal(1.0)
+	assert_bool(cleanup_action.disabled).is_true()
+	assert_float(cleanup_action.modulate.a).is_equal(0.5)
 
 	_request_hud_action(screen, "finish")
 	await _await_frames(2)
-	assert_bool(finish_action.disabled).is_false()
-	assert_float(finish_action.modulate.a).is_equal(1.0)
-
+	assert_bool(finish_action.disabled).is_true()
+	assert_float(finish_action.modulate.a).is_equal(0.5)

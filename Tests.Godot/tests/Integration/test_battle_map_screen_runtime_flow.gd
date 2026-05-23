@@ -1,4 +1,4 @@
-extends "res://addons/gdUnit4/src/GdUnitTestSuite.gd"
+﻿extends "res://addons/gdUnit4/src/GdUnitTestSuite.gd"
 
 func _await_frames(count: int) -> void:
 	for _i in range(count):
@@ -7,7 +7,7 @@ func _await_frames(count: int) -> void:
 
 func _status_and_summary(screen: Node) -> Dictionary:
 	var status: Label = screen.get_node("LegacyPrototypeRoot/VBox/Status")
-	var summary: Label = screen.get_node("LegacyPrototypeRoot/VBox/Summary")
+	var summary: Label = screen.get_node("BattleHud/CombatHud/BottomBar/Root/BattlePanel/VBox/ReservedLabel")
 	return {
 		"status": String(status.text),
 		"summary": String(summary.text),
@@ -154,9 +154,6 @@ const _TASK56_NODE_OWNERSHIP_MAP = {
 	"LegacyPrototypeRoot/VBox/Title": "legacy_prototype",
 	"LegacyPrototypeRoot/VBox/Status": "legacy_prototype",
 	"LegacyPrototypeRoot/VBox/Controls": "legacy_prototype",
-	"LegacyPrototypeRoot/VBox/Summary": "legacy_prototype",
-	"LegacyPrototypeRoot/VBox/Legend": "legacy_prototype",
-	"LegacyPrototypeRoot/VBox/MetricsHelp": "legacy_prototype",
 }
 
 
@@ -272,8 +269,8 @@ func test_narrow_layout_keeps_header_footer_fixed_when_only_battlefield_moves() 
 	await _await_frames(2)
 
 	var background: Control = screen.get_node("Background/BattlefieldViewport")
-	var title: Control = screen.get_node("LegacyPrototypeRoot/VBox/Title")
-	var metrics_help: Control = screen.get_node("LegacyPrototypeRoot/VBox/MetricsHelp")
+	var title: Control = screen.get_node("BattleHud/TopBar")
+	var metrics_help: Control = screen.get_node("BattleHud/CombatHud")
 	var title_before = title.global_position
 	var metrics_before = metrics_help.global_position
 	var background_before = background.global_position
@@ -283,7 +280,7 @@ func test_narrow_layout_keeps_header_footer_fixed_when_only_battlefield_moves() 
 
 	assert_float(background.global_position.x).is_equal(background_before.x - 120.0)
 	assert_that(title.global_position).is_equal(title_before)
-	assert_bool(metrics_help.visible).is_false()
+	assert_bool(metrics_help.visible).is_true()
 	assert_that(metrics_help.global_position).is_equal(metrics_before)
 	_assert_task56_ownership_map(screen)
 
@@ -301,11 +298,11 @@ func test_non_battlefield_layout_perturbation_should_not_shift_header_or_footer(
 	screen.size = Vector2(540.0, 320.0)
 	await _await_frames(2)
 
-	var title: Control = screen.get_node("LegacyPrototypeRoot/VBox/Title")
-	var metrics_help: Control = screen.get_node("LegacyPrototypeRoot/VBox/MetricsHelp")
-	var controls: Control = screen.get_node("LegacyPrototypeRoot/VBox/Controls")
+	var title: Control = screen.get_node("BattleHud/TopBar")
+	var metrics_help: Control = screen.get_node("BattleHud/CombatHud")
+	var controls: Control = screen.get_node("BattleHud/TopBar/HBox/SpeedControls")
 	var status_label: Label = screen.get_node("LegacyPrototypeRoot/VBox/Status")
-	var summary_label: Label = screen.get_node("LegacyPrototypeRoot/VBox/Summary")
+	var summary_label: Label = screen.get_node("BattleHud/CombatHud/BottomBar/Root/BattlePanel/VBox/ReservedLabel")
 	var title_before = title.global_position
 	var metrics_before = metrics_help.global_position
 	var status_before = String(status_label.text)
@@ -315,7 +312,7 @@ func test_non_battlefield_layout_perturbation_should_not_shift_header_or_footer(
 	await _await_frames(1)
 
 	assert_that(title.global_position).is_equal(title_before)
-	assert_bool(metrics_help.visible).is_false()
+	assert_bool(metrics_help.visible).is_true()
 	assert_that(metrics_help.global_position).is_equal(metrics_before)
 	assert_str(String(status_label.text)).is_equal(status_before)
 	assert_str(String(summary_label.text)).is_equal(summary_before)
@@ -339,7 +336,6 @@ func test_1600x900_frame_keeps_three_player_visible_bands_simultaneously_visible
 	var background: Control = bands["middle"]
 	var title: Control = bands["top"]
 	var status: Control = bands["bottom"]
-	var metrics_help: Control = screen.get_node("LegacyPrototypeRoot/VBox/MetricsHelp")
 	var _path: Line2D = screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/Path")
 	var background_top_before = background.global_position.y
 	var background_height_before = background.size.y
@@ -351,7 +347,6 @@ func test_1600x900_frame_keeps_three_player_visible_bands_simultaneously_visible
 	assert_bool(title.visible).is_true()
 	assert_bool(_is_visible_inside_viewport(background, viewport)).is_true()
 	assert_bool(status.visible).is_true()
-	assert_bool(metrics_help.visible).is_false()
 	assert_that(background.size).is_equal(_T59_BATTLEFIELD_SIZE)
 
 	var battlefield_top = background.global_position.y
@@ -403,11 +398,8 @@ func test_reenter_battle_map_keeps_three_band_frame_stable_after_viewport_resize
 	var second_background: Control = second_bands["middle"]
 	var second_title: Control = second_bands["top"]
 	var second_status: Control = second_bands["bottom"]
-	var second_metrics_help: Control = second_screen.get_node("LegacyPrototypeRoot/VBox/MetricsHelp")
-
 	assert_bool(second_title.visible).is_true()
 	assert_bool(second_status.visible).is_true()
-	assert_bool(second_metrics_help.visible).is_false()
 	assert_that(second_background.size).is_equal(_T59_BATTLEFIELD_SIZE)
 	_assert_task56_ownership_map(second_screen)
 
@@ -446,7 +438,7 @@ func test_battle_map_screen_minimum_runtime_loop_is_player_visible() -> void:
 	await _await_frames(2)
 	_assert_task56_ownership_map(screen)
 
-	var summary: Label = screen.get_node("LegacyPrototypeRoot/VBox/Summary")
+	var summary: Label = screen.get_node("BattleHud/CombatHud/BottomBar/Root/BattlePanel/VBox/ReservedLabel")
 	var status: Label = screen.get_node("LegacyPrototypeRoot/VBox/Status")
 	var bridge: Node = screen.get_node("CombatExperienceRuntimeBridge")
 
@@ -456,7 +448,7 @@ func test_battle_map_screen_minimum_runtime_loop_is_player_visible() -> void:
 	await _await_frames(2)
 
 	assert_bool(String(status.text).length() > 0).is_true()
-	assert_bool(summary.visible).is_false()
+	assert_bool(summary.visible).is_true()
 	var runtime_metrics = _bridge_summary_metrics(bridge)
 	assert_bool(runtime_metrics.has("friendly_units_deployed")).is_true()
 	assert_bool(runtime_metrics.has("enemy_units_spawned")).is_true()
@@ -556,7 +548,7 @@ func test_battle_map_runtime_state_should_distinguish_empty_progressed_and_compl
 
 	var bridge: Node = screen.get_node("CombatExperienceRuntimeBridge")
 	var status_label: Label = screen.get_node("LegacyPrototypeRoot/VBox/Status")
-	var summary_label: Label = screen.get_node("LegacyPrototypeRoot/VBox/Summary")
+	var summary_label: Label = screen.get_node("BattleHud/CombatHud/BottomBar/Root/BattlePanel/VBox/ReservedLabel")
 	var presentation_controller: Node = screen.get_node("PresentationController")
 	var loaded_text = str(presentation_controller.call("translate", "battlemap.status.loaded")).to_lower()
 	var require_cleanup_text = str(presentation_controller.call("translate", "battlemap.status.require_cleanup")).to_lower()
@@ -607,7 +599,9 @@ func test_battle_map_runtime_state_should_distinguish_empty_progressed_and_compl
 	assert_int(int(progressed_metrics["friendly_units_deployed"])).is_equal(0)
 	assert_bool(progressed_status != empty_status).is_true()
 	assert_bool(progressed_status != failure_status).is_true()
-	assert_str(progressed_summary).is_equal(empty_summary)
+	assert_bool(progressed_summary.length() > 0).is_true()
+	assert_bool(progressed_summary != empty_summary).is_true()
+	assert_bool(progressed_summary.find("/100") >= 0).is_true()
 	var progressed_feedback_visible: bool = (
 		progressed_feedback["prompt_visible"] == true
 		or progressed_feedback["hit_flash_visible"] == true
@@ -635,7 +629,9 @@ func test_battle_map_runtime_state_should_distinguish_empty_progressed_and_compl
 	assert_int(int(completion_metrics["combat_exchanges"])).is_greater_equal(int(progressed_metrics["combat_exchanges"]))
 	assert_bool(completion_status.length() > 0).is_true()
 	assert_bool(completion_status != failure_status).is_true()
-	assert_str(completion_summary).is_equal(progressed_summary)
+	assert_bool(completion_summary.length() > 0).is_true()
+	assert_bool(completion_summary != progressed_summary).is_true()
+	assert_bool(completion_summary.find("/100") >= 0).is_true()
 	var completion_feedback_visible: bool = (
 		completion_feedback["prompt_visible"] == true
 		or completion_feedback["hit_flash_visible"] == true
@@ -693,7 +689,7 @@ func test_back_action_without_main_navigator_should_not_mutate_runtime_summary()
 	var before_metrics = _bridge_summary_metrics(bridge)
 	var before_children = bridge.get_node("Battlefield").get_child_count()
 	var status_before = String((screen.get_node("LegacyPrototypeRoot/VBox/Status") as Label).text)
-	var summary_before = String((screen.get_node("LegacyPrototypeRoot/VBox/Summary") as Label).text)
+	var summary_before = String((screen.get_node("BattleHud/CombatHud/BottomBar/Root/BattlePanel/VBox/ReservedLabel") as Label).text)
 
 	_request_hud_action(screen, "back")
 	await _await_frames(2)
@@ -705,7 +701,7 @@ func test_back_action_without_main_navigator_should_not_mutate_runtime_summary()
 	assert_int(int(after_metrics.get("dead_units_retired", -1))).is_equal(int(before_metrics.get("dead_units_retired", -1)))
 	assert_int(bridge.get_node("Battlefield").get_child_count()).is_equal(before_children)
 	assert_str(String((screen.get_node("LegacyPrototypeRoot/VBox/Status") as Label).text)).is_equal(status_before)
-	assert_str(String((screen.get_node("LegacyPrototypeRoot/VBox/Summary") as Label).text)).is_equal(summary_before)
+	assert_str(String((screen.get_node("BattleHud/CombatHud/BottomBar/Root/BattlePanel/VBox/ReservedLabel") as Label).text)).is_equal(summary_before)
 
 
 func test_battle_map_formal_hud_back_action_should_handoff_exit_without_legacy_back_button() -> void:
@@ -1110,7 +1106,7 @@ func test_bridge_unavailable_should_keep_coordinator_path_recoverable_without_co
 	assert_int(bridge.get_node("Battlefield").get_child_count()).is_equal(baseline_children)
 	assert_bool(is_instance_valid(screen)).is_true()
 	assert_bool(String((screen.get_node("LegacyPrototypeRoot/VBox/Status") as Label).text).length() > 0).is_true()
-	assert_bool((screen.get_node("LegacyPrototypeRoot/VBox/Summary") as Label).visible).is_false()
+	assert_bool((screen.get_node("BattleHud/CombatHud/BottomBar/Root/BattlePanel/VBox/ReservedLabel") as Label).visible).is_true()
 
 
 # ACC:T66.1
@@ -1122,9 +1118,7 @@ func test_legacy_labels_should_not_be_authoritative_source_for_runtime_feedback(
 
 	var bridge: Node = screen.get_node("CombatExperienceRuntimeBridge")
 	var status_label: Label = screen.get_node("LegacyPrototypeRoot/VBox/Status")
-	var summary_label: Label = screen.get_node("LegacyPrototypeRoot/VBox/Summary")
-	var legend_label: Label = screen.get_node("LegacyPrototypeRoot/VBox/Legend")
-	var metrics_help_label: Label = screen.get_node("LegacyPrototypeRoot/VBox/MetricsHelp")
+	var summary_label: Label = screen.get_node("BattleHud/CombatHud/BottomBar/Root/BattlePanel/VBox/ReservedLabel")
 	var presentation_controller: Node = screen.get_node("PresentationController")
 	var wave_text = str(presentation_controller.call("translate", "battlemap.status.wave_spawned")).to_lower()
 	var finished_text = str(presentation_controller.call("translate", "battlemap.status.finished")).to_lower()
@@ -1135,13 +1129,13 @@ func test_legacy_labels_should_not_be_authoritative_source_for_runtime_feedback(
 
 	# Negative path: tampering legacy text must not mutate runtime counters/state.
 	summary_label.text = "LEGACY_OVERRIDE_SUMMARY"
-	legend_label.text = "LEGACY_OVERRIDE_LEGEND"
-	metrics_help_label.text = "LEGACY_OVERRIDE_METRICS_HELP"
 	await _await_frames(1)
 
 	var after_legacy_override = _bridge_summary_metrics(bridge)
 	assert_that(after_legacy_override).is_equal(baseline_summary)
 	assert_str(String(status_label.text)).is_equal(baseline_status_text)
+	assert_object(screen.get_node_or_null("LegacyPrototypeRoot/VBox/Legend")).is_null()
+	assert_object(screen.get_node_or_null("LegacyPrototypeRoot/VBox/MetricsHelp")).is_null()
 
 	# Positive path: runtime progression should still be driven by bridge flow, not legacy labels.
 	_request_hud_action(screen, "wave")
@@ -1162,7 +1156,9 @@ func test_legacy_labels_should_not_be_authoritative_source_for_runtime_feedback(
 	var terminal_summary = _bridge_summary_metrics(bridge)
 	assert_int(int(terminal_summary.get("combat_exchanges", 0))).is_greater_equal(1)
 	assert_bool(String(status_label.text).to_lower().find(finished_text) >= 0).is_true()
-	assert_str(String(summary_label.text)).is_equal(baseline_static_summary)
+	assert_bool(String(summary_label.text).length() > 0).is_true()
+	assert_str(String(summary_label.text)).is_not_equal("LEGACY_OVERRIDE_SUMMARY")
+	assert_bool(String(summary_label.text) != baseline_static_summary).is_true()
 
 func test_combat_bridge_single_source_updates_actor_snapshots_and_castle_hp() -> void:
 	var bridge = preload("res://Game.Godot/Scripts/Combat/CombatExperienceRuntimeBridge.cs").new()
@@ -1225,22 +1221,22 @@ func test_locale_switch_between_en_us_and_zh_cn_should_keep_player_visible_statu
 	add_child(auto_free(screen_en))
 	await _await_frames(2)
 	var status_en = String((screen_en.get_node("LegacyPrototypeRoot/VBox/Status") as Label).text)
-	var summary_en = String((screen_en.get_node("LegacyPrototypeRoot/VBox/Summary") as Label).text)
+	var summary_en = String((screen_en.get_node("BattleHud/CombatHud/BottomBar/Root/BattlePanel/VBox/ReservedLabel") as Label).text)
 
 	TranslationServer.set_locale("zh-CN")
 	var screen_zh = preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
 	add_child(auto_free(screen_zh))
 	await _await_frames(2)
 	var status_zh = String((screen_zh.get_node("LegacyPrototypeRoot/VBox/Status") as Label).text)
-	var summary_zh = String((screen_zh.get_node("LegacyPrototypeRoot/VBox/Summary") as Label).text)
+	var summary_zh = String((screen_zh.get_node("BattleHud/CombatHud/BottomBar/Root/BattlePanel/VBox/ReservedLabel") as Label).text)
 
 	# Locale switch must keep status/summary readable for players in both locales.
 	assert_bool(status_en.length() > 0).is_true()
 	assert_bool(status_zh.length() > 0).is_true()
 	assert_bool(summary_en.length() > 0).is_true()
 	assert_bool(summary_zh.length() > 0).is_true()
-	assert_bool((screen_en.get_node("LegacyPrototypeRoot/VBox/Summary") as Label).visible).is_false()
-	assert_bool((screen_zh.get_node("LegacyPrototypeRoot/VBox/Summary") as Label).visible).is_false()
+	assert_bool((screen_en.get_node("BattleHud/CombatHud/BottomBar/Root/BattlePanel/VBox/ReservedLabel") as Label).visible).is_true()
+	assert_bool((screen_zh.get_node("BattleHud/CombatHud/BottomBar/Root/BattlePanel/VBox/ReservedLabel") as Label).visible).is_true()
 
 	TranslationServer.set_locale(original_locale)
 
@@ -1289,5 +1285,6 @@ func test_t70_designated_integration_flow_should_cover_outcome_evidence_and_tran
 	var settlement_resolved_text = str(presentation_controller.call("translate", "battlemap.status.settlement_resolved")).to_lower()
 	assert_bool(String(status_label.text).to_lower().find(settlement_resolved_text) >= 0).is_true()
 	assert_that(bridge.call("GetSummary")).is_equal(summary_before_resolve)
+
 
 
