@@ -1050,16 +1050,11 @@ public partial class HUD : Control
 
     private void RequestBottomBarRefresh()
     {
-        GD.Print("[HUD] RequestBottomBarRefresh");
         _bottomBarRefreshPending = true;
     }
 
     private void FlushBottomBarRefresh()
     {
-        if (_bottomBarRefreshPending)
-        {
-            GD.Print("[HUD] FlushBottomBarRefresh pending=true");
-        }
         if (!_bottomBarRefreshPending)
         {
             return;
@@ -1341,7 +1336,6 @@ public partial class HUD : Control
 
     public void SetBuildContextMessages(string title, string detail)
     {
-        GD.Print($"[HUD] SetBuildContextMessages title={title} detail={detail}");
         _buildContextTitleOverride = title?.Trim() ?? string.Empty;
         _buildContextDetailOverride = detail?.Trim() ?? string.Empty;
         RequestBottomBarRefresh();
@@ -1349,28 +1343,46 @@ public partial class HUD : Control
 
     public void SetBuildPlacementMode(bool active)
     {
-        GD.Print($"[HUD] SetBuildPlacementMode active={active}");
         _buildPlacementModeActive = active;
         ApplyBuildActionLabel();
+        ApplyBuildPlacementActionLock();
         RequestBottomBarRefresh();
-        RefreshBottomBarFromRuntime();
     }
 
     public void SetActiveBuildSelection(string selectionId)
     {
-        GD.Print($"[HUD] SetActiveBuildSelection selectionId={selectionId}");
         _activeBuildSelectionId = selectionId?.Trim() ?? string.Empty;
         SyncBuildPaletteVisualState();
     }
 
     public void ClearBuildContextMessages()
     {
-        GD.Print("[HUD] ClearBuildContextMessages");
         _buildContextTitleOverride = string.Empty;
         _buildContextDetailOverride = string.Empty;
         _activeBuildSelectionId = string.Empty;
         SyncBuildPaletteVisualState();
         RequestBottomBarRefresh();
+    }
+
+    private void ApplyBuildPlacementActionLock()
+    {
+        if (_buildPlacementModeActive)
+        {
+            ApplyActionAvailability(
+                buildAvailable: true,
+                waveAvailable: false,
+                exchangeAvailable: false,
+                cleanupAvailable: false,
+                finishAvailable: false);
+            return;
+        }
+
+        ApplyActionAvailability(
+            buildAvailable: true,
+            waveAvailable: true,
+            exchangeAvailable: false,
+            cleanupAvailable: false,
+            finishAvailable: false);
     }
 
     public void ClearBattleSurfaceMessages()

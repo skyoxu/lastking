@@ -64,37 +64,19 @@ func process_runtime_frame(delta: float) -> void:
 		_presentation_controller.call("sync_locale_and_texts")
 	var bridge: Node = _current_bridge()
 	var probe_wave_frame: bool = _operation_controller != null and _operation_controller.has_method("consume_post_wave_probe_tick") and _operation_controller.call("consume_post_wave_probe_tick") == true
-	if probe_wave_frame:
-		print("[Runtime] post_wave_frame start")
 	if bridge != null and bridge.has_method("AdvanceSimulation"):
-		if probe_wave_frame:
-			print("[Runtime] post_wave_frame -> AdvanceSimulation")
 		bridge.call("AdvanceSimulation", delta)
-		if probe_wave_frame:
-			print("[Runtime] post_wave_frame <- AdvanceSimulation")
 	if _day_night_loop != null and _day_night_loop.has_method("SimulateProcessStep"):
 		var paused: bool = _is_runtime_paused()
 		_day_night_loop.set("PauseLoop", paused)
 		if not paused:
-			if probe_wave_frame:
-				print("[Runtime] post_wave_frame -> SimulateProcessStep")
 			_day_night_loop.call("SimulateProcessStep", delta)
-			if probe_wave_frame:
-				print("[Runtime] post_wave_frame <- SimulateProcessStep")
-	if probe_wave_frame:
-		print("[Runtime] post_wave_frame -> sync hud")
 	_sync_battle_hud_runtime_state()
-	if probe_wave_frame:
-		print("[Runtime] post_wave_frame <- sync hud")
 	if _outcome_controller != null and _outcome_controller.has_method("sync_terminal_outcome_from_bridge"):
 		var wave_started: bool = _operation_controller != null and _operation_controller.has_method("is_wave_started") and _operation_controller.call("is_wave_started") == true
 		_outcome_controller.call("sync_terminal_outcome_from_bridge", wave_started)
-	if probe_wave_frame:
-		print("[Runtime] post_wave_frame -> feedback")
 	if _feedback_controller != null and _feedback_controller.has_method("process_frame"):
 		_feedback_controller.call("process_frame", delta)
-	if probe_wave_frame:
-		print("[Runtime] post_wave_frame end")
 
 func _sync_battle_hud_runtime_state() -> void:
 	if _hud == null:

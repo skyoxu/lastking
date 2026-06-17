@@ -74,19 +74,12 @@ func _disable_battle_hud_process_for_isolation() -> void:
 	_battle_hud.set_process_unhandled_key_input(true)
 
 func _process(delta: float) -> void:
-	if _post_place_probe_frames > 0:
-		print("[BattleMapScreen] post_place_frame start remaining=%d" % _post_place_probe_frames)
 	if _debug_component_enabled("runtime"):
-		if _post_place_probe_frames > 0:
-			print("[BattleMapScreen] post_place_frame -> runtime coordinator")
 		_runtime_coordinator.call("process_runtime_frame", delta)
-		if _post_place_probe_frames > 0:
-			print("[BattleMapScreen] post_place_frame <- runtime coordinator")
 	if _debug_component_enabled("debug_geometry"):
 		_combat_debug_geometry_controller.call("process_frame", delta)
 	_presentation_controller.call("sync_locale_and_texts")
 	if _post_place_probe_frames > 0:
-		print("[BattleMapScreen] post_place_frame end remaining=%d" % _post_place_probe_frames)
 		_post_place_probe_frames -= 1
 
 func _exit_tree() -> void:
@@ -134,14 +127,10 @@ func _handle_pointer_input(event: InputEvent) -> void:
 				return
 		if mouse_event.button_index == MOUSE_BUTTON_LEFT and not mouse_event.pressed:
 			var hovered_slot_id: String = _slot_id_under_pointer(mouse_event.position)
-			print("[BattleMapScreen] release detected pos=%s slot=%s" % [str(mouse_event.position), hovered_slot_id])
 			if not hovered_slot_id.is_empty():
 				if _build_placement_controller != null and _build_placement_controller.has_method("handle_battlefield_slot_released"):
-					print("[BattleMapScreen] forwarding release to build placement controller")
 					_build_placement_controller.call("handle_battlefield_slot_released", hovered_slot_id)
-					print("[BattleMapScreen] build placement controller returned from release")
 			elif _build_placement_controller != null and _build_placement_controller.has_method("handle_pointer_release_without_slot"):
-				print("[BattleMapScreen] release without slot")
 				_build_placement_controller.call("handle_pointer_release_without_slot")
 
 func _debug_component_enabled(component_name: String) -> bool:

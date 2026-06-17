@@ -99,15 +99,12 @@ func on_build() -> void:
 	_sync(summary)
 
 func on_wave() -> void:
-	print("[Operation] on_wave start")
 	if _is_settlement_open():
-		print("[Operation] on_wave blocked by settlement")
 		_render_status_only(_t("battlemap.status.settlement_open"))
 		if _feedback_controller != null:
 			_feedback_controller.call("show_local_prompt", _t("battlemap.prompt.resolve_settlement_before_continue"))
 		return
 	if _is_terminal_visible():
-		print("[Operation] on_wave blocked by terminal")
 		_render_status_only(_t("battlemap.status.terminal_outcome_open"))
 		if _feedback_controller != null:
 			_feedback_controller.call("show_local_prompt", _t("battlemap.prompt.close_terminal_before_wave"))
@@ -117,22 +114,24 @@ func on_wave() -> void:
 	_cleaned = false
 	_outcome_published = false
 	if _feedback_controller != null:
-		print("[Operation] on_wave -> mark_spawn_pulse")
 		_feedback_controller.call("mark_spawn_pulse", SPAWN_PULSE_DURATION_SEC)
-	print("[Operation] on_wave -> SpawnEnemyWavePhase")
 	var summary: Dictionary = _call_or_fallback("SpawnEnemyWavePhase")
-	print("[Operation] on_wave <- SpawnEnemyWavePhase")
 	_render(summary, _t("battlemap.status.wave_spawned"))
-	print("[Operation] on_wave <- render")
 	_sync(summary)
-	_post_wave_probe_frames = 5
-	print("[Operation] on_wave end")
+	if _post_wave_probe_enabled():
+		_post_wave_probe_frames = 5
 
 func consume_post_wave_probe_tick() -> bool:
 	if _post_wave_probe_frames <= 0:
 		return false
 	_post_wave_probe_frames -= 1
 	return true
+
+func _post_wave_probe_enabled() -> bool:
+	if not OS.has_environment("LASTKING_BATTLEMAP_ENABLE_POST_WAVE_PROBE"):
+		return false
+	var raw := OS.get_environment("LASTKING_BATTLEMAP_ENABLE_POST_WAVE_PROBE").strip_edges().to_lower()
+	return raw == "1" or raw == "true" or raw == "yes"
 
 func on_auto_wave() -> void:
 	_auto_wave = not _auto_wave

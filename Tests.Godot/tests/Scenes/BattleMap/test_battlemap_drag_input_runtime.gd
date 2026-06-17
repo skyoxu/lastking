@@ -65,6 +65,41 @@ func test_screen_level_pointer_bridge_should_release_on_hovered_slot_when_pointe
 	assert_bool(summary.get("mg_tower_built", false) == true).is_true()
 	assert_bool(controller.call("has_active_placement") == false).is_true()
 
+func test_drag_release_building_should_not_arm_post_place_probe_or_stall_followup_frames() -> void:
+	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
+	add_child(auto_free(screen))
+	await _await_frames(3)
+
+	var controller: Node = screen.get_node("BuildPlacementController")
+	var bridge: Node = screen.get_node("CombatExperienceRuntimeBridge")
+	var battlefield: Node = screen.get_node("Background")
+	var viewport: Control = screen.get_node("Background/BattlefieldViewport")
+
+	controller.call("begin_drag_building", "tower_alpha")
+	await _await_frames(1)
+
+	var slot_position: Vector2 = battlefield.call("get_slot_position", "InnerCastleRegionSlot_06_05")
+	var pointer_position := viewport.position + slot_position + Vector2(24, 24)
+
+	var motion := InputEventMouseMotion.new()
+	motion.position = pointer_position
+	screen.call("debug_handle_pointer_input", motion)
+	await _await_frames(1)
+
+	var release := InputEventMouseButton.new()
+	release.button_index = MOUSE_BUTTON_LEFT
+	release.pressed = false
+	release.position = pointer_position
+	screen.call("debug_handle_pointer_input", release)
+	await _await_frames(90)
+
+	var summary: Dictionary = bridge.call("GetSummary")
+	var preview: Dictionary = controller.call("get_drag_preview_state")
+	assert_bool(summary.get("mg_tower_built", false) == true).is_true()
+	assert_bool(controller.call("has_active_placement") == false).is_true()
+	assert_bool(preview.get("visible", true) == false).is_true()
+	assert_int(int(screen.get("_post_place_probe_frames"))).is_equal(0)
+
 
 func test_screen_level_placed_tower_should_fire_after_enemy_wave_spawns() -> void:
 	var screen := preload("res://Game.Godot/Scenes/Screens/BattleMapScreen.tscn").instantiate()
