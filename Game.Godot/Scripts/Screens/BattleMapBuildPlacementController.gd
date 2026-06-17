@@ -92,25 +92,22 @@ func handle_battlefield_slot_hovered(slot_id: String) -> bool:
 func handle_battlefield_slot_released(slot_id: String) -> bool:
 	if _active_selection_id.is_empty():
 		return false
-	print("[BuildPlacement] release slot=%s selection=%s drag=%s" % [slot_id, _active_selection_id, str(_drag_active)])
 	var evaluation := _evaluate_slot_legality(_active_selection_id, slot_id)
 	var legality: String = str(evaluation.get("legality", ""))
 	if legality == LEGALITY_VALID_INNER or legality == LEGALITY_VALID_OUTER:
 		var bridge: Node = _current_bridge()
 		var placement_result: Dictionary = {}
 		if bridge != null and bridge.has_method("PlaceBuildingAtSlot"):
-			print("[BuildPlacement] calling PlaceBuildingAtSlot")
 			var result: Variant = bridge.call("PlaceBuildingAtSlot", _active_selection_id, slot_id)
-			print("[BuildPlacement] PlaceBuildingAtSlot returned type=%s" % [str(typeof(result))])
 			if result is Dictionary:
 				placement_result = result
 				if placement_result.get("placed", false) == true:
-					print("[BuildPlacement] placement accepted")
 					_occupied_slots[slot_id] = _active_selection_id
 					if _battlefield_view != null and _battlefield_view.has_method("set_slot_available"):
 						_battlefield_view.call("set_slot_available", slot_id, false)
 					_schedule_cancel_active_placement()
-					_schedule_post_release_probe()
+					if _post_release_probe_enabled():
+						_schedule_post_release_probe()
 					return true
 		var failure_reason_code := str(placement_result.get("reason", ""))
 		var failure_reason_key := _build_error_key_for_reason_code(failure_reason_code)
@@ -180,27 +177,19 @@ func get_drag_preview_state() -> Dictionary:
 	}
 
 func cancel_active_placement() -> void:
-	print("[BuildPlacement] cancel_active_placement")
 	_pending_cancel_after_place = false
 	_active_selection_id = ""
 	_drag_active = false
 	_hovered_slot_id = ""
 	_pointer_position = Vector2.ZERO
 	if _selection_controller != null and _selection_controller.has_method("set_placement_context_active"):
-		print("[BuildPlacement] cancel -> set_placement_context_active(false)")
 		_selection_controller.call("set_placement_context_active", false)
 	if _selection_controller != null and _selection_controller.has_method("clear_building_selection"):
-		print("[BuildPlacement] cancel -> clear_building_selection")
 		_selection_controller.call("clear_building_selection")
-	print("[BuildPlacement] cancel -> push build mode false")
 	_push_build_mode_to_hud(false)
-	print("[BuildPlacement] cancel -> clear active selection in hud")
 	_push_active_build_selection_to_hud("")
-	print("[BuildPlacement] cancel -> clear build context")
 	_clear_build_context()
-	print("[BuildPlacement] cancel -> update drag preview")
 	_update_drag_preview()
-	print("[BuildPlacement] cancel complete")
 
 func _schedule_cancel_active_placement() -> void:
 	if _pending_cancel_after_place:
@@ -226,10 +215,15 @@ func _schedule_post_release_probe() -> void:
 func _run_post_release_probe(probe_id: int, stage: int) -> void:
 	if probe_id != _post_release_probe_id:
 		return
-	print("[BuildPlacement] post_release_probe stage=%d" % stage)
 	if stage >= 3:
 		return
 	call_deferred("_run_post_release_probe", probe_id, stage + 1)
+
+func _post_release_probe_enabled() -> bool:
+	if not OS.has_environment("LASTKING_BATTLEMAP_ENABLE_POST_PLACE_PROBE"):
+		return false
+	var raw := OS.get_environment("LASTKING_BATTLEMAP_ENABLE_POST_PLACE_PROBE").strip_edges().to_lower()
+	return raw == "1" or raw == "true" or raw == "yes"
 
 func _begin_placement(selection_id: String, drag_active: bool) -> bool:
 	if _selection_data_provider == null or _battlefield_view == null:
