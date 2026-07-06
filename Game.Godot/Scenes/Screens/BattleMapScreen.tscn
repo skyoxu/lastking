@@ -151,15 +151,14 @@ grow_vertical = 2
 mouse_filter = 2
 
 [node name="LeftFlash" type="ColorRect" parent="Background/BattlefieldViewport/BattlefieldRoot/LocalFeedbackLayer/WallHitFlashOverlay"]
-offset_left = 552.0
-offset_right = 648.0
+offset_right = 96.0
 offset_bottom = 624.0
 mouse_filter = 2
 color = Color(1, 0.858824, 0.611765, 0.42)
 
 [node name="RightFlash" type="ColorRect" parent="Background/BattlefieldViewport/BattlefieldRoot/LocalFeedbackLayer/WallHitFlashOverlay"]
-offset_left = 936.0
-offset_right = 1032.0
+offset_left = 504.0
+offset_right = 600.0
 offset_bottom = 624.0
 mouse_filter = 2
 color = Color(1, 0.858824, 0.611765, 0.42)
@@ -175,14 +174,13 @@ grow_vertical = 2
 mouse_filter = 2
 
 [node name="LeftCrackTiles" type="Control" parent="Background/BattlefieldViewport/BattlefieldRoot/LocalFeedbackLayer/WallCrackOverlay"]
-offset_left = 576.0
-offset_right = 624.0
+offset_right = 48.0
 offset_bottom = 624.0
 mouse_filter = 2
 
 [node name="RightCrackTiles" type="Control" parent="Background/BattlefieldViewport/BattlefieldRoot/LocalFeedbackLayer/WallCrackOverlay"]
-offset_left = 960.0
-offset_right = 1008.0
+offset_left = 528.0
+offset_right = 576.0
 offset_bottom = 624.0
 mouse_filter = 2
 
@@ -282,14 +280,9 @@ text = ""
 
 [node name="Path" type="Line2D" parent="Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer"]
 visible = false
-points = PackedVector2Array(96, 144, 336, 144, 576, 240, 792, 240, 1008, 336, 1296, 432, 1488, 432)
+points = PackedVector2Array(1560, 312, 24, 312)
 width = 8.0
 default_color = Color(0.909804, 0.752941, 0.482353, 1)
-
-[node name="EnemySpawnA" type="ColorRect" parent="Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer"]
-offset_right = 48.0
-offset_bottom = 624.0
-color = Color(0.231373, 0.0862745, 0.0862745, 0.18)
 
 [node name="EnemySpawnB" type="ColorRect" parent="Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer"]
 offset_left = 1536.0

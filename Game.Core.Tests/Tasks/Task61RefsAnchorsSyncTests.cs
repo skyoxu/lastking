@@ -14,18 +14,23 @@ public sealed class Task61RefsAnchorsSyncTests
     public void ShouldResolveTaskScopedEvidenceFiles_WhenTask61RefsAndAnchorsAreValidated()
     {
         var root = FindRepositoryRoot();
+        var master = JsonDocument.Parse(File.ReadAllText(Path.Combine(root, ".taskmaster", "tasks", "tasks.json")));
         var back = JsonDocument.Parse(File.ReadAllText(Path.Combine(root, ".taskmaster", "tasks", "tasks_back.json")));
         var gameplay = JsonDocument.Parse(File.ReadAllText(Path.Combine(root, ".taskmaster", "tasks", "tasks_gameplay.json")));
         var t61Test = File.ReadAllText(Path.Combine(root, "Tests.Godot", "tests", "Scenes", "BattleMap", "test_task61_building_selection_feedback.gd"));
         var thisFile = File.ReadAllText(Path.Combine(root, "Game.Core.Tests", "Tasks", "Task61RefsAnchorsSyncTests.cs"));
 
+        var masterTask = FindMasterTask(master, 61);
         var backTask = FindTask61(back);
         var gameplayTask = FindTask61(gameplay);
+        masterTask.Should().NotBeNull();
         backTask.Should().NotBeNull();
         gameplayTask.Should().NotBeNull();
 
+        var masterTaskValue = masterTask!.Value;
         var backTaskValue = backTask!.Value;
         var gameplayTaskValue = gameplayTask!.Value;
+        var masterRefs = masterTaskValue.GetProperty("testRefs");
         var backAcceptance = backTaskValue.GetProperty("acceptance");
         var gameplayAcceptance = gameplayTaskValue.GetProperty("acceptance");
         var backRefs = backTaskValue.GetProperty("test_refs");
@@ -33,8 +38,24 @@ public sealed class Task61RefsAnchorsSyncTests
 
         backAcceptance[0].GetString().Should().NotContain("test_battle_map_screen_runtime_flow.gd");
         gameplayAcceptance[0].GetString().Should().NotContain("test_battle_map_screen_runtime_flow.gd");
+        masterRefs.ToString().Should().Contain("Game.Core.Tests/Tasks/Task61RefsAnchorsSyncTests.cs");
         backRefs.ToString().Should().Contain("Game.Core.Tests/Tasks/Task61RefsAnchorsSyncTests.cs");
         gameplayRefs.ToString().Should().Contain("Game.Core.Tests/Tasks/Task61RefsAnchorsSyncTests.cs");
+        masterRefs.ToString().Should().Contain("Tests.Godot/tests/Scenes/BattleMap/test_build_placement_controller.gd");
+        masterRefs.ToString().Should().Contain("Tests.Godot/tests/Scenes/BattleMap/test_build_placement_controller_resource_cards.gd");
+        masterRefs.ToString().Should().Contain("Tests.Godot/tests/Scenes/BattleMap/test_build_placement_controller_runtime_actions.gd");
+        masterRefs.ToString().Should().Contain("Tests.Godot/tests/Scenes/BattleMap/test_build_placement_controller_click_actions.gd");
+        masterRefs.ToString().Should().Contain("Tests.Godot/tests/Scenes/BattleMap/test_build_placement_controller_invalid_click_actions.gd");
+        backRefs.ToString().Should().Contain("Tests.Godot/tests/Scenes/BattleMap/test_build_placement_controller.gd");
+        backRefs.ToString().Should().Contain("Tests.Godot/tests/Scenes/BattleMap/test_build_placement_controller_resource_cards.gd");
+        backRefs.ToString().Should().Contain("Tests.Godot/tests/Scenes/BattleMap/test_build_placement_controller_runtime_actions.gd");
+        backRefs.ToString().Should().Contain("Tests.Godot/tests/Scenes/BattleMap/test_build_placement_controller_click_actions.gd");
+        backRefs.ToString().Should().Contain("Tests.Godot/tests/Scenes/BattleMap/test_build_placement_controller_invalid_click_actions.gd");
+        gameplayRefs.ToString().Should().Contain("Tests.Godot/tests/Scenes/BattleMap/test_build_placement_controller.gd");
+        gameplayRefs.ToString().Should().Contain("Tests.Godot/tests/Scenes/BattleMap/test_build_placement_controller_resource_cards.gd");
+        gameplayRefs.ToString().Should().Contain("Tests.Godot/tests/Scenes/BattleMap/test_build_placement_controller_runtime_actions.gd");
+        gameplayRefs.ToString().Should().Contain("Tests.Godot/tests/Scenes/BattleMap/test_build_placement_controller_click_actions.gd");
+        gameplayRefs.ToString().Should().Contain("Tests.Godot/tests/Scenes/BattleMap/test_build_placement_controller_invalid_click_actions.gd");
         backAcceptance[0].GetString().Should().Contain("test_task61_building_selection_feedback.gd");
         gameplayAcceptance[0].GetString().Should().Contain("test_task61_building_selection_feedback.gd");
 
@@ -69,6 +90,30 @@ public sealed class Task61RefsAnchorsSyncTests
             }
 
             if (id.GetInt32() == 61)
+            {
+                return item;
+            }
+        }
+
+        return null;
+    }
+
+    private static JsonElement? FindMasterTask(JsonDocument doc, int taskId)
+    {
+        if (!doc.RootElement.TryGetProperty("master", out var master) ||
+            !master.TryGetProperty("tasks", out var tasks))
+        {
+            return null;
+        }
+
+        foreach (var item in tasks.EnumerateArray())
+        {
+            if (!item.TryGetProperty("id", out var id))
+            {
+                continue;
+            }
+
+            if (id.GetInt32() == taskId)
             {
                 return item;
             }

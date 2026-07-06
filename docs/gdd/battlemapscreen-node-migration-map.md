@@ -37,7 +37,7 @@ It is intentionally conservative:
 | `Background` | battlefield background root | `BattlefieldRoot/MapBaseLayer/TerrainBackdrop` | move/rename | stop using it as a catch-all parent for runtime visuals |
 | `Path` | placeholder path visual | `BattlefieldRoot/MapMarkerLayer` or `PathingVisualLayer` | move | keep only as a temporary debug visual if still useful |
 | `PlayerCastle` | placeholder castle marker | `BattlefieldRoot/MapMarkerLayer/CastleAnchor` or map art replacement | move/rename | should become marker/anchor, not final castle UI |
-| `EnemySpawnA` | left spawn band marker | `BattlefieldRoot/MapMarkerLayer/EnemySpawnMarkerLeft` | keep/rename later | current runtime uses a full-height left spawn band |
+| `EnemySpawnB` | right spawn band marker | `BattlefieldRoot/MapMarkerLayer/EnemySpawnMarkerRight` | keep/rename later | current runtime uses a full-height right spawn band |
 | `EnemySpawnB` | right spawn band marker | `BattlefieldRoot/MapMarkerLayer/EnemySpawnMarkerRight` | keep/rename later | current runtime uses a full-height right spawn band |
 | `Margin` | prototype UI root | `LegacyPrototypeRoot/Margin` | move | keep only during migration |
 | `Margin/VBox/Title` | prototype title label | `LegacyPrototypeRoot/...` | keep-temporary | remove after HUD-driven title/state is no longer needed |
@@ -135,7 +135,6 @@ Move:
 - `Background`
 - `Path`
 - `PlayerCastle`
-- `EnemySpawnA`
 - `EnemySpawnB`
 
 Goal:

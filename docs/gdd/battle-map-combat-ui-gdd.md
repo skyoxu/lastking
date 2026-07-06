@@ -42,7 +42,6 @@ Applies-To:
 - 地图底图是 `Background` + `Line2D Path`
 - 阵营与地形骨架已静态摆放：
   - `PlayerCastle`
-  - `EnemySpawnA`
   - `EnemySpawnB`
 - 按钮已存在并能触发流程：
   - `BuildBtn`
@@ -201,7 +200,7 @@ Applies-To:
 | 地图布局 | `Background` + `Path` + 固定锚点 | 已有 |
 | 阵营图例 | `Legend` 文本 | 已有 |
 | 建筑槽位 | 严格 `48x48` 网格槽位 | 已有 |
-| 敌军刷新点 | `EnemySpawnA/B` 左右整列出生带 | 已有 |
+| 敌军刷新点 | `EnemySpawnB` 右侧整列出生带 | 已有 |
 | 单位路径 | `Line2D` + `GetActorSnapshots()` token | 部分已有 |
 | 按钮反馈 | `Status` + 按钮文本 | 部分已有 |
 | 友军/敌军数量 | `Summary` 文本 | 已有 |

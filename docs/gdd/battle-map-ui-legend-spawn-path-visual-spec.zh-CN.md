@@ -35,7 +35,7 @@ Instead, the battlefield itself communicates meaning through:
 
 ## 3. Spawn Side Rules
 
-- the leftmost outer slot column defines the left spawn band
+- the rightmost outer slot column defines the only enemy spawn band
 - the rightmost outer slot column defines the right spawn band
 - spawn distribution is highest near vertical center and falls off toward top and bottom edges
 - that probability logic stays in backend logic and is not visualized as a heat map

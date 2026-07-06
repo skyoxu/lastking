@@ -200,7 +200,6 @@ func _configure_controllers() -> void:
 			"summary": refs["summary"],
 			"background": refs["background"],
 			"battlefield_view": get_node_or_null("Background"),
-			"enemy_spawn_a": refs["enemy_spawn_a"],
 			"enemy_spawn_b": refs["enemy_spawn_b"],
 			"local_feedback_layer": refs["local_feedback_layer"],
 			"hit_flash_overlay": refs["hit_flash_overlay"],

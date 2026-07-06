@@ -379,19 +379,16 @@ func test_t68_victory_outcome_modal_node_paths_should_exist_and_default_hidden()
 	assert_int((actions as VBoxContainer).get_child_count()).is_equal(2)
 
 
-func test_battle_map_should_hide_player_castle_marker_and_place_enemy_spawns_on_both_sides() -> void:
+func test_battle_map_should_hide_player_castle_marker_and_place_enemy_spawn_only_on_right_side() -> void:
 	var runtime := await _main_runtime()
 	var screen: Control = runtime["screen"]
 	var viewport: Control = screen.get_node("Background/BattlefieldViewport")
 	var player_castle := screen.get_node_or_null("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/PlayerCastle")
-	var spawn_a: ColorRect = screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnA")
+	var spawn_a := screen.get_node_or_null("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnA")
 	var spawn_b: ColorRect = screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnB")
 
 	assert_object(player_castle).is_null()
-	assert_float(spawn_a.position.x).is_equal(0.0)
-	assert_float(spawn_a.position.y).is_equal(0.0)
-	assert_float(spawn_a.size.x).is_equal(48.0)
-	assert_float(spawn_a.size.y).is_equal(viewport.size.y)
+	assert_object(spawn_a).is_null()
 	assert_float(spawn_b.position.x).is_equal(viewport.size.x - 48.0)
 	assert_float(spawn_b.position.y).is_equal(0.0)
 	assert_float(spawn_b.size.x).is_equal(48.0)

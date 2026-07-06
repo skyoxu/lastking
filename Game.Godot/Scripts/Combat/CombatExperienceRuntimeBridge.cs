@@ -84,8 +84,7 @@ public partial class CombatExperienceRuntimeBridge : Node
 
     private enum SpawnLane
     {
-        Left = 0,
-        Right = 1,
+        Right = 0,
     }
 
     private readonly struct TowerPlacementRuntime
@@ -152,22 +151,17 @@ public partial class CombatExperienceRuntimeBridge : Node
     private const int CastleAttackDamage = 5;
     private static readonly Vector2[] RightLanePathPoints =
     {
-        new(1488f, 312f),
-        new(96f, 312f),
-    };
-    private static readonly Vector2[] LeftLanePathPoints =
-    {
-        new(96f, 312f),
-        new(1488f, 312f),
+        new(1560f, 312f),
+        new(24f, 312f),
     };
     private static readonly System.Collections.Generic.Dictionary<string, Vector2> RuntimeMarkerPositions = new(StringComparer.Ordinal)
     {
-        ["MgTower"] = new Vector2(792f, 312f),
-        ["Barracks"] = new Vector2(648f, 312f),
-        ["Residence"] = new Vector2(936f, 312f),
+        ["MgTower"] = new Vector2(216f, 24f),
+        ["Barracks"] = new Vector2(600f, 24f),
+        ["Residence"] = new Vector2(360f, 24f),
     };
-    private const float LeftWallCenterX = 600f;
-    private const float RightWallCenterX = 984f;
+    private const float LeftWallCenterX = 24f;
+    private const float RightWallCenterX = 552f;
     private const string SettingsConfigPath = "user://settings.cfg";
     private const string SettingsSection = "settings";
     private const string DamageNumbersEnabledKey = "combat_damage_numbers_enabled";
@@ -737,7 +731,7 @@ public partial class CombatExperienceRuntimeBridge : Node
                 ["visual_tier"] = actor.VisualTier,
                 ["is_elite"] = actor.IsElite,
                 ["is_boss"] = actor.IsBoss,
-                ["lane"] = actor.Lane == SpawnLane.Left ? "left" : "right",
+                ["lane"] = "right",
             });
         }
 
@@ -979,7 +973,7 @@ public partial class CombatExperienceRuntimeBridge : Node
     private static Vector2 SamplePath(float progress, SpawnLane lane)
     {
         var p = Math.Clamp(progress, 0f, 1f);
-        var pathPoints = lane == SpawnLane.Left ? LeftLanePathPoints : RightLanePathPoints;
+        var pathPoints = RightLanePathPoints;
         var segmentCount = pathPoints.Length - 1;
         if (segmentCount <= 0)
         {
@@ -1355,17 +1349,13 @@ public partial class CombatExperienceRuntimeBridge : Node
         }
 
         float regionOffsetX = 0f;
-        if (slotId.StartsWith("LeftOuterFieldSlot_", StringComparison.Ordinal))
+        if (slotId.StartsWith("InnerCastleRegionSlot_", StringComparison.Ordinal))
         {
-            regionOffsetX = 0f;
-        }
-        else if (slotId.StartsWith("InnerCastleRegionSlot_", StringComparison.Ordinal))
-        {
-            regionOffsetX = 624f;
+            regionOffsetX = 48f;
         }
         else if (slotId.StartsWith("RightOuterFieldSlot_", StringComparison.Ordinal))
         {
-            regionOffsetX = 1008f;
+            regionOffsetX = 576f;
         }
         else
         {
@@ -1569,7 +1559,6 @@ public partial class CombatExperienceRuntimeBridge : Node
                     }
 
                     var spawns = new System.Collections.Generic.List<BattleMapWaveSpawn>();
-                    AppendWaveLaneSpawns(waveEntry, "left", SpawnLane.Left, spawns);
                     AppendWaveLaneSpawns(waveEntry, "right", SpawnLane.Right, spawns);
                     if (spawns.Count > 0)
                     {

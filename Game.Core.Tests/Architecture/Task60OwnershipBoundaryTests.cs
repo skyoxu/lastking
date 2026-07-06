@@ -262,7 +262,7 @@ public class Task60OwnershipBoundaryTests
         script.Should().Contain("func build_refs() -> Dictionary:");
         script.Should().Contain("\"status\": _required(\"LegacyPrototypeRoot/VBox/Status\")");
         script.Should().NotContain("\"auto_wave_btn\":");
-        script.Should().Contain("\"enemy_spawn_a\": _required(\"Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnA\")");
+        script.Should().NotContain("\"enemy_spawn_a\": _required(\"Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnA\")");
         script.Should().Contain("\"victory_restart_btn\": _optional(\"VictoryOutcomeModal/VBox/Actions/RestartBtn\")");
     }
 

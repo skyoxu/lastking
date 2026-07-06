@@ -8,7 +8,6 @@ var _summary_label: Label = null
 var _background: ColorRect = null
 var _map_marker_layer: Control = null
 var _battlefield_view: Node = null
-var _enemy_spawn_a: ColorRect = null
 var _enemy_spawn_b: ColorRect = null
 var _local_feedback_layer: Control = null
 var _hit_flash_overlay: ColorRect = null
@@ -73,7 +72,7 @@ const BUILDING_VISUAL_TEXTURES := {
 const DEFAULT_BUILDING_SLOT_IDS := {
 	"MgTower": "InnerCastleRegionSlot_03_00",
 	"SniperTower": "InnerCastleRegionSlot_06_05",
-	"Barracks": "InnerCastleRegionSlot_00_00",
+	"Barracks": "RightOuterFieldSlot_00_00",
 	"Residence": "InnerCastleRegionSlot_06_00",
 }
 const BUILDING_VISUAL_SIZE := Vector2(48.0, 48.0)
@@ -106,7 +105,6 @@ func configure(screen: Control, bridge: Node, refs: Dictionary) -> void:
 	_background = refs["background"]
 	_map_marker_layer = refs.get("map_marker_layer", null)
 	_battlefield_view = refs.get("battlefield_view", null)
-	_enemy_spawn_a = refs["enemy_spawn_a"]
 	_enemy_spawn_b = refs["enemy_spawn_b"]
 	_local_feedback_layer = refs["local_feedback_layer"]
 	_hit_flash_overlay = refs["hit_flash_overlay"]
@@ -465,13 +463,12 @@ func _update_attack_effects(delta: float) -> void:
 		_attack_traces[index] = entry
 
 func _apply_spawn_cues() -> void:
-	if not _feedback_ready or _enemy_spawn_a == null or _enemy_spawn_b == null:
+	if not _feedback_ready or _enemy_spawn_b == null:
 		return
 	var pulse_active: bool = _spawn_pulse_time_left > 0.0
 	var weak_color: Color = Color(0.231373, 0.0862745, 0.0862745, 0.18)
 	var pulse_color: Color = Color(0.913725, 0.345098, 0.345098, 0.92)
 	var spawn_color: Color = pulse_color if pulse_active else weak_color
-	_enemy_spawn_a.color = spawn_color
 	_enemy_spawn_b.color = spawn_color
 
 func _sync_local_feedback_from_summary(result: Dictionary, status_text: String) -> void:
@@ -596,8 +593,8 @@ func _spawn_wall_damage_number(damage_amount: int) -> void:
 	})
 
 func _resolve_wall_damage_anchor() -> Vector2:
-	var left_anchor := Vector2(600.0, 252.0)
-	var right_anchor := Vector2(984.0, 348.0)
+	var left_anchor := Vector2(24.0, 252.0)
+	var right_anchor := Vector2(552.0, 348.0)
 	var bridge: Node = _current_bridge()
 	if bridge == null or not bridge.has_method("GetActorSnapshots"):
 		return left_anchor
@@ -609,7 +606,7 @@ func _resolve_wall_damage_anchor() -> Vector2:
 		if str(snapshot.get("state", "")) != "attacking_wall":
 			continue
 		var hit_position: Vector2 = _sample_path(float(snapshot.get("path_progress", 0.0)))
-		return left_anchor if hit_position.x < 792.0 else right_anchor
+		return left_anchor if hit_position.x < 288.0 else right_anchor
 	return left_anchor if _current_wall_hp <= 50 else right_anchor
 
 func _should_render_crack_on_left() -> bool:
@@ -624,7 +621,7 @@ func _should_render_crack_on_left() -> bool:
 		if str(snapshot.get("state", "")) != "attacking_wall":
 			continue
 		var hit_position: Vector2 = _sample_path(float(snapshot.get("path_progress", 0.0)))
-		return hit_position.x < 792.0
+		return hit_position.x < 288.0
 	return _current_wall_hp <= 50
 
 func _update_wall_damage_numbers(delta: float) -> bool:
@@ -1345,7 +1342,6 @@ func _has_required_refs() -> bool:
 	return _status_label != null \
 		and _summary_label != null \
 		and _background != null \
-		and _enemy_spawn_a != null \
 		and _enemy_spawn_b != null \
 		and _local_feedback_layer != null \
 		and _local_prompt_panel != null \

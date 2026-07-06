@@ -12,15 +12,6 @@ signal battlefield_slot_hovered(slot_id: String)
 signal battlefield_slot_released(slot_id: String)
 const REGION_DEFS := [
 	{
-		"name": "LeftOuterField",
-		"width": 576.0,
-		"buildable": true,
-		"slot_root": "LeftOuterSlots",
-		"columns": 12,
-		"rows": 13,
-		"color": Color(0.141176, 0.231373, 0.2, 1.0),
-	},
-	{
 		"name": "LeftWall",
 		"width": 48.0,
 		"buildable": false,
@@ -28,10 +19,10 @@ const REGION_DEFS := [
 	},
 	{
 		"name": "InnerCastleRegion",
-		"width": 336.0,
+		"width": 480.0,
 		"buildable": true,
 		"slot_root": "InnerCastleSlots",
-		"columns": 7,
+		"columns": 10,
 		"rows": 13,
 		"color": Color(0.223529, 0.192157, 0.141176, 1.0),
 	},
@@ -43,10 +34,10 @@ const REGION_DEFS := [
 	},
 	{
 		"name": "RightOuterField",
-		"width": 576.0,
+		"width": 1008.0,
 		"buildable": true,
 		"slot_root": "RightOuterSlots",
-		"columns": 12,
+		"columns": 21,
 		"rows": 13,
 		"color": Color(0.129412, 0.188235, 0.176471, 1.0),
 	},
@@ -196,7 +187,7 @@ func get_slot_region_kind(slot_id: String) -> String:
 	var region_name: String = str(slot.get_meta("region_name", ""))
 	if region_name == "InnerCastleRegion":
 		return "inner_castle"
-	if region_name == "LeftOuterField" or region_name == "RightOuterField":
+	if region_name == "RightOuterField":
 		return "outer_field"
 	return "wall"
 

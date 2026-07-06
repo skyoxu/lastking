@@ -27,19 +27,15 @@
     "wave_size": 3,
     "wave_sequence": [
       {
-        "left": [],
         "right": ["grunt", "grunt", "grunt"]
       },
       {
-        "left": ["grunt"],
         "right": ["grunt", "elite"]
       },
       {
-        "left": ["grunt", "elite"],
         "right": ["elite"]
       },
       {
-        "left": ["boss"],
         "right": ["elite", "elite"]
       }
     ]

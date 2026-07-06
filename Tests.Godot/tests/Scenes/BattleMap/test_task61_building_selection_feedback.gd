@@ -420,17 +420,17 @@ func test_scene_selection_controller_should_mount_formal_selection_feedback_into
 	selection_controller.call("apply_building_selection", {
 		"selection_id": "barracks_alpha",
 		"category": "unit",
-		"building_slots": ["InnerCastleRegionSlot_00_00"],
+		"building_slots": ["RightOuterFieldSlot_00_00"],
 		"range_slots": ["InnerCastleRegionSlot_01_00"],
 		"blocked_range_slots": ["InnerCastleRegionSlot_02_00"],
-		"linked_unit_slots": ["LeftOuterFieldSlot_00_00"],
+		"linked_unit_slots": ["RightOuterFieldSlot_01_00"],
 	})
 
-	var building := _runtime_slot_snapshot(screen, "InnerCastleRegionSlot_00_00")
+	var building := _runtime_slot_snapshot(screen, "RightOuterFieldSlot_00_00")
 	var visible_range := _runtime_slot_snapshot(screen, "InnerCastleRegionSlot_01_00")
 	var blocked_range := _runtime_slot_snapshot(screen, "InnerCastleRegionSlot_02_00")
-	var linked_unit := _runtime_slot_snapshot(screen, "LeftOuterFieldSlot_00_00")
-	var unrelated := _runtime_slot_snapshot(screen, "LeftOuterFieldSlot_00_01")
+	var linked_unit := _runtime_slot_snapshot(screen, "RightOuterFieldSlot_01_00")
+	var unrelated := _runtime_slot_snapshot(screen, "RightOuterFieldSlot_00_01")
 
 	assert_that(building["feedback_channel"]).is_equal("building_outline")
 	assert_that(building["selection_owner"]).is_equal("barracks_alpha")
@@ -468,7 +468,7 @@ func test_scene_selection_controller_should_switch_and_clear_formal_selection_fe
 		"building_slots": ["InnerCastleRegionSlot_03_00"],
 		"range_slots": ["InnerCastleRegionSlot_04_00"],
 		"blocked_range_slots": ["InnerCastleRegionSlot_05_00"],
-		"linked_unit_slots": ["LeftOuterFieldSlot_01_00"],
+		"linked_unit_slots": ["RightOuterFieldSlot_01_00"],
 	})
 
 	selection_controller.call("apply_building_selection", {
@@ -480,7 +480,7 @@ func test_scene_selection_controller_should_switch_and_clear_formal_selection_fe
 	var old_building := _runtime_slot_snapshot(screen, "InnerCastleRegionSlot_03_00")
 	var old_range := _runtime_slot_snapshot(screen, "InnerCastleRegionSlot_04_00")
 	var old_blocked := _runtime_slot_snapshot(screen, "InnerCastleRegionSlot_05_00")
-	var old_linked := _runtime_slot_snapshot(screen, "LeftOuterFieldSlot_01_00")
+	var old_linked := _runtime_slot_snapshot(screen, "RightOuterFieldSlot_01_00")
 	var new_economy := _runtime_slot_snapshot(screen, "InnerCastleRegionSlot_06_00")
 
 	assert_that(old_building["overlay_state"]).is_equal("overlay_hidden")
@@ -521,7 +521,7 @@ func test_scene_should_mount_independent_formal_selection_snapshot_provider() ->
 	assert_that(barracks_definition["category"]).is_equal("unit")
 	assert_that(barracks_definition["placement_zone"]).is_equal("inner_castle")
 
-	var initial_runtime_snapshot := selection_data_provider.call("get_formal_selection_snapshot", "InnerCastleRegionSlot_00_00") as Dictionary
+	var initial_runtime_snapshot := selection_data_provider.call("get_formal_selection_snapshot", "RightOuterFieldSlot_00_00") as Dictionary
 	assert_that(initial_runtime_snapshot.is_empty()).is_true()
 
 	var initial_economy_snapshot := selection_data_provider.call("get_formal_selection_snapshot", "InnerCastleRegionSlot_06_00") as Dictionary
@@ -542,13 +542,13 @@ func test_runtime_formal_selection_snapshot_should_follow_bridge_build_occupancy
 	assert_object(selection_data_provider).is_not_null()
 	assert_object(bridge).is_not_null()
 
-	var before_build := selection_data_provider.call("get_formal_selection_snapshot", "InnerCastleRegionSlot_00_00") as Dictionary
+	var before_build := selection_data_provider.call("get_formal_selection_snapshot", "RightOuterFieldSlot_00_00") as Dictionary
 	assert_that(before_build.is_empty()).is_true()
 
 	bridge.call("BuildPhase")
 	await get_tree().process_frame
 
-	var after_build := selection_data_provider.call("get_formal_selection_snapshot", "InnerCastleRegionSlot_00_00") as Dictionary
+	var after_build := selection_data_provider.call("get_formal_selection_snapshot", "RightOuterFieldSlot_00_00") as Dictionary
 	assert_that(after_build["selection_id"]).is_equal("barracks_alpha")
 	assert_that(after_build["building_type"]).is_equal("barracks")
 
@@ -559,7 +559,7 @@ func test_runtime_formal_selection_snapshot_should_follow_bridge_build_occupancy
 	bridge.call("ResetForInteractiveRun")
 	await get_tree().process_frame
 
-	var after_reset := selection_data_provider.call("get_formal_selection_snapshot", "InnerCastleRegionSlot_00_00") as Dictionary
+	var after_reset := selection_data_provider.call("get_formal_selection_snapshot", "RightOuterFieldSlot_00_00") as Dictionary
 	assert_that(after_reset.is_empty()).is_true()
 	var economy_after_reset := selection_data_provider.call("get_formal_selection_snapshot", "InnerCastleRegionSlot_06_00") as Dictionary
 	assert_that(economy_after_reset.is_empty()).is_true()
@@ -576,7 +576,7 @@ func test_scene_clicking_runtime_slot_without_formal_snapshot_should_clear_previ
 	await get_tree().process_frame
 
 	var selected_slot := screen.get_node(
-		"Background/BattlefieldViewport/BattlefieldRoot/SlotOverlayLayer/InnerCastleSlots/InnerCastleRegionSlot_00_00"
+		"Background/BattlefieldViewport/BattlefieldRoot/SlotOverlayLayer/RightOuterSlots/RightOuterFieldSlot_00_00"
 	) as ColorRect
 	var empty_slot := screen.get_node(
 		"Background/BattlefieldViewport/BattlefieldRoot/SlotOverlayLayer/InnerCastleSlots/InnerCastleRegionSlot_01_12"
@@ -592,7 +592,7 @@ func test_scene_clicking_runtime_slot_without_formal_snapshot_should_clear_previ
 	selected_slot.emit_signal("gui_input", click_selected)
 	await get_tree().process_frame
 
-	var building_before_clear := _runtime_slot_snapshot(screen, "InnerCastleRegionSlot_00_00")
+	var building_before_clear := _runtime_slot_snapshot(screen, "RightOuterFieldSlot_00_00")
 	assert_that(building_before_clear["feedback_channel"]).is_equal("building_outline")
 
 	var click_empty := InputEventMouseButton.new()
@@ -603,8 +603,8 @@ func test_scene_clicking_runtime_slot_without_formal_snapshot_should_clear_previ
 	empty_slot.emit_signal("gui_input", click_empty)
 	await get_tree().process_frame
 
-	var building_after_clear := _runtime_slot_snapshot(screen, "InnerCastleRegionSlot_00_00")
-	var linked_after_clear := _runtime_slot_snapshot(screen, "LeftOuterFieldSlot_00_00")
+	var building_after_clear := _runtime_slot_snapshot(screen, "RightOuterFieldSlot_00_00")
+	var linked_after_clear := _runtime_slot_snapshot(screen, "RightOuterFieldSlot_01_00")
 	assert_that(building_after_clear["overlay_state"]).is_equal("overlay_hidden")
 	assert_that(building_after_clear["feedback_channel"]).is_equal("none")
 	assert_that(linked_after_clear["overlay_state"]).is_equal("overlay_hidden")
@@ -623,17 +623,17 @@ func test_scene_clicking_runtime_battlefield_slot_should_drive_formal_building_s
 	await get_tree().process_frame
 
 	var clicked_slot := screen.get_node(
-		"Background/BattlefieldViewport/BattlefieldRoot/SlotOverlayLayer/InnerCastleSlots/InnerCastleRegionSlot_00_00"
+		"Background/BattlefieldViewport/BattlefieldRoot/SlotOverlayLayer/RightOuterSlots/RightOuterFieldSlot_00_00"
 	) as ColorRect
 	assert_object(clicked_slot).is_not_null()
 
-	screen.call("_on_battlefield_slot_clicked", "InnerCastleRegionSlot_00_00")
+	screen.call("_on_battlefield_slot_clicked", "RightOuterFieldSlot_00_00")
 	await get_tree().process_frame
 
-	var building := _runtime_slot_snapshot(screen, "InnerCastleRegionSlot_00_00")
+	var building := _runtime_slot_snapshot(screen, "RightOuterFieldSlot_00_00")
 	var visible_range := _runtime_slot_snapshot(screen, "InnerCastleRegionSlot_01_00")
 	var blocked_range := _runtime_slot_snapshot(screen, "InnerCastleRegionSlot_02_00")
-	var linked_unit := _runtime_slot_snapshot(screen, "LeftOuterFieldSlot_00_00")
+	var linked_unit := _runtime_slot_snapshot(screen, "RightOuterFieldSlot_01_00")
 
 	assert_that(building["selection_owner"]).is_equal("barracks_alpha")
 	assert_that(building["selection_category"]).is_equal("unit")

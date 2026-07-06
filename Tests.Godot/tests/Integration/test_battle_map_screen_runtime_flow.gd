@@ -94,9 +94,8 @@ func _resolve_main_root(node: Node) -> Node:
 
 
 func _spawn_cue_colors(screen: Control) -> Array[Color]:
-	var spawn_a: ColorRect = screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnA")
 	var spawn_b: ColorRect = screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnB")
-	return [spawn_a.color, spawn_b.color]
+	return [spawn_b.color]
 
 
 const _T59_SCREEN_BASELINE = Vector2(1600.0, 900.0)
@@ -108,7 +107,6 @@ const _T59_SIDE_GUTTER = 8.0
 
 
 const _T59_REGION_ORDER: PackedStringArray = [
-	"LeftOuterField",
 	"LeftWall",
 	"InnerCastleRegion",
 	"RightWall",
@@ -116,17 +114,15 @@ const _T59_REGION_ORDER: PackedStringArray = [
 ]
 
 const _T59_REGION_WIDTHS = {
-	"LeftOuterField": 576.0,
 	"LeftWall": 48.0,
-	"InnerCastleRegion": 336.0,
+	"InnerCastleRegion": 480.0,
 	"RightWall": 48.0,
-	"RightOuterField": 576.0,
+	"RightOuterField": 1008.0,
 }
 
 const _T59_SLOT_TOTALS = {
-	"LeftOuterSlots": 156,
-	"InnerCastleSlots": 91,
-	"RightOuterSlots": 156,
+	"InnerCastleSlots": 130,
+	"RightOuterSlots": 273,
 }
 
 
@@ -145,7 +141,6 @@ const _TASK56_NODE_OWNERSHIP_MAP = {
 	"Background/BattlefieldViewport/BattlefieldRoot/SlotOverlayLayer": "battlefield_presentation",
 	"Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer": "battlefield_presentation",
 	"Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/Path": "battlefield_presentation",
-	"Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnA": "battlefield_presentation",
 	"Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnB": "battlefield_presentation",
 	"CombatExperienceRuntimeBridge": "runtime_bridge",
 	"WaveTimer": "runtime_bridge",
@@ -806,6 +801,8 @@ func test_battlefield_layout_should_keep_walls_non_buildable_and_slots_within_re
 		assert_object(wall).is_not_null()
 		assert_bool(wall.get_meta("buildable", true) == true).is_false()
 		assert_object(slot_layer.get_node_or_null("%sSlots" % wall_name)).is_null()
+	assert_object(map_base.get_node_or_null("LeftOuterField")).is_null()
+	assert_object(slot_layer.get_node_or_null("LeftOuterSlots")).is_null()
 
 	for slot_root_name_variant in _T59_SLOT_TOTALS.keys():
 		var slot_root_name = String(slot_root_name_variant)
@@ -825,13 +822,14 @@ func test_battlefield_layout_should_visually_distinguish_buildable_and_non_build
 	var slot_layer = _battlefield_slot_layer(screen)
 	assert_object(slot_layer).is_not_null()
 
-	var left_outer = map_base.get_node("LeftOuterField") as ColorRect
 	var inner_castle = map_base.get_node("InnerCastleRegion") as ColorRect
 	var left_wall = map_base.get_node("LeftWall") as ColorRect
 	var right_wall = map_base.get_node("RightWall") as ColorRect
-	assert_bool(left_outer.color != left_wall.color).is_true()
-	assert_bool(inner_castle.color != left_wall.color).is_true()
+	var right_outer = map_base.get_node("RightOuterField") as ColorRect
 	assert_bool(left_wall.color == right_wall.color).is_true()
+	assert_bool(inner_castle.color != right_wall.color).is_true()
+	assert_bool(right_outer.color != right_wall.color).is_true()
+	assert_bool(inner_castle.color != right_outer.color).is_true()
 
 	for slot_root_name_variant in _T59_SLOT_TOTALS.keys():
 		var slot_root_name = String(slot_root_name_variant)
@@ -850,9 +848,9 @@ func test_placement_overlay_should_drive_runtime_slot_visuals_on_battlefield_sce
 
 	var selection_controller: Node = screen.get_node("SelectionController")
 	var inner_slot = _battlefield_slot(screen, "InnerCastleSlots", "InnerCastleRegionSlot_00_00")
-	var outer_slot = _battlefield_slot(screen, "LeftOuterSlots", "LeftOuterFieldSlot_00_00")
-	var temp_slot = _battlefield_slot(screen, "RightOuterSlots", "RightOuterFieldSlot_00_00")
-	var wall_slot = _battlefield_slot(screen, "LeftOuterSlots", "LeftOuterFieldSlot_01_00")
+	var outer_slot = _battlefield_slot(screen, "RightOuterSlots", "RightOuterFieldSlot_00_00")
+	var temp_slot = _battlefield_slot(screen, "RightOuterSlots", "RightOuterFieldSlot_01_00")
+	var wall_slot = _battlefield_slot(screen, "RightOuterSlots", "RightOuterFieldSlot_02_00")
 	assert_object(inner_slot).is_not_null()
 	assert_object(outer_slot).is_not_null()
 	assert_object(temp_slot).is_not_null()
@@ -860,9 +858,9 @@ func test_placement_overlay_should_drive_runtime_slot_visuals_on_battlefield_sce
 
 	selection_controller.call("apply_legality_overlay", {
 		"InnerCastleRegionSlot_00_00": "valid_inner",
-		"LeftOuterFieldSlot_00_00": "valid_outer",
-		"RightOuterFieldSlot_00_00": "temp_invalid",
-		"LeftOuterFieldSlot_01_00": "wall",
+		"RightOuterFieldSlot_00_00": "valid_outer",
+		"RightOuterFieldSlot_01_00": "temp_invalid",
+		"RightOuterFieldSlot_02_00": "wall",
 	})
 	await _await_frames(1)
 
@@ -924,7 +922,7 @@ func test_spawn_side_glow_and_wave_pulse_decay_back_to_weak_state() -> void:
 	var configured_wave_size: int = int(bridge.call("GetConfiguredWaveSize"))
 
 	var before_pulse = _spawn_cue_colors(screen)
-	assert_bool(before_pulse[0].a < 0.7 and before_pulse[1].a < 0.7).is_true()
+	assert_bool(before_pulse[0].a < 0.7).is_true()
 	var status_before = String(status_label.text)
 	var summary_before = _bridge_summary_metrics(bridge)
 	assert_int(int(summary_before.get("enemy_units_spawned", 0))).is_equal(0)
@@ -934,19 +932,19 @@ func test_spawn_side_glow_and_wave_pulse_decay_back_to_weak_state() -> void:
 	var pulse = _spawn_cue_colors(screen)
 	var status_after_wave = String(status_label.text)
 	var summary_after_wave = _bridge_summary_metrics(bridge)
-	assert_bool(pulse[0].a > before_pulse[0].a and pulse[1].a > before_pulse[1].a).is_true()
-	assert_bool(pulse[0].a >= 0.9 and pulse[1].a >= 0.9).is_true()
+	assert_bool(pulse[0].a > before_pulse[0].a).is_true()
+	assert_bool(pulse[0].a >= 0.9).is_true()
 	assert_bool(status_after_wave != status_before).is_true()
 	assert_int(int(summary_after_wave.get("enemy_units_spawned", 0))).is_equal(configured_wave_size)
 
 	await get_tree().create_timer(2.0).timeout
 	var pulse_midway = _spawn_cue_colors(screen)
-	assert_bool(pulse_midway[0].a >= 0.9 and pulse_midway[1].a >= 0.9).is_true()
+	assert_bool(pulse_midway[0].a >= 0.9).is_true()
 
 	await get_tree().create_timer(4.5).timeout
 	var after_pulse = _spawn_cue_colors(screen)
 	var status_after_decay = String(status_label.text)
-	assert_bool(after_pulse[0].a <= before_pulse[0].a + 0.05 and after_pulse[1].a <= before_pulse[1].a + 0.05).is_true()
+	assert_bool(after_pulse[0].a <= before_pulse[0].a + 0.05).is_true()
 	# ACC:T63.7 / ACC:T63.9: transient cue decays without mutating runtime progression counters.
 	assert_str(status_after_decay).is_equal(status_after_wave)
 	var after_decay_summary = _bridge_summary_metrics(bridge)
@@ -997,11 +995,11 @@ func test_path_readability_stays_behavior_driven_without_arrow_or_route_ui() -> 
 	var path: Line2D = screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/Path")
 	var bridge: Node = screen.get_node("CombatExperienceRuntimeBridge")
 	var initial_positions = {
-		"EnemySpawnA": (screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnA") as Control).global_position,
 		"EnemySpawnB": (screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnB") as Control).global_position,
 	}
 
 	assert_bool(path.visible).is_false()
+	assert_object(screen.get_node_or_null("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnA")).is_null()
 	assert_int(background.get_children().filter(func(n): return str((n as Node).name).find("Arrow") >= 0 or str((n as Node).name).find("Route") >= 0).size()).is_equal(0)
 
 	if bridge.has_method("SpawnEnemyWavePhase"):
@@ -1019,10 +1017,7 @@ func test_path_readability_stays_behavior_driven_without_arrow_or_route_ui() -> 
 		if snapshot != null and snapshot.get("is_moving_enemy", false) == true and float(snapshot.get("path_progress", 0.0)) > 0.0:
 			found_progress = true
 	assert_bool(found_progress).is_true()
-	assert_that((screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnA") as Control).global_position).is_equal(initial_positions["EnemySpawnA"])
 	assert_that((screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnB") as Control).global_position).is_equal(initial_positions["EnemySpawnB"])
-	assert_float((screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnA") as Control).size.x).is_equal(48.0)
-	assert_float((screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnA") as Control).size.y).is_equal(_T59_BATTLEFIELD_SIZE.y)
 	assert_float((screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnB") as Control).size.x).is_equal(48.0)
 	assert_float((screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnB") as Control).size.y).is_equal(_T59_BATTLEFIELD_SIZE.y)
 

@@ -55,17 +55,14 @@ BattleMapScreen (Control)
 |  |  |  |- BoundaryLayer (Control)
 |  |  |  |  |- WallLeft (Control)
 |  |  |  |  |- WallRight (Control)
-|  |  |  |  |- SpawnEdgeGlowLeft (Control)
 |  |  |  |  |- SpawnEdgeGlowRight (Control)
 |  |  |  |
 |  |  |  |- SlotOverlayLayer (Control)
 |  |  |  |  |- InnerSlotGrid (Control)
-|  |  |  |  |- LeftOuterSlotGrid (Control)
 |  |  |  |  |- RightOuterSlotGrid (Control)
 |  |  |  |  |- PlacementStateOverlay (Control)
 |  |  |  |
 |  |  |  |- MapMarkerLayer (Control)
-|  |  |  |  |- EnemySpawnMarkerLeft (Control)
 |  |  |  |  |- EnemySpawnMarkerRight (Control)
 |  |  |  |  |- CastleAnchor (Control)
 |  |  |  |
@@ -154,7 +151,7 @@ Purpose:
 Should contain:
 
 - persistent wall boundary visuals
-- left/right weak red spawn edge glow
+- right-side weak red spawn edge glow
 - stronger pulse state at wave start
 
 ### 4.6 SlotOverlayLayer

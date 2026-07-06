@@ -2,11 +2,11 @@
 
 const BUILDING_SLOT_IDS := {
 	"MgTower": "InnerCastleRegionSlot_03_00",
-	"Barracks": "InnerCastleRegionSlot_00_00",
+	"Barracks": "RightOuterFieldSlot_00_00",
 	"Residence": "InnerCastleRegionSlot_06_00",
 }
-const WALL_LEFT_X := 600.0
-const WALL_RIGHT_X := 984.0
+const WALL_LEFT_X := 24.0
+const WALL_RIGHT_X := 552.0
 const WALL_CENTER_Y := 312.0
 const ENEMY_LABEL_THEME := Color(1.0, 0.95, 0.82, 1.0)
 const ENEMY_STATE_COLORS := {

@@ -73,7 +73,7 @@ const BUILDING_DEFINITIONS := {
 
 const RUNTIME_BRIDGE_SLOT_TO_SELECTION_OWNER := {
 	"Battlefield/Barracks": {
-		"slot_id": "InnerCastleRegionSlot_00_00",
+		"slot_id": "RightOuterFieldSlot_00_00",
 		"selection_id": "barracks_alpha",
 	},
 	"Battlefield/MgTower": {
@@ -147,7 +147,7 @@ func _formal_selection_snapshot_for(selection_id: String, slot_id: String, defin
 		"barracks_alpha":
 			snapshot["range_slots"] = ["InnerCastleRegionSlot_01_00"]
 			snapshot["blocked_range_slots"] = ["InnerCastleRegionSlot_02_00"]
-			snapshot["linked_unit_slots"] = ["LeftOuterFieldSlot_00_00"]
+			snapshot["linked_unit_slots"] = ["RightOuterFieldSlot_01_00"]
 		"farm_alpha":
 			snapshot["hidden_slots"] = ["InnerCastleRegionSlot_03_00"]
 		_:

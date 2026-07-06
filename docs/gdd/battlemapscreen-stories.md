@@ -116,7 +116,7 @@ So that I can understand where building and defense planning is allowed.
 
 - **Given** BattleMapScreen is visible
   **When** the battlefield is rendered
-  **Then** the map reads as left outer field, left wall, inner castle region, right wall, and right outer field
+  **Then** the map reads as left wall, inner castle region, right wall, and right outer field
   **And** the battlefield uses a strict 48 x 48 slot grid across the valid buildable regions.
 - **Given** walls are part of the battlefield
   **When** region layout is shown
@@ -187,7 +187,7 @@ So that I can understand threat direction without explicit path arrows.
 
 - **Given** the battlefield is in normal play
   **When** the player looks at the outer edges
-  **Then** the left and right spawn bands show weak red glow
+  **Then** the right spawn band shows weak red glow
   **And** the glow identifies the enemy entry sides without a separate legend box.
 - **Given** a wave starts
   **When** spawn emphasis is triggered

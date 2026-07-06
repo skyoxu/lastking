@@ -289,7 +289,7 @@ func test_player_visible_combat_experience_runs_from_building_and_training_to_de
 	assert_bool(wall_pressure_emphasis_active).is_true()
 
 
-func test_battlemap_wave_sequence_left_right_should_spawn_on_matching_sides() -> void:
+func test_battlemap_wave_sequence_should_spawn_only_from_right_side() -> void:
 	var bridge_script: Variant = load(COMBAT_EXPERIENCE_BRIDGE)
 	assert_object(bridge_script).is_not_null()
 
@@ -304,21 +304,16 @@ func test_battlemap_wave_sequence_left_right_should_spawn_on_matching_sides() ->
 	var snapshots: Array = bridge.call("GetActorSnapshots")
 	assert_int(snapshots.size()).is_greater_equal(5)
 
-	var left_found := false
 	var right_found := false
 	for item in snapshots:
 		var snapshot := item as Dictionary
 		assert_object(snapshot).is_not_null()
 		var lane := str(snapshot.get("lane", ""))
 		var world_x := float(snapshot.get("world_x", -1.0))
-		if lane == "left":
-			left_found = true
-			assert_float(world_x).is_less(200.0)
-		elif lane == "right":
-			right_found = true
-			assert_float(world_x).is_greater(1400.0)
+		assert_str(lane).is_equal("right")
+		right_found = true
+		assert_float(world_x).is_greater(1400.0)
 
-	assert_bool(left_found).is_true()
 	assert_bool(right_found).is_true()
 
 
@@ -722,10 +717,11 @@ func test_spawn_cues_and_path_readability_survive_full_battle_loop() -> void:
 	var screen: Node = main.get_node("RuntimeUi/ScreenRoot/BattleMapScreen")
 	var bridge: Node = screen.get_node("CombatExperienceRuntimeBridge")
 	var background: Node = screen.get_node("Background")
-	var spawn_a: ColorRect = screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnA")
+	var spawn_a := screen.get_node_or_null("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnA")
 	var spawn_b: ColorRect = screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnB")
 	var status_label: Label = screen.get_node("LegacyPrototypeRoot/VBox/Status")
 	var configured_wave_size: int = int(bridge.call("GetConfiguredWaveSize"))
+	assert_object(spawn_a).is_null()
 
 	# ACC:T63.4 ownership boundary remains unchanged when local feedback is enabled.
 	assert_str(str(screen.get_node("Background").get_meta("ownership_container"))).is_equal("battlefield_presentation")
@@ -739,7 +735,6 @@ func test_spawn_cues_and_path_readability_survive_full_battle_loop() -> void:
 	var summary_before: Dictionary = bridge.call("GetSummary")
 	assert_int(int(summary_before.get("enemy_units_spawned", 0))).is_equal(0)
 
-	var weak_a: float = spawn_a.color.a
 	var weak_b: float = spawn_b.color.a
 	_request_hud_action(screen, "wave")
 	await get_tree().process_frame
@@ -749,12 +744,12 @@ func test_spawn_cues_and_path_readability_survive_full_battle_loop() -> void:
 	assert_int(int(summary_after_wave.get("enemy_units_spawned", 0))).is_equal(int(summary_before.get("enemy_units_spawned", 0)) + configured_wave_size)
 	# ACC:T63.6 trigger-to-feedback path is auditable: WaveBtn -> spawn cue alpha + status update.
 	assert_str(status_label.text.to_lower()).contains("wave")
-	assert_bool(spawn_a.color.a > weak_a and spawn_b.color.a > weak_b).is_true()
+	assert_bool(spawn_b.color.a > weak_b).is_true()
 	assert_int(background.get_children().filter(func(n): return str((n as Node).name).find("Arrow") >= 0 or str((n as Node).name).find("Route") >= 0).size()).is_equal(0)
 	assert_int(int(bridge.call("GetActorSnapshots").size())).is_greater_equal(1)
 
 	await get_tree().create_timer(2.0).timeout
-	assert_bool(spawn_a.color.a >= 0.9 and spawn_b.color.a >= 0.9).is_true()
+	assert_bool(spawn_b.color.a >= 0.9).is_true()
 
 	_request_hud_action(screen, "exchange")
 	await get_tree().process_frame
@@ -765,7 +760,7 @@ func test_spawn_cues_and_path_readability_survive_full_battle_loop() -> void:
 	for _i in range(24):
 		await get_tree().process_frame
 
-	assert_bool(spawn_a.color.a <= weak_a + 0.05 and spawn_b.color.a <= weak_b + 0.05).is_true()
+	assert_bool(spawn_b.color.a <= weak_b + 0.05).is_true()
 	assert_int(background.get_children().filter(func(n): return str((n as Node).name).find("Arrow") >= 0 or str((n as Node).name).find("Route") >= 0).size()).is_equal(0)
 
 	var summary: Dictionary = bridge.call("GetSummary")

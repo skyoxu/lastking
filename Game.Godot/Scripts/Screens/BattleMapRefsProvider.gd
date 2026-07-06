@@ -18,7 +18,6 @@ func build_refs() -> Dictionary:
 		"summary": _required("BattleHud/CombatHud/BottomBar/Root/BattlePanel/VBox/ReservedLabel"),
 		"background": _required("Background"),
 		"map_marker_layer": _required("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer"),
-		"enemy_spawn_a": _required("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnA"),
 		"enemy_spawn_b": _required("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnB"),
 		"local_feedback_layer": _required("Background/BattlefieldViewport/BattlefieldRoot/LocalFeedbackLayer"),
 		"hit_flash_overlay": _required("Background/BattlefieldViewport/BattlefieldRoot/LocalFeedbackLayer/HitFlashOverlay"),

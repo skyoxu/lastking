@@ -2602,6 +2602,15 @@
           "CH05",
           "CH06",
           "CH07"
+        ],
+        "testRefs": [
+          "Tests.Godot/tests/Scenes/BattleMap/test_task61_building_selection_feedback.gd",
+          "Tests.Godot/tests/Scenes/BattleMap/test_build_placement_controller.gd",
+          "Tests.Godot/tests/Scenes/BattleMap/test_build_placement_controller_resource_cards.gd",
+          "Tests.Godot/tests/Scenes/BattleMap/test_build_placement_controller_runtime_actions.gd",
+          "Tests.Godot/tests/Scenes/BattleMap/test_build_placement_controller_click_actions.gd",
+          "Tests.Godot/tests/Scenes/BattleMap/test_build_placement_controller_invalid_click_actions.gd",
+          "Game.Core.Tests/Tasks/Task61RefsAnchorsSyncTests.cs"
         ]
       },
       {

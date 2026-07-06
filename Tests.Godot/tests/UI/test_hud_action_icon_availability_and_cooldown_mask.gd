@@ -41,9 +41,8 @@ func _main_runtime() -> Dictionary:
 	}
 
 func _spawn_cues(screen: Control) -> Array[float]:
-	var a: ColorRect = screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnA")
 	var b: ColorRect = screen.get_node("Background/BattlefieldViewport/BattlefieldRoot/MapMarkerLayer/EnemySpawnB")
-	return [a.color.a, b.color.a]
+	return [b.color.a]
 
 # ACC:T65.2
 func test_action_availability_blocks_out_of_order_exchange_and_keeps_cues_weak() -> void:

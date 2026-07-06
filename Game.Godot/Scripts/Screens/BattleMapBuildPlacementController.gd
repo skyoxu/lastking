@@ -374,7 +374,7 @@ func _formal_selection_snapshot_for_selection(selection_id: String) -> Dictionar
 			snapshot["range_slots"] = ["InnerCastleRegionSlot_05_00"]
 			snapshot["blocked_range_slots"] = ["InnerCastleRegionSlot_06_00"]
 		"barracks_alpha":
-			snapshot["building_slots"] = ["InnerCastleRegionSlot_00_00"]
+			snapshot["building_slots"] = ["RightOuterFieldSlot_00_00"]
 		"farm_alpha":
 			snapshot["building_slots"] = ["InnerCastleRegionSlot_06_00"]
 			snapshot["hidden_slots"] = ["InnerCastleRegionSlot_03_00"]

@@ -22,24 +22,22 @@ It does not define full AI, full pathfinding, or final balance tables.
 - Screen baseline: `1600 x 900`
 - Battlefield usable area: `1584 x 624`
 - Decorative side padding: `8px` on left and `8px` on right
-- Castle interior region: `336 x 624`
+- Castle interior region: `480 x 624`
 - Left wall: `48px`
 - Right wall: `48px`
-- Left outer field: `576px`
-- Right outer field: `576px`
+- Right outer field: `1008px`
 
 Total width:
 
-`576 + 48 + 336 + 48 + 576 = 1584`
+`48 + 480 + 48 + 1008 = 1584`
 
 ## 3. Grid Rules
 
 - Slot size: `48 x 48`
 - The map uses a strict grid, not free placement
-- The walls split the battlefield into three valid slot regions:
-  - left outer grid: `12 x 13 = 156`
-  - inner castle grid: `7 x 13 = 91`
-  - right outer grid: `12 x 13 = 156`
+- The walls split the battlefield into two valid slot regions:
+  - inner castle grid: `10 x 13 = 130`
+  - right outer grid: `21 x 13 = 273`
 - Total valid slots: `403`
 
 Walls are not buildable slots.
@@ -55,7 +53,7 @@ Buildings cannot cross wall boundaries.
 
 ## 5. Building Category Placement Rules
 
-- unit-producing buildings and traps: outer fields only
+- unit-producing buildings and traps: right outer field only
 - defense buildings: allowed regions are configuration-driven
 - all other buildings: inner castle only
 
@@ -65,7 +63,7 @@ Traps consume charges and release their slot again when fully exhausted.
 
 - units are not player-commanded directly
 - units do not cross the wall boundary
-- enemies spawn from left and right side spawn bands only
+- enemies spawn from the right side spawn band only
 - there are no top or bottom enemy entry points in this layout definition
 
 ## 7. Difficulty and Configuration Ownership
