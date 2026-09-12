@@ -19,6 +19,8 @@ jobs:
           fetch-depth: 0
       - name: Python regression tests
         shell: pwsh
+        env:
+          CI: ''
         run: |
           py -3 -m unittest `
             scripts.python.tests.test_impact_analysis_handoff `
@@ -47,6 +49,7 @@ jobs:
             '.agents/skills/workflow-chapter7-ui-wiring-closure/SKILL.md',
             'scripts/python/project_health_knowledge.py',
             'scripts/python/impact_analyzer.py',
+            'scripts/python/impact_runtime.py',
             'scripts/python/_project_health_http.py',
             'scripts/python/project_health_runtime.py',
             'knowledge/policies/consumer-policies.v1.json'
