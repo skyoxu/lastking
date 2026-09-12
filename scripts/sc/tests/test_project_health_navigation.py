@@ -164,6 +164,8 @@ class NavigationTests(unittest.TestCase):
         from _project_health_tasks import task_details, attach_task_scenes
         from project_health_knowledge import DEFAULT_CONFIG
         root = Path(__file__).resolve().parents[3]
+        if not (root / 'Game.Core/Data/m1-warrior-starting-deck.json').exists():
+            self.skipTest('newrouge business fixture is not present in this repository')
         snapshot = DirectorySnapshot(root, ['.taskmaster/tasks', 'Game.Core', 'Game.Core.Tests', 'Game.Godot', 'Tests.Godot/tests'])
         sources = {p: snapshot.read_text(p) for p in snapshot.paths if Path(p).suffix in {'.json', '.cs', '.gd', '.tscn', '.tres'}}
         details = task_details(snapshot)
