@@ -11,7 +11,10 @@ All output messages are in English to keep logs uniform.
 from __future__ import annotations
 
 import argparse
+import base64
 import datetime as dt
+import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -27,6 +30,7 @@ from dev_cli_builders import (
     build_new_execution_plan_cmd,
     build_inspect_run_cmd,
     build_chapter6_route_cmd,
+    build_create_prototype_scene_cmd,
     build_apply_chapter7_status_patch_cmd,
     build_run_chapter7_backlog_gap_cmd,
     build_preflight_cmd,
@@ -35,6 +39,7 @@ from dev_cli_builders import (
     build_run_single_task_chapter6_cmd,
     build_run_chapter7_ui_wiring_cmd,
     build_run_prototype_tdd_cmd,
+    build_run_prototype_workflow_cmd,
     build_quality_gates_cmd,
     build_run_dotnet_cmd,
     build_run_gdunit_full_cmd,
@@ -52,6 +57,120 @@ def run(cmd: list[str]) -> int:
     print(f"[dev_cli] running: {' '.join(cmd)}")
     proc = subprocess.run(cmd, text=True)
     return proc.returncode
+
+
+def _create_openai_image_client(*, api_key: str, base_url: str, timeout: float):
+    try:
+        from openai import OpenAI  # type: ignore
+    except Exception as exc:  # noqa: BLE001
+        raise RuntimeError(f"failed to import openai SDK: {exc}") from exc
+
+    kwargs: dict[str, object] = {
+        "api_key": api_key,
+        "timeout": timeout,
+    }
+    if base_url:
+        kwargs["base_url"] = base_url
+    return OpenAI(**kwargs)
+
+
+def _read_prompt(args: argparse.Namespace) -> str:
+    if str(args.prompt or "").strip():
+        return str(args.prompt).strip()
+    if str(args.prompt_file or "").strip():
+        return Path(args.prompt_file).read_text(encoding="utf-8").strip()
+    raise ValueError("prompt is required via --prompt or --prompt-file")
+
+
+def cmd_generate_image(args: argparse.Namespace) -> int:
+    """Generate an image through the OpenAI-compatible image endpoint."""
+
+    try:
+        prompt = _read_prompt(args)
+    except Exception as exc:  # noqa: BLE001
+        print(f"[dev_cli] error: {exc}", file=sys.stderr)
+        return 2
+
+    model = str(
+        args.model
+        or os.environ.get("AIARTMIRROR_IMAGE_MODEL")
+        or "gpt-image-2"
+    ).strip() or "gpt-image-2"
+    group = str(args.group or os.environ.get("AIARTMIRROR_IMAGE_GROUP") or "").strip()
+    base_url = str(args.base_url or os.environ.get("AIARTMIRROR_BASE_URL") or "").strip()
+    api_key_env = str(args.api_key_env or "AIARTMIRROR_API_KEY").strip() or "AIARTMIRROR_API_KEY"
+    api_key = str(os.environ.get(api_key_env) or "").strip()
+    output_path = Path(args.out)
+    manifest_path = Path(args.manifest_out) if str(args.manifest_out or "").strip() else None
+
+    manifest: dict[str, object] = {
+        "prompt": prompt,
+        "model": model,
+        "group": group or None,
+        "size": args.size,
+        "quality": args.quality,
+        "background": args.background or "",
+        "output_format": args.output_format,
+        "response_format": args.response_format,
+        "api_key_env": api_key_env,
+        "base_url": base_url or None,
+        "out": str(output_path),
+        "dry_run": bool(args.dry_run),
+    }
+
+    if args.dry_run:
+        if manifest_path is not None:
+            manifest_path.parent.mkdir(parents=True, exist_ok=True)
+            manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        print("[dev_cli] generate-image dry-run complete")
+        return 0
+
+    if not api_key:
+        print(f"[dev_cli] error: environment variable {api_key_env} is not set", file=sys.stderr)
+        return 2
+
+    try:
+        client = _create_openai_image_client(api_key=api_key, base_url=base_url, timeout=float(args.timeout))
+        request_kwargs: dict[str, object] = {
+            "model": model,
+            "prompt": prompt,
+            "size": args.size,
+            "quality": args.quality,
+            "output_format": args.output_format,
+            "response_format": args.response_format,
+        }
+        if args.background:
+            request_kwargs["background"] = args.background
+        if group:
+            request_kwargs["extra_headers"] = {"X-Image-Group": group}
+        response = client.images.generate(**request_kwargs)
+    except Exception as exc:  # noqa: BLE001
+        print(f"[dev_cli] error: image generation failed: {exc}", file=sys.stderr)
+        return 1
+
+    data = getattr(response, "data", None) or []
+    first = data[0] if data else None
+    if first is None:
+        print("[dev_cli] error: image generation returned no image payload", file=sys.stderr)
+        return 1
+
+    image_b64 = str(getattr(first, "b64_json", "") or "").strip()
+    if not image_b64:
+        print("[dev_cli] error: only b64_json image responses are currently supported", file=sys.stderr)
+        return 1
+
+    image_bytes = base64.b64decode(image_b64)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_bytes(image_bytes)
+
+    manifest["revised_prompt"] = str(getattr(first, "revised_prompt", "") or "").strip() or None
+    manifest["created"] = getattr(response, "created", None)
+    if manifest_path is not None:
+        manifest_path.parent.mkdir(parents=True, exist_ok=True)
+        manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+    print(f"[dev_cli] generated image: {output_path}")
+    return 0
 
 
 def cmd_run_ci_basic(args: argparse.Namespace) -> int:
@@ -273,6 +392,18 @@ def cmd_run_prototype_tdd(args: argparse.Namespace) -> int:
     return run(build_run_prototype_tdd_cmd(args))
 
 
+def cmd_run_prototype_workflow(args: argparse.Namespace) -> int:
+    """Run the top-level prototype workflow router."""
+
+    return run(build_run_prototype_workflow_cmd(args))
+
+
+def cmd_create_prototype_scene(args: argparse.Namespace) -> int:
+    """Create a minimal Godot prototype scene scaffold."""
+
+    return run(build_create_prototype_scene_cmd(args))
+
+
 def cmd_detect_project_stage(args: argparse.Namespace) -> int:
     """Detect the current repo stage and refresh project-health artifacts."""
 
@@ -301,6 +432,26 @@ def cmd_serve_project_health(args: argparse.Namespace) -> int:
     """Serve the local project-health dashboard on 127.0.0.1."""
 
     return run(build_serve_project_health_cmd(args))
+
+
+def cmd_init_knowledge_catalog(args: argparse.Namespace) -> int:
+    from init_knowledge_catalog import initialize
+    result = initialize(Path(args.repo_root).resolve(), args.force, args.validate)
+    print(json.dumps(result, ensure_ascii=False))
+    return 0 if result.get("status") == "ok" else 1
+
+
+def cmd_generate_knowledge_links(args: argparse.Namespace) -> int:
+    from generate_knowledge_links import generate
+    print(json.dumps(generate(Path(args.repo_root).resolve(), set(args.task_ids or []), args.write_task_refs), ensure_ascii=False))
+    return 0
+
+
+def cmd_chapter6_knowledge(args: argparse.Namespace) -> int:
+    from chapter6_knowledge import run
+    result = run(Path(args.repo_root).resolve(), str(args.task_id), args.write_task_refs, args.semantic, args.llm_backend)
+    print(json.dumps(result, ensure_ascii=False))
+    return 0 if result.get("status") == "knowledge_captured" else 1
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -341,7 +492,7 @@ def build_parser() -> argparse.ArgumentParser:
     # run-local-hard-checks
     p_lh = sub.add_parser(
         "run-local-hard-checks",
-        help="run gate bundle hard + run_dotnet, and append gdunit/smoke when --godot-bin is provided",
+        help="运行 gate bundle hard + run_dotnet；提供 --godot-bin 时追加 gdunit/smoke",
     )
     p_lh.add_argument("--solution", default="auto")
     p_lh.add_argument("--configuration", default="Debug")
@@ -356,7 +507,7 @@ def build_parser() -> argparse.ArgumentParser:
     # run-local-hard-checks-preflight
     p_lhp = sub.add_parser(
         "run-local-hard-checks-preflight",
-        help="run only gate bundle hard + run_dotnet before the full local-hard-checks harness",
+        help="在完整 local-hard-checks 前，仅运行 gate bundle hard + run_dotnet 预检",
     )
     p_lhp.add_argument("--solution", default="auto")
     p_lhp.add_argument("--configuration", default="Debug")
@@ -375,6 +526,28 @@ def build_parser() -> argparse.ArgumentParser:
     p_gf = sub.add_parser("run-gdunit-full", help="run broad GdUnit tests (Adapters+Security+Integration+UI)")
     p_gf.add_argument("--godot-bin", required=True)
     p_gf.set_defaults(func=cmd_run_gdunit_full)
+
+    # generate-image
+    p_gi = sub.add_parser(
+        "generate-image",
+        help="generate one image through the OpenAI-compatible image endpoint used by asset skills",
+    )
+    p_gi.add_argument("--prompt", default="")
+    p_gi.add_argument("--prompt-file", default="")
+    p_gi.add_argument("--out", required=True)
+    p_gi.add_argument("--manifest-out", default="")
+    p_gi.add_argument("--model", default="")
+    p_gi.add_argument("--group", default="")
+    p_gi.add_argument("--size", default="1024x1024")
+    p_gi.add_argument("--quality", default="high")
+    p_gi.add_argument("--output-format", default="png")
+    p_gi.add_argument("--response-format", default="b64_json")
+    p_gi.add_argument("--background", default="")
+    p_gi.add_argument("--api-key-env", default="AIARTMIRROR_API_KEY")
+    p_gi.add_argument("--base-url", default="")
+    p_gi.add_argument("--timeout", type=float, default=120.0)
+    p_gi.add_argument("--dry-run", action="store_true")
+    p_gi.set_defaults(func=cmd_generate_image)
 
     # run-preflight
     p_pf = sub.add_parser("run-preflight", help="run local pre-flight checks (dotnet --info + core tests)")
@@ -484,6 +657,10 @@ def build_parser() -> argparse.ArgumentParser:
     p_ch6.add_argument("--security-profile", default="")
     p_ch6.add_argument("--fix-through", default="", choices=["", "P0", "P1", "P2", "P3"])
     p_ch6.add_argument("--out-dir", default="")
+    p_ch6.add_argument("--frozen-context", default="")
+    p_ch6.add_argument("--impact-report", default="")
+    p_ch6.add_argument("--revision", default="")
+    p_ch6.add_argument("--binding-evidence", default="")
     p_ch6.add_argument("--self-check", action="store_true")
     p_ch6.set_defaults(func=cmd_run_single_task_chapter6)
 
@@ -503,6 +680,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_ch7.add_argument("--ui-gdd-flow-path", default="")
     p_ch7.add_argument("--alignment-audit-path", default="")
     p_ch7.add_argument("--wiring-audit-path", default="")
+    p_ch7.add_argument("--chapter7-profile-path", default="")
     p_ch7.add_argument("--repo-label", default="")
     p_ch7.add_argument("--back-story-id", default="")
     p_ch7.add_argument("--gameplay-story-id", default="")
@@ -554,6 +732,14 @@ def build_parser() -> argparse.ArgumentParser:
     p_proto.add_argument("--owner", default="operator")
     p_proto.add_argument("--related-task-id", action="append", default=[])
     p_proto.add_argument("--hypothesis", default="TODO: describe the prototype hypothesis.")
+    p_proto.add_argument("--core-player-fantasy", default="TODO: describe what the player should feel or understand in the first minute.")
+    p_proto.add_argument("--minimum-playable-loop", default="TODO: describe the smallest end-to-end loop the player must complete.")
+    p_proto.add_argument("--game-feature", default="TODO: describe the gameplay uniqueness.")
+    p_proto.add_argument("--core-gameplay-loop", default="TODO: describe the repeated gameplay loop.")
+    p_proto.add_argument("--win-fail-conditions", default="TODO: define win and fail conditions.")
+    p_proto.add_argument("--game-type-specific-game-type", default="")
+    p_proto.add_argument("--game-type-specific-guide-path", default="")
+    p_proto.add_argument("--game-type-specific-section", action="append", default=[])
     p_proto.add_argument("--scope-in", action="append", default=[])
     p_proto.add_argument("--scope-out", action="append", default=[])
     p_proto.add_argument("--success-criteria", action="append", default=[])
@@ -569,36 +755,80 @@ def build_parser() -> argparse.ArgumentParser:
     p_proto.add_argument("--out-dir", default="")
     p_proto.set_defaults(func=cmd_run_prototype_tdd)
 
+    # create-prototype-scene
+    p_proto_scene = sub.add_parser(
+        "create-prototype-scene",
+        help="create a minimal Godot prototype scene scaffold under Game.Godot/Prototypes",
+    )
+    p_proto_scene.add_argument("--slug", required=True)
+    p_proto_scene.add_argument("--scene-root", default="Node2D")
+    p_proto_scene.add_argument("--prototype-root", default="Game.Godot/Prototypes")
+    p_proto_scene.set_defaults(func=cmd_create_prototype_scene)
+
+    # run-prototype-workflow
+    p_proto_workflow = sub.add_parser(
+        "run-prototype-workflow",
+        help="run the top-level prototype workflow router before promoting exploratory work into formal delivery",
+    )
+    p_proto_workflow.add_argument("--prototype-file", default="")
+    p_proto_workflow.add_argument("--set", action="append", default=[])
+    p_proto_workflow.add_argument("--confirm", action="store_true")
+    p_proto_workflow.add_argument("--godot-bin", default="")
+    p_proto_workflow.add_argument("--stop-after-day", type=int, default=5, choices=[1, 2, 3, 4, 5])
+    p_proto_workflow.add_argument("--resume-active", default="")
+    p_proto_workflow.add_argument("--score-engine", default="deterministic", choices=["deterministic", "codex", "hybrid"])
+    p_proto_workflow.add_argument("--score-timeout-sec", type=int, default=180)
+    p_proto_workflow.add_argument("--self-check", action="store_true")
+    p_proto_workflow.set_defaults(func=cmd_run_prototype_workflow)
+
     # detect-project-stage
-    p_stage = sub.add_parser("detect-project-stage", help="detect repo stage and refresh project-health artifacts")
+    p_stage = sub.add_parser("detect-project-stage", help="检测仓库阶段并刷新 project-health 产物")
     p_stage.add_argument("--repo-root", default=".")
     p_stage.set_defaults(func=cmd_detect_project_stage)
 
     # doctor-project
-    p_doctor = sub.add_parser("doctor-project", help="run repo doctor checks and refresh project-health artifacts")
+    p_doctor = sub.add_parser("doctor-project", help="运行仓库 doctor 检查并刷新 project-health 产物")
     p_doctor.add_argument("--repo-root", default=".")
     p_doctor.set_defaults(func=cmd_doctor_project)
 
     # check-directory-boundaries
     p_boundaries = sub.add_parser(
         "check-directory-boundaries",
-        help="run deterministic directory responsibility checks and refresh project-health artifacts",
+        help="运行目录职责边界确定性检查并刷新 project-health 产物",
     )
     p_boundaries.add_argument("--repo-root", default=".")
     p_boundaries.set_defaults(func=cmd_check_directory_boundaries)
 
     # project-health-scan
-    p_scan = sub.add_parser("project-health-scan", help="run all project-health checks and refresh the dashboard")
+    p_scan = sub.add_parser("project-health-scan", help="运行全部 project-health 检查并刷新仪表盘")
     p_scan.add_argument("--repo-root", default=".")
     p_scan.add_argument("--serve", action="store_true")
     p_scan.add_argument("--port", type=int, default=0)
     p_scan.set_defaults(func=cmd_project_health_scan)
 
     # serve-project-health
-    p_srv = sub.add_parser("serve-project-health", help="serve the local project-health dashboard on 127.0.0.1")
+    p_srv = sub.add_parser("serve-project-health", help="在 127.0.0.1 启动本地 project-health 仪表盘服务")
     p_srv.add_argument("--repo-root", default=".")
     p_srv.add_argument("--port", type=int, default=0)
     p_srv.set_defaults(func=cmd_serve_project_health)
+
+    p_knowledge = sub.add_parser("init-knowledge-catalog", help="初始化 docs/knowledge 项目资源知识目录")
+    p_knowledge.add_argument("--repo-root", default=".")
+    p_knowledge.add_argument("--force", action="store_true")
+    p_knowledge.add_argument("--validate", action="store_true")
+    p_knowledge.set_defaults(func=cmd_init_knowledge_catalog)
+    p_links = sub.add_parser("generate-knowledge-links", help="从最新扫描生成 Chapter 6 资源关联")
+    p_links.add_argument("--repo-root", default=".")
+    p_links.add_argument("--task-id", action="append", dest="task_ids")
+    p_links.add_argument("--write-task-refs", action="store_true")
+    p_links.set_defaults(func=cmd_generate_knowledge_links)
+    p_c6k = sub.add_parser("chapter6-knowledge", help="执行 Chapter 6 资源知识捕获阶段")
+    p_c6k.add_argument("--repo-root", default=".")
+    p_c6k.add_argument("--task-id", required=True)
+    p_c6k.add_argument("--write-task-refs", action="store_true")
+    p_c6k.add_argument("--semantic", action="store_true")
+    p_c6k.add_argument("--llm-backend", default="codex-cli")
+    p_c6k.set_defaults(func=cmd_chapter6_knowledge)
 
     return parser
 
