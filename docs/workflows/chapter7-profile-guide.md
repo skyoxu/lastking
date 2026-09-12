@@ -19,12 +19,22 @@ The scripts deep-merge overrides over the built-in defaults.
 - Full seed: `docs/workflows/templates/chapter7-profile.template.json`
 - Minimal seed: `docs/workflows/templates/chapter7-profile.minimal.example.json`
 
+## LastKing Active Override
+
+`lastking` intentionally keeps the repo-local profile smaller than the upstream example. The checked-in override currently makes only repository-specific facts explicit:
+
+- `task_scope.min_task_id = 1`
+- `task_scope.max_task_id = 54`
+- logical `BattleMap` aliases: `BattleMap`, `BattleMapScreen`, and `Map`
+
+All bucket definitions, task-creation defaults, closure defaults, labels, refs, and screen copy continue to come from the built-in profile unless a future `lastking` change has verified evidence that an override is required. This avoids importing `newrouge` task ids or gameplay-specific surfaces into the target repository.
+
 ## Top-Level Fields
 
 ### `bucket_order`
 
 Defines the traversal order for Chapter 7 slices.
-Default value in this repo:
+Built-in default:
 
 ```json
 [
@@ -40,19 +50,16 @@ Default value in this repo:
 ### `fallback_bucket`
 
 Used when a feature cannot be matched by task id or feature family.
-Current value: `meta`
+Built-in default: `meta`
 
 ### `surface_aliases`
 
 Maps logical surface names to node-name aliases used during closure detection.
-Current keys:
+The built-in profile provides `RuntimeHud` and `SettingsMenu`; the active `lastking` override additionally provides `BattleMap` aliases.
 
-```json
-[
-  "RuntimeHud",
-  "SettingsMenu"
-]
-```
+### `task_scope`
+
+Constrains which master task ids are considered by Chapter 7 when a repository needs an explicit range. `lastking` currently declares Task `1` through Task `54` so the tooling cannot silently inherit the upstream repository's later task range.
 
 ### `task_creation`
 
@@ -70,7 +77,7 @@ Important fields:
 - `view_id_templates`: generated id format for `NG` and `GM`
 - `default_story_templates`: derived story id templates
 
-Current `task_creation` block:
+Built-in `task_creation` block:
 
 ```json
 {
@@ -153,11 +160,11 @@ Each bucket under `buckets.<name>` can override:
 - `screen_contract`
 - `screen_state`
 
-
 ## Field-To-Script Impact
 
 | Field Area | Primary Consumer Scripts | Typical Effect |
 | --- | --- | --- |
+| `task_scope` | `chapter7_ui_gdd_writer.py`, `run_chapter7_ui_wiring.py` | constrains the master-task range eligible for Chapter 7 processing |
 | `bucket_order`, `fallback_bucket` | `chapter7_ui_gdd_writer.py`, `run_chapter7_ui_wiring.py` | changes slice traversal order and fallback grouping |
 | `surface_aliases` | `run_chapter7_ui_wiring.py` | changes closure detection for scene nodes and surface-path matching |
 | `task_creation.adr_refs`, `chapter_refs` | `create_chapter7_tasks_from_ui_candidates.py` | changes generated task refs |
@@ -171,16 +178,14 @@ Each bucket under `buckets.<name>` can override:
 | `buckets.*.slice_title`, `screen_group`, `audience`, `ui_entry`, `player_action`, `system_response`, `suggested_surfaces`, `semantics_defaults`, `screen_contract`, `screen_state` | `chapter7_ui_gdd_writer.py` | changes generated UI GDD wording and candidate sidecar content |
 | `--chapter7-profile-path` only | `run_chapter7_ui_wiring.py`, `chapter7_ui_gdd_writer.py`, `create_chapter7_tasks_from_ui_candidates.py`, `validate_chapter7_ui_wiring.py` | selects a non-default override file |
 
-## Why This Repo Uses A Short Profile
+## Why LastKing Uses A Minimal Profile
 
-The built-in defaults in `scripts/python/_chapter7_profile.py` already encode the template's base Chapter 7 behavior.
-This repo-level `docs/workflows/chapter7-profile.json` is intentionally shorter and only keeps the fields that are useful as explicit, git-visible local policy:
+The built-in defaults in `scripts/python/_chapter7_profile.py` encode the template's reusable Chapter 7 behavior. `lastking` therefore keeps only verified local policy in `docs/workflows/chapter7-profile.json`:
 
-- `surface_aliases`: local closure matching rules worth keeping visible
-- `task_creation.*`: generated ids, owners, labels, and refs that business repos often need to customize first
-- `buckets.*.section_headings`: explicit English + Chinese heading aliases that protect closure parsing against legacy audit docs
+- the current real task range (`1..54`)
+- the Battle Map surface aliases used by this repository
 
-Everything else falls back to the built-in default profile.
+Everything else falls back to the built-in default profile. Add further overrides only when a `lastking` task, scene, decision log, or runtime observation demonstrates that the built-in value is wrong for this repository.
 
 ## Typical Override Scenarios
 
@@ -316,7 +321,7 @@ Use when closure analysis must read existing audit docs that use different secti
 }
 ```
 
-### 6. Expand beyond the short repo profile
+### 6. Expand beyond the minimal repo profile
 
 Use the full seed when the business repo must also override task grouping, surface defaults, screen copy, or state-matrix wording.
 
