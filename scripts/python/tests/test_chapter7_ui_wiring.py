@@ -29,6 +29,12 @@ def _load_module(name: str, relative_path: str):
 
 
 class Chapter7UiWiringTests(unittest.TestCase):
+    def _write_chapter7_profile(self, root: Path, payload: dict) -> Path:
+        path = root / "docs" / "workflows" / "chapter7-profile.json"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
+        return path
+
     def _write_sample_repo(self, root: Path, *, gdd_text: str) -> None:
         tasks_dir = root / ".taskmaster" / "tasks"
         tasks_dir.mkdir(parents=True)
@@ -534,6 +540,21 @@ class Chapter7UiWiringTests(unittest.TestCase):
         self.assertIn("--gameplay-story-id", cmd)
         self.assertIn("PRD-PROJECT-X-v2.0", cmd)
 
+    def test_dev_cli_should_forward_chapter7_profile_path(self) -> None:
+        builders = _load_module("dev_cli_builders_module_for_ch7_profile", "scripts/python/dev_cli_builders.py")
+        dev_cli = _load_module("dev_cli_module_for_ch7_profile", "scripts/python/dev_cli.py")
+        parser = dev_cli.build_parser()
+        args = parser.parse_args(
+            [
+                "run-chapter7-ui-wiring",
+                "--chapter7-profile-path", "docs/workflows/chapter7-profile.json",
+            ]
+        )
+        cmd = builders.build_run_chapter7_ui_wiring_cmd(args)
+
+        self.assertIn("--chapter7-profile-path", cmd)
+        self.assertIn("docs/workflows/chapter7-profile.json", cmd)
+
     def test_dev_cli_should_expose_chapter7_backlog_gap_orchestrator(self) -> None:
         builders = _load_module("dev_cli_builders_module_for_ch7_gap", "scripts/python/dev_cli_builders.py")
         dev_cli = _load_module("dev_cli_module_for_ch7_gap", "scripts/python/dev_cli.py")
@@ -595,6 +616,20 @@ class Chapter7UiWiringTests(unittest.TestCase):
         self.assertIn("## 14. Task Alignment", text)
         self.assertEqual(0, rc)
         self.assertEqual([], payload["missing_done_task_refs"])
+
+
+    def test_writer_should_prefer_readme_repository_identity_over_generic_solution_name(self) -> None:
+        writer = _load_module("chapter7_ui_gdd_writer_module_for_repo_identity", "scripts/python/chapter7_ui_gdd_writer.py")
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            (root / "GodotGame.sln").write_text("", encoding="utf-8")
+            (root / "README.md").write_text("# samplegame (Godot 4.5.1 + C#)\n", encoding="utf-8")
+
+            display = writer._repo_display_name(root)
+            slug = writer._repo_gdd_slug(root)
+
+        self.assertEqual("Samplegame", display)
+        self.assertEqual("SAMPLEGAME", slug)
 
     def test_writer_and_validator_should_support_custom_ui_gdd_path(self) -> None:
         collector = _load_module("collect_ui_wiring_inputs_module_for_custom_writer", "scripts/python/collect_ui_wiring_inputs.py")
@@ -952,6 +987,54 @@ class Chapter7UiWiringTests(unittest.TestCase):
             gameplay[-1]["overlay_refs"][0],
         )
 
+    def test_create_tasks_should_allow_profile_override_for_ids_labels_and_refs(self) -> None:
+        module = _load_module("create_chapter7_tasks_module_for_profile_override", "scripts/python/create_chapter7_tasks_from_ui_candidates.py")
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            self._write_sample_repo(root, gdd_text="# stale doc without candidates\n")
+            self._write_candidate_sidecar(root)
+            profile_path = self._write_chapter7_profile(
+                root,
+                {
+                    "task_creation": {
+                        "adr_refs": ["ADR-9001"],
+                        "chapter_refs": ["CH77"],
+                        "base_labels": ["custom-view", "ui-slice"],
+                        "owners": {"NG": "design", "GM": "implementation"},
+                        "source_labels": {"NG": "plan", "GM": "delivery"},
+                        "view_id_templates": {"NG": "BK-{task_id:04d}", "GM": "GP-{task_id_plus_1000:04d}"},
+                        "default_story_templates": {
+                            "back": "BACK-{repo_label_upper_underscore}-ALT",
+                            "gameplay": "GAME-{repo_label_upper_underscore}-ALT",
+                        },
+                    }
+                },
+            )
+            rc, payload = module.create_tasks(
+                repo_root=root,
+                dry_run=False,
+                chapter7_profile_path=profile_path,
+                repo_label="project-x",
+            )
+            tasks = json.loads((root / ".taskmaster" / "tasks" / "tasks.json").read_text(encoding="utf-8"))["master"]["tasks"]
+            back = json.loads((root / ".taskmaster" / "tasks" / "tasks_back.json").read_text(encoding="utf-8"))
+            gameplay = json.loads((root / ".taskmaster" / "tasks" / "tasks_gameplay.json").read_text(encoding="utf-8"))
+
+        self.assertEqual(0, rc)
+        self.assertTrue(payload["chapter7_profile_path"].endswith("/docs/workflows/chapter7-profile.json"))
+        self.assertEqual(["ADR-9001"], tasks[-1]["adrRefs"])
+        self.assertEqual(["CH77"], tasks[-1]["archRefs"])
+        self.assertEqual("BK-0005", back[-1]["id"])
+        self.assertEqual("GP-1005", gameplay[-1]["id"])
+        self.assertEqual("design", back[-1]["owner"])
+        self.assertEqual("implementation", gameplay[-1]["owner"])
+        self.assertEqual("BACK-PROJECT_X-ALT", back[-1]["story_id"])
+        self.assertEqual("GAME-PROJECT_X-ALT", gameplay[-1]["story_id"])
+        self.assertIn("plan", back[-1]["labels"])
+        self.assertIn("delivery", gameplay[-1]["labels"])
+        self.assertIn("custom-view", gameplay[-1]["labels"])
+        self.assertIn("ui-slice", gameplay[-1]["labels"])
+
     def test_create_tasks_should_be_idempotent_for_same_candidate_sidecar(self) -> None:
         module = _load_module("create_chapter7_tasks_module_for_idempotency", "scripts/python/create_chapter7_tasks_from_ui_candidates.py")
         with tempfile.TemporaryDirectory() as td:
@@ -1183,6 +1266,74 @@ class Chapter7UiWiringTests(unittest.TestCase):
         self.assertEqual("docs-only", loop["write_back_contract"]["must_keep_open_reasons"][-1].split("=")[-1])
         self.assertEqual(0, closure["done_ready_count"])
 
+    def test_orchestrator_should_allow_profile_override_for_closure_task_mapping(self) -> None:
+        run_module = _load_module("run_chapter7_ui_wiring_module_for_profile_closure", "scripts/python/run_chapter7_ui_wiring.py")
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            self._write_rich_sample_repo(root)
+            self._write_chapter7_profile(
+                root,
+                {
+                    "buckets": {
+                        "entry": {
+                            "section_headings": ["### Custom Entry Flow"],
+                            "closure_task_ids": [61],
+                            "wiring_task_id": 61
+                        }
+                    }
+                },
+            )
+            tasks_json_path = root / ".taskmaster" / "tasks" / "tasks.json"
+            tasks_json_payload = json.loads(tasks_json_path.read_text(encoding="utf-8"))
+            tasks_json_payload["master"]["tasks"].append(
+                {"id": 61, "title": "Wire UI: MainMenu And Boot Flow", "status": "done", "adrRefs": ["ADR-0061"]}
+            )
+            tasks_json_path.write_text(json.dumps(tasks_json_payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+            (root / ".taskmaster" / "tasks" / "tasks_back.json").write_text(
+                json.dumps(
+                    json.loads((root / ".taskmaster" / "tasks" / "tasks_back.json").read_text(encoding="utf-8"))
+                    + [{"id": "NG-0061", "taskmaster_id": 61, "story_id": "BACKLOG-LASTKING-M1", "title": "Wire UI: MainMenu And Boot Flow", "status": "done"}],
+                    ensure_ascii=False,
+                    indent=2,
+                ) + "\n",
+                encoding="utf-8",
+            )
+            (root / ".taskmaster" / "tasks" / "tasks_gameplay.json").write_text(
+                json.dumps(
+                    json.loads((root / ".taskmaster" / "tasks" / "tasks_gameplay.json").read_text(encoding="utf-8"))
+                    + [{"id": "GM-0061", "taskmaster_id": 61, "story_id": "PRD-LASTKING-v1.2", "title": "Wire UI: MainMenu And Boot Flow", "status": "done"}],
+                    ensure_ascii=False,
+                    indent=2,
+                ) + "\n",
+                encoding="utf-8",
+            )
+            wiring = root / "docs" / "gdd" / "custom-wiring-audit.md"
+            wiring.write_text(
+                "### Custom Entry Flow\n"
+                "| Task | Title | Primary Surface/Code | Primary Test/Evidence | Governance Path | Evidence Status | Gap To Close |\n"
+                "| --- | --- | --- | --- | --- | --- | --- |\n"
+                "| T61 | Wire UI: MainMenu And Boot Flow | MainMenu | menu.gd | docs | partial | Need to materialize BootStatusPanel as a stable surface. |\n",
+                encoding="utf-8",
+                newline="\n",
+            )
+            out_json = root / "logs" / "ci" / "summary.json"
+            rc = run_module.main(
+                [
+                    "--repo-root", str(root),
+                    "--write-doc",
+                    "--chapter7-profile-path", "docs/workflows/chapter7-profile.json",
+                    "--wiring-audit-path", "docs/gdd/custom-wiring-audit.md",
+                    "--out-json", str(out_json),
+                ]
+            )
+            payload = json.loads(out_json.read_text(encoding="utf-8"))
+            closure = json.loads(Path(payload["closure_summary"]).read_text(encoding="utf-8"))
+
+        self.assertEqual(0, rc)
+        self.assertTrue(payload["input_contract"]["chapter7_profile_path"].endswith("/docs/workflows/chapter7-profile.json"))
+        entry = next(item for item in closure["slices"] if item["bucket"] == "entry")
+        self.assertEqual("T61", entry["write_back_contract"]["task_ref"])
+
     def test_orchestrator_should_export_task_status_patch_preview_when_done_status_conflicts_with_closure(self) -> None:
         run_module = _load_module("run_chapter7_ui_wiring_module_for_status_patch_preview", "scripts/python/run_chapter7_ui_wiring.py")
         with tempfile.TemporaryDirectory() as td:
@@ -1409,7 +1560,7 @@ class Chapter7UiWiringTests(unittest.TestCase):
         self.assertEqual(0, rc)
         self.assertIn("input_contract", payload)
         contract = payload["input_contract"]
-        self.assertTrue(contract["repo_root"].endswith(root.as_posix()))
+        self.assertEqual(Path(contract["repo_root"]).resolve(), root.resolve())
         self.assertTrue(contract["tasks_json_path"].endswith("/.taskmaster/tasks/tasks.json"))
         self.assertTrue(contract["tasks_back_path"].endswith("/.taskmaster/tasks/tasks_back.json"))
         self.assertTrue(contract["tasks_gameplay_path"].endswith("/.taskmaster/tasks/tasks_gameplay.json"))
@@ -1439,6 +1590,22 @@ class Chapter7UiWiringTests(unittest.TestCase):
         self.assertEqual("project-x", payload["repo_label"])
         self.assertEqual("BACKLOG-PROJECT-X-M2", payload["back_story_id"])
         self.assertEqual("PRD-PROJECT-X-v2.0", payload["gameplay_story_id"])
+
+    def test_orchestrator_self_check_should_include_chapter7_profile_path(self) -> None:
+        run_module = _load_module("run_chapter7_ui_wiring_module_for_profile_self_check", "scripts/python/run_chapter7_ui_wiring.py")
+        output = io.StringIO()
+        with redirect_stdout(output):
+            rc = run_module.main(
+                [
+                    "--delivery-profile", "fast-ship",
+                    "--chapter7-profile-path", "docs/workflows/chapter7-profile.json",
+                    "--self-check",
+                ]
+            )
+        payload = json.loads(output.getvalue())
+
+        self.assertEqual(0, rc)
+        self.assertEqual("docs/workflows/chapter7-profile.json", payload["chapter7_profile_path"])
 
     def test_chapter7_backlog_gap_self_check_should_export_input_contract(self) -> None:
         run_module = _load_module("run_chapter7_backlog_gap_module_for_self_check", "scripts/python/run_chapter7_backlog_gap.py")

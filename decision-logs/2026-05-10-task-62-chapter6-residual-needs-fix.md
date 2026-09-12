@@ -1,4 +1,4 @@
-﻿# task-62-chapter6-residual-needs-fix
+# task-62-chapter6-residual-needs-fix
 
 - Title: task-62-chapter6-residual-needs-fix
 - Date: 2026-05-10

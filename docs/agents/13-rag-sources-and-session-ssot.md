@@ -59,3 +59,8 @@ Use these sources first in the current template state:
 ## Old AGENTS Coverage Map
 - `0.1 New Session Quick Reference` -> this document
 - `1 Context Discipline (RAG Rules)` -> this document + `docs/agents/10-template-customization.md`
+
+## Knowledge Control Plane
+Use `scripts/python/knowledge_locator.py` as the deterministic location-only lookup when a current published catalog is available. Locator candidates are not semantic truth: re-read the repository source and verify its hash before accepting context.
+
+Chapter 4/5/6 and review may use the observe-only flow in `docs/workflows/knowledge-context-shadow.md`, followed by the explicit decision/freeze contract in `docs/workflows/knowledge-context-freeze.md`. If publication is missing, stale, or blocked, fall back to the direct authoritative source routes listed above; do not rebuild global knowledge implicitly.

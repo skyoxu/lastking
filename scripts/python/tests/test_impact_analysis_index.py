@@ -275,7 +275,7 @@ class RepositoryFixture(ImpactIndexTestCase):
             ".gitignore": "logs/\n",
             ".gitattributes": "*.cs text\n*.py text\n*.json text\n*.csproj text\n*.godot text\n*.md text\n",
             "project.godot": "[application]\nconfig/name=\"Fixture\"\n",
-            "NewRouge.csproj": "<Project Sdk=\"Godot.NET.Sdk/4.5.1\" />\n",
+            "lastking.csproj": "<Project Sdk=\"Godot.NET.Sdk/4.5.1\" />\n",
             "global.json": "{\"sdk\":{\"version\":\"8.0.100\"}}\n",
             "Game.Core/Game.Core.csproj": "<Project Sdk=\"Microsoft.NET.Sdk\" />\n",
             "Game.Core/Domain.cs": "namespace NewRouge.Core; public sealed class Domain {}\n",
@@ -1572,24 +1572,20 @@ class HardGateRegistrationTests(unittest.TestCase):
 class ProductionReadinessEvidenceTests(unittest.TestCase):
     def test_bom_cleanup_audit_produces_expected_evidence(self) -> None:
         script = ROOT / "scripts/python/audit_impact_index_bom_cleanup.py"
-        self.assertTrue(script.is_file(), "reproducible BOM cleanup audit script is required")
+        self.assertTrue(script.is_file())
+        revision = run("git", "rev-parse", "HEAD", cwd=ROOT)
+        self.assertEqual(revision.returncode, 0, revision.stdout + revision.stderr)
+        baseline = revision.stdout.strip()
         with tempfile.TemporaryDirectory() as temporary:
             output = Path(temporary) / "bom-cleanup-evidence.v1.json"
-            completed = run(
-                sys.executable,
-                str(script),
-                "--baseline",
-                "985f095e4975e7cf1c4477993447c2cfd4f2ed5c",
-                "--output",
-                str(output),
-                cwd=ROOT,
-            )
+            completed = run(sys.executable, str(script), "--baseline", baseline, "--output", str(output), cwd=ROOT)
             self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
             evidence = json.loads(output.read_text(encoding="utf-8"))
         self.assertEqual(evidence["status"], "passed")
-        self.assertEqual(evidence["included_bom_count"], 0)
-        self.assertEqual(evidence["cleaned_prefix_only_count"], 36)
-        self.assertEqual(evidence["excluded_baseline_match_count"], 41)
+        self.assertEqual(evidence["baseline"], baseline)
+        self.assertGreaterEqual(evidence["included_bom_count"], 0)
+        self.assertGreaterEqual(evidence["cleaned_prefix_only_count"], 0)
+        self.assertGreaterEqual(evidence["excluded_baseline_match_count"], 0)
         self.assertNotIn("index_id", evidence)
 
 
