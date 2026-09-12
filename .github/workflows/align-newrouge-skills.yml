@@ -1,0 +1,40 @@
+name: Align newrouge chapter skills
+
+on:
+  push:
+    branches:
+      - align-newrouge-features-20260912
+    paths:
+      - .github/workflows/align-newrouge-skills.yml
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: align-newrouge-features-20260912
+      - uses: actions/checkout@v4
+        with:
+          repository: skyoxu/newrouge
+          ref: main
+          path: _upstream/newrouge
+      - name: Copy and force-add skills
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .agents/skills
+          mkdir -p .agents
+          cp -a _upstream/newrouge/.agents/skills .agents/skills
+          rm -rf _upstream
+          rm -f .github/workflows/align-newrouge-skills.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git add -f .agents/skills
+          git commit -m "feat(skills): align workflow chapter skills"
+          git push origin HEAD:align-newrouge-features-20260912
