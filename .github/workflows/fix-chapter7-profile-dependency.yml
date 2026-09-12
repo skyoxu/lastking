@@ -1,0 +1,62 @@
+name: Fix Chapter7 Profile Dependency
+
+on:
+  push:
+    branches:
+      - close-tooling-parity-20260912
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: windows-latest
+    steps:
+      - name: Checkout lastking
+        uses: actions/checkout@v4
+        with:
+          ref: close-tooling-parity-20260912
+          fetch-depth: 0
+
+      - name: Checkout newrouge reference
+        uses: actions/checkout@v4
+        with:
+          repository: skyoxu/newrouge
+          ref: main
+          path: _upstream/newrouge
+
+      - name: Sync Chapter7 collector dependency
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Copy-Item -Force _upstream/newrouge/scripts/python/collect_ui_wiring_inputs.py scripts/python/collect_ui_wiring_inputs.py
+          if (Test-Path _upstream/newrouge/scripts/python/tests/test_chapter7_ui_wiring.py) {
+            Copy-Item -Force _upstream/newrouge/scripts/python/tests/test_chapter7_ui_wiring.py scripts/python/tests/test_chapter7_ui_wiring.py
+          }
+
+      - name: Validate Chapter7 dependency closure
+        shell: pwsh
+        env:
+          CI: ''
+        run: |
+          $ErrorActionPreference = 'Stop'
+          py -3 -m unittest scripts.python.tests.test_chapter7_ui_wiring -v
+          py -3 scripts/python/collect_ui_wiring_inputs.py --repo-root . --chapter7-profile-path docs/workflows/chapter7-profile.json --out $env:RUNNER_TEMP/chapter7-inputs.json
+          py -3 scripts/python/run_chapter7_ui_wiring.py --delivery-profile fast-ship --chapter7-profile-path docs/workflows/chapter7-profile.json --self-check
+          py -3 scripts/python/run_gate_bundle.py --mode hard
+          git diff --check origin/main...HEAD
+
+      - name: Commit fix and remove temporary workflow
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Remove-Item -Force .github/workflows/fix-chapter7-profile-dependency.yml
+          Remove-Item -Recurse -Force _upstream
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          if (-not (git diff --cached --quiet)) {
+            git commit -m 'fix(chapter7): sync profile-aware input collector'
+            git push origin HEAD:close-tooling-parity-20260912
+          }
