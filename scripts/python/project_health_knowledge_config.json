@@ -38,16 +38,19 @@
   ],
   "task_scene_bindings": [
     {
-      "task_id": 115,
-      "scene": "Game.Godot/Scenes/Reward.tscn",
+      "task_id": 54,
+      "scene": "Game.Godot/Scenes/Screens/BattleMapScreen.tscn",
       "node": ".",
-      "script": "Game.Godot/Scripts/RewardScene.gd",
-      "witness": "func _claim_reward(reward_type: String, selected_card_id: String, selected_index: int) -> void:"
+      "script": "Game.Godot/Scripts/Screens/BattleMapScreen.gd",
+      "witness": "func _initialize_battle_screen() -> void:"
     }
   ],
   "query_aliases": {
-    "奖励": [
-      "Reward"
+    "建筑": [
+      "Building"
+    ],
+    "地图": [
+      "BattleMap"
     ],
     "存档": [
       "Save"

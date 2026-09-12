@@ -30,7 +30,7 @@ py -3 scripts/python/dev_cli.py serve-project-health
 
 节点属性可以追踪 ExtResource/SubResource 和跨 TRES 资源链，并识别场景 instance 引用；循环与深度有界。动态赋值、实例内部覆盖及运行创建节点仍可能无法定位。`static_reference` 为直接文本引用，`static_candidate` 为测试符号或共享卡 ID 关联，所有素材均保留 `runtime_observed=false`，即使任务已有通过的运行测试。
 
-T24 可从声明测试、服务符号和共享卡 ID 找到初始牌组数据候选；T115 可看到 Reward 场景节点、动态纹理脚本线索及素材。测试命令明确标为 `suggested_not_executed`，不会自动运行。JSON 5+4+1 与旧服务十张独立卡不能互换；卡池也存在未统一的范围差异，参见 `decision-logs/2026-09-08-project-health-configuration-audit.md` 和对应 execution plan。
+T54 可从任务来源定位 BattleMapScreen 场景、根脚本与运行测试线索；其他任务仍按各自 test_refs、场景引用和配置证据构造候选。测试命令明确标为 `suggested_not_executed`，不会自动运行。JSON 5+4+1 与旧服务十张独立卡不能互换；卡池也存在未统一的范围差异，参见 `decision-logs/2026-09-08-project-health-configuration-audit.md` 和对应 execution plan。
 
 新增回归：`py -3 -m unittest scripts.sc.tests.test_project_health_navigation -v`；本次证据：`logs/ci/2026-09-08/modification-navigation/`。
 
@@ -65,7 +65,7 @@ CLI：`py -3 scripts/python/project_health_runtime.py --godot-bin "$env:GODOT_BI
 - `source_paths`: 明确的文件或目录范围；默认包含任务三联、架构、契约、运行时和测试。禁止根目录、logs、Git 元数据和越界路径。扫描与探索查询共享同一内容集。
 
 - `gdd_paths`: 多个仓库相对路径，支持 UTF-8 `.md` / `.txt` / `.json`。路径必须存在于扫描的 main；不支持任意本地绝对路径、PDF/DOCX、软链接或浏览器任意文件读取。缺失项会显示为不可用。
-- `query_aliases`: 中文术语到短查询数组。每个别名作为独立 query 执行，原始输入保留。默认提供奖励/Reward、存档/Save、战斗/Combat；不是自动翻译或跨语言向量检索。
+- `query_aliases`: 中文术语到短查询数组。每个别名作为独立 query 执行，原始输入保留。lastking 默认提供建筑/Building、地图/BattleMap、存档/Save、战斗/Combat；不是自动翻译或跨语言向量检索。
 - `task_scene_bindings`: 人工审查的 task 与场景节点/脚本/实现标记映射。扫描验证其结构，无法自动证明设计语义。
 
 GDD 配置真正参与补充检索，但不会悄悄改变 KCP consumer policy、全局索引发布或 freeze 权威。位于既有 KCP 路由中的 GDD 也可正常成为知识候选。任意路径 GDD 显示为 supplementary-design-source，不能直接冒充正式冻结上下文。
@@ -82,7 +82,7 @@ GDD 配置真正参与补充检索，但不会悄悄改变 KCP consumer policy�
 | candidate | 任务 test_refs 等指向的测试直接引用生产场景 | 场景已实现这个任务 |
 | unmapped | 当前规则未找到对应关系 | 功能不存在 |
 
-默认以任务 115 为可审查的映射实例：`Reward.tscn` 根节点挂载 `RewardScene.gd`，脚本含 `_claim_reward(...)` 实现。该声明只认定静态接入，并非重新验收任务 115。节点路径 `.` 表示根节点。配置失效会列入 invalid_declarations，不继续标记静态接入。
+lastking 默认以任务 54 为可审查的映射实例：`BattleMapScreen.tscn` 根节点挂载 `BattleMapScreen.gd`，脚本含 `_initialize_battle_screen()` 实现。该声明只认定静态接入，并非重新验收任务 54。节点路径 `.` 表示根节点。配置失效会列入 invalid_declarations，不继续标记静态接入。
 
 当前不推断任意 C# 调用链、动态 GDScript 调度、运行时创建 Node、autoload 可达性、继承场景覆盖或资源反射；也不因 `status=done`、同名词、契约引用或测试通过就认定已实装。若要提高覆盖率，应逐任务补经过审查的映射；运行验证需另接带 main SHA 的实际 Godot 执行证据。
 
@@ -100,9 +100,9 @@ GDD 配置真正参与补充检索，但不会悄悄改变 KCP consumer policy�
 py -3 scripts/python/project_health_knowledge.py scan
 py -3 scripts/python/project_health_knowledge.py status
 py -3 scripts/python/project_health_knowledge.py tasks --page 2
-py -3 scripts/python/project_health_knowledge.py task --task-id 115
-'{"query":"奖励确认","consumer":"repository-session"}' | py -3 scripts/python/project_health_knowledge.py query
-'{"query":"RewardScene","target":{"type":"file","id":"Game.Godot/Scripts/RewardScene.gd"}}' | py -3 scripts/python/project_health_knowledge.py query
+py -3 scripts/python/project_health_knowledge.py task --task-id 54
+'{"query":"战斗地图","consumer":"repository-session"}' | py -3 scripts/python/project_health_knowledge.py query
+'{"query":"BattleMapScreen","target":{"type":"file","id":"Game.Godot/Scripts/Screens/BattleMapScreen.gd"}}' | py -3 scripts/python/project_health_knowledge.py query
 ```
 
 证据与缓存在 `logs/ci/project-health-knowledge/`。成功扫描写 latest.json，查询保存独立 JSON。快照不会自动删除，避免销毁历史证据；占用空间随 main 版本数量增长。中断后如果遗留 scan.lock，确认没有正在运行的扫描进程后再人工移除该空锁目录。

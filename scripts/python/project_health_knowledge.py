@@ -38,11 +38,11 @@ DEFAULT_CONFIG = {
     'source_path_bindings': SOURCE_PATH_BINDINGS,
     'gdd_paths': ['docs/gdd/ui-gdd-flow.md'],
     'task_scene_bindings': [{
-        'task_id': 115, 'scene': 'Game.Godot/Scenes/Reward.tscn', 'node': '.',
-        'script': 'Game.Godot/Scripts/RewardScene.gd',
-        'witness': 'func _claim_reward(reward_type: String, selected_card_id: String, selected_index: int) -> void:'
+        'task_id': 54, 'scene': 'Game.Godot/Scenes/Screens/BattleMapScreen.tscn', 'node': '.',
+        'script': 'Game.Godot/Scripts/Screens/BattleMapScreen.gd',
+        'witness': 'func _initialize_battle_screen() -> void:'
     }],
-    'query_aliases': {'奖励': ['Reward'], '存档': ['Save'], '战斗': ['Combat']},
+    'query_aliases': {'建筑': ['Building'], '地图': ['BattleMap'], '存档': ['Save'], '战斗': ['Combat']},
 }
 
 
