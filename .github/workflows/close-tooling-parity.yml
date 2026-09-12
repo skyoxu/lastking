@@ -1,0 +1,136 @@
+name: Close Tooling Parity
+
+on:
+  push:
+    branches:
+      - close-tooling-parity-20260912
+
+permissions:
+  contents: write
+
+jobs:
+  close-parity:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: windows-latest
+    steps:
+      - name: Checkout lastking
+        uses: actions/checkout@v4
+        with:
+          ref: close-tooling-parity-20260912
+          fetch-depth: 0
+
+      - name: Checkout newrouge reference
+        uses: actions/checkout@v4
+        with:
+          repository: skyoxu/newrouge
+          ref: main
+          path: _upstream/newrouge
+
+      - name: Sync bounded parity bundles
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $src = Join-Path $PWD '_upstream/newrouge'
+
+          $files = @(
+            'scripts/python/_chapter7_profile.py',
+            'scripts/python/run_chapter7_ui_wiring.py',
+            'scripts/python/chapter7_ui_gdd_writer.py',
+            'scripts/python/create_chapter7_tasks_from_ui_candidates.py',
+            'scripts/python/validate_chapter7_ui_wiring.py',
+            'scripts/python/validate_chapter7_artifact_manifest.py',
+            'docs/workflows/chapter7-profile-guide.md',
+            'docs/workflows/templates/chapter7-profile.template.json',
+            'docs/workflows/templates/chapter7-profile.minimal.example.json',
+            'scripts/python/publish_knowledge_catalog.py',
+            'scripts/python/knowledge_locator.py',
+            'scripts/python/evaluate_knowledge_queries.py',
+            'scripts/python/validate_knowledge_control_plane.py',
+            'scripts/python/impact_analysis_config.v1.json',
+            'scripts/python/impact_target_aliases.v1.json'
+          )
+
+          foreach ($rel in $files) {
+            $from = Join-Path $src $rel
+            $to = Join-Path $PWD $rel
+            New-Item -ItemType Directory -Force -Path (Split-Path $to) | Out-Null
+            Copy-Item -Force $from $to
+          }
+
+          # Keep the local Chapter 7 profile conservative and target-specific.
+          @'
+          {
+            "task_scope": {
+              "min_task_id": 1,
+              "max_task_id": 54
+            },
+            "surface_aliases": {
+              "BattleMap": [
+                "BattleMap",
+                "BattleMapScreen",
+                "Map"
+              ]
+            }
+          }
+          '@ | Set-Content -Encoding utf8NoBOM docs/workflows/chapter7-profile.json
+
+          # Localize only the repository identity file in the versioned Impact policy.
+          $cfgPath = 'scripts/python/impact_analysis_config.v1.json'
+          $cfg = Get-Content -Raw $cfgPath | ConvertFrom-Json
+          $cfg.identity_files = @($cfg.identity_files | ForEach-Object {
+            if ($_ -eq 'NewRouge.csproj') { 'lastking.csproj' } else { $_ }
+          })
+          $cfg | ConvertTo-Json -Depth 100 | Set-Content -Encoding utf8NoBOM $cfgPath
+
+          # Copy focused upstream regression tests for the newly closed surfaces when present.
+          $testNames = @(
+            'test_chapter7_profile.py',
+            'test_run_chapter7_ui_wiring.py',
+            'test_create_chapter7_tasks_from_ui_candidates.py',
+            'test_knowledge_control_plane.py',
+            'test_publish_knowledge_catalog.py',
+            'test_knowledge_locator.py',
+            'test_evaluate_knowledge_queries.py',
+            'test_impact_analysis_index.py',
+            'test_analyze_impact_cli.py'
+          )
+          foreach ($name in $testNames) {
+            $from = Join-Path $src "scripts/python/tests/$name"
+            if (Test-Path $from) {
+              New-Item -ItemType Directory -Force -Path 'scripts/python/tests' | Out-Null
+              Copy-Item -Force $from (Join-Path 'scripts/python/tests' $name)
+            }
+          }
+
+      - name: Validate closed bundles
+        shell: pwsh
+        env:
+          CI: ''
+        run: |
+          $ErrorActionPreference = 'Stop'
+          py -3 -m unittest discover scripts/python/tests -p 'test_chapter7*.py' -v
+          py -3 -m unittest scripts.python.tests.test_impact_analysis_index -v
+          if (Test-Path scripts/python/tests/test_analyze_impact_cli.py) { py -3 -m unittest scripts.python.tests.test_analyze_impact_cli -v }
+          if (Test-Path scripts/python/tests/test_knowledge_control_plane.py) { py -3 -m unittest scripts.python.tests.test_knowledge_control_plane -v }
+          if (Test-Path scripts/python/tests/test_publish_knowledge_catalog.py) { py -3 -m unittest scripts.python.tests.test_publish_knowledge_catalog -v }
+          if (Test-Path scripts/python/tests/test_knowledge_locator.py) { py -3 -m unittest scripts.python.tests.test_knowledge_locator -v }
+          if (Test-Path scripts/python/tests/test_evaluate_knowledge_queries.py) { py -3 -m unittest scripts.python.tests.test_evaluate_knowledge_queries -v }
+          py -3 scripts/python/validate_knowledge_control_plane.py
+          py -3 scripts/python/build_impact_index.py --help | Out-Null
+          py -3 scripts/python/run_chapter7_ui_wiring.py --help | Out-Null
+          node --check scripts/python/project_health_knowledge.js
+          git diff --check origin/main...HEAD
+
+      - name: Commit parity closure and remove temporary workflow
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Remove-Item -Force .github/workflows/close-tooling-parity.yml
+          Remove-Item -Recurse -Force _upstream
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          if (-not (git diff --cached --quiet)) {
+            git commit -m 'feat(tooling): close chapter7 knowledge and impact parity'
+            git push origin HEAD:close-tooling-parity-20260912
+          }
