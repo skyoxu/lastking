@@ -1,0 +1,13 @@
+{
+  "task_scope": {
+    "min_task_id": 1,
+    "max_task_id": 54
+  },
+  "surface_aliases": {
+    "BattleMap": [
+      "BattleMap",
+      "BattleMapScreen",
+      "Map"
+    ]
+  }
+}

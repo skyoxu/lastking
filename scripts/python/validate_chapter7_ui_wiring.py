@@ -23,10 +23,6 @@ def _today() -> str:
     return dt.date.today().strftime('%Y-%m-%d')
 
 
-def _resolve_path(value: str | Path) -> Path:
-    return value if isinstance(value, Path) else Path(value)
-
-
 def _extract_task_refs(text: str) -> set[int]:
     hits = set()
     for match in re.finditer(r'\bT0*(\d{1,4})\b', text):
@@ -42,19 +38,31 @@ def validate(
     tasks_back_path: Path = TASKS_BACK,
     tasks_gameplay_path: Path = TASKS_GAMEPLAY,
     overlay_root_path: Path = OVERLAY_ROOT,
+    chapter7_profile_path: Path | None = None,
 ) -> tuple[int, dict[str, Any]]:
-    ui_gdd_flow_path = _resolve_path(ui_gdd_flow_path)
-    tasks_json_path = _resolve_path(tasks_json_path)
-    tasks_back_path = _resolve_path(tasks_back_path)
-    tasks_gameplay_path = _resolve_path(tasks_gameplay_path)
-    overlay_root_path = _resolve_path(overlay_root_path)
     summary = build_summary(
         repo_root=repo_root,
         tasks_json_path=tasks_json_path,
         tasks_back_path=tasks_back_path,
         tasks_gameplay_path=tasks_gameplay_path,
         overlay_root_path=overlay_root_path,
+        chapter7_profile_path=chapter7_profile_path,
     )
+    if summary.get('status') == 'skipped':
+        payload = {
+            'ts': dt.datetime.now(dt.timezone.utc).isoformat(),
+            'action': 'validate-chapter7-ui-wiring',
+            'status': 'skipped',
+            'reason': summary.get('reason') or 'missing_task_triplet',
+            'target': str(ui_gdd_flow_path).replace('\\', '/'),
+            'required_sections': REQUIRED_SECTIONS,
+            'missing_sections': [],
+            'completed_master_tasks_count': 0,
+            'missing_done_task_refs': [],
+            'missing_source_files': summary.get('missing_source_files', []),
+        }
+        return 0, payload
+
     gdd_path = ui_gdd_flow_path if ui_gdd_flow_path.is_absolute() else (repo_root / ui_gdd_flow_path)
     missing_sections: list[str] = []
     missing_done_task_refs: list[int] = []
@@ -100,6 +108,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument('--tasks-back-path', default=str(TASKS_BACK))
     parser.add_argument('--tasks-gameplay-path', default=str(TASKS_GAMEPLAY))
     parser.add_argument('--overlay-root-path', default=str(OVERLAY_ROOT))
+    parser.add_argument('--chapter7-profile-path', default='')
     parser.add_argument('--out', default='')
     args = parser.parse_args(argv)
 
@@ -111,6 +120,7 @@ def main(argv: list[str] | None = None) -> int:
         tasks_back_path=Path(args.tasks_back_path),
         tasks_gameplay_path=Path(args.tasks_gameplay_path),
         overlay_root_path=Path(args.overlay_root_path),
+        chapter7_profile_path=Path(args.chapter7_profile_path) if args.chapter7_profile_path else None,
     )
     out = Path(args.out) if args.out else (repo_root / 'logs' / 'ci' / _today() / 'chapter7-ui-wiring-gate' / 'summary.json')
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -126,5 +136,3 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == '__main__':
     raise SystemExit(main())
-def _resolve_path(value: str | Path) -> Path:
-    return value if isinstance(value, Path) else Path(value)
