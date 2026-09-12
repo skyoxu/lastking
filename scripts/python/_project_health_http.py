@@ -133,11 +133,13 @@ def handler_factory(root: Path):
                     text = Path(__file__).with_name('project_health_knowledge.' + suffix).read_text(encoding='utf-8')
                     self.send(text, content_type='text/javascript' if suffix == 'js' else 'text/css')
                 elif parsed.path in ('/', '/latest.html'):
+                    # The existing dashboard has inline scripts/styles; retain its rendering behavior.
                     self.send((root / 'logs/ci/project-health/latest.html').read_text(encoding='utf-8'),
                               content_type='text/html; charset=utf-8')
                 elif parsed.path.startswith('/api/'):
                     self.send({'reason': 'Not found'}, 404)
                 else:
+                    # Keep report JSON/Markdown links, but never serve private snapshots or directories.
                     relative = parsed.path.lstrip('/')
                     path = safe_file(root / 'logs/ci/project-health', relative)
                     if path.suffix not in ('.json', '.md', '.txt') or not path.is_file():
