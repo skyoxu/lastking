@@ -10,6 +10,8 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
+from _chapter7_profile import bucket_names, bucket_profile, load_chapter7_profile, surface_aliases
+
 
 def _today() -> str:
     return dt.date.today().strftime('%Y-%m-%d')
@@ -61,6 +63,7 @@ def _canonical_input_snapshot(source_payload: dict[str, Any]) -> dict[str, Any]:
         'action': source_payload.get('action'),
         'repo_root': source_payload.get('repo_root'),
         'source_files': source_payload.get('source_files', []),
+        'task_scope': source_payload.get('task_scope', {}),
         'completed_master_tasks_count': source_payload.get('completed_master_tasks_count'),
         'needed_wiring_features_count': source_payload.get('needed_wiring_features_count'),
         'feature_family_counts': source_payload.get('feature_family_counts', {}),
@@ -75,19 +78,15 @@ def _read_text_if_exists(path: Path) -> str:
         return ''
 
 
-def _scene_has_surface_nodes(repo_root: Path, scene_rel_path: str, surfaces: list[str]) -> list[str]:
+def _scene_has_surface_nodes(repo_root: Path, scene_rel_path: str, surfaces: list[str], *, profile: dict[str, Any]) -> list[str]:
     scene_path = (repo_root / scene_rel_path).resolve()
     scene_text = _read_text_if_exists(scene_path)
     if not scene_text:
         return []
 
-    alias_map = {
-        'RuntimeHud': ['RuntimeHud', 'HUD'],
-        'SettingsMenu': ['SettingsMenu', 'SettingsPanel', 'SettingsScreen'],
-    }
     present: list[str] = []
     for surface in surfaces:
-        aliases = alias_map.get(surface, [surface])
+        aliases = surface_aliases(profile, surface)
         if any(f'[node name="{alias}"' in scene_text for alias in aliases):
             present.append(surface)
     return present
@@ -103,7 +102,7 @@ def _extract_section(text: str, heading: str | list[str]) -> str:
         if stripped in headings:
             capture = True
             continue
-        if capture and stripped.startswith('## '):
+        if capture and (stripped.startswith('## ') or stripped.startswith('### ')):
             break
         if capture:
             out.append(line)
@@ -147,12 +146,15 @@ def _pick_evidence_status(evidence_statuses: list[str]) -> str:
     return 'unknown'
 
 
-def _surface_closure_status(surface: str, implemented_surfaces: list[str]) -> str:
-    aliases = {
-        'RuntimeHud': {'RuntimeHud', 'HUD'},
-        'SettingsMenu': {'SettingsMenu', 'SettingsPanel', 'SettingsScreen'},
-    }.get(surface, {surface})
+def _surface_closure_status(surface: str, implemented_surfaces: list[str], *, profile: dict[str, Any]) -> str:
+    aliases = set(surface_aliases(profile, surface))
     return 'implemented' if any(alias in implemented_surfaces for alias in aliases) else 'pending'
+
+
+def _surface_present_in_paths(surface: str, paths: list[str], *, profile: dict[str, Any]) -> bool:
+    aliases = set(surface_aliases(profile, surface))
+    normalized_paths = [path.strip() for path in paths if path.strip()]
+    return any(path in aliases or any(alias in path for alias in aliases) for path in normalized_paths)
 
 
 def _load_task_status_views(
@@ -352,6 +354,29 @@ def _extract_table_row(section_text: str, task_id: int) -> dict[str, str]:
     return {}
 
 
+def _extract_all_table_rows(section_text: str) -> list[dict[str, str]]:
+    rows: list[dict[str, str]] = []
+    for line in section_text.splitlines():
+        stripped = line.strip()
+        if not stripped.startswith('| T'):
+            continue
+        cells = [_normalize_table_cell(cell) for cell in stripped.strip('|').split('|')]
+        if len(cells) < 7:
+            continue
+        rows.append(
+            {
+                'task': cells[0],
+                'title': cells[1],
+                'primary_surface_code': cells[2],
+                'primary_test_evidence': cells[3],
+                'governance_path': cells[4],
+                'evidence_status': cells[5],
+                'gap_to_close': cells[6],
+            }
+        )
+    return rows
+
+
 def _candidate_by_bucket(candidate_payload: dict[str, Any]) -> dict[str, dict[str, Any]]:
     result: dict[str, dict[str, Any]] = {}
     for item in candidate_payload.get('candidates', []) if isinstance(candidate_payload, dict) else []:
@@ -363,18 +388,9 @@ def _candidate_by_bucket(candidate_payload: dict[str, Any]) -> dict[str, dict[st
     return result
 
 
-def _bucket_to_section_heading(bucket: str) -> list[str]:
-    return {
-        'entry': [
-            '### 6.1.1 Entry And Bootstrap（入口与启动）',
-            '### 6.1.1 MainMenu And Boot Flow（主菜单与启动流程）',
-        ],
-        'loop': ['### 6.1.2 Runtime HUD And Outcome（运行时 HUD 与结果）'],
-        'combat': ['### 6.1.3 Combat Pressure And Interaction（战斗压力与交互）'],
-        'economy': ['### 6.1.4 Economy And Progression（经济与成长）'],
-        'meta': ['### 6.1.5 Save, Settings, And Meta（存档、设置与元系统）'],
-        'governance': ['### 6.1.6 Config Governance And Audit（配置治理与审计）'],
-    }[bucket]
+def _bucket_to_section_heading(profile: dict[str, Any], bucket: str) -> list[str]:
+    values = list(bucket_profile(profile, bucket).get('section_headings') or [])
+    return [str(item) for item in values if str(item).strip()]
 
 
 def _build_closure_summary(
@@ -383,54 +399,42 @@ def _build_closure_summary(
     source_payload: dict[str, Any],
     ui_candidates_path: Path,
     wiring_audit_path: Path | None,
+    profile: dict[str, Any],
 ) -> dict[str, Any]:
     candidate_payload = _load_json_if_exists(ui_candidates_path)
     candidates_by_bucket = _candidate_by_bucket(candidate_payload)
     audit_text = _read_text_if_exists(wiring_audit_path) if wiring_audit_path and wiring_audit_path.exists() else ''
-    bucket_order = ['entry', 'loop', 'combat', 'economy', 'meta', 'governance']
-    # Chapter 7 closure should be judged by the dedicated wiring task row itself.
-    bucket_task_map = {
-        'entry': [41],
-        'loop': [42],
-        'combat': [43],
-        'economy': [44],
-        'meta': [45],
-        'governance': [46],
-    }
-    wiring_task_map = {
-        'entry': 41,
-        'loop': 42,
-        'combat': 43,
-        'economy': 44,
-        'meta': 45,
-        'governance': 46,
-    }
+    bucket_order = bucket_names(profile)
     slices: list[dict[str, Any]] = []
     for bucket in bucket_order:
+        config = bucket_profile(profile, bucket)
         candidate = candidates_by_bucket.get(bucket, {})
-        section_text = _extract_section(audit_text, _bucket_to_section_heading(bucket)) if audit_text else ''
-        task_rows = [_extract_table_row(section_text, task_id) for task_id in bucket_task_map[bucket]]
+        section_text = _extract_section(audit_text, _bucket_to_section_heading(profile, bucket)) if audit_text else ''
+        section_rows = _extract_all_table_rows(section_text) if section_text else []
+        closure_task_ids = [int(item) for item in config.get('closure_task_ids', []) if isinstance(item, int)]
+        task_rows = [_extract_table_row(section_text, task_id) for task_id in closure_task_ids]
         task_rows = [row for row in task_rows if row]
-        evidence_statuses = [row['evidence_status'] for row in task_rows if row.get('evidence_status')]
+        evidence_statuses = [row['evidence_status'] for row in section_rows if row.get('evidence_status')]
         evidence_status = _pick_evidence_status(evidence_statuses)
         suggested_surfaces = list(candidate.get('suggested_standalone_surfaces') or [])
         implemented_surfaces: list[str] = []
         pending_surfaces = list(suggested_surfaces)
-        scene_map = {
-            'entry': 'Game.Godot/Scenes/UI/MainMenu.tscn',
-            'loop': 'Game.Godot/Scenes/UI/HUD.tscn',
-            'combat': 'Game.Godot/Scenes/UI/HUD.tscn',
-            'economy': 'Game.Godot/Scenes/UI/HUD.tscn',
-            'meta': 'Game.Godot/Scenes/UI/SettingsPanel.tscn',
-            'governance': 'Game.Godot/Scenes/UI/HUD.tscn',
-        }
-        scene_rel = scene_map.get(bucket)
+        primary_surface_paths = _dedupe_keep_order(
+            [path for row in section_rows for path in _split_path_list(row.get('primary_surface_code', ''))]
+        )
+        scene_rel = str(config.get('scene_rel_path') or '').strip()
         if scene_rel:
             implemented_surfaces = _scene_has_surface_nodes(
                 repo_root=repo_root,
                 scene_rel_path=scene_rel,
                 surfaces=suggested_surfaces,
+                profile=profile,
             )
+        implemented_surfaces = _dedupe_keep_order(
+            implemented_surfaces
+            + [surface for surface in suggested_surfaces if _surface_present_in_paths(surface, primary_surface_paths, profile=profile)]
+        )
+        if suggested_surfaces:
             pending_surfaces = [item for item in suggested_surfaces if item not in implemented_surfaces]
         gap_to_close = [row['gap_to_close'] for row in task_rows if row.get('gap_to_close') and row.get('gap_to_close') != 'None']
         epic_usable = evidence_status == 'runtime' and len(pending_surfaces) == 0 and not gap_to_close
@@ -443,27 +447,25 @@ def _build_closure_summary(
         standalone_surface_status = [
             {
                 'surface': surface,
-                'status': _surface_closure_status(surface, implemented_surfaces),
+                'status': _surface_closure_status(surface, implemented_surfaces, profile=profile),
             }
             for surface in suggested_surfaces
         ]
-        primary_surface_paths = _dedupe_keep_order(
-            [path for row in task_rows for path in _split_path_list(row.get('primary_surface_code', ''))]
-        )
         primary_test_paths = _dedupe_keep_order(
-            [path for row in task_rows for path in _split_path_list(row.get('primary_test_evidence', ''))]
+            [path for row in section_rows for path in _split_path_list(row.get('primary_test_evidence', ''))]
         )
         governance_paths = _dedupe_keep_order(
-            [path for row in task_rows for path in _split_path_list(row.get('governance_path', ''))]
+            [path for row in section_rows for path in _split_path_list(row.get('governance_path', ''))]
         )
         scope_task_ids = list(candidate.get('scope_task_ids') or [])
-        wiring_task_id = wiring_task_map[bucket]
-        related_wiring_row = next((row for row in task_rows if row.get('task') == f'T{wiring_task_id:02d}'), {})
+        raw_wiring_task_id = config.get('wiring_task_id')
+        wiring_task_id = int(raw_wiring_task_id) if isinstance(raw_wiring_task_id, int) and int(raw_wiring_task_id) > 0 else None
+        related_wiring_row = next((row for row in task_rows if wiring_task_id is not None and row.get('task') == f'T{wiring_task_id:02d}'), {})
         blocker_class = 'surface-missing' if pending_surfaces else ('evidence-missing' if evidence_status != 'runtime' else 'none')
         ready_for_done = evidence_status == 'runtime' and len(pending_surfaces) == 0 and not gap_to_close
         write_back_contract = {
             'task_id': wiring_task_id,
-            'task_ref': f'T{wiring_task_id:02d}',
+            'task_ref': f'T{wiring_task_id:02d}' if wiring_task_id is not None else '',
             'current_recommendation': write_back_recommendation,
             'ready_for_done': ready_for_done,
             'blocker_class': blocker_class,
@@ -525,6 +527,10 @@ def _artifact_entry(*, repo_root: Path, path: Path, artifact_type: str, producer
     }
 
 
+def _is_skipped_input_summary(source_payload: dict[str, Any]) -> bool:
+    return str(source_payload.get('status') or '').lower() == 'skipped' and str(source_payload.get('reason') or '') == 'missing_task_triplet'
+
+
 def orchestrate(
     *,
     repo_root: Path,
@@ -538,6 +544,7 @@ def orchestrate(
     ui_gdd_flow_path: Path,
     alignment_audit_path: Path | None,
     wiring_audit_path: Path | None,
+    chapter7_profile_path: Path | None,
     repo_label: str,
     back_story_id: str,
     gameplay_story_id: str,
@@ -548,6 +555,7 @@ def orchestrate(
     ui_candidates_path = ui_gdd_flow_path.with_suffix('.candidates.json')
     resolved_alignment_audit_path = _optional_resolved_path(repo_root, alignment_audit_path)
     resolved_wiring_audit_path = _optional_resolved_path(repo_root, wiring_audit_path)
+    profile = load_chapter7_profile(repo_root=repo_root, profile_path=chapter7_profile_path)
     commands = [
         (
             'collect',
@@ -568,6 +576,8 @@ def orchestrate(
             ],
         ),
     ]
+    if chapter7_profile_path:
+        commands[0][1].extend(['--chapter7-profile-path', str(chapter7_profile_path)])
     if write_doc:
         commands.append(
             (
@@ -591,6 +601,8 @@ def orchestrate(
                 ],
             )
         )
+        if chapter7_profile_path:
+            commands[-1][1].extend(['--chapter7-profile-path', str(chapter7_profile_path)])
     commands.append(
         (
             'validate',
@@ -613,6 +625,8 @@ def orchestrate(
             ],
         )
     )
+    if chapter7_profile_path:
+        commands[-1][1].extend(['--chapter7-profile-path', str(chapter7_profile_path)])
     if create_tasks:
         commands.append(
             (
@@ -636,6 +650,8 @@ def orchestrate(
                 ],
             )
         )
+        if chapter7_profile_path:
+            commands[-1][1].extend(['--chapter7-profile-path', str(chapter7_profile_path)])
         if repo_label:
             commands[-1][1].extend(['--repo-label', repo_label])
         if back_story_id:
@@ -669,6 +685,7 @@ def orchestrate(
             'ui_candidates_path': _contract_path(repo_root, ui_candidates_path),
             'alignment_audit_path': _contract_path(repo_root, alignment_audit_path),
             'wiring_audit_path': _contract_path(repo_root, wiring_audit_path),
+            'chapter7_profile_path': profile.get('_loaded_profile_path') or '',
             'repo_label': repo_label,
             'back_story_id': back_story_id,
             'gameplay_story_id': gameplay_story_id,
@@ -730,91 +747,97 @@ def orchestrate(
                 'needed_wiring_features_count': source_payload.get('needed_wiring_features_count'),
                 'feature_family_counts': source_payload.get('feature_family_counts', {}),
             }
-            closure_summary_path = out_dir / 'closure-summary.json'
-            closure_summary = _build_closure_summary(
-                repo_root=repo_root,
-                source_payload=source_payload,
-                ui_candidates_path=ui_candidates_path if ui_candidates_path.is_absolute() else (repo_root / ui_candidates_path),
-                wiring_audit_path=resolved_wiring_audit_path,
-            )
-            closure_summary_path.write_text(
-                json.dumps(closure_summary, ensure_ascii=False, indent=2) + '\n',
-                encoding='utf-8',
-                newline='\n',
-            )
-            payload['closure_summary'] = str(closure_summary_path.resolve()).replace('\\', '/')
-            payload['closure_summary_meta'] = {
-                'slice_count': closure_summary.get('slice_count', 0),
-                'epic_usable_count': closure_summary.get('epic_usable_count', 0),
-            }
-            artifact_entries.append(
-                _artifact_entry(
+            if _is_skipped_input_summary(source_payload):
+                payload['status'] = 'skipped'
+                payload['skip_reason'] = 'missing_task_triplet'
+                payload['missing_source_files'] = list(source_payload.get('missing_source_files') or [])
+            else:
+                closure_summary_path = out_dir / 'closure-summary.json'
+                closure_summary = _build_closure_summary(
                     repo_root=repo_root,
-                    path=closure_summary_path,
-                    artifact_type='closure-summary',
-                    producer_step='collect',
+                    source_payload=source_payload,
+                    ui_candidates_path=ui_candidates_path if ui_candidates_path.is_absolute() else (repo_root / ui_candidates_path),
+                    wiring_audit_path=resolved_wiring_audit_path,
+                    profile=profile,
                 )
-            )
-            status_patch_preview_path = out_dir / 'task-status-patch-preview.json'
-            status_patch_preview = _build_status_patch_preview(
-                repo_root=repo_root,
-                closure_summary=closure_summary,
-                tasks_json_path=tasks_json_path,
-                tasks_back_path=tasks_back_path,
-                tasks_gameplay_path=tasks_gameplay_path,
-            )
-            status_patch_preview_path.write_text(
-                json.dumps(status_patch_preview, ensure_ascii=False, indent=2) + '\n',
-                encoding='utf-8',
-                newline='\n',
-            )
-            payload['task_status_patch_preview'] = str(status_patch_preview_path.resolve()).replace('\\', '/')
-            payload['task_status_patch_preview_meta'] = {
-                'mismatch_count': status_patch_preview.get('mismatch_count', 0),
-            }
-            artifact_entries.append(
-                _artifact_entry(
+                closure_summary_path.write_text(
+                    json.dumps(closure_summary, ensure_ascii=False, indent=2) + '\n',
+                    encoding='utf-8',
+                    newline='\n',
+                )
+                payload['closure_summary'] = str(closure_summary_path.resolve()).replace('\\', '/')
+                payload['closure_summary_meta'] = {
+                    'slice_count': closure_summary.get('slice_count', 0),
+                    'epic_usable_count': closure_summary.get('epic_usable_count', 0),
+                }
+                artifact_entries.append(
+                    _artifact_entry(
+                        repo_root=repo_root,
+                        path=closure_summary_path,
+                        artifact_type='closure-summary',
+                        producer_step='collect',
+                    )
+                )
+                status_patch_preview_path = out_dir / 'task-status-patch-preview.json'
+                status_patch_preview = _build_status_patch_preview(
                     repo_root=repo_root,
-                    path=status_patch_preview_path,
-                    artifact_type='task-status-patch-preview',
-                    producer_step='collect',
+                    closure_summary=closure_summary,
+                    tasks_json_path=tasks_json_path,
+                    tasks_back_path=tasks_back_path,
+                    tasks_gameplay_path=tasks_gameplay_path,
                 )
-            )
-            status_patch_preview_md_path = out_dir / 'task-status-patch-preview.md'
-            status_patch_preview_md_path.write_text(
-                _render_status_patch_preview_markdown(status_patch_preview),
-                encoding='utf-8',
-                newline='\n',
-            )
-            payload['task_status_patch_preview_md'] = str(status_patch_preview_md_path.resolve()).replace('\\', '/')
-            artifact_entries.append(
-                _artifact_entry(
-                    repo_root=repo_root,
-                    path=status_patch_preview_md_path,
-                    artifact_type='task-status-patch-preview-md',
-                    producer_step='collect',
+                status_patch_preview_path.write_text(
+                    json.dumps(status_patch_preview, ensure_ascii=False, indent=2) + '\n',
+                    encoding='utf-8',
+                    newline='\n',
                 )
-            )
-            status_patch_contract_path = out_dir / 'task-status-patch.json'
-            status_patch_contract = _build_status_patch_contract(status_patch_preview)
-            status_patch_contract_path.write_text(
-                json.dumps(status_patch_contract, ensure_ascii=False, indent=2) + '\n',
-                encoding='utf-8',
-                newline='\n',
-            )
-            payload['task_status_patch'] = str(status_patch_contract_path.resolve()).replace('\\', '/')
-            payload['task_status_patch_meta'] = {
-                'operation_count': status_patch_contract.get('operation_count', 0),
-            }
-            artifact_entries.append(
-                _artifact_entry(
-                    repo_root=repo_root,
-                    path=status_patch_contract_path,
-                    artifact_type='task-status-patch',
-                    producer_step='collect',
+                payload['task_status_patch_preview'] = str(status_patch_preview_path.resolve()).replace('\\', '/')
+                payload['task_status_patch_preview_meta'] = {
+                    'mismatch_count': status_patch_preview.get('mismatch_count', 0),
+                }
+                artifact_entries.append(
+                    _artifact_entry(
+                        repo_root=repo_root,
+                        path=status_patch_preview_path,
+                        artifact_type='task-status-patch-preview',
+                        producer_step='collect',
+                    )
                 )
-            )
-    if overall_rc == 0:
+                status_patch_preview_md_path = out_dir / 'task-status-patch-preview.md'
+                status_patch_preview_md_path.write_text(
+                    _render_status_patch_preview_markdown(status_patch_preview),
+                    encoding='utf-8',
+                    newline='\n',
+                )
+                payload['task_status_patch_preview_md'] = str(status_patch_preview_md_path.resolve()).replace('\\', '/')
+                artifact_entries.append(
+                    _artifact_entry(
+                        repo_root=repo_root,
+                        path=status_patch_preview_md_path,
+                        artifact_type='task-status-patch-preview-md',
+                        producer_step='collect',
+                    )
+                )
+                status_patch_contract_path = out_dir / 'task-status-patch.json'
+                status_patch_contract = _build_status_patch_contract(status_patch_preview)
+                status_patch_contract_path.write_text(
+                    json.dumps(status_patch_contract, ensure_ascii=False, indent=2) + '\n',
+                    encoding='utf-8',
+                    newline='\n',
+                )
+                payload['task_status_patch'] = str(status_patch_contract_path.resolve()).replace('\\', '/')
+                payload['task_status_patch_meta'] = {
+                    'operation_count': status_patch_contract.get('operation_count', 0),
+                }
+                artifact_entries.append(
+                    _artifact_entry(
+                        repo_root=repo_root,
+                        path=status_patch_contract_path,
+                        artifact_type='task-status-patch',
+                        producer_step='collect',
+                    )
+                )
+    if overall_rc == 0 and payload.get('status') == 'ok':
         candidate_sidecar_path = ui_candidates_path if ui_candidates_path.is_absolute() else (repo_root / ui_candidates_path)
         ui_gdd_path = ui_gdd_flow_path if ui_gdd_flow_path.is_absolute() else (repo_root / ui_gdd_flow_path)
         payload['ui_gdd'] = str(ui_gdd_path.resolve()).replace('\\', '/')
@@ -848,10 +871,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument('--tasks-json-path', default='.taskmaster/tasks/tasks.json')
     parser.add_argument('--tasks-back-path', default='.taskmaster/tasks/tasks_back.json')
     parser.add_argument('--tasks-gameplay-path', default='.taskmaster/tasks/tasks_gameplay.json')
-    parser.add_argument('--overlay-root-path', default='docs/architecture/overlays/PRD-lastking-T2/08')
+    parser.add_argument('--overlay-root-path', default='docs/architecture/overlays')
     parser.add_argument('--ui-gdd-flow-path', default='docs/gdd/ui-gdd-flow.md')
     parser.add_argument('--alignment-audit-path', default='')
     parser.add_argument('--wiring-audit-path', default='')
+    parser.add_argument('--chapter7-profile-path', default='')
     parser.add_argument('--repo-label', default='')
     parser.add_argument('--back-story-id', default='')
     parser.add_argument('--gameplay-story-id', default='')
@@ -876,6 +900,7 @@ def main(argv: list[str] | None = None) -> int:
             'delivery_profile': args.delivery_profile,
             'write_doc': bool(args.write_doc),
             'create_tasks': bool(args.create_tasks),
+            'chapter7_profile_path': args.chapter7_profile_path,
             'repo_label': args.repo_label,
             'back_story_id': args.back_story_id,
             'gameplay_story_id': args.gameplay_story_id,
@@ -884,8 +909,8 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(payload, ensure_ascii=False, indent=2))
         return 0
 
-    effective_wiring_audit = Path(args.wiring_audit_path) if args.wiring_audit_path else Path('docs/gdd/t1-t46-m1-wiring-audit.md')
-    if not (repo_root / effective_wiring_audit).exists() and not effective_wiring_audit.is_absolute():
+    effective_wiring_audit = Path(args.wiring_audit_path) if args.wiring_audit_path else None
+    if effective_wiring_audit is not None and not (repo_root / effective_wiring_audit).exists() and not effective_wiring_audit.is_absolute():
         effective_wiring_audit = None
 
     rc, payload = orchestrate(
@@ -900,6 +925,7 @@ def main(argv: list[str] | None = None) -> int:
         ui_gdd_flow_path=Path(args.ui_gdd_flow_path),
         alignment_audit_path=Path(args.alignment_audit_path) if args.alignment_audit_path else None,
         wiring_audit_path=effective_wiring_audit,
+        chapter7_profile_path=Path(args.chapter7_profile_path) if args.chapter7_profile_path else None,
         repo_label=args.repo_label,
         back_story_id=args.back_story_id,
         gameplay_story_id=args.gameplay_story_id,
@@ -922,6 +948,8 @@ def main(argv: list[str] | None = None) -> int:
         'out_dir': payload['out_dir'],
         'artifacts': artifact_entries,
     }
+    if payload.get('skip_reason'):
+        manifest_payload['skip_reason'] = payload['skip_reason']
     manifest_path.parent.mkdir(parents=True, exist_ok=True)
     manifest_path.write_text(json.dumps(manifest_payload, ensure_ascii=False, indent=2) + '\n', encoding='utf-8', newline='\n')
     validation_out = manifest_path.with_name('artifact-manifest-validation.json')
