@@ -1,0 +1,54 @@
+name: Validate newrouge alignment
+
+on:
+  push:
+    branches:
+      - align-newrouge-features-20260912
+    paths:
+      - .github/workflows/validate-newrouge-alignment.yml
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Python regression tests
+        shell: pwsh
+        run: |
+          py -3 -m unittest `
+            scripts.python.tests.test_impact_analysis_handoff `
+            scripts.python.tests.test_impact_analyzer `
+            scripts.sc.tests.test_project_health_knowledge `
+            scripts.sc.tests.test_project_health_navigation `
+            scripts.sc.tests.test_project_health_runtime_snapshot `
+            scripts.sc.tests.test_project_health_server `
+            -v
+      - name: Knowledge UI JavaScript syntax
+        shell: pwsh
+        run: node --check scripts/python/project_health_knowledge.js
+      - name: Diff whitespace check
+        shell: pwsh
+        run: git diff --check origin/main...HEAD
+      - name: Required aligned surfaces exist
+        shell: pwsh
+        run: |
+          $required = @(
+            'workflow.md',
+            '.agents/skills/workflow-chapter2-repository-bootstrap/SKILL.md',
+            '.agents/skills/workflow-chapter3-task-triplet-baseline/SKILL.md',
+            '.agents/skills/workflow-chapter4-overlays-contracts-baseline/SKILL.md',
+            '.agents/skills/workflow-chapter5-semantics-stabilization/SKILL.md',
+            '.agents/skills/workflow-chapter6-single-task-daily-loop/SKILL.md',
+            '.agents/skills/workflow-chapter7-ui-wiring-closure/SKILL.md',
+            'scripts/python/project_health_knowledge.py',
+            'scripts/python/impact_analyzer.py',
+            'scripts/python/_project_health_http.py',
+            'scripts/python/project_health_runtime.py',
+            'knowledge/policies/consumer-policies.v1.json'
+          )
+          foreach ($path in $required) { if (-not (Test-Path $path)) { throw "Missing $path" } }
