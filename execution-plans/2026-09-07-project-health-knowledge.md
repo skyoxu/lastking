@@ -3,7 +3,7 @@
 - Title: Project Health Knowledge Integration
 - Status: active
 - Branch: align-newrouge-features-20260912
-- Git Head: a7b70ef1a6363d71356238ba898b51346a61e57a
+- Git Head: bde6bc46678cd100865532236eebb535f5719cdf
 - Goal: Align main-only Knowledge/Impact investigation and local Project Health service with upstream while binding runtime examples to lastking repository facts.
 - Scope: CLI/API, GDD configuration, SSOT task pagination, static scene attachment evidence, and pre-merge target adaptation.
 - Current step: Focused target-adaptation validation passed; repository PR checks are the remaining merge gate.
