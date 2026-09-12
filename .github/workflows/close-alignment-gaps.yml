@@ -78,50 +78,43 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-
           $path = 'scripts/python/init_knowledge_catalog.py'
           $text = Get-Content -Raw -Encoding UTF8 $path
           $text = $text.Replace('"project": "newrouge"', '"project": "lastking"')
           Set-Content -Path $path -Value $text -Encoding UTF8NoBOM
-
           $path = 'scripts/python/knowledge_locator.py'
           $text = Get-Content -Raw -Encoding UTF8 $path
           $text = $text.Replace('Locate authoritative newrouge repository knowledge without synthesizing answers.', 'Locate authoritative repository knowledge without synthesizing answers.')
           Set-Content -Path $path -Value $text -Encoding UTF8NoBOM
-
           $path = 'scripts/python/validate_knowledge_control_plane.py'
           $text = Get-Content -Raw -Encoding UTF8 $path
           $text = $text.Replace('Terminal validation for the newrouge repository Knowledge Control Plane.', 'Terminal validation for the repository Knowledge Control Plane.')
           Set-Content -Path $path -Value $text -Encoding UTF8NoBOM
-
           $path = 'docs/adr/ADR-0035-repository-knowledge-control-plane.md'
           $text = Get-Content -Raw -Encoding UTF8 $path
           $text = $text.Replace('`newrouge`', '`lastking`')
           Set-Content -Path $path -Value $text -Encoding UTF8NoBOM
-
           $path = 'scripts/python/impact_analysis_config.v1.json'
           $text = Get-Content -Raw -Encoding UTF8 $path
           $text = $text.Replace('NewRouge.csproj', 'lastking.csproj')
           Set-Content -Path $path -Value $text -Encoding UTF8NoBOM
-
           $routing = 'docs/agents/13-rag-sources-and-session-ssot.md'
           $routingText = Get-Content -Raw -Encoding UTF8 $routing
           if (-not $routingText.Contains('## Knowledge Control Plane')) {
-            $routingText += @"
-
-## Knowledge Control Plane
-Use `scripts/python/knowledge_locator.py` as the deterministic location-only lookup when a current published catalog is available. Locator candidates are not semantic truth: re-read the repository source and verify its hash before accepting context.
-
-Chapter 4/5/6 and review may use the observe-only flow in `docs/workflows/knowledge-context-shadow.md`, followed by the explicit decision/freeze contract in `docs/workflows/knowledge-context-freeze.md`. If publication is missing, stale, or blocked, fall back to the direct authoritative source routes listed above; do not rebuild global knowledge implicitly.
-"@
-            Set-Content -Path $routing -Value $routingText -Encoding UTF8NoBOM
+            $extra = @(
+              '',
+              '## Knowledge Control Plane',
+              'Use `scripts/python/knowledge_locator.py` as the deterministic location-only lookup when a current published catalog is available. Locator candidates are not semantic truth: re-read the repository source and verify its hash before accepting context.',
+              '',
+              'Chapter 4/5/6 and review may use the observe-only flow in `docs/workflows/knowledge-context-shadow.md`, followed by the explicit decision/freeze contract in `docs/workflows/knowledge-context-freeze.md`. If publication is missing, stale, or blocked, fall back to the direct authoritative source routes listed above; do not rebuild global knowledge implicitly.'
+            ) -join [Environment]::NewLine
+            Set-Content -Path $routing -Value ($routingText.TrimEnd() + [Environment]::NewLine + $extra + [Environment]::NewLine) -Encoding UTF8NoBOM
           }
-
           $adrIndex = 'docs/architecture/ADR_INDEX_GODOT.md'
           $adrText = Get-Content -Raw -Encoding UTF8 $adrIndex
           if (-not $adrText.Contains('ADR-0035')) {
             $needle = '- ADR-0030: Core 线程模型（Single-Thread Core + 明确跨线程边界） — `docs/adr/ADR-0030-core-threading-model.md`'
-            $replacement = $needle + "`n- ADR-0035: Repository Knowledge Control Plane — `docs/adr/ADR-0035-repository-knowledge-control-plane.md`"
+            $replacement = $needle + "`n- ADR-0035: Repository Knowledge Control Plane — ``docs/adr/ADR-0035-repository-knowledge-control-plane.md``"
             $adrText = $adrText.Replace($needle, $replacement)
             Set-Content -Path $adrIndex -Value $adrText -Encoding UTF8NoBOM
           }
@@ -133,7 +126,6 @@ Chapter 4/5/6 and review may use the observe-only flow in `docs/workflows/knowle
           import importlib.util
           import json
           from pathlib import Path
-
           root = Path.cwd()
           module_path = root / 'scripts/python/_chapter7_profile.py'
           spec = importlib.util.spec_from_file_location('chapter7_profile_alignment', module_path)
@@ -186,16 +178,13 @@ Chapter 4/5/6 and review may use the observe-only flow in `docs/workflows/knowle
           import importlib.util
           import json
           from pathlib import Path
-
           root = Path.cwd()
           impact = json.loads((root / 'scripts/python/impact_analysis_config.v1.json').read_text(encoding='utf-8'))
           assert 'lastking.csproj' in impact['identity_files']
           assert 'NewRouge.csproj' not in impact['identity_files']
           assert (root / 'scripts/python/impact_target_aliases.v1.json').is_file()
-
           catalog = json.loads((root / 'docs/knowledge/catalog/knowledge-catalog.json').read_text(encoding='utf-8'))
           assert catalog['project'] == 'lastking'
-
           spec = importlib.util.spec_from_file_location('chapter7_profile_verify', root / 'scripts/python/_chapter7_profile.py')
           module = importlib.util.module_from_spec(spec)
           assert spec and spec.loader
