@@ -50,8 +50,6 @@ def _resolve_inside(root: Path, value: str) -> Path:
         canonical_candidate.relative_to(canonical_root)
     except ValueError as exc:
         raise ImpactIndexError("path_outside_repository", f"path outside repository: {value}") from exc
-    # Return the repository spelling for 8.3 aliases so later relative paths
-    # and manifest bindings remain stable, while preserving ordinary paths.
     lexical = _lexical_absolute_path(candidate)
     if lexical != candidate:
         return lexical
@@ -79,7 +77,6 @@ def _discover_index(root: Path, revision: str) -> Path:
 
 
 def _validated_output(root: Path, value: str) -> Path:
-    # Check Windows aliases before resolve() can normalize them away.
     for part in Path(value).parts:
         if part == Path(value).anchor:
             continue
@@ -92,14 +89,11 @@ def _validated_output(root: Path, value: str) -> Path:
     except ImpactIndexError as exc:
         raise ImpactIndexError("path_outside_repository", "output must remain under logs/ci") from exc
     try:
-        # The policy boundary is the literal repository logs/ci root, not its redirect target.
         try:
             relative = path.relative_to(root / "logs" / "ci")
         except ValueError:
             canonical_path = _lexical_absolute_path(path)
-            relative = canonical_path.relative_to(
-                _lexical_absolute_path(root / "logs" / "ci")
-            )
+            relative = canonical_path.relative_to(_lexical_absolute_path(root / "logs" / "ci"))
             path = root / "logs" / "ci" / relative
         if not relative.parts:
             raise ValueError("output must name a file beneath logs/ci")
@@ -175,7 +169,6 @@ def _publish_pair(root: Path, output: Path, report: dict[str, Any], manifest: di
 
 
 def _rollback_report(output: Path, owned_identity: Any, report_data: bytes) -> list[str]:
-    """Compensate only a verified owned report; never hide the publication error."""
     try:
         current = output.stat()
     except FileNotFoundError:
@@ -206,7 +199,17 @@ def _rollback_report(output: Path, owned_identity: Any, report_data: bytes) -> l
 def _failure_evidence(root: Path, output: Path | None, run_id: str, target: Any,
                       revision: str | None, reason: ImpactIndexError) -> dict[str, Any]:
     isolated = root / "logs" / "ci" / _utc_date() / "impact-analysis" / ("failed-" + run_id) / "impact-report.v1.json"
-    candidates = [output, isolated] if output is not None and output != isolated else [isolated]
+    concurrent_collision = reason.code == "lock_unavailable" or (
+        reason.code == "index_identity_collision"
+        and any(marker in reason.reason for marker in (
+            "another writer owns the output directory",
+            "output report or run manifest already exists",
+        ))
+    )
+    if concurrent_collision:
+        candidates = [isolated, output] if output is not None and output != isolated else [isolated]
+    else:
+        candidates = [output, isolated] if output is not None and output != isolated else [isolated]
     errors = []
     for candidate in candidates:
         try:
@@ -231,10 +234,7 @@ def _failure_evidence(root: Path, output: Path | None, run_id: str, target: Any,
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(
-        description="Analyze a target against an immutable Impact Index. Stable failure codes: "
-        + ", ".join(f"{k}={v}" for k, v in sorted(EXIT_CODES.items()))
-    )
+    parser = argparse.ArgumentParser(description="Analyze a target against an immutable Impact Index. Stable failure codes: " + ", ".join(f"{k}={v}" for k, v in sorted(EXIT_CODES.items())))
     parser.add_argument("--target", required=True, help='JSON target, e.g. {"type":"event","id":"RewardOfferPresentedEvent"}')
     parser.add_argument("--revision", required=True, help="Full 40-character Git commit SHA.")
     parser.add_argument("--trusted-ref", default=None)
@@ -304,10 +304,8 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     except Exception as exc:
         reason = exc if isinstance(exc, ImpactIndexError) else ImpactIndexError("internal_error", str(exc))
-        evidence = _failure_evidence(root, None if publication_started else output_path,
-                                     run_id, target_input, revision, reason)
-        print(json.dumps({"status": "failed", "code": reason.code, "exit_code": reason.exit_code,
-                          "reason": reason.reason, "run_id": run_id, **evidence}, ensure_ascii=False, sort_keys=True))
+        evidence = _failure_evidence(root, None if publication_started else output_path, run_id, target_input, revision, reason)
+        print(json.dumps({"status": "failed", "code": reason.code, "exit_code": reason.exit_code, "reason": reason.reason, "run_id": run_id, **evidence}, ensure_ascii=False, sort_keys=True))
         return reason.exit_code
 
 
