@@ -20,7 +20,7 @@ from project_health_knowledge import CONFIG, safe_file, write_json, validate_con
 
 def image_bytes(root, path, revision):
     safe_file(root, path)
-    types = {'.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp'}
+    types = {'.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.gif': 'image/gif'}
     mime = types.get(Path(path).suffix.lower())
     state = read_json(base_dir(root) / 'latest.json')
     if not mime or path not in state.get('file_manifest', []):
@@ -112,11 +112,37 @@ def handler_factory(root: Path):
                     self.cli('status')
                 elif parsed.path == '/api/knowledge/config':
                     self.send(load_config(root))
+                elif parsed.path == '/api/knowledge/scene-graph':
+                    snapshot = base_dir(root) / 'latest.json'
+                    state = read_json(snapshot) if snapshot.exists() else {}
+                    graph = state.get('scene_graph') or {
+                        'schema_version': 'newrouge.godot-scene-graph.v1',
+                        'main_scene': None, 'nodes': {}, 'edges': [],
+                        'code_references': [], 'diagnostics': [],
+                        'snapshot_available': bool(snapshot.exists()),
+                    }
+                    self.send({'revision': state.get('revision'), 'file_manifest': state.get('file_manifest', []), **graph})
+                elif parsed.path in ('/api/knowledge/godot/scene', '/api/knowledge/godot/script', '/api/knowledge/godot/unreachable'):
+                    snapshot = base_dir(root) / 'latest.json'
+                    state = read_json(snapshot) if snapshot.exists() else {}
+                    graph = state.get('scene_graph') or {'main_scene': None, 'nodes': {}, 'edges': [], 'code_references': [], 'diagnostics': []}
+                    if parsed.path.endswith('/unreachable'):
+                        self.send({'revision': state.get('revision'), 'items': [n for n in graph.get('nodes', {}).values() if n.get('classification') == 'unreachable-candidate']})
+                    else:
+                        path = params.get('path', [''])[0].replace('\\', '/')
+                        safe_file(root, path)
+                        if parsed.path.endswith('/scene'):
+                            item = graph.get('nodes', {}).get(path)
+                        else:
+                            item = [ref for ref in graph.get('code_references', []) if ref.get('source') == path]
+                        if item is None or item == []:
+                            self.send({'reason': 'Scene or script not found'}, 404)
+                        else:
+                            self.send({'revision': state.get('revision'), 'path': path, 'item': item})
                 elif parsed.path == '/api/knowledge/tasks':
                     args = ['--page', params.get('page', ['1'])[0]]
                     if params.get('filter_kind', [''])[0]:
-                        args.extend(['--filter-kind', params['filter_kind'][0],
-                                     '--filter-value', params.get('filter_value', [''])[0]])
+                        args.extend(['--filter-kind', params['filter_kind'][0], '--filter-value', params.get('filter_value', [''])[0]])
                     self.cli('tasks', args)
                 elif parsed.path == '/api/knowledge/task':
                     self.cli('task', ['--task-id', params.get('id', [''])[0]])
@@ -126,20 +152,32 @@ def handler_factory(root: Path):
                     data, mime = image_bytes(root, params.get('path', [''])[0], params.get('revision', [''])[0])
                     self.send(data, content_type=mime)
                 elif parsed.path in ('/knowledge', '/knowledge/'):
-                    self.send(Path(__file__).with_name('project_health_knowledge.html').read_text(encoding='utf-8'),
-                              content_type='text/html; charset=utf-8')
+                    self.send(Path(__file__).with_name('project_health_knowledge.html').read_text(encoding='utf-8'), content_type='text/html; charset=utf-8')
+                elif parsed.path == '/knowledge/scenes/unreachable':
+                    self.send(Path(__file__).with_name('project_health_unreachable.html').read_text(encoding='utf-8'), content_type='text/html; charset=utf-8')
+                elif parsed.path == '/knowledge/scenes':
+                    self.send(Path(__file__).with_name('project_health_scenes.html').read_text(encoding='utf-8'), content_type='text/html; charset=utf-8')
+                elif parsed.path == '/knowledge/unreachable.js':
+                    self.send(Path(__file__).with_name('project_health_unreachable.js').read_text(encoding='utf-8'), content_type='text/javascript')
+                elif parsed.path == '/knowledge/scenes.js':
+                    self.send(Path(__file__).with_name('project_health_scenes.js').read_text(encoding='utf-8'), content_type='text/javascript')
+                elif parsed.path == '/knowledge/treant.js':
+                    self.send((Path(__file__).parent / 'vendor' / 'Treant.js').read_bytes(), content_type='text/javascript')
+                elif parsed.path == '/knowledge/raphael.js':
+                    self.send((Path(__file__).parent / 'vendor' / 'raphael.js').read_bytes(), content_type='text/javascript')
+                elif parsed.path == '/knowledge/treant.css':
+                    self.send((Path(__file__).parent / 'vendor' / 'Treant.css').read_bytes(), content_type='text/css')
+                elif parsed.path == '/knowledge/mermaid.min.js':
+                    self.send((Path(__file__).parent / 'vendor' / 'mermaid.min.js').read_bytes(), content_type='text/javascript')
                 elif parsed.path in ('/knowledge/app.js', '/knowledge/style.css'):
                     suffix = 'js' if parsed.path.endswith('.js') else 'css'
                     text = Path(__file__).with_name('project_health_knowledge.' + suffix).read_text(encoding='utf-8')
                     self.send(text, content_type='text/javascript' if suffix == 'js' else 'text/css')
                 elif parsed.path in ('/', '/latest.html'):
-                    # The existing dashboard has inline scripts/styles; retain its rendering behavior.
-                    self.send((root / 'logs/ci/project-health/latest.html').read_text(encoding='utf-8'),
-                              content_type='text/html; charset=utf-8')
+                    self.send((root / 'logs/ci/project-health/latest.html').read_text(encoding='utf-8'), content_type='text/html; charset=utf-8')
                 elif parsed.path.startswith('/api/'):
                     self.send({'reason': 'Not found'}, 404)
                 else:
-                    # Keep report JSON/Markdown links, but never serve private snapshots or directories.
                     relative = parsed.path.lstrip('/')
                     path = safe_file(root / 'logs/ci/project-health', relative)
                     if path.suffix not in ('.json', '.md', '.txt') or not path.is_file():
