@@ -37,6 +37,81 @@ test.describe('project health Godot scene graph', () => {
     await expect(page.getByRole('button', { name: 'Next' })).toBeVisible();
   });
 
+  test('refreshes scene composition after a delayed graph response', async ({ page }) => {
+    let releaseGraphResponse;
+    const graphResponseReleased = new Promise(resolve => { releaseGraphResponse = resolve; });
+    await page.route('**/api/knowledge/scene-graph', async route => {
+      const response = await route.fetch();
+      await graphResponseReleased;
+      await route.fulfill({ response });
+    });
+
+    const baseUrl = process.env.PROJECT_HEALTH_URL || 'http://127.0.0.1:8767';
+    await page.goto(baseUrl + '/knowledge/scenes');
+    await page.getByRole('button', { name: 'Scene composition' }).click();
+    await expect(page.locator('#scene-structure')).toContainText('No resources in this category.');
+
+    releaseGraphResponse();
+
+    await expect(page.locator('tr[data-resource-type="scene"]').first()).toBeVisible();
+  });
+
+  test('keeps the route tree active after a delayed graph response', async ({ page }) => {
+    let releaseGraphResponse;
+    const graphResponseReleased = new Promise(resolve => { releaseGraphResponse = resolve; });
+    await page.route('**/api/knowledge/scene-graph', async route => {
+      const response = await route.fetch();
+      await graphResponseReleased;
+      await route.fulfill({ response });
+    });
+
+    const baseUrl = process.env.PROJECT_HEALTH_URL || 'http://127.0.0.1:8767';
+    await page.goto(baseUrl + '/knowledge/scenes');
+    await expect(page.getByRole('button', { name: 'Scene route tree' })).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('.scene-composition-toolbar')).toBeHidden();
+
+    releaseGraphResponse();
+
+    await expect(page.locator('[data-scene-path]').first()).toBeVisible();
+    await expect(page.locator('.scene-composition-toolbar')).toBeHidden();
+  });
+
+  test('uses route-tree closure instead of scene classification for composition defaults', async ({ page }) => {
+    const graph = {
+      revision: 'a'.repeat(40),
+      main_scene: 'Test/Main.tscn',
+      nodes: {
+        'Test/Main.tscn': { path: 'Test/Main.tscn', classification: 'confirmed-reachable', nodes: [], functional_summary: { scripts: [], config_references: [] }, knowledge_context: [] },
+        'Test/Child.tscn': { path: 'Test/Child.tscn', classification: 'confirmed-reachable', nodes: [], functional_summary: { scripts: [], config_references: [] }, knowledge_context: [] },
+        'Test/Deep.tscn': { path: 'Test/Deep.tscn', classification: 'unreachable-candidate', nodes: [], functional_summary: { scripts: [], config_references: [] }, knowledge_context: [] },
+        'Test/Outside.tscn': { path: 'Test/Outside.tscn', classification: 'unreachable-candidate', nodes: [], functional_summary: { scripts: [], config_references: [] }, knowledge_context: [] }
+      },
+      edges: [
+        { source: 'Test/Main.tscn', target: 'Test/Child.tscn', kind: 'packed_scene', evidence_level: 'effective' },
+        { source: 'Test/Child.tscn', target: 'Test/Deep.tscn', kind: 'script-reference', evidence_level: 'possible' }
+      ],
+      code_references: [],
+      script_task_context: {},
+      data_dictionary: { entries: {} },
+      file_manifest: ['Test/Main.tscn', 'Test/Child.tscn', 'Test/Deep.tscn', 'Test/Outside.tscn']
+    };
+    await page.route('**/api/knowledge/scene-graph', route => route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(graph)
+    }));
+
+    const baseUrl = process.env.PROJECT_HEALTH_URL || 'http://127.0.0.1:8767';
+    await page.goto(baseUrl + '/knowledge/scenes');
+    await page.getByRole('button', { name: 'Scene composition' }).click();
+
+    await expect(page.locator('tr[data-resource-path="Test/Deep.tscn"]')).toBeVisible();
+    await expect(page.locator('tr[data-resource-path="Test/Outside.tscn"]')).toHaveCount(0);
+
+    await page.locator('#include-unreachable').check();
+    await expect(page.locator('tr[data-resource-path="Test/Outside.tscn"]')).toBeVisible();
+  });
+
   test('opens dedicated unconfirmed scene page and filters entries', async ({ page }) => {
     await page.goto((process.env.PROJECT_HEALTH_URL || 'http://127.0.0.1:8767') + '/knowledge/scenes/unreachable');
     await expect(page.getByRole('heading', { name: 'Unconfirmed Godot scenes' })).toBeVisible();
