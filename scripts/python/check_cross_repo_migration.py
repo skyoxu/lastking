@@ -7,6 +7,7 @@ import datetime as dt
 import hashlib
 import json
 import re
+import subprocess
 from pathlib import Path, PurePosixPath
 from typing import Any
 
@@ -49,7 +50,24 @@ def _safe_repo_path(root: Path, value: str) -> tuple[Path | None, str | None]:
     return candidate, None
 
 
-def _git_blob_sha(path: Path) -> str:
+def _git_blob_sha(path: Path, repo_root: Path | None = None) -> str:
+    if repo_root is not None:
+        try:
+            rel = path.resolve().relative_to(repo_root.resolve()).as_posix()
+            proc = subprocess.run(
+                ["git", "-C", str(repo_root), "hash-object", f"--path={rel}", rel],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                check=False,
+            )
+            value = (proc.stdout or "").strip()
+            if proc.returncode == 0 and HEX40_RE.fullmatch(value):
+                return value
+        except (OSError, ValueError):
+            pass
     data = path.read_bytes()
     header = f"blob {len(data)}\0".encode("ascii")
     return hashlib.sha1(header + data).hexdigest()
@@ -150,7 +168,7 @@ def validate_manifest(doc: dict[str, Any], repo_root: Path) -> list[str]:
                 if err:
                     errors.append(f"{source_path}: {err}")
                 elif candidate is not None and candidate.is_file():
-                    target_blob_sha = _git_blob_sha(candidate)
+                    target_blob_sha = _git_blob_sha(candidate, repo_root)
                     if target_blob_sha != source_blob_sha:
                         errors.append(
                             f"{source_path}: copy_exact drift target={target_blob_sha} source={source_blob_sha}"
