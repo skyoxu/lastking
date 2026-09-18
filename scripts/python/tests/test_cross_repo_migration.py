@@ -36,7 +36,7 @@ class CrossRepoMigrationReconciliationTests(unittest.TestCase):
                     "source_path": "shared.py",
                     "classification": "copy_exact",
                     "target_paths": ["shared.py"],
-                    "source_blob_sha": migration._git_blob_sha(self.root / "shared.py"),
+                    "source_blob_sha": migration._git_blob_sha(self.root / "shared.py", self.root),
                     "rationale": "shared control plane",
                 },
                 {
