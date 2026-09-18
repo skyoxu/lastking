@@ -39,6 +39,10 @@ This file is the durable protocol. Use `docs/workflows/business-repo-upgrade-gui
   - `docs/workflows/prototype-lane.md`, `docs/prototypes/README.md`, and `docs/prototypes/TEMPLATE.md` are template-generic and can usually be copied as-is, but the business repo should still decide whether to activate the lane operationally.
 - `entrypoint-routing-docs`
   - `docs/workflows/stable-public-entrypoints.md` and `docs/workflows/script-entrypoints-index.md` should travel with `README.md`, `AGENTS.md`, and `docs/PROJECT_DOCUMENTATION_INDEX.md` whenever the template updates the repo entry surface.
+- `source-pr-reconciliation`
+  - For a bounded source PR migration, freeze the source repo, PR, merge commit, and complete changed-file list under `docs/migration/reconciliation/*.json`.
+  - Classify every source file exactly once as `copy_exact`, `adapt_target_native`, `already_present`, `derived_regenerate`, `business_only_drop`, or `protocol_name_retain`.
+  - `copy_exact` entries must retain the frozen source Git blob identity; adapted entries must name target-owned validation evidence. Generated source state must be regenerated from the target repository rather than copied.
 
 ## Migration Order
 1. Baseline and identity
@@ -61,8 +65,11 @@ This file is the durable protocol. Use `docs/workflows/business-repo-upgrade-gui
    - If the repo uses gate bundle docs, sync mirror-runtime gate docs together with the gate list.
 7. Business-local adaptation
    - Rename project references, update overlay roots, adapt domain contract paths, and remove template fallback assumptions.
-8. Validation and stop-loss
-   - Run the minimum validation bundle before opening a PR.
+8. Source-PR reconciliation
+   - Create or update `docs/migration/reconciliation/<source>-<pr>.json` from the frozen source PR changed-file list.
+   - Run `py -3 scripts/python/check_cross_repo_migration.py` and resolve every unclassified, missing-evidence, or `copy_exact` drift failure before calling the migration complete.
+9. Validation and stop-loss
+   - Run the minimum validation bundle before opening a PR; repositories with gate-bundle integration run the reconciliation checker as a hard gate.
 
 ## Required Localization Checklist
 - Replace upstream source repository name with the business repo name.
