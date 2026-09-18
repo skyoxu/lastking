@@ -1,0 +1,306 @@
+{
+  "schema_version": "lastking.cross-repo-migration-reconciliation.v1",
+  "source": {
+    "repo": "skyoxu/newrouge",
+    "pr": 180,
+    "merge_commit": "9f75081ae80e2b8eb1c222eda3ad9def93ef09b5",
+    "changed_file_count": 25,
+    "changed_files": [
+      ".github/workflows/mvg-integration.yml",
+      "Game.Core.Tests/Integration/MvgRewardOfferIntegrationTests.cs",
+      "Game.Core.Tests/Services/MvgRewardMutationProbeTests.cs",
+      "Game.Godot/Scripts/Main.gd",
+      "README.md",
+      "Tests.Godot/tests/Integration/Mvg/reward_fixture.gd",
+      "Tests.Godot/tests/Integration/Mvg/test_reward_claim_idempotency.gd",
+      "Tests.Godot/tests/Integration/Mvg/test_reward_input_journey.gd",
+      "decision-logs/2026-09-18-mvg-integration.md",
+      "docs/PROJECT_DOCUMENTATION_INDEX.md",
+      "docs/adr/ADR-0037-mvg-integration-evidence.md",
+      "docs/architecture/ADR_INDEX_GODOT.md",
+      "docs/testing-framework.md",
+      "docs/testing/mvg/reward-pilot.json",
+      "docs/workflows/mvg-integration-acceptance.md",
+      "execution-plans/2026-09-18-mvg-integration.md",
+      "scripts/python/_mvg_execution.py",
+      "scripts/python/_mvg_manifest.py",
+      "scripts/python/check_workflow_gate_enforcement.py",
+      "scripts/python/config/workflow-gate-allowlist.json",
+      "scripts/python/dev_cli.py",
+      "scripts/python/run_mvg_acceptance.py",
+      "scripts/python/run_mvg_mutation_probe.py",
+      "scripts/python/tests/test_mvg_acceptance.py",
+      "workflow.md"
+    ]
+  },
+  "target": {
+    "repo": "skyoxu/lastking",
+    "pr": 109,
+    "branch": "sync-mvg-impact-evolution-20260918",
+    "baseline_commit": "0c5f642ff675c4119f2f46db39e5833d7ea2617a"
+  },
+  "policy": {
+    "statement": "Every source PR file must be explicitly classified; copy_exact files must remain byte-identical to the frozen source blob while adapted files require target-native evidence.",
+    "generated_state_rule": "Do not copy generated Knowledge publication state from the source repository."
+  },
+  "entries": [
+    {
+      "source_path": ".github/workflows/mvg-integration.yml",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        ".github/workflows/mvg-integration.yml"
+      ],
+      "validation_paths": [
+        "docs/testing/mvg/battlemap-pilot.json",
+        "scripts/python/tests/test_mvg_acceptance.py"
+      ],
+      "rationale": "The workflow is reused but runs the lastking BattleMap pilot and target-native challenge."
+    },
+    {
+      "source_path": "Game.Core.Tests/Integration/MvgRewardOfferIntegrationTests.cs",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "Game.Core.Tests/Integration/MvgBattleMapIntegrationTests.cs"
+      ],
+      "validation_paths": [
+        "docs/testing/mvg/battlemap-pilot.json"
+      ],
+      "rationale": "Reward integration coverage is replaced by a real lastking BattleMap placement/resource boundary."
+    },
+    {
+      "source_path": "Game.Core.Tests/Services/MvgRewardMutationProbeTests.cs",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "Game.Core.Tests/Integration/MvgBattleMapIntegrationTests.cs",
+        "scripts/python/run_mvg_mutation_probe.py"
+      ],
+      "validation_paths": [
+        "scripts/python/run_mvg_mutation_probe.py"
+      ],
+      "rationale": "The source reward mutation probe is replaced with a BattleMap BuildingPlacementService mutation probe."
+    },
+    {
+      "source_path": "Game.Godot/Scripts/Main.gd",
+      "classification": "business_only_drop",
+      "rationale": "The source change fixes Reward-specific duplicate-claim behavior and is not a reusable control-plane change for the BattleMap pilot."
+    },
+    {
+      "source_path": "README.md",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "README.md"
+      ],
+      "validation_paths": [
+        "docs/workflows/mvg-integration-acceptance.md"
+      ],
+      "rationale": "The target README keeps lastking identity and links to the shared MVG integration entrypoint."
+    },
+    {
+      "source_path": "Tests.Godot/tests/Integration/Mvg/reward_fixture.gd",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "Tests.Godot/tests/Integration/Mvg/test_battlemap_input_journey.gd"
+      ],
+      "validation_paths": [
+        "docs/testing/mvg/battlemap-pilot.json"
+      ],
+      "rationale": "The reward fixture is replaced by a target-native BattleMap scene/input journey."
+    },
+    {
+      "source_path": "Tests.Godot/tests/Integration/Mvg/test_reward_claim_idempotency.gd",
+      "classification": "business_only_drop",
+      "rationale": "This regression proves a source Reward claim defect that is not part of the selected lastking BattleMap pilot."
+    },
+    {
+      "source_path": "Tests.Godot/tests/Integration/Mvg/test_reward_input_journey.gd",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "Tests.Godot/tests/Integration/Mvg/test_battlemap_input_journey.gd"
+      ],
+      "validation_paths": [
+        "docs/testing/mvg/battlemap-pilot.json"
+      ],
+      "rationale": "The engine-input concept is retained with lastking's WaveAction BattleMap journey and disconnected-input challenge."
+    },
+    {
+      "source_path": "decision-logs/2026-09-18-mvg-integration.md",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "decision-logs/2026-09-18-mvg-integration.md"
+      ],
+      "validation_paths": [
+        "scripts/python/validate_recovery_docs.py"
+      ],
+      "rationale": "Recovery evidence is rewritten around lastking source/target commits and BattleMap validation."
+    },
+    {
+      "source_path": "docs/PROJECT_DOCUMENTATION_INDEX.md",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "docs/PROJECT_DOCUMENTATION_INDEX.md"
+      ],
+      "validation_paths": [
+        "docs/workflows/mvg-integration-acceptance.md"
+      ],
+      "rationale": "The shared entry is added to the lastking documentation index without replacing target-owned navigation."
+    },
+    {
+      "source_path": "docs/adr/ADR-0037-mvg-integration-evidence.md",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "docs/adr/ADR-0037-mvg-integration-evidence.md"
+      ],
+      "validation_paths": [
+        "docs/workflows/mvg-integration-acceptance.md"
+      ],
+      "rationale": "The ADR preserves generic MVG boundaries while documenting the BattleMap target pilot."
+    },
+    {
+      "source_path": "docs/architecture/ADR_INDEX_GODOT.md",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "docs/architecture/ADR_INDEX_GODOT.md"
+      ],
+      "validation_paths": [
+        "docs/adr/ADR-0037-mvg-integration-evidence.md"
+      ],
+      "rationale": "ADR-0037 is registered in the target-owned ADR index."
+    },
+    {
+      "source_path": "docs/testing-framework.md",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "docs/testing-framework.md"
+      ],
+      "validation_paths": [
+        "docs/workflows/mvg-integration-acceptance.md"
+      ],
+      "rationale": "Testing guidance is integrated without replacing lastking-specific test policy."
+    },
+    {
+      "source_path": "docs/testing/mvg/reward-pilot.json",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "docs/testing/mvg/battlemap-pilot.json"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_mvg_acceptance.py",
+        "Game.Core.Tests/Integration/MvgBattleMapIntegrationTests.cs",
+        "Tests.Godot/tests/Integration/Mvg/test_battlemap_input_journey.gd"
+      ],
+      "rationale": "The source Reward manifest is replaced by the target-owned BattleMap MVG manifest."
+    },
+    {
+      "source_path": "docs/workflows/mvg-integration-acceptance.md",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "docs/workflows/mvg-integration-acceptance.md"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_mvg_acceptance.py"
+      ],
+      "rationale": "The generic workflow is retained while examples and pilot references are localized to lastking."
+    },
+    {
+      "source_path": "execution-plans/2026-09-18-mvg-integration.md",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "execution-plans/2026-09-18-mvg-integration-alignment.md"
+      ],
+      "validation_paths": [
+        "scripts/python/validate_recovery_docs.py"
+      ],
+      "rationale": "The execution plan is rewritten as an explicit source-to-target alignment plan."
+    },
+    {
+      "source_path": "scripts/python/_mvg_execution.py",
+      "classification": "copy_exact",
+      "target_paths": [
+        "scripts/python/_mvg_execution.py"
+      ],
+      "source_blob_sha": "f7dcb78d1ba6cb9d2414f56d43505f3051c5adc9",
+      "rationale": "Shared MVG execution/report verification is repository-neutral and intentionally byte-identical."
+    },
+    {
+      "source_path": "scripts/python/_mvg_manifest.py",
+      "classification": "copy_exact",
+      "target_paths": [
+        "scripts/python/_mvg_manifest.py"
+      ],
+      "source_blob_sha": "2d4c1fd642c83f7843e2de07579ed079ee9072cf",
+      "rationale": "Shared manifest validation is repository-neutral and intentionally byte-identical."
+    },
+    {
+      "source_path": "scripts/python/check_workflow_gate_enforcement.py",
+      "classification": "copy_exact",
+      "target_paths": [
+        "scripts/python/check_workflow_gate_enforcement.py"
+      ],
+      "source_blob_sha": "cbe359a3b8623ffb9d607be003a5a48376f24048",
+      "rationale": "Workflow run-command enforcement is shared control-plane code and intentionally byte-identical."
+    },
+    {
+      "source_path": "scripts/python/config/workflow-gate-allowlist.json",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/python/config/workflow-gate-allowlist.json"
+      ],
+      "validation_paths": [
+        "scripts/python/check_workflow_gate_enforcement.py"
+      ],
+      "rationale": "The allowlist is repository-owned configuration and preserves lastking workflow inventory."
+    },
+    {
+      "source_path": "scripts/python/dev_cli.py",
+      "classification": "copy_exact",
+      "target_paths": [
+        "scripts/python/dev_cli.py"
+      ],
+      "source_blob_sha": "bf8f9af3d7fb5afae4f99328a9bb8227a82ca22c",
+      "rationale": "The MVG CLI registration lives in shared repository-neutral dispatch code and remains byte-identical."
+    },
+    {
+      "source_path": "scripts/python/run_mvg_acceptance.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/python/run_mvg_acceptance.py"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_mvg_acceptance.py",
+        "docs/testing/mvg/battlemap-pilot.json"
+      ],
+      "rationale": "Shared runner semantics are retained but default manifest and negative-input challenge identifiers are BattleMap-specific."
+    },
+    {
+      "source_path": "scripts/python/run_mvg_mutation_probe.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/python/run_mvg_mutation_probe.py"
+      ],
+      "validation_paths": [
+        "Game.Core.Tests/Integration/MvgBattleMapIntegrationTests.cs"
+      ],
+      "rationale": "The optional mutation experiment is localized to BuildingPlacementService and the BattleMap domain test."
+    },
+    {
+      "source_path": "scripts/python/tests/test_mvg_acceptance.py",
+      "classification": "copy_exact",
+      "target_paths": [
+        "scripts/python/tests/test_mvg_acceptance.py"
+      ],
+      "source_blob_sha": "2e0a60bb028e766a76fb5540ea57fd6dd99af454",
+      "rationale": "Failure-path regression coverage for the generic MVG infrastructure is intentionally byte-identical."
+    },
+    {
+      "source_path": "workflow.md",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "workflow.md"
+      ],
+      "validation_paths": [
+        "docs/workflows/mvg-integration-acceptance.md"
+      ],
+      "rationale": "The Chapter 3/4/6/7 MVG hooks are merged into lastking's authoritative workflow without replacing target-specific workflow history."
+    }
+  ]
+}
