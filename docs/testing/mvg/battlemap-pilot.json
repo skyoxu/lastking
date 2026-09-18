@@ -1,0 +1,70 @@
+{
+  "schema_version": "newrouge.mvg-integration.v1",
+  "mvg_id": "battlemap-pilot",
+  "scope_note": "A bounded target-native pilot for lastking BattleMap integration evidence. It verifies selected domain, scene-method and engine-input boundaries; it is not whole-MVG coverage or human gameplay approval.",
+  "flows": [
+    {
+      "id": "battlemap-runtime-boundary",
+      "outcome": "Resource and placement invariants remain deterministic while the real BattleMap HUD can drive a wave through focused engine input.",
+      "task_ids": [
+        12,
+        54
+      ],
+      "source_paths": [
+        "Game.Core/Services/ResourceManager.cs",
+        "Game.Core/Services/Building/BuildingPlacementService.cs",
+        "Game.Godot/Scripts/UI/HUD.cs",
+        "Game.Godot/Scripts/Screens/BattleMapScreen.gd",
+        "Game.Godot/Scenes/UI/HUD.tscn",
+        "Game.Godot/Scenes/Screens/BattleMapScreen.tscn"
+      ],
+      "handoffs": [
+        {
+          "producer_task": 12,
+          "consumer_task": 54,
+          "owner_task": 54,
+          "contract_ref": "Game.Core/Contracts/Lastking/ResourcesChanged.cs",
+          "behavior": "Keep resource mutation evidence structured and stable at the BattleMap runtime boundary; UI command wiring is verified separately as engine-input evidence.",
+          "test_ids": [
+            "battlemap-core",
+            "battlemap-scene",
+            "battlemap-input"
+          ]
+        }
+      ],
+      "test_ids": [
+        "battlemap-core",
+        "battlemap-scene",
+        "battlemap-input"
+      ]
+    }
+  ],
+  "tests": [
+    {
+      "id": "battlemap-core",
+      "kind": "dotnet",
+      "state": "implemented",
+      "evidence_level": "domain-integration",
+      "path": "Game.Core.Tests/Integration/MvgBattleMapIntegrationTests.cs",
+      "selector": "Game.Core.Tests.Integration.MvgBattleMapIntegrationTests",
+      "min_tests": 3
+    },
+    {
+      "id": "battlemap-scene",
+      "kind": "gdunit",
+      "state": "implemented",
+      "evidence_level": "scene-method",
+      "path": "Tests.Godot/tests/Integration/test_battlemap_local_runtime_controls.gd",
+      "min_tests": 2
+    },
+    {
+      "id": "battlemap-input",
+      "kind": "gdunit",
+      "state": "implemented",
+      "evidence_level": "engine-input",
+      "path": "Tests.Godot/tests/Integration/Mvg/test_battlemap_input_journey.gd",
+      "min_tests": 1,
+      "challenge": "disable-battlemap-wave-input"
+    }
+  ]
+}
