@@ -6,7 +6,7 @@
 - Supersedes: None
 - Superseded by: None
 - Branch: sync-mvg-impact-evolution-20260918
-- Git Head: 1b2a01d201f960d072ba9d9aa259bc11e1f430d5 (validated implementation checkpoint; recovery-document-only closure follows)
+- Git Head: 1b2a01d201f960d072ba9d9aa259bc11e1f430d5
 - Why now: newrouge evolved after the prior reconciliation with PR #180's bounded MVG integration acceptance and conservative regression recommendation.
 - Context: The formal KCP Impact core was already aligned, but lastking did not yet have the new MVG manifest/execution/evidence layer or target-native pilot.
 - Decision: Port the generic MVG manifest/execution/recommendation infrastructure, replace the source RewardOffer pilot with a target-native BattleMap/resource pilot, and preserve all target-specific Impact configuration and business defaults.
