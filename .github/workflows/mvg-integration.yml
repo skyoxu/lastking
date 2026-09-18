@@ -18,6 +18,8 @@ on:
       - 'scripts/python/config/workflow-gate-allowlist.json'
       - 'docs/testing/mvg/**'
       - 'docs/workflows/mvg-integration-acceptance.md'
+      - 'decision-logs/2026-09-18-mvg-integration.md'
+      - 'execution-plans/2026-09-18-mvg-integration-alignment.md'
       - 'Game.Core/Services/ResourceManager.cs'
       - 'Game.Core/Services/Building/BuildingPlacementService.cs'
       - 'Game.Core/Contracts/Lastking/ResourcesChanged.cs'
