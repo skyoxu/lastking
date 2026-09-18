@@ -3,7 +3,7 @@
 - Title: Post-#108 MVG and Impact recommendation alignment
 - Status: Completed on sync branch; validated implementation checkpoint is green
 - Branch: sync-mvg-impact-evolution-20260918
-- Git Head: 1b2a01d201f960d072ba9d9aa259bc11e1f430d5 (validated implementation checkpoint; documentation-only closure commits follow)
+- Git Head: 1b2a01d201f960d072ba9d9aa259bc11e1f430d5
 - Goal: Align lastking with newrouge PR #180's reusable MVG testing capability while preserving target business semantics.
 - Scope: MVG manifest/runner, evidence validation, revision-bound recommendation, BattleMap pilot, optional target mutation probe, CI wiring and documentation.
 - Current step: No implementation repair remains. Recovery documents are being closed to the validated checkpoint so future resume does not report stale work.
