@@ -160,23 +160,21 @@ class NavigationTests(unittest.TestCase):
         rows = located_fields('{"cards":[{"pick":1},\n{"pick":2}],"a/b~":true}')
         self.assertEqual([(r['pointer'], r['line']) for r in rows], [('/cards/0/pick', 1), ('/cards/1/pick', 2), ('/a~1b~0', 2)])
 
-    def test_real_task_sources_cover_starter_deck_and_dynamic_reward(self):
+    def test_real_task_sources_cover_lastking_battlemap_navigation(self):
         from _project_health_tasks import task_details, attach_task_scenes
         from project_health_knowledge import DEFAULT_CONFIG
         root = Path(__file__).resolve().parents[3]
-        if not (root / 'Game.Core/Data/m1-warrior-starting-deck.json').exists():
-            self.skipTest('newrouge business fixture is not present in this repository')
         snapshot = DirectorySnapshot(root, ['.taskmaster/tasks', 'Game.Core', 'Game.Core.Tests', 'Game.Godot', 'Tests.Godot/tests'])
         sources = {p: snapshot.read_text(p) for p in snapshot.paths if Path(p).suffix in {'.json', '.cs', '.gd', '.tscn', '.tres'}}
         details = task_details(snapshot)
         attach_task_scenes(details, sources, DEFAULT_CONFIG['task_scene_bindings'])
         state = {'revision': snapshot.commit, 'sources': sources, 'file_manifest': snapshot.paths}
-        starter = build_navigation(next(d for d in details if str(d['task']['id']) == '24'), state)
-        self.assertIn('Game.Core/Data/m1-warrior-starting-deck.json', [c['path'] for c in starter['configs']])
-        reward = build_navigation(next(d for d in details if str(d['task']['id']) == '115'), state)
-        self.assertIn('Game.Godot/Scenes/Reward.tscn', [s['path'] for s in reward['scenes']])
-        self.assertTrue(reward['assets'])
-        self.assertTrue(all(not a['runtime_observed'] for a in reward['assets']))
+        battlemap = build_navigation(next(d for d in details if str(d['task']['id']) == '54'), state)
+        scene_paths = [item['path'] for item in battlemap['scenes']]
+        code_paths = [item['path'] for item in battlemap['code']]
+        self.assertIn('Game.Godot/Scenes/Screens/BattleMapScreen.tscn', scene_paths)
+        self.assertIn('Game.Godot/Scripts/Screens/BattleMapScreen.gd', code_paths)
+        self.assertNotIn('Game.Godot/Scenes/Reward.tscn', scene_paths)
 
     def test_resource_chain_crosses_tres_and_preserves_instance(self):
         sources = {
