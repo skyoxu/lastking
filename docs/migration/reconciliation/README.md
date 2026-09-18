@@ -26,6 +26,7 @@ This directory records frozen source-PR inventories for reusable migrations from
 | #179 | Generated Knowledge publication | `derived_regenerate`; no source publication payload is copied. |
 | #180 | Bounded MVG integration acceptance | Migrated via lastking #109 with a BattleMap-native pilot and frozen 25/25 source-file classification. |
 | #181 | Generated Knowledge publication after #180 | `derived_regenerate`; after #109 lands, lastking's publication workflow must rebuild generated state from target inputs. |
+| #182 | Runtime snapshot and evidence-integrity hardening | Migrated through lastking #109: workspace BattleMap execution, GdUnit4 runtime-bin preservation, cross-report MVG identity deduplication, and Impact run-manifest rebinding. |
 
 ## Maintenance
 
