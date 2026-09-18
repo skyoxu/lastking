@@ -1,0 +1,72 @@
+{
+  "schema_version": "lastking.cross-repo-migration-reconciliation.v1",
+  "source": {
+    "repo": "skyoxu/newrouge",
+    "pr": 178,
+    "merge_commit": "c586393493b42abc5364430b98ea960a34631ece",
+    "changed_file_count": 6,
+    "changed_files": [
+      "_bmad-output/implementation-artifacts/deferred-work.md",
+      "_bmad-output/implementation-artifacts/spec-scene-composition-load-sync.md",
+      "_bmad-output/implementation-artifacts/spec-scene-composition-route-depth.md",
+      "docs/knowledge/catalog/godot-elements.json",
+      "scripts/browser/project_health.spec.js",
+      "scripts/python/project_health_scenes.js"
+    ]
+  },
+  "target": {
+    "repo": "skyoxu/lastking",
+    "pr": 108,
+    "branch": "sync-newrouge-project-health-20260918",
+    "baseline_commit": "79b63d421055aece28a10129a5fb6ac79bbfe8a7"
+  },
+  "policy": {
+    "statement": "Port scene-composition loading/runtime behavior and browser coverage; keep source implementation notes and generated Knowledge out of the target migration."
+  },
+  "entries": [
+    {
+      "source_path": "_bmad-output/implementation-artifacts/deferred-work.md",
+      "classification": "business_only_drop",
+      "rationale": "Source deferred-work artifact is historical implementation evidence and not production behavior."
+    },
+    {
+      "source_path": "_bmad-output/implementation-artifacts/spec-scene-composition-load-sync.md",
+      "classification": "business_only_drop",
+      "rationale": "Source implementation specification is not copied as target runtime truth."
+    },
+    {
+      "source_path": "_bmad-output/implementation-artifacts/spec-scene-composition-route-depth.md",
+      "classification": "business_only_drop",
+      "rationale": "Source route-depth implementation specification remains source-local historical evidence."
+    },
+    {
+      "source_path": "docs/knowledge/catalog/godot-elements.json",
+      "classification": "derived_regenerate",
+      "regeneration_command": "py -3 scripts/python/inject_godot_dictionary.py",
+      "rationale": "Godot element catalog must be rebuilt from lastking scene knowledge."
+    },
+    {
+      "source_path": "scripts/browser/project_health.spec.js",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/browser/project_health.spec.js"
+      ],
+      "validation_paths": [
+        "scripts/browser/project_health.spec.js",
+        "scripts/python/project_health_scenes.js"
+      ],
+      "rationale": "Browser coverage is retained with target-agnostic synthetic graph fixtures instead of relying on source business scenes."
+    },
+    {
+      "source_path": "scripts/python/project_health_scenes.js",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/python/project_health_scenes.js"
+      ],
+      "validation_paths": [
+        "scripts/browser/project_health.spec.js"
+      ],
+      "rationale": "Scene-composition refresh and route-closure logic is retained in the lastking Project Health implementation."
+    }
+  ]
+}
