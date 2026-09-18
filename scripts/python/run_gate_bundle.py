@@ -219,6 +219,10 @@ def _hard_gate_commands(task_files: list[str], task_links_max_warnings: int = -1
             "cmd": ["py", "-3", "scripts/python/validate_recovery_docs.py"],
         },
         {
+            "name": "cross_repo_migration_reconciliation",
+            "cmd": ["py", "-3", "scripts/python/check_cross_repo_migration.py"],
+        },
+        {
             "name": "check_domain_contracts",
             "cmd": ["py", "-3", "scripts/python/check_domain_contracts.py"],
         },
@@ -310,6 +314,7 @@ def _hard_gate_commands(task_files: list[str], task_links_max_warnings: int = -1
                 "scripts.python.tests.test_analyze_impact_cli",
                 "scripts.python.tests.test_impact_analyzer",
                 "scripts.python.tests.test_run_single_task_chapter6_lane",
+                "scripts.python.tests.test_cross_repo_migration",
                 "-v",
             ],
         },
