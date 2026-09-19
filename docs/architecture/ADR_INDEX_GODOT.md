@@ -19,6 +19,9 @@
 - ADR-0030: Core 线程模型（Single-Thread Core + 明确跨线程边界） — `docs/adr/ADR-0030-core-threading-model.md`
 - ADR-0035: Repository Knowledge Control Plane — `docs/adr/ADR-0035-repository-knowledge-control-plane.md`
 
+## 提案（Proposed）
+- ADR-0037: Bounded MVG Integration Evidence — `docs/adr/ADR-0037-mvg-integration-evidence.md`
+
 ## 附录（Addenda）
 - ADR-0005 Addendum: Godot+C# 质量门禁补充 — `docs/adr/addenda/ADR-0005-godot-quality-gates-addendum.md`
 - ADR-0006 Addendum: Godot 数据存储补充 — `docs/adr/addenda/ADR-0006-godot-data-storage-addendum.md`

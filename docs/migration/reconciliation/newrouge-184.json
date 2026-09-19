@@ -1,0 +1,89 @@
+{
+  "schema_version": "repo.cross-repo-migration-reconciliation.v1",
+  "source": {
+    "repo": "skyoxu/newrouge",
+    "pr": 184,
+    "merge_commit": "c6ec8f99138ae9b62ac95b6e22ec0f1cee2b4fcf",
+    "changed_file_count": 6,
+    "changed_files": [
+      "docs/workflows/cross-repo-migration-reconciliation.md",
+      "docs/workflows/gate-bundle.md",
+      "docs/workflows/template-upgrade-protocol.md",
+      "scripts/python/check_cross_repo_migration.py",
+      "scripts/python/run_gate_bundle.py",
+      "scripts/python/tests/test_cross_repo_migration.py"
+    ]
+  },
+  "target": {
+    "repo": "skyoxu/lastking",
+    "pr": 109,
+    "branch": "sync-mvg-impact-evolution-20260918",
+    "baseline_commit": "205172a71bde6474aaa301d95308ceef65d54f59"
+  },
+  "policy": {
+    "statement": "Adopt the repository-neutral reconciliation protocol exactly where generic, while preserving lastking's mandatory offline manifest gate and target-specific gate inventory."
+  },
+  "entries": [
+    {
+      "source_path": "docs/workflows/cross-repo-migration-reconciliation.md",
+      "classification": "copy_exact",
+      "target_paths": [
+        "docs/workflows/cross-repo-migration-reconciliation.md"
+      ],
+      "source_blob_sha": "9d5e35dd04407c8476aa81e03ffea9f03586fb8b",
+      "rationale": "The repository-neutral reconciliation protocol is shared byte-identically."
+    },
+    {
+      "source_path": "docs/workflows/gate-bundle.md",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "docs/workflows/gate-bundle.md"
+      ],
+      "validation_paths": [
+        "scripts/python/run_gate_bundle.py"
+      ],
+      "rationale": "lastking documents both the reconciliation checker unit coverage and its stricter mandatory manifest execution alongside target-specific gates."
+    },
+    {
+      "source_path": "docs/workflows/template-upgrade-protocol.md",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "docs/workflows/template-upgrade-protocol.md"
+      ],
+      "validation_paths": [
+        "docs/workflows/cross-repo-migration-reconciliation.md"
+      ],
+      "rationale": "Authoritative GitHub source verification and deterministic offline reconciliation are integrated into the target's broader upgrade protocol."
+    },
+    {
+      "source_path": "scripts/python/check_cross_repo_migration.py",
+      "classification": "copy_exact",
+      "target_paths": [
+        "scripts/python/check_cross_repo_migration.py"
+      ],
+      "source_blob_sha": "66a15090e78d45da42d74656a219778000df3e96",
+      "rationale": "The repository-neutral checker, including remote source verification and path hardening, is shared byte-identically."
+    },
+    {
+      "source_path": "scripts/python/run_gate_bundle.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/python/run_gate_bundle.py"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_cross_repo_migration.py",
+        "docs/migration/reconciliation/newrouge-184.json"
+      ],
+      "rationale": "lastking retains its target-only gates and additionally requires reconciliation manifests to exist in every hard-gate run."
+    },
+    {
+      "source_path": "scripts/python/tests/test_cross_repo_migration.py",
+      "classification": "copy_exact",
+      "target_paths": [
+        "scripts/python/tests/test_cross_repo_migration.py"
+      ],
+      "source_blob_sha": "c2e0144deaf93e54c3a4e39227cb53dd99f03854",
+      "rationale": "Repository-neutral checker regressions are shared byte-identically."
+    }
+  ]
+}

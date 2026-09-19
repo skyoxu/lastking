@@ -71,6 +71,8 @@ py -3 scripts/python/remind_overlay_task_drift.py --write --overlay-index docs/a
 - `forbid_mirror_path_refs.py`
 - `validate_contracts.py`
 - `validate_recovery_docs.py`
+- `check_cross_repo_migration.py`
+  - lastking 在 hard bundle 中以 `--require-manifests` 调用，业务仓没有 reconciliation manifest 时必须 fail-closed。
 - `check_domain_contracts.py`
 - `check_contract_interface_docs.py`
 - `check_test_naming.py`
@@ -79,6 +81,8 @@ py -3 scripts/python/remind_overlay_task_drift.py --write --overlay-index docs/a
 - `llm_check_subtasks_coverage.py`
 - `check_obligations_reuse_regression.py`
 - `obligations unittest suite`（`test_obligations_guard.py` / `test_obligations_extract_helpers.py` / `test_obligations_code_fingerprint.py` / `test_obligations_output_contract.py` / `test_obligations_cli_guards.py` / `test_obligations_pipeline_order.py`）
+- `Project Health core unittest coverage`（navigation / target defaults / Godot scene graph / runtime snapshot / Chapter 6 capture / local server；随 `obligations_unittest` 一并阻断）
+- `cross-repo migration reconciliation unittest coverage`（manifest 完整性、copy_exact 漂移、路径安全、远端 source inventory 校验；随 `obligations_unittest` 一并阻断）
 - `check_gate_bundle_consistency.py`
 - `check_workflow_gate_enforcement.py`
 - `validate_chapter7_ui_wiring.py`

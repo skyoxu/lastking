@@ -1,24 +1,24 @@
 # Project Health Knowledge Integration
 
 - Title: Project Health Knowledge Integration
-- Status: active
+- Status: done
 - Branch: align-newrouge-features-20260912
-- Git Head: bde6bc46678cd100865532236eebb535f5719cdf
+- Git Head: 9e19350c1881506b45da90c45dba0aee817a9161
 - Goal: Align main-only Knowledge/Impact investigation and local Project Health service with upstream while binding runtime examples to lastking repository facts.
 - Scope: CLI/API, GDD configuration, SSOT task pagination, static scene attachment evidence, and pre-merge target adaptation.
-- Current step: Focused target-adaptation validation passed; repository PR checks are the remaining merge gate.
-- Last completed step: Removed source-only CI repair history, replaced the invalid upstream Task 115/Reward binding with lastking Task 54/BattleMapScreen evidence, and passed focused regression validation.
+- Current step: Completed and merged through PR #98; later parity/publication follow-ups are tracked separately.
+- Last completed step: PR #98 head 9e19350c1881506b45da90c45dba0aee817a9161 passed Windows Quality Gate run 34689121352 and Windows Smoke run 34689121371 before merge.
 - Stop-loss: Do not import newrouge gameplay fixtures or weaken repository recovery/Impact validation to make copied tooling pass.
-- Next action: Require Windows Quality Gate and Windows Smoke to pass on the restored PR head; merge only if green.
+- Next action: n/a - this migration plan is complete; use newer reconciliation plans for subsequent upstream evolution.
 - Recovery command: py -3 scripts/python/validate_recovery_docs.py --dir all
 - Open questions: Native developer-machine browser interaction and local GODOT_BIN execution remain environment-dependent; repository CI is the merge gate.
 - Exit criteria: Target-specific defaults are valid, focused regression checks pass, and PR checks are green.
 - Related ADRs: docs/adr/ADR-0036-project-health-investigation.md
 - Related decision logs: decision-logs/2026-09-07-project-health-impact-limits.md
 - Related task id(s): T54 is used only as a static mapping example; this change is repository tooling, not a gameplay task implementation.
-- Related run id: n/a - pre-merge adaptation
+- Related run id: Windows Quality Gate 34689121352; Windows Smoke 34689121371
 - Related latest.json: logs/ci/project-health-knowledge/latest.json
-- Related pipeline artifacts: n/a - use PR #98 GitHub Actions checks
+- Related pipeline artifacts: GitHub Actions runs 34689121352 and 34689121371 for PR #98
 
 ## Scope
 

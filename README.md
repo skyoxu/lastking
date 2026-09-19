@@ -17,6 +17,7 @@
 - Project health dashboard: `docs/workflows/project-health-dashboard.md`
 - Stable public entrypoints: `docs/workflows/stable-public-entrypoints.md`
 - Script entrypoints index: `docs/workflows/script-entrypoints-index.md`
+- MVG integration acceptance: `docs/workflows/mvg-integration-acceptance.md`
 - Prototype lane: `docs/workflows/prototype-lane.md`
 - Prototype lane playbook: `docs/workflows/prototype-lane-playbook.md`
 - Prototype TDD: `docs/workflows/prototype-tdd.md`

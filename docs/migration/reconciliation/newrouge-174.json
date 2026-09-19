@@ -1,0 +1,300 @@
+{
+  "schema_version": "repo.cross-repo-migration-reconciliation.v1",
+  "source": {
+    "repo": "skyoxu/newrouge",
+    "pr": 174,
+    "merge_commit": "fe222e37187e76e849b20bebae39c56906286a69",
+    "changed_file_count": 26,
+    "changed_files": [
+      "_bmad-output/implementation-artifacts/spec-godot-scene-graph-evidence-ui.md",
+      "_bmad-output/implementation-artifacts/spec-godot-scene-knowledge-graph.md",
+      "docs/knowledge/catalog/godot-elements.json",
+      "docs/workflows/project-health-knowledge.md",
+      "scripts/browser/project_health.spec.js",
+      "scripts/browser/run_project_health_tests.ps1",
+      "scripts/python/_godot_scene_graph.py",
+      "scripts/python/_project_health_http.py",
+      "scripts/python/analyze_impact.py",
+      "scripts/python/chapter6_knowledge.py",
+      "scripts/python/inject_godot_dictionary.py",
+      "scripts/python/project_health_knowledge.css",
+      "scripts/python/project_health_knowledge.html",
+      "scripts/python/project_health_knowledge.js",
+      "scripts/python/project_health_scenes.html",
+      "scripts/python/project_health_scenes.js",
+      "scripts/python/project_health_unreachable.html",
+      "scripts/python/project_health_unreachable.js",
+      "scripts/python/vendor/Treant.css",
+      "scripts/python/vendor/Treant.js",
+      "scripts/python/vendor/raphael.js",
+      "scripts/python/verify_project_health_browser.py",
+      "scripts/sc/tests/test_chapter6_knowledge.py",
+      "scripts/sc/tests/test_godot_scene_graph.py",
+      "scripts/sc/tests/test_project_health_knowledge.py",
+      "test-results/.last-run.json"
+    ]
+  },
+  "target": {
+    "repo": "skyoxu/lastking",
+    "pr": 105,
+    "branch": "sync-newrouge-evolution-20260915",
+    "baseline_commit": "b060d041d6d924c6633f3f592ee38e8ab75b180d"
+  },
+  "policy": {
+    "statement": "Reconcile reusable Godot scene knowledge, Project Health, Chapter 6 capture and Impact hardening while preserving lastking business defaults and replacing heavy source vendor bundles with the target compatibility renderer."
+  },
+  "entries": [
+    {
+      "source_path": "_bmad-output/implementation-artifacts/spec-godot-scene-graph-evidence-ui.md",
+      "classification": "business_only_drop",
+      "rationale": "Source implementation-artifact prose is historical evidence, not target runtime truth."
+    },
+    {
+      "source_path": "_bmad-output/implementation-artifacts/spec-godot-scene-knowledge-graph.md",
+      "classification": "business_only_drop",
+      "rationale": "Source implementation-artifact prose is historical evidence, not target runtime truth."
+    },
+    {
+      "source_path": "docs/knowledge/catalog/godot-elements.json",
+      "classification": "derived_regenerate",
+      "regeneration_command": "py -3 scripts/python/inject_godot_dictionary.py",
+      "rationale": "Godot element catalog is derived from target repository scene knowledge."
+    },
+    {
+      "source_path": "docs/workflows/project-health-knowledge.md",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "docs/workflows/project-health-knowledge.md",
+        "docs/workflows/project-health-scene-graph.md"
+      ],
+      "validation_paths": [
+        "scripts/sc/tests/test_project_health_godot_scene_graph.py",
+        "scripts/sc/tests/test_project_health_chapter6_capture.py"
+      ],
+      "rationale": "Source scene-graph and Chapter 6 documentation is retained in lastking's target-local Project Health docs with Task54/BattleMap examples."
+    },
+    {
+      "source_path": "scripts/browser/project_health.spec.js",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/browser/project_health.spec.js"
+      ],
+      "validation_paths": [
+        "scripts/browser/project_health.spec.js",
+        "scripts/python/project_health_scenes.js"
+      ],
+      "rationale": "Browser regressions are retained with lastking target-native/synthetic scene fixtures."
+    },
+    {
+      "source_path": "scripts/browser/run_project_health_tests.ps1",
+      "classification": "copy_exact",
+      "target_paths": [
+        "scripts/browser/run_project_health_tests.ps1"
+      ],
+      "source_blob_sha": "640f8f7063f098f612d3746e1771cd492f6a2e9b",
+      "rationale": "Project Health browser runner is shared and remains byte-identical."
+    },
+    {
+      "source_path": "scripts/python/_godot_scene_graph.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/python/_godot_scene_graph.py"
+      ],
+      "validation_paths": [
+        "scripts/sc/tests/test_project_health_godot_scene_graph.py"
+      ],
+      "rationale": "Scene graph extraction behavior is retained with target-local formatting and target business evidence."
+    },
+    {
+      "source_path": "scripts/python/_project_health_http.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/python/_project_health_http.py"
+      ],
+      "validation_paths": [
+        "scripts/sc/tests/test_project_health_server.py",
+        "scripts/browser/project_health.spec.js"
+      ],
+      "rationale": "HTTP scene/knowledge endpoints are retained while target server wiring continues to evolve locally."
+    },
+    {
+      "source_path": "scripts/python/analyze_impact.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/python/analyze_impact.py"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_impact_analysis_index.py",
+        "scripts/python/tests/test_analyze_impact_cli.py"
+      ],
+      "rationale": "Impact concurrency/failure handling is retained with lastking-specific configuration and repository identity."
+    },
+    {
+      "source_path": "scripts/python/chapter6_knowledge.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/python/chapter6_knowledge.py"
+      ],
+      "validation_paths": [
+        "scripts/sc/tests/test_project_health_chapter6_capture.py"
+      ],
+      "rationale": "Chapter 6 Godot element capture is retained with target-local capture tests."
+    },
+    {
+      "source_path": "scripts/python/inject_godot_dictionary.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/python/inject_godot_dictionary.py"
+      ],
+      "validation_paths": [
+        "scripts/sc/tests/test_project_health_chapter6_capture.py"
+      ],
+      "rationale": "Dictionary injection remains target-generated and is integrated with lastking Project Health capture."
+    },
+    {
+      "source_path": "scripts/python/project_health_knowledge.css",
+      "classification": "copy_exact",
+      "target_paths": [
+        "scripts/python/project_health_knowledge.css"
+      ],
+      "source_blob_sha": "d97925407c20ffca9e887f577521fcf2d3495c03",
+      "rationale": "Scene graph/composition presentation CSS is shared and now byte-identical after audit repair."
+    },
+    {
+      "source_path": "scripts/python/project_health_knowledge.html",
+      "classification": "copy_exact",
+      "target_paths": [
+        "scripts/python/project_health_knowledge.html"
+      ],
+      "source_blob_sha": "948c96157d29143a35e1be53ffbd3d95b3ddf0ef",
+      "rationale": "Knowledge dashboard HTML is shared and byte-identical."
+    },
+    {
+      "source_path": "scripts/python/project_health_knowledge.js",
+      "classification": "copy_exact",
+      "target_paths": [
+        "scripts/python/project_health_knowledge.js"
+      ],
+      "source_blob_sha": "ec52d08191fda254cb69961469692494174c6f1e",
+      "rationale": "Knowledge dashboard client logic is shared and byte-identical."
+    },
+    {
+      "source_path": "scripts/python/project_health_scenes.html",
+      "classification": "copy_exact",
+      "target_paths": [
+        "scripts/python/project_health_scenes.html"
+      ],
+      "source_blob_sha": "0e6030b4e9c871b5fdbad551ab432b010a6ace4f",
+      "rationale": "Scene graph page shell is shared and byte-identical."
+    },
+    {
+      "source_path": "scripts/python/project_health_scenes.js",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/python/project_health_scenes.js"
+      ],
+      "validation_paths": [
+        "scripts/browser/project_health.spec.js"
+      ],
+      "rationale": "Scene graph client logic includes later route-closure synchronization evolution and target-safe behavior."
+    },
+    {
+      "source_path": "scripts/python/project_health_unreachable.html",
+      "classification": "copy_exact",
+      "target_paths": [
+        "scripts/python/project_health_unreachable.html"
+      ],
+      "source_blob_sha": "cbc1f6dd59e94db3524fab824502152718a989c5",
+      "rationale": "Unconfirmed-scenes page shell is shared and byte-identical."
+    },
+    {
+      "source_path": "scripts/python/project_health_unreachable.js",
+      "classification": "copy_exact",
+      "target_paths": [
+        "scripts/python/project_health_unreachable.js"
+      ],
+      "source_blob_sha": "50bcfee50610673a9c2ec96356bbaa1956bb6e3e",
+      "rationale": "Unconfirmed-scenes client logic is shared and byte-identical."
+    },
+    {
+      "source_path": "scripts/python/vendor/Treant.css",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/python/vendor/Treant.css"
+      ],
+      "validation_paths": [
+        "scripts/browser/project_health.spec.js"
+      ],
+      "rationale": "lastking intentionally uses a repository-local lightweight Treant-compatible renderer instead of the source vendor bundle."
+    },
+    {
+      "source_path": "scripts/python/vendor/Treant.js",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/python/vendor/Treant.js"
+      ],
+      "validation_paths": [
+        "scripts/browser/project_health.spec.js"
+      ],
+      "rationale": "lastking intentionally uses a repository-local lightweight Treant-compatible renderer instead of the source vendor bundle."
+    },
+    {
+      "source_path": "scripts/python/vendor/raphael.js",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/python/vendor/raphael.js"
+      ],
+      "validation_paths": [
+        "scripts/browser/project_health.spec.js"
+      ],
+      "rationale": "lastking intentionally uses a lightweight compatibility implementation rather than copying the source vendor payload."
+    },
+    {
+      "source_path": "scripts/python/verify_project_health_browser.py",
+      "classification": "copy_exact",
+      "target_paths": [
+        "scripts/python/verify_project_health_browser.py"
+      ],
+      "source_blob_sha": "17ab88f0d71e3c38b8e9957e8dd7157e9713f790",
+      "rationale": "Browser verification helper is shared and byte-identical."
+    },
+    {
+      "source_path": "scripts/sc/tests/test_chapter6_knowledge.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/sc/tests/test_project_health_chapter6_capture.py"
+      ],
+      "validation_paths": [
+        "scripts/python/chapter6_knowledge.py"
+      ],
+      "rationale": "Source Chapter 6 Knowledge test coverage is represented by the target-local Project Health capture regression suite."
+    },
+    {
+      "source_path": "scripts/sc/tests/test_godot_scene_graph.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/sc/tests/test_project_health_godot_scene_graph.py"
+      ],
+      "validation_paths": [
+        "scripts/python/_godot_scene_graph.py"
+      ],
+      "rationale": "Source scene graph regressions are represented by target-local scene graph tests."
+    },
+    {
+      "source_path": "scripts/sc/tests/test_project_health_knowledge.py",
+      "classification": "already_present",
+      "target_paths": [
+        "scripts/sc/tests/test_project_health_knowledge.py"
+      ],
+      "validation_paths": [
+        "scripts/sc/tests/test_project_health_target_defaults.py"
+      ],
+      "rationale": "Project Health Knowledge regression coverage already existed in lastking and remains target-adapted; target defaults are guarded separately."
+    },
+    {
+      "source_path": "test-results/.last-run.json",
+      "classification": "business_only_drop",
+      "rationale": "Playwright last-run state is ephemeral test output and must never be migrated."
+    }
+  ]
+}

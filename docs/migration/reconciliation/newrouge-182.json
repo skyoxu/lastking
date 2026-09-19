@@ -1,0 +1,110 @@
+{
+  "schema_version": "repo.cross-repo-migration-reconciliation.v1",
+  "source": {
+    "repo": "skyoxu/newrouge",
+    "pr": 182,
+    "merge_commit": "a8e2f39872c39ffe4ee38461076279353d0d5b0e",
+    "changed_file_count": 8,
+    "changed_files": [
+      ".github/workflows/mvg-integration.yml",
+      "scripts/python/_mvg_execution.py",
+      "scripts/python/_project_health_runtime_snapshot.py",
+      "scripts/python/impact_analysis_handoff.py",
+      "scripts/python/tests/test_impact_analysis_handoff.py",
+      "scripts/python/tests/test_mvg_acceptance.py",
+      "scripts/python/tests/test_run_single_task_chapter6_lane.py",
+      "scripts/sc/tests/test_project_health_runtime_snapshot.py"
+    ]
+  },
+  "target": {
+    "repo": "skyoxu/lastking",
+    "pr": 109,
+    "branch": "sync-mvg-impact-evolution-20260918",
+    "baseline_commit": "77f96181580ad2d270ef28a29639208f551ea52a"
+  },
+  "policy": {
+    "statement": "Reconcile newrouge #182 evidence-integrity hardening while preserving the lastking BattleMap pilot and target-local Project Health runtime snapshot implementation."
+  },
+  "entries": [
+    {
+      "source_path": ".github/workflows/mvg-integration.yml",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        ".github/workflows/mvg-integration.yml"
+      ],
+      "validation_paths": [
+        "docs/testing/mvg/battlemap-pilot.json",
+        "scripts/sc/tests/test_project_health_runtime_snapshot.py"
+      ],
+      "rationale": "The source workspace Reward pilot is retained as a workspace BattleMap pilot while preserving the target-specific committed pilot and mutation experiment."
+    },
+    {
+      "source_path": "scripts/python/_mvg_execution.py",
+      "classification": "copy_exact",
+      "target_paths": [
+        "scripts/python/_mvg_execution.py"
+      ],
+      "source_blob_sha": "05d5e40d11acf6a58d448436258a9440561ed5da",
+      "rationale": "Cross-report MVG identity deduplication is repository-neutral evidence validation and is byte-identical."
+    },
+    {
+      "source_path": "scripts/python/_project_health_runtime_snapshot.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/python/_project_health_runtime_snapshot.py"
+      ],
+      "validation_paths": [
+        "scripts/sc/tests/test_project_health_runtime_snapshot.py"
+      ],
+      "rationale": "The GdUnit4 runtime-bin workspace exception is applied to lastking's locally evolved runtime snapshot helper without replacing its target-specific import-cache semantics."
+    },
+    {
+      "source_path": "scripts/python/impact_analysis_handoff.py",
+      "classification": "copy_exact",
+      "target_paths": [
+        "scripts/python/impact_analysis_handoff.py"
+      ],
+      "source_blob_sha": "2d21a6082a4881c039e570b5576bf35838d180ef",
+      "rationale": "Impact handoff report-to-run-manifest rebinding is shared control-plane integrity logic and is byte-identical."
+    },
+    {
+      "source_path": "scripts/python/tests/test_impact_analysis_handoff.py",
+      "classification": "copy_exact",
+      "target_paths": [
+        "scripts/python/tests/test_impact_analysis_handoff.py"
+      ],
+      "source_blob_sha": "146c5cad9dfaf1a484f7e21bb0fb2ac2af72a693",
+      "rationale": "Impact handoff tamper/missing-manifest regression coverage is shared and byte-identical."
+    },
+    {
+      "source_path": "scripts/python/tests/test_mvg_acceptance.py",
+      "classification": "copy_exact",
+      "target_paths": [
+        "scripts/python/tests/test_mvg_acceptance.py"
+      ],
+      "source_blob_sha": "7d6e7aac226558a0c5131f86899d52305c651d50",
+      "rationale": "MVG cross-report duplicate identity regression coverage is shared and byte-identical."
+    },
+    {
+      "source_path": "scripts/python/tests/test_run_single_task_chapter6_lane.py",
+      "classification": "copy_exact",
+      "target_paths": [
+        "scripts/python/tests/test_run_single_task_chapter6_lane.py"
+      ],
+      "source_blob_sha": "d0d68066986fda8d30e840745153e33c9f0f0ef1",
+      "rationale": "Chapter 6 handoff fixtures now require the Impact run manifest and remain shared byte-identical coverage."
+    },
+    {
+      "source_path": "scripts/sc/tests/test_project_health_runtime_snapshot.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/sc/tests/test_project_health_runtime_snapshot.py"
+      ],
+      "validation_paths": [
+        "scripts/python/_project_health_runtime_snapshot.py",
+        ".github/workflows/mvg-integration.yml"
+      ],
+      "rationale": "The workspace GdUnit4 bin exception regression is added to lastking's broader target-local runtime snapshot suite."
+    }
+  ]
+}

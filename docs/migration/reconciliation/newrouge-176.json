@@ -1,0 +1,71 @@
+{
+  "schema_version": "repo.cross-repo-migration-reconciliation.v1",
+  "source": {
+    "repo": "skyoxu/newrouge",
+    "pr": 176,
+    "merge_commit": "b3c3c4ed3a3203980a5cbdd819eaf614ca9d5a53",
+    "changed_file_count": 5,
+    "changed_files": [
+      "_bmad-output/implementation-artifacts/spec-runtime-snapshot-import-integrity.md",
+      "docs/knowledge/catalog/godot-elements.json",
+      "scripts/python/_project_health_runtime_snapshot.py",
+      "scripts/python/project_health_knowledge_config.json",
+      "scripts/sc/tests/test_project_health_runtime_snapshot.py"
+    ]
+  },
+  "target": {
+    "repo": "skyoxu/lastking",
+    "pr": 107,
+    "branch": "remove-bmad-config-harden-snapshots",
+    "baseline_commit": "733ca1011a601cf9e0de7779a503ade3adb0faca"
+  },
+  "policy": {
+    "statement": "Port reusable runtime snapshot hardening while keeping generated Knowledge and source implementation artifacts repository-local."
+  },
+  "entries": [
+    {
+      "source_path": "_bmad-output/implementation-artifacts/spec-runtime-snapshot-import-integrity.md",
+      "classification": "business_only_drop",
+      "rationale": "Source implementation-artifact prose is historical source evidence, not reusable runtime behavior."
+    },
+    {
+      "source_path": "docs/knowledge/catalog/godot-elements.json",
+      "classification": "derived_regenerate",
+      "regeneration_command": "py -3 scripts/python/inject_godot_dictionary.py",
+      "rationale": "Godot element catalog is generated from the target repository and must not be copied."
+    },
+    {
+      "source_path": "scripts/python/_project_health_runtime_snapshot.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/python/_project_health_runtime_snapshot.py"
+      ],
+      "validation_paths": [
+        "scripts/sc/tests/test_project_health_runtime_snapshot.py"
+      ],
+      "rationale": "Runtime snapshot hardening is retained; lastking carries an equivalent locally formatted helper implementation."
+    },
+    {
+      "source_path": "scripts/python/project_health_knowledge_config.json",
+      "classification": "already_present",
+      "target_paths": [
+        "scripts/python/project_health_knowledge_config.json"
+      ],
+      "validation_paths": [
+        "scripts/sc/tests/test_project_health_target_defaults.py"
+      ],
+      "rationale": "The source PR only changed terminal newline state; lastking keeps its target-owned Project Health configuration."
+    },
+    {
+      "source_path": "scripts/sc/tests/test_project_health_runtime_snapshot.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/sc/tests/test_project_health_runtime_snapshot.py"
+      ],
+      "validation_paths": [
+        "scripts/python/_project_health_runtime_snapshot.py"
+      ],
+      "rationale": "Snapshot regression coverage is retained with target-local test organization."
+    }
+  ]
+}

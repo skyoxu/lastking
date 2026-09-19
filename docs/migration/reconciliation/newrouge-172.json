@@ -1,0 +1,74 @@
+{
+  "schema_version": "repo.cross-repo-migration-reconciliation.v1",
+  "source": {
+    "repo": "skyoxu/newrouge",
+    "pr": 172,
+    "merge_commit": "ed4affcc6fc2e89f6c2e78a2a03de88dfbff9a22",
+    "changed_file_count": 5,
+    "changed_files": [
+      ".github/workflows/publish-knowledge-catalog.yml",
+      "scripts/python/_knowledge_locator_core.py",
+      "scripts/python/knowledge_locator.py",
+      "scripts/python/publish_knowledge_catalog.py",
+      "scripts/python/tests/test_knowledge_publication_freshness.py"
+    ]
+  },
+  "target": {
+    "repo": "skyoxu/lastking",
+    "pr": 103,
+    "branch": "sync-knowledge-publication-freshness-20260912",
+    "baseline_commit": "ff19f369e5f552f87b263072b3872f6320750f82"
+  },
+  "policy": {
+    "statement": "Reconcile the shared content-aware Knowledge publication freshness lifecycle without copying business or generated state."
+  },
+  "entries": [
+    {
+      "source_path": ".github/workflows/publish-knowledge-catalog.yml",
+      "classification": "copy_exact",
+      "target_paths": [
+        ".github/workflows/publish-knowledge-catalog.yml"
+      ],
+      "source_blob_sha": "7234713e13a3a0fc81f12b27e1e3b9defad00085",
+      "rationale": "Knowledge publication workflow lifecycle wiring remains byte-identical to the frozen source fix."
+    },
+    {
+      "source_path": "scripts/python/_knowledge_locator_core.py",
+      "classification": "copy_exact",
+      "target_paths": [
+        "scripts/python/_knowledge_locator_core.py"
+      ],
+      "source_blob_sha": "0e014bea4530b3d5c38107e4ae26d443a046e4c7",
+      "rationale": "Content-aware Knowledge locator core is shared repository-neutral logic."
+    },
+    {
+      "source_path": "scripts/python/knowledge_locator.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/python/knowledge_locator.py"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_knowledge_publication_freshness.py"
+      ],
+      "rationale": "Locator behavior is retained but the target file also carries repository-local evolution, so byte identity is not required."
+    },
+    {
+      "source_path": "scripts/python/publish_knowledge_catalog.py",
+      "classification": "copy_exact",
+      "target_paths": [
+        "scripts/python/publish_knowledge_catalog.py"
+      ],
+      "source_blob_sha": "485cf08ebc7e6ddd4c2c335348558915b3f69cc6",
+      "rationale": "Knowledge publication implementation remains byte-identical to the frozen source fix."
+    },
+    {
+      "source_path": "scripts/python/tests/test_knowledge_publication_freshness.py",
+      "classification": "copy_exact",
+      "target_paths": [
+        "scripts/python/tests/test_knowledge_publication_freshness.py"
+      ],
+      "source_blob_sha": "c1bc92b0d14d287651698f462dd5135bff7c7ab4",
+      "rationale": "Publication freshness regression suite remains byte-identical."
+    }
+  ]
+}

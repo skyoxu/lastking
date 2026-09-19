@@ -39,6 +39,7 @@ This file is the top-level navigation for project docs.
 - Prototype lane playbook: `docs/workflows/prototype-lane-playbook.md`
 - Prototype TDD: `docs/workflows/prototype-tdd.md`
 - Prototype lane TDD entrypoint: `py -3 scripts/python/dev_cli.py run-prototype-tdd --slug <slug> --stage <red|green|refactor> --expect <auto|fail|pass>`
+- MVG integration acceptance: `docs/workflows/mvg-integration-acceptance.md`
 - Local hard checks: `docs/workflows/local-hard-checks.md`
 - Stable entrypoint index: `docs/workflows/stable-public-entrypoints.md`
 - Script entrypoint index: `docs/workflows/script-entrypoints-index.md`

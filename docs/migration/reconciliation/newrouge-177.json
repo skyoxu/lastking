@@ -1,0 +1,111 @@
+{
+  "schema_version": "repo.cross-repo-migration-reconciliation.v1",
+  "source": {
+    "repo": "skyoxu/newrouge",
+    "pr": 177,
+    "merge_commit": "4f9ea2c7279e350193e722196b2f1138147f118a",
+    "changed_file_count": 13,
+    "changed_files": [
+      "knowledge/catalogs/repository-knowledge-catalog.v1.json",
+      "knowledge/indexes/current.json",
+      "knowledge/indexes/generations/a149275c464d5452c247914562c05b53ee79adb52d496a657705efb743091a09/catalog.json",
+      "knowledge/indexes/generations/a149275c464d5452c247914562c05b53ee79adb52d496a657705efb743091a09/evaluation.json",
+      "knowledge/indexes/generations/a149275c464d5452c247914562c05b53ee79adb52d496a657705efb743091a09/exclusions.json",
+      "knowledge/indexes/generations/a149275c464d5452c247914562c05b53ee79adb52d496a657705efb743091a09/manifest.json",
+      "knowledge/indexes/generations/a149275c464d5452c247914562c05b53ee79adb52d496a657705efb743091a09/policies.json",
+      "knowledge/indexes/generations/a149275c464d5452c247914562c05b53ee79adb52d496a657705efb743091a09/projections.json",
+      "knowledge/indexes/generations/a149275c464d5452c247914562c05b53ee79adb52d496a657705efb743091a09/query_suite.json",
+      "knowledge/indexes/generations/a149275c464d5452c247914562c05b53ee79adb52d496a657705efb743091a09/snapshot.json",
+      "knowledge/indexes/last-known-good.json",
+      "knowledge/projections/consumer-projections.v1.json",
+      "knowledge/snapshots/repository-source-snapshot.v1.json"
+    ]
+  },
+  "target": {
+    "repo": "skyoxu/lastking",
+    "related_pr": 107
+  },
+  "policy": {
+    "statement": "newrouge#177 is generated Knowledge publication state only; never copy it into lastking."
+  },
+  "entries": [
+    {
+      "source_path": "knowledge/catalogs/repository-knowledge-catalog.v1.json",
+      "classification": "derived_regenerate",
+      "regeneration_command": "py -3 scripts/python/publish_knowledge_catalog.py --publish",
+      "rationale": "Generated Knowledge publication output is repository-derived and must be rebuilt from lastking authoritative inputs."
+    },
+    {
+      "source_path": "knowledge/indexes/current.json",
+      "classification": "derived_regenerate",
+      "regeneration_command": "py -3 scripts/python/publish_knowledge_catalog.py --publish",
+      "rationale": "Generated Knowledge publication output is repository-derived and must be rebuilt from lastking authoritative inputs."
+    },
+    {
+      "source_path": "knowledge/indexes/generations/a149275c464d5452c247914562c05b53ee79adb52d496a657705efb743091a09/catalog.json",
+      "classification": "derived_regenerate",
+      "regeneration_command": "py -3 scripts/python/publish_knowledge_catalog.py --publish",
+      "rationale": "Generated Knowledge publication output is repository-derived and must be rebuilt from lastking authoritative inputs."
+    },
+    {
+      "source_path": "knowledge/indexes/generations/a149275c464d5452c247914562c05b53ee79adb52d496a657705efb743091a09/evaluation.json",
+      "classification": "derived_regenerate",
+      "regeneration_command": "py -3 scripts/python/publish_knowledge_catalog.py --publish",
+      "rationale": "Generated Knowledge publication output is repository-derived and must be rebuilt from lastking authoritative inputs."
+    },
+    {
+      "source_path": "knowledge/indexes/generations/a149275c464d5452c247914562c05b53ee79adb52d496a657705efb743091a09/exclusions.json",
+      "classification": "derived_regenerate",
+      "regeneration_command": "py -3 scripts/python/publish_knowledge_catalog.py --publish",
+      "rationale": "Generated Knowledge publication output is repository-derived and must be rebuilt from lastking authoritative inputs."
+    },
+    {
+      "source_path": "knowledge/indexes/generations/a149275c464d5452c247914562c05b53ee79adb52d496a657705efb743091a09/manifest.json",
+      "classification": "derived_regenerate",
+      "regeneration_command": "py -3 scripts/python/publish_knowledge_catalog.py --publish",
+      "rationale": "Generated Knowledge publication output is repository-derived and must be rebuilt from lastking authoritative inputs."
+    },
+    {
+      "source_path": "knowledge/indexes/generations/a149275c464d5452c247914562c05b53ee79adb52d496a657705efb743091a09/policies.json",
+      "classification": "derived_regenerate",
+      "regeneration_command": "py -3 scripts/python/publish_knowledge_catalog.py --publish",
+      "rationale": "Generated Knowledge publication output is repository-derived and must be rebuilt from lastking authoritative inputs."
+    },
+    {
+      "source_path": "knowledge/indexes/generations/a149275c464d5452c247914562c05b53ee79adb52d496a657705efb743091a09/projections.json",
+      "classification": "derived_regenerate",
+      "regeneration_command": "py -3 scripts/python/publish_knowledge_catalog.py --publish",
+      "rationale": "Generated Knowledge publication output is repository-derived and must be rebuilt from lastking authoritative inputs."
+    },
+    {
+      "source_path": "knowledge/indexes/generations/a149275c464d5452c247914562c05b53ee79adb52d496a657705efb743091a09/query_suite.json",
+      "classification": "derived_regenerate",
+      "regeneration_command": "py -3 scripts/python/publish_knowledge_catalog.py --publish",
+      "rationale": "Generated Knowledge publication output is repository-derived and must be rebuilt from lastking authoritative inputs."
+    },
+    {
+      "source_path": "knowledge/indexes/generations/a149275c464d5452c247914562c05b53ee79adb52d496a657705efb743091a09/snapshot.json",
+      "classification": "derived_regenerate",
+      "regeneration_command": "py -3 scripts/python/publish_knowledge_catalog.py --publish",
+      "rationale": "Generated Knowledge publication output is repository-derived and must be rebuilt from lastking authoritative inputs."
+    },
+    {
+      "source_path": "knowledge/indexes/last-known-good.json",
+      "classification": "derived_regenerate",
+      "regeneration_command": "py -3 scripts/python/publish_knowledge_catalog.py --publish",
+      "rationale": "Generated Knowledge publication output is repository-derived and must be rebuilt from lastking authoritative inputs."
+    },
+    {
+      "source_path": "knowledge/projections/consumer-projections.v1.json",
+      "classification": "derived_regenerate",
+      "regeneration_command": "py -3 scripts/python/publish_knowledge_catalog.py --publish",
+      "rationale": "Generated Knowledge publication output is repository-derived and must be rebuilt from lastking authoritative inputs."
+    },
+    {
+      "source_path": "knowledge/snapshots/repository-source-snapshot.v1.json",
+      "classification": "derived_regenerate",
+      "regeneration_command": "py -3 scripts/python/publish_knowledge_catalog.py --publish",
+      "rationale": "Generated Knowledge publication output is repository-derived and must be rebuilt from lastking authoritative inputs."
+    }
+  ]
+}
