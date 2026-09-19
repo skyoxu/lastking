@@ -1,5 +1,5 @@
 {
-  "schema_version": "lastking.cross-repo-migration-reconciliation.v1",
+  "schema_version": "repo.cross-repo-migration-reconciliation.v1",
   "source": {
     "repo": "skyoxu/newrouge",
     "pr": 172,
