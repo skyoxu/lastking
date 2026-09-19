@@ -226,12 +226,15 @@
     },
     {
       "source_path": "scripts/python/_mvg_manifest.py",
-      "classification": "copy_exact",
+      "classification": "already_present",
       "target_paths": [
         "scripts/python/_mvg_manifest.py"
       ],
-      "source_blob_sha": "2d4c1fd642c83f7843e2de07579ed079ee9072cf",
-      "rationale": "Shared manifest validation is repository-neutral and intentionally byte-identical."
+      "rationale": "The #180 manifest validator was initially byte-identical, then legitimately superseded by source PR #187's coverage-contract evolution. The current target follows #187, whose reconciliation record carries the live copy_exact blob lock.",
+      "validation_paths": [
+        "docs/migration/reconciliation/newrouge-187.json",
+        "scripts/python/tests/test_mvg_acceptance.py"
+      ]
     },
     {
       "source_path": "scripts/python/check_workflow_gate_enforcement.py",
