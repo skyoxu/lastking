@@ -22,7 +22,8 @@
   },
   "target": {
     "repo": "skyoxu/lastking",
-    "branch": "sync-newrouge-187-194-20260919"
+    "branch": "sync-newrouge-187-194-20260919",
+    "pr": 111
   },
   "policy": {
     "statement": "Adopt reusable MVG coverage-tier capability while preserving lastking BattleMap semantics and refusing unsupported source-business coverage claims."
