@@ -26,12 +26,15 @@
   "entries": [
     {
       "source_path": "docs/workflows/cross-repo-migration-reconciliation.md",
-      "classification": "copy_exact",
+      "classification": "already_present",
       "target_paths": [
         "docs/workflows/cross-repo-migration-reconciliation.md"
       ],
-      "source_blob_sha": "9d5e35dd04407c8476aa81e03ffea9f03586fb8b",
-      "rationale": "The repository-neutral reconciliation protocol is shared byte-identically."
+      "rationale": "The #184 repository-neutral protocol was initially copied exactly, then legitimately superseded by source PR #192's canonical target-PR uniqueness extension. The current target follows #192, whose reconciliation record carries the live copy_exact blob lock.",
+      "validation_paths": [
+        "docs/migration/reconciliation/newrouge-192.json",
+        "scripts/python/tests/test_cross_repo_migration.py"
+      ]
     },
     {
       "source_path": "docs/workflows/gate-bundle.md",
@@ -57,12 +60,15 @@
     },
     {
       "source_path": "scripts/python/check_cross_repo_migration.py",
-      "classification": "copy_exact",
+      "classification": "already_present",
       "target_paths": [
         "scripts/python/check_cross_repo_migration.py"
       ],
-      "source_blob_sha": "66a15090e78d45da42d74656a219778000df3e96",
-      "rationale": "The repository-neutral checker, including remote source verification and path hardening, is shared byte-identically."
+      "rationale": "The #184 checker was initially byte-identical, then legitimately superseded by source PR #192's canonical target-PR uniqueness guard. The current target follows #192, whose reconciliation record carries the live copy_exact blob lock.",
+      "validation_paths": [
+        "docs/migration/reconciliation/newrouge-192.json",
+        "scripts/python/tests/test_cross_repo_migration.py"
+      ]
     },
     {
       "source_path": "scripts/python/run_gate_bundle.py",
@@ -78,12 +84,15 @@
     },
     {
       "source_path": "scripts/python/tests/test_cross_repo_migration.py",
-      "classification": "copy_exact",
+      "classification": "already_present",
       "target_paths": [
         "scripts/python/tests/test_cross_repo_migration.py"
       ],
-      "source_blob_sha": "c2e0144deaf93e54c3a4e39227cb53dd99f03854",
-      "rationale": "Repository-neutral checker regressions are shared byte-identically."
+      "rationale": "The #184 reconciliation regressions were initially byte-identical, then legitimately superseded by source PR #192's canonical target-PR tests. The current target follows #192, whose reconciliation record carries the live copy_exact blob lock.",
+      "validation_paths": [
+        "docs/migration/reconciliation/newrouge-192.json",
+        "scripts/python/check_cross_repo_migration.py"
+      ]
     }
   ]
 }
