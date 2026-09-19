@@ -10,7 +10,9 @@ This directory records frozen source-PR inventories for reusable migrations from
 - `derived_regenerate` means source generated state must never be copied; rebuild it from lastking inputs.
 - `business_only_drop` means the source change is intentionally outside target migration scope.
 - `protocol_name_retain` is reserved for compatible upstream protocol/schema identifiers that intentionally keep their upstream namespace.
-- Run `py -3 scripts/python/check_cross_repo_migration.py`; it is also part of the hard gate bundle.
+- Manifests use `repo.cross-repo-migration-reconciliation.v1`.
+- Run `py -3 scripts/python/check_cross_repo_migration.py --require-manifests`; it is part of the hard gate bundle.
+- During migration creation/review, independently verify the frozen source PR with `--verify-source-github`; ordinary hard gates remain deterministic/offline.
 
 ## Reconciled Source Evolution
 
@@ -27,7 +29,10 @@ This directory records frozen source-PR inventories for reusable migrations from
 | #180 | Bounded MVG integration acceptance | Migrated via lastking #109 with a BattleMap-native pilot and frozen 25/25 source-file classification. |
 | #181 | Generated Knowledge publication after #180 | `derived_regenerate`; after #109 lands, lastking's publication workflow must rebuild generated state from target inputs. |
 | #182 | Runtime snapshot and evidence-integrity hardening | Migrated through lastking #109: workspace BattleMap execution, GdUnit4 runtime-bin preservation, cross-report MVG identity deduplication, and Impact run-manifest rebinding. |
+| #183 | Project Health hard-gate follow-up | Reconciled through lastking #109: event-route reachability and CI serve-test isolation were already repaired target-side; generic handoff guidance is exact and target-native Project Health suites stay protected. |
+| #184 | Repository-neutral migration reconciliation protocol | Adopted through lastking #109: generic checker/tests/protocol are exact; target hard gate remains stricter with `--require-manifests`. |
+| #185 | Generated Knowledge publication | `derived_regenerate`; no source publication payload is copied. |
 
 ## Maintenance
 
-For the next bounded upstream migration, freeze the source repository, PR, merge commit, and full changed-file list before implementation is declared complete. Add a new JSON manifest in this directory and keep the hard gate green.
+For the next bounded upstream migration, freeze the source repository, PR, merge commit, and full changed-file list before implementation is declared complete. Verify that inventory against the merged source PR with `--verify-source-github`, add a new JSON manifest in this directory, and keep the offline `--require-manifests` hard gate green.
