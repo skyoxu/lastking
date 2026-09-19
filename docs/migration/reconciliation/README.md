@@ -32,6 +32,13 @@ This directory records frozen source-PR inventories for reusable migrations from
 | #183 | Project Health hard-gate follow-up | Reconciled through lastking #109: event-route reachability and CI serve-test isolation were already repaired target-side; generic handoff guidance is exact and target-native Project Health suites stay protected. |
 | #184 | Repository-neutral migration reconciliation protocol | Adopted through lastking #109: generic checker/tests/protocol are exact; target hard gate remains stricter with `--require-manifests`. |
 | #185 | Generated Knowledge publication | `derived_regenerate`; no source publication payload is copied. |
+| #186 | Generated Knowledge publication | `derived_regenerate`; rebuild from lastking inputs with the target publication command. |
+| #187 | MVG coverage tiers and full-scope boundary | Reconciled on this alignment branch: generic coverage validation/tests are source-exact; BattleMap pilot declares its real Task 12 blocker; newrouge M1/Reward business inventories are not copied. |
+| #190 | Generated Knowledge publication after #187 | `derived_regenerate`; no source publication payload is copied. |
+| #191 | Knowledge-link full rebuild replacement | Reconciled on this alignment branch: restores the CLI-referenced generator, replaces stale catalog entries on full rebuild, and hard-gates the regression. |
+| #192 | Canonical target PR uniqueness guard | Reconciled source-exact for the repository-neutral protocol, checker, and tests. |
+| #193 | Project Health scene-graph browser isolation | Reconciled target-natively: delayed graph tests use synthetic fixtures while lastking's route-tree closure regression is retained. |
+| #194 | Generated Knowledge publication after #192 | `derived_regenerate`; no source publication payload is copied. |
 
 ## Maintenance
 
