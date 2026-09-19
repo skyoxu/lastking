@@ -17,6 +17,12 @@
 
 每个 flow 必须有 outcome、真实 task_ids、source_paths、handoffs、test_ids。每个 handoff 必须声明 producer_task / consumer_task / owner_task、contract_ref、behavior 与 test_ids。每个测试必须声明 kind、state、path、evidence_level 和 min_tests；dotnet 还要求精确类 selector。
 
+### Coverage contract
+
+与 `newrouge` #187 对齐后，每个 manifest 还必须声明 `coverage`：`mode` 取 `pilot` / `critical` / `full`，`scope_id` 标识覆盖边界，`required_flow_ids` 必须与 flow 顺序完全一致，`blocking_task_ids` 必须精确等于范围内 Taskmaster 非 `done` 任务，`excluded_claims` 明确本 manifest 不证明什么。
+
+`critical` 至少包含两个 flow，`full` 至少包含三个 flow；二者在存在非 `done` scoped task 时禁止执行。`pilot` 允许保留 blocker 并继续运行，用于证明有限链路，但不能据此升级成 critical/full 覆盖声明。当前 lastking 的默认 `battlemap-pilot` 因 Task 12 仍为 `pending`，明确记录 `blocking_task_ids: [12]`；Task 54 已为 `done`。目标仓尚未定义经过业务确认的 critical/full manifest，因此不会从 newrouge 复制其 M1/Reward 任务 ID、场景路径或覆盖结论。
+
 运行器对 TRX / GdUnit JUnit 做正向证据校验：报告必须存在、测试非空、类/套件身份精确匹配、计数一致、无重复结果、零失败、零跳过，并且子进程成功。plan/recommend 成功不等于 runtime_verified。
 
 ## lastking BattleMap pilot
