@@ -71,7 +71,8 @@ py -3 scripts/python/remind_overlay_task_drift.py --write --overlay-index docs/a
 - `forbid_mirror_path_refs.py`
 - `validate_contracts.py`
 - `validate_recovery_docs.py`
-- `check_cross_repo_migration.py --require-manifests`
+- `check_cross_repo_migration.py`
+  - lastking 在 hard bundle 中以 `--require-manifests` 调用，业务仓没有 reconciliation manifest 时必须 fail-closed。
 - `check_domain_contracts.py`
 - `check_contract_interface_docs.py`
 - `check_test_naming.py`
