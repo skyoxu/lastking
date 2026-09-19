@@ -1,22 +1,22 @@
 # MVG integration alignment
 
 - Title: Post-#108 MVG and Impact recommendation alignment
-- Status: In validation after newrouge #182 incremental hardening
+- Status: In validation after newrouge #183-#185 reconciliation
 - Branch: sync-mvg-impact-evolution-20260918
-- Git Head: 10b988acea91b0a38e3d0c4d67a1955c1c50eb0a
-- Goal: Align lastking with newrouge #180 and #182 reusable MVG/Impact testing capability while preserving target business semantics.
-- Scope: MVG manifest/runner, evidence validation, revision-bound recommendation, BattleMap commit/workspace pilot, runtime snapshot integrity, Impact run-manifest handoff binding, migration reconciliation, CI wiring and documentation.
-- Current step: Wait for the protected checks on the #182-aligned checkpoint, then close recovery state only if MVG, Windows Quality Gate and Windows Smoke are all green.
-- Last completed step: Migrated newrouge #182: GdUnit4 runtime-bin workspace preservation, cross-report MVG identity deduplication, Impact report/run-manifest rebinding, shared regression tests, and a BattleMap-native workspace MVG CI run. Also repaired three regressions exposed when Project Health/reconciliation tests were promoted into the hard gate.
-- Stop-loss: Do not count missing/skipped reports, compile failure or timeout as acceptance or mutation detection; do not weaken existing quality gates or copy source generated Knowledge state.
-- Next action: Inspect target runs MVG 35367820494, Quality 35367820237 and Smoke 35367820478. If any fail, repair the root cause on this branch; if all pass, record the validated checkpoint and prepare PR #109 for normal review/merge.
+- Git Head: a5b7807a50ab2c17d84b9a6804ace6336b30cf55
+- Goal: Align lastking with newrouge #180/#182 MVG+Impact evolution and #183/#184 correctness/governance follow-ups while preserving target business semantics.
+- Scope: MVG manifest/runner, evidence validation, revision-bound recommendation, BattleMap commit/workspace pilot, runtime snapshot integrity, Impact run-manifest handoff binding, repository-neutral migration reconciliation, target hard-gate enforcement, CI wiring and documentation.
+- Current step: Wait for the protected checks on the #183-#185-aligned checkpoint, then close recovery state only if MVG, Windows Quality Gate and Windows Smoke are all green.
+- Last completed step: Reconciled newrouge #183/#184 and generated publication #185. Generic checker/tests/protocol are now source-exact; historical manifests #172-#182 use the shared `repo.cross-repo-migration-reconciliation.v1` schema; lastking retains a stricter offline `--require-manifests` hard gate and target-native Project Health test organization.
+- Stop-loss: Do not count missing/skipped reports, compile failure or timeout as acceptance or mutation detection; do not weaken existing quality gates; do not copy source generated Knowledge state; do not treat embedded manifest inventories as authoritative without source PR verification during migration creation/review.
+- Next action: Inspect target runs MVG 35422094397, Quality 35422094288 and Smoke 35422094443. If any fail, repair the root cause on this branch; if all pass, record the validated checkpoint and prepare PR #109 for normal review/merge.
 - Recovery command: `py -3 scripts/python/dev_cli.py run-mvg-acceptance --mode plan`
-- Open questions: Full-MVG manifest expansion remains future scope. The current BattleMap pilot is intentionally bounded. The reconciliation checker validates committed inventories and exact-copy drift but does not independently refetch the remote source PR on every hard-gate run.
-- Exit criteria: MVG failure-path tests pass; committed and workspace BattleMap pilots execute with valid evidence; disconnected-input challenge is detected; migration reconciliation passes; Impact handoff requires valid sibling run manifest; protected Quality and Smoke checks are green.
+- Open questions: Full-MVG manifest expansion remains future scope. The current BattleMap pilot is intentionally bounded. Remote source verification is an explicit migration-creation/review step, while ordinary hard gates remain deterministic and offline.
+- Exit criteria: MVG failure-path tests pass; committed and workspace BattleMap pilots execute with valid evidence; disconnected-input challenge is detected; repository-neutral reconciliation passes with mandatory manifests; Impact handoff requires valid sibling run manifest; protected Quality and Smoke checks are green.
 - Related ADRs: `docs/adr/ADR-0037-mvg-integration-evidence.md`
 - Related decision logs: `decision-logs/2026-09-18-mvg-integration.md`
 - Related task id(s): Tasks 12 and 54 are referenced by the pilot; this infrastructure does not write task status.
-- Related run id: Pending target checkpoint runs: MVG 35367820494; Quality 35367820237; Smoke 35367820478.
+- Related run id: Pending target checkpoint runs: MVG 35422094397; Quality 35422094288; Smoke 35422094443.
 - Related latest.json: N/A because this MVG infrastructure does not create or replace Chapter 6 latest.json.
 - Related pipeline artifacts: `logs/ci/mvg-acceptance/**`, `logs/ci/mvg-mutation/**`
 
