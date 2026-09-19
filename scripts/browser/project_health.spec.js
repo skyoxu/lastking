@@ -1,5 +1,28 @@
 const { test, expect } = require('@playwright/test');
 
+const syntheticGraph = () => ({
+  revision: 'synthetic-revision',
+  main_scene: 'Test/Main.tscn',
+  nodes: {
+    'Test/Main.tscn': {
+      path: 'Test/Main.tscn', classification: 'confirmed-reachable',
+      nodes: [], knowledge_context: [], functional_summary: { scripts: [], config_references: [] }
+    },
+    'Test/Deep.tscn': {
+      path: 'Test/Deep.tscn', classification: 'unreachable-candidate',
+      nodes: [], knowledge_context: [], functional_summary: { scripts: [], config_references: [] }
+    }
+  },
+  edges: [{
+    source: 'Test/Main.tscn', target: 'Test/Deep.tscn',
+    evidence_level: 'possible', kind: 'scene-reference'
+  }],
+  code_references: [],
+  script_task_context: {},
+  data_dictionary: { entries: {} },
+  file_manifest: ['Test/Main.tscn', 'Test/Deep.tscn']
+});
+
 test.describe('project health Godot scene graph', () => {
   test('renders graph controls and supports graph refresh', async ({ page }) => {
     await page.goto((process.env.PROJECT_HEALTH_URL || 'http://127.0.0.1:8767') + '/knowledge/');
@@ -41,9 +64,12 @@ test.describe('project health Godot scene graph', () => {
     let releaseGraphResponse;
     const graphResponseReleased = new Promise(resolve => { releaseGraphResponse = resolve; });
     await page.route('**/api/knowledge/scene-graph', async route => {
-      const response = await route.fetch();
       await graphResponseReleased;
-      await route.fulfill({ response });
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(syntheticGraph())
+      });
     });
 
     const baseUrl = process.env.PROJECT_HEALTH_URL || 'http://127.0.0.1:8767';
@@ -60,9 +86,12 @@ test.describe('project health Godot scene graph', () => {
     let releaseGraphResponse;
     const graphResponseReleased = new Promise(resolve => { releaseGraphResponse = resolve; });
     await page.route('**/api/knowledge/scene-graph', async route => {
-      const response = await route.fetch();
       await graphResponseReleased;
-      await route.fulfill({ response });
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(syntheticGraph())
+      });
     });
 
     const baseUrl = process.env.PROJECT_HEALTH_URL || 'http://127.0.0.1:8767';
