@@ -23,7 +23,8 @@
   },
   "target": {
     "repo": "skyoxu/lastking",
-    "branch": "sync-newrouge-187-194-20260919"
+    "branch": "sync-newrouge-187-194-20260919",
+    "pr": 111
   },
   "policy": {
     "statement": "newrouge #190 contains generated Knowledge publication state only; lastking regenerates publication state from its own authoritative inputs."
