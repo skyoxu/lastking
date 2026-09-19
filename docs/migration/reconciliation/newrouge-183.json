@@ -1,0 +1,94 @@
+{
+  "schema_version": "repo.cross-repo-migration-reconciliation.v1",
+  "source": {
+    "repo": "skyoxu/newrouge",
+    "pr": 183,
+    "merge_commit": "84a7f242b48d7aec9bcfe8d248867e81e6b943f1",
+    "changed_file_count": 6,
+    "changed_files": [
+      "docs/workflows/gate-bundle.md",
+      "docs/workflows/knowledge-context-freeze.md",
+      "scripts/python/_godot_scene_graph.py",
+      "scripts/python/run_gate_bundle.py",
+      "scripts/sc/tests/test_godot_scene_graph.py",
+      "scripts/sc/tests/test_project_health_server.py"
+    ]
+  },
+  "target": {
+    "repo": "skyoxu/lastking",
+    "pr": 109,
+    "branch": "sync-mvg-impact-evolution-20260918",
+    "baseline_commit": "205172a71bde6474aaa301d95308ceef65d54f59"
+  },
+  "policy": {
+    "statement": "Reconcile newrouge #183 Project Health hard-gate fixes while retaining lastking-native Project Health test organization and stricter migration-gate behavior."
+  },
+  "entries": [
+    {
+      "source_path": "docs/workflows/gate-bundle.md",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "docs/workflows/gate-bundle.md"
+      ],
+      "validation_paths": [
+        "scripts/python/run_gate_bundle.py"
+      ],
+      "rationale": "The Project Health/reconciliation hard-test coverage is documented in lastking's target-owned gate inventory, which also contains lastking-only hard gates."
+    },
+    {
+      "source_path": "docs/workflows/knowledge-context-freeze.md",
+      "classification": "copy_exact",
+      "target_paths": [
+        "docs/workflows/knowledge-context-freeze.md"
+      ],
+      "source_blob_sha": "44d1930f714fef27c23eae9926d4b353de67948a",
+      "rationale": "Impact run-manifest operator guidance is repository-neutral and is kept byte-identical."
+    },
+    {
+      "source_path": "scripts/python/_godot_scene_graph.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/python/_godot_scene_graph.py"
+      ],
+      "validation_paths": [
+        "scripts/sc/tests/test_project_health_godot_scene_graph.py"
+      ],
+      "rationale": "Effective event routes participate in reachability in lastking's locally evolved scene-graph implementation."
+    },
+    {
+      "source_path": "scripts/python/run_gate_bundle.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/python/run_gate_bundle.py"
+      ],
+      "validation_paths": [
+        "scripts/sc/tests/test_project_health_navigation.py",
+        "scripts/sc/tests/test_project_health_godot_scene_graph.py",
+        "scripts/sc/tests/test_project_health_runtime_snapshot.py",
+        "scripts/sc/tests/test_project_health_chapter6_capture.py",
+        "scripts/sc/tests/test_project_health_server.py"
+      ],
+      "rationale": "Project Health core tests are already protected in lastking's larger hard suite while preserving target-only gates and playable-ea defaults."
+    },
+    {
+      "source_path": "scripts/sc/tests/test_godot_scene_graph.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/sc/tests/test_project_health_godot_scene_graph.py"
+      ],
+      "validation_paths": [
+        "scripts/python/_godot_scene_graph.py"
+      ],
+      "rationale": "The source reachability assertion is represented by lastking's target-local Project Health scene-graph regression suite."
+    },
+    {
+      "source_path": "scripts/sc/tests/test_project_health_server.py",
+      "classification": "copy_exact",
+      "target_paths": [
+        "scripts/sc/tests/test_project_health_server.py"
+      ],
+      "source_blob_sha": "6793357dbf7f8a74e53aa22451964adc755ad802",
+      "rationale": "CI-environment isolation for the local serve regression is repository-neutral and byte-identical."
+    }
+  ]
+}
