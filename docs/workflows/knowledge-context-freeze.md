@@ -81,13 +81,13 @@ Continue separately:
    and record explicit Review semantic decisions.
 2. Freeze that Review bundle without `--task-id` and generate an Impact Report
    bound to its exact frozen hash and revision. Keep the analyzer-produced sibling
-   `run-manifest.v1.json` beside the report; Review handoff now requires that
-   manifest to bind the exact report bytes SHA, repository-relative report path,
-   revision and status. Missing, tampered or mismatched manifests fail closed.
-   Rebuild the Impact Index when its revision or identity inputs have changed.
+   `run-manifest.v1.json` beside the report; Review handoff requires that manifest
+   to bind the exact report bytes SHA, repository-relative report path, revision,
+   and status. Missing, tampered, or mismatched manifests fail closed. Rebuild the
+   Impact Index when its revision or identity inputs have changed.
 3. Invoke `scripts/sc/run_review_pipeline.py` directly with the business
    `--task-id`, the Review `--frozen-context`, `--impact-report` and matching
-   `--revision`. Do not move/copy the report without its sibling run manifest.
+   `--revision`. Do not move or copy the report without its sibling run manifest.
    Supply `--binding-evidence` when using the corresponding Review sidecar.
    Existing review prerequisites still apply.
 
