@@ -13,7 +13,8 @@
   },
   "target": {
     "repo": "skyoxu/lastking",
-    "branch": "sync-newrouge-187-194-20260919"
+    "branch": "sync-newrouge-187-194-20260919",
+    "pr": 111
   },
   "policy": {
     "statement": "Adopt the repository-neutral canonical target-PR uniqueness guard byte-identically; existing manifests remain compatible because canonical identity is optional."
