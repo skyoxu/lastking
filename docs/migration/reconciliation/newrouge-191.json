@@ -13,7 +13,8 @@
   },
   "target": {
     "repo": "skyoxu/lastking",
-    "branch": "sync-newrouge-187-194-20260919"
+    "branch": "sync-newrouge-187-194-20260919",
+    "pr": 111
   },
   "policy": {
     "statement": "Restore the Knowledge-link generator referenced by lastking's CLI, adopt stale-catalog replacement on full rebuild, and hard-gate the regression without replacing target-specific gate inventory."
