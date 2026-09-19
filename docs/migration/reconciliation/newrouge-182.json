@@ -78,12 +78,15 @@
     },
     {
       "source_path": "scripts/python/tests/test_mvg_acceptance.py",
-      "classification": "copy_exact",
+      "classification": "already_present",
       "target_paths": [
         "scripts/python/tests/test_mvg_acceptance.py"
       ],
-      "source_blob_sha": "7d6e7aac226558a0c5131f86899d52305c651d50",
-      "rationale": "MVG cross-report duplicate identity regression coverage is shared and byte-identical."
+      "rationale": "The #182 MVG regression suite was initially byte-identical, then legitimately superseded by source PR #187's coverage-tier regressions. The current target follows #187, whose reconciliation record carries the live copy_exact blob lock.",
+      "validation_paths": [
+        "docs/migration/reconciliation/newrouge-187.json",
+        "scripts/python/_mvg_manifest.py"
+      ]
     },
     {
       "source_path": "scripts/python/tests/test_run_single_task_chapter6_lane.py",
