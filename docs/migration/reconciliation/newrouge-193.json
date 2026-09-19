@@ -11,7 +11,8 @@
   },
   "target": {
     "repo": "skyoxu/lastking",
-    "branch": "sync-newrouge-187-194-20260919"
+    "branch": "sync-newrouge-187-194-20260919",
+    "pr": 111
   },
   "policy": {
     "statement": "Adopt the delayed scene-graph browser-test isolation while preserving lastking's stronger target-native route-tree closure regression."
