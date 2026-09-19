@@ -1,0 +1,146 @@
+{
+  "schema_version": "repo.cross-repo-migration-reconciliation.v1",
+  "source": {
+    "repo": "skyoxu/newrouge",
+    "pr": 187,
+    "merge_commit": "0d9b28b7e4ad79bced6b562b3852a9d58e36f5a7",
+    "changed_file_count": 12,
+    "changed_files": [
+      ".github/workflows/mvg-integration.yml",
+      "README.md",
+      "Tests.Godot/tests/Integration/test_headless_resume_repeatability.gd",
+      "decision-logs/2026-09-19-mvg-coverage-tiers.md",
+      "docs/testing/mvg/m1-critical.json",
+      "docs/testing/mvg/m1-full.json",
+      "docs/testing/mvg/reward-pilot.json",
+      "docs/workflows/mvg-integration-acceptance.md",
+      "execution-plans/2026-09-19-mvg-full-scope-expansion.md",
+      "scripts/python/_mvg_manifest.py",
+      "scripts/python/run_mvg_acceptance.py",
+      "scripts/python/tests/test_mvg_acceptance.py"
+    ]
+  },
+  "target": {
+    "repo": "skyoxu/lastking",
+    "branch": "sync-newrouge-187-194-20260919",
+    "pr": 111
+  },
+  "policy": {
+    "statement": "Adopt reusable MVG coverage-tier capability while preserving lastking BattleMap semantics and refusing unsupported source-business coverage claims."
+  },
+  "entries": [
+    {
+      "source_path": ".github/workflows/mvg-integration.yml",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        ".github/workflows/mvg-integration.yml"
+      ],
+      "validation_paths": [
+        "docs/testing/mvg/battlemap-pilot.json",
+        "scripts/python/tests/test_mvg_acceptance.py"
+      ],
+      "rationale": "Adopt task-status-triggered coverage validation while retaining lastking's BattleMap-native pilot workflow."
+    },
+    {
+      "source_path": "README.md",
+      "classification": "already_present",
+      "target_paths": [
+        "README.md"
+      ],
+      "validation_paths": [
+        "docs/workflows/mvg-integration-acceptance.md"
+      ],
+      "rationale": "lastking already exposes the MVG integration entrypoint; target-specific tier semantics are documented in the workflow guide."
+    },
+    {
+      "source_path": "Tests.Godot/tests/Integration/test_headless_resume_repeatability.gd",
+      "classification": "business_only_drop",
+      "rationale": "newrouge resume-route business coverage is not part of lastking's BattleMap pilot migration."
+    },
+    {
+      "source_path": "decision-logs/2026-09-19-mvg-coverage-tiers.md",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "decision-logs/2026-09-19-mvg-coverage-tiers-lastking.md"
+      ],
+      "validation_paths": [
+        "execution-plans/2026-09-19-newrouge-187-194-alignment.md"
+      ],
+      "rationale": "Coverage-tier decision is recorded with lastking task and business boundaries."
+    },
+    {
+      "source_path": "docs/testing/mvg/m1-critical.json",
+      "classification": "business_only_drop",
+      "rationale": "newrouge M1 critical inventory names source-specific tasks and routes; lastking adopts the coverage engine without inventing equivalent business coverage."
+    },
+    {
+      "source_path": "docs/testing/mvg/m1-full.json",
+      "classification": "business_only_drop",
+      "rationale": "newrouge M1 full inventory is source-business-specific and must not be copied into lastking."
+    },
+    {
+      "source_path": "docs/testing/mvg/reward-pilot.json",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "docs/testing/mvg/battlemap-pilot.json"
+      ],
+      "validation_paths": [
+        "scripts/python/_mvg_manifest.py",
+        "scripts/python/tests/test_mvg_acceptance.py"
+      ],
+      "rationale": "The existing BattleMap pilot now declares the upstream-compatible pilot coverage contract and its real Task 12 blocker."
+    },
+    {
+      "source_path": "docs/workflows/mvg-integration-acceptance.md",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "docs/workflows/mvg-integration-acceptance.md"
+      ],
+      "validation_paths": [
+        "docs/testing/mvg/battlemap-pilot.json"
+      ],
+      "rationale": "Document pilot/critical/full protocol using lastking's target-native BattleMap evidence boundary."
+    },
+    {
+      "source_path": "execution-plans/2026-09-19-mvg-full-scope-expansion.md",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "execution-plans/2026-09-19-newrouge-187-194-alignment.md"
+      ],
+      "validation_paths": [
+        "decision-logs/2026-09-19-mvg-coverage-tiers-lastking.md"
+      ],
+      "rationale": "Recovery planning records the target-native rule against inventing source M1/Reward coverage claims."
+    },
+    {
+      "source_path": "scripts/python/_mvg_manifest.py",
+      "classification": "copy_exact",
+      "target_paths": [
+        "scripts/python/_mvg_manifest.py"
+      ],
+      "source_blob_sha": "00fdc069b1a55eb45d42e03011e94673f60677d0",
+      "rationale": "Coverage contract validation and conservative recommendation semantics are repository-neutral."
+    },
+    {
+      "source_path": "scripts/python/run_mvg_acceptance.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/python/run_mvg_acceptance.py"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_mvg_acceptance.py",
+        "docs/testing/mvg/battlemap-pilot.json"
+      ],
+      "rationale": "Expose coverage evidence while retaining lastking's BattleMap challenge and default manifest."
+    },
+    {
+      "source_path": "scripts/python/tests/test_mvg_acceptance.py",
+      "classification": "copy_exact",
+      "target_paths": [
+        "scripts/python/tests/test_mvg_acceptance.py"
+      ],
+      "source_blob_sha": "9e576e4323096febb18b0e07c70223b50a58e181",
+      "rationale": "Coverage-contract runner regressions are repository-neutral."
+    }
+  ]
+}

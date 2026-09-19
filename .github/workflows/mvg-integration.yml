@@ -1,4 +1,4 @@
-name: MVG Integration Pilot
+name: MVG Integration
 
 on:
   workflow_dispatch:
@@ -17,6 +17,7 @@ on:
       - 'scripts/python/check_workflow_gate_enforcement.py'
       - 'scripts/python/config/workflow-gate-allowlist.json'
       - 'docs/testing/mvg/**'
+      - '.taskmaster/tasks/tasks.json'
       - 'docs/workflows/mvg-integration-acceptance.md'
       - 'decision-logs/2026-09-18-mvg-integration.md'
       - 'execution-plans/2026-09-18-mvg-integration-alignment.md'
@@ -54,7 +55,7 @@ jobs:
       - name: Download Godot .NET
         shell: pwsh
         run: ./scripts/ci/download_godot_release.ps1 -Version '4.5.1' -PreferConsole
-      - name: Verify MVG runner failure handling
+      - name: Verify MVG coverage runner failure handling
         run: python -m unittest discover -s scripts/python/tests -p test_mvg_acceptance.py -v
       - name: Run committed BattleMap pilot and disconnected-input challenge
         shell: pwsh

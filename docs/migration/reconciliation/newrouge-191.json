@@ -1,0 +1,53 @@
+{
+  "schema_version": "repo.cross-repo-migration-reconciliation.v1",
+  "source": {
+    "repo": "skyoxu/newrouge",
+    "pr": 191,
+    "merge_commit": "7ffd6c903fe41064822a4325d7dc82842b8bc376",
+    "changed_file_count": 3,
+    "changed_files": [
+      "scripts/python/generate_knowledge_links.py",
+      "scripts/python/run_gate_bundle.py",
+      "scripts/sc/tests/test_generate_knowledge_links.py"
+    ]
+  },
+  "target": {
+    "repo": "skyoxu/lastking",
+    "branch": "sync-newrouge-187-194-20260919",
+    "pr": 111
+  },
+  "policy": {
+    "statement": "Restore the Knowledge-link generator referenced by lastking's CLI, adopt stale-catalog replacement on full rebuild, and hard-gate the regression without replacing target-specific gate inventory."
+  },
+  "entries": [
+    {
+      "source_path": "scripts/python/generate_knowledge_links.py",
+      "classification": "copy_exact",
+      "target_paths": [
+        "scripts/python/generate_knowledge_links.py"
+      ],
+      "source_blob_sha": "a9dee06d647e932649408ce38c9f6afe158009f9",
+      "rationale": "Knowledge-link generation is repository-driven and the full-rebuild stale-entry fix is reusable."
+    },
+    {
+      "source_path": "scripts/python/run_gate_bundle.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/python/run_gate_bundle.py"
+      ],
+      "validation_paths": [
+        "scripts/sc/tests/test_generate_knowledge_links.py"
+      ],
+      "rationale": "lastking keeps its target-specific gate inventory and adds the upstream Knowledge-link regression module to the existing hard unittest bundle."
+    },
+    {
+      "source_path": "scripts/sc/tests/test_generate_knowledge_links.py",
+      "classification": "copy_exact",
+      "target_paths": [
+        "scripts/sc/tests/test_generate_knowledge_links.py"
+      ],
+      "source_blob_sha": "b92ee015a9d137d6f814edc3ffe9af59624b0437",
+      "rationale": "The full-rebuild replacement regression is repository-neutral and runs entirely on isolated fixtures."
+    }
+  ]
+}

@@ -2,6 +2,20 @@
   "schema_version": "newrouge.mvg-integration.v1",
   "mvg_id": "battlemap-pilot",
   "scope_note": "A bounded target-native pilot for lastking BattleMap integration evidence. It verifies selected domain, scene-method and engine-input boundaries; it is not whole-MVG coverage or human gameplay approval.",
+  "coverage": {
+    "mode": "pilot",
+    "scope_id": "battlemap-player-loop",
+    "required_flow_ids": [
+      "battlemap-runtime-boundary"
+    ],
+    "blocking_task_ids": [
+      12
+    ],
+    "excluded_claims": [
+      "This BattleMap pilot does not claim full lastking M1 or product-wide MVG coverage while scoped Task 12 remains non-done.",
+      "Human gameplay approval, balance quality, OS-native mouse geometry and focus-navigation quality remain separate."
+    ]
+  },
   "flows": [
     {
       "id": "battlemap-runtime-boundary",
