@@ -214,12 +214,15 @@
     },
     {
       "source_path": "scripts/python/_mvg_execution.py",
-      "classification": "copy_exact",
+      "classification": "already_present",
       "target_paths": [
         "scripts/python/_mvg_execution.py"
       ],
-      "source_blob_sha": "f7dcb78d1ba6cb9d2414f56d43505f3051c5adc9",
-      "rationale": "Shared MVG execution/report verification is repository-neutral and intentionally byte-identical."
+      "rationale": "The #180 shared MVG execution behavior was initially copied exactly, then legitimately superseded by source PR #182. The current target follows #182, whose reconciliation record carries the live copy_exact blob lock.",
+      "validation_paths": [
+        "docs/migration/reconciliation/newrouge-182.json",
+        "scripts/python/tests/test_mvg_acceptance.py"
+      ]
     },
     {
       "source_path": "scripts/python/_mvg_manifest.py",
@@ -284,12 +287,14 @@
     },
     {
       "source_path": "scripts/python/tests/test_mvg_acceptance.py",
-      "classification": "copy_exact",
+      "classification": "already_present",
       "target_paths": [
         "scripts/python/tests/test_mvg_acceptance.py"
       ],
-      "source_blob_sha": "2e0a60bb028e766a76fb5540ea57fd6dd99af454",
-      "rationale": "Failure-path regression coverage for the generic MVG infrastructure is intentionally byte-identical."
+      "rationale": "The #180 generic MVG regression suite was initially copied exactly, then extended by source PR #182. The live target identity is locked by the #182 reconciliation record rather than the historical #180 blob.",
+      "validation_paths": [
+        "docs/migration/reconciliation/newrouge-182.json"
+      ]
     },
     {
       "source_path": "workflow.md",
