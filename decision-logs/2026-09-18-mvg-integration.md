@@ -6,7 +6,7 @@
 - Supersedes: None
 - Superseded by: None
 - Branch: sync-mvg-impact-evolution-20260918
-- Git Head: a5b7807a50ab2c17d84b9a6804ace6336b30cf55
+- Git Head: e4281d6b0e3e13ddaaae32ff45fc54cd1c9a8195
 - Why now: newrouge evolved through PR #180's bounded MVG integration acceptance, PR #182's runtime-snapshot/evidence-integrity hardening, PR #183's Project Health hard-gate follow-up, and PR #184's repository-neutral migration reconciliation protocol.
 - Context: lastking needs the reusable MVG/Impact control-plane behavior plus the source reconciliation protocol while keeping a target-native BattleMap pilot, target-specific Project Health tests, and repository-derived Knowledge state.
 - Decision: Port generic MVG/Impact and reconciliation control-plane behavior exactly where repository-neutral, adapt Reward-specific execution to a BattleMap pilot, upgrade historical reconciliation records to `repo.cross-repo-migration-reconciliation.v1`, classify source PRs #172-#185, and preserve target business defaults/generated-state boundaries.
@@ -16,7 +16,7 @@
 - Related ADRs: `docs/adr/ADR-0037-mvg-integration-evidence.md`
 - Related execution plans: `execution-plans/2026-09-18-mvg-integration-alignment.md`
 - Related task id(s): Tasks 12 and 54 are referenced by the pilot; no Taskmaster status is changed by this decision.
-- Related run id: Pending target checkpoint runs: MVG 35422094397; Quality 35422094288; Smoke 35422094443.
+- Related run id: Pending target checkpoint runs: MVG 35422124767; Quality 35422124746; Smoke 35422124730.
 - Related latest.json: N/A because MVG acceptance is separate from the Chapter 6 latest.json authority.
 - Related pipeline artifacts: `logs/ci/mvg-acceptance/**`, `logs/ci/mvg-mutation/**`
 
