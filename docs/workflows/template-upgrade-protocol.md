@@ -40,8 +40,9 @@ This file is the durable protocol. Use `docs/workflows/business-repo-upgrade-gui
 - `entrypoint-routing-docs`
   - `docs/workflows/stable-public-entrypoints.md` and `docs/workflows/script-entrypoints-index.md` should travel with `README.md`, `AGENTS.md`, and `docs/PROJECT_DOCUMENTATION_INDEX.md` whenever the template updates the repo entry surface.
 - `source-pr-reconciliation`
-  - For a bounded source PR migration, freeze the source repo, PR, merge commit, and complete changed-file list under `docs/migration/reconciliation/*.json`.
+  - For a bounded source PR migration, freeze the source repo, PR, merge commit, and complete changed-file list under `docs/migration/reconciliation/*.json`; an inventory SHA may be added as an extra audit checksum.
   - Classify every source file exactly once as `copy_exact`, `adapt_target_native`, `already_present`, `derived_regenerate`, `business_only_drop`, or `protocol_name_retain`.
+  - Run offline reconciliation on every adopted target hard gate, and run `--verify-source-github` during migration creation/review to independently verify the frozen source PR inventory.
   - `copy_exact` entries must retain the frozen source Git blob identity; adapted entries must name target-owned validation evidence. Generated source state must be regenerated from the target repository rather than copied.
 
 ## Migration Order
@@ -66,8 +67,9 @@ This file is the durable protocol. Use `docs/workflows/business-repo-upgrade-gui
 7. Business-local adaptation
    - Rename project references, update overlay roots, adapt domain contract paths, and remove template fallback assumptions.
 8. Source-PR reconciliation
-   - Create or update `docs/migration/reconciliation/<source>-<pr>.json` from the frozen source PR changed-file list.
-   - Run `py -3 scripts/python/check_cross_repo_migration.py` and resolve every unclassified, missing-evidence, or `copy_exact` drift failure before calling the migration complete.
+   - Create or update `docs/migration/reconciliation/<source>-<pr>.json` from the authoritative merged source PR inventory.
+   - Run `py -3 scripts/python/check_cross_repo_migration.py --manifest <manifest> --verify-source-github` during creation/review.
+   - Re-run deterministic offline reconciliation with `--require-manifests` in the target repository before calling the migration complete.
 9. Validation and stop-loss
    - Run the minimum validation bundle before opening a PR; repositories with gate-bundle integration run the reconciliation checker as a hard gate.
 
