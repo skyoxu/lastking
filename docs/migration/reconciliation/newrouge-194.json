@@ -1,0 +1,111 @@
+{
+  "schema_version": "repo.cross-repo-migration-reconciliation.v1",
+  "source": {
+    "repo": "skyoxu/newrouge",
+    "pr": 194,
+    "merge_commit": "548af63fb1aa2e220dff0042161671acd23b36d5",
+    "changed_file_count": 13,
+    "changed_files": [
+      "knowledge/catalogs/repository-knowledge-catalog.v1.json",
+      "knowledge/indexes/current.json",
+      "knowledge/indexes/generations/3dcca21b847f370d5a32478e4ae694dd3a224bcfc76378d4b4198f44b7c3e641/catalog.json",
+      "knowledge/indexes/generations/3dcca21b847f370d5a32478e4ae694dd3a224bcfc76378d4b4198f44b7c3e641/evaluation.json",
+      "knowledge/indexes/generations/3dcca21b847f370d5a32478e4ae694dd3a224bcfc76378d4b4198f44b7c3e641/exclusions.json",
+      "knowledge/indexes/generations/3dcca21b847f370d5a32478e4ae694dd3a224bcfc76378d4b4198f44b7c3e641/manifest.json",
+      "knowledge/indexes/generations/3dcca21b847f370d5a32478e4ae694dd3a224bcfc76378d4b4198f44b7c3e641/policies.json",
+      "knowledge/indexes/generations/3dcca21b847f370d5a32478e4ae694dd3a224bcfc76378d4b4198f44b7c3e641/projections.json",
+      "knowledge/indexes/generations/3dcca21b847f370d5a32478e4ae694dd3a224bcfc76378d4b4198f44b7c3e641/query_suite.json",
+      "knowledge/indexes/generations/3dcca21b847f370d5a32478e4ae694dd3a224bcfc76378d4b4198f44b7c3e641/snapshot.json",
+      "knowledge/indexes/last-known-good.json",
+      "knowledge/projections/consumer-projections.v1.json",
+      "knowledge/snapshots/repository-source-snapshot.v1.json"
+    ]
+  },
+  "target": {
+    "repo": "skyoxu/lastking",
+    "branch": "sync-newrouge-187-194-20260919"
+  },
+  "policy": {
+    "statement": "newrouge #194 contains generated Knowledge publication state only; lastking regenerates publication state from its own authoritative inputs."
+  },
+  "entries": [
+    {
+      "source_path": "knowledge/catalogs/repository-knowledge-catalog.v1.json",
+      "classification": "derived_regenerate",
+      "regeneration_command": "py -3 scripts/python/publish_knowledge_catalog.py --publish",
+      "rationale": "Generated Knowledge publication output is repository-derived and must not be copied from newrouge."
+    },
+    {
+      "source_path": "knowledge/indexes/current.json",
+      "classification": "derived_regenerate",
+      "regeneration_command": "py -3 scripts/python/publish_knowledge_catalog.py --publish",
+      "rationale": "Generated Knowledge publication output is repository-derived and must not be copied from newrouge."
+    },
+    {
+      "source_path": "knowledge/indexes/generations/3dcca21b847f370d5a32478e4ae694dd3a224bcfc76378d4b4198f44b7c3e641/catalog.json",
+      "classification": "derived_regenerate",
+      "regeneration_command": "py -3 scripts/python/publish_knowledge_catalog.py --publish",
+      "rationale": "Generated Knowledge publication output is repository-derived and must not be copied from newrouge."
+    },
+    {
+      "source_path": "knowledge/indexes/generations/3dcca21b847f370d5a32478e4ae694dd3a224bcfc76378d4b4198f44b7c3e641/evaluation.json",
+      "classification": "derived_regenerate",
+      "regeneration_command": "py -3 scripts/python/publish_knowledge_catalog.py --publish",
+      "rationale": "Generated Knowledge publication output is repository-derived and must not be copied from newrouge."
+    },
+    {
+      "source_path": "knowledge/indexes/generations/3dcca21b847f370d5a32478e4ae694dd3a224bcfc76378d4b4198f44b7c3e641/exclusions.json",
+      "classification": "derived_regenerate",
+      "regeneration_command": "py -3 scripts/python/publish_knowledge_catalog.py --publish",
+      "rationale": "Generated Knowledge publication output is repository-derived and must not be copied from newrouge."
+    },
+    {
+      "source_path": "knowledge/indexes/generations/3dcca21b847f370d5a32478e4ae694dd3a224bcfc76378d4b4198f44b7c3e641/manifest.json",
+      "classification": "derived_regenerate",
+      "regeneration_command": "py -3 scripts/python/publish_knowledge_catalog.py --publish",
+      "rationale": "Generated Knowledge publication output is repository-derived and must not be copied from newrouge."
+    },
+    {
+      "source_path": "knowledge/indexes/generations/3dcca21b847f370d5a32478e4ae694dd3a224bcfc76378d4b4198f44b7c3e641/policies.json",
+      "classification": "derived_regenerate",
+      "regeneration_command": "py -3 scripts/python/publish_knowledge_catalog.py --publish",
+      "rationale": "Generated Knowledge publication output is repository-derived and must not be copied from newrouge."
+    },
+    {
+      "source_path": "knowledge/indexes/generations/3dcca21b847f370d5a32478e4ae694dd3a224bcfc76378d4b4198f44b7c3e641/projections.json",
+      "classification": "derived_regenerate",
+      "regeneration_command": "py -3 scripts/python/publish_knowledge_catalog.py --publish",
+      "rationale": "Generated Knowledge publication output is repository-derived and must not be copied from newrouge."
+    },
+    {
+      "source_path": "knowledge/indexes/generations/3dcca21b847f370d5a32478e4ae694dd3a224bcfc76378d4b4198f44b7c3e641/query_suite.json",
+      "classification": "derived_regenerate",
+      "regeneration_command": "py -3 scripts/python/publish_knowledge_catalog.py --publish",
+      "rationale": "Generated Knowledge publication output is repository-derived and must not be copied from newrouge."
+    },
+    {
+      "source_path": "knowledge/indexes/generations/3dcca21b847f370d5a32478e4ae694dd3a224bcfc76378d4b4198f44b7c3e641/snapshot.json",
+      "classification": "derived_regenerate",
+      "regeneration_command": "py -3 scripts/python/publish_knowledge_catalog.py --publish",
+      "rationale": "Generated Knowledge publication output is repository-derived and must not be copied from newrouge."
+    },
+    {
+      "source_path": "knowledge/indexes/last-known-good.json",
+      "classification": "derived_regenerate",
+      "regeneration_command": "py -3 scripts/python/publish_knowledge_catalog.py --publish",
+      "rationale": "Generated Knowledge publication output is repository-derived and must not be copied from newrouge."
+    },
+    {
+      "source_path": "knowledge/projections/consumer-projections.v1.json",
+      "classification": "derived_regenerate",
+      "regeneration_command": "py -3 scripts/python/publish_knowledge_catalog.py --publish",
+      "rationale": "Generated Knowledge publication output is repository-derived and must not be copied from newrouge."
+    },
+    {
+      "source_path": "knowledge/snapshots/repository-source-snapshot.v1.json",
+      "classification": "derived_regenerate",
+      "regeneration_command": "py -3 scripts/python/publish_knowledge_catalog.py --publish",
+      "rationale": "Generated Knowledge publication output is repository-derived and must not be copied from newrouge."
+    }
+  ]
+}
