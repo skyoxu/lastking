@@ -1,0 +1,16 @@
+{
+  "artifacts": {
+    "catalog": "sha256:fa6d27b12dc1b60b5d334acc3e7d97515e9bcde0ff1099afa7870ad48b2d68b8",
+    "evaluation": "sha256:e680d9516a5436f21863e4d81eb167d4368792a7fad1b478470789f7e109b52b",
+    "exclusions": "sha256:a6f18dee5ae098a4b0f7f6774cebd9e60d15100b9208c4a414fa302be4f60381",
+    "policies": "sha256:7fa231a7b80d23f03a08737c0d20f37c7b2f4d33b65cf5715a4c3ce4e5f9320a",
+    "projections": "sha256:3e2b8079c83c7e6a54e732d366088369d886de8f4fcdaa60bc655579e2c38ca0",
+    "query_suite": "sha256:49b92029f5357760fe4f7e2255afd0c4ae70dbd0ec107268a0796810bfcf170e",
+    "snapshot": "sha256:d82bb9410fc9a5624b0aaee95cc0d2e8ea48294ccde1dae32a197d53dbb4bed6"
+  },
+  "authority_ref": "refs/heads/main",
+  "generation_id": "c95b075886469d6d44c83b169500a76f2d5faa561a58f93970a48e24992f5e11",
+  "main_commit": "959d0f1d8a28c3783758a4e3334b692b82745b24",
+  "schema_version": "newrouge.knowledge-publication-generation.v1",
+  "source_snapshot_id": "38ea84d07f6bf7feadf1f21375b9019dcd83f8c335704bd6e4e0f30e4ced315a"
+}
