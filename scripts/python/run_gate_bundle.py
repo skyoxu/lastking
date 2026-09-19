@@ -220,7 +220,7 @@ def _hard_gate_commands(task_files: list[str], task_links_max_warnings: int = -1
         },
         {
             "name": "cross_repo_migration_reconciliation",
-            "cmd": ["py", "-3", "scripts/python/check_cross_repo_migration.py"],
+            "cmd": ["py", "-3", "scripts/python/check_cross_repo_migration.py", "--require-manifests"],
         },
         {
             "name": "check_domain_contracts",
