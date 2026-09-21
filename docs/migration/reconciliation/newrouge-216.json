@@ -22,7 +22,10 @@
     ]
   },
   "target": {
-    "repo": "skyoxu/lastking"
+    "repo": "skyoxu/lastking",
+    "pr": 113,
+    "branch": "sync-newrouge-195-216-20260921",
+    "migration_key": "skyoxu/newrouge@2e2fbdd15afcfedcf93416e0d60cd6cad4a2dfaf->skyoxu/lastking"
   },
   "entries": [
     {
