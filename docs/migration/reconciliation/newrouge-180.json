@@ -258,12 +258,14 @@
     },
     {
       "source_path": "scripts/python/dev_cli.py",
-      "classification": "copy_exact",
+      "classification": "adapt_target_native",
       "target_paths": [
         "scripts/python/dev_cli.py"
       ],
-      "source_blob_sha": "bf8f9af3d7fb5afae4f99328a9bb8227a82ca22c",
-      "rationale": "The MVG CLI registration lives in shared repository-neutral dispatch code and remains byte-identical."
+      "rationale": "The MVG CLI registration lives in shared repository-neutral dispatch code and remains byte-identical. Superseded by later reconciled upstream evolution; validation now follows the target's current regression surface.",
+      "validation_paths": [
+        "scripts/sc/tests/test_dev_cli_recovery_commands.py"
+      ]
     },
     {
       "source_path": "scripts/python/run_mvg_acceptance.py",
