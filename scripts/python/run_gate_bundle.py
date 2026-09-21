@@ -46,6 +46,7 @@ TASK_FILE_DEPENDENT_GATES = {
     "acceptance_stability_template",
     "check_tasks_all_refs_warning_budget",
     "llm_align_acceptance_self_check",
+    "chapter7_ui_wiring_gate",
 }
 
 CONTRACT_INTERFACES_DIR = Path("Game.Core/Contracts/Interfaces")
@@ -315,6 +316,16 @@ def _hard_gate_commands(task_files: list[str], task_links_max_warnings: int = -1
                 "scripts.python.tests.test_impact_analyzer",
                 "scripts.python.tests.test_run_single_task_chapter6_lane",
                 "scripts.python.tests.test_cross_repo_migration",
+                "scripts.sc.tests.test_sync_task_overlay_refs",
+                "scripts.sc.tests.test_local_hard_checks_harness",
+                "scripts.sc.tests.test_run_review_pipeline_delivery_profile",
+                "scripts.python.tests.test_semantic_topology",
+                "scripts.python.tests.test_semantic_topology_http",
+                "scripts.python.tests.test_chapter3_task_generation",
+                "scripts.python.tests.test_chapter3_semantic_conservation",
+                "scripts.python.tests.test_chapter5_semantic_reconciliation",
+                "scripts.python.tests.test_chapter7_ui_wiring",
+                "scripts.sc.tests.test_chapter6_knowledge",
                 "scripts.sc.tests.test_generate_knowledge_links",
                 "scripts.sc.tests.test_project_health_navigation",
                 "scripts.sc.tests.test_project_health_target_defaults",
@@ -324,6 +335,10 @@ def _hard_gate_commands(task_files: list[str], task_links_max_warnings: int = -1
                 "scripts.sc.tests.test_project_health_server",
                 "-v",
             ],
+        },
+        {
+            "name": "semantic_topology_validate",
+            "cmd": ["py", "-3", "scripts/python/validate_semantic_topology.py"],
         },
         {
             "name": "check_gate_bundle_consistency",
