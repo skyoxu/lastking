@@ -90,12 +90,14 @@
     },
     {
       "source_path": "scripts/python/tests/test_run_single_task_chapter6_lane.py",
-      "classification": "copy_exact",
+      "classification": "adapt_target_native",
       "target_paths": [
         "scripts/python/tests/test_run_single_task_chapter6_lane.py"
       ],
-      "source_blob_sha": "d0d68066986fda8d30e840745153e33c9f0f0ef1",
-      "rationale": "Chapter 6 handoff fixtures now require the Impact run manifest and remain shared byte-identical coverage."
+      "rationale": "Chapter 6 handoff fixtures now require the Impact run manifest and remain shared byte-identical coverage. Superseded by later reconciled upstream evolution; validation now follows the target's current regression surface.",
+      "validation_paths": [
+        "scripts/python/tests/test_run_single_task_chapter6_lane.py"
+      ]
     },
     {
       "source_path": "scripts/sc/tests/test_project_health_runtime_snapshot.py",

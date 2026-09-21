@@ -1,0 +1,40 @@
+{
+  "schema_version": "repo.cross-repo-migration-reconciliation.v1",
+  "source": {
+    "repo": "skyoxu/newrouge",
+    "pr": 215,
+    "merge_commit": "f18c3a8c29accb89956c70e1a434ce0cb9798741",
+    "changed_file_count": 2,
+    "changed_files": [
+      "scripts/python/audit_task_intents_quality.py",
+      "scripts/python/tests/test_chapter3_task_generation.py"
+    ]
+  },
+  "target": {
+    "repo": "skyoxu/lastking"
+  },
+  "entries": [
+    {
+      "source_path": "scripts/python/audit_task_intents_quality.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/python/audit_task_intents_quality.py"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_chapter3_task_generation.py"
+      ],
+      "rationale": "Reconciled into lastking while preserving target-owned BattleMap, Taskmaster, Project Health, and repository workflow boundaries."
+    },
+    {
+      "source_path": "scripts/python/tests/test_chapter3_task_generation.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/python/tests/test_chapter3_task_generation.py"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_chapter3_task_generation.py"
+      ],
+      "rationale": "Reconciled into lastking while preserving target-owned BattleMap, Taskmaster, Project Health, and repository workflow boundaries."
+    }
+  ]
+}

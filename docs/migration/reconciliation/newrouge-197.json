@@ -1,0 +1,40 @@
+{
+  "schema_version": "repo.cross-repo-migration-reconciliation.v1",
+  "source": {
+    "repo": "skyoxu/newrouge",
+    "pr": 197,
+    "merge_commit": "e2c30b5aa3c6dc2e10ae5f88539cb017fa884468",
+    "changed_file_count": 2,
+    "changed_files": [
+      "docs/adr/ADR-0038-semantic-delivery-topology.md",
+      "docs/architecture/ADR_INDEX_GODOT.md"
+    ]
+  },
+  "target": {
+    "repo": "skyoxu/lastking"
+  },
+  "entries": [
+    {
+      "source_path": "docs/adr/ADR-0038-semantic-delivery-topology.md",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "docs/adr/ADR-0038-semantic-delivery-topology.md"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_semantic_topology.py"
+      ],
+      "rationale": "Reconciled into lastking while preserving target-owned BattleMap, Taskmaster, Project Health, and repository workflow boundaries."
+    },
+    {
+      "source_path": "docs/architecture/ADR_INDEX_GODOT.md",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "docs/architecture/ADR_INDEX_GODOT.md"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_semantic_topology.py"
+      ],
+      "rationale": "Reconciled into lastking while preserving target-owned BattleMap, Taskmaster, Project Health, and repository workflow boundaries."
+    }
+  ]
+}

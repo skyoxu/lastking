@@ -16,6 +16,7 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 
 from project_health_knowledge import CONFIG, safe_file, write_json, validate_config, load_config, read_json, base_dir
+from _semantic_topology import load_workspace_topology
 
 
 def image_bytes(root, path, revision):
@@ -112,6 +113,31 @@ def handler_factory(root: Path):
                     self.cli('status')
                 elif parsed.path == '/api/knowledge/config':
                     self.send(load_config(root))
+                elif parsed.path == '/api/knowledge/topology':
+                    mode = params.get('mode', ['main'])[0]
+                    if mode == 'main':
+                        snapshot = base_dir(root) / 'latest.json'
+                        state = read_json(snapshot) if snapshot.exists() else {}
+                        topology = state.get('semantic_topology')
+                        if not isinstance(topology, dict):
+                            topology = {
+                                'schema_version': 'newrouge.semantic-topology-view.v1',
+                                'available': False, 'fresh': False,
+                                'identity': {'kind': 'main', 'revision': state.get('revision')},
+                                'status': 'legacy_unmapped',
+                                'reason': 'No semantic topology is attached to the current main scan',
+                                'nodes': {'source_blocks': [], 'requirements': [], 'capabilities': [], 'tasks': [], 'acceptance': []},
+                                'edges': [], 'task_trace': {}, 'summary': {}, 'problems': [],
+                            }
+                        self.send(topology)
+                    elif mode == 'workspace':
+                        workspace_view = params.get('view', ['attempt'])[0]
+                        if workspace_view not in ('attempt', 'stable', 'stabilized'):
+                            self.send({'reason': 'Unknown workspace topology view'}, 400)
+                        else:
+                            self.send(load_workspace_topology(root, workspace_view))
+                    else:
+                        self.send({'reason': 'Unknown topology identity'}, 400)
                 elif parsed.path == '/api/knowledge/scene-graph':
                     snapshot = base_dir(root) / 'latest.json'
                     state = read_json(snapshot) if snapshot.exists() else {}
@@ -121,6 +147,9 @@ def handler_factory(root: Path):
                         'code_references': [], 'diagnostics': [],
                         'snapshot_available': bool(snapshot.exists()),
                     }
+                    # The image endpoint is revision-bound; expose the snapshot
+                    # revision alongside graph data so refreshed pages can load
+                    # previews without using a stale or empty token.
                     self.send({'revision': state.get('revision'), 'file_manifest': state.get('file_manifest', []), **graph})
                 elif parsed.path in ('/api/knowledge/godot/scene', '/api/knowledge/godot/script', '/api/knowledge/godot/unreachable'):
                     snapshot = base_dir(root) / 'latest.json'
@@ -142,7 +171,8 @@ def handler_factory(root: Path):
                 elif parsed.path == '/api/knowledge/tasks':
                     args = ['--page', params.get('page', ['1'])[0]]
                     if params.get('filter_kind', [''])[0]:
-                        args.extend(['--filter-kind', params['filter_kind'][0], '--filter-value', params.get('filter_value', [''])[0]])
+                        args.extend(['--filter-kind', params['filter_kind'][0],
+                                     '--filter-value', params.get('filter_value', [''])[0]])
                     self.cli('tasks', args)
                 elif parsed.path == '/api/knowledge/task':
                     self.cli('task', ['--task-id', params.get('id', [''])[0]])
@@ -152,15 +182,23 @@ def handler_factory(root: Path):
                     data, mime = image_bytes(root, params.get('path', [''])[0], params.get('revision', [''])[0])
                     self.send(data, content_type=mime)
                 elif parsed.path in ('/knowledge', '/knowledge/'):
-                    self.send(Path(__file__).with_name('project_health_knowledge.html').read_text(encoding='utf-8'), content_type='text/html; charset=utf-8')
+                    self.send(Path(__file__).with_name('project_health_knowledge.html').read_text(encoding='utf-8'),
+                              content_type='text/html; charset=utf-8')
                 elif parsed.path == '/knowledge/scenes/unreachable':
-                    self.send(Path(__file__).with_name('project_health_unreachable.html').read_text(encoding='utf-8'), content_type='text/html; charset=utf-8')
+                    html = Path(__file__).with_name('project_health_unreachable.html').read_text(encoding='utf-8')
+                    self.send(html, content_type='text/html; charset=utf-8')
                 elif parsed.path == '/knowledge/scenes':
-                    self.send(Path(__file__).with_name('project_health_scenes.html').read_text(encoding='utf-8'), content_type='text/html; charset=utf-8')
+                    html = Path(__file__).with_name('project_health_scenes.html').read_text(encoding='utf-8')
+                    self.send(html, content_type='text/html; charset=utf-8')
+                elif parsed.path == '/knowledge/topology':
+                    html = Path(__file__).with_name('project_health_topology.html').read_text(encoding='utf-8')
+                    self.send(html, content_type='text/html; charset=utf-8')
                 elif parsed.path == '/knowledge/unreachable.js':
                     self.send(Path(__file__).with_name('project_health_unreachable.js').read_text(encoding='utf-8'), content_type='text/javascript')
                 elif parsed.path == '/knowledge/scenes.js':
                     self.send(Path(__file__).with_name('project_health_scenes.js').read_text(encoding='utf-8'), content_type='text/javascript')
+                elif parsed.path == '/knowledge/topology.js':
+                    self.send(Path(__file__).with_name('project_health_topology.js').read_text(encoding='utf-8'), content_type='text/javascript')
                 elif parsed.path == '/knowledge/treant.js':
                     self.send((Path(__file__).parent / 'vendor' / 'Treant.js').read_bytes(), content_type='text/javascript')
                 elif parsed.path == '/knowledge/raphael.js':
@@ -174,10 +212,13 @@ def handler_factory(root: Path):
                     text = Path(__file__).with_name('project_health_knowledge.' + suffix).read_text(encoding='utf-8')
                     self.send(text, content_type='text/javascript' if suffix == 'js' else 'text/css')
                 elif parsed.path in ('/', '/latest.html'):
-                    self.send((root / 'logs/ci/project-health/latest.html').read_text(encoding='utf-8'), content_type='text/html; charset=utf-8')
+                    # The existing dashboard has inline scripts/styles; retain its rendering behavior.
+                    self.send((root / 'logs/ci/project-health/latest.html').read_text(encoding='utf-8'),
+                              content_type='text/html; charset=utf-8')
                 elif parsed.path.startswith('/api/'):
                     self.send({'reason': 'Not found'}, 404)
                 else:
+                    # Keep report JSON/Markdown links, but never serve private snapshots or directories.
                     relative = parsed.path.lstrip('/')
                     path = safe_file(root / 'logs/ci/project-health', relative)
                     if path.suffix not in ('.json', '.md', '.txt') or not path.is_file():

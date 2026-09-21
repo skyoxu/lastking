@@ -40,6 +40,20 @@ This directory records frozen source-PR inventories for reusable migrations from
 | #193 | Project Health scene-graph browser isolation | Reconciled target-natively: delayed graph tests use synthetic fixtures while lastking's route-tree closure regression is retained. |
 | #194 | Generated Knowledge publication after #192 | `derived_regenerate`; no source publication payload is copied. |
 
+| #195 | Semantic delivery topology structural layer | Reconciled target-natively: semantic topology schemas/core/HTTP/UI are aligned while lastking BattleMap Project Health defaults remain authoritative. |
+| #196 | Generated Knowledge publication | `derived_regenerate`; no source publication payload is copied. |
+| #197 | ADR-0038 semantic topology acceptance | Reconciled with the target ADR and semantic topology regression coverage. |
+| #199 | Semantic topology structural closure | Reconciled into topology/catalog/navigation core while preserving lastking browser and Project Health target regressions. |
+| #200 | Generated Knowledge publication | `derived_regenerate`; no source publication payload is copied. |
+| #201 | Chapter 3 semantic conservation and Knowledge refresh | Reconciled into Source Block Ledger, Semantic Projection A, task generation, guarded refresh, and hard regressions. |
+| #203 | Chapter 3 reconciliation hardening | Reconciled into triplet attestation, semantic conservation, refresh and workflow skill generation. |
+| #206 | Final Chapter 3 reconciliation gaps | Reconciled into exact JSON provenance, guarded lifecycle and semantic regressions. |
+| #208 | Downstream Chapter 4/5/6/7 + Review reconciliation | Reconciled into Chapter 5 semantic authority, Chapter 6 local Knowledge boundary, Chapter 7 lineage and Review evidence gates. |
+| #211 | Final Chapter 5 authority/freshness closure | Reconciled into explicit semantic verdicts, freshness fingerprinting, authority review and guarded Chapter 5 execution. |
+| #213 | Chapter 3 semantic task grouping quality | Reconciled into CJK-aware grouping/title generation and advisory multi-Capability evidence. |
+| #215 | Unicode-aware Chapter 3 quality audit | Reconciled into task-intent quality audit and task-generation regressions. |
+| #216 | Generated Knowledge publication | `derived_regenerate`; final source reconciliation boundary for this migration. |
+
 ## Maintenance
 
 For the next bounded upstream migration, freeze the source repository, PR, merge commit, and full changed-file list before implementation is declared complete. Verify that inventory against the merged source PR with `--verify-source-github`, add a new JSON manifest in this directory, and keep the offline `--require-manifests` hard gate green.
