@@ -18,12 +18,14 @@ from _knowledge_locator_core import locate, tokens
 from _project_health_tasks import attach_task_scenes, task_details, task_page, task_summary
 from _project_health_navigation import ASSET_SUFFIXES, CONFIG_SUFFIXES, build_navigation
 from _godot_scene_graph import build_scene_graph
+from _semantic_topology import attach_scene_design_trace, load_topology_from_snapshot
 from impact_analysis_index import build_and_publish_index
 from impact_analysis_index import ImpactIndexError
 from impact_analyzer import ImpactAnalyzer
 
 CONFIG = 'scripts/python/project_health_knowledge_config.json'
 REF = 'refs/heads/main'
+STRUCTURAL_SOURCE_PATHS = ['docs/planning/semantic-topology']
 SOURCE_PATHS = ['.taskmaster/tasks', 'docs/prd', 'docs/adr', 'docs/architecture',
                 'docs/agents', 'docs/workflows', 'Game.Core', 'Game.Godot',
                 'Game.Core.Tests', 'Tests.Godot', 'README.md', 'AGENTS.md',
@@ -45,7 +47,6 @@ DEFAULT_CONFIG = {
     }],
     'query_aliases': {'建筑': ['Building'], '地图': ['BattleMap'], '存档': ['Save'], '战斗': ['Combat']},
 }
-
 
 def base_dir(root: Path) -> Path:
     return root / 'logs/ci/project-health-knowledge'
@@ -103,7 +104,8 @@ def prune_query_evidence(root: Path, keep: int = QUERY_EVIDENCE_LIMIT) -> None:
     directory = base_dir(root) / 'queries'
     if not directory.exists():
         return
-    files = sorted((p for p in directory.glob('*.json') if p.is_file()), key=lambda p: p.stat().st_mtime, reverse=True)
+    files = sorted((p for p in directory.glob('*.json') if p.is_file()),
+                   key=lambda p: p.stat().st_mtime, reverse=True)
     for path in files[max(0, keep):]:
         try:
             path.unlink()
@@ -196,12 +198,12 @@ def scan(root: Path) -> dict:
             trusted = LocalMainSnapshot(root, REF)
             revision = trusted.commit
         else:
-            trusted = DirectorySnapshot(root, config['source_paths'] + config['gdd_paths'] + ['knowledge/policies'])
+            trusted = DirectorySnapshot(root, config['source_paths'] + config['gdd_paths'] + STRUCTURAL_SOURCE_PATHS + ['knowledge/policies'])
             revision = trusted.commit
         required = ['.taskmaster/tasks/tasks.json', '.taskmaster/tasks/tasks_back.json',
                     '.taskmaster/tasks/tasks_gameplay.json', 'knowledge/policies/consumer-policies.v1.json',
                     'knowledge/policies/source-exclusions.v1.json', *config['gdd_paths']]
-        allowed = config['source_paths'] + config['gdd_paths'] + ['knowledge/policies', 'project.godot']
+        allowed = config['source_paths'] + config['gdd_paths'] + STRUCTURAL_SOURCE_PATHS + ['knowledge/policies', 'project.godot']
         for prefix in config['source_paths'] + config['gdd_paths']:
             if not any(p == prefix or p.startswith(prefix.rstrip('/') + '/') for p in trusted.paths):
                 raise ValueError('Configured source does not exist: ' + prefix)
@@ -213,6 +215,7 @@ def scan(root: Path) -> dict:
         exclusions = json.loads(trusted.read_text('knowledge/policies/source-exclusions.v1.json'))
         _, catalog, projections = build_layers(trusted, exclusions, policies)
         index = {'status': 'unavailable', 'reason': 'Impact index is not built by exploratory scan'}
+        # Only tracked, bounded UTF-8 source files enter the investigation workspace.
         selected = {m['source_path'] for m in catalog['modules']}
         if 'project.godot' in trusted.paths:
             selected.add('project.godot')
@@ -229,7 +232,9 @@ def scan(root: Path) -> dict:
                     pass
         details = task_details(trusted)
         attach_task_scenes(details, sources, config['task_scene_bindings'])
+        semantic_topology = load_topology_from_snapshot(trusted, details, identity_kind='main')
         scene_graph = build_scene_graph(sources, details, known_paths=trusted.paths)
+        attach_scene_design_trace(scene_graph, semantic_topology, details)
         previous_index_path = root / 'docs/knowledge/catalog/godot-elements.json'
         previous_index = read_json(previous_index_path) if previous_index_path.exists() else None
         file_manifest = sorted(set(sources) | {p for p in trusted.paths
@@ -247,11 +252,13 @@ def scan(root: Path) -> dict:
                   'snapshot': None, 'summary': task_summary(details), 'tasks': details,
                   'gdd_files': gdds, 'config': config, 'index': index,
                   'catalog': catalog, 'policies': policies, 'projections': projections,
-                  'sources': sources, 'scene_graph': scene_graph, 'godot_elements': godot_elements,
+                  'sources': sources, 'scene_graph': scene_graph, 'semantic_topology': semantic_topology,
+                  'godot_elements': godot_elements,
                   'file_manifest': file_manifest,
                   'publication': {'main_commit': publication.get('main_commit'),
                   'matches_scan': publication.get('main_commit') == revision,
                   'note': 'Exploratory catalogs are not published or frozen KCP authority.'}}
+        # Commit only complete successful scans; failures retain the previous dated result.
         write_json(base / 'latest.json', result)
         return status(root, result)
     finally:
@@ -357,6 +364,7 @@ ACTION_NAVIGATION_LIMIT = 4
 
 
 def _search_terms(text: str) -> set[str]:
+    """Return small deterministic search terms with light English normalization."""
     result = set()
     separated = re.sub(r'(?<=[a-z0-9])(?=[A-Z])', ' ', text)
     for value in re.findall(r'[\w]+', separated.casefold(), flags=re.UNICODE):
@@ -384,158 +392,321 @@ def _snapshot_freshness(root: Path, revision: str | None) -> dict:
     except (RuntimeError, OSError, subprocess.SubprocessError):
         current = None
     stale = bool(current and revision and current != revision)
-    return {'stale': stale, 'snapshot_revision': revision, 'current_revision': current,
-            'message': ('Snapshot is stale; results describe the scanned revision.' if stale
+    return {
+        'stale': stale,
+        'snapshot_revision': revision,
+        'current_revision': current,
+        'message': ('Snapshot is stale; results describe the scanned revision.' if stale
                     else 'Snapshot matches the current revision.' if current == revision
-                    else 'Snapshot freshness could not be determined.')}
+                    else 'Snapshot freshness could not be determined.'),
+    }
 
 
 def _action_item(kind: str, path: str | None, score: int, strength: str,
                  reason: str, task: dict | None = None) -> dict:
-    item = {'kind': kind, 'score': score, 'evidence_strength': strength, 'reason': reason}
-    if path: item['path'] = path
+    item = {'kind': kind, 'score': score, 'evidence_strength': strength,
+            'reason': reason}
+    if path:
+        item['path'] = path
     if task:
-        item['task_id'] = str(task['id']); item['title'] = task.get('title', ''); item['status'] = task.get('status')
+        item['task_id'] = str(task['id'])
+        item['title'] = task.get('title', '')
+        item['status'] = task.get('status')
     return item
 
 
 def _actionable_results(root: Path, state: dict, queries: list[str]) -> dict:
     query_text = ' '.join(queries)
-    query_needles = [_search_terms(query) for query in queries]; query_needles = [needles for needles in query_needles if needles]
-    normalized_query = query_text.casefold().replace('\\', '/')
+    query_needles = [_search_terms(query) for query in queries]
+    query_needles = [needles for needles in query_needles if needles]
+    needles = set().union(*query_needles) if query_needles else set()
+
     def best_score(text: str) -> tuple[int, int]:
+        """Score against each query variant so aliases do not dilute matches."""
         scores = [_term_score(text, terms) for terms in query_needles]
-        return max(scores, key=lambda score: (score[0] == score[1], score[0], -score[1]), default=(0, 0))
+        return max(scores, key=lambda score: (score[0] == score[1], score[0], -score[1]),
+                   default=(0, 0))
+
+    normalized_query = query_text.casefold().replace('\\', '/')
+
     def path_is_explicit(path: str) -> bool:
-        candidate = path.casefold().replace('\\', '/'); boundary = r'[a-z0-9_]'; pattern = rf'(?<!{boundary}){re.escape(candidate)}(?!{boundary})'; return re.search(pattern, normalized_query) is not None
-    exact_paths = {path for path in state.get('file_manifest', []) if path_is_explicit(path)}
+        candidate = path.casefold().replace('\\', '/')
+        boundary = r'[a-z0-9_]'
+        pattern = rf'(?<!{boundary}){re.escape(candidate)}(?!{boundary})'
+        return re.search(pattern, normalized_query) is not None
+
+    exact_paths = {path for path in state.get('file_manifest', [])
+                   if path_is_explicit(path)}
     task_candidates = []
     for detail in state.get('tasks', []):
-        task = detail.get('task', {}); searchable = json.dumps({'task': task, 'mappings': detail.get('mappings', {})}, ensure_ascii=False)
-        matched, total = best_score(searchable); exact_task = re.search(r'\btask\s*#?\s*' + re.escape(str(task.get('id'))) + r'\b', query_text, flags=re.IGNORECASE)
+        task = detail.get('task', {})
+        searchable = json.dumps({'task': task, 'mappings': detail.get('mappings', {})},
+                                ensure_ascii=False)
+        matched, total = best_score(searchable)
+        exact_task = re.search(r'\btask\s*#?\s*' + re.escape(str(task.get('id'))) + r'\b',
+                               query_text, flags=re.IGNORECASE)
         if exact_task or (matched and (matched == total or matched >= min(2, total))):
-            title_matched, _ = best_score(str(task.get('title', ''))); score = 1000 if exact_task else 500 + matched * 40 + title_matched * 15; task_candidates.append((score, detail))
-    task_candidates.sort(key=lambda row: (-row[0], int(row[1]['task']['id']))); task_candidates = task_candidates[:16]
-    groups = {name: {} for name in ('tasks', 'configs', 'code', 'tests')}; strength_rank = {'direct': 2, 'confirmed': 1, 'inferred': 0}
+            title_matched, _ = best_score(str(task.get('title', '')))
+            score = 1000 if exact_task else 500 + matched * 40 + title_matched * 15
+            task_candidates.append((score, detail))
+    task_candidates.sort(key=lambda row: (-row[0], int(row[1]['task']['id'])))
+    task_candidates = task_candidates[:16]
+
+    groups = {name: {} for name in ('tasks', 'configs', 'code', 'tests')}
+    strength_rank = {'direct': 2, 'confirmed': 1, 'inferred': 0}
+
     def put(group: str, key: str, item: dict) -> None:
         current = groups[group].get(key)
-        if current is None or strength_rank[item['evidence_strength']] > strength_rank[current['evidence_strength']] or (item['evidence_strength'] == current['evidence_strength'] and item['score'] > current['score']): groups[group][key] = item
+        if (current is None
+                or strength_rank[item['evidence_strength']] > strength_rank[current['evidence_strength']]
+                or (item['evidence_strength'] == current['evidence_strength']
+                    and item['score'] > current['score'])):
+            groups[group][key] = item
+
     for score, detail in task_candidates:
-        task = detail['task']; put('tasks', str(task['id']), _action_item('task', None, score, 'direct', 'Task title or definition matches the query.', task))
+        task = detail['task']
+        put('tasks', str(task['id']), _action_item(
+            'task', None, score, 'direct', 'Task title or definition matches the query.', task))
     for score, detail in task_candidates[:ACTION_NAVIGATION_LIMIT]:
-        task = detail['task']; navigation = build_navigation(detail, state); task_id = str(task['id'])
+        task = detail['task']
+        navigation = build_navigation(detail, state)
+        task_id = str(task['id'])
         for group, output_kind in (('configs', 'config'), ('code', 'code'), ('tests', 'test')):
             for nav_item in navigation.get(group, []):
-                path = nav_item['path']; focus = nav_item.get('focus', 'core'); strength = ('confirmed' if focus == 'core' and nav_item.get('evidence_kind') != 'static_candidate' else 'inferred'); relation_score = score - (35 if strength == 'confirmed' else 180); direct, _ = best_score(path)
-                if path in exact_paths: relation_score = 1200; strength = 'direct'
-                else: relation_score += direct * 30
-                item = _action_item(output_kind, path, relation_score, strength, f'Linked through task {task_id} navigation evidence.'); item['related_task_ids'] = [task_id]; put(group, path, item)
-    source_groups = (('configs', 'config', CONFIG_SUFFIXES), ('code', 'code', {'.cs', '.gd'}), ('tests', 'test', {'.cs', '.gd'}))
+                path = nav_item['path']
+                focus = nav_item.get('focus', 'core')
+                strength = ('confirmed' if focus == 'core' and
+                            nav_item.get('evidence_kind') != 'static_candidate' else 'inferred')
+                relation_score = score - (35 if strength == 'confirmed' else 180)
+                direct, _ = best_score(path)
+                if path in exact_paths:
+                    relation_score = 1200
+                    strength = 'direct'
+                else:
+                    relation_score += direct * 30
+                item = _action_item(output_kind, path, relation_score, strength,
+                                    f'Linked through task {task_id} navigation evidence.')
+                item['related_task_ids'] = [task_id]
+                put(group, path, item)
+
+    source_groups = (('configs', 'config', CONFIG_SUFFIXES),
+                     ('code', 'code', {'.cs', '.gd'}),
+                     ('tests', 'test', {'.cs', '.gd'}))
     for path in state.get('file_manifest', []):
         suffix = PurePosixPath(path).suffix.lower()
         for group, kind, suffixes in source_groups:
-            if suffix not in suffixes: continue
-            if group == 'tests' and not path.startswith(('Game.Core.Tests/', 'Tests.Godot/')): continue
-            if group == 'code' and not path.startswith(('Game.Core/', 'Game.Godot/')): continue
-            if group == 'configs' and not path.startswith(('Game.Core/', 'Game.Godot/')): continue
+            if suffix not in suffixes:
+                continue
+            if group == 'tests' and not path.startswith(('Game.Core.Tests/', 'Tests.Godot/')):
+                continue
+            if group == 'code' and not path.startswith(('Game.Core/', 'Game.Godot/')):
+                continue
+            if group == 'configs' and not path.startswith(('Game.Core/', 'Game.Godot/')):
+                continue
             matched, total = best_score(path)
-            if path in exact_paths: put(group, path, _action_item(kind, path, 1400, 'direct', 'Exact scanned path matches the query.'))
-            elif total and matched == total: put(group, path, _action_item(kind, path, 420 + matched * 20, 'direct', 'Scanned path matches all query terms.'))
-    ordered_groups = {}; kind_order = {'task': 0, 'config': 1, 'code': 2, 'test': 3}
+            if path in exact_paths:
+                put(group, path, _action_item(kind, path, 1400, 'direct',
+                                              'Exact scanned path matches the query.'))
+            elif total and matched == total:
+                put(group, path, _action_item(kind, path, 420 + matched * 20, 'direct',
+                                              'Scanned path matches all query terms.'))
+
+    ordered_groups = {}
+    kind_order = {'task': 0, 'config': 1, 'code': 2, 'test': 3}
     for name in ('tasks', 'configs', 'code', 'tests'):
-        items = sorted(groups[name].values(), key=lambda item: (-strength_rank[item['evidence_strength']], -item['score'], kind_order[item['kind']], item.get('path', ''), item.get('task_id', ''))); visible = items[:ACTION_GROUP_LIMIT]; ordered_groups[name] = {'items': visible, 'total': len(items), 'truncated': max(0, len(items) - len(visible))}
+        items = sorted(groups[name].values(), key=lambda item: (
+            -strength_rank[item['evidence_strength']], -item['score'],
+            kind_order[item['kind']], item.get('path', ''), item.get('task_id', '')))
+        visible = items[:ACTION_GROUP_LIMIT]
+        ordered_groups[name] = {'items': visible, 'total': len(items),
+                                'truncated': max(0, len(items) - len(visible))}
     top = []
     for name, limit in (('tasks', 2), ('configs', 1), ('code', 1), ('tests', 1)):
-        evidenced = [item for item in ordered_groups[name]['items'] if item['evidence_strength'] != 'inferred']; top.extend(evidenced[:limit])
+        evidenced = [item for item in ordered_groups[name]['items']
+                     if item['evidence_strength'] != 'inferred']
+        top.extend(evidenced[:limit])
     return {**ordered_groups, 'top': top, 'group_limit': ACTION_GROUP_LIMIT}
 
 
 def query(root: Path, state: dict, request: dict) -> dict:
     query_text = request.get('query')
-    if not isinstance(query_text, str) or not query_text.strip() or len(query_text) > 2000: raise ValueError('Query must contain 1 to 2000 characters')
+    if not isinstance(query_text, str) or not query_text.strip() or len(query_text) > 2000:
+        raise ValueError('Query must contain 1 to 2000 characters')
     queries = [query_text]
     for key, values in state['config']['query_aliases'].items():
-        if key.casefold() in query_text.casefold(): queries.extend(values)
-    queries = list(dict.fromkeys(queries))[:12]; consumer = request.get('consumer', 'repository-session')
+        if key.casefold() in query_text.casefold():
+            queries.extend(values)
+    queries = list(dict.fromkeys(queries))[:12]
+    consumer = request.get('consumer', 'repository-session')
     if consumer == 'dictionary':
-        entries = (state.get('scene_graph') or {}).get('data_dictionary', {}).get('entries', {}); hits = []
+        entries = (state.get('scene_graph') or {}).get('data_dictionary', {}).get('entries', {})
+        hits = []
         for text in queries:
             needles = _search_terms(text)
             for path, entry in entries.items():
-                haystack = f"{path} {entry.get('description', '')}"; matched, total = _term_score(haystack, needles)
-                if matched and (matched == total or matched >= min(2, total)): hits.append((matched, path, text, entry))
+                haystack = f"{path} {entry.get('description', '')}"
+                matched, total = _term_score(haystack, needles)
+                if matched and (matched == total or matched >= min(2, total)):
+                    hits.append((matched, path, text, entry))
         unique = {}
         for score, path, text, entry in sorted(hits, key=lambda item: (-item[0], item[1])):
-            unique.setdefault(path, {'path': path, 'line_start': 0, 'line_end': 0, 'matched_query': text, 'dictionary': entry, 'score': score})
-        result = {'status': 'exploratory', 'handoff_eligible': False, 'revision': state['revision'], 'queries': queries, 'consumer': consumer, 'knowledge': list(unique.values()), 'gdd_supplements': [], 'impact_targets': [], 'impact_target_total': 0, 'impact_preview': None, 'impact_skipped_methods': [], 'actionable_results': {'tasks': {'items': [], 'total': 0, 'truncated': 0}, 'configs': {'items': [], 'total': 0, 'truncated': 0}, 'code': {'items': [], 'total': 0, 'truncated': 0}, 'tests': {'items': [], 'total': 0, 'truncated': 0}}, 'scene_graph': state.get('scene_graph', {}), 'snapshot_freshness': _snapshot_freshness(root, state['revision']), 'next_step': 'Dictionary results are based on the latest local snapshot.'}
-        evidence = base_dir(root) / 'queries' / (uuid.uuid4().hex + '.json'); write_json(evidence, result); prune_query_evidence(root); result['evidence_path'] = evidence.relative_to(root).as_posix(); return result
-    policy = next((p for p in state['policies']['policies'] if p['consumer'] == consumer), None); projection = next((p for p in state['projections']['projections'] if p['consumer'] == consumer), None)
-    if not policy or not projection: raise ValueError('Unknown knowledge consumer')
+            unique.setdefault(path, {'path': path, 'line_start': 0, 'line_end': 0,
+                                     'matched_query': text, 'dictionary': entry,
+                                     'score': score})
+        result = {'status': 'exploratory', 'handoff_eligible': False, 'revision': state['revision'],
+                  'queries': queries, 'consumer': consumer, 'knowledge': list(unique.values()),
+                  'gdd_supplements': [], 'impact_targets': [], 'impact_target_total': 0,
+                  'impact_preview': None, 'impact_skipped_methods': [],
+                  'actionable_results': {'tasks': {'items': [], 'total': 0, 'truncated': 0},
+                                         'configs': {'items': [], 'total': 0, 'truncated': 0},
+                                         'code': {'items': [], 'total': 0, 'truncated': 0},
+                                         'tests': {'items': [], 'total': 0, 'truncated': 0}},
+                  'scene_graph': state.get('scene_graph', {}),
+                  'snapshot_freshness': _snapshot_freshness(root, state['revision']),
+                  'next_step': 'Dictionary results are based on the latest local snapshot.'}
+        evidence = base_dir(root) / 'queries' / (uuid.uuid4().hex + '.json')
+        write_json(evidence, result)
+        prune_query_evidence(root)
+        result['evidence_path'] = evidence.relative_to(root).as_posix()
+        return result
+    policy = next((p for p in state['policies']['policies'] if p['consumer'] == consumer), None)
+    projection = next((p for p in state['projections']['projections'] if p['consumer'] == consumer), None)
+    if not policy or not projection:
+        raise ValueError('Unknown knowledge consumer')
     candidates = {}
     for text in queries:
         found = locate({'query': text}, state['catalog'], policy, set(projection['eligible_module_ids']), 12)
-        for item in found['candidates']: candidates.setdefault(item['module_id'], {**item, 'matched_query': text})
+        for item in found['candidates']:
+            candidates.setdefault(item['module_id'], {**item, 'matched_query': text})
     supplemental = []
     for item in state['gdd_files']:
         content = state['sources'].get(item['path'], '')
-        if item['available'] and any(any(t in content.casefold() for t in tokens(q)) for q in queries): supplemental.append(item)
-    analyzer = ImpactAnalyzer.from_exploratory_sources(state.get('sources', {}), state['revision']); targets = []; needles = set(t for q in queries for t in tokens(q))
+        if item['available'] and any(any(t in content.casefold() for t in tokens(q)) for q in queries):
+            supplemental.append(item)
+    analyzer = ImpactAnalyzer.from_exploratory_sources(state.get('sources', {}), state['revision'])
+    targets = []
+    needles = set(t for q in queries for t in tokens(q))
+    # Exploratory scans may not have a formal Impact index. Catalog/query results
+    # remain useful, while formal handoff is explicitly unavailable.
     if analyzer:
         for symbol in analyzer.resolver.symbol_index.symbols:
-            if symbol.kind.startswith('__'): continue
-            if any(t in symbol.identity.casefold() for t in needles): targets.append({'type': symbol.kind, 'id': symbol.identity, 'path': symbol.path})
+            if symbol.kind.startswith('__'):
+                continue
+            if any(t in symbol.identity.casefold() for t in needles):
+                targets.append({'type': symbol.kind, 'id': symbol.identity, 'path': symbol.path})
         for path in analyzer.hashes:
-            if any(t in path.casefold() for t in needles): targets.append({'type': 'file', 'id': path, 'path': path})
-    try: preview = analyzer.explore(request['target']) if analyzer and request.get('target') else None
-    except ImpactIndexError as exc: preview = {'status': 'blocked', 'code': exc.code, 'reason': exc.reason, 'handoff_eligible': False}
+            if any(t in path.casefold() for t in needles):
+                targets.append({'type': 'file', 'id': path, 'path': path})
+    try:
+        preview = analyzer.explore(request['target']) if analyzer and request.get('target') else None
+    except ImpactIndexError as exc:
+        preview = {'status': 'blocked', 'code': exc.code, 'reason': exc.reason, 'handoff_eligible': False}
     freshness = _snapshot_freshness(root, state['revision'])
-    result = {'status': 'exploratory', 'handoff_eligible': False, 'revision': state['revision'], 'queries': queries, 'consumer': consumer, 'knowledge': list(candidates.values()), 'gdd_supplements': supplemental, 'impact_targets': targets[:80], 'impact_target_total': len(targets), 'impact_preview': preview, 'impact_skipped_methods': analyzer.resolver.symbol_index.skipped_methods if analyzer else [], 'actionable_results': _actionable_results(root, state, queries), 'scene_graph': state.get('scene_graph', {}), 'snapshot_freshness': freshness, 'next_step': 'Select an exact Impact target. Formal handoff requires existing KCP accept/freeze and analyze_impact CLI.'}
-    evidence = base_dir(root) / 'queries' / (uuid.uuid4().hex + '.json'); write_json(evidence, result); prune_query_evidence(root); result['evidence_path'] = evidence.relative_to(root).as_posix(); return result
+    result = {'status': 'exploratory', 'handoff_eligible': False, 'revision': state['revision'],
+              'queries': queries, 'consumer': consumer, 'knowledge': list(candidates.values()),
+              'gdd_supplements': supplemental, 'impact_targets': targets[:80],
+              'impact_target_total': len(targets), 'impact_preview': preview,
+              'impact_skipped_methods': analyzer.resolver.symbol_index.skipped_methods if analyzer else [],
+              'actionable_results': _actionable_results(root, state, queries),
+              'scene_graph': state.get('scene_graph', {}),
+              'snapshot_freshness': freshness,
+              'next_step': 'Select an exact Impact target. Formal handoff requires existing KCP accept/freeze and analyze_impact CLI.'}
+    evidence = base_dir(root) / 'queries' / (uuid.uuid4().hex + '.json')
+    write_json(evidence, result)
+    prune_query_evidence(root)
+    result['evidence_path'] = evidence.relative_to(root).as_posix()
+    return result
 
 
 def attach_semantic_navigation(navigation: dict, semantic: dict, sources: dict | None = None) -> None:
-    sources = sources or {}; by_key = {(item.get('kind'), item.get('path')): item for item in semantic.get('entries', []) if isinstance(item, dict)}
+    sources = sources or {}
+    by_key = {(item.get('kind'), item.get('path')): item for item in semantic.get('entries', [])
+              if isinstance(item, dict)}
     for group, kind in (('configs', 'config'), ('assets', 'asset'), ('scenes', 'scene')):
         for item in navigation.get(group, []):
             item['semantic'] = by_key.get((kind, item.get('path')))
-            if kind != 'config': continue
-            confirmed = {field.get('pointer'): {**field, 'confirmation': 'static_record_identity'} for field in item.get('focused_fields', []) if field.get('pointer')}
-            reader_text = '\n'.join(sources.get(reader.get('reader'), '') for reader in item.get('readers', [])); quoted_keys = set(re.findall(r'["\']([A-Za-z_][A-Za-z0-9_]*)["\']', reader_text)); fields_by_pointer = {field.get('pointer'): field for field in item.get('fields', [])}
+            if kind != 'config':
+                continue
+            confirmed = {field.get('pointer'): {**field, 'confirmation': 'static_record_identity'}
+                         for field in item.get('focused_fields', []) if field.get('pointer')}
+            reader_text = '\n'.join(sources.get(reader.get('reader'), '') for reader in item.get('readers', []))
+            quoted_keys = set(re.findall(r'["\']([A-Za-z_][A-Za-z0-9_]*)["\']', reader_text))
+            fields_by_pointer = {field.get('pointer'): field for field in item.get('fields', [])}
             for parameter in (item.get('semantic') or {}).get('parameters', []):
-                pointer = parameter.get('pointer') or parameter.get('key'); segments = [segment.replace('~1', '/').replace('~0', '~') for segment in str(pointer or '').split('/') if segment and not segment.isdigit()]
-                if (pointer in fields_by_pointer and segments and segments[-1] in quoted_keys and any(segment in quoted_keys for segment in segments[:-1])): confirmed[pointer] = {**fields_by_pointer[pointer], 'confirmation': 'semantic_reconstruction+static_reader_key_chain'}
+                pointer = parameter.get('pointer') or parameter.get('key')
+                segments = [segment.replace('~1', '/').replace('~0', '~')
+                            for segment in str(pointer or '').split('/') if segment and not segment.isdigit()]
+                if (pointer in fields_by_pointer and segments and segments[-1] in quoted_keys
+                        and any(segment in quoted_keys for segment in segments[:-1])):
+                    confirmed[pointer] = {**fields_by_pointer[pointer],
+                                          'confirmation': 'semantic_reconstruction+static_reader_key_chain'}
             item['confirmed_fields'] = list(confirmed.values())
 
 
 def main(argv=None) -> int:
-    parser = argparse.ArgumentParser(description=__doc__); parser.add_argument('action', choices=('scan', 'status', 'tasks', 'task', 'query', 'source')); parser.add_argument('--repo-root', type=Path, default=Path.cwd()); parser.add_argument('--page', type=int, default=1); parser.add_argument('--task-id'); parser.add_argument('--path'); parser.add_argument('--filter-kind', choices=('task_status', 'godot_status')); parser.add_argument('--filter-value'); args = parser.parse_args(argv); root = args.repo_root.resolve()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('action', choices=('scan', 'status', 'tasks', 'task', 'query', 'source'))
+    parser.add_argument('--repo-root', type=Path, default=Path.cwd())
+    parser.add_argument('--page', type=int, default=1)
+    parser.add_argument('--task-id')
+    parser.add_argument('--path')
+    parser.add_argument('--filter-kind', choices=('task_status', 'godot_status'))
+    parser.add_argument('--filter-value')
+    args = parser.parse_args(argv)
+    root = args.repo_root.resolve()
     try:
-        if args.action == 'scan': result = scan(root)
+        if args.action == 'scan':
+            result = scan(root)
         else:
             latest = base_dir(root) / 'latest.json'
-            if latest.exists(): state = read_json(latest)
+            if latest.exists():
+                state = read_json(latest)
             else:
-                config = load_config(root); state = {'schema_version': 'newrouge.project-health-knowledge.v1', 'revision': None, 'scanned_at': None, 'branch': 'main', 'summary': {'total': 0, 'statuses': {}, 'godot': {}}, 'gdd_files': [], 'publication': {'main_commit': None, 'matches_scan': False, 'note': 'No successful local main scan yet.'}, 'config': config, 'tasks': [], 'sources': {}, 'policies': {}, 'projections': {}, 'catalog': {}, 'index': {}}
-            if args.action == 'status': apply_runtime_results(root, state); result = status(root, state)
-            elif args.action == 'tasks': apply_runtime_results(root, state); result = task_page(state['tasks'], args.page, args.filter_kind, args.filter_value)
+                config = load_config(root)
+                state = {'schema_version': 'newrouge.project-health-knowledge.v1',
+                         'revision': None, 'scanned_at': None, 'branch': 'main',
+                         'summary': {'total': 0, 'statuses': {}, 'godot': {}},
+                         'gdd_files': [], 'publication': {'main_commit': None,
+                         'matches_scan': False, 'note': 'No successful local main scan yet.'},
+                         'config': config, 'tasks': [], 'sources': {}, 'policies': {},
+                         'projections': {}, 'catalog': {}, 'index': {}}
+            if args.action == 'status':
+                apply_runtime_results(root, state)
+                result = status(root, state)
+            elif args.action == 'tasks':
+                apply_runtime_results(root, state)
+                result = task_page(state['tasks'], args.page, args.filter_kind, args.filter_value)
             elif args.action == 'task':
-                apply_runtime_results(root, state); result = next((x for x in state['tasks'] if str(x['task']['id']) == args.task_id), None)
-                if result is None: raise ValueError('Task not found')
-                result = {**result, 'navigation': build_navigation(result, state)}; links_path = root / 'docs/knowledge/generated/task-resource-links.json'
-                if links_path.exists(): links = read_json(links_path).get('generated', []); result['resource_knowledge'] = [entry for entry in links if str(entry.get('task_id')) == str(args.task_id)]
+                apply_runtime_results(root, state)
+                result = next((x for x in state['tasks'] if str(x['task']['id']) == args.task_id), None)
+                if result is None:
+                    raise ValueError('Task not found')
+                result = {**result, 'navigation': build_navigation(result, state)}
+                links_path = root / 'docs/knowledge/generated/task-resource-links.json'
+                if links_path.exists():
+                    links = read_json(links_path).get('generated', [])
+                    result['resource_knowledge'] = [entry for entry in links if str(entry.get('task_id')) == str(args.task_id)]
                 capture_path = root / 'docs/knowledge/generated' / f'chapter6-task-{args.task_id}-elements.json'
-                if capture_path.exists(): result['chapter6_capture'] = read_json(capture_path)
+                if capture_path.exists():
+                    result['chapter6_capture'] = read_json(capture_path)
                 semantic_path = root / 'docs/knowledge/generated' / f'task-{args.task_id}-semantic.json'
-                if semantic_path.exists(): semantic = read_json(semantic_path); attach_semantic_navigation(result.get('navigation', {}), semantic, state.get('sources', {}))
+                if semantic_path.exists():
+                    semantic = read_json(semantic_path)
+                    attach_semantic_navigation(result.get('navigation', {}), semantic, state.get('sources', {}))
             elif args.action == 'source':
-                if args.path not in state['sources']: raise ValueError('Source is not in the scanned allowlist')
+                if args.path not in state['sources']:
+                    raise ValueError('Source is not in the scanned allowlist')
                 result = {'path': args.path, 'revision': state['revision'], 'content': state['sources'][args.path]}
-            else: result = query(root, state, json.load(sys.stdin))
-        print(json.dumps(result, ensure_ascii=False)); return 0
+            else:
+                result = query(root, state, json.load(sys.stdin))
+        print(json.dumps(result, ensure_ascii=False))
+        return 0
     except Exception as exc:
-        print(json.dumps({'status': 'failed', 'reason': str(exc)}, ensure_ascii=False)); return 1
+        print(json.dumps({'status': 'failed', 'reason': str(exc)}, ensure_ascii=False))
+        return 1
 
 
 if __name__ == '__main__':
-    if hasattr(sys.stdout, 'reconfigure'): sys.stdout.reconfigure(encoding='utf-8')
+    if hasattr(sys.stdout, 'reconfigure'):
+        sys.stdout.reconfigure(encoding='utf-8')
     raise SystemExit(main())
