@@ -14,7 +14,7 @@ def _changed_paths(root: Path) -> set[str]:
     except OSError:
         return set()
 
-def _capture_element_manifest(root: Path, task_id: str, out_dir: Path) -> dict:
+def _capture_element_manifest(root: Path, task_id: str, out_dir: Path | None = None) -> dict:
     latest = root / 'logs/ci/project-health-knowledge/latest.json'
     state = json.loads(latest.read_text(encoding='utf-8')) if latest.exists() else {}
     graph = state.get('scene_graph') or {}
@@ -50,10 +50,16 @@ def _capture_element_manifest(root: Path, task_id: str, out_dir: Path) -> dict:
         elif item['kind'] in {'scene', 'asset', 'config'} and not any(e.get('focus') == 'core' for e in item.get('evidence', []) if isinstance(e, dict)):
             gaps.append({'severity': 'P2', 'path': item['path'], 'reason': 'Resource is recorded but lacks confirmed semantic focus.'})
     payload = {'schema_version': 'newrouge.chapter6-element-capture.v1', 'task_id': str(task_id), 'source_revision': state.get('revision'), 'elements': elements, 'documentation_gaps': gaps, 'blocking': False}
+    legacy_publish = out_dir is None
+    if legacy_publish:
+        out_dir = root / 'docs/knowledge/generated'
+        out = out_dir / f'chapter6-task-{task_id}-elements.json'
+        gaps_out = out_dir / f'chapter6-task-{task_id}-documentation-gaps.md'
+    else:
+        out = out_dir / 'knowledge-capture-candidate.json'
+        gaps_out = out_dir / 'documentation-gaps.md'
     out_dir.mkdir(parents=True, exist_ok=True)
-    out = out_dir / 'knowledge-capture-candidate.json'
     out.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-    gaps_out = out_dir / 'documentation-gaps.md'
     lines = [f'# Chapter 6 documentation gaps: task {task_id}', '', 'Generated from deterministic scan. These gaps are non-blocking follow-up items.', '']
     if gaps:
         lines.extend(f"- [{gap['severity']}] `{gap['path']}`: {gap['reason']}" for gap in gaps)
