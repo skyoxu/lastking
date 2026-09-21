@@ -1,0 +1,471 @@
+{
+  "schema_version": "repo.cross-repo-migration-reconciliation.v1",
+  "source": {
+    "repo": "skyoxu/newrouge",
+    "pr": 208,
+    "merge_commit": "a03fa68716c0fd44e2d2b148640509834d8db0c8",
+    "changed_file_count": 36,
+    "changed_files": [
+      ".agents/skills/workflow-chapter5-semantics-stabilization/SKILL.md",
+      ".agents/skills/workflow-chapter6-single-task-daily-loop/SKILL.md",
+      "docs/workflows/project-health-knowledge.md",
+      "knowledge/README.md",
+      "knowledge/policies/consumer-policies.v1.json",
+      "scripts/browser/project_health.spec.js",
+      "scripts/python/_project_health_http.py",
+      "scripts/python/_semantic_topology.py",
+      "scripts/python/chapter5_semantic_reconciliation.py",
+      "scripts/python/chapter6_knowledge.py",
+      "scripts/python/chapter6_route.py",
+      "scripts/python/collect_ui_wiring_inputs.py",
+      "scripts/python/dev_cli.py",
+      "scripts/python/local_hard_checks_harness.py",
+      "scripts/python/local_hard_checks_support.py",
+      "scripts/python/project_health_topology.html",
+      "scripts/python/project_health_topology.js",
+      "scripts/python/refresh_chapter_knowledge.py",
+      "scripts/python/run_gate_bundle.py",
+      "scripts/python/run_single_task_chapter6_lane.py",
+      "scripts/python/sync_task_overlay_refs.py",
+      "scripts/python/tests/test_chapter3_semantic_conservation.py",
+      "scripts/python/tests/test_chapter5_semantic_reconciliation.py",
+      "scripts/python/tests/test_chapter7_ui_wiring.py",
+      "scripts/python/tests/test_run_single_task_chapter6_lane.py",
+      "scripts/python/tests/test_semantic_topology.py",
+      "scripts/python/tests/test_semantic_topology_http.py",
+      "scripts/python/update_workflow_chapter_skills.py",
+      "scripts/sc/_summary_schema_fallback.py",
+      "scripts/sc/run_review_pipeline.py",
+      "scripts/sc/schemas/sc-review-pipeline-summary.schema.json",
+      "scripts/sc/tests/test_chapter6_knowledge.py",
+      "scripts/sc/tests/test_local_hard_checks_harness.py",
+      "scripts/sc/tests/test_run_review_pipeline_delivery_profile.py",
+      "scripts/sc/tests/test_sync_task_overlay_refs.py",
+      "workflow.md"
+    ]
+  },
+  "target": {
+    "repo": "skyoxu/lastking"
+  },
+  "entries": [
+    {
+      "source_path": ".agents/skills/workflow-chapter5-semantics-stabilization/SKILL.md",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        ".agents/skills/workflow-chapter5-semantics-stabilization/SKILL.md"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_chapter5_semantic_reconciliation.py",
+        "scripts/sc/tests/test_run_review_pipeline_delivery_profile.py"
+      ],
+      "rationale": "Reconciled into lastking while preserving target-owned BattleMap, Taskmaster, Project Health, and repository workflow boundaries."
+    },
+    {
+      "source_path": ".agents/skills/workflow-chapter6-single-task-daily-loop/SKILL.md",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        ".agents/skills/workflow-chapter6-single-task-daily-loop/SKILL.md"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_run_single_task_chapter6_lane.py",
+        "scripts/sc/tests/test_local_hard_checks_harness.py"
+      ],
+      "rationale": "Reconciled into lastking while preserving target-owned BattleMap, Taskmaster, Project Health, and repository workflow boundaries."
+    },
+    {
+      "source_path": "docs/workflows/project-health-knowledge.md",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "docs/workflows/project-health-knowledge.md"
+      ],
+      "validation_paths": [
+        "scripts/sc/tests/test_project_health_target_defaults.py",
+        "scripts/sc/tests/test_project_health_navigation.py"
+      ],
+      "rationale": "Reconciled into lastking while preserving target-owned BattleMap, Taskmaster, Project Health, and repository workflow boundaries."
+    },
+    {
+      "source_path": "knowledge/README.md",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "knowledge/README.md"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_chapter3_semantic_conservation.py"
+      ],
+      "rationale": "Reconciled into lastking while preserving target-owned BattleMap, Taskmaster, Project Health, and repository workflow boundaries."
+    },
+    {
+      "source_path": "knowledge/policies/consumer-policies.v1.json",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "knowledge/policies/consumer-policies.v1.json"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_chapter3_semantic_conservation.py"
+      ],
+      "rationale": "Reconciled into lastking while preserving target-owned BattleMap, Taskmaster, Project Health, and repository workflow boundaries."
+    },
+    {
+      "source_path": "scripts/browser/project_health.spec.js",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/browser/project_health.spec.js"
+      ],
+      "validation_paths": [
+        "scripts/sc/tests/test_project_health_target_defaults.py",
+        "scripts/sc/tests/test_project_health_navigation.py"
+      ],
+      "rationale": "Reconciled into lastking while preserving target-owned BattleMap, Taskmaster, Project Health, and repository workflow boundaries."
+    },
+    {
+      "source_path": "scripts/python/_project_health_http.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/python/_project_health_http.py"
+      ],
+      "validation_paths": [
+        "scripts/sc/tests/test_project_health_target_defaults.py",
+        "scripts/sc/tests/test_project_health_navigation.py"
+      ],
+      "rationale": "Reconciled into lastking while preserving target-owned BattleMap, Taskmaster, Project Health, and repository workflow boundaries."
+    },
+    {
+      "source_path": "scripts/python/_semantic_topology.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/python/_semantic_topology.py"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_semantic_topology.py"
+      ],
+      "rationale": "Reconciled into lastking while preserving target-owned BattleMap, Taskmaster, Project Health, and repository workflow boundaries."
+    },
+    {
+      "source_path": "scripts/python/chapter5_semantic_reconciliation.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/python/chapter5_semantic_reconciliation.py"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_chapter5_semantic_reconciliation.py",
+        "scripts/sc/tests/test_run_review_pipeline_delivery_profile.py"
+      ],
+      "rationale": "Reconciled into lastking while preserving target-owned BattleMap, Taskmaster, Project Health, and repository workflow boundaries."
+    },
+    {
+      "source_path": "scripts/python/chapter6_knowledge.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/python/chapter6_knowledge.py"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_run_single_task_chapter6_lane.py",
+        "scripts/sc/tests/test_local_hard_checks_harness.py"
+      ],
+      "rationale": "Reconciled into lastking while preserving target-owned BattleMap, Taskmaster, Project Health, and repository workflow boundaries."
+    },
+    {
+      "source_path": "scripts/python/chapter6_route.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/python/chapter6_route.py"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_run_single_task_chapter6_lane.py",
+        "scripts/sc/tests/test_local_hard_checks_harness.py"
+      ],
+      "rationale": "Reconciled into lastking while preserving target-owned BattleMap, Taskmaster, Project Health, and repository workflow boundaries."
+    },
+    {
+      "source_path": "scripts/python/collect_ui_wiring_inputs.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/python/collect_ui_wiring_inputs.py"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_chapter7_ui_wiring.py"
+      ],
+      "rationale": "Reconciled into lastking while preserving target-owned BattleMap, Taskmaster, Project Health, and repository workflow boundaries."
+    },
+    {
+      "source_path": "scripts/python/dev_cli.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/python/dev_cli.py"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_chapter3_semantic_conservation.py"
+      ],
+      "rationale": "Reconciled into lastking while preserving target-owned BattleMap, Taskmaster, Project Health, and repository workflow boundaries."
+    },
+    {
+      "source_path": "scripts/python/local_hard_checks_harness.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/python/local_hard_checks_harness.py"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_run_single_task_chapter6_lane.py",
+        "scripts/sc/tests/test_local_hard_checks_harness.py"
+      ],
+      "rationale": "Reconciled into lastking while preserving target-owned BattleMap, Taskmaster, Project Health, and repository workflow boundaries."
+    },
+    {
+      "source_path": "scripts/python/local_hard_checks_support.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/python/local_hard_checks_support.py"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_run_single_task_chapter6_lane.py",
+        "scripts/sc/tests/test_local_hard_checks_harness.py"
+      ],
+      "rationale": "Reconciled into lastking while preserving target-owned BattleMap, Taskmaster, Project Health, and repository workflow boundaries."
+    },
+    {
+      "source_path": "scripts/python/project_health_topology.html",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/python/project_health_topology.html"
+      ],
+      "validation_paths": [
+        "scripts/sc/tests/test_project_health_target_defaults.py",
+        "scripts/sc/tests/test_project_health_navigation.py"
+      ],
+      "rationale": "Reconciled into lastking while preserving target-owned BattleMap, Taskmaster, Project Health, and repository workflow boundaries."
+    },
+    {
+      "source_path": "scripts/python/project_health_topology.js",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/python/project_health_topology.js"
+      ],
+      "validation_paths": [
+        "scripts/sc/tests/test_project_health_target_defaults.py",
+        "scripts/sc/tests/test_project_health_navigation.py"
+      ],
+      "rationale": "Reconciled into lastking while preserving target-owned BattleMap, Taskmaster, Project Health, and repository workflow boundaries."
+    },
+    {
+      "source_path": "scripts/python/refresh_chapter_knowledge.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/python/refresh_chapter_knowledge.py"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_chapter3_semantic_conservation.py"
+      ],
+      "rationale": "Reconciled into lastking while preserving target-owned BattleMap, Taskmaster, Project Health, and repository workflow boundaries."
+    },
+    {
+      "source_path": "scripts/python/run_gate_bundle.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/python/run_gate_bundle.py"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_chapter3_semantic_conservation.py"
+      ],
+      "rationale": "Reconciled into lastking while preserving target-owned BattleMap, Taskmaster, Project Health, and repository workflow boundaries."
+    },
+    {
+      "source_path": "scripts/python/run_single_task_chapter6_lane.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/python/run_single_task_chapter6_lane.py"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_run_single_task_chapter6_lane.py",
+        "scripts/sc/tests/test_local_hard_checks_harness.py"
+      ],
+      "rationale": "Reconciled into lastking while preserving target-owned BattleMap, Taskmaster, Project Health, and repository workflow boundaries."
+    },
+    {
+      "source_path": "scripts/python/sync_task_overlay_refs.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/python/sync_task_overlay_refs.py"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_run_single_task_chapter6_lane.py",
+        "scripts/sc/tests/test_local_hard_checks_harness.py"
+      ],
+      "rationale": "Reconciled into lastking while preserving target-owned BattleMap, Taskmaster, Project Health, and repository workflow boundaries."
+    },
+    {
+      "source_path": "scripts/python/tests/test_chapter3_semantic_conservation.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/python/tests/test_chapter3_semantic_conservation.py"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_chapter3_semantic_conservation.py"
+      ],
+      "rationale": "Reconciled into lastking while preserving target-owned BattleMap, Taskmaster, Project Health, and repository workflow boundaries."
+    },
+    {
+      "source_path": "scripts/python/tests/test_chapter5_semantic_reconciliation.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/python/tests/test_chapter5_semantic_reconciliation.py"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_chapter5_semantic_reconciliation.py",
+        "scripts/sc/tests/test_run_review_pipeline_delivery_profile.py"
+      ],
+      "rationale": "Reconciled into lastking while preserving target-owned BattleMap, Taskmaster, Project Health, and repository workflow boundaries."
+    },
+    {
+      "source_path": "scripts/python/tests/test_chapter7_ui_wiring.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/python/tests/test_chapter7_ui_wiring.py"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_chapter7_ui_wiring.py"
+      ],
+      "rationale": "Reconciled into lastking while preserving target-owned BattleMap, Taskmaster, Project Health, and repository workflow boundaries."
+    },
+    {
+      "source_path": "scripts/python/tests/test_run_single_task_chapter6_lane.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/python/tests/test_run_single_task_chapter6_lane.py"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_run_single_task_chapter6_lane.py",
+        "scripts/sc/tests/test_local_hard_checks_harness.py"
+      ],
+      "rationale": "Reconciled into lastking while preserving target-owned BattleMap, Taskmaster, Project Health, and repository workflow boundaries."
+    },
+    {
+      "source_path": "scripts/python/tests/test_semantic_topology.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/python/tests/test_semantic_topology.py"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_semantic_topology.py"
+      ],
+      "rationale": "Reconciled into lastking while preserving target-owned BattleMap, Taskmaster, Project Health, and repository workflow boundaries."
+    },
+    {
+      "source_path": "scripts/python/tests/test_semantic_topology_http.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/python/tests/test_semantic_topology_http.py"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_semantic_topology.py"
+      ],
+      "rationale": "Reconciled into lastking while preserving target-owned BattleMap, Taskmaster, Project Health, and repository workflow boundaries."
+    },
+    {
+      "source_path": "scripts/python/update_workflow_chapter_skills.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/python/update_workflow_chapter_skills.py"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_chapter3_semantic_conservation.py"
+      ],
+      "rationale": "Reconciled into lastking while preserving target-owned BattleMap, Taskmaster, Project Health, and repository workflow boundaries."
+    },
+    {
+      "source_path": "scripts/sc/_summary_schema_fallback.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/sc/_summary_schema_fallback.py"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_run_single_task_chapter6_lane.py",
+        "scripts/sc/tests/test_local_hard_checks_harness.py"
+      ],
+      "rationale": "Reconciled into lastking while preserving target-owned BattleMap, Taskmaster, Project Health, and repository workflow boundaries."
+    },
+    {
+      "source_path": "scripts/sc/run_review_pipeline.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/sc/run_review_pipeline.py"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_chapter5_semantic_reconciliation.py",
+        "scripts/sc/tests/test_run_review_pipeline_delivery_profile.py"
+      ],
+      "rationale": "Reconciled into lastking while preserving target-owned BattleMap, Taskmaster, Project Health, and repository workflow boundaries."
+    },
+    {
+      "source_path": "scripts/sc/schemas/sc-review-pipeline-summary.schema.json",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/sc/schemas/sc-review-pipeline-summary.schema.json"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_chapter5_semantic_reconciliation.py",
+        "scripts/sc/tests/test_run_review_pipeline_delivery_profile.py"
+      ],
+      "rationale": "Reconciled into lastking while preserving target-owned BattleMap, Taskmaster, Project Health, and repository workflow boundaries."
+    },
+    {
+      "source_path": "scripts/sc/tests/test_chapter6_knowledge.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/sc/tests/test_chapter6_knowledge.py"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_run_single_task_chapter6_lane.py",
+        "scripts/sc/tests/test_local_hard_checks_harness.py"
+      ],
+      "rationale": "Reconciled into lastking while preserving target-owned BattleMap, Taskmaster, Project Health, and repository workflow boundaries."
+    },
+    {
+      "source_path": "scripts/sc/tests/test_local_hard_checks_harness.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/sc/tests/test_local_hard_checks_harness.py"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_run_single_task_chapter6_lane.py",
+        "scripts/sc/tests/test_local_hard_checks_harness.py"
+      ],
+      "rationale": "Reconciled into lastking while preserving target-owned BattleMap, Taskmaster, Project Health, and repository workflow boundaries."
+    },
+    {
+      "source_path": "scripts/sc/tests/test_run_review_pipeline_delivery_profile.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/sc/tests/test_run_review_pipeline_delivery_profile.py"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_chapter5_semantic_reconciliation.py",
+        "scripts/sc/tests/test_run_review_pipeline_delivery_profile.py"
+      ],
+      "rationale": "Reconciled into lastking while preserving target-owned BattleMap, Taskmaster, Project Health, and repository workflow boundaries."
+    },
+    {
+      "source_path": "scripts/sc/tests/test_sync_task_overlay_refs.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/sc/tests/test_sync_task_overlay_refs.py"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_run_single_task_chapter6_lane.py",
+        "scripts/sc/tests/test_local_hard_checks_harness.py"
+      ],
+      "rationale": "Reconciled into lastking while preserving target-owned BattleMap, Taskmaster, Project Health, and repository workflow boundaries."
+    },
+    {
+      "source_path": "workflow.md",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "workflow.md"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_chapter3_semantic_conservation.py"
+      ],
+      "rationale": "Reconciled into lastking while preserving target-owned BattleMap, Taskmaster, Project Health, and repository workflow boundaries."
+    }
+  ]
+}
