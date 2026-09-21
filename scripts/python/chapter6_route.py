@@ -5,6 +5,8 @@ import argparse
 import json
 import sys
 from pathlib import Path
+
+from chapter5_semantic_reconciliation import load_task_readiness
 from typing import Any
 
 
@@ -33,6 +35,24 @@ _REPO_NOISE_TOKENS = (
     "connection aborted",
     "unable to write to the transport connection",
 )
+
+_P1_FLOOR_CATEGORIES = {
+    "acceptance-refs",
+    "acceptance-anchors",
+    "artifact-integrity",
+    "planned-only",
+    "planned_only",
+    "security",
+    "security-boundary",
+    "test-false-green",
+    "false-green",
+}
+
+_P1_FLOOR_OWNER_STEPS = {
+    "sc-acceptance-check",
+    "artifact-integrity",
+    "producer-pipeline",
+}
 
 
 def _contains_repo_noise_token(value: Any) -> bool:
@@ -156,6 +176,16 @@ def _residual_reason_from_agent_review(agent_review: dict[str, Any]) -> tuple[bo
     severities = {str(item.get("severity") or "").strip().lower() for item in findings if isinstance(item, dict)}
     if "high" in severities:
         return False, "high_severity_finding_present"
+    for item in findings:
+        if not isinstance(item, dict):
+            continue
+        category = str(item.get("category") or "").strip().lower()
+        owner_step = str(item.get("owner_step") or "").strip().lower()
+        message = str(item.get("message") or "").strip().lower()
+        if category in _P1_FLOOR_CATEGORIES or owner_step in _P1_FLOOR_OWNER_STEPS:
+            return False, "p1_floor_finding_present"
+        if "artifact_integrity" in message or "planned-only" in message or "acceptance refs" in message:
+            return False, "p1_floor_finding_present"
     if severities & {"medium", "low"}:
         return True, "only_medium_or_low_findings_remain"
     return False, "no_low_priority_findings"
@@ -219,6 +249,30 @@ def route_chapter6(
     record_residual: bool = False,
 ) -> tuple[int, dict[str, Any]]:
     root = Path(repo_root).resolve()
+    readiness_ok, readiness, readiness_reason = load_task_readiness(root, str(task_id or "").strip())
+    if not readiness_ok:
+        return 3, {
+            "task_id": str(task_id or "").strip(),
+            "run_id": str(run_id or "").strip(),
+            "preferred_lane": "blocked",
+            "recommended_command": (
+                f"py -3 scripts/python/chapter5_semantic_reconciliation.py check-readiness --task-id {str(task_id or '').strip()}"
+            ),
+            "forbidden_commands": ["Chapter 6 RED/GREEN/REFACTOR"],
+            "reviewer_anchor_hit": False,
+            "changed_paths": [],
+            "six_eight_worthwhile": False,
+            "full_67_recommended": False,
+            "repo_noise_classification": "task-issue",
+            "repo_noise_reason": readiness_reason,
+            "recommended_action": "blocked",
+            "recommended_action_why": "Chapter 5 readiness must allow closure before Chapter 6.",
+            "latest_reason": readiness_reason,
+            "chapter6_next_action": "return_to_chapter5",
+            "blocked_by": "chapter5_readiness",
+            "chapter5_readiness": readiness,
+            "residual_recording": {"eligible": False, "performed": False},
+        }
     _, payload = build_resume_payload(
         repo_root=root,
         task_id=str(task_id or "").strip(),
@@ -238,7 +292,6 @@ def route_chapter6(
     chapter6_hints = payload.get("chapter6_hints") if isinstance(payload.get("chapter6_hints"), dict) else {}
     candidate_commands = payload.get("candidate_commands") if isinstance(payload.get("candidate_commands"), dict) else {}
     recommended_action = str(payload.get("recommended_action") or "").strip().lower()
-    task_id_text = str(payload.get("task_id") or task_id or "").strip()
     repo_noise_classification, repo_noise_reason = _classify_repo_noise(payload)
     six_eight_worthwhile = bool(chapter6_hints.get("can_go_to_6_8")) and recommended_action == "needs-fix-fast" and reviewer_anchor_hit
     full_67_recommended = (
@@ -257,28 +310,15 @@ def route_chapter6(
         "execution_plan_path": "",
     }
 
-    inspect_command = str(candidate_commands.get("inspect") or "").strip()
-    rerun_command = str(candidate_commands.get("rerun") or "").strip()
-    needs_fix_command = str(candidate_commands.get("needs_fix_fast") or "").strip()
-    if not inspect_command and task_id_text:
-        inspect_command = f"py -3 scripts/python/dev_cli.py inspect-run --kind pipeline --task-id {task_id_text}"
-    if not rerun_command and task_id_text:
-        rerun_command = f"py -3 scripts/sc/run_review_pipeline.py --task-id {task_id_text}"
-    if not needs_fix_command and task_id_text:
-        needs_fix_command = (
-            f"py -3 scripts/sc/llm_review_needs_fix_fast.py --task-id {task_id_text} "
-            "--delivery-profile fast-ship --rerun-failing-only --max-rounds 1"
-        )
-
     preferred_lane = "inspect-first"
-    recommended_command = str(payload.get("recommended_command") or "").strip() or inspect_command
+    recommended_command = str(payload.get("recommended_command") or "").strip() or str(candidate_commands.get("inspect") or "").strip()
 
     if repo_noise_classification == "repo-noise":
         preferred_lane = "repo-noise-stop"
-        recommended_command = inspect_command or recommended_command
+        recommended_command = str(candidate_commands.get("inspect") or recommended_command)
     elif str(chapter6_hints.get("blocked_by") or "").strip().lower() == "artifact_integrity":
         preferred_lane = "inspect-first"
-        recommended_command = inspect_command or recommended_command
+        recommended_command = str(candidate_commands.get("rerun") or recommended_command)
     elif str(failure.get("code") or "").strip().lower() == "step-failed" or str(chapter6_hints.get("blocked_by") or "").strip().lower() in {
         "deterministic_failure",
         "sc_test_retry_stop_loss",
@@ -287,27 +327,14 @@ def route_chapter6(
         preferred_lane = "fix-deterministic"
     elif six_eight_worthwhile:
         preferred_lane = "run-6.8"
-        recommended_command = needs_fix_command or recommended_command
+        recommended_command = str(candidate_commands.get("needs_fix_fast") or recommended_command)
     elif record_residual and residual_eligible:
         residual_recording = _record_residual_docs(root=root, payload=payload, low_priority_findings=low_priority_findings)
         preferred_lane = "record-residual"
-        recommended_command = inspect_command or recommended_command
+        recommended_command = str(candidate_commands.get("inspect") or recommended_command)
     elif full_67_recommended:
         preferred_lane = "run-6.7"
-        recommended_command = rerun_command or recommended_command
-
-    # Keep command and lane coherent in compact route output.
-    if preferred_lane in {"inspect-first", "repo-noise-stop", "record-residual", "fix-deterministic"}:
-        next_action = str(chapter6_hints.get("next_action") or "").strip().lower()
-        failure_code = str(failure.get("code") or "").strip().lower()
-        if next_action == "continue" and failure_code == "ok":
-            recommended_command = str(payload.get("recommended_command") or "").strip() or "n/a"
-        else:
-            recommended_command = inspect_command or recommended_command
-    elif preferred_lane == "run-6.7":
-        recommended_command = rerun_command or recommended_command
-    elif preferred_lane == "run-6.8":
-        recommended_command = needs_fix_command or recommended_command
+        recommended_command = str(candidate_commands.get("rerun") or recommended_command)
 
     route_payload = {
         "task_id": str(payload.get("task_id") or "").strip(),
@@ -398,7 +425,7 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     root = Path(str(args.repo_root or REPO_ROOT)).resolve()
     try:
-        _, payload = route_chapter6(
+        route_rc, payload = route_chapter6(
             repo_root=root,
             task_id=task_id,
             latest=latest,
@@ -428,10 +455,10 @@ def main(argv: list[str] | None = None) -> int:
             print(json.dumps(compact, ensure_ascii=False))
         else:
             print("\n".join(f"{key}={value}" for key, value in compact.items()))
-        return 0
+        return route_rc
 
     print(json.dumps(payload, ensure_ascii=False, indent=2))
-    return 0
+    return route_rc
 
 
 if __name__ == "__main__":
