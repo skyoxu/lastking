@@ -179,7 +179,13 @@ class GreenPrerequisiteSurfaceTests(unittest.TestCase):
                 },
                 gameplay=None,
             )
-            with mock.patch.object(tdd_script, "_find_latest_red_first_summary") as red_summary:
+            manifest = Path(td) / "docs" / "testing" / "mvg" / "m1-critical.json"
+            manifest.parent.mkdir(parents=True, exist_ok=True)
+            manifest.write_text(json.dumps({"coverage": {"mode": "critical"}}), encoding="utf-8")
+            with (
+                mock.patch.object(tdd_script, "repo_root", return_value=Path(td)),
+                mock.patch.object(tdd_script, "_find_latest_red_first_summary") as red_summary,
+            ):
                 result = tdd_script.validate_green_red_prerequisite(
                     task_id="14",
                     out_dir=out_dir,

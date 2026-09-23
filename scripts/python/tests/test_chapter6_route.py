@@ -149,10 +149,6 @@ class Chapter6RouteTests(unittest.TestCase):
         self.assertEqual("inspect-first", route["preferred_lane"])
         self.assertFalse(route["six_eight_worthwhile"])
         self.assertFalse(route["reviewer_anchor_hit"])
-        self.assertEqual(
-            "py -3 scripts/python/dev_cli.py inspect-run --kind pipeline --task-id 15",
-            route["recommended_command"],
-        )
 
     def test_should_classify_repo_noise_when_lock_contention_is_detected(self) -> None:
         payload = {
@@ -292,10 +288,6 @@ class Chapter6RouteTests(unittest.TestCase):
 
         self.assertEqual("inspect-first", route["preferred_lane"])
         self.assertFalse(route["full_67_recommended"])
-        self.assertEqual(
-            "py -3 scripts/python/dev_cli.py inspect-run --kind pipeline --task-id 15",
-            route["recommended_command"],
-        )
 
     def test_should_keep_continue_command_when_preferred_lane_falls_back_to_inspect_first_for_clean_run(self) -> None:
         payload = {

@@ -6,6 +6,7 @@ sc-acceptance-check: local, reproducible acceptance gate.
 from __future__ import annotations
 
 import os
+import subprocess
 import uuid
 from pathlib import Path
 from typing import Any

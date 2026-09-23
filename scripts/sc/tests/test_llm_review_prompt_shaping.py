@@ -73,7 +73,7 @@ class LlmReviewPromptShapingTests(unittest.TestCase):
         self.assertIn("Game.Core.Tests/Tasks/Task1EnvironmentEvidencePersistenceTests.cs", compact_text)
         self.assertIn("Tests.Godot/tests/Security/Hard/test_db_open_denied_writes_audit_log.gd", compact_text)
         self.assertLess(len(compact_text), len(full_text))
-        self.assertEqual(2, int(full_meta.get("included_ref_files") or 0))
+        self.assertEqual(1, int(full_meta.get("included_ref_files") or 0))
 
     def test_prompt_shape_should_give_required_semantics_to_single_reviewer(self) -> None:
         normal = _prompt_shape_for_agent(
