@@ -20,24 +20,28 @@
 - 日志、审计和证据统一放在 `logs/**`。
 - 非 trivial 任务必须显式分步并持续更新进度。
 - 不保留无用兼容层，过期路径应清理。
-- 若存在未修复 `Needs Fix`，必须先记录到 `decision-logs/**`，并在 `execution-plans/**` 写明后续修复入口与证据路径。
+- Review `Needs Fix` 按当前 fix-through 与 P1 floor 处理：必修项先修；允许延期的 findings 进入 `docs/technical-debt.md`。只有真实政策/权威/不可逆决定才写 Decision Log，只有跨 session、顺序协调、迁移或分阶段恢复需要才写 Execution Plan。
 
-## Context Reset 后的启动顺序
+## Context Reset 与按任务读取
 
-1. `README.md`
-2. `docs/agents/00-index.md`
-3. `docs/agents/01-session-recovery.md`
-4. `docs/PROJECT_DOCUMENTATION_INDEX.md`
-5. `docs/agents/13-rag-sources-and-session-ssot.md`
-6. `DELIVERY_PROFILE.md`
-7. `docs/testing-framework.md`
-8. `docs/agents/16-directory-responsibilities.md`
-9. `docs/workflows/prototype-lane.md`
-10. `docs/workflows/prototype-lane-playbook.md`
-11. `docs/workflows/prototype-tdd.md`
-12. `execution-plans/` 最新文件
-13. `decision-logs/` 最新文件
-14. 若已有审查流水线结果，读取 `logs/ci/<date>/sc-review-pipeline-task-<task-id>/latest.json`
+Context Reset 后先读取本文件，再按当前任务范围选择首要入口；不要固定预加载一组无关文档，也不要用“目录中最新 plan/decision”猜测当前任务。跨领域任务取必要路由的并集。
+
+| 任务范围 | 首要入口 | 按需补充 |
+| --- | --- | --- |
+| 项目身份/状态 | `README.md` | 当前任务三联或用户明确指定的状态文件 |
+| Chapter 3 | `workflow.md` 第 3 章 | `.agents/skills/workflow-chapter3-task-triplet-baseline/SKILL.md`；本次 PRD/GDD/planning sources |
+| Chapter 4 | `workflow.md` 第 4 章 | `.agents/skills/workflow-chapter4-overlays-contracts-baseline/SKILL.md`；任务三联、相关 Overlay/Contract |
+| Chapter 5 | `workflow.md` 第 5 章 | `.agents/skills/workflow-chapter5-semantics-stabilization/SKILL.md`；当前 reconciliation/readiness |
+| Chapter 6 新任务 | `workflow.md` 6.0、6.3；`run-single-task-chapter6` | `.agents/skills/workflow-chapter6-single-task-daily-loop/SKILL.md`；当前 Task/Acceptance 与相关权威 |
+| Chapter 6 恢复 | `resume-task --recommendation-only` | `chapter6-route --recommendation-only`；仅在决策需要时展开该 run 的 sidecars/events |
+| Chapter 7 | `workflow.md` 第 7 章；`docs/gdd/ui-gdd-flow.md` | Chapter 7 Skill、profile guide 与当前 backlog/capability |
+| Prototype | `docs/workflows/prototype-lane.md` | 同目录 playbook、prototype-tdd |
+| Architecture/Contract | `docs/architecture/ADR_INDEX_GODOT.md` | 相关 ADR、Base/Overlay、`Game.Core/Contracts/**` |
+| Testing/MVG | `docs/testing-framework.md` | `docs/workflows/mvg-integration-acceptance.md`、选定 manifest |
+| Harness/工作流维护 | `docs/workflows/run-protocol.md` | 当前涉及入口脚本、schema、`docs/workflows/local-hard-checks.md` |
+| 显式 plan/decision 工作 | 用户或当前任务绑定的具体文件 | 该文件引用的来源；不按目录时间戳猜测 |
+
+历史日志是证据而不是当前指令。被当前 Task、ADR、冻结来源、恢复对象或显式 plan/decision 引用时再展开；source 缺失且影响边界判断时 fail closed，不用摘要猜测替代。
 
 ## 权威来源
 
@@ -63,23 +67,29 @@
   - `DELIVERY_PROFILE.md`
   - `docs/workflows/run-protocol.md`
   - `docs/workflows/local-hard-checks.md`
+- Chapter 7:
+  - `docs/gdd/ui-gdd-flow.md`
+  - `docs/workflows/chapter7-profile.json`
+  - `docs/workflows/chapter7-profile-guide.md`
+  - `docs/workflows/templates/chapter7-profile.template.json`
+  - `docs/workflows/templates/chapter7-profile.minimal.example.json`
 
 ## 核心入口
 
-- 本地硬检查:
-  - `py -3 scripts/python/dev_cli.py run-local-hard-checks --godot-bin <godot-bin>`
-- 任务恢复（规范入口）:
-  - `py -3 scripts/python/dev_cli.py resume-task --task-id <task-id>`
-- 第六章重跑路由（先读工件再决定 6.7/6.8/止损）:
-  - `py -3 scripts/python/dev_cli.py chapter6-route --task-id <task-id> --recommendation-only`
-- 任务级统一评审流水线:
-  - `py -3 scripts/sc/run_review_pipeline.py --task-id <task-id> --godot-bin <godot-bin>`
-- Prototype lane TDD（原型阶段正式入口）:
-  - `py -3 scripts/python/dev_cli.py run-prototype-tdd --slug <slug> --stage <red|green|refactor> --expect <auto|fail|pass>`
-- 恢复文档校验:
-  - `py -3 scripts/python/validate_recovery_docs.py --dir all`
-- 门禁聚合:
-  - `py -3 scripts/python/run_gate_bundle.py --mode hard --task-files .taskmaster/tasks/tasks_back.json .taskmaster/tasks/tasks_gameplay.json`
+根文件只保留稳定入口；Chapter 3–7、Prototype、MVG 与维护命令的完整参数和阶段说明按上表读取 owning docs，不在这里重复维护。
+
+- Chapter 6 新任务：`py -3 scripts/python/dev_cli.py run-single-task-chapter6 --task-id <task-id> --godot-bin <godot-bin> --delivery-profile <profile>`
+- Chapter 6 恢复：`py -3 scripts/python/dev_cli.py resume-task --task-id <task-id> --recommendation-only`
+- Chapter 6 路由：`py -3 scripts/python/dev_cli.py chapter6-route --task-id <task-id> --recommendation-only`
+- Prototype lane TDD：`py -3 scripts/python/dev_cli.py run-prototype-tdd --slug <slug> --stage <red|green|refactor> --expect <auto|fail|pass>`
+- 仓库硬检查：`py -3 scripts/python/dev_cli.py run-local-hard-checks --skip-project-health --godot-bin <godot-bin>`
+
+详细入口索引：
+- `workflow.md`：Chapter 3 → 7 的阶段规则与 owning 命令。
+- `docs/workflows/stable-public-entrypoints.md`：稳定公共入口及恢复边界。
+- `docs/workflows/script-entrypoints-index.md`：脚本入口索引。
+- `docs/workflows/prototype-lane.md`：Prototype。
+- `docs/workflows/mvg-integration-acceptance.md`：MVG 与 Mutation。
 
 ## Recovery Stop-Loss Signals
 
