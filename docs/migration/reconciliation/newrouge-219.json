@@ -1,0 +1,816 @@
+{
+  "schema_version": "repo.cross-repo-migration-reconciliation.v1",
+  "source": {
+    "repo": "skyoxu/newrouge",
+    "pr": 219,
+    "merge_commit": "7e85fedc360462ba2353a3bf11d2a1cdce9840ad",
+    "changed_file_count": 67,
+    "changed_files": [
+      ".agents/skills/workflow-chapter6-single-task-daily-loop/SKILL.md",
+      ".agents/skills/workflow-chapter6-single-task-daily-loop/references/workflow-source.md",
+      "AGENTS.md",
+      "DELIVERY_PROFILE.md",
+      "docs/agents/00-index.md",
+      "docs/agents/01-session-recovery.md",
+      "docs/workflows/acceptance-check-and-llm-review.md",
+      "docs/workflows/chapter-6-t56-optimization-guide.md",
+      "docs/workflows/mvg-integration-acceptance.md",
+      "docs/workflows/script-entrypoints-index.md",
+      "docs/workflows/stable-public-entrypoints.md",
+      "execution-plans/2026-09-22-workflow-optimization-v2.md",
+      "scripts/python/_chapter6_recovery_common.py",
+      "scripts/python/_mvg_manifest.py",
+      "scripts/python/chapter6_route.py",
+      "scripts/python/run_gate_bundle.py",
+      "scripts/python/run_gdunit.py",
+      "scripts/python/run_single_task_chapter6_lane.py",
+      "scripts/python/tests/test_agent_context_routing.py",
+      "scripts/python/tests/test_chapter6_recovery_common.py",
+      "scripts/python/tests/test_chapter6_route.py",
+      "scripts/python/tests/test_mvg_acceptance.py",
+      "scripts/python/tests/test_run_single_task_chapter6_lane.py",
+      "scripts/python/update_workflow_chapter_skills.py",
+      "scripts/sc/README.md",
+      "scripts/sc/_acceptance_task_requirements.py",
+      "scripts/sc/_acceptance_testgen_red.py",
+      "scripts/sc/_acceptance_verification_surface.py",
+      "scripts/sc/_agent_review_contract.py",
+      "scripts/sc/_agent_review_policy.py",
+      "scripts/sc/_execution_plan_policy.py",
+      "scripts/sc/_llm_review_cli.py",
+      "scripts/sc/_llm_review_engine.py",
+      "scripts/sc/_llm_review_exec.py",
+      "scripts/sc/_llm_review_prompting.py",
+      "scripts/sc/_llm_review_tier.py",
+      "scripts/sc/_pipeline_helpers.py",
+      "scripts/sc/_pipeline_plan.py",
+      "scripts/sc/_sc_test_refs.py",
+      "scripts/sc/_summary_schema_fallback.py",
+      "scripts/sc/_technical_debt.py",
+      "scripts/sc/acceptance_check.py",
+      "scripts/sc/build/tdd.py",
+      "scripts/sc/check_tdd_execution_plan.py",
+      "scripts/sc/config/delivery_profiles.json",
+      "scripts/sc/llm_generate_tests_from_acceptance_refs.py",
+      "scripts/sc/llm_review_needs_fix_fast.py",
+      "scripts/sc/run_review_pipeline.py",
+      "scripts/sc/schemas/sc-acceptance-check-summary.schema.json",
+      "scripts/sc/templates/llm_review/bmad-godot-review-template.txt",
+      "scripts/sc/tests/test_acceptance_testgen_red.py",
+      "scripts/sc/tests/test_acceptance_verification_surface.py",
+      "scripts/sc/tests/test_agent_review_contract.py",
+      "scripts/sc/tests/test_build_tdd_orchestration.py",
+      "scripts/sc/tests/test_check_tdd_execution_plan.py",
+      "scripts/sc/tests/test_generate_tests_from_acceptance_refs.py",
+      "scripts/sc/tests/test_llm_review_backend_cli.py",
+      "scripts/sc/tests/test_llm_review_cli_guards.py",
+      "scripts/sc/tests/test_llm_review_needs_fix_fast.py",
+      "scripts/sc/tests/test_llm_review_prompt_shaping.py",
+      "scripts/sc/tests/test_llm_review_runtime_budget.py",
+      "scripts/sc/tests/test_llm_review_tier.py",
+      "scripts/sc/tests/test_review_technical_debt.py",
+      "scripts/sc/tests/test_run_review_pipeline_delivery_profile.py",
+      "scripts/sc/tests/test_sc_test_refs.py",
+      "workflow.example.md",
+      "workflow.md"
+    ]
+  },
+  "target": {
+    "repo": "skyoxu/lastking",
+    "branch": "sync-newrouge-217-227-20260923",
+    "pr": 115
+  },
+  "entries": [
+    {
+      "source_path": ".agents/skills/workflow-chapter6-single-task-daily-loop/SKILL.md",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        ".agents/skills/workflow-chapter6-single-task-daily-loop/SKILL.md"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_agent_context_routing.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": ".agents/skills/workflow-chapter6-single-task-daily-loop/references/workflow-source.md",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        ".agents/skills/workflow-chapter6-single-task-daily-loop/references/workflow-source.md"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_agent_context_routing.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "AGENTS.md",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "AGENTS.md"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_agent_context_routing.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "DELIVERY_PROFILE.md",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "DELIVERY_PROFILE.md"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_agent_context_routing.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "docs/agents/00-index.md",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "docs/agents/00-index.md"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_agent_context_routing.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "docs/agents/01-session-recovery.md",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "docs/agents/01-session-recovery.md"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_agent_context_routing.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "docs/workflows/acceptance-check-and-llm-review.md",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "docs/workflows/acceptance-check-and-llm-review.md"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_agent_context_routing.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "docs/workflows/chapter-6-t56-optimization-guide.md",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "docs/workflows/chapter-6-t56-optimization-guide.md"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_agent_context_routing.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "docs/workflows/mvg-integration-acceptance.md",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "docs/workflows/mvg-integration-acceptance.md"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_agent_context_routing.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "docs/workflows/script-entrypoints-index.md",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "docs/workflows/script-entrypoints-index.md"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_agent_context_routing.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "docs/workflows/stable-public-entrypoints.md",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "docs/workflows/stable-public-entrypoints.md"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_agent_context_routing.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "execution-plans/2026-09-22-workflow-optimization-v2.md",
+      "classification": "business_only_drop",
+      "rationale": "Source-specific workflow-v2 execution/closure evidence contains newrouge revisions and run evidence. Target migration evidence is owned by lastking PR #115 and is not copied as target validation."
+    },
+    {
+      "source_path": "scripts/python/_chapter6_recovery_common.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/python/_chapter6_recovery_common.py"
+      ],
+      "validation_paths": [
+        "scripts/python/run_gate_bundle.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "scripts/python/_mvg_manifest.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/python/_mvg_manifest.py"
+      ],
+      "validation_paths": [
+        "scripts/python/run_gate_bundle.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "scripts/python/chapter6_route.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/python/chapter6_route.py"
+      ],
+      "validation_paths": [
+        "scripts/python/run_gate_bundle.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "scripts/python/run_gate_bundle.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/python/run_gate_bundle.py"
+      ],
+      "validation_paths": [
+        "scripts/python/run_gate_bundle.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "scripts/python/run_gdunit.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/python/run_gdunit.py"
+      ],
+      "validation_paths": [
+        "scripts/python/run_gate_bundle.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "scripts/python/run_single_task_chapter6_lane.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/python/run_single_task_chapter6_lane.py"
+      ],
+      "validation_paths": [
+        "scripts/python/run_gate_bundle.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "scripts/python/tests/test_agent_context_routing.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/python/tests/test_agent_context_routing.py"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_agent_context_routing.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "scripts/python/tests/test_chapter6_recovery_common.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/python/tests/test_chapter6_recovery_common.py"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_chapter6_recovery_common.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "scripts/python/tests/test_chapter6_route.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/python/tests/test_chapter6_route.py"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_chapter6_route.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "scripts/python/tests/test_mvg_acceptance.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/python/tests/test_mvg_acceptance.py"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_mvg_acceptance.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "scripts/python/tests/test_run_single_task_chapter6_lane.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/python/tests/test_run_single_task_chapter6_lane.py"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_run_single_task_chapter6_lane.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "scripts/python/update_workflow_chapter_skills.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/python/update_workflow_chapter_skills.py"
+      ],
+      "validation_paths": [
+        "scripts/python/run_gate_bundle.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "scripts/sc/README.md",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/sc/README.md"
+      ],
+      "validation_paths": [
+        "scripts/sc/tests/test_run_review_pipeline_delivery_profile.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "scripts/sc/_acceptance_task_requirements.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/sc/_acceptance_task_requirements.py"
+      ],
+      "validation_paths": [
+        "scripts/sc/tests/test_run_review_pipeline_delivery_profile.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "scripts/sc/_acceptance_testgen_red.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/sc/_acceptance_testgen_red.py"
+      ],
+      "validation_paths": [
+        "scripts/sc/tests/test_run_review_pipeline_delivery_profile.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "scripts/sc/_acceptance_verification_surface.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/sc/_acceptance_verification_surface.py"
+      ],
+      "validation_paths": [
+        "scripts/sc/tests/test_run_review_pipeline_delivery_profile.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "scripts/sc/_agent_review_contract.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/sc/_agent_review_contract.py"
+      ],
+      "validation_paths": [
+        "scripts/sc/tests/test_run_review_pipeline_delivery_profile.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "scripts/sc/_agent_review_policy.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/sc/_agent_review_policy.py"
+      ],
+      "validation_paths": [
+        "scripts/sc/tests/test_run_review_pipeline_delivery_profile.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "scripts/sc/_execution_plan_policy.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/sc/_execution_plan_policy.py"
+      ],
+      "validation_paths": [
+        "scripts/sc/tests/test_run_review_pipeline_delivery_profile.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "scripts/sc/_llm_review_cli.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/sc/_llm_review_cli.py"
+      ],
+      "validation_paths": [
+        "scripts/sc/tests/test_run_review_pipeline_delivery_profile.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "scripts/sc/_llm_review_engine.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/sc/_llm_review_engine.py"
+      ],
+      "validation_paths": [
+        "scripts/sc/tests/test_run_review_pipeline_delivery_profile.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "scripts/sc/_llm_review_exec.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/sc/_llm_review_exec.py"
+      ],
+      "validation_paths": [
+        "scripts/sc/tests/test_run_review_pipeline_delivery_profile.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "scripts/sc/_llm_review_prompting.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/sc/_llm_review_prompting.py"
+      ],
+      "validation_paths": [
+        "scripts/sc/tests/test_run_review_pipeline_delivery_profile.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "scripts/sc/_llm_review_tier.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/sc/_llm_review_tier.py"
+      ],
+      "validation_paths": [
+        "scripts/sc/tests/test_run_review_pipeline_delivery_profile.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "scripts/sc/_pipeline_helpers.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/sc/_pipeline_helpers.py"
+      ],
+      "validation_paths": [
+        "scripts/sc/tests/test_run_review_pipeline_delivery_profile.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "scripts/sc/_pipeline_plan.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/sc/_pipeline_plan.py"
+      ],
+      "validation_paths": [
+        "scripts/sc/tests/test_run_review_pipeline_delivery_profile.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "scripts/sc/_sc_test_refs.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/sc/_sc_test_refs.py"
+      ],
+      "validation_paths": [
+        "scripts/sc/tests/test_run_review_pipeline_delivery_profile.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "scripts/sc/_summary_schema_fallback.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/sc/_summary_schema_fallback.py"
+      ],
+      "validation_paths": [
+        "scripts/sc/tests/test_run_review_pipeline_delivery_profile.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "scripts/sc/_technical_debt.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/sc/_technical_debt.py"
+      ],
+      "validation_paths": [
+        "scripts/sc/tests/test_run_review_pipeline_delivery_profile.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "scripts/sc/acceptance_check.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/sc/acceptance_check.py"
+      ],
+      "validation_paths": [
+        "scripts/sc/tests/test_run_review_pipeline_delivery_profile.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "scripts/sc/build/tdd.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/sc/build/tdd.py"
+      ],
+      "validation_paths": [
+        "scripts/sc/tests/test_run_review_pipeline_delivery_profile.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "scripts/sc/check_tdd_execution_plan.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/sc/check_tdd_execution_plan.py"
+      ],
+      "validation_paths": [
+        "scripts/sc/tests/test_run_review_pipeline_delivery_profile.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "scripts/sc/config/delivery_profiles.json",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/sc/config/delivery_profiles.json"
+      ],
+      "validation_paths": [
+        "scripts/sc/tests/test_run_review_pipeline_delivery_profile.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "scripts/sc/llm_generate_tests_from_acceptance_refs.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/sc/llm_generate_tests_from_acceptance_refs.py"
+      ],
+      "validation_paths": [
+        "scripts/sc/tests/test_run_review_pipeline_delivery_profile.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "scripts/sc/llm_review_needs_fix_fast.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/sc/llm_review_needs_fix_fast.py"
+      ],
+      "validation_paths": [
+        "scripts/sc/tests/test_run_review_pipeline_delivery_profile.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "scripts/sc/run_review_pipeline.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/sc/run_review_pipeline.py"
+      ],
+      "validation_paths": [
+        "scripts/sc/tests/test_run_review_pipeline_delivery_profile.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "scripts/sc/schemas/sc-acceptance-check-summary.schema.json",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/sc/schemas/sc-acceptance-check-summary.schema.json"
+      ],
+      "validation_paths": [
+        "scripts/sc/tests/test_run_review_pipeline_delivery_profile.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "scripts/sc/templates/llm_review/bmad-godot-review-template.txt",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/sc/templates/llm_review/bmad-godot-review-template.txt"
+      ],
+      "validation_paths": [
+        "scripts/sc/tests/test_run_review_pipeline_delivery_profile.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "scripts/sc/tests/test_acceptance_testgen_red.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/sc/tests/test_acceptance_testgen_red.py"
+      ],
+      "validation_paths": [
+        "scripts/sc/tests/test_acceptance_testgen_red.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "scripts/sc/tests/test_acceptance_verification_surface.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/sc/tests/test_acceptance_verification_surface.py"
+      ],
+      "validation_paths": [
+        "scripts/sc/tests/test_acceptance_verification_surface.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "scripts/sc/tests/test_agent_review_contract.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/sc/tests/test_agent_review_contract.py"
+      ],
+      "validation_paths": [
+        "scripts/sc/tests/test_agent_review_contract.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "scripts/sc/tests/test_build_tdd_orchestration.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/sc/tests/test_build_tdd_orchestration.py"
+      ],
+      "validation_paths": [
+        "scripts/sc/tests/test_build_tdd_orchestration.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "scripts/sc/tests/test_check_tdd_execution_plan.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/sc/tests/test_check_tdd_execution_plan.py"
+      ],
+      "validation_paths": [
+        "scripts/sc/tests/test_check_tdd_execution_plan.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "scripts/sc/tests/test_generate_tests_from_acceptance_refs.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/sc/tests/test_generate_tests_from_acceptance_refs.py"
+      ],
+      "validation_paths": [
+        "scripts/sc/tests/test_generate_tests_from_acceptance_refs.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "scripts/sc/tests/test_llm_review_backend_cli.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/sc/tests/test_llm_review_backend_cli.py"
+      ],
+      "validation_paths": [
+        "scripts/sc/tests/test_llm_review_backend_cli.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "scripts/sc/tests/test_llm_review_cli_guards.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/sc/tests/test_llm_review_cli_guards.py"
+      ],
+      "validation_paths": [
+        "scripts/sc/tests/test_llm_review_cli_guards.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "scripts/sc/tests/test_llm_review_needs_fix_fast.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/sc/tests/test_llm_review_needs_fix_fast.py"
+      ],
+      "validation_paths": [
+        "scripts/sc/tests/test_llm_review_needs_fix_fast.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "scripts/sc/tests/test_llm_review_prompt_shaping.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/sc/tests/test_llm_review_prompt_shaping.py"
+      ],
+      "validation_paths": [
+        "scripts/sc/tests/test_llm_review_prompt_shaping.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "scripts/sc/tests/test_llm_review_runtime_budget.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/sc/tests/test_llm_review_runtime_budget.py"
+      ],
+      "validation_paths": [
+        "scripts/sc/tests/test_llm_review_runtime_budget.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "scripts/sc/tests/test_llm_review_tier.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/sc/tests/test_llm_review_tier.py"
+      ],
+      "validation_paths": [
+        "scripts/sc/tests/test_llm_review_tier.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "scripts/sc/tests/test_review_technical_debt.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/sc/tests/test_review_technical_debt.py"
+      ],
+      "validation_paths": [
+        "scripts/sc/tests/test_review_technical_debt.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "scripts/sc/tests/test_run_review_pipeline_delivery_profile.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/sc/tests/test_run_review_pipeline_delivery_profile.py"
+      ],
+      "validation_paths": [
+        "scripts/sc/tests/test_run_review_pipeline_delivery_profile.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "scripts/sc/tests/test_sc_test_refs.py",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "scripts/sc/tests/test_sc_test_refs.py"
+      ],
+      "validation_paths": [
+        "scripts/sc/tests/test_sc_test_refs.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "workflow.example.md",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "workflow.example.md"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_agent_context_routing.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    },
+    {
+      "source_path": "workflow.md",
+      "classification": "adapt_target_native",
+      "target_paths": [
+        "workflow.md"
+      ],
+      "validation_paths": [
+        "scripts/python/tests/test_agent_context_routing.py"
+      ],
+      "rationale": "Reconciled through lastking PR #115 while preserving target-owned BattleMap, Prototype, Project Health, Taskmaster/business, and cross-repo hard-gate boundaries."
+    }
+  ]
+}
