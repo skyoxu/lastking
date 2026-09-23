@@ -546,43 +546,6 @@ class GenerateTestsFromAcceptanceRefsTests(unittest.TestCase):
                 "unit",
             ]
             seen_test_cmds: list[list[str]] = []
-    def test_red_requirement_state_should_skip_machine_red_only_for_non_machine_obligations(self) -> None:
-        integration_only = SimpleNamespace(
-            back={
-                "acceptance": ["Integrated journey. Refs: docs/testing/mvg/m1-critical.json"],
-                "acceptance_verification": {
-                    "ACC:T11.1": {
-                        "verification_surface": "player-journey",
-                        "journey_scope": "mvg-critical",
-                        "primary_evidence": ["docs/testing/mvg/m1-critical.json"],
-                    }
-                },
-            },
-            gameplay=None,
-        )
-        mixed = SimpleNamespace(
-            back={
-                "acceptance": ["Mixed behavior. Refs: Game.Core.Tests/FooTests.cs"],
-                "acceptance_verification": {
-                    "ACC:T11.1": {
-                        "obligations": [
-                            {
-                                "obligation_id": "core",
-                                "verification_surface": "core-behavior",
-                                "primary_evidence": ["Game.Core.Tests/FooTests.cs"],
-                            },
-                            {
-                                "obligation_id": "journey",
-                                "verification_surface": "player-journey",
-                                "journey_scope": "mvg-critical",
-                                "primary_evidence": ["docs/testing/mvg/m1-critical.json"],
-                            },
-                        ]
-                    }
-                },
-            },
-            gameplay=None,
-        )
 
             class _Triplet26:
                 def __init__(self) -> None:
@@ -622,6 +585,43 @@ class GenerateTestsFromAcceptanceRefsTests(unittest.TestCase):
         self.assertIn("--no-coverage-gate", seen_test_cmds[0])
         self.assertIn("--no-coverage-report", seen_test_cmds[0])
 
+    def test_red_requirement_state_should_skip_machine_red_only_for_non_machine_obligations(self) -> None:
+        integration_only = SimpleNamespace(
+            back={
+                "acceptance": ["Integrated journey. Refs: docs/testing/mvg/m1-critical.json"],
+                "acceptance_verification": {
+                    "ACC:T11.1": {
+                        "verification_surface": "player-journey",
+                        "journey_scope": "mvg-critical",
+                        "primary_evidence": ["docs/testing/mvg/m1-critical.json"],
+                    }
+                },
+            },
+            gameplay=None,
+        )
+        mixed = SimpleNamespace(
+            back={
+                "acceptance": ["Mixed behavior. Refs: Game.Core.Tests/FooTests.cs"],
+                "acceptance_verification": {
+                    "ACC:T11.1": {
+                        "obligations": [
+                            {
+                                "obligation_id": "core",
+                                "verification_surface": "core-behavior",
+                                "primary_evidence": ["Game.Core.Tests/FooTests.cs"],
+                            },
+                            {
+                                "obligation_id": "journey",
+                                "verification_surface": "player-journey",
+                                "journey_scope": "mvg-critical",
+                                "primary_evidence": ["docs/testing/mvg/m1-critical.json"],
+                            },
+                        ]
+                    }
+                },
+            },
+            gameplay=None,
+        )
 
         integration_state = gen_script._red_requirement_state(integration_only, task_id="11")
         mixed_state = gen_script._red_requirement_state(mixed, task_id="11")

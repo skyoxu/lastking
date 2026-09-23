@@ -114,12 +114,14 @@
     },
     {
       "source_path": "scripts/python/_mvg_manifest.py",
-      "classification": "copy_exact",
+      "classification": "adapt_target_native",
       "target_paths": [
         "scripts/python/_mvg_manifest.py"
       ],
-      "source_blob_sha": "00fdc069b1a55eb45d42e03011e94673f60677d0",
-      "rationale": "Coverage contract validation and conservative recommendation semantics are repository-neutral."
+      "rationale": "Historical copy_exact lock is superseded by later reusable MVG evolution through newrouge #219/#223 and lastking PR #115; target preserves BattleMap-native coverage facts while adopting the evolved shared protocol.",
+      "validation_paths": [
+        "scripts/python/tests/test_mvg_acceptance.py"
+      ]
     },
     {
       "source_path": "scripts/python/run_mvg_acceptance.py",
@@ -135,12 +137,14 @@
     },
     {
       "source_path": "scripts/python/tests/test_mvg_acceptance.py",
-      "classification": "copy_exact",
+      "classification": "adapt_target_native",
       "target_paths": [
         "scripts/python/tests/test_mvg_acceptance.py"
       ],
-      "source_blob_sha": "9e576e4323096febb18b0e07c70223b50a58e181",
-      "rationale": "Coverage-contract runner regressions are repository-neutral."
+      "rationale": "Historical copy_exact lock is superseded by later reusable MVG evolution through newrouge #219/#223 and lastking PR #115; target preserves BattleMap-native coverage facts while adopting the evolved shared protocol.",
+      "validation_paths": [
+        "scripts/python/tests/test_mvg_acceptance.py"
+      ]
     }
   ]
 }

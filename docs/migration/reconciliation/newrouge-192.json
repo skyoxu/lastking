@@ -31,21 +31,25 @@
     },
     {
       "source_path": "scripts/python/check_cross_repo_migration.py",
-      "classification": "copy_exact",
+      "classification": "adapt_target_native",
       "target_paths": [
         "scripts/python/check_cross_repo_migration.py"
       ],
-      "source_blob_sha": "198c8cb2f6eaa4b1c8bceda257aa8a0f7e6f306b",
-      "rationale": "Canonical migration identity and uniqueness verification are repository-neutral."
+      "rationale": "Historical copy_exact lock is superseded by later migration-checker evolution from newrouge #217 and lastking PR #115; canonical target-PR uniqueness semantics remain preserved and are validated target-side.",
+      "validation_paths": [
+        "scripts/python/tests/test_cross_repo_migration.py"
+      ]
     },
     {
       "source_path": "scripts/python/tests/test_cross_repo_migration.py",
-      "classification": "copy_exact",
+      "classification": "adapt_target_native",
       "target_paths": [
         "scripts/python/tests/test_cross_repo_migration.py"
       ],
-      "source_blob_sha": "aef9cbf80f5c8e6239988afe4dae7fdde5ed2cf8",
-      "rationale": "Canonical migration identity and uniqueness verification are repository-neutral."
+      "rationale": "Historical copy_exact lock is superseded by later migration-checker evolution from newrouge #217 and lastking PR #115; canonical target-PR uniqueness semantics remain preserved and are validated target-side.",
+      "validation_paths": [
+        "scripts/python/tests/test_cross_repo_migration.py"
+      ]
     }
   ]
 }
