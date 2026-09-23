@@ -81,6 +81,60 @@ class MvgAcceptanceTests(unittest.TestCase):
         errors = validate_manifest(self.root, doc, executable=True)
         self.assertTrue(any('blocked by non-done tasks [2]' in item for item in errors))
 
+    def test_full_scope_does_not_require_dedicated_owner_only_integration_task_done(self):
+        tasks_path = self.root / '.taskmaster/tasks/tasks.json'
+        tasks_path.write_text(json.dumps({'master': {'tasks': [
+            {'id': 1, 'status': 'done'},
+            {'id': 2, 'status': 'done'},
+            {'id': 3, 'status': 'pending'},
+        ]}}))
+        doc = copy.deepcopy(self.manifest)
+        doc['coverage'] = {
+            'mode': 'full',
+            'scope_id': 'm1-player-loop',
+            'required_flow_ids': ['claim', 'resume', 'combat'],
+            'blocking_task_ids': [],
+            'excluded_claims': ['Human gameplay approval remains separate.'],
+        }
+        doc['flows'] = [
+            doc['flows'][0],
+            {**copy.deepcopy(doc['flows'][0]), 'id': 'resume'},
+            {**copy.deepcopy(doc['flows'][0]), 'id': 'combat'},
+        ]
+        for flow in doc['flows']:
+            flow['task_ids'] = [1, 2, 3]
+            flow['handoffs'][0].update(producer_task=1, consumer_task=2, owner_task=3)
+
+        self.assertEqual([], validate_manifest(self.root, doc, executable=True))
+
+    def test_owner_task_that_is_also_flow_participant_remains_a_done_blocker(self):
+        tasks_path = self.root / '.taskmaster/tasks/tasks.json'
+        tasks_path.write_text(json.dumps({'master': {'tasks': [
+            {'id': 1, 'status': 'done'},
+            {'id': 2, 'status': 'done'},
+            {'id': 3, 'status': 'pending'},
+        ]}}))
+        doc = copy.deepcopy(self.manifest)
+        doc['coverage'] = {
+            'mode': 'full',
+            'scope_id': 'm1-player-loop',
+            'required_flow_ids': ['claim', 'resume', 'combat'],
+            'blocking_task_ids': [3],
+            'excluded_claims': ['Human gameplay approval remains separate.'],
+        }
+        doc['flows'] = [
+            doc['flows'][0],
+            {**copy.deepcopy(doc['flows'][0]), 'id': 'resume'},
+            {**copy.deepcopy(doc['flows'][0]), 'id': 'combat'},
+        ]
+        for flow in doc['flows']:
+            flow['task_ids'] = [1, 2, 3]
+            flow['handoffs'][0].update(producer_task=1, consumer_task=3, owner_task=3)
+
+        self.assertEqual([], validate_manifest(self.root, doc, executable=False))
+        errors = validate_manifest(self.root, doc, executable=True)
+        self.assertTrue(any('blocked by non-done tasks [3]' in item for item in errors))
+
     def test_critical_scope_requires_multiple_done_flows(self):
         doc = copy.deepcopy(self.manifest)
         doc['coverage'].update(mode='critical', scope_id='m1-critical')
@@ -157,6 +211,41 @@ class MvgAcceptanceTests(unittest.TestCase):
         summary = json.loads(next(self.root.glob('logs/ci/mvg-acceptance/*/summary.json')).read_text())
         self.assertFalse(summary['runtime_verified'])
         self.assertFalse(summary['authorizes_task_status_write'])
+
+    def test_runtime_summary_binds_manifest_scope_and_source_revision(self):
+        path = self.root / 'manifest.json'
+        path.write_text(json.dumps(self.manifest))
+        parser = argparse.ArgumentParser()
+        register_arguments(parser)
+        args = parser.parse_args(['--manifest', 'manifest.json', '--mode', 'run'])
+
+        def fake_git(root, *args):
+            if args[:2] == ('status', '--porcelain'):
+                return ''
+            if args and args[0] == 'rev-parse':
+                return 'a' * 40
+            return ''
+
+        def snapshot(root, target, revision, mode, deadline):
+            target.mkdir(parents=True)
+            (target / 'manifest.json').write_text(json.dumps(self.manifest))
+            return dict(source_revision='a' * 40, snapshot_digest='digest')
+
+        with patch('run_mvg_acceptance.git', side_effect=fake_git), \
+             patch('run_mvg_acceptance.prepare_snapshot', side_effect=snapshot), \
+             patch('run_mvg_acceptance.validate_manifest', return_value=[]), \
+             patch('run_mvg_acceptance.recommend', return_value={}), \
+             patch('run_mvg_acceptance.execute_test', return_value={'status': 'passed'}):
+            self.assertEqual(0, run(args, self.root))
+
+        summary = json.loads(next(self.root.glob('logs/ci/mvg-acceptance/*/summary.json')).read_text())
+        self.assertEqual('run', summary['mode'])
+        self.assertEqual('passed', summary['status'])
+        self.assertTrue(summary['runtime_verified'])
+        self.assertFalse(summary['workspace_dirty'])
+        self.assertEqual('a' * 40, summary['source_revision'])
+        self.assertEqual('manifest.json', summary['manifest'])
+        self.assertEqual(self.manifest['coverage'], summary['coverage'])
 
     def test_execution_failure_blocks_runtime_acceptance(self):
         parser = argparse.ArgumentParser()
