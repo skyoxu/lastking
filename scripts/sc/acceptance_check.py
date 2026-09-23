@@ -30,6 +30,7 @@ from _acceptance_task_requirements import (
     task_requires_env_evidence_preflight,
     task_requires_headless_e2e,
 )
+from _acceptance_verification_surface import requires_task_local_execution_evidence, validate_acceptance_verification
 from _acceptance_steps import StepResult, step_perf_budget
 from _risk_summary import write_risk_summary
 from _security_profile import security_profile_payload
@@ -212,11 +213,29 @@ def main() -> int:
     only_steps = parse_only_steps(args.only)
     subtasks_mode = normalize_subtasks_mode(args.subtasks_coverage)
 
+    candidate_revision = str(getattr(args, "candidate_revision", None) or os.environ.get("SC_ACCEPTANCE_CANDIDATE_REVISION") or "").strip()
+    if not candidate_revision:
+        status_probe = subprocess.run(
+            ["git", "status", "--porcelain"], cwd=repo_root(), text=True, capture_output=True, check=False
+        )
+        if status_probe.returncode == 0 and not status_probe.stdout.strip():
+            revision_probe = subprocess.run(
+                ["git", "rev-parse", "HEAD"], cwd=repo_root(), text=True, capture_output=True, check=False
+            )
+            if revision_probe.returncode == 0:
+                candidate_revision = revision_probe.stdout.strip()
+    verification_surface_report = validate_acceptance_verification(
+        triplet=triplet,
+        root=repo_root(),
+        expected_revision=candidate_revision,
+    )
     force_headless_for_task1 = bool(args.require_headless_e2e) and int(triplet.task_id) == 1
     has_gd_refs = task_requires_headless_e2e(triplet) or force_headless_for_task1
     needs_env_preflight = task_requires_env_evidence_preflight(triplet)
     require_headless_e2e = bool(args.require_headless_e2e) and has_gd_refs
-    require_executed_refs = bool(args.require_executed_refs)
+    require_executed_refs = bool(args.require_executed_refs) or (
+        is_enabled(only_steps, "tests") and requires_task_local_execution_evidence(triplet)
+    )
 
     security_profile, security_modes = resolve_security_modes(args)
     audit_evidence_mode = security_modes["audit_evidence"]
@@ -272,6 +291,7 @@ def main() -> int:
             task_requirements={
                 "has_gd_refs": has_gd_refs,
                 "requires_env_evidence_preflight": needs_env_preflight,
+                "verification_surface": verification_surface_report,
             },
             step_plan=step_plan,
         )
@@ -301,11 +321,23 @@ def main() -> int:
             audit_evidence_mode=audit_evidence_mode,
             godot_bin=godot_bin,
             run_id=run_id,
+            candidate_revision=candidate_revision,
         )
     )
 
     if is_enabled(only_steps, "perf"):
         steps.append(step_perf_budget(out_dir, max_p95_ms=perf_p95_ms))
+
+    if int(verification_surface_report.get("classified_count") or 0) > 0:
+        surface_status = str(verification_surface_report.get("status") or "fail")
+        steps.append(
+            StepResult(
+                name="verification-surface",
+                status="ok" if surface_status == "ok" else "fail",
+                rc=0 if surface_status == "ok" else 1,
+                details=verification_surface_report,
+            )
+        )
 
     hard_failed = any(
         should_mark_hard_failure(step_name=s.name, status=s.status, subtasks_mode=subtasks_mode)
@@ -340,6 +372,7 @@ def main() -> int:
         task_requirements={
             "has_gd_refs": has_gd_refs,
             "requires_env_evidence_preflight": needs_env_preflight,
+            "verification_surface": verification_surface_report,
         },
         metrics=metrics,
         risk_summary_rel=risk_summary_rel,
