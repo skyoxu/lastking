@@ -8,6 +8,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from unittest import mock
 
 
@@ -50,7 +51,169 @@ class _FakeTriplet:
         return "docs/architecture/overlays/PRD-demo/08/_index.md"
 
 
+class GreenPrerequisiteSurfaceTests(unittest.TestCase):
+    def test_pure_human_pending_preflight_can_enter_green_without_machine_red(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            out_dir = Path(td) / "sc-build-tdd"
+            out_dir.mkdir(parents=True, exist_ok=True)
+            triplet = SimpleNamespace(
+                task_id="14",
+                back={
+                    "acceptance": ["Combat pacing must be readable during playtest."],
+                    "acceptance_verification": {
+                        "ACC:T14.1": {
+                            "verification_surface": "human-experience",
+                            "primary_evidence": ["logs/manual/task-14-playtest.md"],
+                            "secondary_evidence": [],
+                            "human_evidence_required": True,
+                            "human_evidence_status": "pending",
+                        }
+                    },
+                },
+                gameplay=None,
+            )
+            with mock.patch.object(tdd_script, "_find_latest_red_first_summary") as red_summary:
+                result = tdd_script.validate_green_red_prerequisite(
+                    task_id="14",
+                    out_dir=out_dir,
+                    triplet=triplet,
+                )
+            self.assertEqual(0, result["rc"])
+            self.assertTrue(result["manual_only"])
+            self.assertEqual(["ACC:T14.1"], result["human_obligations"])
+            red_summary.assert_not_called()
+
+    def test_mixed_human_and_automated_obligations_still_require_machine_red(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            out_dir = Path(td) / "sc-build-tdd"
+            out_dir.mkdir(parents=True, exist_ok=True)
+            triplet = SimpleNamespace(
+                task_id="14",
+                back={
+                    "acceptance": ["Combat reward and pacing obligations."],
+                    "acceptance_verification": {
+                        "ACC:T14.1": {
+                            "obligations": [
+                                {
+                                    "obligation_id": "reward-core",
+                                    "verification_surface": "core-behavior",
+                                    "primary_evidence": ["Game.Core.Tests/Combat/RewardTests.cs"],
+                                    "secondary_evidence": [],
+                                    "human_evidence_required": False,
+                                },
+                                {
+                                    "obligation_id": "pacing-human",
+                                    "verification_surface": "human-experience",
+                                    "primary_evidence": ["logs/manual/task-14-playtest.md"],
+                                    "secondary_evidence": [],
+                                    "human_evidence_required": True,
+                                    "human_evidence_status": "pending",
+                                },
+                            ]
+                        }
+                    },
+                },
+                gameplay=None,
+            )
+            with mock.patch.object(tdd_script, "_find_latest_red_first_summary", return_value=(None, {})):
+                result = tdd_script.validate_green_red_prerequisite(
+                    task_id="14",
+                    out_dir=out_dir,
+                    triplet=triplet,
+                )
+            self.assertEqual(1, result["rc"])
+            self.assertFalse(result["manual_only"])
+            self.assertEqual(["ACC:T14.1#reward-core"], result["automated_obligations"])
+            self.assertIn("missing red-first summary", " ".join(result["errors"]))
+
+    def test_partial_surface_metadata_cannot_use_manual_item_to_waive_red(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            out_dir = Path(td) / "sc-build-tdd"
+            out_dir.mkdir(parents=True, exist_ok=True)
+            triplet = SimpleNamespace(
+                task_id="14",
+                back={
+                    "acceptance": [
+                        "Combat pacing must be readable during playtest.",
+                        "Reward totals must remain deterministic.",
+                    ],
+                    "acceptance_verification": {
+                        "ACC:T14.1": {
+                            "verification_surface": "human-experience",
+                            "primary_evidence": ["logs/manual/task-14-playtest.md"],
+                            "secondary_evidence": [],
+                            "human_evidence_required": True,
+                            "human_evidence_status": "pending",
+                        }
+                    },
+                },
+                gameplay=None,
+            )
+            with mock.patch.object(tdd_script, "_find_latest_red_first_summary", return_value=(None, {})):
+                result = tdd_script.validate_green_red_prerequisite(
+                    task_id="14",
+                    out_dir=out_dir,
+                    triplet=triplet,
+                )
+            self.assertEqual(1, result["rc"])
+            self.assertEqual(["ACC:T14.2"], result["unclassified_anchors"])
+            self.assertIn("cannot waive RED", " ".join(result["errors"]))
+
+    def test_mvg_integration_journey_does_not_require_task_local_red_first(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            out_dir = Path(td) / "sc-build-tdd"
+            out_dir.mkdir(parents=True, exist_ok=True)
+            triplet = SimpleNamespace(
+                task_id="14",
+                back={
+                    "acceptance": ["Combat to reward integrated journey."],
+                    "acceptance_verification": {
+                        "ACC:T14.1": {
+                            "verification_surface": "player-journey",
+                            "journey_scope": "mvg-critical",
+                            "primary_evidence": ["docs/testing/mvg/m1-critical.json"],
+                            "secondary_evidence": [],
+                            "human_evidence_required": False,
+                        }
+                    },
+                },
+                gameplay=None,
+            )
+            with mock.patch.object(tdd_script, "_find_latest_red_first_summary") as red_summary:
+                result = tdd_script.validate_green_red_prerequisite(
+                    task_id="14",
+                    out_dir=out_dir,
+                    triplet=triplet,
+                )
+
+            self.assertEqual(0, result["rc"])
+            self.assertTrue(result["red_not_required"])
+            self.assertFalse(result["manual_only"])
+            self.assertEqual(["ACC:T14.1"], result["integration_obligations"])
+            red_summary.assert_not_called()
+
+
+
 class BuildTddOrchestrationTests(unittest.TestCase):
+    def test_direct_red_does_not_consume_a_report_from_an_earlier_invocation(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            out_dir = Path(td)
+            old_trx = out_dir / "direct-red.trx"
+            old_trx.write_text(
+                '<TestRun><Results><UnitTestResult testName="Game.Core.Tests.Tasks.Task14RedTests.ShouldFail" outcome="Failed">'
+                '<Output><ErrorInfo><Message>Assert.Equal() Failure: Expected: 1 Actual: 0</Message></ErrorInfo></Output>'
+                '</UnitTestResult></Results></TestRun>', encoding="utf-8",
+            )
+            with mock.patch.object(tdd_script, "run_cmd", return_value=(1, "Test host exited unexpectedly")):
+                step = tdd_script.run_dotnet_test_filtered("14", solution="Game.sln", configuration="Debug", out_dir=out_dir)
+            report = tdd_script.evaluate_direct_dotnet_red(
+                test_step=step, verify_log_text=(out_dir / "dotnet-test-filtered.log").read_text(encoding="utf-8"),
+                expected_test_refs=["Game.Core.Tests/Tasks/Task14RedTests.cs"],
+            )
+            self.assertNotEqual(old_trx, Path(step["trx_path"]))
+            self.assertEqual("fail", report["status"])
+            self.assertEqual("verification_report_missing", report["reason"])
+
     def test_red_should_stop_when_context_validation_fails(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             out_dir = Path(tmpdir) / "sc-build-tdd"

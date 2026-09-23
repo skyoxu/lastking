@@ -30,15 +30,47 @@ review_cli = _load_module("sc_llm_review_cli_module", "scripts/sc/_llm_review_cl
 
 
 class LlmReviewBackendCliTests(unittest.TestCase):
-    def test_resolve_agents_should_preserve_explicit_agent_list_without_auto_adding_semantic_reviewer(self) -> None:
+    def test_resolve_agents_should_collapse_explicit_legacy_model_personas_to_single_reviewer(self) -> None:
         agents = review_cli.resolve_agents("code-reviewer,security-auditor", "warn")
 
-        self.assertEqual(["code-reviewer", "security-auditor"], agents)
+        self.assertEqual(["code-reviewer"], agents)
 
-    def test_resolve_agents_should_add_semantic_reviewer_when_using_profile_defaults(self) -> None:
+    def test_resolve_agents_should_preserve_deterministic_reviewers_alongside_single_model_reviewer(self) -> None:
+        agents = review_cli.resolve_agents(
+            "adr-compliance-checker,security-auditor,performance-slo-validator",
+            "warn",
+        )
+
+        self.assertEqual(
+            ["adr-compliance-checker", "code-reviewer", "performance-slo-validator"],
+            agents,
+        )
+
+    def test_legacy_model_timeout_overrides_should_collapse_to_code_reviewer(self) -> None:
+        overrides = review_cli.parse_agent_timeout_overrides(
+            "security-auditor=360,semantic-equivalence-auditor=480,adr-compliance-checker=120"
+        )
+
+        self.assertEqual(
+            {"code-reviewer": 480, "adr-compliance-checker": 120},
+            overrides,
+        )
+
+    def test_resolve_agents_should_add_single_model_reviewer_for_deterministic_only_input(self) -> None:
+        agents = review_cli.resolve_agents(
+            "adr-compliance-checker,performance-slo-validator",
+            "warn",
+        )
+
+        self.assertEqual(
+            ["adr-compliance-checker", "performance-slo-validator", "code-reviewer"],
+            agents,
+        )
+
+    def test_resolve_agents_should_use_single_reviewer_when_using_profile_defaults(self) -> None:
         agents = review_cli.resolve_agents("", "warn")
 
-        self.assertIn("semantic-equivalence-auditor", agents)
+        self.assertEqual(["code-reviewer"], agents)
 
     def test_apply_delivery_profile_defaults_should_resolve_llm_backend(self) -> None:
         args = Namespace(
@@ -58,7 +90,7 @@ class LlmReviewBackendCliTests(unittest.TestCase):
 
         self.assertEqual("codex-cli", updated.llm_backend)
 
-    def test_validate_args_should_fail_when_openai_backend_missing_requirements(self) -> None:
+    def test_validate_args_should_allow_self_check_without_openai_requirements(self) -> None:
         args = Namespace(
             uncommitted=False,
             commit=None,
@@ -83,8 +115,7 @@ class LlmReviewBackendCliTests(unittest.TestCase):
         ):
             errors = review_cli.validate_args(args)
 
-        self.assertIn("python package 'openai' is not installed", errors)
-        self.assertIn("OPENAI_API_KEY is not set", errors)
+        self.assertEqual([], errors)
         self.assertEqual("openai-api", args._llm_backend_info["backend"])
 
     def test_validate_args_should_allow_prompts_only_even_when_backend_not_ready(self) -> None:
@@ -114,7 +145,7 @@ class LlmReviewBackendCliTests(unittest.TestCase):
 
         self.assertEqual([], errors)
 
-    def test_validate_args_should_fail_when_semantic_gate_require_omits_semantic_reviewer_from_explicit_agents(self) -> None:
+    def test_validate_args_should_allow_semantic_require_with_single_reviewer(self) -> None:
         args = Namespace(
             uncommitted=False,
             commit=None,
@@ -127,22 +158,19 @@ class LlmReviewBackendCliTests(unittest.TestCase):
             dry_run_plan=False,
             prompts_only=False,
             llm_backend="codex-cli",
-            agents="code-reviewer,security-auditor",
+            agents="code-reviewer",
             semantic_gate="require",
             _agents_explicit=True,
         )
         with mock.patch.object(
             review_cli,
             "inspect_llm_backend",
-            return_value={
-                "backend": "codex-cli",
-                "available": True,
-                "blocking_errors": [],
-            },
+            return_value={"backend": "codex-cli", "available": True, "blocking_errors": []},
         ):
             errors = review_cli.validate_args(args)
 
-        self.assertTrue(any("semantic-equivalence-auditor" in item for item in errors))
+        self.assertEqual([], errors)
+
 
     def test_summary_base_should_include_backend_readiness(self) -> None:
         args = Namespace(
