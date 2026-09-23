@@ -62,8 +62,8 @@ class Chapter6RouteTests(unittest.TestCase):
                 "eligible": False,
                 "reason": "no_low_priority_findings",
                 "performed": False,
-                "decision_log_path": "",
-                "execution_plan_path": "",
+                "register_path": "",
+                "register_status": "",
             },
         }
 
@@ -359,6 +359,7 @@ class Chapter6RouteTests(unittest.TestCase):
                     "item_count": 1,
                     "findings": [
                         {
+                            "finding_id": "llm-semantic-1",
                             "severity": "P2",
                             "agent": "semantic-equivalence-auditor",
                             "message": "Evidence wording is still too weak.",
@@ -401,8 +402,36 @@ class Chapter6RouteTests(unittest.TestCase):
             self.assertEqual("record-residual", route["preferred_lane"])
             self.assertTrue(record["eligible"])
             self.assertTrue(record["performed"])
-            self.assertTrue((root / record["decision_log_path"]).exists())
-            self.assertTrue((root / record["execution_plan_path"]).exists())
+            self.assertEqual("docs/technical-debt.md", record["register_path"])
+            self.assertTrue((root / record["register_path"]).exists())
+            first_register = (root / record["register_path"]).read_text(encoding="utf-8")
+            with (
+                mock.patch.object(chapter6_route, "build_resume_payload", return_value=(1, payload)),
+                mock.patch.object(chapter6_route, "_derive_change_scope", return_value={"changed_paths": ["README.md"]}),
+            ):
+                _, second_route = chapter6_route.route_chapter6(repo_root=root, task_id="15", record_residual=True)
+            self.assertEqual("unchanged", second_route["residual_recording"]["register_status"])
+            self.assertEqual(first_register, (root / record["register_path"]).read_text(encoding="utf-8"))
+            self.assertFalse((root / "decision-logs").exists())
+            self.assertFalse((root / "execution-plans").exists())
+
+    def test_p2_fix_through_should_keep_p2_finding_in_must_fix_path(self) -> None:
+        eligible, reason = chapter6_route._residual_reason_from_agent_review(
+            {
+                "findings": [
+                    {
+                        "finding_id": "p2-review-gap",
+                        "severity": "P2",
+                        "category": "llm-review",
+                        "owner_step": "sc-llm-review",
+                        "message": "Verification gap remains.",
+                    }
+                ]
+            },
+            fix_through="P2",
+        )
+        self.assertFalse(eligible)
+        self.assertEqual("must_fix_severity_finding_present", reason)
 
     def test_should_not_record_residual_docs_when_high_severity_finding_exists(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
