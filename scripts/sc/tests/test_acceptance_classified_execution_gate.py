@@ -64,7 +64,6 @@ class ClassifiedExecutionGateTests(unittest.TestCase):
                         "acceptance_check.py", "--task-id", "15", "--delivery-profile", profile,
                         "--dry-run-plan", "--only", "tests",
                     ]), \
-                    patch.object(acceptance_check, "_restore_task_triplet_from_head_if_needed"), \
                     patch.object(acceptance_check, "resolve_triplet", return_value=triplet), \
                     patch.object(acceptance_check, "repo_root", return_value=root), \
                     patch.object(acceptance_check, "ci_dir", return_value=root / "out"):
