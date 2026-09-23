@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from impact_analysis_handoff import validate_handoff
+from _chapter6_recovery_common import route_execution_policy
 
 
 def _repo_root() -> Path:
@@ -52,10 +53,12 @@ def resolve_profile_policy(
     if resolved_security not in {"host-safe", "strict"}:
         resolved_security = "host-safe"
 
-    default_fix_through = "P0" if resolved_profile == "playable-ea" else "P1"
+    default_fix_through = "P1"
     resolved_fix_through = str(fix_through or default_fix_through).strip().upper() or default_fix_through
     if resolved_fix_through not in {"P0", "P1", "P2", "P3"}:
         resolved_fix_through = default_fix_through
+    if resolved_fix_through == "P0":
+        raise ValueError("fix-through P0 is below the repository P1 must-fix floor")
 
     return {
         "delivery_profile": resolved_profile,
@@ -64,7 +67,7 @@ def resolve_profile_policy(
         "execution_plan_policy": "warn" if resolved_profile == "playable-ea" else "draft",
         "red_verify": "auto" if resolved_profile == "standard" else "unit",
         "needs_fix_max_rounds": "1",
-        "record_residual": "true" if resolved_fix_through in {"P0", "P1"} else "false",
+        "record_residual": "true" if resolved_fix_through == "P1" else "false",
     }
 
 
@@ -89,7 +92,15 @@ def build_resume_task_cmd(task_id: str, *, frozen_context: str = "", impact_repo
     ]
 
 
-def build_chapter6_route_cmd(task_id: str, *, record_residual: bool, frozen_context: str = "", impact_report: str = "", revision: str = "") -> list[str]:
+def build_chapter6_route_cmd(
+    task_id: str,
+    *,
+    record_residual: bool,
+    fix_through: str = "P1",
+    frozen_context: str = "",
+    impact_report: str = "",
+    revision: str = "",
+) -> list[str]:
     cmd = [
         "py",
         "-3",
@@ -103,11 +114,17 @@ def build_chapter6_route_cmd(task_id: str, *, record_residual: bool, frozen_cont
     ]
     if record_residual:
         cmd.append("--record-residual")
+    cmd.extend(["--fix-through", str(fix_through or "P1")])
     return cmd
 
 
-def build_check_tdd_plan_cmd(task_id: str, *, profile_policy: dict[str, str]) -> list[str]:
-    return [
+def build_check_tdd_plan_cmd(
+    task_id: str,
+    *,
+    profile_policy: dict[str, str],
+    coordination_signals: list[str] | None = None,
+) -> list[str]:
+    cmd = [
         "py",
         "-3",
         "scripts/sc/check_tdd_execution_plan.py",
@@ -120,6 +137,10 @@ def build_check_tdd_plan_cmd(task_id: str, *, profile_policy: dict[str, str]) ->
         "--execution-plan-policy",
         str(profile_policy["execution_plan_policy"]),
     ]
+    for signal in coordination_signals or []:
+        if str(signal or "").strip():
+            cmd.extend(["--coordination-signal", str(signal).strip()])
+    return cmd
 
 
 def build_red_first_cmd(task_id: str, *, profile_policy: dict[str, str], godot_bin: str) -> list[str]:
@@ -167,6 +188,8 @@ def build_review_pipeline_cmd(task_id: str, *, profile_policy: dict[str, str], g
         str(profile_policy["delivery_profile"]),
         "--security-profile",
         str(profile_policy["security_profile"]),
+        "--fix-through",
+        str(profile_policy["fix_through"]),
     ]
     if str(godot_bin).strip():
         cmd += ["--godot-bin", str(godot_bin)]
@@ -190,6 +213,8 @@ def build_needs_fix_fast_cmd(task_id: str, *, profile_policy: dict[str, str]) ->
         str(profile_policy["delivery_profile"]),
         "--security-profile",
         str(profile_policy["security_profile"]),
+        "--fix-through",
+        str(profile_policy["fix_through"]),
         "--rerun-failing-only",
         "--max-rounds",
         str(profile_policy["needs_fix_max_rounds"]),
@@ -252,6 +277,10 @@ def _route_blocked_by(route_payload: dict[str, Any] | None) -> str:
     return str((route_payload or {}).get("blocked_by") or "").strip().lower()
 
 
+def _route_execution_allowed(route_payload: dict[str, Any] | None) -> bool:
+    return bool(route_execution_policy(route_payload).get("execution_allowed"))
+
+
 def _route_next_action(route_payload: dict[str, Any] | None) -> str:
     route = route_payload or {}
     value = route.get("chapter6_next_action")
@@ -299,10 +328,13 @@ def _evaluate_route_state(route_payload: dict[str, Any] | None, *, allow_needs_f
     lane = _route_lane(route_payload)
     next_action = _route_next_action(route_payload)
     has_recovery_signal = _initial_route_has_recovery_signal(route_payload)
+    execution_allowed = _route_execution_allowed(route_payload)
     stop_reason = ""
     needs_fix = False
 
-    if has_recovery_signal:
+    if not execution_allowed or blocked_by == "chapter5_readiness":
+        stop_reason = "chapter5_readiness"
+    elif has_recovery_signal:
         if blocked_by == "artifact_integrity" or latest_reason == "planned_only_incomplete" or latest_run_type == "planned-only":
             stop_reason = "artifact-integrity"
         elif blocked_by in {"approval_pending", "approval_invalid"}:
@@ -329,7 +361,7 @@ def _evaluate_route_state(route_payload: dict[str, Any] | None, *, allow_needs_f
         elif blocked_by in {"rerun_guard", "llm_retry_stop_loss", "sc_test_retry_stop_loss", "waste_signals", "repo-noise", "recent_failure_summary"}:
             stop_reason = blocked_by
 
-    if allow_needs_fix:
+    if allow_needs_fix and execution_allowed and stop_reason != "chapter5_readiness":
         if next_action in {"run-6.8", "needs-fix-fast"}:
             needs_fix = True
         elif next_action not in {"continue", "pause", "fork", "resume", "inspect", "rerun", "fix-and-resume"}:
@@ -337,6 +369,7 @@ def _evaluate_route_state(route_payload: dict[str, Any] | None, *, allow_needs_f
 
     return {
         "has_recovery_signal": has_recovery_signal,
+        "execution_allowed": execution_allowed,
         "lane": lane,
         "next_action": next_action,
         "blocked_by": blocked_by,
@@ -449,6 +482,11 @@ def _decide_phase(
     approval_fork_ready = required_action == "fork" and status == "approved" and ("fork" in allowed_actions or not allowed_actions)
     no_increment_stop_reason = _no_increment_stop_reason(resume_payload, route_payload)
 
+    if not bool(route_eval["execution_allowed"]) or blocked_by == "chapter5_readiness":
+        return {
+            "action": "blocked",
+            "stop_reason": "chapter5_readiness",
+        }
     if approval_resume_stop_reason:
         return {
             "action": "blocked",
@@ -574,7 +612,7 @@ def build_execution_plan(
     )
     steps: list[dict[str, Any]] = [
         _build_step("resume-task", build_resume_task_cmd(task_id)),
-        _build_step("chapter6-route-initial", build_chapter6_route_cmd(task_id, record_residual=record_residual)),
+        _build_step("chapter6-route-initial", build_chapter6_route_cmd(task_id, record_residual=record_residual, fix_through=str(profile_policy["fix_through"]))),
     ]
     if decision["initial_phase"]["action"] == "blocked":
         return {
@@ -603,14 +641,14 @@ def build_execution_plan(
                         revision=revision,
                     ),
                 ),
-                _build_step("chapter6-route-post-review", build_chapter6_route_cmd(task_id, record_residual=record_residual)),
+                _build_step("chapter6-route-post-review", build_chapter6_route_cmd(task_id, record_residual=record_residual, fix_through=str(profile_policy["fix_through"]))),
             ]
         )
         if decision["post_review_phase"]["action"] == "needs-fix-fast":
             steps.extend(
                 [
                     _build_step("needs-fix-fast", build_needs_fix_fast_cmd(task_id, profile_policy=profile_policy)),
-                    _build_step("chapter6-route-post-needs-fix", build_chapter6_route_cmd(task_id, record_residual=record_residual)),
+                    _build_step("chapter6-route-post-needs-fix", build_chapter6_route_cmd(task_id, record_residual=record_residual, fix_through=str(profile_policy["fix_through"]))),
                 ]
             )
             if decision["final_phase"]["action"] == "blocked":
@@ -643,7 +681,7 @@ def build_execution_plan(
         steps.extend(
             [
                 _build_step("needs-fix-fast", build_needs_fix_fast_cmd(task_id, profile_policy=profile_policy)),
-                _build_step("chapter6-route-post-needs-fix", build_chapter6_route_cmd(task_id, record_residual=record_residual)),
+                _build_step("chapter6-route-post-needs-fix", build_chapter6_route_cmd(task_id, record_residual=record_residual, fix_through=str(profile_policy["fix_through"]))),
             ]
         )
         if decision["final_phase"]["action"] == "continue":
@@ -677,7 +715,7 @@ def build_execution_plan(
                     revision=revision,
                 ),
             ),
-            _build_step("chapter6-route-post-review", build_chapter6_route_cmd(task_id, record_residual=record_residual)),
+            _build_step("chapter6-route-post-review", build_chapter6_route_cmd(task_id, record_residual=record_residual, fix_through=str(profile_policy["fix_through"]))),
         ]
     )
 
@@ -685,7 +723,7 @@ def build_execution_plan(
         steps.extend(
             [
                 _build_step("needs-fix-fast", build_needs_fix_fast_cmd(task_id, profile_policy=profile_policy)),
-                _build_step("chapter6-route-post-needs-fix", build_chapter6_route_cmd(task_id, record_residual=record_residual)),
+                _build_step("chapter6-route-post-needs-fix", build_chapter6_route_cmd(task_id, record_residual=record_residual, fix_through=str(profile_policy["fix_through"]))),
             ]
         )
         if decision["final_phase"]["action"] == "blocked":
@@ -830,6 +868,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--impact-report", default="")
     parser.add_argument("--revision", default="")
     parser.add_argument("--binding-evidence", default="")
+    parser.add_argument("--execution-plan-signal", action="append", default=[], help="Explicit durable coordination signal for 6.3 plan policy.")
     return parser
 
 
@@ -838,11 +877,25 @@ def main() -> int:
     task_id = str(args.task_id).strip()
     out_dir = Path(str(args.out_dir).strip()) if str(args.out_dir).strip() else _default_out_dir(task_id)
     out_dir.mkdir(parents=True, exist_ok=True)
-    profile_policy = resolve_profile_policy(
-        str(args.delivery_profile),
-        security_profile=str(args.security_profile),
-        fix_through=str(args.fix_through),
-    )
+    try:
+        profile_policy = resolve_profile_policy(
+            str(args.delivery_profile),
+            security_profile=str(args.security_profile),
+            fix_through=str(args.fix_through),
+        )
+    except ValueError as exc:
+        payload = {
+            "cmd": "run-single-task-chapter6",
+            "task_id": task_id,
+            "status": "fail",
+            "stop_reason": "invalid_fix_through",
+            "message": str(exc),
+            "steps": [],
+            "out_dir": str(out_dir).replace("\\", "/"),
+        }
+        _write_json(out_dir / "summary.json", payload)
+        print(f"SINGLE_TASK_CHAPTER6 status=fail task={task_id} stop=invalid_fix_through")
+        return 2
 
     handoff = validate_handoff(args.frozen_context, args.impact_report, args.revision, repo_root=_repo_root(), consumer="chapter6", task_id=task_id, binding_evidence=args.binding_evidence)
     if not handoff.ok:
@@ -921,7 +974,7 @@ def main() -> int:
     initial_route_step, initial_route = _run_json_step(
         out_dir,
         name="chapter6-route-initial",
-        cmd=build_chapter6_route_cmd(task_id, record_residual=record_residual),
+        cmd=build_chapter6_route_cmd(task_id, record_residual=record_residual, fix_through=str(profile_policy["fix_through"])),
     )
     summary["steps"].append(initial_route_step)
     summary["initial_route"] = initial_route
@@ -968,6 +1021,12 @@ def main() -> int:
             route_payload = initial_route
         elif name in {"local-hard-checks-preflight", "local-hard-checks"}:
             route_payload = final_route if isinstance(final_route, dict) and final_route else post_review_route
+        if not _route_execution_allowed(route_payload) or _route_blocked_by(route_payload) == "chapter5_readiness":
+            summary["status"] = "blocked"
+            summary["stop_reason"] = "chapter5_readiness"
+            _write_json(out_dir / "summary.json", summary)
+            print(f"SINGLE_TASK_CHAPTER6 status=blocked task={task_id} stop=chapter5_readiness")
+            return False
         if _command_is_forbidden(route_payload, cmd):
             summary["status"] = "blocked"
             summary["stop_reason"] = f"forbidden-command:{name}"
@@ -997,7 +1056,7 @@ def main() -> int:
         step, payload = _run_json_step(
             out_dir,
             name=name,
-            cmd=build_chapter6_route_cmd(task_id, record_residual=record_residual),
+            cmd=build_chapter6_route_cmd(task_id, record_residual=record_residual, fix_through=str(profile_policy["fix_through"])),
         )
         summary["steps"].append(step)
         summary[name.replace("-", "_")] = payload
@@ -1074,7 +1133,7 @@ def main() -> int:
                 return 1
     else:
         full_path_steps = [
-            ("check-tdd-plan", build_check_tdd_plan_cmd(task_id, profile_policy=profile_policy)),
+            ("check-tdd-plan", build_check_tdd_plan_cmd(task_id, profile_policy=profile_policy, coordination_signals=list(args.execution_plan_signal or []))),
             ("red-first", build_red_first_cmd(task_id, profile_policy=profile_policy, godot_bin=str(args.godot_bin))),
             ("green", build_build_tdd_cmd(task_id, stage="green", profile_policy=profile_policy)),
             ("refactor", build_build_tdd_cmd(task_id, stage="refactor", profile_policy=profile_policy)),

@@ -20,6 +20,7 @@ import _acceptance_testgen_llm as _llm_helpers  # noqa: E402
 import _acceptance_testgen_quality as _quality_helpers  # noqa: E402
 import _acceptance_testgen_red as _red_helpers  # noqa: E402
 import _acceptance_testgen_refs as _refs_helpers  # noqa: E402
+from _acceptance_verification_surface import collect_acceptance_verification  # noqa: E402
 from _llm_backend import KNOWN_LLM_BACKENDS, resolve_llm_backend, run_llm_exec  # noqa: E402
 from _taskmaster import resolve_triplet  # noqa: E402
 from _util import ci_dir, repo_root, run_cmd, write_json, write_text  # noqa: E402
@@ -72,13 +73,14 @@ def _validate_generated_test_content(*, ref: str, content: str):
     return _quality_helpers.validate_generated_test_content(ref=ref, content=content)
 
 
-def _evaluate_red_verification(*, out_dir: Path, verify_mode: str, test_step, verify_log_text: str):
+def _evaluate_red_verification(*, out_dir: Path, verify_mode: str, test_step, verify_log_text: str, expected_test_refs: list[str]):
     return _red_helpers.evaluate_red_verification(
         repo_root=repo_root(),
         out_dir=out_dir,
         verify_mode=verify_mode,
         test_step=test_step,
         verify_log_text=verify_log_text,
+        expected_test_refs=expected_test_refs,
     )
 
 
@@ -149,11 +151,16 @@ def _generate_missing_files(*, refs: list[str], by_ref, task_id: str, title: str
     created = 0
     any_gd = any(Path(ref).suffix.lower() == ".gd" for ref in refs)
     primary_ref = None
+    missing_refs = [
+        ref
+        for ref in refs
+        if not (repo_root() / str(ref).replace("\\", "/")).exists()
+    ]
     context_excerpt = _load_optional_prd_excerpt(
         include_prd_context=bool(args.include_prd_context),
         prd_context_path=str(args.prd_context_path),
     )
-    if str(args.tdd_stage) == "red-first":
+    if str(args.tdd_stage) == "red-first" and missing_refs:
         primary_ref, primary_meta = _select_primary_ref_with_llm(
             task_id=task_id,
             title=title,
@@ -250,6 +257,77 @@ def _generate_missing_files(*, refs: list[str], by_ref, task_id: str, title: str
     return results, created, any_gd, primary_ref
 
 
+def _red_requirement_state(triplet, *, task_id: str) -> dict[str, object]:
+    machine: list[str] = []
+    non_machine: list[str] = []
+    unclassified: list[str] = []
+    saw_acceptance = False
+    mapping = collect_acceptance_verification(triplet)
+
+    for view in (getattr(triplet, "back", None), getattr(triplet, "gameplay", None)):
+        if not isinstance(view, dict):
+            continue
+        acceptance = view.get("acceptance")
+        if not isinstance(acceptance, list):
+            continue
+        for index, raw in enumerate(acceptance, start=1):
+            if not str(raw or "").strip():
+                continue
+            saw_acceptance = True
+            anchor = f"ACC:T{task_id}.{index}"
+            classified = mapping.get(anchor)
+            if not isinstance(classified, dict):
+                unclassified.append(anchor)
+                continue
+            raw_obligations = classified.get("obligations")
+            if raw_obligations is None:
+                rows = [classified]
+            elif isinstance(raw_obligations, list) and raw_obligations:
+                rows = raw_obligations
+            else:
+                unclassified.append(anchor)
+                continue
+            for row in rows:
+                if not isinstance(row, dict):
+                    unclassified.append(anchor)
+                    continue
+                obligation_id = str(row.get("obligation_id") or "").strip()
+                label = f"{anchor}#{obligation_id}" if raw_obligations is not None else anchor
+                surface = str(row.get("verification_surface") or "").strip()
+                if surface == "human-experience":
+                    non_machine.append(label)
+                    continue
+                if surface == "player-journey":
+                    journey_scope = str(row.get("journey_scope") or "task-local").strip().lower()
+                    if journey_scope in {"mvg-critical", "mvg-full"}:
+                        non_machine.append(label)
+                        continue
+                    if journey_scope == "task-local":
+                        machine.append(label)
+                        continue
+                    unclassified.append(label)
+                    continue
+                if surface in {"core-behavior", "godot-scene"}:
+                    machine.append(label)
+                    continue
+                unclassified.append(label)
+
+    def unique(values: list[str]) -> list[str]:
+        return list(dict.fromkeys(values))
+
+    machine = unique(machine)
+    non_machine = unique(non_machine)
+    unclassified = unique(unclassified)
+    red_not_required = bool(saw_acceptance and non_machine and not machine and not unclassified)
+    return {
+        "red_not_required": red_not_required,
+        "machine_obligations": machine,
+        "non_machine_obligations": non_machine,
+        "unclassified_anchors": unclassified,
+    }
+
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Generate missing tests from acceptance Refs with an LLM backend.")
     ap.add_argument("--task-id", required=True, help="Task id (master id, e.g. 11).")
@@ -339,6 +417,28 @@ def main() -> int:
         is_allowed_test_path_fn=_is_allowed_test_path,
         write_json_fn=write_json,
     )
+    red_requirement = _red_requirement_state(triplet, task_id=task_id)
+    if str(args.tdd_stage) == "red-first" and bool(red_requirement.get("red_not_required")):
+        summary = {
+            "cmd": "sc-llm-generate-tests-from-acceptance-refs",
+            "task_id": task_id,
+            "title": title,
+            "tdd_stage": str(args.tdd_stage),
+            "primary_ref": "",
+            "refs_total": len(refs),
+            "created": 0,
+            "sync_test_refs_rc": 0,
+            "verify_mode": "none",
+            "test_step": None,
+            "llm_backend": str(args.llm_backend),
+            "results": [],
+            "red_not_required": True,
+            "red_requirement": red_requirement,
+            "out_dir": str(out_dir),
+        }
+        write_json(out_dir / f"summary-{task_id}.json", summary)
+        print(f"SC_LLM_ACCEPTANCE_TESTS status=ok created=0 red_not_required=true out={out_dir}")
+        return 0
     if not refs:
         print(f"SC_LLM_ACCEPTANCE_TESTS ERROR: no allowed test refs found for task_id={task_id}.")
         return 1
@@ -395,6 +495,7 @@ def main() -> int:
             verify_mode=verify_mode,
             test_step=test_step,
             verify_log_text=verify_out,
+            expected_test_refs=[result.ref for result in results if result.status == "ok"],
         )
         summary["red_verify"] = red_verify
     write_json(out_dir / f"summary-{task_id}.json", summary)

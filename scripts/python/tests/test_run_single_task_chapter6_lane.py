@@ -29,6 +29,7 @@ def _load_module(name: str, relative_path: str):
 
 
 lane = _load_module("single_task_chapter6_lane_module", "scripts/python/run_single_task_chapter6_lane.py")
+chapter6_route_mod = _load_module("chapter6_route_orchestration_regression", "scripts/python/chapter6_route.py")
 
 
 class RunSingleTaskChapter6LaneTests(unittest.TestCase):
@@ -125,6 +126,23 @@ class RunSingleTaskChapter6LaneTests(unittest.TestCase):
             cmd[-6:],
         )
 
+    def test_review_and_needs_fix_commands_should_propagate_fix_through(self) -> None:
+        policy = lane.resolve_profile_policy("standard", fix_through="P2")
+        review_cmd = lane.build_review_pipeline_cmd(
+            "15",
+            profile_policy=policy,
+            godot_bin="",
+        )
+        needs_fix_cmd = lane.build_needs_fix_fast_cmd(
+            "15",
+            profile_policy=policy,
+        )
+
+        self.assertIn("--fix-through", review_cmd)
+        self.assertEqual("P2", review_cmd[review_cmd.index("--fix-through") + 1])
+        self.assertIn("--fix-through", needs_fix_cmd)
+        self.assertEqual("P2", needs_fix_cmd[needs_fix_cmd.index("--fix-through") + 1])
+
     def test_partial_handoff_is_rejected_fail_closed(self) -> None:
         result = lane.validate_handoff(
             "logs/ci/context.frozen.json",
@@ -139,14 +157,18 @@ class RunSingleTaskChapter6LaneTests(unittest.TestCase):
         self.assertEqual("invalid_kcp_binding", result.code)
         self.assertEqual(11, result.exit_code)
 
-    def test_resolve_profile_policy_should_default_to_p0_for_playable_ea(self) -> None:
+    def test_resolve_profile_policy_should_default_to_p1_for_playable_ea(self) -> None:
         policy = lane.resolve_profile_policy("playable-ea")
 
         self.assertEqual("playable-ea", policy["delivery_profile"])
         self.assertEqual("host-safe", policy["security_profile"])
-        self.assertEqual("P0", policy["fix_through"])
+        self.assertEqual("P1", policy["fix_through"])
         self.assertEqual("warn", policy["execution_plan_policy"])
         self.assertEqual("unit", policy["red_verify"])
+
+    def test_resolve_profile_policy_should_reject_explicit_p0_below_floor(self) -> None:
+        with self.assertRaisesRegex(ValueError, "P1 must-fix floor"):
+            lane.resolve_profile_policy("fast-ship", fix_through="P0")
 
     def test_resolve_profile_policy_should_default_to_p1_for_standard(self) -> None:
         policy = lane.resolve_profile_policy("standard")
@@ -1573,6 +1595,135 @@ class RunSingleTaskChapter6LaneTests(unittest.TestCase):
             )
             payload = json.loads((out_dir / "summary.json").read_text(encoding="utf-8"))
             self.assertEqual("ok", payload["status"])
+
+    def test_main_must_not_dispatch_when_real_route_disallows_execution(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            out_dir = root / "logs" / "ci" / "chapter6-readiness-block"
+            resume_payload = {
+                "task_id": "15",
+                "run_id": "run-15",
+                "recommended_action": "needs-fix-fast",
+                "recommended_command": "py -3 scripts/sc/llm_review_needs_fix_fast.py --task-id 15",
+                "candidate_commands": {
+                    "needs_fix_fast": "py -3 scripts/sc/llm_review_needs_fix_fast.py --task-id 15",
+                },
+                "latest_summary_signals": {
+                    "reason": "rerun_blocked:deterministic_green_llm_not_clean",
+                },
+                "chapter6_hints": {
+                    "can_go_to_6_8": True,
+                    "next_action": "run-6.8",
+                    "blocked_by": "",
+                },
+                "inspection": {"paths": {}},
+            }
+            with (
+                mock.patch.object(
+                    chapter6_route_mod,
+                    "load_task_readiness",
+                    return_value=(False, {}, "chapter5_readiness_missing"),
+                ),
+                mock.patch.object(
+                    chapter6_route_mod,
+                    "build_resume_payload",
+                    return_value=(0, resume_payload),
+                ),
+                mock.patch.object(
+                    chapter6_route_mod,
+                    "_derive_change_scope",
+                    return_value={"changed_paths": ["scripts/sc/run_review_pipeline.py"]},
+                ),
+                mock.patch.object(
+                    chapter6_route_mod,
+                    "_changed_paths_hit_reviewer_anchors",
+                    return_value=True,
+                ),
+                mock.patch.object(
+                    chapter6_route_mod,
+                    "_load_agent_review",
+                    return_value={},
+                ),
+                mock.patch.object(
+                    chapter6_route_mod,
+                    "_load_low_priority_findings",
+                    return_value=[],
+                ),
+                mock.patch.object(
+                    chapter6_route_mod,
+                    "_classify_repo_noise",
+                    return_value=("task-issue", ""),
+                ),
+            ):
+                route_rc, real_route = chapter6_route_mod.route_chapter6(
+                    repo_root=root,
+                    task_id="15",
+                )
+
+            self.assertEqual(0, route_rc)
+            self.assertEqual("run-6.8", real_route["preferred_lane"])
+            self.assertFalse(real_route["execution_allowed"])
+            self.assertEqual("chapter5_readiness", real_route["blocked_by"])
+
+            argv = [
+                "run_single_task_chapter6_lane.py",
+                "--task-id",
+                "15",
+                "--delivery-profile",
+                "fast-ship",
+                "--out-dir",
+                str(out_dir),
+            ]
+            executed_steps: list[str] = []
+
+            def fake_run_json_step(*_args, name, **_kwargs):
+                if name == "resume-task":
+                    return (
+                        {
+                            "name": name,
+                            "cmd": [],
+                            "rc": 0,
+                            "stdout_tail": "",
+                            "stderr_tail": "",
+                            "log": "resume.log",
+                        },
+                        resume_payload,
+                    )
+                if name == "chapter6-route-initial":
+                    return (
+                        {
+                            "name": name,
+                            "cmd": [],
+                            "rc": 0,
+                            "stdout_tail": "",
+                            "stderr_tail": "",
+                            "log": "route-initial.log",
+                        },
+                        real_route,
+                    )
+                raise AssertionError(f"unexpected JSON step dispatch: {name}")
+
+            def fake_run_plain_step(*_args, name, **_kwargs):
+                executed_steps.append(str(name))
+                raise AssertionError(f"execution step must not dispatch while readiness is blocked: {name}")
+
+            with (
+                mock.patch.object(sys, "argv", argv),
+                mock.patch.object(lane, "_repo_root", return_value=root),
+                mock.patch.object(lane, "_run_json_step", side_effect=fake_run_json_step),
+                mock.patch.object(lane, "_run_plain_step", side_effect=fake_run_plain_step),
+            ):
+                rc = lane.main()
+
+            self.assertEqual(1, rc)
+            self.assertEqual([], executed_steps)
+            summary = json.loads((out_dir / "summary.json").read_text(encoding="utf-8"))
+            self.assertEqual("blocked", summary["status"])
+            self.assertEqual("chapter5_readiness", summary["stop_reason"])
+            self.assertNotIn("needs-fix-fast", [
+                str(step.get("name") or "")
+                for step in summary["steps"]
+            ])
 
     def test_parse_json_stdout_should_extract_payload_from_mixed_output(self) -> None:
         stdout = 'INFO preparing route\n{\n  "preferred_lane": "run-6.8",\n  "blocked_by": "rerun_guard"\n}\nDone\n'

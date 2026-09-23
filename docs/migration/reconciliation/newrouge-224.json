@@ -1,0 +1,24 @@
+{
+  "schema_version": "repo.cross-repo-migration-reconciliation.v1",
+  "source": {
+    "repo": "skyoxu/newrouge",
+    "pr": 224,
+    "merge_commit": "04355dd681bb1fb17420e7a6a5c0bfe5efaaeba2",
+    "changed_file_count": 1,
+    "changed_files": [
+      "execution-plans/2026-09-22-workflow-optimization-v2.md"
+    ]
+  },
+  "target": {
+    "repo": "skyoxu/lastking",
+    "branch": "sync-newrouge-217-227-20260923",
+    "pr": 115
+  },
+  "entries": [
+    {
+      "source_path": "execution-plans/2026-09-22-workflow-optimization-v2.md",
+      "classification": "business_only_drop",
+      "rationale": "Source-specific workflow-v2 execution/closure evidence contains newrouge revisions and run evidence. Target migration evidence is owned by lastking PR #115 and is not copied as target validation."
+    }
+  ]
+}

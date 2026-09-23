@@ -16,6 +16,7 @@ CS_FACT_RE = re.compile(r"^\s*\[\s*(Fact|Theory)\s*\]\s*$")
 CS_METHOD_RE = re.compile(r"^\s*public\s+(?:async\s+)?(?:Task(?:<[^>]+>)?|void)\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(")
 CS_CLASS_RE = re.compile(r"^\s*public\s+(?:sealed\s+|static\s+|partial\s+)*class\s+([A-Za-z_][A-Za-z0-9_]*)\b")
 GD_TEST_FUNC_RE = re.compile(r"^\s*func\s+(test_[A-Za-z0-9_]+)\s*\(", flags=re.IGNORECASE)
+JOURNEY_SCOPES = {"task-local", "mvg-critical", "mvg-full"}
 
 
 def repo_root() -> Path:
@@ -97,7 +98,7 @@ def parse_trx_test_names(trx_path: Path) -> set[str]:
     names: set[str] = set()
     root = ET.parse(trx_path).getroot()
     for elem in root.iter():
-        if elem.tag.endswith("UnitTestResult"):
+        if elem.tag.endswith("UnitTestResult") and elem.attrib.get("outcome", "").strip().lower() == "passed":
             tn = elem.attrib.get("testName")
             if tn:
                 names.add(tn)
@@ -117,11 +118,78 @@ def parse_junit_testcase_names(results_xml: Path) -> set[str]:
     names: set[str] = set()
     root = ET.parse(results_xml).getroot()
     for elem in root.iter():
-        if elem.tag == "testcase":
-            n = elem.attrib.get("name")
-            if n:
-                names.add(n)
+        if elem.tag.rsplit("}", 1)[-1] != "testcase":
+            continue
+        if elem.attrib.get("status", "").strip().lower() in {"skipped", "failed", "error", "notexecuted"}:
+            continue
+        if any(child.tag.rsplit("}", 1)[-1] in {"skipped", "failure", "error"} for child in elem):
+            continue
+        n = elem.attrib.get("name")
+        if n:
+            names.add(n)
     return names
+
+
+def _normalize_repo_ref(value: str) -> str:
+    return str(value or "").strip().replace("\\", "/")
+
+
+def _eligible_mvg_manifests(*, root: Path, primary_refs: list[str], expected_mode: str) -> list[str]:
+    eligible: list[str] = []
+    for raw in primary_refs:
+        ref = _normalize_repo_ref(raw)
+        path = root / ref
+        if not ref.startswith("docs/testing/mvg/") or not ref.casefold().endswith(".json") or not path.is_file():
+            continue
+        try:
+            payload = load_json(path)
+        except (OSError, json.JSONDecodeError):
+            continue
+        coverage = payload.get("coverage") if isinstance(payload, dict) and isinstance(payload.get("coverage"), dict) else {}
+        blockers = coverage.get("blocking_task_ids") if isinstance(coverage.get("blocking_task_ids"), list) else []
+        if str(coverage.get("mode") or "").strip().lower() == expected_mode and not blockers:
+            eligible.append(ref)
+    return eligible
+
+
+def find_mvg_runtime_evidence(
+    *,
+    root: Path,
+    manifest_refs: list[str],
+    candidate_revision: str,
+    expected_mode: str,
+) -> str:
+    revision = str(candidate_revision or "").strip()
+    if not revision or not manifest_refs:
+        return ""
+    manifests = {_normalize_repo_ref(item) for item in manifest_refs}
+    logs_root = root / "logs" / "ci" / "mvg-acceptance"
+    if not logs_root.is_dir():
+        return ""
+    for summary_path in sorted(logs_root.glob("*/summary.json"), key=lambda item: str(item)):
+        try:
+            payload = load_json(summary_path)
+        except (OSError, json.JSONDecodeError):
+            continue
+        if not isinstance(payload, dict):
+            continue
+        coverage = payload.get("coverage") if isinstance(payload.get("coverage"), dict) else {}
+        blockers = coverage.get("blocking_task_ids") if isinstance(coverage.get("blocking_task_ids"), list) else []
+        if (
+            str(payload.get("mode") or "").strip().lower() == "run"
+            and str(payload.get("status") or "").strip().lower() == "passed"
+            and payload.get("runtime_verified") is True
+            and not bool(payload.get("workspace_dirty"))
+            and str(payload.get("source_revision") or "").strip() == revision
+            and _normalize_repo_ref(str(payload.get("manifest") or "")) in manifests
+            and str(coverage.get("mode") or "").strip().lower() == expected_mode
+            and not blockers
+        ):
+            try:
+                return str(summary_path.relative_to(root)).replace("\\", "/")
+            except ValueError:
+                return str(summary_path).replace("\\", "/")
+    return ""
 
 
 @dataclass(frozen=True)
@@ -234,6 +302,7 @@ def validate_view(
     entry: dict[str, Any],
     trx_names: set[str],
     gdunit_names: set[str],
+    candidate_revision: str = "",
 ) -> dict[str, Any]:
     acceptance = entry.get("acceptance") or []
     if not isinstance(acceptance, list):
@@ -241,6 +310,8 @@ def validate_view(
 
     items: list[dict[str, Any]] = []
     errors: list[str] = []
+    verification = entry.get("acceptance_verification")
+    verification = verification if isinstance(verification, dict) else {}
 
     for idx, raw in enumerate(acceptance):
         text = str(raw or "").strip()
@@ -249,6 +320,71 @@ def validate_view(
         if not refs:
             items.append({"index": idx + 1, "status": "fail", "reason": "missing_refs", "anchor": anchor})
             errors.append(f"{view_name}: acceptance[{idx}] missing Refs:")
+            continue
+
+        classified = verification.get(anchor)
+        if isinstance(classified, dict):
+            raw_rows = classified.get("obligations")
+            rows = raw_rows if isinstance(raw_rows, list) else [classified]
+            if not rows:
+                items.append({"index": idx + 1, "status": "fail", "reason": "missing_obligations", "anchor": anchor})
+                errors.append(f"{view_name}: acceptance[{idx}] has no classified obligations: {anchor}")
+                continue
+            for row in rows:
+                if not isinstance(row, dict):
+                    errors.append(f"{view_name}: acceptance[{idx}] has an invalid obligation: {anchor}")
+                    continue
+                obligation_id = str(row.get("obligation_id") or "").strip()
+                label = f"{anchor}#{obligation_id}" if raw_rows is not None else anchor
+                surface = str(row.get("verification_surface") or "").strip()
+                if surface == "human-experience":
+                    items.append({"index": idx + 1, "status": "not_required", "anchor": label, "reason": "human_evidence_checked_by_verification_surface"})
+                    continue
+                if surface not in {"core-behavior", "godot-scene", "player-journey"}:
+                    errors.append(f"{view_name}: acceptance[{idx}] has an invalid verification surface: {label}")
+                    continue
+                primary = row.get("primary_evidence")
+                primary_refs = [str(ref) for ref in primary if isinstance(ref, str) and ref.strip()] if isinstance(primary, list) else []
+                if surface == "player-journey":
+                    journey_scope = str(row.get("journey_scope") or "task-local").strip().lower()
+                    if journey_scope not in JOURNEY_SCOPES:
+                        items.append({"index": idx + 1, "status": "fail", "anchor": label, "reason": "invalid_journey_scope"})
+                        errors.append(f"{view_name}: acceptance[{idx}] invalid journey_scope for {label}: {journey_scope}")
+                        continue
+                    if journey_scope in {"mvg-critical", "mvg-full"}:
+                        expected_mode = "critical" if journey_scope == "mvg-critical" else "full"
+                        manifests = _eligible_mvg_manifests(root=root, primary_refs=primary_refs, expected_mode=expected_mode)
+                        mvg_summary = find_mvg_runtime_evidence(
+                            root=root,
+                            manifest_refs=manifests,
+                            candidate_revision=candidate_revision,
+                            expected_mode=expected_mode,
+                        )
+                        executed = bool(mvg_summary)
+                        items.append({
+                            "index": idx + 1,
+                            "status": "ok" if executed else "fail",
+                            "anchor": label,
+                            "refs": primary_refs,
+                            "executed": executed,
+                            "journey_scope": journey_scope,
+                            "mvg_summary": mvg_summary,
+                        })
+                        if not executed:
+                            errors.append(
+                                f"{view_name}: acceptance[{idx}] {journey_scope} has no runtime_verified "
+                                f"MVG {expected_mode} evidence for candidate revision: {label}"
+                            )
+                        continue
+                bound_tests = [
+                    bound for ref in primary_refs
+                    if (bound := bind_anchor_to_test(root=root, ref=ref, anchor=anchor)) is not None
+                    and (surface == "player-journey" or (surface == "core-behavior" and bound.kind == "cs") or (surface == "godot-scene" and bound.kind == "gd"))
+                ]
+                executed = any(is_test_executed(bound, trx_names=trx_names, gdunit_names=gdunit_names) for bound in bound_tests)
+                items.append({"index": idx + 1, "status": "ok" if executed else "fail", "anchor": label, "refs": primary_refs, "executed": executed})
+                if not executed:
+                    errors.append(f"{view_name}: acceptance[{idx}] obligation has no executed primary test: {label}")
             continue
 
         # Find a bound test in any referenced file.
@@ -288,6 +424,7 @@ def main() -> int:
     ap.add_argument("--run-id", required=True, help="Expected sc-test run_id.")
     ap.add_argument("--out", required=True, help="Output JSON path.")
     ap.add_argument("--date", default="", help="Override date for logs lookup (YYYY-MM-DD). Default: today.")
+    ap.add_argument("--candidate-revision", default="", help="Candidate Git revision required by integration player-journey evidence.")
     args = ap.parse_args()
 
     root = repo_root()
@@ -366,9 +503,17 @@ def main() -> int:
 
     results: list[dict[str, Any]] = []
     if back_entry is not None:
-        results.append(validate_view(root=root, view_name="back", task_id=task_id, entry=back_entry, trx_names=trx_names, gdunit_names=gd_names))
+        results.append(validate_view(
+            root=root, view_name="back", task_id=task_id, entry=back_entry,
+            trx_names=trx_names, gdunit_names=gd_names,
+            candidate_revision=str(args.candidate_revision or "").strip(),
+        ))
     if game_entry is not None:
-        results.append(validate_view(root=root, view_name="gameplay", task_id=task_id, entry=game_entry, trx_names=trx_names, gdunit_names=gd_names))
+        results.append(validate_view(
+            root=root, view_name="gameplay", task_id=task_id, entry=game_entry,
+            trx_names=trx_names, gdunit_names=gd_names,
+            candidate_revision=str(args.candidate_revision or "").strip(),
+        ))
 
     if not results:
         meta["errors"].append("task_not_found_in_back_or_gameplay")

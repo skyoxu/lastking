@@ -53,6 +53,16 @@ This directory records frozen source-PR inventories for reusable migrations from
 | #213 | Chapter 3 semantic task grouping quality | Reconciled into CJK-aware grouping/title generation and advisory multi-Capability evidence. |
 | #215 | Unicode-aware Chapter 3 quality audit | Reconciled into task-intent quality audit and task-generation regressions. |
 | #216 | Generated Knowledge publication | `derived_regenerate`; final source reconciliation boundary for this migration. |
+| #217 | Compatibility and semantic-proof closure after #216 | Reconciled into Chapter 3/5/6 and Review guards; target business data remains unchanged. |
+| #218 | Regression closure for #217 | Reconciled into hard regressions and Chapter 6 orchestration coverage. |
+| #219 | Workflow optimization v2 | Reconciled target-natively: task-scoped context, single reviewer + lenses, P1 fix-through floor, debt-only residuals, verification surfaces, causal RED, and compact recovery. |
+| #221 | Workflow-v2 audit gap closure | Reconciled structured review contracts, target-bound RED/human evidence, stable finding IDs, and stricter review recovery semantics. |
+| #222 | Evidence-validation hardening | Reconciled fresh direct-RED evidence, execution-evidence validation, debt synchronization guards, and review timeout isolation. |
+| #223 | Final workflow-v2 P1 closure | Reconciled single-reviewer legacy compatibility and MVG critical/full journey evidence binding while preserving lastking's BattleMap-native MVG scope. |
+| #224 | Source workflow-v2 closure evidence | `business_only_drop` for the source execution-plan evidence; newrouge run IDs/revisions are not copied as lastking validation. |
+| #227 | Passed task-local Acceptance evidence | Reconciled pass-only TRX/JUnit evidence semantics and classified-obligation execution gates. |
+
+Unmerged generated Knowledge PRs #220, #225, and #226 are outside the migration inventory; no source publication payload is copied.
 
 ## Maintenance
 

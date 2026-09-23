@@ -24,6 +24,7 @@ from typing import Any
 
 from agent_to_agent_review import write_agent_review
 from _agent_review_policy import apply_agent_review_policy, apply_agent_review_signal
+from _deterministic_review import DETERMINISTIC_AGENTS
 from _delivery_profile import (
     default_security_profile_for_delivery,
     profile_acceptance_defaults,
@@ -73,7 +74,7 @@ from _pipeline_support import (
     run_step as _run_step,
     upsert_step as _upsert_step,
 )
-from _llm_review_cli import parse_agent_timeout_overrides, resolve_agents
+from _llm_review_cli import normalize_agent_timeout_overrides, parse_agent_timeout_overrides, resolve_agents
 from _change_scope import classify_change_scope_between_snapshots
 from _pipeline_history import collect_recent_failure_summary
 
@@ -194,6 +195,7 @@ DIRTY_WORKTREE_CHANGED_PATHS_CEILING = 20
 DIRTY_WORKTREE_UNSAFE_PATHS_CEILING = 8
 PROFILE_DRIFT_CHANGED_PATHS_CEILING = 8
 PROFILE_DRIFT_UNSAFE_PATHS_CEILING = 1
+TECHNICAL_DEBT_SYNC_ERROR_RC = 13
 
 
 def _read_json(path: Path) -> dict[str, Any]:
@@ -540,8 +542,13 @@ def _derive_llm_reviewer_subset_from_recent_signals(
         return {"applied": False, "reason": "logs_missing"}
 
     planned_agents = resolve_agents(llm_agents, llm_semantic_gate)
-    if len(planned_agents) < 2:
-        return {"applied": False, "reason": "planned_agents_not_wide"}
+    model_reviewers = [agent for agent in planned_agents if agent not in DETERMINISTIC_AGENTS]
+    if len(model_reviewers) <= 1:
+        return {
+            "applied": False,
+            "reason": "single_reviewer_method",
+            "planned_agents": planned_agents,
+        }
 
     current_out_dir_resolved = current_out_dir.resolve()
     candidates = sorted(
@@ -1484,6 +1491,12 @@ def _derive_llm_agent_timeout_overrides(
         if not llm_summary_path.exists():
             continue
         llm_summary = _read_json(llm_summary_path)
+        review_method = llm_summary.get("review_method") if isinstance(llm_summary.get("review_method"), dict) else {}
+        if (
+            str(review_method.get("reviewer_mode") or "").strip() != "single-reviewer"
+            or review_method.get("required_lenses") != ["Spec Compliance", "Edge Case", "Verification Gap"]
+        ):
+            continue
         for result in llm_summary.get("results", []):
             if not isinstance(result, dict):
                 continue
@@ -1847,7 +1860,7 @@ def main() -> int:
         print("[sc-review-pipeline] ERROR: invalid --task-id")
         return 2
     readiness_ok, readiness_payload, readiness_reason = load_task_readiness(repo_root(), task_id)
-    if not readiness_ok:
+    if not readiness_ok and not args.abort:
         print(
             "[sc-review-pipeline] ERROR: chapter5_readiness: "
             + readiness_reason
@@ -1861,17 +1874,19 @@ def main() -> int:
         print("[sc-review-pipeline] ERROR: --resume, --abort, and --fork are mutually exclusive.")
         return 2
 
-    handoff = validate_handoff(
-        args.frozen_context,
-        args.impact_report,
-        args.revision,
-        repo_root=repo_root(),
-        consumer="review",
-        binding_evidence=args.binding_evidence,
-    )
-    if not handoff.ok:
-        print(f"[sc-review-pipeline] ERROR: {handoff.code}: {handoff.reason}")
-        return handoff.exit_code
+    handoff = None
+    if not args.abort:
+        handoff = validate_handoff(
+            args.frozen_context,
+            args.impact_report,
+            args.revision,
+            repo_root=repo_root(),
+            consumer="review",
+            binding_evidence=args.binding_evidence,
+        )
+        if not handoff.ok:
+            print(f"[sc-review-pipeline] ERROR: {handoff.code}: {handoff.reason}")
+            return handoff.exit_code
 
     requested_run_id = str(args.run_id or "").strip() or uuid.uuid4().hex
     run_id = requested_run_id
@@ -1981,6 +1996,55 @@ def main() -> int:
         print("[sc-review-pipeline] ERROR: no existing pipeline run found for resume/abort/fork.")
         return 2
 
+    if args.abort:
+        try:
+            delivery_profile, security_profile = _resolve_pipeline_profiles(
+                requested_delivery_profile=args.delivery_profile,
+                requested_security_profile=args.security_profile,
+                source_execution_context=source_execution_context,
+                inherit_from_source=True,
+                allow_profile_reselect=False,
+            )
+        except RuntimeError as exc:
+            print(f"[sc-review-pipeline] ERROR: {exc}")
+            return 2
+        current_turn_seq = max(1, int((marathon_state or {}).get("resume_count") or 1))
+        current_turn_id = build_turn_id(run_id=run_id, turn_seq=current_turn_seq)
+        append_run_event(
+            out_dir=out_dir,
+            event="run_aborted",
+            task_id=task_id,
+            run_id=run_id,
+            turn_id=current_turn_id,
+            turn_seq=current_turn_seq,
+            delivery_profile=delivery_profile,
+            security_profile=security_profile,
+            status="aborted",
+            details={
+                "reason": "operator_requested",
+                "chapter5_readiness": readiness_reason,
+            },
+        )
+        abort_state = marathon_state
+        if not isinstance(abort_state, dict):
+            abort_state = build_initial_state(
+                task_id=task_id,
+                run_id=run_id,
+                requested_run_id=requested_run_id,
+                max_step_retries=0,
+                max_wall_time_sec=int(args.max_wall_time_sec or 0),
+                summary=summary,
+                resume_count=1,
+            )
+        save_marathon_state(
+            out_dir,
+            mark_aborted(abort_state, reason="operator_requested"),
+        )
+        _write_latest_index(task_id=task_id, run_id=run_id, out_dir=out_dir, status="aborted")
+        _write_active_task_sidecar(task_id=task_id, run_id=run_id, out_dir=out_dir, status="aborted")
+        print(f"SC_REVIEW_PIPELINE status=aborted out={out_dir}")
+        return 0
+
     reconciliation_path = reconciliation_path_for_task(repo_root(), task_id)
     try:
         reconciliation_payload = json.loads(reconciliation_path.read_text(encoding="utf-8"))
@@ -2033,7 +2097,7 @@ def main() -> int:
         "reconciliation_sha256": readiness_payload.get("reconciliation_sha256"),
     }
 
-    if handoff.ok and handoff.identity is not None:
+    if handoff is not None and handoff.ok and handoff.identity is not None:
         if source_handoff_identity is not None and source_handoff_identity != handoff.identity:
             print("[sc-review-pipeline] ERROR: invalid_kcp_binding: resume/fork handoff identity mismatch")
             return 11
@@ -2065,6 +2129,30 @@ def main() -> int:
     except RuntimeError as exc:
         print(f"[sc-review-pipeline] ERROR: {exc}")
         return 2
+
+    requested_fix_through = str(args.fix_through or "").strip().upper()
+    source_llm_context = (
+        source_execution_context.get("llm_review")
+        if isinstance(source_execution_context, dict)
+        and isinstance(source_execution_context.get("llm_review"), dict)
+        else {}
+    )
+    source_fix_through = str((source_llm_context or {}).get("fix_through") or "").strip().upper()
+    if bool(args.resume or args.fork) and source_fix_through:
+        if requested_fix_through and requested_fix_through != source_fix_through:
+            print(
+                "[sc-review-pipeline] ERROR: fix-through mismatch for resume/fork "
+                f"source={source_fix_through} requested={requested_fix_through}"
+            )
+            return 2
+        fix_through = source_fix_through
+    else:
+        fix_through = requested_fix_through or "P1"
+    if fix_through not in {"P1", "P2", "P3"}:
+        print(f"[sc-review-pipeline] ERROR: invalid fix-through={fix_through}")
+        return 2
+    args.fix_through = fix_through
+
     current_git = current_git_fingerprint()
     profile_floor_decision: dict[str, Any] | None = None
     change_scope_for_floor: dict[str, Any] = {}
@@ -2096,10 +2184,11 @@ def main() -> int:
         triplet=triplet,
         profile_defaults=llm_defaults,
     )
-    llm_agents = str(args.llm_agents or llm_review_plan.get("agents") or llm_defaults.get("agents") or "all")
+    raw_llm_agents = str(args.llm_agents or llm_review_plan.get("agents") or llm_defaults.get("agents") or "all")
     llm_timeout_sec = int(args.llm_timeout_sec or llm_review_plan.get("timeout_sec") or llm_defaults.get("timeout_sec") or 900)
     llm_agent_timeout_sec = int(args.llm_agent_timeout_sec or llm_review_plan.get("agent_timeout_sec") or llm_defaults.get("agent_timeout_sec") or 300)
     llm_semantic_gate = str(args.llm_semantic_gate or llm_review_plan.get("semantic_gate") or llm_defaults.get("semantic_gate") or "require")
+    llm_agents = ",".join(resolve_agents(raw_llm_agents, llm_semantic_gate))
     llm_strict = bool(args.llm_strict) or bool(llm_review_plan.get("strict", False))
     llm_diff_mode = str(args.llm_diff_mode or llm_review_plan.get("diff_mode") or llm_defaults.get("diff_mode") or "full")
     explicit_llm_agents = bool(str(args.llm_agents or "").strip())
@@ -2114,7 +2203,20 @@ def main() -> int:
         explicit_llm_agents=explicit_llm_agents,
     )
     if bool(llm_reviewer_subset.get("applied")):
-        llm_agents = ",".join([str(item).strip() for item in list(llm_reviewer_subset.get("agents") or []) if str(item).strip()])
+        subset_raw = ",".join(
+            [str(item).strip() for item in list(llm_reviewer_subset.get("agents") or []) if str(item).strip()]
+        )
+        subset_agents = resolve_agents(subset_raw, llm_semantic_gate)
+        llm_reviewer_subset = {
+            **llm_reviewer_subset,
+            "agents": subset_agents,
+            "normalized_from_agents": [
+                str(item).strip()
+                for item in list(llm_reviewer_subset.get("agents") or [])
+                if str(item).strip()
+            ],
+        }
+        llm_agents = ",".join(subset_agents)
     llm_execution_context = {
         **llm_review_plan,
         "agents": llm_agents,
@@ -2126,6 +2228,7 @@ def main() -> int:
         "task_id": task_id,
         "chapter5_semantic_evidence_path": str(chapter5_evidence_path).replace("\\", "/"),
         "chapter5_readiness": readiness_payload.get("readiness"),
+        "fix_through": fix_through,
     }
     if bool(llm_reviewer_subset.get("applied")):
         llm_execution_context["derived_reviewer_subset"] = dict(llm_reviewer_subset)
@@ -2173,15 +2276,17 @@ def main() -> int:
         security_profile=security_profile,
     )
     requested_llm_agent_timeout_overrides = parse_agent_timeout_overrides(getattr(args, "llm_agent_timeouts", ""))
-    derived_llm_agent_timeout_overrides = _derive_llm_agent_timeout_overrides(
-        current_out_dir=out_dir,
-        task_id=task_id,
-        delivery_profile=delivery_profile,
-        security_profile=security_profile,
-        llm_agents=llm_agents,
-        llm_semantic_gate=llm_semantic_gate,
-        llm_timeout_sec=llm_timeout_sec,
-        llm_agent_timeout_sec=llm_agent_timeout_sec,
+    derived_llm_agent_timeout_overrides = normalize_agent_timeout_overrides(
+        _derive_llm_agent_timeout_overrides(
+            current_out_dir=out_dir,
+            task_id=task_id,
+            delivery_profile=delivery_profile,
+            security_profile=security_profile,
+            llm_agents=llm_agents,
+            llm_semantic_gate=llm_semantic_gate,
+            llm_timeout_sec=llm_timeout_sec,
+            llm_agent_timeout_sec=llm_agent_timeout_sec,
+        )
     )
     llm_agent_timeout_overrides = {**derived_llm_agent_timeout_overrides, **requested_llm_agent_timeout_overrides}
     llm_agent_timeouts = _format_agent_timeout_overrides(llm_agent_timeout_overrides)
@@ -2543,10 +2648,18 @@ def main() -> int:
             task_id=task_id,
             run_id=run_id,
             delivery_profile=delivery_profile,
+            fix_through=fix_through,
         )
     except Exception as exc:
-        write_text(out_dir / "technical-debt-sync.log", f"technical debt sync skipped: {exc}\n")
-        print(f"[sc-review-pipeline] WARN: technical debt sync skipped: {exc}")
+        write_text(
+            out_dir / "technical-debt-sync.log",
+            f"technical debt sync failed: {exc}\n"
+            "Recovery: repair the register/write condition and rerun the debt sync; "
+            "do not reinterpret the existing Review verdict.\n",
+        )
+        print(f"[sc-review-pipeline] ERROR: technical debt sync failed: {exc}")
+        print(f"SC_REVIEW_PIPELINE status=fail task={task_id} stop=technical-debt-sync out={out_dir}")
+        return TECHNICAL_DEBT_SYNC_ERROR_RC
     print(f"SC_REVIEW_PIPELINE status={session.summary['status']} out={out_dir}")
     return final_rc
 
